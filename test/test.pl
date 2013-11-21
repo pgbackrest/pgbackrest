@@ -2,7 +2,7 @@
 
 #use strict;
 
-my $strPgBinPath = '/usr/lib/postgresql/9.3/bin/';
+my $strPgBinPath = '/Library/PostgreSQL/9.3/bin/';
 
 sub execute
 {
@@ -27,7 +27,7 @@ sub pg_create
 sub pg_start
 {
     local($strPath) = @_;
-    my $strCommand = $strPgBinPath . "pg_ctl start -o \"-c wal_level=archive -c archive_mode=on -c archive_command='test ! -f $strPath/archive/%f && cp %p $strPath/archive/%f'\" -D $strPath -l $strPath/postgresql.log -w -s";
+    my $strCommand = $strPgBinPath . "pg_ctl start -o \”-c wal_level=archive -c archive_mode=on -c archive_command='test ! -f $strPath/archive/%f && cp %p $strPath/archive/%f'\" -D $strPath -l $strPath/postgresql.log -w -s";
     
     execute($strCommand);
 }
@@ -48,7 +48,7 @@ sub pg_drop
     execute($strCommand);
 }
 
-pg_stop("/home/dsteele/test/test2");
-pg_drop("/home/dsteele/test/test2");
-pg_create("/home/dsteele/test/test2");
-pg_start("/home/dsteele/test/test2");
+pg_stop("/Users/dsteele/test/test2");
+pg_drop("/Users/dsteele/test/test2");
+pg_create("/Users/dsteele/test/test2");
+pg_start("/Users/dsteele/test/test2");
