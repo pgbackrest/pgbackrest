@@ -20,7 +20,7 @@ sub pg_create
 {
     local($strPath) = @_;
     
-    execute($strPgBinPath . "initdb -D $strPath -A trust");
+    execute($strPgBinPath . "initdb -D $strPath -A trust -k");
     execute("mkdir $strPath/archive");
 }
 
