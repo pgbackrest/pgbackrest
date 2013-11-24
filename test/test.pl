@@ -78,8 +78,12 @@ sub pg_execute
 {
     local($dbh, $strSql) = @_;
 
+    print($strSql);
     $sth = $dbh->prepare($strSql);
     $sth->execute();
+    $sth->finish();
+
+    print(" ... complete\n\n");
 }
 
 my $strUser = execute('whoami');
@@ -89,6 +93,7 @@ my $strDbDir = "db";
 my $strArchiveDir = "archive";
 
 my $strPgBinPath = "/Library/PostgreSQL/9.3/bin";
+my $strPort = "6000";
 
 my $strBackRestBinPath = "/Users/dsteele/pg_backrest";
 my $strArchiveCommand = "$strBackRestBinPath/pg_backrest.pl archive-local %p $strTestPath/$strArchiveDir/%f";
@@ -105,13 +110,15 @@ if ($@)
 
 pg_drop($strTestPath);
 pg_create($strPgBinPath, $strTestPath, $strDbDir, $strArchiveDir);
-pg_start($strPgBinPath, "$strTestPath/$strDbDir", "6000", $strArchiveCommand);
+pg_start($strPgBinPath, "$strTestPath/$strDbDir", $strPort, $strArchiveCommand);
 pg_password_set($strPgBinPath, "$strTestPath/$strDbDir", $strUser);
 
 ################################################################################
-# Connect and start
+# Connect and start tests
 ################################################################################
-$dbh = DBI->connect("dbi:Pg:dbname=postgres;port=6000;host=127.0.0.1", 'dsteele', 'password', {AutoCommit => 1});
+$dbh = DBI->connect("dbi:Pg:dbname=postgres;port=6000;host=127.0.0.1", $strUser,
+                    'password', {AutoCommit => 1});
+
 pg_execute($dbh, "create table test (id int)");
 
 pg_execute($dbh, "insert into test values (1)");
@@ -123,4 +130,9 @@ pg_execute($dbh, "select pg_switch_xlog()");
 pg_execute($dbh, "insert into test values (3)");
 pg_execute($dbh, "select pg_switch_xlog()");
 
-#pg_stop($strTestPath);
+$dbh->disconnect();
+
+################################################################################
+# Stop the server
+################################################################################
+pg_stop($strPgBinPath, "$strTestPath/$strDbDir");
