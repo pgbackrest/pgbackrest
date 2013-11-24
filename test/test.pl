@@ -2,58 +2,74 @@
 
 #use strict;
 use DBI;
+use IPC::System::Simple qw(capture);
 
-my $strPgBinPath = '/Library/PostgreSQL/9.3/bin/';
+sub trim
+{
+    local($strBuffer) = @_;
+
+	$strBuffer =~ s/^\s+|\s+$//g;
+
+	return $strBuffer;
+}
 
 sub execute
 {
     local($strCommand) = @_;
     my $strOutput;
 
-    print("$strCommand\n");
-    $strOutput = qx($strCommand) or return 0;
-    $strOutput =~ s/^\s+|\s+$//g;
-    print("$strOutput\n");
+    print("$strCommand");
+    $strOutput = trim(capture($strCommand));
+
+    if ($strOutput eq "")
+    {  
+        print(" ... complete\n\n");
+    }
+    else
+    {
+        print(" ... complete\n$strOutput\n\n");
+    }
     
     return $strOutput;
 }
 
 sub pg_create
 {
-    local($strPath) = @_;
+    local($strPgBinPath, $strTestPath, $strTestDir, $strArchiveDir) = @_;
     
-    execute($strPgBinPath . "initdb -D $strPath -A trust -k");
-    execute("mkdir $strPath/archive");
+    execute("mkdir $strTestPath");
+    execute($strPgBinPath . "/initdb -D $strTestPath/$strTestDir -A trust -k");
+    execute("mkdir $strTestPath/$strArchiveDir");
 }
 
 sub pg_start
 {
-    local($strPath) = @_;
-    my $strCommand = $strPgBinPath . "pg_ctl start -o \"-c port=6000 -c wal_level=archive -c archive_mode=on -c archive_command='test ! -f $strPath/archive/%f && cp %p $strPath/archive/%f'\" -D $strPath -l $strPath/postgresql.log -w -s";
+    local($strPgBinPath, $strDbPath, $strPort, $strAchiveCommand) = @_;
+    my $strCommand = "$strPgBinPath/pg_ctl start -o \"-c port=$strPort -c wal_level=archive -c archive_mode=on -c archive_command=\'$strAchiveCommand\'\" -D $strDbPath -l $strDbPath/postgresql.log -w -s";
     
     execute($strCommand);
 }
 
 sub pg_password_set
 {
-    local($strPath, $strUser) = @_;
-    my $strCommand = $strPgBinPath . "psql --port=6000 -c \"alter user $strUser with password 'password'\" postgres";
+    local($strPgBinPath, $strPath, $strUser) = @_;
+    my $strCommand = "$strPgBinPath/psql --port=6000 -c \"alter user $strUser with password 'password'\" postgres";
     
     execute($strCommand);
 }
 
 sub pg_stop
 {
-    local($strPath) = @_;
-    my $strCommand = $strPgBinPath . "pg_ctl stop -D $strPath -w -s";
+    local($strPgBinPath, $strPath) = @_;
+    my $strCommand = "$strPgBinPath/pg_ctl stop -D $strPath -w -s";
     
     execute($strCommand);
 }
 
 sub pg_drop
 {
-    local($strPath) = @_;
-    my $strCommand = "rm -rf $strPath";
+    local($strTestPath) = @_;
+    my $strCommand = "rm -rf $strTestPath";
     
     execute($strCommand);
 }
@@ -67,16 +83,34 @@ sub pg_execute
 }
 
 my $strUser = execute('whoami');
-my $strTestPath = "/Users/dsteele/test/";
-my $strTestDir = "test2";
+
+my $strTestPath = "/Users/dsteele/test";
+my $strDbDir = "db";
 my $strArchiveDir = "archive";
 
-pg_stop("$strTestPath$strTestDir");
-pg_drop("$strTestPath$strTestDir");
-pg_create("$strTestPath$strTestDir");
-pg_start("$strTestPath$strTestDir");
-pg_password_set("$strTestPath$strTestDir", $strUser);
+my $strPgBinPath = "/Library/PostgreSQL/9.3/bin";
 
+my $strBackRestBinPath = "/Users/dsteele/pg_backrest";
+my $strArchiveCommand = "$strBackRestBinPath/pg_backrest.pl archive-local %p $strTestPath/$strArchiveDir/%f";
+
+################################################################################
+# Stop the current test cluster if it is running and create a new one
+################################################################################
+eval {pg_stop($strPgBinPath, "$strTestPath/$strDbDir")};
+
+if ($@)
+{
+    print(" ... unable to stop pg server (ignoring): " . trim($@) . "\n\n")
+}
+
+pg_drop($strTestPath);
+pg_create($strPgBinPath, $strTestPath, $strDbDir, $strArchiveDir);
+pg_start($strPgBinPath, "$strTestPath/$strDbDir", "6000", $strArchiveCommand);
+pg_password_set($strPgBinPath, "$strTestPath/$strDbDir", $strUser);
+
+################################################################################
+# Connect and start
+################################################################################
 $dbh = DBI->connect("dbi:Pg:dbname=postgres;port=6000;host=127.0.0.1", 'dsteele', 'password', {AutoCommit => 1});
 pg_execute($dbh, "create table test (id int)");
 
