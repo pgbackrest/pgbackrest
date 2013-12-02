@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+use strict;
 #use Getopt::Long;
 
 #my $strCommandCompress = "pigz --rsyncable --best --stdout %file%"; # Ubuntu Linux
@@ -12,11 +13,12 @@ my $strCommandHash = "shasum %file% | awk '{print \$1}'";
 ################################################################################
 sub execute
 {
-    local($strCommand) = @_;
-    my $strOutput;
+    my $strCommand = shift;
+    
+    #local($strCommand) = @_;
 
 #   print("$strCommand\n");
-    $strOutput = qx($strCommand) or return 0;
+    my $strOutput = qx($strCommand) or return 0;
 #   print("$strOutput\n");
     
     return($strOutput);
@@ -27,7 +29,8 @@ sub execute
 ################################################################################
 sub file_hash_get
 {
-    local($strFile) = @_;
+    my $strFile = shift;
+    #local($strFile) = @_;
     
     my $strCommand = $strCommandHash;
     $strCommand =~ s/\%file\%/$strFile/g;
@@ -42,7 +45,7 @@ sub file_hash_get
 # START MAIN
 ################################################################################
 # Get the command
-$strCommand = $ARGV[0];
+my $strCommand = $ARGV[0];
 
 ################################################################################
 # ARCHIVE-LOCAL COMMAND
