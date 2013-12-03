@@ -107,7 +107,7 @@ if ($strCommand eq "archive-local")
         $strDestinationFile .= "-" . file_hash_get($strSourceFile);
     }
     
-    # Setup the copy string
+    # Setup the copy command
     my $strCommand = "";
 
     if ($bNoCompression)
@@ -123,7 +123,6 @@ if ($strCommand eq "archive-local")
         $strCommand .= " > $strDestinationFile.gz";
     }
     
-    # Execute the compression
-    print("copy: $strCommand\n");
+    # Execute the copy
     execute($strCommand);
 }
