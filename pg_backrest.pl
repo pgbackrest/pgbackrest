@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Cwd 'abs_path';
 use File::Basename;
 use Getopt::Long;
 
