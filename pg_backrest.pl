@@ -67,7 +67,7 @@ sub file_hash_get
 my $strCommand = $ARGV[0];
 
 ####################################################################################################################################
-# ARCHIVE-LOCAL COMMAND
+# ARCHIVE-LOCAL Command !!! This should become archive-push with no hostname
 ####################################################################################################################################
 if ($strCommand eq "archive-local")
 {
