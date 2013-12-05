@@ -3,21 +3,17 @@
 use strict;
 use File::Basename;
 use Getopt::Long;
+use Config::IniFiles;
 
 # Process flags
 my $bNoCompression;
 my $bNoChecksum;
+my $strConfigFile;
 
 GetOptions ("no-compression" => \$bNoCompression,
-            "no-checksum" => \$bNoChecksum)
+            "no-checksum" => \$bNoChecksum,
+            "config=s" => \$strConfigFile)
     or die("Error in command line arguments\n");
-
-# Command strings - temporary until these are in the config file
-#my $strCommandCompress = "pigz --rsyncable --best --stdout %file%"; # Ubuntu Linux
-my $strCommandCompress = "gzip --stdout %file%"; # OSX --best was removed for testing
-my $strCommandCopy = "cp %source% %destination%";
-#my $strCommandHash = "sha1sum %file% | awk '{print \$1}'"; # Ubuntu Linux
-my $strCommandHash = "shasum %file% | awk '{print \$1}'"; # OSX
 
 ####################################################################################################################################
 # TRIM - trim whitespace off strings
@@ -50,9 +46,9 @@ sub execute
 ####################################################################################################################################
 sub file_hash_get
 {
+    my $strCommand = shift;
     my $strFile = shift;
     
-    my $strCommand = $strCommandHash;
     $strCommand =~ s/\%file\%/$strFile/g;
     
     my $strHash = trim(execute($strCommand));
@@ -65,6 +61,15 @@ sub file_hash_get
 ####################################################################################################################################
 # Get the command
 my $strCommand = $ARGV[0];
+
+# Load the config file
+if (!defined($strConfigFile))
+{
+    $strConfigFile = "/etc/pg_backrest.conf";
+}
+
+my %oConfig;
+tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to find config file";
 
 ####################################################################################################################################
 # ARCHIVE-LOCAL Command !!! This should become archive-push with no hostname
@@ -103,7 +108,7 @@ if ($strCommand eq "archive-local")
     # Calculate sha1 hash for the file (unless disabled)
     if (!$bNoChecksum)
     {
-        $strDestinationFile .= "-" . file_hash_get($strSourceFile);
+        $strDestinationFile .= "-" . file_hash_get($oConfig{command}{checksum}, $strSourceFile);
     }
     
     # Setup the copy command
@@ -111,17 +116,27 @@ if ($strCommand eq "archive-local")
 
     if ($bNoCompression)
     {
-        $strCommand = $strCommandCopy;
+        $strCommand = $oConfig{command}{copy};
         $strCommand =~ s/\%source\%/$strSourceFile/g;
         $strCommand =~ s/\%destination\%/$strDestinationFile/g;
     }
     else
     {
-        $strCommand = $strCommandCompress;
+        $strCommand = $oConfig{command}{compress};
         $strCommand =~ s/\%file\%/$strSourceFile/g;
         $strCommand .= " > $strDestinationFile.gz";
     }
     
     # Execute the copy
     execute($strCommand);
+
+#    print "$strCommandManifest\n";
+#    print execute($strCommandManifest) . "\n";
+}
+
+####################################################################################################################################
+# BACKUP
+####################################################################################################################################
+if ($strCommand eq "backup")
+{
 }
