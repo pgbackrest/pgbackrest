@@ -168,5 +168,26 @@ if ($strOperation eq "backup")
     $strCommand =~ s/\%path\%/$oConfig{"cluster:$strCluster"}{pgdata}/g;
     my $strManifest = execute($strCommand);
     
-    print "$strManifest\n";
+    my @stryFile = split("\n", $strManifest);
+    
+    for (my $iFileIdx = 0; $iFileIdx < scalar @stryFile; $iFileIdx++)
+    {
+        my @stryField = split("\t", $stryFile[$iFileIdx]);
+        
+        my $dfTime = $stryField[0];
+        my $lInode = $stryField[1];
+        my $cType = $stryField[2];
+        my $strPermission = $stryField[3];
+        my $strUser = $stryField[4];
+        my $strGroup = $stryField[5];
+        my $strSize = $stryField[6];
+        my $strName = $stryField[7];
+        
+        if ($cType eq "f" && index($strName, 'pg_xlog') != 0)
+        {
+#            print "$strName\n"
+        }
+    }
+    
+#    print scalar @stryFile . "\n";
 }
