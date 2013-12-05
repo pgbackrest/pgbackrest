@@ -60,9 +60,11 @@ sub file_hash_get
 # START MAIN
 ####################################################################################################################################
 # Get the command
-my $strCommand = $ARGV[0];
+my $strOperation = $ARGV[0];
 
-# Load the config file
+####################################################################################################################################
+# LOAD CONFIG FILE
+####################################################################################################################################
 if (!defined($strConfigFile))
 {
     $strConfigFile = "/etc/pg_backrest.conf";
@@ -74,7 +76,7 @@ tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to fi
 ####################################################################################################################################
 # ARCHIVE-LOCAL Command !!! This should become archive-push with no hostname
 ####################################################################################################################################
-if ($strCommand eq "archive-local")
+if ($strOperation eq "archive-local")
 {
     # archive-local command must have three arguments
     if (@ARGV != 3)
@@ -132,11 +134,39 @@ if ($strCommand eq "archive-local")
 
 #    print "$strCommandManifest\n";
 #    print execute($strCommandManifest) . "\n";
+    exit 0;
+}
+
+####################################################################################################################################
+# GET MORE CONFIG INFO
+####################################################################################################################################
+if (!defined($oConfig{common}{base_path}))
+{
+    die 'undefined base path';
 }
 
 ####################################################################################################################################
 # BACKUP
 ####################################################################################################################################
-if ($strCommand eq "backup")
+if ($strOperation eq "backup")
 {
+    # backup command must have three arguments
+    if (@ARGV != 2)
+    {
+        die "not enough arguments - show usage";
+    }
+
+    # Get the cluster name
+    my $strCluster = $ARGV[1];
+
+    if (!defined($oConfig{"cluster:$strCluster"}{pgdata}))
+    {
+        die 'undefined cluster path';
+    }
+
+    my $strCommand = $oConfig{command}{manifest};
+    $strCommand =~ s/\%path\%/$oConfig{"cluster:$strCluster"}{pgdata}/g;
+    my $strManifest = execute($strCommand);
+    
+    print "$strManifest\n";
 }
