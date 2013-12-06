@@ -159,9 +159,14 @@ if ($strOperation eq "backup")
     # Get the cluster name
     my $strCluster = $ARGV[1];
 
+    if (!defined($strCluster))
+    {
+        die 'undefined cluster';
+    }
+
     if (!defined($oConfig{"cluster:$strCluster"}{pgdata}))
     {
-        die 'undefined cluster path';
+        die 'undefined cluster pgdata';
     }
 
     my $strCommand = $oConfig{command}{manifest};
@@ -169,6 +174,9 @@ if ($strOperation eq "backup")
     my $strManifest = execute($strCommand);
     
     my @stryFile = split("\n", $strManifest);
+
+    # Flag to only allow the root directory once
+    my $bRootDir = 0;
     
     for (my $iFileIdx = 0; $iFileIdx < scalar @stryFile; $iFileIdx++)
     {
@@ -182,10 +190,44 @@ if ($strOperation eq "backup")
         my $strGroup = $stryField[5];
         my $strSize = $stryField[6];
         my $strName = $stryField[7];
-        
-        if ($cType eq "f" && index($strName, 'pg_xlog') != 0)
+
+        if (!defined($strName))
         {
-#            print "$strName\n"
+            if ($bRootDir)
+            {
+                die "Root dir appeared twice - check manifest command"
+            }
+            
+            $bRootDir = 1;
+            $strName = ".";
+        }
+        
+        # Don't process anything in pg_xlog
+        if (index($strName, 'pg_xlog/') != 0)
+        {
+            # Process directories
+            if ($cType eq "d")
+            {
+                print "dir: $strName\n"
+            }
+
+            # Process symbolic links (hard links not supported)
+            elsif ($cType eq "l")
+            {
+                print "link: $strName\n"
+            }
+        
+            # Process files except those in pg_xlog (hard links not supported)
+            elsif ($cType eq "f")
+            {
+                    print "file: $strName\n"
+            }
+
+            # Unrecognized type - fail
+            else
+            {
+                die "Unrecognized file type $cType for file $strName";
+            }
         }
     }
     
