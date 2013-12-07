@@ -57,6 +57,88 @@ sub file_hash_get
 }
 
 ####################################################################################################################################
+# BACKUP - Backup the base directory or a tablespace
+####################################################################################################################################
+sub backup
+{
+    my $strCommandManifest = shift;
+    my $strBackupPath = shift;
+    my $strPath = shift;
+    my %oBackupConfig = shift;
+    my $strLevel = shift;
+
+    my $strCommand = $strCommandManifest;
+    $strCommand =~ s/\%path\%/$strPath/g;
+    my $strManifest = execute($strCommand);
+    
+    my @stryFile = split("\n", $strManifest);
+
+    # Flag to only allow the root directory once
+    my $bRootDir = 0;
+    
+    for (my $iFileIdx = 0; $iFileIdx < scalar @stryFile; $iFileIdx++)
+    {
+        my @stryField = split("\t", $stryFile[$iFileIdx]);
+        
+        my $dfModifyTime = $stryField[0];
+        my $lInode = $stryField[1];
+        my $cType = $stryField[2];
+        my $strPermission = $stryField[3];
+        my $strUser = $stryField[4];
+        my $strGroup = $stryField[5];
+        my $strSize = $stryField[6];
+        my $strName = $stryField[7];
+        my $strLinkDestination = $stryField[8];
+
+        if (!defined($strName))
+        {
+            if ($bRootDir)
+            {
+                die "Root dir appeared twice - check manifest command"
+            }
+            
+            $bRootDir = 1;
+            $strName = ".";
+        }
+        
+        # Don't process anything in pg_xlog
+        if (index($strName, 'pg_xlog/') != 0)
+        {
+            # Process directories
+            if ($cType eq "d")
+            {
+                print "$strPath dir: $strName\n"
+            }
+
+            # Process symbolic links (hard links not supported)
+            elsif ($cType eq "l")
+            {
+                print "$strPath link: $strName -> $strLinkDestination\n";
+
+                if (index($strName, 'pg_tblspc/') == 0)
+                {
+                    backup($strCommandManifest, $strBackupPath, $strLinkDestination, %oBackupConfig, $strName);
+                }                
+            }
+        
+            # Process files except those in pg_xlog (hard links not supported)
+            elsif ($cType eq "f")
+            {
+                #$oBackupConfig{"file"}{"$strName"} = $dfModifyTime;
+                
+                print "$strPath file: $strName\n"
+            }
+
+            # Unrecognized type - fail
+            else
+            {
+                die "Unrecognized file type $cType for file $strName";
+            }
+        }
+    }
+}
+
+####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
 # Get the command
@@ -140,10 +222,14 @@ if ($strOperation eq "archive-local")
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
-if (!defined($oConfig{common}{base_path}))
+my $strBackupPath = $oConfig{common}{backup_path};
+
+if (!defined($strBackupPath))
 {
     die 'undefined base path';
 }
+
+$strBackupPath .= "/backup.tmp";
 
 ####################################################################################################################################
 # BACKUP
@@ -169,67 +255,26 @@ if ($strOperation eq "backup")
         die 'undefined cluster pgdata';
     }
 
-    my $strCommand = $oConfig{command}{manifest};
-    $strCommand =~ s/\%path\%/$oConfig{"cluster:$strCluster"}{pgdata}/g;
-    my $strManifest = execute($strCommand);
-    
-    my @stryFile = split("\n", $strManifest);
-
-    # Flag to only allow the root directory once
-    my $bRootDir = 0;
-    
-    for (my $iFileIdx = 0; $iFileIdx < scalar @stryFile; $iFileIdx++)
+    unless (-e $strBackupPath)
     {
-        my @stryField = split("\t", $stryFile[$iFileIdx]);
-        
-        my $dfTime = $stryField[0];
-        my $lInode = $stryField[1];
-        my $cType = $stryField[2];
-        my $strPermission = $stryField[3];
-        my $strUser = $stryField[4];
-        my $strGroup = $stryField[5];
-        my $strSize = $stryField[6];
-        my $strName = $stryField[7];
-
-        if (!defined($strName))
-        {
-            if ($bRootDir)
-            {
-                die "Root dir appeared twice - check manifest command"
-            }
-            
-            $bRootDir = 1;
-            $strName = ".";
-        }
-        
-        # Don't process anything in pg_xlog
-        if (index($strName, 'pg_xlog/') != 0)
-        {
-            # Process directories
-            if ($cType eq "d")
-            {
-                print "dir: $strName\n"
-            }
-
-            # Process symbolic links (hard links not supported)
-            elsif ($cType eq "l")
-            {
-                print "link: $strName\n"
-            }
-        
-            # Process files except those in pg_xlog (hard links not supported)
-            elsif ($cType eq "f")
-            {
-                    print "file: $strName\n"
-            }
-
-            # Unrecognized type - fail
-            else
-            {
-                die "Unrecognized file type $cType for file $strName";
-            }
-        }
+        print "Creating backup path $strBackupPath\n";
+        mkdir $strBackupPath or die "Unable to create backup path";
     }
+    
+    my %oBackupConfig;
+
+    if (-e "$strBackupPath/backup.conf")
+    {
+        tie %oBackupConfig, 'Config::IniFiles', (-file => "$strBackupPath/backup.conf") or die "Unable to open backup config";
+    }
+    else
+    {
+        tie %oBackupConfig, 'Config::IniFiles' or die 'Unable to create backup config';
+    }
+
+    backup($oConfig{command}{manifest}, $strBackupPath, $oConfig{"cluster:$strCluster"}{pgdata}, %oBackupConfig, "base");
+    
+    tied(%oBackupConfig)->WriteConfig("$strBackupPath/backup.conf");
     
 #    print scalar @stryFile . "\n";
 }

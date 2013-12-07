@@ -36,11 +36,15 @@ sub execute
 
 sub pg_create
 {
-    local($strPgBinPath, $strTestPath, $strTestDir, $strArchiveDir) = @_;
+    local($strPgBinPath, $strTestPath, $strTestDir, $strArchiveDir, $strBackupDir) = @_;
     
     execute("mkdir $strTestPath");
-    execute($strPgBinPath . "/initdb -D $strTestPath/$strTestDir -A trust -k");
+    execute("mkdir $strTestPath/$strTestDir");
+    execute("mkdir $strTestPath/$strTestDir/ts1");
+    execute("mkdir $strTestPath/$strTestDir/ts2");
+    execute($strPgBinPath . "/initdb -D $strTestPath/$strTestDir/common -A trust -k");
     execute("mkdir $strTestPath/$strArchiveDir");
+    execute("mkdir $strTestPath/$strBackupDir");
 }
 
 sub pg_start
@@ -81,7 +85,7 @@ sub pg_execute
 
     print($strSql);
     $sth = $dbh->prepare($strSql);
-    $sth->execute();
+    $sth->execute() or die;
     $sth->finish();
 
     print(" ... complete\n\n");
@@ -92,6 +96,7 @@ my $strUser = execute('whoami');
 my $strTestPath = "/Users/dsteele/test";
 my $strDbDir = "db";
 my $strArchiveDir = "archive";
+my $strBackupDir = "backup";
 
 my $strPgBinPath = "/Library/PostgreSQL/9.3/bin";
 my $strPort = "6000";
@@ -110,9 +115,9 @@ if ($@)
 }
 
 pg_drop($strTestPath);
-pg_create($strPgBinPath, $strTestPath, $strDbDir, $strArchiveDir);
-pg_start($strPgBinPath, "$strTestPath/$strDbDir", $strPort, $strArchiveCommand);
-pg_password_set($strPgBinPath, "$strTestPath/$strDbDir", $strUser);
+pg_create($strPgBinPath, $strTestPath, $strDbDir, $strArchiveDir, $strBackupDir);
+pg_start($strPgBinPath, "$strTestPath/$strDbDir/common", $strPort, $strArchiveCommand);
+pg_password_set($strPgBinPath, "$strTestPath/$strDbDir/common", $strUser);
 
 ################################################################################
 # Connect and start tests
@@ -120,7 +125,12 @@ pg_password_set($strPgBinPath, "$strTestPath/$strDbDir", $strUser);
 $dbh = DBI->connect("dbi:Pg:dbname=postgres;port=6000;host=127.0.0.1", $strUser,
                     'password', {AutoCommit => 1});
 
+pg_execute($dbh, "create tablespace ts1 location '$strTestPath/$strDbDir/ts1'");
+pg_execute($dbh, "create tablespace ts2 location '$strTestPath/$strDbDir/ts2'");
+
 pg_execute($dbh, "create table test (id int)");
+pg_execute($dbh, "create table test_ts1 (id int) tablespace ts1");
+pg_execute($dbh, "create table test_ts2 (id int) tablespace ts1");
 
 pg_execute($dbh, "insert into test values (1)");
 pg_execute($dbh, "select pg_switch_xlog()");
@@ -136,4 +146,4 @@ $dbh->disconnect();
 ################################################################################
 # Stop the server
 ################################################################################
-pg_stop($strPgBinPath, "$strTestPath/$strDbDir");
+pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
