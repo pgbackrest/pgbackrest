@@ -22,9 +22,9 @@ sub trim
 {
     my $strBuffer = shift;
 
-	$strBuffer =~ s/^\s+|\s+$//g;
+    $strBuffer =~ s/^\s+|\s+$//g;
 
-	return $strBuffer;
+    return $strBuffer;
 }
 
 ####################################################################################################################################
@@ -64,8 +64,10 @@ sub backup
     my $strCommandManifest = shift;
     my $strBackupPath = shift;
     my $strPath = shift;
-    my %oBackupConfig = shift;
+    my $oBackupConfigRef = shift;
     my $strLevel = shift;
+
+#    my %oBackupConfig = %{$oBackupConfigRef};
 
     my $strCommand = $strCommandManifest;
     $strCommand =~ s/\%path\%/$strPath/g;
@@ -115,16 +117,20 @@ sub backup
             {
                 print "$strPath link: $strName -> $strLinkDestination\n";
 
+                ${$oBackupConfigRef}{"base:link"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
+
                 if (index($strName, 'pg_tblspc/') == 0)
                 {
-                    backup($strCommandManifest, $strBackupPath, $strLinkDestination, %oBackupConfig, $strName);
-                }                
+                    #${$oBackupConfigRef}{"base:tablespace"}{"$strName"} = $;
+
+                    backup($strCommandManifest, $strBackupPath, $strLinkDestination, $oBackupConfigRef, $strName);
+                }
             }
         
             # Process files except those in pg_xlog (hard links not supported)
             elsif ($cType eq "f")
             {
-                #$oBackupConfig{"file"}{"$strName"} = $dfModifyTime;
+                ${$oBackupConfigRef}{"$strLevel\:file"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
                 
                 print "$strPath file: $strName\n"
             }
@@ -265,15 +271,16 @@ if ($strOperation eq "backup")
 
     if (-e "$strBackupPath/backup.conf")
     {
-        tie %oBackupConfig, 'Config::IniFiles', (-file => "$strBackupPath/backup.conf") or die "Unable to open backup config";
+        tie %oBackupConfig, 'Config::IniFiles', (-file => "$strBackupPath/backup.conf") or die "Unable to open backup config" . @_;
     }
     else
     {
         tie %oBackupConfig, 'Config::IniFiles' or die 'Unable to create backup config';
     }
 
-    backup($oConfig{command}{manifest}, $strBackupPath, $oConfig{"cluster:$strCluster"}{pgdata}, %oBackupConfig, "base");
+    backup($oConfig{command}{manifest}, $strBackupPath, $oConfig{"cluster:$strCluster"}{pgdata}, \%oBackupConfig, "base");
     
+#    $oBackupConfig{"file"}{"name"} = "test";
     tied(%oBackupConfig)->WriteConfig("$strBackupPath/backup.conf");
     
 #    print scalar @stryFile . "\n";
