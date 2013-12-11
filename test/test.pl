@@ -155,7 +155,7 @@ my $strPgBinPath = "/Library/PostgreSQL/9.3/bin";
 my $strPort = "6001";
 
 my $strBackRestBinPath = "/Users/dsteele/pg_backrest";
-my $strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 1, 1);
+my $strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 0, 0);
 
 ################################################################################
 # Stop the current test cluster if it is running and create a new one
@@ -189,9 +189,9 @@ pg_execute($dbh, "insert into test values (1)");
 pg_execute($dbh, "select pg_switch_xlog()");
 
 # Test for archive log file 000000010000000000000001
-wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000001-([a-f]|[0-9]){40}\\.gz\$", 5);
+wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000001\$", 5);
 
-# Turn off log compression for the next test
+# Turn on log checksum for the next test
 $dbh->disconnect();
 pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
 $strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 0, 1);
@@ -206,10 +206,10 @@ pg_execute($dbh, "select pg_switch_xlog()");
 # Test for archive log file 000000010000000000000002
 wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000002-([a-f]|[0-9]){40}\$", 5);
 
-# Turn off log compression and checksum for the next test
+# Turn on log compression and checksum for the next test
 $dbh->disconnect();
 pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
-$strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 0, 0);
+$strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 1, 1);
 pg_start($strPgBinPath, "$strTestPath/$strDbDir/common", $strPort, $strArchiveCommand);
 $dbh = DBI->connect("dbi:Pg:dbname=postgres;port=$strPort;host=127.0.0.1", $strUser,
                     'password', {AutoCommit => 1});
@@ -219,7 +219,7 @@ pg_execute($dbh, "insert into test values (3)");
 pg_execute($dbh, "select pg_switch_xlog()");
 
 # Test for archive log file 000000010000000000000003
-wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000003\$", 5);
+wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000003-([a-f]|[0-9]){40}\\.gz\$", 5);
 
 $dbh->disconnect();
 
