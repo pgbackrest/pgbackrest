@@ -162,11 +162,11 @@ my %oConfig;
 tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to find config file";
 
 ####################################################################################################################################
-# ARCHIVE-LOCAL Command !!! This should become archive-push with no hostname
+# ARCHIVE-PUSH Command
 ####################################################################################################################################
-if ($strOperation eq "archive-local")
+if ($strOperation eq "archive-push")
 {
-    # archive-local command must have three arguments
+    # archive-push command must have three arguments
     if (@ARGV != 3)
     {
         die "not enough arguments - show usage";
