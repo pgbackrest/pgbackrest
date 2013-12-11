@@ -144,6 +144,16 @@ sub wait_for_file
     die "could not find $strDir/$strRegEx after $iSeconds second(s)";
 }
 
+sub pgbr_backup
+{
+    my $strBackRestBinPath = shift;
+    my $strCluster = shift;
+    
+    my $strCommand = "$strBackRestBinPath/pg_backrest.pl --config=$strBackRestBinPath/pg_backrest.conf backup $strCluster";
+
+    execute($strCommand);
+}
+
 my $strUser = execute('whoami');
 
 my $strTestPath = "/Users/dsteele/test";
@@ -227,3 +237,8 @@ $dbh->disconnect();
 # Stop the server
 ################################################################################
 pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
+
+################################################################################
+# Start an offline backup
+################################################################################
+pgbr_backup($strBackRestBinPath, "db");
