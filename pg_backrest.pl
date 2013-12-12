@@ -1,10 +1,10 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 use File::Basename;
 use Getopt::Long;
 use Config::IniFiles;
-#use Readonly;
 
 # Process flags
 my $bNoCompression;
@@ -63,6 +63,31 @@ sub execute
 #   print("$strOutput\n");
     
     return($strOutput);
+}
+
+####################################################################################################################################
+# CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
+####################################################################################################################################
+sub config_load
+{
+    my $oConfigRef = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $bRequired = shift;
+    
+    if (!defined($bRequired))
+    {
+        $bRequired = 1;
+    }
+    
+    my $strValue = ${$oConfigRef}{"${strSection}"}{"${strKey}"};
+    
+    if ($bRequired && !defined($strValue))
+    {
+        die &log(ERROR, 'config value ${strSection}->${strKey} is undefined');
+    }
+    
+    return $strValue;
 }
 
 ####################################################################################################################################
@@ -189,6 +214,11 @@ if (!defined($strConfigFile))
 my %oConfig;
 tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to find config file";
 
+# Load commands required for archive-push
+my $strCommandChecksum = config_load(\%oConfig, "command", "checksum", !$bNoChecksum);
+my $strCommandCompress = config_load(\%oConfig, "command", "compress", !$bNoCompression);
+my $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
+
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
@@ -226,7 +256,7 @@ if ($strOperation eq "archive-push")
     # Calculate sha1 hash for the file (unless disabled)
     if (!$bNoChecksum)
     {
-        $strDestinationFile .= "-" . file_hash_get($oConfig{command}{checksum}, $strSourceFile);
+        $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
     }
     
     # Setup the copy command
@@ -234,13 +264,13 @@ if ($strOperation eq "archive-push")
 
     if ($bNoCompression)
     {
-        $strCommand = $oConfig{command}{copy};
+        $strCommand = $strCommandCopy;
         $strCommand =~ s/\%source\%/$strSourceFile/g;
         $strCommand =~ s/\%destination\%/$strDestinationFile/g;
     }
     else
     {
-        $strCommand = $oConfig{command}{compress};
+        $strCommand = $strCommandCompress;
         $strCommand =~ s/\%file\%/$strSourceFile/g;
         $strCommand .= " > $strDestinationFile.gz";
     }
@@ -281,13 +311,8 @@ unless (-e $strBackupClusterPath)
     mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
 
-# Load and check manifest command
-my $strCommandManifest = $oConfig{command}{manifest};
-
-if (!defined($strCommandManifest))
-{
-    die &log(ERROR, "command:manifest undefined");
-}
+# Load commands required for backup
+my $strCommandManifest = config_load(\%oConfig, "command", "manifest");
 
 ####################################################################################################################################
 # BACKUP
