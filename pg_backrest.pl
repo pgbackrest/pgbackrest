@@ -33,11 +33,6 @@ sub trim
 ####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
-#Readonly my $DEBUG = "DEBUG";
-#Readonly my $INFO = "INFO";
-#Readonly my $WARNING = "WARNING";
-#Readonly my $ERROR = "ERROR";
-
 use constant 
 {
     DEBUG   => 'DEBUG',
@@ -253,29 +248,29 @@ if ($strOperation eq "archive-push")
     # Execute the copy
     execute($strCommand);
 
-#    print "$strCommandManifest\n";
-#    print execute($strCommandManifest) . "\n";
     exit 0;
 }
 
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
+# Load and check the base backup path
 my $strBasePath = $oConfig{common}{backup_path};
 
 if (!defined($strBasePath))
 {
-    die 'undefined base path';
+    die &log(ERROR, "common:backup_path undefined");
 }
 
 unless (-e $strBasePath)
 {
-    die 'base path ${strBackupPath} does not exist';
+    die &log(ERROR, "base path ${strBasePath} does not exist");
 }
 
+# Load and check the cluster
 if (!defined($strCluster))
 {
-    $strCluster = "db";
+    $strCluster = "db"; #!!! Modify to load cluster from conf if there is only one, else error
 }
 
 my $strClusterPath = "${strBasePath}/${strCluster}";
@@ -284,6 +279,14 @@ unless (-e $strClusterPath)
 {
     &log (INFO, "creating cluster path ${strClusterPath}");
     mkdir $strClusterPath or die &log(ERROR, "cluster backup path '${strClusterPath}' create failed");
+}
+
+# Load and check manifest command
+my $strCommandManifest = $oConfig{command}{manifest};
+
+if (!defined($strCommandManifest))
+{
+    die &log(ERROR, "command:manifest undefined");
 }
 
 ####################################################################################################################################
@@ -315,23 +318,32 @@ if ($strOperation eq "backup")
 
         if (-e $strBackupConfFile)
         {
-            unlink $strBackupConfFile or die "Unable to delete backup config";
+            unlink $strBackupConfFile or die &log(ERROR, "backup config ${strBackupConfFile} could not be deleted");
         }
     }
     # Else create the backup tmp path
     else
     {
         &log(INFO, "creating backup path $strBackupPath");
-        mkdir $strBackupPath or die "Unable to create backup path";
+        mkdir $strBackupPath or die &log(ERROR, "backup path ${strBackupPath} could not be created");
     }
 
     # Create a new backup conf hash
     my %oBackupConfig;
-    tie %oBackupConfig, 'Config::IniFiles' or die 'Unable to create backup config';
+    tie %oBackupConfig, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
 
     # Build the backup manifest
-    backup_manifest($oConfig{command}{manifest}, $strClusterDataPath, \%oBackupConfig);
+    backup_manifest($strCommandManifest, $strClusterDataPath, \%oBackupConfig);
+
+    # Delete files leftover from a partial backup
+    # !!! do it
+
+    # Perform the backup
+    # !!! do it
     
     # Save the backup conf file
     tied(%oBackupConfig)->WriteConfig($strBackupConfFile);
+
+    # Rename the backup tmp path to complete the backup
+    # !!! Still not sure about format, probably YYYYMMDDTHH24MMSS
 }
