@@ -273,12 +273,12 @@ if (!defined($strCluster))
     $strCluster = "db"; #!!! Modify to load cluster from conf if there is only one, else error
 }
 
-my $strClusterPath = "${strBasePath}/${strCluster}";
+my $strBackupClusterPath = "${strBasePath}/${strCluster}";
 
-unless (-e $strClusterPath)
+unless (-e $strBackupClusterPath)
 {
-    &log (INFO, "creating cluster path ${strClusterPath}");
-    mkdir $strClusterPath or die &log(ERROR, "cluster backup path '${strClusterPath}' create failed");
+    &log (INFO, "creating cluster path ${strBackupClusterPath}");
+    mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
 
 # Load and check manifest command
@@ -308,13 +308,13 @@ if ($strOperation eq "backup")
     }
 
     # Build backup tmp and config
-    my $strBackupPath = "${strBasePath}/backup.tmp";
-    my $strBackupConfFile = "${strBackupPath}/backup.conf";
+    my $strBackupTmpPath = "${strBackupClusterPath}/backup.tmp";
+    my $strBackupConfFile = "${strBackupTmpPath}/backup.conf";
 
     # If the backup tmp path already exists, delete the conf file
-    if (-e $strBackupPath)
+    if (-e $strBackupTmpPath)
     {
-        &log(INFO, "backup path $strBackupPath already exists");
+        &log(INFO, "backup path $strBackupTmpPath already exists");
 
         if (-e $strBackupConfFile)
         {
@@ -324,8 +324,8 @@ if ($strOperation eq "backup")
     # Else create the backup tmp path
     else
     {
-        &log(INFO, "creating backup path $strBackupPath");
-        mkdir $strBackupPath or die &log(ERROR, "backup path ${strBackupPath} could not be created");
+        &log(INFO, "creating backup path $strBackupTmpPath");
+        mkdir $strBackupTmpPath or die &log(ERROR, "backup path ${strBackupTmpPath} could not be created");
     }
 
     # Create a new backup conf hash
