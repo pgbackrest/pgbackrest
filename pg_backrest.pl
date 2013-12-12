@@ -4,15 +4,18 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 use Config::IniFiles;
+#use Readonly;
 
 # Process flags
 my $bNoCompression;
 my $bNoChecksum;
 my $strConfigFile;
+my $strCluster;
 
 GetOptions ("no-compression" => \$bNoCompression,
             "no-checksum" => \$bNoChecksum,
-            "config=s" => \$strConfigFile)
+            "config=s" => \$strConfigFile,
+            "cluster=s" => \$strCluster)
     or die("Error in command line arguments\n");
 
 ####################################################################################################################################
@@ -25,6 +28,32 @@ sub trim
     $strBuffer =~ s/^\s+|\s+$//g;
 
     return $strBuffer;
+}
+
+####################################################################################################################################
+# LOG - log messages
+####################################################################################################################################
+#Readonly my $DEBUG = "DEBUG";
+#Readonly my $INFO = "INFO";
+#Readonly my $WARNING = "WARNING";
+#Readonly my $ERROR = "ERROR";
+
+use constant 
+{
+    DEBUG   => 'DEBUG',
+    INFO    => 'INFO',
+    WARNING => 'WARNING',
+    ERROR   => 'ERROR'
+};
+
+sub log
+{
+    my $strLevel = shift;
+    my $strMessage = shift;
+
+    print "${strLevel}: ${strMessage}\n";
+
+    return $strMessage;
 }
 
 ####################################################################################################################################
@@ -57,20 +86,22 @@ sub file_hash_get
 }
 
 ####################################################################################################################################
-# BACKUP - Backup the base directory or a tablespace
+# BACKUP_MANIFEST - Create the backup manifest
 ####################################################################################################################################
-sub backup
+sub backup_manifest
 {
     my $strCommandManifest = shift;
-    my $strBackupPath = shift;
-    my $strPath = shift;
+    my $strClusterDataPath = shift;
     my $oBackupConfigRef = shift;
     my $strLevel = shift;
-
-#    my %oBackupConfig = %{$oBackupConfigRef};
+    
+    if (!defined($strLevel))
+    {
+        $strLevel = "base";
+    }
 
     my $strCommand = $strCommandManifest;
-    $strCommand =~ s/\%path\%/$strPath/g;
+    $strCommand =~ s/\%path\%/$strClusterDataPath/g;
     my $strManifest = execute($strCommand);
     
     my @stryFile = split("\n", $strManifest);
@@ -106,39 +137,41 @@ sub backup
         # Don't process anything in pg_xlog
         if (index($strName, 'pg_xlog/') != 0)
         {
-            # Process directories
+            # Process paths
             if ($cType eq "d")
             {
-                print "$strPath dir: $strName\n"
+                ${$oBackupConfigRef}{"${strLevel}:path"}{"$strName"} = "$strUser,$strGroup,$strPermission";
+
+                &log(DEBUG, "$strClusterDataPath path: $strName");
             }
 
             # Process symbolic links (hard links not supported)
             elsif ($cType eq "l")
             {
-                print "$strPath link: $strName -> $strLinkDestination\n";
+                &log(DEBUG, "$strClusterDataPath link: $strName -> $strLinkDestination");
 
-                ${$oBackupConfigRef}{"base:link"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
+                ${$oBackupConfigRef}{"${strLevel}:link"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
 
                 if (index($strName, 'pg_tblspc/') == 0)
                 {
                     #${$oBackupConfigRef}{"base:tablespace"}{"$strName"} = $;
 
-                    backup($strCommandManifest, $strBackupPath, $strLinkDestination, $oBackupConfigRef, $strName);
+                    backup_manifest($strCommandManifest, $strLinkDestination, $oBackupConfigRef, $strName);
                 }
             }
         
             # Process files except those in pg_xlog (hard links not supported)
             elsif ($cType eq "f")
             {
-                ${$oBackupConfigRef}{"$strLevel\:file"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
+                ${$oBackupConfigRef}{"${strLevel}:file"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
                 
-                print "$strPath file: $strName\n"
+                &log(DEBUG, "$strClusterDataPath file: $strName");
             }
 
             # Unrecognized type - fail
             else
             {
-                die "Unrecognized file type $cType for file $strName";
+                die &log(ERROR, "Unrecognized file type $cType for file $strName");
             }
         }
     }
@@ -228,60 +261,77 @@ if ($strOperation eq "archive-push")
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
-my $strBackupPath = $oConfig{common}{backup_path};
+my $strBasePath = $oConfig{common}{backup_path};
 
-if (!defined($strBackupPath))
+if (!defined($strBasePath))
 {
     die 'undefined base path';
 }
 
-$strBackupPath .= "/backup.tmp";
+unless (-e $strBasePath)
+{
+    die 'base path ${strBackupPath} does not exist';
+}
+
+if (!defined($strCluster))
+{
+    $strCluster = "db";
+}
+
+my $strClusterPath = "${strBasePath}/${strCluster}";
+
+unless (-e $strClusterPath)
+{
+    &log (INFO, "creating cluster path ${strClusterPath}");
+    mkdir $strClusterPath or die &log(ERROR, "cluster backup path '${strClusterPath}' create failed");
+}
 
 ####################################################################################################################################
 # BACKUP
 ####################################################################################################################################
 if ($strOperation eq "backup")
 {
-    # backup command must have three arguments
-    if (@ARGV != 2)
+    # Make sure that the cluster data directory exists
+    my $strClusterDataPath = $oConfig{"cluster:$strCluster"}{data_path};
+
+    if (!defined($strClusterDataPath))
     {
-        die "not enough arguments - show usage";
+        die &log(ERROR, "cluster data path is not defined");
     }
 
-    # Get the cluster name
-    my $strCluster = $ARGV[1];
-
-    if (!defined($strCluster))
+    unless (-e $strClusterDataPath)
     {
-        die 'undefined cluster';
+        die &log(ERROR, "cluster data path '${strClusterDataPath}' does not exist");
     }
 
-    if (!defined($oConfig{"cluster:$strCluster"}{pgdata}))
-    {
-        die 'undefined cluster pgdata';
-    }
+    # Build backup tmp and config
+    my $strBackupPath = "${strBasePath}/backup.tmp";
+    my $strBackupConfFile = "${strBackupPath}/backup.conf";
 
-    unless (-e $strBackupPath)
+    # If the backup tmp path already exists, delete the conf file
+    if (-e $strBackupPath)
     {
-        print "Creating backup path $strBackupPath\n";
-        mkdir $strBackupPath or die "Unable to create backup path";
-    }
-    
-    my %oBackupConfig;
+        &log(INFO, "backup path $strBackupPath already exists");
 
-    if (-e "$strBackupPath/backup.conf")
-    {
-        tie %oBackupConfig, 'Config::IniFiles', (-file => "$strBackupPath/backup.conf") or die "Unable to open backup config" . @_;
+        if (-e $strBackupConfFile)
+        {
+            unlink $strBackupConfFile or die "Unable to delete backup config";
+        }
     }
+    # Else create the backup tmp path
     else
     {
-        tie %oBackupConfig, 'Config::IniFiles' or die 'Unable to create backup config';
+        &log(INFO, "creating backup path $strBackupPath");
+        mkdir $strBackupPath or die "Unable to create backup path";
     }
 
-    backup($oConfig{command}{manifest}, $strBackupPath, $oConfig{"cluster:$strCluster"}{pgdata}, \%oBackupConfig, "base");
+    # Create a new backup conf hash
+    my %oBackupConfig;
+    tie %oBackupConfig, 'Config::IniFiles' or die 'Unable to create backup config';
+
+    # Build the backup manifest
+    backup_manifest($oConfig{command}{manifest}, $strClusterDataPath, \%oBackupConfig);
     
-#    $oBackupConfig{"file"}{"name"} = "test";
-    tied(%oBackupConfig)->WriteConfig("$strBackupPath/backup.conf");
-    
-#    print scalar @stryFile . "\n";
+    # Save the backup conf file
+    tied(%oBackupConfig)->WriteConfig($strBackupConfFile);
 }
