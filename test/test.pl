@@ -236,7 +236,7 @@ $dbh->disconnect();
 ################################################################################
 # Stop the server
 ################################################################################
-pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
+#pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
 
 ################################################################################
 # Start an offline backup

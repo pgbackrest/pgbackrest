@@ -5,6 +5,7 @@ use warnings;
 use File::Basename;
 use Getopt::Long;
 use Config::IniFiles;
+use JSON;
 
 # Process flags
 my $bNoCompression;
@@ -106,53 +107,108 @@ sub file_hash_get
 }
 
 ####################################################################################################################################
+# DATA_HASH_BUILD - Hash a delimited file with header
+####################################################################################################################################
+sub data_hash_build
+{
+    my $strData = shift;
+    my $strDelimiter = shift;
+    my $strUndefinedKey = shift;
+
+    my @stryFile = split("\n", $strData);
+    my @stryHeader = split($strDelimiter, $stryFile[0]);
+    
+#    print "data: $strData\n";
+
+    my %oHash;
+
+    for (my $iLineIdx = 1; $iLineIdx < scalar @stryFile; $iLineIdx++)
+    {
+        my @stryLine = split($strDelimiter, $stryFile[$iLineIdx]);
+
+        if (!defined($stryLine[0]) || $stryLine[0] eq "")
+        {
+            $stryLine[0] = $strUndefinedKey;
+        }
+
+#        print "line: @stryLine\n";
+        
+        for (my $iColumnIdx = 1; $iColumnIdx < scalar @stryHeader; $iColumnIdx++)
+        {
+            if (defined($oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
+            {
+                die "the first column must be unique to build the hash";
+            }
+            
+            $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
+            #print "Hash {$stryHeader[0]}{$stryLine[0]}{$stryHeader[$iColumnIdx]} = " . (defined $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} ? $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} : "null") . "\n";
+            #$oHash{$stryHeader[$iColumnIdx]}{$stryLine[$iColumnIdx]}{$stryHeader[0]} = $stryLine[0];
+        }
+    }
+
+    return %oHash;
+}
+
+####################################################################################################################################
+# TABLESPACE_MAP_GET - Get the mapping between oid and tablespace name
+####################################################################################################################################
+sub tablespace_map_get
+{
+    my $strCommandTablespaceMap = shift;
+
+    my %oTablespaceMap = data_hash_build("oid\tname\n" . execute($strCommandTablespaceMap), "\t");
+    
+    return %oTablespaceMap;
+}
+
+####################################################################################################################################
+# MANIFEST_GET - Get a directory manifest
+####################################################################################################################################
+sub manifest_get
+{
+    my $strCommandManifest = shift;
+    my $strPath = shift;
+
+    my $strCommand = $strCommandManifest;
+    $strCommand =~ s/\%path\%/$strPath/g;
+
+    my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
+                                    execute($strCommand), "\t", ".");
+    
+    return %oManifest;
+}
+
+####################################################################################################################################
 # BACKUP_MANIFEST - Create the backup manifest
 ####################################################################################################################################
 sub backup_manifest
 {
     my $strCommandManifest = shift;
     my $strClusterDataPath = shift;
-    my $oBackupConfigRef = shift;
+    my $oBackupManifestRef = shift;
+    my $oTablespaceMapRef = shift;
     my $strLevel = shift;
     
     if (!defined($strLevel))
     {
         $strLevel = "base";
     }
-
-    my $strCommand = $strCommandManifest;
-    $strCommand =~ s/\%path\%/$strClusterDataPath/g;
-    my $strManifest = execute($strCommand);
     
-    my @stryFile = split("\n", $strManifest);
+    my %oManifestHash = manifest_get($strCommandManifest, $strClusterDataPath);
+    my $strName;
+    my $cType;
+    my $strLinkDestination;
 
-    # Flag to only allow the root directory once
-    my $bRootDir = 0;
-    
-    for (my $iFileIdx = 0; $iFileIdx < scalar @stryFile; $iFileIdx++)
+#    print "test: " . $oManifestHash{name}{"."}{type} . "\n";
+#    foreach $strName (sort(keys $oManifestHash{name}{base}{inode}))
+#    {
+#        print "found key $strName\n";
+#    }
+
+    foreach $strName (sort(keys $oManifestHash{name}))
     {
-        my @stryField = split("\t", $stryFile[$iFileIdx]);
-        
-        my $dfModifyTime = $stryField[0];
-        my $lInode = $stryField[1];
-        my $cType = $stryField[2];
-        my $strPermission = $stryField[3];
-        my $strUser = $stryField[4];
-        my $strGroup = $stryField[5];
-        my $strSize = $stryField[6];
-        my $strName = $stryField[7];
-        my $strLinkDestination = $stryField[8];
-
-        if (!defined($strName))
-        {
-            if ($bRootDir)
-            {
-                die "Root dir appeared twice - check manifest command"
-            }
-            
-            $bRootDir = 1;
-            $strName = ".";
-        }
+        $cType = $oManifestHash{name}{"${strName}"}{type};
+        $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
         
         # Don't process anything in pg_xlog
         if (index($strName, 'pg_xlog/') != 0)
@@ -160,7 +216,7 @@ sub backup_manifest
             # Process paths
             if ($cType eq "d")
             {
-                ${$oBackupConfigRef}{"${strLevel}:path"}{"$strName"} = "$strUser,$strGroup,$strPermission";
+                ${$oBackupManifestRef}{"${strLevel}:path"}{"$strName"} = "test"; #"$strUser,$strGroup,$strPermission";
 
                 &log(DEBUG, "$strClusterDataPath path: $strName");
             }
@@ -170,20 +226,20 @@ sub backup_manifest
             {
                 &log(DEBUG, "$strClusterDataPath link: $strName -> $strLinkDestination");
 
-                ${$oBackupConfigRef}{"${strLevel}:link"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
+                ${$oBackupManifestRef}{"${strLevel}:link"}{"$strName"} = "test"; #"$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
 
                 if (index($strName, 'pg_tblspc/') == 0)
                 {
                     #${$oBackupConfigRef}{"base:tablespace"}{"$strName"} = $;
 
-                    backup_manifest($strCommandManifest, $strLinkDestination, $oBackupConfigRef, $strName);
+                    backup_manifest($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oTablespaceMapRef, $strName);
                 }
             }
         
             # Process files except those in pg_xlog (hard links not supported)
             elsif ($cType eq "f")
             {
-                ${$oBackupConfigRef}{"${strLevel}:file"}{"$strName"} = "$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
+                ${$oBackupManifestRef}{"${strLevel}:file"}{"$strName"} = "test"; #"$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
                 
                 &log(DEBUG, "$strClusterDataPath file: $strName");
             }
@@ -313,6 +369,7 @@ unless (-e $strBackupClusterPath)
 
 # Load commands required for backup
 my $strCommandManifest = config_load(\%oConfig, "command", "manifest");
+my $strCommandTablespace = config_load(\%oConfig, "command", "tablespace_map");
 
 ####################################################################################################################################
 # BACKUP
@@ -354,12 +411,12 @@ if ($strOperation eq "backup")
     }
 
     # Create a new backup conf hash
-    my %oBackupConfig;
-    tie %oBackupConfig, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
-
+    my %oBackupManifest;
+    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
+    
     # Build the backup manifest
-    backup_manifest($strCommandManifest, $strClusterDataPath, \%oBackupConfig);
-
+    backup_manifest($strCommandManifest, $strClusterDataPath, \%oBackupManifest); #, \(tablespace_map_get($strCommandTablespace)));
+    #\%oBackupConfig
     # Delete files leftover from a partial backup
     # !!! do it
 
@@ -367,7 +424,7 @@ if ($strOperation eq "backup")
     # !!! do it
     
     # Save the backup conf file
-    tied(%oBackupConfig)->WriteConfig($strBackupConfFile);
+    tied(%oBackupManifest)->WriteConfig($strBackupConfFile);
 
     # Rename the backup tmp path to complete the backup
     # !!! Still not sure about format, probably YYYYMMDDTHH24MMSS
