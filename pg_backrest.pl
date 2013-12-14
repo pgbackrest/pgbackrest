@@ -179,6 +179,67 @@ sub manifest_get
 }
 
 ####################################################################################################################################
+# BACKUP_MANIFEST_LOAD - Load the backup manifest
+####################################################################################################################################
+sub backup_manifest_load
+{
+    my $strBackupManifestFile = shift;
+    
+    my %oBackupManifestFile;
+    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or die &log(ERROR, "backup manifest '%{strBackupManifestFile}' could not be loaded");
+
+    my %oBackupManifest;
+    my $strSection;
+
+    foreach $strSection (sort(keys %oBackupManifestFile))
+    {
+        my $strKey;
+        
+        #&log(DEBUG, "section: ${strSection}");
+
+        foreach $strKey (sort(keys ${oBackupManifestFile}{"${strSection}"}))
+        {
+            my $strValue = ${oBackupManifestFile}{"${strSection}"}{"$strKey"};
+
+            #&log(DEBUG, "    key: ${strKey}=${strValue}");
+            $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
+        }
+    }
+    
+    return %oBackupManifest;
+}
+####################################################################################################################################
+# BACKUP_MANIFEST_SAVE - Save the backup manifest
+####################################################################################################################################
+sub backup_manifest_save
+{
+    my $strBackupManifestFile = shift;
+    my $oBackupManifestRef = shift;
+    
+    my %oBackupManifest;
+    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
+
+    my $strSection;
+
+    foreach $strSection (sort(keys $oBackupManifestRef))
+    {
+        my $strKey;
+        
+        #&log(DEBUG, "section: ${strSection}");
+
+        foreach $strKey (sort(keys ${$oBackupManifestRef}{"${strSection}"}))
+        {
+            my $strValue = encode_json(${$oBackupManifestRef}{"${strSection}"}{"$strKey"});
+
+            #&log(DEBUG, "    key: ${strKey}=${strValue}");
+            $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
+        }
+    }
+    
+    tied(%oBackupManifest)->WriteConfig($strBackupManifestFile);
+}
+
+####################################################################################################################################
 # BACKUP_MANIFEST_BUILD - Create the backup manifest
 ####################################################################################################################################
 sub backup_manifest_build
@@ -247,7 +308,7 @@ sub backup_manifest_build
                     my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
                     #&log(DEBUG, "tablespace: ${strTablespace}");
 
-                    ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"} = $strTablespaceOid;
+                    ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
                     
                     backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
                 }
@@ -415,7 +476,7 @@ if ($strOperation eq "backup")
 
     # Create a new backup conf hash
     my %oBackupManifest;
-    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
+#    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
     
     # Build the backup manifest
     my %oTablespaceMap = tablespace_map_get($strCommandTablespace);
@@ -429,7 +490,9 @@ if ($strOperation eq "backup")
     # !!! do it
     
     # Save the backup conf file
-    tied(%oBackupManifest)->WriteConfig($strBackupConfFile);
+    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+    backup_manifest_load($strBackupConfFile);
+    #tied(%oBackupManifest)->WriteConfig($strBackupConfFile);
 
     # Rename the backup tmp path to complete the backup
     # !!! Still not sure about format, probably YYYYMMDDTHH24MMSS
