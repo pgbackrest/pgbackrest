@@ -179,9 +179,9 @@ sub manifest_get
 }
 
 ####################################################################################################################################
-# BACKUP_MANIFEST - Create the backup manifest
+# BACKUP_MANIFEST_BUILD - Create the backup manifest
 ####################################################################################################################################
-sub backup_manifest
+sub backup_manifest_build
 {
     my $strCommandManifest = shift;
     my $strClusterDataPath = shift;
@@ -196,58 +196,61 @@ sub backup_manifest
     
     my %oManifestHash = manifest_get($strCommandManifest, $strClusterDataPath);
     my $strName;
-    my $cType;
-    my $strLinkDestination;
-
-#    print "test: " . $oManifestHash{name}{"."}{type} . "\n";
-#    foreach $strName (sort(keys $oManifestHash{name}{base}{inode}))
-#    {
-#        print "found key $strName\n";
-#    }
 
     foreach $strName (sort(keys $oManifestHash{name}))
     {
-        $cType = $oManifestHash{name}{"${strName}"}{type};
-        $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
-        
         # Don't process anything in pg_xlog
         if (index($strName, 'pg_xlog/') != 0)
         {
-            # Process paths
-            if ($cType eq "d")
+            my $cType = $oManifestHash{name}{"${strName}"}{type};
+            my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
+            my $strSection = "${strLevel}:path";
+
+            #&log(DEBUG, "$strClusterDataPath ${cType}: $strName");
+
+            if ($cType eq "f")
             {
-                ${$oBackupManifestRef}{"${strLevel}:path"}{"$strName"} = "test"; #"$strUser,$strGroup,$strPermission";
-
-                &log(DEBUG, "$strClusterDataPath path: $strName");
+                $strSection = "${strLevel}:file";
             }
-
-            # Process symbolic links (hard links not supported)
             elsif ($cType eq "l")
             {
-                &log(DEBUG, "$strClusterDataPath link: $strName -> $strLinkDestination");
-
-                ${$oBackupManifestRef}{"${strLevel}:link"}{"$strName"} = "test"; #"$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
-
-                if (index($strName, 'pg_tblspc/') == 0)
-                {
-                    #${$oBackupConfigRef}{"base:tablespace"}{"$strName"} = $;
-
-                    backup_manifest($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oTablespaceMapRef, $strName);
-                }
+                $strSection = "${strLevel}:link";
             }
-        
-            # Process files except those in pg_xlog (hard links not supported)
-            elsif ($cType eq "f")
-            {
-                ${$oBackupManifestRef}{"${strLevel}:file"}{"$strName"} = "test"; #"$dfModifyTime,$strSize,$strUser,$strGroup,$strPermission,$lInode";
-                
-                &log(DEBUG, "$strClusterDataPath file: $strName");
-            }
-
-            # Unrecognized type - fail
-            else
+            elsif ($cType ne "d")
             {
                 die &log(ERROR, "Unrecognized file type $cType for file $strName");
+            }
+
+    #        my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permissions};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
+
+            if ($cType eq "f" || $cType eq "l")
+            {
+                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
+            }
+
+            if ($cType eq "f")
+            {
+                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
+            }
+
+            if ($cType eq "l")
+            {
+                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} = $oManifestHash{name}{"${strName}"}{link_destination};
+
+                if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq "base")
+                {
+                    my $strTablespaceOid = basename($strName);
+                    my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
+                    #&log(DEBUG, "tablespace: ${strTablespace}");
+
+                    ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"} = $strTablespaceOid;
+                    
+                    backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
+                }
             }
         }
     }
@@ -415,7 +418,9 @@ if ($strOperation eq "backup")
     tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
     
     # Build the backup manifest
-    backup_manifest($strCommandManifest, $strClusterDataPath, \%oBackupManifest); #, \(tablespace_map_get($strCommandTablespace)));
+    my %oTablespaceMap = tablespace_map_get($strCommandTablespace);
+    backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oTablespaceMap);
+
     #\%oBackupConfig
     # Delete files leftover from a partial backup
     # !!! do it
