@@ -282,7 +282,6 @@ sub backup_manifest_build
                 die &log(ERROR, "Unrecognized file type $cType for file $strName");
             }
 
-    #        my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
@@ -327,6 +326,7 @@ sub backup
     my $strCommandCompress = shift;
     my $strCommandDecompress = shift;
     my $strCommandCopy = shift;
+    my $strCommandDiff = shift;
     my $strClusterDataPath = shift;
     my $strBackupTmpPath = shift;
     my $oBackupManifestRef = shift;
@@ -438,7 +438,20 @@ sub backup
             # Check if the file already exists
             if (-e $strBackupDestinationFile)
             {
-                $strCommand = "/bin/bash -c '/usr/bin/diff -q <(/usr/bin/gzip -dc ${strBackupDestinationFile}) <(/usr/bin/gzip -dc ${strBackupDestinationTmpFile})'";
+                $strCommand = $strCommandDiff;
+                
+                if ($bNoCompression)
+                {
+                    $strCommand =~ s/\%file1\%/${strBackupDestinationFile}/g;
+                    $strCommand =~ s/\%file2\%/${strBackupDestinationTmpFile}/g;
+                }
+                else
+                {
+                    $strCommand =~ s/\%file1\%/ \<\(${strCommandDecompress}\)/g;
+                    $strCommand =~ s/\%file\%/${strBackupDestinationFile}/g;
+                    $strCommand =~ s/\%file2\%/ \<\(${strCommandDecompress}\)/g;
+                    $strCommand =~ s/\%file\%/${strBackupDestinationTmpFile}/g;
+                }
                 
                 system($strCommand);# or die "unable to execute $strCommand";
                 
@@ -454,7 +467,7 @@ sub backup
                 }
                 else
                 {
-                    die "unable to run diff command"
+                    die "unable to run diff command: $strCommand"
                 }
             }
             else
@@ -465,9 +478,7 @@ sub backup
 
             # Write the hash into the backup manifest
             ${$oBackupManifestRef}{"${strSection}"}{"$strFile"}{checksum} = $strHash;
-
-            # Calculate the checksum
-            # $strCommand = 
+            ${$oBackupManifestRef}{checksum}{"${strHash}-${iSize}"}{"$strFile"}{section} = $strSection;
         }
     }
 }
@@ -494,6 +505,7 @@ my $strCommandChecksum = config_load(\%oConfig, "command", "checksum", !$bNoChec
 my $strCommandCompress = config_load(\%oConfig, "command", "compress", !$bNoCompression);
 my $strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNoCompression);
 my $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
+my $strCommandDiff = config_load(\%oConfig, "command", "diff");
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
@@ -642,7 +654,8 @@ if ($strOperation eq "backup")
     # !!! do it
 
     # Perform the backup
-    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath, $strBackupTmpPath, \%oBackupManifest);
+    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strCommandDiff,
+           $strClusterDataPath, $strBackupTmpPath, \%oBackupManifest);
 
     # Save the backup conf file
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
