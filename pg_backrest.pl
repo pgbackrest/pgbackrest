@@ -60,7 +60,7 @@ sub execute
     my $strCommand = shift;
     
 #   print("$strCommand\n");
-    my $strOutput = qx($strCommand) or return 0;
+    my $strOutput = qx($strCommand) or return 0; #die "Unable to run ${strCommand}";
 #   print("$strOutput\n");
     
     return($strOutput);
@@ -285,7 +285,7 @@ sub backup_manifest_build
     #        my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permissions};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
 
             if ($cType eq "f" || $cType eq "l")
@@ -309,10 +309,165 @@ sub backup_manifest_build
                     #&log(DEBUG, "tablespace: ${strTablespace}");
 
                     ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
+                    ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
                     
                     backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
                 }
             }
+        }
+    }
+}
+
+####################################################################################################################################
+# BACKUP - Perform the backup
+####################################################################################################################################
+sub backup
+{
+    my $strCommandChecksum = shift;
+    my $strCommandCompress = shift;
+    my $strCommandDecompress = shift;
+    my $strCommandCopy = shift;
+    my $strClusterDataPath = shift;
+    my $strBackupTmpPath = shift;
+    my $oBackupManifestRef = shift;
+    
+    my $strSection;
+    my $strCommand;
+
+    # Create the backup file dir
+    my $strBackupDestinationPath = "${strBackupTmpPath}/file";
+    my $strBackupDestinationTmpFile = "${strBackupDestinationPath}/file.tmp";
+
+    unless (-e $strBackupDestinationPath)
+    {
+        #execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
+        mkdir $strBackupDestinationPath, 0750 or die "Unable to create path ${strBackupDestinationPath}";
+    }
+
+    # Iterate through the file sections to backup
+    foreach $strSection (sort(keys $oBackupManifestRef))
+    {
+        # Skip non-file sections
+        if ($strSection !~ /\:file$/)
+        {
+            next;
+        }
+
+        # Determine the source backup path
+        my $strBackupSourcePath = "${strClusterDataPath}/";
+
+        if ($strSection =~ /^tablespace\:/)
+        {
+            my $strTablespaceName = (split(":", $strSection))[1];
+            $strBackupSourcePath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path} . "/";
+        }
+        elsif ($strSection !~ /^base\:/)
+        {
+            die "Cannot find file type for section ${strSection}";
+        }
+
+        &log(DEBUG, "Backing up ${strBackupSourcePath}");
+
+        # Iterate through the files for each backup source path
+        my $strFile;
+        
+        foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSection}"}))
+        {
+            my $strBackupSourceFile = "${strBackupSourcePath}${strFile}";
+            my $iSize = ${$oBackupManifestRef}{"${strSection}"}{"$strFile"}{size};
+            
+            # Skip zero-length files
+            if ($iSize == 0)
+            {
+                &log(DEBUG, "   Skipped zero-length file ${strBackupSourceFile}");
+                next;
+            }
+            
+            &log(DEBUG, "   Backing up ${strBackupSourceFile}");
+            
+            # Copy the file and calculate checksum
+            my $strHash;
+            
+            if ($bNoCompression)
+            {
+                $strCommand = $strCommandCopy;
+                $strCommand =~ s/\%source\%/${strBackupSourceFile}/g;
+                $strCommand =~ s/\%destination\%/${strBackupDestinationTmpFile}/g;
+
+                execute($strCommand);
+                
+                $strHash = file_hash_get($strCommandChecksum, $strBackupDestinationTmpFile);
+            }
+            else
+            {
+                $strCommand = $strCommandCompress;
+                $strCommand =~ s/\%file\%/${strBackupSourceFile}/g;
+                $strCommand .= " > ${strBackupDestinationTmpFile}";
+
+                execute($strCommand);
+
+                $strCommand = $strCommandDecompress;
+                $strCommand =~ s/\%file\%/${strBackupDestinationTmpFile}/g;
+                $strCommand .= " | " . $strCommandChecksum;
+                $strCommand =~ s/\%file\%//g;
+
+#                &log(DEBUG, "       command ${strCommand}");
+
+                $strHash = trim(execute($strCommand));
+            }
+            
+            &log(DEBUG, "       Hash ${strHash}");
+            
+            # Generate the filename
+            my $strBackupDestinationSubPath = "${strBackupDestinationPath}/" . substr($strHash, length($strHash) - 2, 2);
+            
+            unless (-e "${strBackupDestinationSubPath}")
+            {
+                mkdir $strBackupDestinationSubPath, 0750 or die "Unable to create path ${strBackupDestinationSubPath}";
+            }
+
+            my $strBackupDestinationFile = "${strBackupDestinationSubPath}/${strHash}-${iSize}";
+
+            if (!$bNoCompression)
+            {
+                $strBackupDestinationFile .= ".gz";
+            }
+
+            &log(DEBUG, "       Output file ${strBackupDestinationFile}");
+
+            # Check if the file already exists
+            if (-e $strBackupDestinationFile)
+            {
+                $strCommand = "/bin/bash -c '/usr/bin/diff -q <(/usr/bin/gzip -dc ${strBackupDestinationFile}) <(/usr/bin/gzip -dc ${strBackupDestinationTmpFile})'";
+                
+                system($strCommand);# or die "unable to execute $strCommand";
+                
+                if ($? >> 8 == 0)
+                {
+                    &log(DEBUG, "       Found matching hash/size - performed diff and files are identical");
+                    unlink $strBackupDestinationTmpFile or die "Unable to delete ${strBackupDestinationTmpFile}";
+
+                }
+                elsif ($? >> 8 == 1)
+                {
+                    die "hash already exists but the files are not the same - this is unlikely so probably a bug";
+                }
+                else
+                {
+                    die "unable to run diff command"
+                }
+            }
+            else
+            {
+                # Move the file
+                rename $strBackupDestinationTmpFile, $strBackupDestinationFile or die "Unable to move ${strBackupDestinationFile}";
+            }
+
+            # Write the hash into the backup manifest
+            ${$oBackupManifestRef}{"${strSection}"}{"$strFile"}{checksum} = $strHash;
+
+            # Calculate the checksum
+            # $strCommand = 
         }
     }
 }
@@ -337,6 +492,7 @@ tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to fi
 # Load commands required for archive-push
 my $strCommandChecksum = config_load(\%oConfig, "command", "checksum", !$bNoChecksum);
 my $strCommandCompress = config_load(\%oConfig, "command", "compress", !$bNoCompression);
+my $strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNoCompression);
 my $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
 
 ####################################################################################################################################
@@ -455,7 +611,7 @@ if ($strOperation eq "backup")
 
     # Build backup tmp and config
     my $strBackupTmpPath = "${strBackupClusterPath}/backup.tmp";
-    my $strBackupConfFile = "${strBackupTmpPath}/backup.conf";
+    my $strBackupConfFile = "${strBackupTmpPath}/backup.manifest";
 
     # If the backup tmp path already exists, delete the conf file
     if (-e $strBackupTmpPath)
@@ -474,9 +630,8 @@ if ($strOperation eq "backup")
         mkdir $strBackupTmpPath or die &log(ERROR, "backup path ${strBackupTmpPath} could not be created");
     }
 
-    # Create a new backup conf hash
+    # Create a new backup manifest hash
     my %oBackupManifest;
-#    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
     
     # Build the backup manifest
     my %oTablespaceMap = tablespace_map_get($strCommandTablespace);
@@ -487,8 +642,8 @@ if ($strOperation eq "backup")
     # !!! do it
 
     # Perform the backup
-    # !!! do it
-    
+    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath, $strBackupTmpPath, \%oBackupManifest);
+
     # Save the backup conf file
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
     backup_manifest_load($strBackupConfFile);
