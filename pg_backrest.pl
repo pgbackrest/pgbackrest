@@ -5,6 +5,7 @@ use warnings;
 use File::Basename;
 use Getopt::Long;
 use Config::IniFiles;
+use IPC::System::Simple qw(capture);
 use JSON;
 
 # Process flags
@@ -58,12 +59,21 @@ sub log
 sub execute
 {
     my $strCommand = shift;
-    
-#   print("$strCommand\n");
-    my $strOutput = qx($strCommand) or return 0; #die "Unable to run ${strCommand}";
-#   print("$strOutput\n");
-    
-    return($strOutput);
+    my $strOutput;
+
+#    print("$strCommand");
+    $strOutput = capture($strCommand);
+
+#    if ($strOutput eq "")
+#    {  
+#        print(" ... complete\n\n");
+#    }
+#    else
+#    {
+#        print(" ... complete\n$strOutput\n\n");
+#    }
+
+    return $strOutput;
 }
 
 ####################################################################################################################################
@@ -141,7 +151,7 @@ sub data_hash_build
             }
             
             $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
-            #print "Hash {$stryHeader[0]}{$stryLine[0]}{$stryHeader[$iColumnIdx]} = " . (defined $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} ? $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} : "null") . "\n";
+#            print "Hash {$stryHeader[0]}{$stryLine[0]}{$stryHeader[$iColumnIdx]} = " . (defined $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} ? $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} : "null") . "\n";
             #$oHash{$stryHeader[$iColumnIdx]}{$stryLine[$iColumnIdx]}{$stryHeader[0]} = $stryLine[0];
         }
     }
@@ -154,9 +164,10 @@ sub data_hash_build
 ####################################################################################################################################
 sub tablespace_map_get
 {
-    my $strCommandTablespaceMap = shift;
+    my $strCommandPsql = shift;
 
-    my %oTablespaceMap = data_hash_build("oid\tname\n" . execute($strCommandTablespaceMap), "\t");
+    my %oTablespaceMap = data_hash_build("oid\tname\n" . execute($strCommandPsql .
+                                         " -c 'copy (select oid, spcname from pg_tablespace) to stdout' postgres"), "\t");
     
     return %oTablespaceMap;
 }
@@ -186,7 +197,7 @@ sub backup_manifest_load
     my $strBackupManifestFile = shift;
     
     my %oBackupManifestFile;
-    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or die &log(ERROR, "backup manifest '%{strBackupManifestFile}' could not be loaded");
+    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or die &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
 
     my %oBackupManifest;
     my $strSection;
@@ -541,16 +552,10 @@ if ($strOperation eq "archive-push")
         die "destination file already exists";
     }
 
-    # Calculate sha1 hash for the file (unless disabled)
-    if (!$bNoChecksum)
-    {
-        $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
-    }
-    
     # Setup the copy command
     my $strCommand = "";
 
-    if ($bNoCompression)
+    if ($strSourceFile =~ /\.backup$/)
     {
         $strCommand = $strCommandCopy;
         $strCommand =~ s/\%source\%/$strSourceFile/g;
@@ -558,9 +563,24 @@ if ($strOperation eq "archive-push")
     }
     else
     {
-        $strCommand = $strCommandCompress;
-        $strCommand =~ s/\%file\%/$strSourceFile/g;
-        $strCommand .= " > $strDestinationFile.gz";
+        # Calculate sha1 hash for the file (unless disabled)
+        if (!$bNoChecksum)
+        {
+            $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
+        }
+    
+        if ($bNoCompression)
+        {
+            $strCommand = $strCommandCopy;
+            $strCommand =~ s/\%source\%/$strSourceFile/g;
+            $strCommand =~ s/\%destination\%/$strDestinationFile/g;
+        }
+        else
+        {
+            $strCommand = $strCommandCompress;
+            $strCommand =~ s/\%file\%/$strSourceFile/g;
+            $strCommand .= " > $strDestinationFile.gz";
+        }
     }
     
     # Execute the copy
@@ -601,7 +621,7 @@ unless (-e $strBackupClusterPath)
 
 # Load commands required for backup
 my $strCommandManifest = config_load(\%oConfig, "command", "manifest");
-my $strCommandTablespace = config_load(\%oConfig, "command", "tablespace_map");
+my $strCommandPsql = config_load(\%oConfig, "command", "psql");
 
 ####################################################################################################################################
 # BACKUP
@@ -645,17 +665,28 @@ if ($strOperation eq "backup")
     # Create a new backup manifest hash
     my %oBackupManifest;
     
+    # Start backup
+    my $strLabel = "test_lablel";
+    
+    &log(INFO, 'Backup start: ' . trim(execute($strCommandPsql .
+               " -c \"copy (select * from pg_start_backup('${strLabel}')) to stdout\" postgres")));
+    
     # Build the backup manifest
-    my %oTablespaceMap = tablespace_map_get($strCommandTablespace);
+    my %oTablespaceMap = tablespace_map_get($strCommandPsql);
     backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oTablespaceMap);
-
-    #\%oBackupConfig
-    # Delete files leftover from a partial backup
-    # !!! do it
 
     # Perform the backup
     backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strCommandDiff,
            $strClusterDataPath, $strBackupTmpPath, \%oBackupManifest);
+
+    # Stop backup
+    &log(INFO, 'Backup start: ' . trim(execute($strCommandPsql .
+               " -c \"copy (select * from pg_stop_backup()) to stdout\" postgres")));
+
+
+    #\%oBackupConfig
+    # Delete files leftover from a partial backup
+    # !!! do it
 
     # Save the backup conf file
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
