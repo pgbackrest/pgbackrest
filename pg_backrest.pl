@@ -664,13 +664,15 @@ if ($strOperation eq "backup")
 
     # Create a new backup manifest hash
     my %oBackupManifest;
-    
+
     # Start backup
-    my $strLabel = "test_lablel";
-    
-    &log(INFO, 'Backup start: ' . trim(execute($strCommandPsql .
-               " -c \"copy (select * from pg_start_backup('${strLabel}')) to stdout\" postgres")));
-    
+    my $strLabel = "test_label";
+
+    my $strArchiveStart = trim(execute($strCommandPsql .
+        " -c \"copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
+
+    &log(INFO, 'Backup archive start: ' . $strArchiveStart);
+
     # Build the backup manifest
     my %oTablespaceMap = tablespace_map_get($strCommandPsql);
     backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oTablespaceMap);
@@ -680,18 +682,20 @@ if ($strOperation eq "backup")
            $strClusterDataPath, $strBackupTmpPath, \%oBackupManifest);
 
     # Stop backup
-    &log(INFO, 'Backup start: ' . trim(execute($strCommandPsql .
-               " -c \"copy (select * from pg_stop_backup()) to stdout\" postgres")));
+    my $strArchiveStop = trim(execute($strCommandPsql .
+        " -c \"copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout\" postgres"));
 
+    &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    #\%oBackupConfig
+    # Fetch the archive logs and backup file
+    # !!! do it
+
     # Delete files leftover from a partial backup
     # !!! do it
 
     # Save the backup conf file
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
     backup_manifest_load($strBackupConfFile);
-    #tied(%oBackupManifest)->WriteConfig($strBackupConfFile);
 
     # Rename the backup tmp path to complete the backup
     # !!! Still not sure about format, probably YYYYMMDDTHH24MMSS
