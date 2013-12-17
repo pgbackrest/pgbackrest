@@ -296,7 +296,10 @@ sub backup_manifest_build
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
+                (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
+
+#                print("modification time:" . ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time});
 
             if ($cType eq "f" || $cType eq "l")
             {
@@ -413,6 +416,7 @@ sub backup
         
         foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
         {
+            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{modification_time};
             my $strBackupDestinationSubPath = "${strBackupDestinationPath}/${strPath}";
 
             unless (-e $strBackupDestinationSubPath)
@@ -421,6 +425,7 @@ sub backup
             }
             
             execute ("chmod ${$oBackupManifestRef}{$strSectionPath}{$strPath}{permission} ${strBackupDestinationSubPath}");
+#            utime($lModificationTime, $lModificationTime, $strBackupDestinationTmpFile) or die "Unable to set time for ${strBackupDestinationTmpFile}";
         }
 
         #&log(DEBUG, "Backing up ${strBackupSourcePath}");
@@ -438,6 +443,7 @@ sub backup
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
             my $iSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
 
             #&log(DEBUG, "   Backing up ${strBackupSourceFile}");
             
@@ -489,6 +495,7 @@ sub backup
 
             # Set permissions and move the file
             execute ("chmod ${$oBackupManifestRef}{$strSectionFile}{$strFile}{permission} ${strBackupDestinationTmpFile}");
+            utime($lModificationTime, $lModificationTime, $strBackupDestinationTmpFile) or die "Unable to set time for ${strBackupDestinationTmpFile}";
             rename $strBackupDestinationTmpFile, $strBackupDestinationFile or die "Unable to move ${strBackupDestinationFile}";
 
             # Write the hash into the backup manifest
@@ -676,7 +683,7 @@ if ($strOperation eq "backup")
     my $strArchiveStart = trim(execute($strCommandPsql .
         " -c \"copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
         
-    ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
+    ${oBackupManifest}{archive}{archive_location}{startg} = $strArchiveStart;
 
     &log(INFO, 'Backup archive start: ' . $strArchiveStart);
 
