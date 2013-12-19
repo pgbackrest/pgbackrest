@@ -416,7 +416,7 @@ sub backup
         
         foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
         {
-            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{modification_time};
+#            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{modification_time};
             my $strBackupDestinationSubPath = "${strBackupDestinationPath}/${strPath}";
 
             unless (-e $strBackupDestinationSubPath)
