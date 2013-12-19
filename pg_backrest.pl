@@ -683,7 +683,7 @@ if ($strOperation eq "backup")
     my $strArchiveStart = trim(execute($strCommandPsql .
         " -c \"copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
         
-    ${oBackupManifest}{archive}{archive_location}{startg} = $strArchiveStart;
+    ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
 
     &log(INFO, 'Backup archive start: ' . $strArchiveStart);
 
