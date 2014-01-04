@@ -724,6 +724,29 @@ if ($strOperation eq "backup")
         &log(INFO, 'Last backup: ' . $strBackupLastPath);
     }
 
+    # Create the path for the new backup
+    my $strBackupPath;
+
+    if ($strType eq "full" || !defined($strBackupLastPath))
+    {
+        $strBackupPath = date_string_get() . "F";
+    }
+    else
+    {
+        $strBackupPath = substr($strBackupLastPath, 0, 16);
+
+        $strBackupPath .= "_" . date_string_get();
+        
+        if ($strType eq "differential")
+        {
+            $strBackupPath .= "D";
+        }
+        else
+        {
+            $strBackupPath .= "I";
+        }
+    }
+
     # Build backup tmp and config
     my $strBackupTmpPath = "${strBackupClusterPath}/backup.tmp";
     my $strBackupConfFile = "${strBackupTmpPath}/backup.manifest";
@@ -749,7 +772,7 @@ if ($strOperation eq "backup")
     my %oBackupManifest;
 
     # Start backup
-    my $strLabel = "test_label";
+    my $strLabel = $strBackupPath;
 
     my $strArchiveStart = trim(execute($strCommandPsql .
         " -c \"copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
@@ -785,39 +808,5 @@ if ($strOperation eq "backup")
     backup_manifest_load($strBackupConfFile);
 
     # Rename the backup tmp path to complete the backup
-    my $strBackupPath = "${strBackupClusterPath}/";
-
-    if ($strType eq "full" || !defined($strBackupLastPath))
-    {
-        $strBackupPath .= date_string_get() . "F";
-    }
-    else
-    {
-        $strBackupPath .= substr($strBackupLastPath, 0, 16);
-
-#        # If the last backup was incremental then strip off the last part
-#        if ($strBackupLastPath =~ /^[0-F]{8}\-[0-F]{6}F(\_[0-F]{8}\-[0-F]{6}D){0,1}\_[0-F]{8}\-[0-F]{6}I$/)
-#        {
-#            $strBackupPath .= substr($strBackupLastPath, 0, length($strBackupLastPath) - 17);
-#        }
-#        else
-#        {
-#            $strBackupPath .= $strBackupLastPath;
-#        }
-
-        $strBackupPath .= "_" . date_string_get();
-        
-        if ($strType eq "differential")
-        {
-            $strBackupPath .= "D";
-        }
-        else
-        {
-            $strBackupPath .= "I";
-        }
-    }
-
-    rename($strBackupTmpPath, $strBackupPath) or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
-    #print "$strBackupPath\n";
-    # !!! Still not sure about format, probably YYYYMMDDTHH24MMSS
+    rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 }
