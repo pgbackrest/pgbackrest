@@ -44,8 +44,8 @@ sub pg_create
     execute("mkdir $strTestPath/$strTestDir/ts1");
     execute("mkdir $strTestPath/$strTestDir/ts2");
     execute($strPgBinPath . "/initdb -D $strTestPath/$strTestDir/common -A trust -k");
-    execute("mkdir $strTestPath/$strArchiveDir");
     execute("mkdir $strTestPath/$strBackupDir");
+#    execute("mkdir -p $strTestPath/$strArchiveDir");
 }
 
 sub pg_start
@@ -99,7 +99,7 @@ sub archive_command_build
     my $bCompression = shift;
     my $bChecksum = shift;
     
-    my $strCommand = "$strBackRestBinPath/pg_backrest.pl archive-push --config=$strBackRestBinPath/pg_backrest.conf";
+    my $strCommand = "$strBackRestBinPath/pg_backrest.pl --cluster=db --config=$strBackRestBinPath/pg_backrest.conf";
     
     if (!$bCompression)
     {
@@ -111,7 +111,7 @@ sub archive_command_build
         $strCommand .= " --no-checksum"
     }
     
-    return $strCommand . " %p $strDestinationPath/%f";
+    return $strCommand . " archive-push %p";
 }
 
 sub wait_for_file
@@ -158,7 +158,7 @@ my $strUser = execute('whoami');
 
 my $strTestPath = "/Users/dsteele/test";
 my $strDbDir = "db";
-my $strArchiveDir = "archive";
+my $strArchiveDir = "backup/db/archive";
 my $strBackupDir = "backup";
 
 my $strPgBinPath = "/Library/PostgreSQL/9.3/bin";
@@ -198,8 +198,10 @@ pg_execute($dbh, "create table test_ts2 (id int) tablespace ts1");
 pg_execute($dbh, "insert into test values (1)");
 pg_execute($dbh, "select pg_switch_xlog()");
 
+execute("mkdir -p $strTestPath/$strArchiveDir/0000000100000000");
+
 # Test for archive log file 000000010000000000000001
-wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000001\$", 5);
+wait_for_file("$strTestPath/$strArchiveDir/0000000100000000", "^000000010000000000000001\$", 5);
 
 # Turn on log checksum for the next test
 $dbh->disconnect();
@@ -214,7 +216,7 @@ pg_execute($dbh, "insert into test values (2)");
 pg_execute($dbh, "select pg_switch_xlog()");
 
 # Test for archive log file 000000010000000000000002
-wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000002-([a-f]|[0-9]){40}\$", 5);
+wait_for_file("$strTestPath/$strArchiveDir/0000000100000000", "^000000010000000000000002-([a-f]|[0-9]){40}\$", 5);
 
 # Turn on log compression and checksum for the next test
 $dbh->disconnect();
@@ -229,7 +231,7 @@ pg_execute($dbh, "insert into test values (3)");
 pg_execute($dbh, "select pg_switch_xlog()");
 
 # Test for archive log file 000000010000000000000003
-wait_for_file("$strTestPath/$strArchiveDir", "^000000010000000000000003-([a-f]|[0-9]){40}\\.gz\$", 5);
+wait_for_file("$strTestPath/$strArchiveDir/0000000100000000", "^000000010000000000000003-([a-f]|[0-9]){40}\\.gz\$", 5);
 
 $dbh->disconnect();
 
