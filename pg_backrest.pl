@@ -102,7 +102,7 @@ sub backup_type_find
     if ($strType eq 'incremental')
     {
         opendir $hDir, $strBackupClusterPath or die &log(ERROR, "unable to open path ${strBackupClusterPath}");
-        my @stryFile = sort {$b cmp $a} grep(/^[0-F]{8}\-[0-F]{6}F\_[0-F]{8}\-[0-F]{6}(I|D){1}(\_[0-F]{8}\-[0-F]{6}I){0,1}$/i, readdir $hDir); 
+        my @stryFile = sort {$b cmp $a} grep(/^[0-F]{8}\-[0-F]{6}F\_[0-F]{8}\-[0-F]{6}(I|D)$/i, readdir $hDir); 
         close $hDir;
         
         #print "incremental: @stryFile\n";
@@ -793,15 +793,17 @@ if ($strOperation eq "backup")
     }
     else
     {
-        # If the last backup was incremental then strip off the last part
-        if ($strBackupLastPath =~ /^[0-F]{8}\-[0-F]{6}F(\_[0-F]{8}\-[0-F]{6}D){0,1}\_[0-F]{8}\-[0-F]{6}I$/)
-        {
-            $strBackupPath .= substr($strBackupLastPath, 0, length($strBackupLastPath) - 17);
-        }
-        else
-        {
-            $strBackupPath .= $strBackupLastPath;
-        }
+        $strBackupPath .= substr($strBackupLastPath, 0, 16);
+
+#        # If the last backup was incremental then strip off the last part
+#        if ($strBackupLastPath =~ /^[0-F]{8}\-[0-F]{6}F(\_[0-F]{8}\-[0-F]{6}D){0,1}\_[0-F]{8}\-[0-F]{6}I$/)
+#        {
+#            $strBackupPath .= substr($strBackupLastPath, 0, length($strBackupLastPath) - 17);
+#        }
+#        else
+#        {
+#            $strBackupPath .= $strBackupLastPath;
+#        }
 
         $strBackupPath .= "_" . date_string_get();
         
