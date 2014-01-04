@@ -13,11 +13,13 @@ my $bNoCompression;
 my $bNoChecksum;
 my $strConfigFile;
 my $strCluster;
+my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 
 GetOptions ("no-compression" => \$bNoCompression,
             "no-checksum" => \$bNoChecksum,
             "config=s" => \$strConfigFile,
-            "cluster=s" => \$strCluster)
+            "cluster=s" => \$strCluster,
+            "type=s" => \$strType)
     or die("Error in command line arguments\n");
 
 ####################################################################################################################################
@@ -30,6 +32,16 @@ sub trim
     $strBuffer =~ s/^\s+|\s+$//g;
 
     return $strBuffer;
+}
+
+####################################################################################################################################
+# DATE_STRING_GET - Get the date and time string
+####################################################################################################################################
+sub date_string_get
+{
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+
+    return(sprintf("%4d%02d%02d-%02d%02d%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec));
 }
 
 ####################################################################################################################################
@@ -74,6 +86,40 @@ sub execute
 #    }
 
     return $strOutput;
+}
+
+####################################################################################################################################
+# BACKUP_TYPE_FIND - Find the last backup depending on the type
+####################################################################################################################################
+sub backup_type_find
+{
+    my $strType = shift;
+    my $strBackupClusterPath = shift;
+    my $strDirectory;
+
+    my $hDir;
+    
+    if ($strType eq 'incremental')
+    {
+        opendir $hDir, $strBackupClusterPath or die &log(ERROR, "unable to open path ${strBackupClusterPath}");
+        my @stryFile = sort {$b cmp $a} grep(/^[0-F]{8}\-[0-F]{6}F\_[0-F]{8}\-[0-F]{6}(I|D){1}(\_[0-F]{8}\-[0-F]{6}I){0,1}$/i, readdir $hDir); 
+        close $hDir;
+        
+        #print "incremental: @stryFile\n";
+        $strDirectory = $stryFile[0];
+    }
+
+    if (!defined($strDirectory) && $strType ne "full")
+    {
+        opendir $hDir, $strBackupClusterPath or die &log(ERROR, "unable to open path ${strBackupClusterPath}");
+        my @stryFile = sort {$b cmp $a} grep(/^[0-F]{8}\-[0-F]{6}F$/i, readdir $hDir); 
+        close $hDir;
+
+        #print "next: @stryFile\n";
+        $strDirectory = $stryFile[0];
+    }
+    
+    return $strDirectory;
 }
 
 ####################################################################################################################################
@@ -567,6 +613,7 @@ if ($strOperation eq "archive-push")
     # Setup the copy command
     my $strCommand = "";
 
+    # !!! Modify this to skip compression and checksum for any file that is not a log file
     if ($strSourceFile =~ /\.backup$/)
     {
         $strCommand = $strCommandCopy;
@@ -604,6 +651,22 @@ if ($strOperation eq "archive-push")
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
+# Check the backup type
+if ($strType eq "diff")
+{
+    $strType = "differential";
+}
+
+if ($strType eq "incr")
+{
+    $strType = "incremental";
+}
+
+if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental")
+{
+    die &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
+}
+
 # Load and check the base backup path
 my $strBasePath = $oConfig{common}{backup_path};
 
@@ -653,6 +716,14 @@ if ($strOperation eq "backup")
         die &log(ERROR, "cluster data path '${strClusterDataPath}' does not exist");
     }
 
+    # Find the previous backup based on the type
+    my $strBackupLastPath = backup_type_find($strType, $strBackupClusterPath);
+
+    if (defined($strBackupLastPath))
+    {
+        &log(INFO, 'Last backup: ' . $strBackupLastPath);
+    }
+
     # Build backup tmp and config
     my $strBackupTmpPath = "${strBackupClusterPath}/backup.tmp";
     my $strBackupConfFile = "${strBackupTmpPath}/backup.manifest";
@@ -692,8 +763,8 @@ if ($strOperation eq "backup")
     backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oTablespaceMap);
 
     # Perform the backup
-    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
-           $strBackupTmpPath, \%oBackupManifest);
+#    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
+#           $strBackupTmpPath, \%oBackupManifest);
 
     # Stop backup
     my $strArchiveStop = trim(execute($strCommandPsql .
@@ -714,5 +785,37 @@ if ($strOperation eq "backup")
     backup_manifest_load($strBackupConfFile);
 
     # Rename the backup tmp path to complete the backup
+    my $strBackupPath = "${strBackupClusterPath}/";
+
+    if ($strType eq "full" || !defined($strBackupLastPath))
+    {
+        $strBackupPath .= date_string_get() . "F";
+    }
+    else
+    {
+        # If the last backup was incremental then strip off the last part
+        if ($strBackupLastPath =~ /^[0-F]{8}\-[0-F]{6}F(\_[0-F]{8}\-[0-F]{6}D){0,1}\_[0-F]{8}\-[0-F]{6}I$/)
+        {
+            $strBackupPath .= substr($strBackupLastPath, 0, length($strBackupLastPath) - 17);
+        }
+        else
+        {
+            $strBackupPath .= $strBackupLastPath;
+        }
+
+        $strBackupPath .= "_" . date_string_get();
+        
+        if ($strType eq "differential")
+        {
+            $strBackupPath .= "D";
+        }
+        else
+        {
+            $strBackupPath .= "I";
+        }
+    }
+
+    rename($strBackupTmpPath, $strBackupPath) or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
+    #print "$strBackupPath\n";
     # !!! Still not sure about format, probably YYYYMMDDTHH24MMSS
 }
