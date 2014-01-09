@@ -302,7 +302,6 @@ sub backup_manifest_build
     my $strCommandManifest = shift;
     my $strClusterDataPath = shift;
     my $oBackupManifestRef = shift;
-    my $oLastManifestRef = shift;
     my $oTablespaceMapRef = shift;
     my $strLevel = shift;
     
@@ -354,15 +353,6 @@ sub backup_manifest_build
             if ($cType eq "f")
             {
                 ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
-                
-#                if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
-#                {
-#                    if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
-#                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
-#                    {
-#                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
-#                    }
-#                }
             }
 
             if ($cType eq "l")
@@ -378,7 +368,7 @@ sub backup_manifest_build
                     ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
                     ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
                     
-                    backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
+                    backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
                 }
             }
         }
@@ -566,14 +556,6 @@ sub backup
 ####################################################################################################################################
 # Get the command
 my $strOperation = $ARGV[0];
-my $strLogFile = "";
-
-# !!! Pick the log file name here (backup, restore, archive-YYYYMMDD)
-# 
-if ($strOperation eq "archive-push")
-{
-    
-}
 
 ####################################################################################################################################
 # LOAD CONFIG FILE
@@ -755,12 +737,9 @@ if ($strOperation eq "backup")
     # Find the previous backup based on the type
     my $strBackupLastPath = backup_type_find($strType, $strBackupClusterPath);
 
-    my %oLastManifest;
-
     if (defined($strBackupLastPath))
     {
-        %oLastManifest = backup_manifest_load("${strBackupClusterPath}/$strBackupLastPath/backup.manifest");
-        &log(INFO, "Last backup label: $oLastManifest{common}{backup}{label}");
+        &log(INFO, 'Last backup: ' . $strBackupLastPath);
     }
 
     # Create the path for the new backup
@@ -812,7 +791,6 @@ if ($strOperation eq "backup")
 
     # Start backup
     my $strLabel = $strBackupPath;
-    ${oBackupManifest}{common}{backup}{label} = $strLabel;
 
     my $strArchiveStart = trim(execute($strCommandPsql .
         " -c \"copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
@@ -823,7 +801,7 @@ if ($strOperation eq "backup")
 
     # Build the backup manifest
     my %oTablespaceMap = tablespace_map_get($strCommandPsql);
-    backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oLastManifest, %oTablespaceMap);
+    backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oTablespaceMap);
 
     # Perform the backup
 #    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
