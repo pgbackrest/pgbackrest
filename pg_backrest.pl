@@ -355,14 +355,14 @@ sub backup_manifest_build
             {
                 ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
                 
-#                if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
-#                {
-#                    if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
-#                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
-#                    {
-#                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
-#                    }
-#                }
+                if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
+                {
+                    if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
+                    {
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
+                    }
+                }
             }
 
             if ($cType eq "l")
@@ -498,6 +498,11 @@ sub backup
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
             my $iSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
             my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
+
+            if (defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
+            {
+                next;
+            }
 
             #&log(DEBUG, "   Backing up ${strBackupSourceFile}");
             
@@ -823,11 +828,11 @@ if ($strOperation eq "backup")
 
     # Build the backup manifest
     my %oTablespaceMap = tablespace_map_get($strCommandPsql);
-    backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oLastManifest, %oTablespaceMap);
+    backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
     # Perform the backup
-#    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
-#           $strBackupTmpPath, \%oBackupManifest);
+    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
+           $strBackupTmpPath, \%oBackupManifest);
 
     # Stop backup
     my $strArchiveStop = trim(execute($strCommandPsql .
