@@ -895,6 +895,7 @@ if ($strOperation eq "backup")
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
     # Fetch the archive logs and backup file
+    # Need a function for create an array of archive log names from strArchiveBegin and strArchiveEnd
     # !!! do it
 
     # Delete files leftover from a partial backup
