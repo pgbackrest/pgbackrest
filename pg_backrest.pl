@@ -417,41 +417,42 @@ sub backup
         my $strBackupSourcePath;
         my $strBackupDestinationPath;
         my $strSectionFile;
+        my $strFile;
+
+        my $strTablespaceName;
+        my $strTablespaceLink;
+        my $strBackupTablespaceLink;
 
         if ($strSectionPath =~ /^base\:/)
         {
             $strBackupSourcePath = "${strClusterDataPath}";
             $strBackupDestinationPath = "${strBackupTmpPath}/base";
             $strSectionFile = "base:file";
+
+            undef($strTablespaceName);
+            undef($strTablespaceLink);
+            undef($strBackupTablespaceLink);
         }
         elsif ($strSectionPath =~ /^tablespace\:/)
         {
-            my $strTablespaceName = (split(":", $strSectionPath))[1];
+            $strTablespaceName = (split(":", $strSectionPath))[1];
             $strBackupSourcePath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path};
             $strBackupDestinationPath = "${strBackupTmpPath}/tablespace";
 
             # Create the tablespace path
-            unless (-e $strBackupDestinationPath)
-            {
-                execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
-            }
+            #unless (-e $strBackupDestinationPath)
+            #{
+            #    execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
+            #}
             
             $strBackupDestinationPath = "${strBackupTmpPath}/tablespace/${strTablespaceName}";
             $strSectionFile = "tablespace:${strTablespaceName}:file";
             #my $strSectionLink = "tablespace:${strTablespaceName}:link";
             
             # Create link to the tablespace
-            my $strTablespaceLink = "pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid};
-            my $strBackupTablespaceLink = "${strBackupTmpPath}/base/${strTablespaceLink}";
+            $strTablespaceLink = "pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid};
+            $strBackupTablespaceLink = "${strBackupTmpPath}/base/${strTablespaceLink}";
             #my $strBackupLinkPath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path};
-            
-            if (-e $strBackupTablespaceLink)
-            {
-                unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
-            }
-            
-            execute("ln -s ../../tablespace/${strTablespaceName} $strBackupTablespaceLink");
-            execute ("chmod " . ${$oBackupManifestRef}{"base:link"}{$strTablespaceLink}{permission} . " ${strBackupTablespaceLink}");
         }
         else
         {
@@ -459,19 +460,51 @@ sub backup
         }
 
         # Create the base or tablespace path
-        unless (-e $strBackupDestinationPath)
-        {
-            execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
+#        unless (-e $strBackupDestinationPath)
+#        {
+#            execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
             #mkdir $strBackupDestinationPath, 0750 or die "Unable to create path ${strBackupDestinationPath}";
-        }
+#        }
 
         # Create all the paths required to store the files
         my $strPath;
-        
+
         foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
         {
 #            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{modification_time};
             my $strBackupDestinationSubPath = "${strBackupDestinationPath}/${strPath}";
+            my $iFileTotal = 0;
+
+            if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
+            {
+                next;
+            }
+
+            foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
+            {
+                if (dirname($strFile) eq $strPath && !defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
+                {
+                    $iFileTotal += 1;
+                    last;
+                }
+            }
+            
+            if ($iFileTotal == 0)
+            {
+                next;
+            }
+
+            if (defined($strTablespaceName))
+            {
+                unless (-e $strBackupTablespaceLink)
+                {
+                    execute("mkdir -p -m 0750 ${strBackupTablespaceLink}");
+    #                unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
+                }
+
+                execute("ln -s ../../tablespace/${strTablespaceName} $strBackupTablespaceLink");
+                execute ("chmod " . ${$oBackupManifestRef}{"base:link"}{$strTablespaceLink}{permission} . " ${strBackupTablespaceLink}");
+            }
 
             unless (-e $strBackupDestinationSubPath)
             {
@@ -491,8 +524,6 @@ sub backup
         }
 
         # Iterate through the files for each backup source path
-        my $strFile;
-        
         foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
