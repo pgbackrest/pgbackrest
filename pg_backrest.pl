@@ -924,6 +924,9 @@ if ($strOperation eq "backup")
     my %oTablespaceMap = tablespace_map_get($strCommandPsql);
     backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
+    # Delete files leftover from a partial backup
+    # !!! do it
+
     # Perform the backup
     backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
            $strBackupTmpPath, \%oBackupManifest);
@@ -936,7 +939,7 @@ if ($strOperation eq "backup")
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # Fetch the archive logs and backup file
+    # Fetch the backup file and put it in pg_xlog
     my $hDir;
     
     opendir $hDir, "${strBackupClusterPath}/archive" or die "Could not open dir: $!\n";
@@ -953,10 +956,8 @@ if ($strOperation eq "backup")
         die &log(ERROR, "Unable to find backup file (or found multiple matches)"); 
     }
 
+    # Fetch the archive logs and put them in pg_xlog
     # Need a function for create an array of archive log names from strArchiveBegin and strArchiveEnd
-    # !!! do it
-
-    # Delete files leftover from a partial backup
     # !!! do it
 
     # Save the backup conf file
