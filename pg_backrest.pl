@@ -914,7 +914,7 @@ if ($strOperation eq "backup")
     ${oBackupManifest}{common}{backup}{label} = $strLabel;
 
     my $strArchiveStart = trim(execute($strCommandPsql .
-        " -c \"copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
+        " -c \"set client_min_messages = 'warning';copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
         
     ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
 
@@ -933,7 +933,7 @@ if ($strOperation eq "backup")
 
     # Stop backup
     my $strArchiveStop = trim(execute($strCommandPsql .
-        " -c \"copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout\" postgres"));
+        " -c \"set client_min_messages = 'warning'; copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout\" postgres"));
 
     ${oBackupManifest}{archive}{archive_location}{stop} = $strArchiveStop;
 
