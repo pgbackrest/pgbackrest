@@ -503,7 +503,7 @@ sub backup
                 next;
             }
 
-            if (!$bHardLink)
+            if (!$bHardLink && !(!defined($strTablespaceName) && $strPath eq 'pg_xlog'))
             {
                 foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
                 {
@@ -937,6 +937,22 @@ if ($strOperation eq "backup")
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
     # Fetch the archive logs and backup file
+    my $hDir;
+    
+    opendir $hDir, "${strBackupClusterPath}/archive" or die "Could not open dir: $!\n";
+    my @stryFile = grep(/^${strArchiveStop}\.[0-F]{8}\.backup$/i, readdir $hDir);
+    close $hDir;
+    
+    if (scalar @stryFile == 1)
+    {
+        rename("${strBackupClusterPath}/archive/" . $stryFile[0], "$strBackupTmpPath/base/pg_xlog/" . $stryFile[0]) or die "Unable to move backup file";
+#        print("Backup file: " . $stryFile[0] . "\n");
+    }
+    else
+    {
+        die &log(ERROR, "Unable to find backup file (or found multiple matches)"); 
+    }
+
     # Need a function for create an array of archive log names from strArchiveBegin and strArchiveEnd
     # !!! do it
 
