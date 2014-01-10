@@ -368,6 +368,20 @@ sub backup_manifest_build
                         {
                             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
                         }
+                        
+                        my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
+                        
+                        if (!defined(${$oBackupManifestRef}{common}{backup}{reference}))
+                        {
+                            ${$oBackupManifestRef}{common}{backup}{reference} = $strReference;
+                        }
+                        else
+                        {
+                            if (${$oBackupManifestRef}{common}{backup}{reference} !~ /$strReference/)
+                            {
+                                ${$oBackupManifestRef}{common}{backup}{reference} .= ",$strReference";
+                            }
+                        }
                     }
                 }
             }
