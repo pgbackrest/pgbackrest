@@ -11,12 +11,14 @@ use JSON;
 # Process flags
 my $bNoCompression;
 my $bNoChecksum;
+my $bHardLink; # !!! Add hardlink option to make restores easier
 my $strConfigFile;
 my $strCluster;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 
 GetOptions ("no-compression" => \$bNoCompression,
             "no-checksum" => \$bNoChecksum,
+            "hardlink" => \$bHardLink,
             "config=s" => \$strConfigFile,
             "cluster=s" => \$strCluster,
             "type=s" => \$strType)
@@ -501,20 +503,23 @@ sub backup
                 next;
             }
 
-            foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
+            if (!$bHardLink)
             {
-                if (dirname($strFile) eq $strPath && !defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
+                foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
                 {
-                    $iFileTotal += 1;
-                    last;
+                    if (dirname($strFile) eq $strPath && !defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
+                    {
+                        $iFileTotal += 1;
+                        last;
+                    }
+                }
+
+                if ($iFileTotal == 0)
+                {
+                    next;
                 }
             }
             
-            if ($iFileTotal == 0)
-            {
-                next;
-            }
-
             if (defined($strTablespaceName))
             {
                 unless (-e $strBackupTablespaceLink)
@@ -523,7 +528,11 @@ sub backup
     #                unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
                 }
 
-                execute("ln -s ../../tablespace/${strTablespaceName} $strBackupTablespaceLink");
+                unless (-e $strBackupTablespaceLink)
+                {
+                    execute("ln -s ../../tablespace/${strTablespaceName} $strBackupTablespaceLink");
+                }
+                
                 execute ("chmod " . ${$oBackupManifestRef}{"base:link"}{$strTablespaceLink}{permission} . " ${strBackupTablespaceLink}");
             }
 
@@ -551,8 +560,47 @@ sub backup
             my $iSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
             my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
 
-            if (defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
+            # If the file is a reference it does not need to be copied
+            my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference};
+
+            if (defined($strReference))
             {
+                if ($bHardLink)
+                {
+                    my $strLinkSource = "${strBackupTmpPath}/../${strReference}";
+                    my $strLinkDestination = "${strBackupTmpPath}";
+                    
+                    if (defined($strTablespaceName))
+                    {
+                        $strLinkSource .= "/tablespace/${strTablespaceName}/${strFile}";
+                        $strLinkDestination .= "/tablespace/${strTablespaceName}/${strFile}";
+                    }
+                    else
+                    {
+                        $strLinkSource .= "/base/${strFile}";
+                        $strLinkDestination .= "/base/${strFile}";
+                    }
+                    
+                    if (!$bNoCompression && $iSize != 0)
+                    {
+                        #unless (-e $strLinkSource)
+                        #{
+                            $strLinkSource .= ".gz";
+                            $strLinkDestination .= ".gz";
+                        #}
+                    }
+                    
+                    if (-e $strLinkDestination)
+                    {
+                        unlink $strLinkDestination or die "Unable to unlink ${$strLinkDestination}";
+                    }
+                    
+                    #unless (-e $strLinkDestination)
+                    #{
+                        execute("ln ${strLinkSource} ${strLinkDestination}");
+                    #}
+                }
+                
                 next;
             }
 
