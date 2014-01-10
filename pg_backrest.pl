@@ -360,7 +360,14 @@ sub backup_manifest_build
                     if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
                         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
                     {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
+                        if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
+                        {
+                            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
+                        }
+                        else
+                        {
+                            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
+                        }
                     }
                 }
             }
