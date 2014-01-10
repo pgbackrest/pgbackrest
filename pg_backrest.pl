@@ -661,6 +661,49 @@ sub backup
 }
 
 ####################################################################################################################################
+# ARCHIVE_LIST_GET
+####################################################################################################################################
+sub archive_list_get
+{
+    my $strArchiveStart = shift;
+    my $strArchiveStop = shift;
+    
+    my $strTimeline = substr($strArchiveStart, 0, 8);
+    my @stryArchive;
+    my $iArchiveIdx = 0;
+
+    if ($strTimeline ne substr($strArchiveStop, 0, 8))
+    {
+        die "Timelines between ${strArchiveStart} and ${strArchiveStop} differ";
+    }
+        
+    my $iStartMajor = hex substr($strArchiveStart, 8, 8);
+    my $iStartMinor = hex substr($strArchiveStart, 16, 8);
+
+    my $iStopMajor = hex substr($strArchiveStop, 8, 8);
+    my $iStopMinor = hex substr($strArchiveStop, 16, 8);
+
+    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
+    {
+        if ($iArchiveIdx != 0)
+        {
+            $iStartMinor += 1;
+
+            if ($iStartMinor == 256)
+            {
+                $iStartMajor += 1;
+                $iStartMinor = 0;
+            }
+        }
+        
+        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+        $iArchiveIdx += 1;
+    }
+    
+    return @stryArchive;
+}
+
+####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
 # Get the command
@@ -943,11 +986,13 @@ if ($strOperation eq "backup")
     my $hDir;
     
     opendir $hDir, "${strBackupClusterPath}/archive" or die "Could not open dir: $!\n";
-    my @stryFile = grep(/^${strArchiveStop}\.[0-F]{8}\.backup$/i, readdir $hDir);
+    my @stryFile = grep(/^${strArchiveStart}\.[0-F]{8}\.backup$/i, readdir $hDir);
     close $hDir;
     
     if (scalar @stryFile == 1)
     {
+#        &log(INFO, "Move archive backup fle: " . $stryFile[0]);
+        
         rename("${strBackupClusterPath}/archive/" . $stryFile[0], "$strBackupTmpPath/base/pg_xlog/" . $stryFile[0]) or die "Unable to move backup file";
 #        print("Backup file: " . $stryFile[0] . "\n");
     }
