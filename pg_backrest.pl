@@ -583,11 +583,8 @@ sub backup
                     
                     if (!$bNoCompression && $iSize != 0)
                     {
-                        #unless (-e $strLinkSource)
-                        #{
-                            $strLinkSource .= ".gz";
-                            $strLinkDestination .= ".gz";
-                        #}
+                        $strLinkSource .= ".gz";
+                        $strLinkDestination .= ".gz";
                     }
                     
                     if (-e $strLinkDestination)
@@ -595,10 +592,7 @@ sub backup
                         unlink $strLinkDestination or die "Unable to unlink ${$strLinkDestination}";
                     }
                     
-                    #unless (-e $strLinkDestination)
-                    #{
-                        execute("ln ${strLinkSource} ${strLinkDestination}");
-                    #}
+                    execute("ln ${strLinkSource} ${strLinkDestination}");
                 }
                 
                 next;
