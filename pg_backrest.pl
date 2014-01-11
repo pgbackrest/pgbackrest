@@ -683,10 +683,13 @@ sub archive_list_get
     my $iStopMajor = hex substr($strArchiveStop, 8, 8);
     my $iStopMinor = hex substr($strArchiveStop, 16, 8);
 
-    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
+    do
     {
-        if ($iArchiveIdx != 0)
+        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+
+        if ($strArchiveStart ne $strArchiveStop)
         {
+            $iArchiveIdx += 1;
             $iStartMinor += 1;
 
             if ($iStartMinor == 256)
@@ -695,11 +698,9 @@ sub archive_list_get
                 $iStartMinor = 0;
             }
         }
-        
-        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
-        $iArchiveIdx += 1;
     }
-    
+    while !($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor);    
+
     return @stryArchive;
 }
 
@@ -973,6 +974,8 @@ if ($strOperation eq "backup")
     # Perform the backup
     backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
            $strBackupTmpPath, \%oBackupManifest);
+           
+#    sleep(30);
 
     # Stop backup
     my $strArchiveStop = trim(execute($strCommandPsql .
@@ -1002,6 +1005,14 @@ if ($strOperation eq "backup")
     }
 
     # Fetch the archive logs and put them in pg_xlog
+    my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop);
+
+    foreach my $strArchive (@stryArchive)
+    {
+        print "archive: $strArchive\n";
+        # need to put the copy logic here
+    }
+    
     # Need a function for create an array of archive log names from strArchiveBegin and strArchiveEnd
     # !!! do it
 
