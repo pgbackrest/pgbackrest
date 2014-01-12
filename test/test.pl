@@ -243,4 +243,4 @@ $dbh->disconnect();
 ################################################################################
 # Start an offline backup
 ################################################################################
-pgbr_backup($strBackRestBinPath, "db");
+#pgbr_backup($strBackRestBinPath, "db");

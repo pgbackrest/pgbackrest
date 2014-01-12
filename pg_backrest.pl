@@ -498,13 +498,15 @@ sub backup
             my $strBackupDestinationSubPath = "${strBackupDestinationPath}/${strPath}";
             my $iFileTotal = 0;
 
-            if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
+            if (!$bHardLink && $strType ne "full" && !(!defined($strTablespaceName) && $strPath eq 'pg_xlog'))
             {
-                next;
-            }
+                print "Skipping ${strPath}\n";
 
-            if (!$bHardLink && !(!defined($strTablespaceName) && $strPath eq 'pg_xlog'))
-            {
+                if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
+                {
+                    next;
+                }
+                
                 foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
                 {
                     if (dirname($strFile) eq $strPath && !defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
@@ -513,7 +515,7 @@ sub backup
                         last;
                     }
                 }
-
+                
                 if ($iFileTotal == 0)
                 {
                     next;
@@ -912,6 +914,7 @@ if ($strOperation eq "backup")
     if ($strType eq "full" || !defined($strBackupLastPath))
     {
         $strBackupPath = date_string_get() . "F";
+        $strType = "full";
     }
     else
     {
@@ -975,7 +978,7 @@ if ($strOperation eq "backup")
     backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
            $strBackupTmpPath, \%oBackupManifest);
            
-#    sleep(30);
+    #sleep(30);
 
     # Stop backup
     my $strArchiveStop = trim(execute($strCommandPsql .
@@ -1009,7 +1012,24 @@ if ($strOperation eq "backup")
 
     foreach my $strArchive (@stryArchive)
     {
-        print "archive: $strArchive\n";
+        my $strArchiveFile = "${strBackupClusterPath}/archive/" . substr($strArchive, 0, 16) . "/";
+        my @stryArchiveFile = glob($strArchiveFile . ${strArchive} . "*") or die "Unable to glob";
+        
+        if (scalar @stryArchiveFile != 1)
+        {
+            die &log(ERROR, "Zero or more than one file found for glob: {$strArchiveFile}${strArchive}*"); 
+        }
+
+        $strArchiveFile = $stryArchiveFile[0];
+        my $strArchiveBackupFile = "$strBackupTmpPath/base/pg_xlog/${strArchive}";
+        
+        if ($strArchiveFile =~ /\.gz$/)
+        {
+            $strArchiveBackupFile .= ".gz";
+        }
+        
+        rename($strArchiveFile, $strArchiveBackupFile) or die "Unable to move archive file: ${strArchiveFile}";
+#        print "archive: ${strArchiveFile} -> ${strArchiveBackupFile}\n";
         # need to put the copy logic here
     }
     
