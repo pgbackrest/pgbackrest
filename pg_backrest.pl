@@ -318,91 +318,94 @@ sub backup_manifest_build
 
     foreach $strName (sort(keys $oManifestHash{name}))
     {
-        # Don't process anything in pg_xlog
-        if (index($strName, 'pg_xlog/') != 0)
+        # Skip certain files during backup
+        if ($strName =~ /^pg\_xlog\/.*/ ||    # pg_xlog/ - this will be reconstructed
+            $strName =~ /^postmaster\.pid$/)  # postmaster.pid - to avoid confusing postgres when restoring
         {
-            my $cType = $oManifestHash{name}{"${strName}"}{type};
-            my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
-            my $strSection = "${strLevel}:path";
+            next;
+        }
+        
+        my $cType = $oManifestHash{name}{"${strName}"}{type};
+        my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
+        my $strSection = "${strLevel}:path";
 
-            #&log(DEBUG, "$strClusterDataPath ${cType}: $strName");
+        #&log(DEBUG, "$strClusterDataPath ${cType}: $strName");
 
-            if ($cType eq "f")
-            {
-                $strSection = "${strLevel}:file";
-            }
-            elsif ($cType eq "l")
-            {
-                $strSection = "${strLevel}:link";
-            }
-            elsif ($cType ne "d")
-            {
-                die &log(ERROR, "Unrecognized file type $cType for file $strName");
-            }
+        if ($cType eq "f")
+        {
+            $strSection = "${strLevel}:file";
+        }
+        elsif ($cType eq "l")
+        {
+            $strSection = "${strLevel}:link";
+        }
+        elsif ($cType ne "d")
+        {
+            die &log(ERROR, "Unrecognized file type $cType for file $strName");
+        }
 
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
-                (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
+            (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
 
 #                print("modification time:" . ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time});
 
-            if ($cType eq "f" || $cType eq "l")
-            {
-                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
-            }
+        if ($cType eq "f" || $cType eq "l")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
+        }
 
-            if ($cType eq "f")
+        if ($cType eq "f")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
+            
+            if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
             {
-                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
-                
-                if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
+                if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
                 {
-                    if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
+                    if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
                     {
-                        if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
+                    }
+                    else
+                    {
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
+                    }
+                    
+                    my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
+                    
+                    if (!defined(${$oBackupManifestRef}{common}{backup}{reference}))
+                    {
+                        ${$oBackupManifestRef}{common}{backup}{reference} = $strReference;
+                    }
+                    else
+                    {
+                        if (${$oBackupManifestRef}{common}{backup}{reference} !~ /$strReference/)
                         {
-                            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
-                        }
-                        else
-                        {
-                            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
-                        }
-                        
-                        my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
-                        
-                        if (!defined(${$oBackupManifestRef}{common}{backup}{reference}))
-                        {
-                            ${$oBackupManifestRef}{common}{backup}{reference} = $strReference;
-                        }
-                        else
-                        {
-                            if (${$oBackupManifestRef}{common}{backup}{reference} !~ /$strReference/)
-                            {
-                                ${$oBackupManifestRef}{common}{backup}{reference} .= ",$strReference";
-                            }
+                            ${$oBackupManifestRef}{common}{backup}{reference} .= ",$strReference";
                         }
                     }
                 }
             }
+        }
 
-            if ($cType eq "l")
+        if ($cType eq "l")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} = $oManifestHash{name}{"${strName}"}{link_destination};
+
+            if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq "base")
             {
-                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} = $oManifestHash{name}{"${strName}"}{link_destination};
+                my $strTablespaceOid = basename($strName);
+                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
+                #&log(DEBUG, "tablespace: ${strTablespace}");
 
-                if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq "base")
-                {
-                    my $strTablespaceOid = basename($strName);
-                    my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
-                    #&log(DEBUG, "tablespace: ${strTablespace}");
-
-                    ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
-                    ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
-                    
-                    backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
-                }
+                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
+                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
+                
+                backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
             }
         }
     }
