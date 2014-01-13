@@ -529,7 +529,7 @@ sub backup
             {
                 unless (-e $strBackupTablespaceLink)
                 {
-                    execute("mkdir -p -m 0750 ${strBackupTablespaceLink}");
+                    #execute("mkdir -p -m 0750 ${strBackupTablespaceLink}");
     #                unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
                 }
 
@@ -991,39 +991,34 @@ if ($strOperation eq "backup")
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # Fetch the backup file and put it in pg_xlog
+    # Fetch the backup file and put it in pg_xlog (this file is just for reference)
     my $hDir;
     
     opendir $hDir, "${strBackupClusterPath}/archive" or die "Could not open dir: $!\n";
     my @stryFile = grep(/^${strArchiveStart}\.[0-F]{8}\.backup$/i, readdir $hDir);
     close $hDir;
     
-    if (scalar @stryFile == 1)
-    {
-#        &log(INFO, "Move archive backup fle: " . $stryFile[0]);
-        
-        rename("${strBackupClusterPath}/archive/" . $stryFile[0], "$strBackupTmpPath/base/pg_xlog/" . $stryFile[0]) or die "Unable to move backup file";
-#        print("Backup file: " . $stryFile[0] . "\n");
-    }
-    else
+    if (scalar @stryFile != 1)
     {
         die &log(ERROR, "Unable to find backup file (or found multiple matches)"); 
     }
+
+    rename("${strBackupClusterPath}/archive/" . $stryFile[0], "$strBackupTmpPath/base/pg_xlog/" . $stryFile[0]) or die "Unable to move backup file";
 
     # Fetch the archive logs and put them in pg_xlog
     my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop);
 
     foreach my $strArchive (@stryArchive)
     {
-        my $strArchiveFile = "${strBackupClusterPath}/archive/" . substr($strArchive, 0, 16) . "/";
-        my @stryArchiveFile = glob($strArchiveFile . ${strArchive} . "*") or die "Unable to glob";
+        my $strArchivePath = "${strBackupClusterPath}/archive/" . substr($strArchive, 0, 16) . "/" . ${strArchive} . "*";
+        my @stryArchiveFile = glob($strArchivePath) or die "Unable to glob";
         
         if (scalar @stryArchiveFile != 1)
         {
-            die &log(ERROR, "Zero or more than one file found for glob: {$strArchiveFile}${strArchive}*"); 
+            die &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
         }
 
-        $strArchiveFile = $stryArchiveFile[0];
+        my $strArchiveFile = $stryArchiveFile[0];
         my $strArchiveBackupFile = "$strBackupTmpPath/base/pg_xlog/${strArchive}";
         
         if ($strArchiveFile =~ /\.gz$/)
@@ -1032,13 +1027,8 @@ if ($strOperation eq "backup")
         }
         
         rename($strArchiveFile, $strArchiveBackupFile) or die "Unable to move archive file: ${strArchiveFile}";
-#        print "archive: ${strArchiveFile} -> ${strArchiveBackupFile}\n";
-        # need to put the copy logic here
     }
     
-    # Need a function for create an array of archive log names from strArchiveBegin and strArchiveEnd
-    # !!! do it
-
     # Save the backup conf file
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
     backup_manifest_load($strBackupConfFile);
