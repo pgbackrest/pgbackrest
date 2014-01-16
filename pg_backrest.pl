@@ -991,20 +991,6 @@ if ($strOperation eq "backup")
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # Fetch the backup file and put it in pg_xlog (this file is just for reference)
-    my $hDir;
-    
-    opendir $hDir, "${strBackupClusterPath}/archive" or die "Could not open dir: $!\n";
-    my @stryFile = grep(/^${strArchiveStart}\.[0-F]{8}\.backup$/i, readdir $hDir);
-    close $hDir;
-    
-    if (scalar @stryFile != 1)
-    {
-        die &log(ERROR, "Unable to find backup file (or found multiple matches)"); 
-    }
-
-    rename("${strBackupClusterPath}/archive/" . $stryFile[0], "$strBackupTmpPath/base/pg_xlog/" . $stryFile[0]) or die "Unable to move backup file";
-
     # Fetch the archive logs and put them in pg_xlog
     my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop);
 
@@ -1035,4 +1021,8 @@ if ($strOperation eq "backup")
 
     # Rename the backup tmp path to complete the backup
     rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
+
+    # !!! Expiration goes here - allow this to be run separately?
+    
+    exit 0;
 }
