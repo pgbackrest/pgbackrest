@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use File::Basename;
+use File::Path;
 use Getopt::Long;
 use Config::IniFiles;
 use IPC::System::Simple qw(capture);
@@ -710,6 +711,55 @@ sub archive_list_get
 }
 
 ####################################################################################################################################
+# FILE_LIST_GET
+####################################################################################################################################
+sub file_list_get
+{
+    my $strPath = shift;
+    my $strExpression = shift;
+    
+    my $hDir;
+    
+    opendir $hDir, $strPath or die &log(ERROR, "unable to open path ${strPath}");
+    my @stryFile = sort {$b cmp $a} grep(/$strExpression/i, readdir $hDir) or die &log(ERROR, "unable to get files for path ${strPath}, expression ${strExpression}"); 
+    close $hDir;
+    
+    return @stryFile;
+}
+
+####################################################################################################################################
+# BACKUP_EXPIRE
+####################################################################################################################################
+sub backup_expire
+{
+    my $strBackupClusterPath = shift;
+    my $iFullRetention = shift;
+    my $iDifferentialRetention = shift;
+    my $strArchiveRetentionType = shift;
+    my $iArchiveRetention = shift;
+    
+    # Expire full backups
+    my $iIndex = $iFullRetention;
+    my $strPath;
+    my @stryPath = file_list_get($strBackupClusterPath, "^[0-9]{8}\\-[0-9]{6}F\$");
+
+    print "full backup: @stryPath\n";
+
+    while (defined($stryPath[$iIndex]))
+    {
+        foreach $strPath (file_list_get($strBackupClusterPath, "^" . $stryPath[$iIndex] . ".*"))
+        {
+            rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
+            print "delete backup: $strPath\n";
+        }
+        
+        $iIndex++;
+    }
+    
+    !!! Now add diff and archive expiration
+}
+
+####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
 # Get the command
@@ -766,6 +816,9 @@ unless (-e $strBackupClusterPath)
     &log (INFO, "creating cluster path ${strBackupClusterPath}");
     mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
+
+backup_expire($strBackupClusterPath, 2, 2, "full", 2);
+exit 0;
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
