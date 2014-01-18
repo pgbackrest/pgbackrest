@@ -528,11 +528,11 @@ sub backup
             
             if (defined($strTablespaceName))
             {
-                unless (-e $strBackupTablespaceLink)
-                {
-                    #execute("mkdir -p -m 0750 ${strBackupTablespaceLink}");
-    #                unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
-                }
+#                unless (-e $strBackupTablespaceLink)
+#                {
+#                    execute("mkdir -p -m 0750 ${strBackupTablespaceLink}");
+#                    unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
+#                }
 
                 unless (-e $strBackupTablespaceLink)
                 {
@@ -730,18 +730,26 @@ sub file_list_get
 ####################################################################################################################################
 # BACKUP_EXPIRE
 ####################################################################################################################################
+use constant 
+{
+    FULL_REGEXP         => "^[0-9]{8}\\-[0-9]{6}F\$",
+    DIFF_REGEXP => "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D\$",
+    INCR_REGEXP  => "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I\$"
+    INCRDIFF_REGEXP  => "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(I|D)\$"
+};
+
 sub backup_expire
 {
-    my $strBackupClusterPath = shift;
-    my $iFullRetention = shift;
-    my $iDifferentialRetention = shift;
-    my $strArchiveRetentionType = shift;
-    my $iArchiveRetention = shift;
+    my $strBackupClusterPath = shift;       # Base path to cluster backup
+    my $iFullRetention = shift;             # Number of full backups to keep
+    my $iDifferentialRetention = shift;     # Number of differential backups to keep
+    my $strArchiveRetentionType = shift;    # Type of backup to base archive retention on
+    my $iArchiveRetention = shift;          # Number of backups worth of archive to keep
     
     # Expire full backups
     my $iIndex = $iFullRetention;
     my $strPath;
-    my @stryPath = file_list_get($strBackupClusterPath, "^[0-9]{8}\\-[0-9]{6}F\$");
+    my @stryPath = file_list_get($strBackupClusterPath, FULL_REGEXP);
 
     print "full backup: @stryPath\n";
 
@@ -756,7 +764,18 @@ sub backup_expire
         $iIndex++;
     }
     
-    !!! Now add diff and archive expiration
+    # Expire differential backups
+    @stryPath = file_list_get($strBackupClusterPath, DIFFERENTIAL_REGEXP);
+     
+    if (defined($stryPath[$iDifferentialRetention]))
+    {
+        foreach $strPath (file_list_get($strBackupClusterPath, INCRDIFF_REGEXP))
+        {
+            !!! still working here
+        }
+    }
+    
+#    !!! Now add diff and archive expiration
 }
 
 ####################################################################################################################################
