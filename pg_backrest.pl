@@ -8,6 +8,7 @@ use Getopt::Long;
 use Config::IniFiles;
 use IPC::System::Simple qw(capture);
 use JSON;
+use File::Copy;
 
 # Process flags
 my $bNoCompression;
@@ -92,6 +93,58 @@ sub execute
 }
 
 ####################################################################################################################################
+# BACKUP_REGEXP_GET - Generate a regexp depending on the backups that need to be found
+####################################################################################################################################
+sub backup_regexp_get
+{
+    my $bFull = shift;
+    my $bDifferential = shift;
+    my $bIncremental = shift;
+    
+    if (!$bFull && !$bDifferential && !$bIncremental)
+    {
+        die &log(ERROR, 'one parameter must be true');
+    }
+    
+    my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
+    my $strRegExp = "^";
+    
+    if ($bFull || $bDifferential || $bIncremental)
+    {
+        $strRegExp .= $strDateTimeRegExp . "F";
+    }
+    
+    if ($bDifferential || $bIncremental)
+    {
+        if ($bFull)
+        {
+            $strRegExp .= "\\_";
+        }
+        
+        $strRegExp .= $strDateTimeRegExp;
+        
+        if ($bDifferential && $bIncremental)
+        {
+            $strRegExp .= "(D|I)";
+        }
+        elsif ($bDifferential)
+        {
+            $strRegExp .= "D";
+        }
+        else
+        {
+            $strRegExp .= "I";
+        }
+    }
+    
+    $strRegExp .= "\$";
+    
+    &log(DEBUG, "backup_regexp_get($bFull, $bDifferential, $bIncremental): $strRegExp");
+    
+    return $strRegExp;
+}
+
+####################################################################################################################################
 # BACKUP_TYPE_FIND - Find the last backup depending on the type
 ####################################################################################################################################
 sub backup_type_find
@@ -100,24 +153,14 @@ sub backup_type_find
     my $strBackupClusterPath = shift;
     my $strDirectory;
 
-    my $hDir;
-    
     if ($strType eq 'incremental')
     {
-        opendir $hDir, $strBackupClusterPath or die &log(ERROR, "unable to open path ${strBackupClusterPath}");
-        my @stryFile = sort {$b cmp $a} grep(/^[0-F]{8}\-[0-F]{6}F\_[0-F]{8}\-[0-F]{6}(I|D)$/i, readdir $hDir); 
-        close $hDir;
-        
-        $strDirectory = $stryFile[0];
+        $strDirectory = (file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse"))[0];
     }
 
     if (!defined($strDirectory) && $strType ne "full")
     {
-        opendir $hDir, $strBackupClusterPath or die &log(ERROR, "unable to open path ${strBackupClusterPath}");
-        my @stryFile = sort {$b cmp $a} grep(/^[0-F]{8}\-[0-F]{6}F$/i, readdir $hDir); 
-        close $hDir;
-
-        $strDirectory = $stryFile[0];
+        $strDirectory = (file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse"))[0];
     }
     
     return $strDirectory;
@@ -504,7 +547,7 @@ sub backup
 
             if (!$bHardLink && $strType ne "full" && !(!defined($strTablespaceName) && $strPath eq 'pg_xlog'))
             {
-                print "Skipping ${strPath}\n";
+                &log(DEBUG, "skipping path: ${strPath}");
 
                 if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
                 {
@@ -717,12 +760,32 @@ sub file_list_get
 {
     my $strPath = shift;
     my $strExpression = shift;
+    my $strSortOrder = shift;
     
     my $hDir;
     
     opendir $hDir, $strPath or die &log(ERROR, "unable to open path ${strPath}");
-    my @stryFile = sort {$b cmp $a} grep(/$strExpression/i, readdir $hDir) or die &log(ERROR, "unable to get files for path ${strPath}, expression ${strExpression}"); 
+    my @stryFileAll = readdir $hDir or die &log(ERROR, "unable to get files for path ${strPath}, expression ${strExpression}");
     close $hDir;
+    
+    my @stryFile;
+
+    if (@stryFileAll)
+    {
+        @stryFile = grep(/$strExpression/i, @stryFileAll)
+    }
+    
+    if (@stryFile)
+    {
+        if ($strSortOrder eq "reverse")
+        {
+            return sort {$b cmp $a} @stryFile;
+        }
+        else
+        {
+            return sort @stryFile;
+        }
+    }
     
     return @stryFile;
 }
@@ -730,14 +793,6 @@ sub file_list_get
 ####################################################################################################################################
 # BACKUP_EXPIRE
 ####################################################################################################################################
-use constant 
-{
-    FULL_REGEXP         => "^[0-9]{8}\\-[0-9]{6}F\$",
-    DIFF_REGEXP => "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D\$",
-    INCR_REGEXP  => "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I\$"
-    INCRDIFF_REGEXP  => "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(I|D)\$"
-};
-
 sub backup_expire
 {
     my $strBackupClusterPath = shift;       # Base path to cluster backup
@@ -749,33 +804,79 @@ sub backup_expire
     # Expire full backups
     my $iIndex = $iFullRetention;
     my $strPath;
-    my @stryPath = file_list_get($strBackupClusterPath, FULL_REGEXP);
-
-    print "full backup: @stryPath\n";
+    my @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse");
 
     while (defined($stryPath[$iIndex]))
     {
-        foreach $strPath (file_list_get($strBackupClusterPath, "^" . $stryPath[$iIndex] . ".*"))
+        &log (INFO, "deleting expired full backup: " . $stryPath[$iIndex]);
+
+        foreach $strPath (file_list_get($strBackupClusterPath, "^" . $stryPath[$iIndex] . ".*", "reverse"))
         {
             rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
-            print "delete backup: $strPath\n";
         }
         
         $iIndex++;
     }
     
     # Expire differential backups
-    @stryPath = file_list_get($strBackupClusterPath, DIFFERENTIAL_REGEXP);
+    @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(0, 1, 0), "reverse");
      
     if (defined($stryPath[$iDifferentialRetention]))
     {
-        foreach $strPath (file_list_get($strBackupClusterPath, INCRDIFF_REGEXP))
+        foreach $strPath (file_list_get($strBackupClusterPath, backup_regexp_get(0, 1, 1), "reverse"))
         {
-            !!! still working here
+            if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
+            {
+                rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
+                &log (INFO, "deleting expired diff/incr backup ${strPath}");
+            }
         }
     }
     
-#    !!! Now add diff and archive expiration
+    # Determine which backup type to use for archive retention
+    if ($strArchiveRetentionType eq "full")
+    {
+        @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse");
+    }
+    elsif ($strArchiveRetentionType eq "diff")
+    {
+        @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 0), "reverse");
+    }
+    else
+    {
+        @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse");
+    }
+    
+    # if no backups were found then preserve current archive - too dangerous to delete
+    my $iBackupTotal = scalar @stryPath;
+    
+    if ($iBackupTotal == 0)
+    {
+        return;
+    }
+    
+    # See if enough backups exist for retention
+    my $strArchiveRetentionBackup = $stryPath[$iArchiveRetention - 1];
+    
+    if (!defined($strArchiveRetentionBackup))
+    {
+        return;
+    }
+
+    &log (INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
+
+    # Get the archive logs that need to be kept.  To be cautious we will keep the first archive log even though this is also
+    # preserved in the backup.
+    my %oManifest = backup_manifest_load("${strBackupClusterPath}/$strArchiveRetentionBackup/backup.manifest");
+    my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
+    
+    &log (INFO, "archive starts at " . $strArchiveLast);
+
+#    else
+#    {
+#        return;
+#        #print "Archive retention based on " . $stryPath[$iBackupTotal - 1] . "\n";
+#    }
 }
 
 ####################################################################################################################################
@@ -835,9 +936,6 @@ unless (-e $strBackupClusterPath)
     &log (INFO, "creating cluster path ${strBackupClusterPath}");
     mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
-
-backup_expire($strBackupClusterPath, 2, 2, "full", 2);
-exit 0;
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
@@ -1084,7 +1182,7 @@ if ($strOperation eq "backup")
             $strArchiveBackupFile .= ".gz";
         }
         
-        rename($strArchiveFile, $strArchiveBackupFile) or die "Unable to move archive file: ${strArchiveFile}";
+        copy($strArchiveFile, $strArchiveBackupFile) or die "Unable to move archive file: ${strArchiveFile}";
     }
     
     # Save the backup conf file
@@ -1094,7 +1192,8 @@ if ($strOperation eq "backup")
     # Rename the backup tmp path to complete the backup
     rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
-    # !!! Expiration goes here - allow this to be run separately?
+    # Expire backups
+    backup_expire($strBackupClusterPath, 2, 2, "full", 2);
     
     exit 0;
 }
