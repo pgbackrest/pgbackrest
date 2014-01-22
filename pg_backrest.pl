@@ -1013,7 +1013,7 @@ if ($strOperation eq "archive-push")
     my $strCommand;
 
     # !!! Modify this to skip compression and checksum for any file that is not a log file
-    if ($strDestinationFile =~ /^([0-F]){24}(\.[0-F]{8}\.backup){0,1}/)
+    if ($strDestinationFile =~ /^([0-F]){24}.*/)
     {
         $strBackupClusterArchiveSubPath = "${strBackupClusterArchivePath}/" . substr($strDestinationFile, 0, 16);
 
