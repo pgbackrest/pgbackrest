@@ -118,7 +118,7 @@ sub backup_regexp_get
     {
         if ($bFull)
         {
-            $strRegExp .= "\\_";
+            $strRegExp .= "(\\_";
         }
         
         $strRegExp .= $strDateTimeRegExp;
@@ -134,6 +134,11 @@ sub backup_regexp_get
         else
         {
             $strRegExp .= "I";
+        }
+
+        if ($bFull)
+        {
+            $strRegExp .= "){0,1}";
         }
     }
     
@@ -833,12 +838,12 @@ sub backup_expire
         }
     }
     
-    # Determine which backup type to use for archive retention
+    # Determine which backup type to use for archive retention (full, differential, incremental)
     if ($strArchiveRetentionType eq "full")
     {
         @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse");
     }
-    elsif ($strArchiveRetentionType eq "diff")
+    elsif ($strArchiveRetentionType eq "differential")
     {
         @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 0), "reverse");
     }
@@ -847,7 +852,7 @@ sub backup_expire
         @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse");
     }
     
-    # if no backups were found then preserve current archive - too dangerous to delete
+    # if no backups were found then preserve current archive logs - too dangerous to delete!
     my $iBackupTotal = scalar @stryPath;
     
     if ($iBackupTotal == 0)
@@ -855,7 +860,7 @@ sub backup_expire
         return;
     }
     
-    # See if enough backups exist for retention
+    # See if enough backups exist for expiration to start
     my $strArchiveRetentionBackup = $stryPath[$iArchiveRetention - 1];
     
     if (!defined($strArchiveRetentionBackup))
@@ -863,10 +868,10 @@ sub backup_expire
         return;
     }
 
+    # Get the archive logs that need to be kept.  To be cautious we will keep all the archive logs starting from this backup
+    # even though they are also in the pg_xlog directory (since they have been copied more than once).
     &log (INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
 
-    # Get the archive logs that need to be kept.  To be cautious we will keep the first archive log even though this is also
-    # preserved in the backup.
     my %oManifest = backup_manifest_load("${strBackupClusterPath}/$strArchiveRetentionBackup/backup.manifest");
     my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
     
