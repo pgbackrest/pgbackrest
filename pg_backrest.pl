@@ -806,15 +806,17 @@ sub backup_expire
     my $strArchiveRetentionType = shift;    # Type of backup to base archive retention on
     my $iArchiveRetention = shift;          # Number of backups worth of archive to keep
     
-    # Expire full backups
+    # Find all the expired full backups
     my $iIndex = $iFullRetention;
     my $strPath;
     my @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse");
 
     while (defined($stryPath[$iIndex]))
     {
-        &log (INFO, "deleting expired full backup: " . $stryPath[$iIndex]);
+        &log (INFO, "removed expired full backup: " . $stryPath[$iIndex]);
 
+        # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
+        # be consistent if the backup dies.
         foreach $strPath (file_list_get($strBackupClusterPath, "^" . $stryPath[$iIndex] . ".*", "reverse"))
         {
             rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
@@ -823,17 +825,19 @@ sub backup_expire
         $iIndex++;
     }
     
-    # Expire differential backups
+    # Find all the expired differential backups
     @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(0, 1, 0), "reverse");
      
     if (defined($stryPath[$iDifferentialRetention]))
     {
+        # Get a list of all differential and incremental backups
         foreach $strPath (file_list_get($strBackupClusterPath, backup_regexp_get(0, 1, 1), "reverse"))
         {
+            # Remove all differential and incremental backups before the oldest valid differential
             if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
             {
                 rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
-                &log (INFO, "deleting expired diff/incr backup ${strPath}");
+                &log (INFO, "removed expired diff/incr backup ${strPath}");
             }
         }
     }
@@ -852,7 +856,7 @@ sub backup_expire
         @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse");
     }
     
-    # if no backups were found then preserve current archive logs - too dangerous to delete!
+    # if no backups were found then preserve current archive logs - too afraid to delete!
     my $iBackupTotal = scalar @stryPath;
     
     if ($iBackupTotal == 0)
@@ -883,33 +887,29 @@ sub backup_expire
     &log (INFO, "archive retention starts at " . $strArchiveLast);
 
     # Remove any archive directories or files that are out of date
-    foreach $strPath (file_list_get($strBackupClusterPath . "/archive", "^[0-F]{16}([0-F]{8}\\.[0-F]{8}\\.backup){0,1}\$"))
+    foreach $strPath (file_list_get($strBackupClusterPath . "/archive", "^[0-F]{16}\$"))
     {
-        if (length($strPath) == 16)
+        # If less than first 16 characters of current archive file, then remove the directory
+        if ($strPath lt substr($strArchiveLast, 0, 16))
         {
-            if ($strPath lt substr($strArchiveLast, 0, 16))
+            rmtree($strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
+            &log (DEBUG, "removed major archive directory " . $strPath);
+        }
+        # If equals the first 16 characters of the current archive file, then delete individual files instead
+        elsif ($strPath eq substr($strArchiveLast, 0, 16))
+        {
+            my $strSubPath;
+        
+            # Look for archive files in the archive directory
+            foreach $strSubPath (file_list_get($strBackupClusterPath . "/archive/" . $strPath, "^[0-F]{24}.*\$"))
             {
-                rmtree($strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
-                &log (DEBUG, "removed major archive directory " . $strPath);
-            }
-            elsif ($strPath eq substr($strArchiveLast, 0, 16))
-            {
-                my $strSubPath;
-            
-                foreach $strSubPath (file_list_get($strBackupClusterPath . "/archive/" . $strPath, "^[0-F]{24}.*\$"))
+                # Delete if the first 24 characters less than the current archive file
+                if ($strSubPath lt substr($strArchiveLast, 0, 24))
                 {
-                    if ($strSubPath lt substr($strArchiveLast, 0, 24))
-                    {
-                        unlink("${strBackupClusterPath}/archive/${strPath}/${strSubPath}") or die &log(ERROR, "unable to remove " . $strSubPath);
-                        &log (DEBUG, "removed archive file " . $strSubPath);
-                    }
+                    unlink("${strBackupClusterPath}/archive/${strPath}/${strSubPath}") or die &log(ERROR, "unable to remove " . $strSubPath);
+                    &log (DEBUG, "removed expired archive file " . $strSubPath);
                 }
             }
-        }
-        elsif (substr($strPath, 0, 24) lt substr($strArchiveLast, 0, 24))
-        {
-            unlink($strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
-            &log (DEBUG, "removed archive backup file " . $strPath);
         }
     }
 }
@@ -1013,47 +1013,54 @@ if ($strOperation eq "archive-push")
     my $strCommand;
 
     # !!! Modify this to skip compression and checksum for any file that is not a log file
-    if ($strDestinationFile =~ /^([0-9]|[A-F]){24}$/)
+    if ($strDestinationFile =~ /^([0-F]){24}(\.[0-F]{8}\.backup){0,1}/)
     {
         $strBackupClusterArchiveSubPath = "${strBackupClusterArchivePath}/" . substr($strDestinationFile, 0, 16);
 
-        unless (-e $strBackupClusterArchiveSubPath)
+        if ($strDestinationFile =~ /^([0-F]){24}$/)
         {
-            &log (INFO, "creating cluster archive sub path ${strBackupClusterArchiveSubPath}");
-            mkdir $strBackupClusterArchiveSubPath or die &log(ERROR, "cluster backup archive sub path '${strBackupClusterArchiveSubPath}' create failed");
-        }
+            unless (-e $strBackupClusterArchiveSubPath)
+            {
+                &log (INFO, "creating cluster archive sub path ${strBackupClusterArchiveSubPath}");
+                mkdir $strBackupClusterArchiveSubPath or die &log(ERROR, "cluster backup archive sub path '${strBackupClusterArchiveSubPath}' create failed");
+            }
 
-        # Make sure the destination file does NOT exist - ignore checksum and extension in case they (or options) have changed
-        if (glob("${strBackupClusterArchiveSubPath}/${strDestinationFile}*"))
-        {
-            die "destination file already exists";
-        }
+            # Make sure the destination file does NOT exist - ignore checksum and extension in case they (or options) have changed
+            if (glob("${strBackupClusterArchiveSubPath}/${strDestinationFile}*"))
+            {
+                die "destination file already exists";
+            }
 
-        # Calculate sha1 hash for the file (unless disabled)
-        if (!$bNoChecksum)
-        {
-            $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
-        }
+            # Calculate sha1 hash for the file (unless disabled)
+            if (!$bNoChecksum)
+            {
+                $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
+            }
 
-        if ($bNoCompression)
-        {
-            $strCommand = $strCommandCopy;
-            $strCommand =~ s/\%source\%/${strSourceFile}/g;
-            $strCommand =~ s/\%destination\%/${strDestinationTmpFile}/g;
+            if ($bNoCompression)
+            {
+                $strCommand = $strCommandCopy;
+                $strCommand =~ s/\%source\%/${strSourceFile}/g;
+                $strCommand =~ s/\%destination\%/${strDestinationTmpFile}/g;
+            }
+            else
+            {
+                $strCommand = $strCommandCompress;
+                $strCommand =~ s/\%file\%/${strSourceFile}/g;
+                $strCommand .= " > ${strDestinationTmpFile}";
+                $strDestinationFile .= ".gz";
+            }
         }
         else
         {
-            $strCommand = $strCommandCompress;
-            $strCommand =~ s/\%file\%/${strSourceFile}/g;
-            $strCommand .= " > ${strDestinationTmpFile}";
-            $strDestinationFile .= ".gz";
+            $strCommand = $strCommandCopy;
+            $strCommand =~ s/\%source\%/$strSourceFile/g;
+            $strCommand =~ s/\%destination\%/${strDestinationTmpFile}/g;
         }
     }
     else
     {
-        $strCommand = $strCommandCopy;
-        $strCommand =~ s/\%source\%/$strSourceFile/g;
-        $strCommand =~ s/\%destination\%/${strDestinationTmpFile}/g;
+        die &log(ERROR, "Unknown file type ${strDestinationFile}")
     }
     
     # Execute the copy
@@ -1201,15 +1208,15 @@ if ($strOperation eq "backup")
 
     foreach my $strArchive (@stryArchive)
     {
-        my $strArchivePath = "${strBackupClusterPath}/archive/" . substr($strArchive, 0, 16) . "/" . ${strArchive} . "*";
-        my @stryArchiveFile = glob($strArchivePath) or die "Unable to glob";
+        my $strArchivePath = "${strBackupClusterPath}/archive/" . substr($strArchive, 0, 16);
+        my @stryArchiveFile = file_list_get($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.gz){0,1}\$");
         
         if (scalar @stryArchiveFile != 1)
         {
             die &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
         }
 
-        my $strArchiveFile = $stryArchiveFile[0];
+        my $strArchiveFile = $strArchivePath . "/" . $stryArchiveFile[0];
         my $strArchiveBackupFile = "$strBackupTmpPath/base/pg_xlog/${strArchive}";
         
         if ($strArchiveFile =~ /\.gz$/)
@@ -1217,7 +1224,7 @@ if ($strOperation eq "backup")
             $strArchiveBackupFile .= ".gz";
         }
         
-        copy($strArchiveFile, $strArchiveBackupFile) or die "Unable to move archive file: ${strArchiveFile}";
+        copy($strArchiveFile, $strArchiveBackupFile) or die "Unable to copy archive file: ${strArchiveFile}";
     }
     
     # Save the backup conf file
@@ -1228,7 +1235,7 @@ if ($strOperation eq "backup")
     rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
     # Expire backups
-    backup_expire($strBackupClusterPath, 2, 2, "incremental", 2);
+    backup_expire($strBackupClusterPath, 2, 2, "full", 2);
     
     exit 0;
 }
