@@ -782,7 +782,7 @@ sub file_list_get
     
     if (@stryFile)
     {
-        if ($strSortOrder eq "reverse")
+        if (defined($strSortOrder) && $strSortOrder eq "reverse")
         {
             return sort {$b cmp $a} @stryFile;
         }
@@ -875,13 +875,43 @@ sub backup_expire
     my %oManifest = backup_manifest_load("${strBackupClusterPath}/$strArchiveRetentionBackup/backup.manifest");
     my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
     
-    &log (INFO, "archive starts at " . $strArchiveLast);
+    if (!defined($strArchiveLast))
+    {
+        &log (INFO, "invalid archive location retrieved ${$strArchiveRetentionBackup}");
+    }
+    
+    &log (INFO, "archive retention starts at " . $strArchiveLast);
 
-#    else
-#    {
-#        return;
-#        #print "Archive retention based on " . $stryPath[$iBackupTotal - 1] . "\n";
-#    }
+    # Remove any archive directories or files that are out of date
+    foreach $strPath (file_list_get($strBackupClusterPath . "/archive", "^[0-F]{16}([0-F]{8}\\.[0-F]{8}\\.backup){0,1}\$"))
+    {
+        if (length($strPath) == 16)
+        {
+            if ($strPath lt substr($strArchiveLast, 0, 16))
+            {
+                rmtree($strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
+                &log (DEBUG, "removed major archive directory " . $strPath);
+            }
+            elsif ($strPath eq substr($strArchiveLast, 0, 16))
+            {
+                my $strSubPath;
+            
+                foreach $strSubPath (file_list_get($strBackupClusterPath . "/archive/" . $strPath, "^[0-F]{24}.*\$"))
+                {
+                    if ($strSubPath lt substr($strArchiveLast, 0, 24))
+                    {
+                        unlink("${strBackupClusterPath}/archive/${strPath}/${strSubPath}") or die &log(ERROR, "unable to remove " . $strSubPath);
+                        &log (DEBUG, "removed archive file " . $strSubPath);
+                    }
+                }
+            }
+        }
+        elsif (substr($strPath, 0, 24) lt substr($strArchiveLast, 0, 24))
+        {
+            unlink($strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
+            &log (DEBUG, "removed archive backup file " . $strPath);
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -1198,7 +1228,7 @@ if ($strOperation eq "backup")
     rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
     # Expire backups
-    backup_expire($strBackupClusterPath, 2, 2, "full", 2);
+    backup_expire($strBackupClusterPath, 2, 2, "incremental", 2);
     
     exit 0;
 }
