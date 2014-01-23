@@ -9,6 +9,7 @@ use Config::IniFiles;
 use IPC::System::Simple qw(capture);
 use JSON;
 use File::Copy;
+use Carp;
 
 # Process flags
 my $bNoCompression;
@@ -25,6 +26,10 @@ GetOptions ("no-compression" => \$bNoCompression,
             "cluster=s" => \$strCluster,
             "type=s" => \$strType)
     or die("Error in command line arguments\n");
+    
+
+# Global variables
+my $strBasePath;             # Database base path
 
 ####################################################################################################################################
 # TRIM - trim whitespace off strings
@@ -56,7 +61,8 @@ use constant
     DEBUG   => 'DEBUG',
     INFO    => 'INFO',
     WARNING => 'WARNING',
-    ERROR   => 'ERROR'
+    ERROR   => 'ERROR',
+    ASSERT  => 'ASSERT'
 };
 
 sub log
@@ -223,8 +229,6 @@ sub data_hash_build
     my @stryFile = split("\n", $strData);
     my @stryHeader = split($strDelimiter, $stryFile[0]);
     
-#    print "data: $strData\n";
-
     my %oHash;
 
     for (my $iLineIdx = 1; $iLineIdx < scalar @stryFile; $iLineIdx++)
@@ -236,18 +240,14 @@ sub data_hash_build
             $stryLine[0] = $strUndefinedKey;
         }
 
-#        print "line: @stryLine\n";
-        
         for (my $iColumnIdx = 1; $iColumnIdx < scalar @stryHeader; $iColumnIdx++)
         {
             if (defined($oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
             {
-                die "the first column must be unique to build the hash";
+                confess "the first column must be unique to build the hash";
             }
             
             $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
-#            print "Hash {$stryHeader[0]}{$stryLine[0]}{$stryHeader[$iColumnIdx]} = " . (defined $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} ? $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} : "null") . "\n";
-            #$oHash{$stryHeader[$iColumnIdx]}{$stryLine[$iColumnIdx]}{$stryHeader[0]} = $stryLine[0];
         }
     }
 
@@ -813,7 +813,7 @@ sub backup_expire
 
     while (defined($stryPath[$iIndex]))
     {
-        &log (INFO, "removed expired full backup: " . $stryPath[$iIndex]);
+        &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
 
         # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
         # be consistent if the backup dies.
@@ -837,7 +837,7 @@ sub backup_expire
             if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
             {
                 rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
-                &log (INFO, "removed expired diff/incr backup ${strPath}");
+                &log(INFO, "removed expired diff/incr backup ${strPath}");
             }
         }
     }
@@ -874,17 +874,17 @@ sub backup_expire
 
     # Get the archive logs that need to be kept.  To be cautious we will keep all the archive logs starting from this backup
     # even though they are also in the pg_xlog directory (since they have been copied more than once).
-    &log (INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
+    &log(INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
 
     my %oManifest = backup_manifest_load("${strBackupClusterPath}/$strArchiveRetentionBackup/backup.manifest");
     my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
     
     if (!defined($strArchiveLast))
     {
-        &log (INFO, "invalid archive location retrieved ${$strArchiveRetentionBackup}");
+        &log(INFO, "invalid archive location retrieved ${$strArchiveRetentionBackup}");
     }
     
-    &log (INFO, "archive retention starts at " . $strArchiveLast);
+    &log(INFO, "archive retention starts at " . $strArchiveLast);
 
     # Remove any archive directories or files that are out of date
     foreach $strPath (file_list_get($strBackupClusterPath . "/archive", "^[0-F]{16}\$"))
@@ -893,7 +893,7 @@ sub backup_expire
         if ($strPath lt substr($strArchiveLast, 0, 16))
         {
             rmtree($strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
-            &log (DEBUG, "removed major archive directory " . $strPath);
+            &log(DEBUG, "removed major archive directory " . $strPath);
         }
         # If equals the first 16 characters of the current archive file, then delete individual files instead
         elsif ($strPath eq substr($strArchiveLast, 0, 16))
@@ -907,11 +907,50 @@ sub backup_expire
                 if ($strSubPath lt substr($strArchiveLast, 0, 24))
                 {
                     unlink("${strBackupClusterPath}/archive/${strPath}/${strSubPath}") or die &log(ERROR, "unable to remove " . $strSubPath);
-                    &log (DEBUG, "removed expired archive file " . $strSubPath);
+                    &log(DEBUG, "removed expired archive file " . $strSubPath);
                 }
             }
         }
     }
+}
+
+####################################################################################################################################
+# PATH_GET
+####################################################################################################################################
+sub path_get
+{
+    my $strType = shift;
+    
+    # Tokenize the path type string
+    my @stryToken = split(/:/, $strType);
+    
+    # Parse paths on the db side
+    if ($stryToken[0] eq "db")
+    {
+        if (!defined($strBasePath))
+        {
+            confess &log(ASSERT, "\$BasePath not yet defined");
+        }
+    }
+    # Parse paths on the backup side
+    elsif ($stryToken[0] eq "backup")
+    {
+        
+    }
+
+    # Error when path type not recognized
+    confess &log(ASSERT, "no known path types in '${strType}'");
+}
+
+####################################################################################################################################
+# FILE_COPY
+####################################################################################################################################
+sub file_copy
+{
+    my $strSource = shift;
+    my $strSourceFile = shift;
+    my $strDestination = shift;
+    my $strDestinationFile = shift;
 }
 
 ####################################################################################################################################
@@ -946,7 +985,7 @@ my $strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNo
 my $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
 
 # Load and check the base backup path
-my $strBasePath = $oConfig{common}{backup_path};
+$strBasePath = $oConfig{common}{backup_path};
 
 if (!defined($strBasePath))
 {
@@ -968,9 +1007,12 @@ my $strBackupClusterPath = "${strBasePath}/${strCluster}";
 
 unless (-e $strBackupClusterPath)
 {
-    &log (INFO, "creating cluster path ${strBackupClusterPath}");
+    &log(INFO, "creating cluster path ${strBackupClusterPath}");
     mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
+
+path_get("db");
+exit 0;
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
@@ -987,7 +1029,7 @@ if ($strOperation eq "archive-push")
 
     unless (-e $strBackupClusterArchivePath)
     {
-        &log (INFO, "creating cluster archive path ${strBackupClusterArchivePath}");
+        &log(INFO, "creating cluster archive path ${strBackupClusterArchivePath}");
         mkdir $strBackupClusterArchivePath or die &log(ERROR, "cluster backup archive path '${strBackupClusterArchivePath}' create failed");
     }
 
@@ -1021,7 +1063,7 @@ if ($strOperation eq "archive-push")
         {
             unless (-e $strBackupClusterArchiveSubPath)
             {
-                &log (INFO, "creating cluster archive sub path ${strBackupClusterArchiveSubPath}");
+                &log(INFO, "creating cluster archive sub path ${strBackupClusterArchiveSubPath}");
                 mkdir $strBackupClusterArchiveSubPath or die &log(ERROR, "cluster backup archive sub path '${strBackupClusterArchiveSubPath}' create failed");
             }
 
