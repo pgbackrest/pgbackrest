@@ -29,7 +29,10 @@ GetOptions ("no-compression" => \$bNoCompression,
     
 
 # Global variables
-my $strBasePath;             # Database base path
+my $strDbClusterPath;          # Database cluster base path
+
+my $strBackupPath;             # Backup base path
+my $strBackupClusterPath;       # Backup cluster path
 
 ####################################################################################################################################
 # TRIM - trim whitespace off strings
@@ -351,7 +354,7 @@ sub backup_manifest_save
 sub backup_manifest_build
 {
     my $strCommandManifest = shift;
-    my $strClusterDataPath = shift;
+    my $strDbClusterPath = shift;
     my $oBackupManifestRef = shift;
     my $oLastManifestRef = shift;
     my $oTablespaceMapRef = shift;
@@ -362,7 +365,7 @@ sub backup_manifest_build
         $strLevel = "base";
     }
     
-    my %oManifestHash = manifest_get($strCommandManifest, $strClusterDataPath);
+    my %oManifestHash = manifest_get($strCommandManifest, $strDbClusterPath);
     my $strName;
 
     foreach $strName (sort(keys $oManifestHash{name}))
@@ -378,7 +381,7 @@ sub backup_manifest_build
         my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
         my $strSection = "${strLevel}:path";
 
-        #&log(DEBUG, "$strClusterDataPath ${cType}: $strName");
+        #&log(DEBUG, "${strDbClusterPath} ${cType}: $strName");
 
         if ($cType eq "f")
         {
@@ -469,7 +472,7 @@ sub backup
     my $strCommandCompress = shift;
     my $strCommandDecompress = shift;
     my $strCommandCopy = shift;
-    my $strClusterDataPath = shift;
+    my $strDbClusterPath = shift;
     my $strBackupTmpPath = shift;
     my $oBackupManifestRef = shift;
 
@@ -500,7 +503,7 @@ sub backup
 
         if ($strSectionPath =~ /^base\:/)
         {
-            $strBackupSourcePath = "${strClusterDataPath}";
+            $strBackupSourcePath = "${strDbClusterPath}";
             $strBackupDestinationPath = "${strBackupTmpPath}/base";
             $strSectionFile = "base:file";
 
@@ -917,24 +920,86 @@ sub backup_expire
 ####################################################################################################################################
 # PATH_GET
 ####################################################################################################################################
+use constant 
+{
+    PATH_DB_ABSOLUTE    => 'db:absolute',
+    PATH_DB_RELATIVE    => 'db:relative',
+    PATH_BACKUP         => 'backup',
+    PATH_BACKUP_CLUSTER => 'backup:cluster',
+    PATH_BACKUP_TMP     => 'backup:tmp',
+    PATH_BACKUP_ARCHIVE => 'backup:archive'
+};
+
 sub path_get
 {
     my $strType = shift;
-    
-    # Tokenize the path type string
-    my @stryToken = split(/:/, $strType);
-    
+    my $strPath = shift;
+    my $strFile = shift;
+
     # Parse paths on the db side
-    if ($stryToken[0] eq "db")
+    if ($strType eq PATH_DB_ABSOLUTE)
     {
-        if (!defined($strBasePath))
+        return $strPath;
+    }
+    elsif ($strType eq PATH_DB_RELATIVE)
+    {
+        if (!defined($strDbClusterPath))
         {
-            confess &log(ASSERT, "\$BasePath not yet defined");
+            confess &log(ASSERT, "\$strDbClusterPath not yet defined");
         }
+
+        return $strDbClusterPath . "/" . $strPath;
     }
     # Parse paths on the backup side
-    elsif ($stryToken[0] eq "backup")
+    elsif ($strType eq PATH_BACKUP)
     {
+        if (!defined($strBackupPath))
+        {
+            confess &log(ASSERT, "\$strBackupPath not yet defined");
+        }
+        
+        return $strBackupPath;
+    }
+    elsif ($strType eq PATH_BACKUP_CLUSTER)
+    {
+        if (!defined($strBackupClusterPath))
+        {
+            confess &log(ASSERT, "\$strBackupPath not yet defined");
+        }
+        
+        return $strBackupPath;
+    }
+    elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_TMP || $strType eq PATH_BACKUP_ARCHIVE)
+    {
+        if (!defined($strBackupClusterPath))
+        {
+            confess &log(ASSERT, "\$strBackupClusterPath not yet defined");
+        }
+        
+        if ($strType eq PATH_BACKUP_CLUSTER)
+        {
+            return $strBackupClusterPath;
+        }
+        elsif ($strType eq PATH_BACKUP_TMP)
+        {
+            return $strBackupClusterPath . "/backup.tmp" . (defined($strPath) ? "/${strPath}" : "");
+        }
+        elsif ($strType eq PATH_BACKUP_ARCHIVE)
+        {
+            my $strArchive;
+            
+            if (defined($strFile))
+            {
+                $strArchive = substr($strFile, 0, 24);
+            
+                if ($strArchive !~ /^([0-F]){24}$/)
+                {
+                    croak &log(ERROR, "\$strFile not a valid archive file");
+                }
+            }
+            
+            return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/${strArchive}" : "");
+        }
         
     }
 
@@ -947,9 +1012,9 @@ sub path_get
 ####################################################################################################################################
 sub file_copy
 {
-    my $strSource = shift;
+    my $strSourcePathType = shift;
     my $strSourceFile = shift;
-    my $strDestination = shift;
+    my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
 }
 
@@ -985,16 +1050,16 @@ my $strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNo
 my $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
 
 # Load and check the base backup path
-$strBasePath = $oConfig{common}{backup_path};
+$strBackupPath = $oConfig{common}{backup_path};
 
-if (!defined($strBasePath))
+if (!defined($strBackupPath))
 {
     die &log(ERROR, "common:backup_path undefined");
 }
 
-unless (-e $strBasePath)
+unless (-e $strBackupPath)
 {
-    die &log(ERROR, "base path ${strBasePath} does not exist");
+    die &log(ERROR, "base path ${strBackupPath} does not exist");
 }
 
 # Load and check the cluster
@@ -1003,16 +1068,13 @@ if (!defined($strCluster))
     $strCluster = "db"; #!!! Modify to load cluster from conf if there is only one, else error
 }
 
-my $strBackupClusterPath = "${strBasePath}/${strCluster}";
+$strBackupClusterPath = "${strBackupPath}/${strCluster}";
 
 unless (-e $strBackupClusterPath)
 {
     &log(INFO, "creating cluster path ${strBackupClusterPath}");
     mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
-
-path_get("db");
-exit 0;
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
@@ -1142,16 +1204,16 @@ my $strCommandPsql = config_load(\%oConfig, "command", "psql");
 if ($strOperation eq "backup")
 {
     # Make sure that the cluster data directory exists
-    my $strClusterDataPath = $oConfig{"cluster:$strCluster"}{data_path};
+    $strDbClusterPath = $oConfig{"cluster:$strCluster"}{path};
 
-    if (!defined($strClusterDataPath))
+    if (!defined($strDbClusterPath))
     {
         die &log(ERROR, "cluster data path is not defined");
     }
 
-    unless (-e $strClusterDataPath)
+    unless (-e $strDbClusterPath)
     {
-        die &log(ERROR, "cluster data path '${strClusterDataPath}' does not exist");
+        die &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
     }
 
     # Find the previous backup based on the type
@@ -1226,13 +1288,13 @@ if ($strOperation eq "backup")
 
     # Build the backup manifest
     my %oTablespaceMap = tablespace_map_get($strCommandPsql);
-    backup_manifest_build($strCommandManifest, $strClusterDataPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
+    backup_manifest_build($strCommandManifest, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
     # Delete files leftover from a partial backup
     # !!! do it
 
     # Perform the backup
-    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strClusterDataPath,
+    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strDbClusterPath,
            $strBackupTmpPath, \%oBackupManifest);
            
     #sleep(30);
