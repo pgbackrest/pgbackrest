@@ -939,7 +939,7 @@ sub path_get
     # Parse paths on the db side
     if ($strType eq PATH_DB_ABSOLUTE)
     {
-        return $strPath;
+        return (defined($strPath) ? $strPath : "") . (defined($strFile) ? (defined($strPath) ? "/" : "") . $strFile : "");
     }
     elsif ($strType eq PATH_DB_RELATIVE)
     {
@@ -994,11 +994,12 @@ sub path_get
             
                 if ($strArchive !~ /^([0-F]){24}$/)
                 {
-                    croak &log(ERROR, "\$strFile not a valid archive file");
+                    croak &log(ERROR, "$strFile not a valid archive file");
                 }
             }
             
-            return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/${strArchive}" : "");
+            return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
+                   substr($strArchive, 0, 16) : "") . "/" . $strFile;
         }
         
     }
