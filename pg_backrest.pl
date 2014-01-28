@@ -9,6 +9,7 @@ use Config::IniFiles;
 use IPC::System::Simple qw(capture);
 use JSON;
 use File::Copy;
+use File::Remove;
 use Carp;
 
 # Process flags
@@ -27,6 +28,18 @@ GetOptions ("no-compression" => \$bNoCompression,
             "type=s" => \$strType)
     or die("Error in command line arguments\n");
     
+# Global constants
+use constant
+{
+    true  => 1,
+    false => 0
+};
+
+# Global command strings
+my $strCommandChecksum;
+my $strCommandCompress;
+my $strCommandDecompress;
+my $strCommandCopy;
 
 # Global variables
 my $strDbClusterPath;          # Database cluster base path
@@ -935,6 +948,12 @@ sub path_get
     my $strType = shift;
     my $strPath = shift;
     my $strFile = shift;
+    my $bTemp = shift;
+
+    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE))
+    {
+        confess &log(ASSERT, "temp file not supported on path " . $strType);
+    }
 
     # Parse paths on the db side
     if ($strType eq PATH_DB_ABSOLUTE)
@@ -986,22 +1005,28 @@ sub path_get
         }
         elsif ($strType eq PATH_BACKUP_ARCHIVE)
         {
-            my $strArchive;
-            
-            if (defined($strFile))
+            if (defined($bTemp) && $bTemp)
             {
-                $strArchive = substr($strFile, 0, 24);
-            
-                if ($strArchive !~ /^([0-F]){24}$/)
-                {
-                    croak &log(ERROR, "$strFile not a valid archive file");
-                }
+                return $strBackupClusterPath . "/archive/archive.tmp";
             }
+            else
+            {
+                my $strArchive;
             
-            return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
-                   substr($strArchive, 0, 16) : "") . "/" . $strFile;
+                if (defined($strFile))
+                {
+                    $strArchive = substr($strFile, 0, 24);
+            
+                    if ($strArchive !~ /^([0-F]){24}$/)
+                    {
+                        croak &log(ERROR, "$strFile not a valid archive file");
+                    }
+                }
+            
+                return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
+                       substr($strArchive, 0, 16) : "") . "/" . $strFile;
+            }
         }
-        
     }
 
     # Error when path type not recognized
@@ -1017,6 +1042,33 @@ sub file_copy
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
+    my $bNoCompressionOverride = shift;
+
+    my $strSource = path_get($strSourcePathType, undef, $strSourceFile);
+    my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
+    my $strDestinationTmp = path_get($strDestinationPathType, undef, $strDestinationFile, true);
+    
+    my $strCommand;
+    
+    if ((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
+        (!defined($bNoCompressionOverride) && $bNoCompression))
+    {
+        $strCommand = $strCommandCopy;
+        $strCommand =~ s/\%source\%/${strSource}/g;
+        $strCommand =~ s/\%destination\%/${strDestinationTmp}/g;
+    }
+    else
+    {
+        $strCommand = $strCommandCompress;
+        $strCommand =~ s/\%file\%/${strSourceFile}/g;
+        $strCommand .= " > ${strDestinationTmp}";
+        $strDestination .= ".gz";
+    }
+
+    # !!! Would like to put or die on these statements - tends to fail
+    unlink($strDestinationTmp); # or die &log(ERROR, "unable to remove temp file ${strDestinationTmp}");
+    system($strCommand); # or die &log(ERROR, "unable to copy $strSource to $strDestinationTmp");
+    rename($strDestinationTmp, $strDestination) or die &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
 }
 
 ####################################################################################################################################
@@ -1045,10 +1097,10 @@ my %oConfig;
 tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to find config file";
 
 # Load commands required for archive-push
-my $strCommandChecksum = config_load(\%oConfig, "command", "checksum", !$bNoChecksum);
-my $strCommandCompress = config_load(\%oConfig, "command", "compress", !$bNoCompression);
-my $strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNoCompression);
-my $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
+$strCommandChecksum = config_load(\%oConfig, "command", "checksum", !$bNoChecksum);
+$strCommandCompress = config_load(\%oConfig, "command", "compress", !$bNoCompression);
+$strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNoCompression);
+$strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
 
 # Load and check the base backup path
 $strBackupPath = $oConfig{common}{backup_path};
@@ -1082,96 +1134,24 @@ unless (-e $strBackupClusterPath)
 ####################################################################################################################################
 if ($strOperation eq "archive-push")
 {
-    # archive-push command must have three arguments
+    # archive-push command must have two arguments
     if (@ARGV != 2)
     {
         die "not enough arguments - show usage";
     }
 
-    my $strBackupClusterArchivePath = "${strBackupClusterPath}/archive";
-
-    unless (-e $strBackupClusterArchivePath)
-    {
-        &log(INFO, "creating cluster archive path ${strBackupClusterArchivePath}");
-        mkdir $strBackupClusterArchivePath or die &log(ERROR, "cluster backup archive path '${strBackupClusterArchivePath}' create failed");
-    }
-
-    # Get the source dir/file
+    # Get the source/destination file
     my $strSourceFile = $ARGV[1];
-    
-    unless (-e $strSourceFile)
-    {
-        die "source file does not exist - show usage";
-    }
-
-    # Get the destination dir/file
     my $strDestinationFile = basename($strSourceFile);
-    my $strDestinationTmpFile = "${strBackupClusterArchivePath}/archive.tmp";
-    my $strBackupClusterArchiveSubPath = "${strBackupClusterArchivePath}";
 
-    if (-e $strDestinationTmpFile)
+    # Append the checksum (if requested)
+    if (!$bNoChecksum)
     {
-        unlink($strDestinationTmpFile);
-    }
-
-    # Setup the copy command
-    my $strCommand;
-
-    # !!! Modify this to skip compression and checksum for any file that is not a log file
-    if ($strDestinationFile =~ /^([0-F]){24}.*/)
-    {
-        $strBackupClusterArchiveSubPath = "${strBackupClusterArchivePath}/" . substr($strDestinationFile, 0, 16);
-
-        if ($strDestinationFile =~ /^([0-F]){24}$/)
-        {
-            unless (-e $strBackupClusterArchiveSubPath)
-            {
-                &log(INFO, "creating cluster archive sub path ${strBackupClusterArchiveSubPath}");
-                mkdir $strBackupClusterArchiveSubPath or die &log(ERROR, "cluster backup archive sub path '${strBackupClusterArchiveSubPath}' create failed");
-            }
-
-            # Make sure the destination file does NOT exist - ignore checksum and extension in case they (or options) have changed
-            if (glob("${strBackupClusterArchiveSubPath}/${strDestinationFile}*"))
-            {
-                die "destination file already exists";
-            }
-
-            # Calculate sha1 hash for the file (unless disabled)
-            if (!$bNoChecksum)
-            {
-                $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
-            }
-
-            if ($bNoCompression)
-            {
-                $strCommand = $strCommandCopy;
-                $strCommand =~ s/\%source\%/${strSourceFile}/g;
-                $strCommand =~ s/\%destination\%/${strDestinationTmpFile}/g;
-            }
-            else
-            {
-                $strCommand = $strCommandCompress;
-                $strCommand =~ s/\%file\%/${strSourceFile}/g;
-                $strCommand .= " > ${strDestinationTmpFile}";
-                $strDestinationFile .= ".gz";
-            }
-        }
-        else
-        {
-            $strCommand = $strCommandCopy;
-            $strCommand =~ s/\%source\%/$strSourceFile/g;
-            $strCommand =~ s/\%destination\%/${strDestinationTmpFile}/g;
-        }
-    }
-    else
-    {
-        die &log(ERROR, "Unknown file type ${strDestinationFile}")
+        $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
     }
     
-    # Execute the copy
-    execute($strCommand);
-    rename($strDestinationTmpFile, "${strBackupClusterArchiveSubPath}/${strDestinationFile}")
-        or die &log(ERROR, "unable to rename '${strBackupClusterArchiveSubPath}/${strDestinationFile}'");
+    # Copy the archive file
+    file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile);
 
     exit 0;
 }
