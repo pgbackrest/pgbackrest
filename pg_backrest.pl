@@ -88,6 +88,11 @@ sub log
 {
     my $strLevel = shift;
     my $strMessage = shift;
+    
+    if (!defined($strMessage))
+    {
+        $strMessage = "(undefined)";
+    }
 
     print "${strLevel}: ${strMessage}\n";
 
@@ -226,6 +231,7 @@ sub config_load
 ####################################################################################################################################
 sub file_hash_get
 {
+    my $strPathType = shift;
     my $strFile = shift;
     
     if (!defined($strCommandChecksum))
@@ -233,12 +239,27 @@ sub file_hash_get
         confess &log(ASSERT, "\$strCommandChecksum not defined");
     }
     
+    my $strPath = path_get($strPathType, $strFile);
     my $strCommand = $strCommandChecksum;
-    $strCommand =~ s/\%file\%/$strFile/g;
     
-    my $strHash = trim(execute($strCommand));
+    if (-e $strPath)
+    {
+        $strCommand = $strCommandChecksum;
+        $strCommand =~ s/\%file\%/$strFile/g;
+    }
+    elsif (-e $strPath . ".gz")
+    {
+        $strCommand = $strCommandDecompress;
+        $strCommand =~ s/\%file\%/${strPath}/g;
+        $strCommand .= " | " . $strCommandChecksum;
+        $strCommand =~ s/\%file\%//g;
+    }
+    else
+    {
+        confess &log(ASSERT, "unable to find $strPath(.gz) for checksum");
+    }
     
-    return($strHash);
+    return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
 }
 
 ####################################################################################################################################
@@ -402,8 +423,6 @@ sub backup_manifest_build
         my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
         my $strSection = "${strLevel}:path";
 
-        #&log(DEBUG, "${strDbClusterPath} ${cType}: $strName");
-
         if ($cType eq "f")
         {
             $strSection = "${strLevel}:file";
@@ -423,8 +442,6 @@ sub backup_manifest_build
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
             (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
 
-#                print("modification time:" . ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time});
-
         if ($cType eq "f" || $cType eq "l")
         {
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
@@ -436,16 +453,20 @@ sub backup_manifest_build
             
             if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
             {
-                if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
-                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} == ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
+                if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
+                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
+                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
                 {
                     if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
                     {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                            ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
                     }
                     else
                     {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} = ${$oLastManifestRef}{common}{backup}{label};
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                            ${$oLastManifestRef}{common}{backup}{label};
                     }
                     
                     my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
@@ -467,7 +488,8 @@ sub backup_manifest_build
 
         if ($cType eq "l")
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} = $oManifestHash{name}{"${strName}"}{link_destination};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} =
+                $oManifestHash{name}{"${strName}"}{link_destination};
 
             if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq "base")
             {
@@ -478,10 +500,211 @@ sub backup_manifest_build
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
                 
-                backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef, $oTablespaceMapRef, "tablespace:${strTablespaceName}");
+                backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
+                                      $oTablespaceMapRef, "tablespace:${strTablespaceName}");
             }
         }
     }
+}
+
+####################################################################################################################################
+# PATH_GET
+####################################################################################################################################
+use constant 
+{
+    PATH_DB_ABSOLUTE    => 'db:absolute',
+    PATH_DB_RELATIVE    => 'db:relative',
+    PATH_BACKUP         => 'backup',
+    PATH_BACKUP_CLUSTER => 'backup:cluster',
+    PATH_BACKUP_TMP     => 'backup:tmp',
+    PATH_BACKUP_ARCHIVE => 'backup:archive'
+};
+
+sub path_get
+{
+    my $strType = shift;
+    my $strPath = shift;
+    my $strFile = shift;
+    my $bTemp = shift;
+
+    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP))
+    {
+        confess &log(ASSERT, "temp file not supported on path " . $strType);
+    }
+
+    # Parse paths on the db side
+    if ($strType eq PATH_DB_ABSOLUTE)
+    {
+        return (defined($strPath) ? $strPath : "") . (defined($strFile) ? (defined($strPath) ? "/" : "") . $strFile : "");
+    }
+    elsif ($strType eq PATH_DB_RELATIVE)
+    {
+        if (!defined($strDbClusterPath))
+        {
+            confess &log(ASSERT, "\$strDbClusterPath not yet defined");
+        }
+
+        return $strDbClusterPath . "/" . $strPath;
+    }
+    # Parse paths on the backup side
+    elsif ($strType eq PATH_BACKUP)
+    {
+        if (!defined($strBackupPath))
+        {
+            confess &log(ASSERT, "\$strBackupPath not yet defined");
+        }
+        
+        return $strBackupPath;
+    }
+    elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_TMP || $strType eq PATH_BACKUP_ARCHIVE)
+    {
+        if (!defined($strBackupClusterPath))
+        {
+            confess &log(ASSERT, "\$strBackupClusterPath not yet defined");
+        }
+        
+        if ($strType eq PATH_BACKUP_CLUSTER)
+        {
+            return $strBackupClusterPath . (defined($strPath) ? "/${strPath}" : "") .
+                   (defined($strFile) ? "/${strFile}" : "");
+        }
+        elsif ($strType eq PATH_BACKUP_TMP)
+        {
+            if (defined($bTemp) && $bTemp)
+            {
+                return $strBackupClusterPath . "/backup.tmp/file.tmp";
+            }
+            
+            return $strBackupClusterPath . "/backup.tmp" . (defined($strPath) ? "/${strPath}" : "") .
+                   (defined($strFile) ? "/${strFile}" : "");
+        }
+        elsif ($strType eq PATH_BACKUP_ARCHIVE)
+        {
+            if (defined($bTemp) && $bTemp)
+            {
+                return $strBackupClusterPath . "/archive/archive.tmp";
+            }
+            else
+            {
+                my $strArchive;
+            
+                if (defined($strFile))
+                {
+                    $strArchive = substr($strFile, 0, 24);
+            
+                    if ($strArchive !~ /^([0-F]){24}$/)
+                    {
+                        croak &log(ERROR, "$strFile not a valid archive file");
+                    }
+                }
+            
+                return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
+                       substr($strArchive, 0, 16) : "") . "/" . $strFile;
+            }
+        }
+    }
+
+    # Error when path type not recognized
+    confess &log(ASSERT, "no known path types in '${strType}'");
+}
+
+####################################################################################################################################
+# LINK_CREATE
+####################################################################################################################################
+sub link_create
+{
+    my $strSourcePathType = shift;
+    my $strSourceFile = shift;
+    my $strDestinationPathType = shift;
+    my $strDestinationFile = shift;
+    my $bHard = shift;
+    my $bRelative = shift;
+    
+    my $strSource = path_get($strSourcePathType, undef, $strSourceFile);
+    my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
+
+    # If the destination path does not exist, create it
+    unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
+    {
+        system("mkdir -p -m 0750 " . dirname($strDestination)) or die "unable to create path " . dirname($strDestination);
+    }
+
+    unless (-e $strSource)
+    {
+        if (-e $strSource . ".gz")
+        {
+            $strSource .= ".gz";
+            $strDestination .= ".gz";
+        }
+        else
+        {
+            confess &log(ASSERT, "unable to find ${strSource}(.gz) for checksum");
+        }
+    }
+    
+    # Create the link
+    my $strCommand = "ln";
+    
+    if (!defined($bHard) || !$bHard)
+    {
+        $strCommand .= " -s";
+    }
+    
+    $strCommand .= " ${strSource} ${strDestination}";
+    system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
+#    &log(DEBUG, "link command ($strSourcePathType): ${strCommand}");
+}
+
+####################################################################################################################################
+# FILE_COPY
+####################################################################################################################################
+sub file_copy
+{
+    my $strSourcePathType = shift;
+    my $strSourceFile = shift;
+    my $strDestinationPathType = shift;
+    my $strDestinationFile = shift;
+    my $bNoCompressionOverride = shift;
+
+    my $strSource = path_get($strSourcePathType, undef, $strSourceFile);
+    my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
+    my $strDestinationTmp = path_get($strDestinationPathType, undef, $strDestinationFile, true);
+    
+    my $strCommand;
+    
+    if ((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
+        (!defined($bNoCompressionOverride) && $bNoCompression))
+    {
+        $strCommand = $strCommandCopy;
+        $strCommand =~ s/\%source\%/${strSource}/g;
+        $strCommand =~ s/\%destination\%/${strDestinationTmp}/g;
+    }
+    else
+    {
+        $strCommand = $strCommandCompress;
+        $strCommand =~ s/\%file\%/${strSourceFile}/g;
+        $strCommand .= " > ${strDestinationTmp}";
+        $strDestination .= ".gz";
+    }
+
+    #&log(DEBUG, "copy command $strSource to $strDestination ($strDestinationTmp)");
+
+    # If the destination path does not exist, create it
+    unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
+    {
+        system("mkdir -p -m 0750 " . dirname($strDestination)) or die "unable to create path " . dirname($strDestination);
+    }
+
+    # Remove the temp file if it exists (indicates a previous failure)
+    if (-e $strDestinationTmp)
+    {
+        &log(ASSERT, "temp file ${strDestinationTmp} found - should not exist");
+        unlink($strDestinationTmp) or die &log(ERROR, "unable to remove temp file ${strDestinationTmp}");
+    }
+    
+    # Copy the file to temp and then move to the final destination
+    system($strCommand) == 0 or die &log(ERROR, "unable to copy $strSource to $strDestinationTmp");
+    rename($strDestinationTmp, $strDestination) or die &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
 }
 
 ####################################################################################################################################
@@ -514,6 +737,7 @@ sub backup
 
         # Determine the source and destination backup paths
         my $strBackupSourcePath;
+        my $strBackupDestinationPathOld; # Deprecated - will be remove when all file functions are migrated
         my $strBackupDestinationPath;
         my $strSectionFile;
         my $strFile;
@@ -525,7 +749,8 @@ sub backup
         if ($strSectionPath =~ /^base\:/)
         {
             $strBackupSourcePath = "${strDbClusterPath}";
-            $strBackupDestinationPath = "${strBackupTmpPath}/base";
+            $strBackupDestinationPath = "base";
+            $strBackupDestinationPathOld = "${strBackupTmpPath}/base";
             $strSectionFile = "base:file";
 
             undef($strTablespaceName);
@@ -536,7 +761,7 @@ sub backup
         {
             $strTablespaceName = (split(":", $strSectionPath))[1];
             $strBackupSourcePath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path};
-            $strBackupDestinationPath = "${strBackupTmpPath}/tablespace";
+            #$strBackupDestinationPathOld = "${strBackupTmpPath}/tablespace";
 
             # Create the tablespace path
             #unless (-e $strBackupDestinationPath)
@@ -544,7 +769,8 @@ sub backup
             #    execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
             #}
             
-            $strBackupDestinationPath = "${strBackupTmpPath}/tablespace/${strTablespaceName}";
+            $strBackupDestinationPath = "tablespace/${strTablespaceName}";
+            $strBackupDestinationPathOld = "${strBackupTmpPath}/tablespace/${strTablespaceName}";
             $strSectionFile = "tablespace:${strTablespaceName}:file";
             #my $strSectionLink = "tablespace:${strTablespaceName}:link";
             
@@ -555,15 +781,8 @@ sub backup
         }
         else
         {
-            die "Cannot find type for section ${strSectionPath}";
+            confess &log(ASSERT, "cannot find type for section ${strSectionPath}");
         }
-
-        # Create the base or tablespace path
-#        unless (-e $strBackupDestinationPath)
-#        {
-#            execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
-            #mkdir $strBackupDestinationPath, 0750 or die "Unable to create path ${strBackupDestinationPath}";
-#        }
 
         # Create all the paths required to store the files
         my $strPath;
@@ -571,7 +790,7 @@ sub backup
         foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
         {
 #            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{modification_time};
-            my $strBackupDestinationSubPath = "${strBackupDestinationPath}/${strPath}";
+            my $strBackupDestinationSubPath = "${strBackupDestinationPathOld}/${strPath}";
             my $iFileTotal = 0;
 
             if (!$bHardLink && $strType ne "full" && !(!defined($strTablespaceName) && $strPath eq 'pg_xlog'))
@@ -600,12 +819,6 @@ sub backup
             
             if (defined($strTablespaceName))
             {
-#                unless (-e $strBackupTablespaceLink)
-#                {
-#                    execute("mkdir -p -m 0750 ${strBackupTablespaceLink}");
-#                    unlink $strBackupTablespaceLink or die &log(ERROR, "Unable to remove table link '${strBackupTablespaceLink}'");
-#                }
-
                 unless (-e $strBackupTablespaceLink)
                 {
                     execute("ln -s ../../tablespace/${strTablespaceName} $strBackupTablespaceLink");
@@ -635,104 +848,44 @@ sub backup
         foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
-            my $iSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
-            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
 
-            # If the file is a reference it does not need to be copied
+            # If the file is a has reference it does not need to be copied since it can be retrieved from the referenced backup.
+            # However, if hard-linking is turned up the link will need to be created
             my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference};
 
             if (defined($strReference))
             {
+                # If hardlinking is turned on then create the hard link
                 if ($bHardLink)
                 {
-                    my $strLinkSource = "${strBackupTmpPath}/../${strReference}";
-                    my $strLinkDestination = "${strBackupTmpPath}";
+                    my $strLink;
                     
                     if (defined($strTablespaceName))
                     {
-                        $strLinkSource .= "/tablespace/${strTablespaceName}/${strFile}";
-                        $strLinkDestination .= "/tablespace/${strTablespaceName}/${strFile}";
+                        $strLink = "tablespace/${strTablespaceName}/${strFile}";
                     }
                     else
                     {
-                        $strLinkSource .= "/base/${strFile}";
-                        $strLinkDestination .= "/base/${strFile}";
+                        $strLink = "base/${strFile}";
                     }
                     
-                    if (!$bNoCompression && $iSize != 0)
-                    {
-                        $strLinkSource .= ".gz";
-                        $strLinkDestination .= ".gz";
-                    }
-                    
-                    if (-e $strLinkDestination)
-                    {
-                        unlink $strLinkDestination or die "Unable to unlink ${$strLinkDestination}";
-                    }
-                    
-                    execute("ln ${strLinkSource} ${strLinkDestination}");
+                    link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strLink}", PATH_BACKUP_TMP, $strLink, true);
                 }
                 
                 next;
             }
 
-            #&log(DEBUG, "   Backing up ${strBackupSourceFile}");
+            &log(DEBUG, "   backing up ${strBackupSourceFile}");
             
-            # Copy the file and calculate checksum
-            my $strBackupDestinationFile = "${strBackupDestinationPath}/${strFile}";
-            my $strHash;
+            # Copy the file from db to backup
+            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
+            file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
 
-            if ($iSize == 0)
+            # Write the hash into the backup manifest (if not suppressed)
+            if (!$bNoChecksum)
             {
-                execute("touch ${strBackupDestinationTmpFile}")
-            }
-            else
-            {
-                if ($bNoCompression || $iSize == 0)
-                {
-                    $strCommand = $strCommandCopy;
-                    $strCommand =~ s/\%source\%/${strBackupSourceFile}/g;
-                    $strCommand =~ s/\%destination\%/${strBackupDestinationTmpFile}/g;
-
-                    execute($strCommand);
-                
-                    $strHash = file_hash_get($strBackupDestinationTmpFile);
-                }
-                else
-                {
-                    $strCommand = $strCommandCompress;
-                    $strCommand =~ s/\%file\%/${strBackupSourceFile}/g;
-                    $strCommand .= " > ${strBackupDestinationTmpFile}";
-
-                    execute($strCommand);
-
-                    $strCommand = $strCommandDecompress;
-                    $strCommand =~ s/\%file\%/${strBackupDestinationTmpFile}/g;
-                    $strCommand .= " | " . $strCommandChecksum;
-                    $strCommand =~ s/\%file\%//g;
-
-                    #&log(DEBUG, "       command ${strCommand}");
-
-                    $strHash = trim(execute($strCommand));
-                }
-            
-                #&log(DEBUG, "       Hash ${strHash}");
-            
-                if (!$bNoCompression)
-                {
-                    $strBackupDestinationFile .= ".gz";
-                }
-            }
-
-            # Set permissions and move the file
-            execute ("chmod ${$oBackupManifestRef}{$strSectionFile}{$strFile}{permission} ${strBackupDestinationTmpFile}");
-            utime($lModificationTime, $lModificationTime, $strBackupDestinationTmpFile) or die "Unable to set time for ${strBackupDestinationTmpFile}";
-            rename $strBackupDestinationTmpFile, $strBackupDestinationFile or die "Unable to move ${strBackupDestinationFile}";
-
-            # Write the hash into the backup manifest
-            if (defined($strHash))
-            {
-                ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} = $strHash;
+                ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
+                    file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
             }
         }
     }
@@ -939,147 +1092,6 @@ sub backup_expire
 }
 
 ####################################################################################################################################
-# PATH_GET
-####################################################################################################################################
-use constant 
-{
-    PATH_DB_ABSOLUTE    => 'db:absolute',
-    PATH_DB_RELATIVE    => 'db:relative',
-    PATH_BACKUP         => 'backup',
-    PATH_BACKUP_CLUSTER => 'backup:cluster',
-    PATH_BACKUP_TMP     => 'backup:tmp',
-    PATH_BACKUP_ARCHIVE => 'backup:archive'
-};
-
-sub path_get
-{
-    my $strType = shift;
-    my $strPath = shift;
-    my $strFile = shift;
-    my $bTemp = shift;
-
-    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE))
-    {
-        confess &log(ASSERT, "temp file not supported on path " . $strType);
-    }
-
-    # Parse paths on the db side
-    if ($strType eq PATH_DB_ABSOLUTE)
-    {
-        return (defined($strPath) ? $strPath : "") . (defined($strFile) ? (defined($strPath) ? "/" : "") . $strFile : "");
-    }
-    elsif ($strType eq PATH_DB_RELATIVE)
-    {
-        if (!defined($strDbClusterPath))
-        {
-            confess &log(ASSERT, "\$strDbClusterPath not yet defined");
-        }
-
-        return $strDbClusterPath . "/" . $strPath;
-    }
-    # Parse paths on the backup side
-    elsif ($strType eq PATH_BACKUP)
-    {
-        if (!defined($strBackupPath))
-        {
-            confess &log(ASSERT, "\$strBackupPath not yet defined");
-        }
-        
-        return $strBackupPath;
-    }
-    elsif ($strType eq PATH_BACKUP_CLUSTER)
-    {
-        if (!defined($strBackupClusterPath))
-        {
-            confess &log(ASSERT, "\$strBackupPath not yet defined");
-        }
-        
-        return $strBackupPath;
-    }
-    elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_TMP || $strType eq PATH_BACKUP_ARCHIVE)
-    {
-        if (!defined($strBackupClusterPath))
-        {
-            confess &log(ASSERT, "\$strBackupClusterPath not yet defined");
-        }
-        
-        if ($strType eq PATH_BACKUP_CLUSTER)
-        {
-            return $strBackupClusterPath;
-        }
-        elsif ($strType eq PATH_BACKUP_TMP)
-        {
-            return $strBackupClusterPath . "/backup.tmp" . (defined($strPath) ? "/${strPath}" : "");
-        }
-        elsif ($strType eq PATH_BACKUP_ARCHIVE)
-        {
-            if (defined($bTemp) && $bTemp)
-            {
-                return $strBackupClusterPath . "/archive/archive.tmp";
-            }
-            else
-            {
-                my $strArchive;
-            
-                if (defined($strFile))
-                {
-                    $strArchive = substr($strFile, 0, 24);
-            
-                    if ($strArchive !~ /^([0-F]){24}$/)
-                    {
-                        croak &log(ERROR, "$strFile not a valid archive file");
-                    }
-                }
-            
-                return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
-                       substr($strArchive, 0, 16) : "") . "/" . $strFile;
-            }
-        }
-    }
-
-    # Error when path type not recognized
-    confess &log(ASSERT, "no known path types in '${strType}'");
-}
-
-####################################################################################################################################
-# FILE_COPY
-####################################################################################################################################
-sub file_copy
-{
-    my $strSourcePathType = shift;
-    my $strSourceFile = shift;
-    my $strDestinationPathType = shift;
-    my $strDestinationFile = shift;
-    my $bNoCompressionOverride = shift;
-
-    my $strSource = path_get($strSourcePathType, undef, $strSourceFile);
-    my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
-    my $strDestinationTmp = path_get($strDestinationPathType, undef, $strDestinationFile, true);
-    
-    my $strCommand;
-    
-    if ((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
-        (!defined($bNoCompressionOverride) && $bNoCompression))
-    {
-        $strCommand = $strCommandCopy;
-        $strCommand =~ s/\%source\%/${strSource}/g;
-        $strCommand =~ s/\%destination\%/${strDestinationTmp}/g;
-    }
-    else
-    {
-        $strCommand = $strCommandCompress;
-        $strCommand =~ s/\%file\%/${strSourceFile}/g;
-        $strCommand .= " > ${strDestinationTmp}";
-        $strDestination .= ".gz";
-    }
-
-    # !!! Would like to put or die on these statements - tends to fail
-    unlink($strDestinationTmp); # or die &log(ERROR, "unable to remove temp file ${strDestinationTmp}");
-    system($strCommand); # or die &log(ERROR, "unable to copy $strSource to $strDestinationTmp");
-    rename($strDestinationTmp, $strDestination) or die &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
-}
-
-####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
 # Get the command
@@ -1155,7 +1167,7 @@ if ($strOperation eq "archive-push")
     # Append the checksum (if requested)
     if (!$bNoChecksum)
     {
-        $strDestinationFile .= "-" . file_hash_get($strSourceFile);
+        $strDestinationFile .= "-" . file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
     }
     
     # Copy the archive file
