@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+#use lib ".";
+
 use strict;
 use warnings;
 use File::Basename;
@@ -11,6 +13,7 @@ use JSON;
 use File::Copy;
 use File::Remove;
 use Carp;
+#use pg_backrest_file;
 
 # Process flags
 my $bNoCompression;
@@ -223,9 +226,14 @@ sub config_load
 ####################################################################################################################################
 sub file_hash_get
 {
-    my $strCommand = shift;
     my $strFile = shift;
     
+    if (!defined($strCommandChecksum))
+    {
+        confess &log(ASSERT, "\$strCommandChecksum not defined");
+    }
+    
+    my $strCommand = $strCommandChecksum;
     $strCommand =~ s/\%file\%/$strFile/g;
     
     my $strHash = trim(execute($strCommand));
@@ -688,7 +696,7 @@ sub backup
 
                     execute($strCommand);
                 
-                    $strHash = file_hash_get($strCommandChecksum, $strBackupDestinationTmpFile);
+                    $strHash = file_hash_get($strBackupDestinationTmpFile);
                 }
                 else
                 {
@@ -1147,7 +1155,7 @@ if ($strOperation eq "archive-push")
     # Append the checksum (if requested)
     if (!$bNoChecksum)
     {
-        $strDestinationFile .= "-" . file_hash_get($strCommandChecksum, $strSourceFile);
+        $strDestinationFile .= "-" . file_hash_get($strSourceFile);
     }
     
     # Copy the archive file
@@ -1314,7 +1322,6 @@ if ($strOperation eq "backup")
     
     # Save the backup conf file
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
-    backup_manifest_load($strBackupConfFile);
 
     # Rename the backup tmp path to complete the backup
     rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
