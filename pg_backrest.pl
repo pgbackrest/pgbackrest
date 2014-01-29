@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-#use lib ".";
-
 use strict;
 use warnings;
 use File::Basename;
@@ -13,7 +11,6 @@ use JSON;
 use File::Copy;
 use File::Remove;
 use Carp;
-#use pg_backrest_file;
 
 # Process flags
 my $bNoCompression;
@@ -49,6 +46,12 @@ my $strDbClusterPath;          # Database cluster base path
 
 my $strBackupPath;             # Backup base path
 my $strBackupClusterPath;       # Backup cluster path
+
+####################################################################################################################################
+####################################################################################################################################
+## UTILITY FUNCTIONS
+####################################################################################################################################
+####################################################################################################################################
 
 ####################################################################################################################################
 # TRIM - trim whitespace off strings
@@ -110,16 +113,49 @@ sub execute
 #    print("$strCommand");
     $strOutput = capture($strCommand);
 
-#    if ($strOutput eq "")
-#    {  
-#        print(" ... complete\n\n");
-#    }
-#    else
-#    {
-#        print(" ... complete\n$strOutput\n\n");
-#    }
-
     return $strOutput;
+}
+
+####################################################################################################################################
+####################################################################################################################################
+## FILE FUNCTIONS
+####################################################################################################################################
+####################################################################################################################################
+
+####################################################################################################################################
+# FILE_HASH_GET
+####################################################################################################################################
+sub file_hash_get
+{
+    my $strPathType = shift;
+    my $strFile = shift;
+    
+    if (!defined($strCommandChecksum))
+    {
+        confess &log(ASSERT, "\$strCommandChecksum not defined");
+    }
+    
+    my $strPath = path_get($strPathType, $strFile);
+    my $strCommand;
+    
+    if (-e $strPath)
+    {
+        $strCommand = $strCommandChecksum;
+        $strCommand =~ s/\%file\%/$strFile/g;
+    }
+    elsif (-e $strPath . ".gz")
+    {
+        $strCommand = $strCommandDecompress;
+        $strCommand =~ s/\%file\%/${strPath}/g;
+        $strCommand .= " | " . $strCommandChecksum;
+        $strCommand =~ s/\%file\%//g;
+    }
+    else
+    {
+        confess &log(ASSERT, "unable to find $strPath(.gz) for checksum");
+    }
+    
+    return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
 }
 
 ####################################################################################################################################
@@ -224,42 +260,6 @@ sub config_load
     }
     
     return $strValue;
-}
-
-####################################################################################################################################
-# FILE_HASH_GET - get the sha1 hash for a file
-####################################################################################################################################
-sub file_hash_get
-{
-    my $strPathType = shift;
-    my $strFile = shift;
-    
-    if (!defined($strCommandChecksum))
-    {
-        confess &log(ASSERT, "\$strCommandChecksum not defined");
-    }
-    
-    my $strPath = path_get($strPathType, $strFile);
-    my $strCommand = $strCommandChecksum;
-    
-    if (-e $strPath)
-    {
-        $strCommand = $strCommandChecksum;
-        $strCommand =~ s/\%file\%/$strFile/g;
-    }
-    elsif (-e $strPath . ".gz")
-    {
-        $strCommand = $strCommandDecompress;
-        $strCommand =~ s/\%file\%/${strPath}/g;
-        $strCommand .= " | " . $strCommandChecksum;
-        $strCommand =~ s/\%file\%//g;
-    }
-    else
-    {
-        confess &log(ASSERT, "unable to find $strPath(.gz) for checksum");
-    }
-    
-    return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
 }
 
 ####################################################################################################################################
