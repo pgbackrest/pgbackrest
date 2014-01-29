@@ -117,152 +117,6 @@ sub execute
 }
 
 ####################################################################################################################################
-####################################################################################################################################
-## FILE FUNCTIONS
-####################################################################################################################################
-####################################################################################################################################
-
-####################################################################################################################################
-# FILE_HASH_GET
-####################################################################################################################################
-sub file_hash_get
-{
-    my $strPathType = shift;
-    my $strFile = shift;
-    
-    if (!defined($strCommandChecksum))
-    {
-        confess &log(ASSERT, "\$strCommandChecksum not defined");
-    }
-    
-    my $strPath = path_get($strPathType, $strFile);
-    my $strCommand;
-    
-    if (-e $strPath)
-    {
-        $strCommand = $strCommandChecksum;
-        $strCommand =~ s/\%file\%/$strFile/g;
-    }
-    elsif (-e $strPath . ".gz")
-    {
-        $strCommand = $strCommandDecompress;
-        $strCommand =~ s/\%file\%/${strPath}/g;
-        $strCommand .= " | " . $strCommandChecksum;
-        $strCommand =~ s/\%file\%//g;
-    }
-    else
-    {
-        confess &log(ASSERT, "unable to find $strPath(.gz) for checksum");
-    }
-    
-    return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
-}
-
-####################################################################################################################################
-# BACKUP_REGEXP_GET - Generate a regexp depending on the backups that need to be found
-####################################################################################################################################
-sub backup_regexp_get
-{
-    my $bFull = shift;
-    my $bDifferential = shift;
-    my $bIncremental = shift;
-    
-    if (!$bFull && !$bDifferential && !$bIncremental)
-    {
-        die &log(ERROR, 'one parameter must be true');
-    }
-    
-    my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
-    my $strRegExp = "^";
-    
-    if ($bFull || $bDifferential || $bIncremental)
-    {
-        $strRegExp .= $strDateTimeRegExp . "F";
-    }
-    
-    if ($bDifferential || $bIncremental)
-    {
-        if ($bFull)
-        {
-            $strRegExp .= "(\\_";
-        }
-        
-        $strRegExp .= $strDateTimeRegExp;
-        
-        if ($bDifferential && $bIncremental)
-        {
-            $strRegExp .= "(D|I)";
-        }
-        elsif ($bDifferential)
-        {
-            $strRegExp .= "D";
-        }
-        else
-        {
-            $strRegExp .= "I";
-        }
-
-        if ($bFull)
-        {
-            $strRegExp .= "){0,1}";
-        }
-    }
-    
-    $strRegExp .= "\$";
-    
-    &log(DEBUG, "backup_regexp_get($bFull, $bDifferential, $bIncremental): $strRegExp");
-    
-    return $strRegExp;
-}
-
-####################################################################################################################################
-# BACKUP_TYPE_FIND - Find the last backup depending on the type
-####################################################################################################################################
-sub backup_type_find
-{
-    my $strType = shift;
-    my $strBackupClusterPath = shift;
-    my $strDirectory;
-
-    if ($strType eq 'incremental')
-    {
-        $strDirectory = (file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse"))[0];
-    }
-
-    if (!defined($strDirectory) && $strType ne "full")
-    {
-        $strDirectory = (file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse"))[0];
-    }
-    
-    return $strDirectory;
-}
-
-####################################################################################################################################
-# CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
-####################################################################################################################################
-sub config_load
-{
-    my $oConfigRef = shift;
-    my $strSection = shift;
-    my $strKey = shift;
-    my $bRequired = shift;
-    
-    if (!defined($bRequired))
-    {
-        $bRequired = 1;
-    }
-    
-    my $strValue = ${$oConfigRef}{"${strSection}"}{"${strKey}"};
-    
-    if ($bRequired && !defined($strValue))
-    {
-        die &log(ERROR, 'config value ${strSection}->${strKey} is undefined');
-    }
-    
-    return $strValue;
-}
-
-####################################################################################################################################
 # DATA_HASH_BUILD - Hash a delimited file with header
 ####################################################################################################################################
 sub data_hash_build
@@ -300,212 +154,10 @@ sub data_hash_build
 }
 
 ####################################################################################################################################
-# TABLESPACE_MAP_GET - Get the mapping between oid and tablespace name
 ####################################################################################################################################
-sub tablespace_map_get
-{
-    my $strCommandPsql = shift;
-
-    my %oTablespaceMap = data_hash_build("oid\tname\n" . execute($strCommandPsql .
-                                         " -c 'copy (select oid, spcname from pg_tablespace) to stdout' postgres"), "\t");
-    
-    return %oTablespaceMap;
-}
-
+## FILE FUNCTIONS
 ####################################################################################################################################
-# MANIFEST_GET - Get a directory manifest
 ####################################################################################################################################
-sub manifest_get
-{
-    my $strCommandManifest = shift;
-    my $strPath = shift;
-
-    my $strCommand = $strCommandManifest;
-    $strCommand =~ s/\%path\%/$strPath/g;
-
-    my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
-                                    execute($strCommand), "\t", ".");
-    
-    return %oManifest;
-}
-
-####################################################################################################################################
-# BACKUP_MANIFEST_LOAD - Load the backup manifest
-####################################################################################################################################
-sub backup_manifest_load
-{
-    my $strBackupManifestFile = shift;
-    
-    my %oBackupManifestFile;
-    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or die &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
-
-    my %oBackupManifest;
-    my $strSection;
-
-    foreach $strSection (sort(keys %oBackupManifestFile))
-    {
-        my $strKey;
-        
-        #&log(DEBUG, "section: ${strSection}");
-
-        foreach $strKey (sort(keys ${oBackupManifestFile}{"${strSection}"}))
-        {
-            my $strValue = ${oBackupManifestFile}{"${strSection}"}{"$strKey"};
-
-            #&log(DEBUG, "    key: ${strKey}=${strValue}");
-            $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
-        }
-    }
-    
-    return %oBackupManifest;
-}
-####################################################################################################################################
-# BACKUP_MANIFEST_SAVE - Save the backup manifest
-####################################################################################################################################
-sub backup_manifest_save
-{
-    my $strBackupManifestFile = shift;
-    my $oBackupManifestRef = shift;
-    
-    my %oBackupManifest;
-    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
-
-    my $strSection;
-
-    foreach $strSection (sort(keys $oBackupManifestRef))
-    {
-        my $strKey;
-        
-        #&log(DEBUG, "section: ${strSection}");
-
-        foreach $strKey (sort(keys ${$oBackupManifestRef}{"${strSection}"}))
-        {
-            my $strValue = encode_json(${$oBackupManifestRef}{"${strSection}"}{"$strKey"});
-
-            #&log(DEBUG, "    key: ${strKey}=${strValue}");
-            $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
-        }
-    }
-    
-    tied(%oBackupManifest)->WriteConfig($strBackupManifestFile);
-}
-
-####################################################################################################################################
-# BACKUP_MANIFEST_BUILD - Create the backup manifest
-####################################################################################################################################
-sub backup_manifest_build
-{
-    my $strCommandManifest = shift;
-    my $strDbClusterPath = shift;
-    my $oBackupManifestRef = shift;
-    my $oLastManifestRef = shift;
-    my $oTablespaceMapRef = shift;
-    my $strLevel = shift;
-    
-    if (!defined($strLevel))
-    {
-        $strLevel = "base";
-    }
-    
-    my %oManifestHash = manifest_get($strCommandManifest, $strDbClusterPath);
-    my $strName;
-
-    foreach $strName (sort(keys $oManifestHash{name}))
-    {
-        # Skip certain files during backup
-        if ($strName =~ /^pg\_xlog\/.*/ ||    # pg_xlog/ - this will be reconstructed
-            $strName =~ /^postmaster\.pid$/)  # postmaster.pid - to avoid confusing postgres when restoring
-        {
-            next;
-        }
-        
-        my $cType = $oManifestHash{name}{"${strName}"}{type};
-        my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
-        my $strSection = "${strLevel}:path";
-
-        if ($cType eq "f")
-        {
-            $strSection = "${strLevel}:file";
-        }
-        elsif ($cType eq "l")
-        {
-            $strSection = "${strLevel}:link";
-        }
-        elsif ($cType ne "d")
-        {
-            die &log(ERROR, "Unrecognized file type $cType for file $strName");
-        }
-
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
-            (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
-
-        if ($cType eq "f" || $cType eq "l")
-        {
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
-        }
-
-        if ($cType eq "f")
-        {
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
-            
-            if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
-            {
-                if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
-                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
-                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
-                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
-                {
-                    if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
-                    {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                            ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
-                    }
-                    else
-                    {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                            ${$oLastManifestRef}{common}{backup}{label};
-                    }
-                    
-                    my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
-                    
-                    if (!defined(${$oBackupManifestRef}{common}{backup}{reference}))
-                    {
-                        ${$oBackupManifestRef}{common}{backup}{reference} = $strReference;
-                    }
-                    else
-                    {
-                        if (${$oBackupManifestRef}{common}{backup}{reference} !~ /$strReference/)
-                        {
-                            ${$oBackupManifestRef}{common}{backup}{reference} .= ",$strReference";
-                        }
-                    }
-                }
-            }
-        }
-
-        if ($cType eq "l")
-        {
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} =
-                $oManifestHash{name}{"${strName}"}{link_destination};
-
-            if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq "base")
-            {
-                my $strTablespaceOid = basename($strName);
-                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
-                #&log(DEBUG, "tablespace: ${strTablespace}");
-
-                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
-                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
-                
-                backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
-                                      $oTablespaceMapRef, "tablespace:${strTablespaceName}");
-            }
-        }
-    }
-}
 
 ####################################################################################################################################
 # PATH_GET
@@ -708,6 +360,405 @@ sub file_copy
 }
 
 ####################################################################################################################################
+# FILE_HASH_GET
+####################################################################################################################################
+sub file_hash_get
+{
+    my $strPathType = shift;
+    my $strFile = shift;
+    
+    if (!defined($strCommandChecksum))
+    {
+        confess &log(ASSERT, "\$strCommandChecksum not defined");
+    }
+    
+    my $strPath = path_get($strPathType, $strFile);
+    my $strCommand;
+    
+    if (-e $strPath)
+    {
+        $strCommand = $strCommandChecksum;
+        $strCommand =~ s/\%file\%/$strFile/g;
+    }
+    elsif (-e $strPath . ".gz")
+    {
+        $strCommand = $strCommandDecompress;
+        $strCommand =~ s/\%file\%/${strPath}/g;
+        $strCommand .= " | " . $strCommandChecksum;
+        $strCommand =~ s/\%file\%//g;
+    }
+    else
+    {
+        confess &log(ASSERT, "unable to find $strPath(.gz) for checksum");
+    }
+    
+    return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
+}
+
+
+####################################################################################################################################
+# FILE_LIST_GET
+####################################################################################################################################
+sub file_list_get
+{
+    my $strPath = shift;
+    my $strExpression = shift;
+    my $strSortOrder = shift;
+    
+    my $hDir;
+    
+    opendir $hDir, $strPath or die &log(ERROR, "unable to open path ${strPath}");
+    my @stryFileAll = readdir $hDir or die &log(ERROR, "unable to get files for path ${strPath}, expression ${strExpression}");
+    close $hDir;
+    
+    my @stryFile;
+
+    if (@stryFileAll)
+    {
+        @stryFile = grep(/$strExpression/i, @stryFileAll)
+    }
+    
+    if (@stryFile)
+    {
+        if (defined($strSortOrder) && $strSortOrder eq "reverse")
+        {
+            return sort {$b cmp $a} @stryFile;
+        }
+        else
+        {
+            return sort @stryFile;
+        }
+    }
+    
+    return @stryFile;
+}
+
+####################################################################################################################################
+# MANIFEST_GET - Get a directory manifest
+####################################################################################################################################
+sub manifest_get
+{
+    my $strCommandManifest = shift;
+    my $strPath = shift;
+
+    my $strCommand = $strCommandManifest;
+    $strCommand =~ s/\%path\%/$strPath/g;
+
+    my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
+                                    execute($strCommand), "\t", ".");
+    
+    return %oManifest;
+}
+
+####################################################################################################################################
+####################################################################################################################################
+## BACKUP FUNCTIONS
+####################################################################################################################################
+####################################################################################################################################
+
+####################################################################################################################################
+# BACKUP_REGEXP_GET - Generate a regexp depending on the backups that need to be found
+####################################################################################################################################
+sub backup_regexp_get
+{
+    my $bFull = shift;
+    my $bDifferential = shift;
+    my $bIncremental = shift;
+    
+    if (!$bFull && !$bDifferential && !$bIncremental)
+    {
+        die &log(ERROR, 'one parameter must be true');
+    }
+    
+    my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
+    my $strRegExp = "^";
+    
+    if ($bFull || $bDifferential || $bIncremental)
+    {
+        $strRegExp .= $strDateTimeRegExp . "F";
+    }
+    
+    if ($bDifferential || $bIncremental)
+    {
+        if ($bFull)
+        {
+            $strRegExp .= "(\\_";
+        }
+        
+        $strRegExp .= $strDateTimeRegExp;
+        
+        if ($bDifferential && $bIncremental)
+        {
+            $strRegExp .= "(D|I)";
+        }
+        elsif ($bDifferential)
+        {
+            $strRegExp .= "D";
+        }
+        else
+        {
+            $strRegExp .= "I";
+        }
+
+        if ($bFull)
+        {
+            $strRegExp .= "){0,1}";
+        }
+    }
+    
+    $strRegExp .= "\$";
+    
+#    &log(DEBUG, "backup_regexp_get($bFull, $bDifferential, $bIncremental): $strRegExp");
+    
+    return $strRegExp;
+}
+
+####################################################################################################################################
+# BACKUP_TYPE_FIND - Find the last backup depending on the type
+####################################################################################################################################
+sub backup_type_find
+{
+    my $strType = shift;
+    my $strBackupClusterPath = shift;
+    my $strDirectory;
+
+    if ($strType eq 'incremental')
+    {
+        $strDirectory = (file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse"))[0];
+    }
+
+    if (!defined($strDirectory) && $strType ne "full")
+    {
+        $strDirectory = (file_list_get($strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse"))[0];
+    }
+    
+    return $strDirectory;
+}
+
+####################################################################################################################################
+# CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
+####################################################################################################################################
+sub config_load
+{
+    my $oConfigRef = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $bRequired = shift;
+    
+    if (!defined($bRequired))
+    {
+        $bRequired = 1;
+    }
+    
+    my $strValue = ${$oConfigRef}{"${strSection}"}{"${strKey}"};
+    
+    if ($bRequired && !defined($strValue))
+    {
+        die &log(ERROR, 'config value ${strSection}->${strKey} is undefined');
+    }
+    
+    return $strValue;
+}
+
+####################################################################################################################################
+# TABLESPACE_MAP_GET - Get the mapping between oid and tablespace name
+####################################################################################################################################
+sub tablespace_map_get
+{
+    my $strCommandPsql = shift;
+
+    my %oTablespaceMap = data_hash_build("oid\tname\n" . execute($strCommandPsql .
+                                         " -c 'copy (select oid, spcname from pg_tablespace) to stdout' postgres"), "\t");
+    
+    return %oTablespaceMap;
+}
+
+####################################################################################################################################
+# BACKUP_MANIFEST_LOAD - Load the backup manifest
+####################################################################################################################################
+sub backup_manifest_load
+{
+    my $strBackupManifestFile = shift;
+    
+    my %oBackupManifestFile;
+    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or die &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
+
+    my %oBackupManifest;
+    my $strSection;
+
+    foreach $strSection (sort(keys %oBackupManifestFile))
+    {
+        my $strKey;
+        
+        #&log(DEBUG, "section: ${strSection}");
+
+        foreach $strKey (sort(keys ${oBackupManifestFile}{"${strSection}"}))
+        {
+            my $strValue = ${oBackupManifestFile}{"${strSection}"}{"$strKey"};
+
+            #&log(DEBUG, "    key: ${strKey}=${strValue}");
+            $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
+        }
+    }
+    
+    return %oBackupManifest;
+}
+####################################################################################################################################
+# BACKUP_MANIFEST_SAVE - Save the backup manifest
+####################################################################################################################################
+sub backup_manifest_save
+{
+    my $strBackupManifestFile = shift;
+    my $oBackupManifestRef = shift;
+    
+    my %oBackupManifest;
+    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
+
+    my $strSection;
+
+    foreach $strSection (sort(keys $oBackupManifestRef))
+    {
+        my $strKey;
+        
+        #&log(DEBUG, "section: ${strSection}");
+
+        foreach $strKey (sort(keys ${$oBackupManifestRef}{"${strSection}"}))
+        {
+            my $strValue = encode_json(${$oBackupManifestRef}{"${strSection}"}{"$strKey"});
+
+            #&log(DEBUG, "    key: ${strKey}=${strValue}");
+            $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
+        }
+    }
+    
+    tied(%oBackupManifest)->WriteConfig($strBackupManifestFile);
+}
+
+####################################################################################################################################
+# BACKUP_MANIFEST_BUILD - Create the backup manifest
+####################################################################################################################################
+sub backup_manifest_build
+{
+    my $strCommandManifest = shift;
+    my $strDbClusterPath = shift;
+    my $oBackupManifestRef = shift;
+    my $oLastManifestRef = shift;
+    my $oTablespaceMapRef = shift;
+    my $strLevel = shift;
+    
+    if (!defined($strLevel))
+    {
+        $strLevel = "base";
+    }
+    
+    my %oManifestHash = manifest_get($strCommandManifest, $strDbClusterPath);
+    my $strName;
+
+    foreach $strName (sort(keys $oManifestHash{name}))
+    {
+        # Skip certain files during backup
+        if ($strName =~ /^pg\_xlog\/.*/ ||    # pg_xlog/ - this will be reconstructed
+            $strName =~ /^postmaster\.pid$/)  # postmaster.pid - to avoid confusing postgres when restoring
+        {
+            next;
+        }
+        
+        my $cType = $oManifestHash{name}{"${strName}"}{type};
+        my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
+        my $strSection = "${strLevel}:path";
+
+        if ($cType eq "f")
+        {
+            $strSection = "${strLevel}:file";
+        }
+        elsif ($cType eq "l")
+        {
+            $strSection = "${strLevel}:link";
+        }
+        elsif ($cType ne "d")
+        {
+            die &log(ERROR, "Unrecognized file type $cType for file $strName");
+        }
+
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
+            (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
+
+        if ($cType eq "f" || $cType eq "l")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
+
+            my $bSizeMatch = true;
+            
+            if ($cType eq "f")
+            {
+                $bSizeMatch = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} =
+                              ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size};
+            }
+
+            if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
+            {
+                if ($bSizeMatch &&
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
+                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
+                {
+                    if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
+                    {
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                            ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
+                    }
+                    else
+                    {
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                            ${$oLastManifestRef}{common}{backup}{label};
+                    }
+                    
+                    my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
+                    
+                    if (!defined(${$oBackupManifestRef}{common}{backup}{reference}))
+                    {
+                        ${$oBackupManifestRef}{common}{backup}{reference} = $strReference;
+                    }
+                    else
+                    {
+                        if (${$oBackupManifestRef}{common}{backup}{reference} !~ /$strReference/)
+                        {
+                            ${$oBackupManifestRef}{common}{backup}{reference} .= ",$strReference";
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($cType eq "f")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
+        }
+
+        if ($cType eq "l")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{link_destination} =
+                $oManifestHash{name}{"${strName}"}{link_destination};
+
+            if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq "base")
+            {
+                my $strTablespaceOid = basename($strName);
+                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
+                #&log(DEBUG, "tablespace: ${strTablespace}");
+
+                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
+                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
+                
+                backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
+                                      $oTablespaceMapRef, "tablespace:${strTablespaceName}");
+            }
+        }
+    }
+}
+
+####################################################################################################################################
 # BACKUP - Perform the backup
 ####################################################################################################################################
 sub backup
@@ -869,15 +920,17 @@ sub backup
                         $strLink = "base/${strFile}";
                     }
                     
+                    &log(DEBUG, "   hard-linking ${strBackupSourceFile} from ${strReference}");
+
                     link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strLink}", PATH_BACKUP_TMP, $strLink, true);
                 }
                 
                 next;
             }
 
+            # Copy the file from db to backup
             &log(DEBUG, "   backing up ${strBackupSourceFile}");
             
-            # Copy the file from db to backup
             my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
             file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
 
@@ -933,43 +986,6 @@ sub archive_list_get
     while !($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor);    
 
     return @stryArchive;
-}
-
-####################################################################################################################################
-# FILE_LIST_GET
-####################################################################################################################################
-sub file_list_get
-{
-    my $strPath = shift;
-    my $strExpression = shift;
-    my $strSortOrder = shift;
-    
-    my $hDir;
-    
-    opendir $hDir, $strPath or die &log(ERROR, "unable to open path ${strPath}");
-    my @stryFileAll = readdir $hDir or die &log(ERROR, "unable to get files for path ${strPath}, expression ${strExpression}");
-    close $hDir;
-    
-    my @stryFile;
-
-    if (@stryFileAll)
-    {
-        @stryFile = grep(/$strExpression/i, @stryFileAll)
-    }
-    
-    if (@stryFile)
-    {
-        if (defined($strSortOrder) && $strSortOrder eq "reverse")
-        {
-            return sort {$b cmp $a} @stryFile;
-        }
-        else
-        {
-            return sort @stryFile;
-        }
-    }
-    
-    return @stryFile;
 }
 
 ####################################################################################################################################
@@ -1261,10 +1277,11 @@ if ($strOperation eq "backup")
     {
         &log(WARNING, "backup path $strBackupTmpPath already exists");
 
-        if (-e $strBackupConfFile)
-        {
-            unlink $strBackupConfFile or die &log(ERROR, "backup config ${strBackupConfFile} could not be deleted");
-        }
+        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete backup.tmp");
+        #if (-e $strBackupConfFile)
+        #{
+        #    unlink $strBackupConfFile or die &log(ERROR, "backup config ${strBackupConfFile} could not be deleted");
+        #}
     }
     # Else create the backup tmp path
     else
