@@ -41,6 +41,8 @@ my $strCommandCompress;
 my $strCommandDecompress;
 my $strCommandCopy;
 
+my $strDefaultPathPermission = "0750";
+
 # Global variables
 my $strDbClusterPath;          # Database cluster base path
 
@@ -278,7 +280,7 @@ sub link_create
     # If the destination path does not exist, create it
     unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
     {
-        system("mkdir -p -m 0750 " . dirname($strDestination)) or die "unable to create path " . dirname($strDestination);
+        path_create(undef, dirname($strDestination), $strDefaultPathPermission);
     }
 
     unless (-e $strSource)
@@ -305,6 +307,33 @@ sub link_create
     $strCommand .= " ${strSource} ${strDestination}";
     system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
 #    &log(DEBUG, "link command ($strSourcePathType): ${strCommand}");
+}
+
+####################################################################################################################################
+# PATH_CREATE
+####################################################################################################################################
+sub path_create
+{
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $strPermission = shift;
+    
+    # If no permission are given then use the default
+    if (!defined($strPermission))
+    {
+        $strPermission = "0750";
+    }
+
+    # Get the path to create
+    my $strPathCreate = $strPath;
+    
+    if (defined($strPathType))
+    {
+        $strPathCreate = path_get($strPathType, undef, $strPath);
+    }
+
+    # Create the path
+    system("mkdir -p -m ${strPermission} ${strPathCreate}") == 0 or confess &log(ERROR, "unable to create path ${strPathCreate}");
 }
 
 ####################################################################################################################################
@@ -344,7 +373,7 @@ sub file_copy
     # If the destination path does not exist, create it
     unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
     {
-        system("mkdir -p -m 0750 " . dirname($strDestination)) or die "unable to create path " . dirname($strDestination);
+        path_create(undef, dirname($strDestination), $strDefaultPathPermission);
     }
 
     # Remove the temp file if it exists (indicates a previous failure)
@@ -677,7 +706,7 @@ sub backup_manifest_build
         }
         elsif ($cType ne "d")
         {
-            die &log(ERROR, "Unrecognized file type $cType for file $strName");
+            confess &log(ASSERT, "unrecognized file type $cType for file $strName");
         }
 
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
@@ -763,21 +792,11 @@ sub backup_manifest_build
 ####################################################################################################################################
 sub backup
 {
-    my $strCommandChecksum = shift;
-    my $strCommandCompress = shift;
-    my $strCommandDecompress = shift;
-    my $strCommandCopy = shift;
-    my $strDbClusterPath = shift;
-    my $strBackupTmpPath = shift;
-    my $oBackupManifestRef = shift;
+    my $oBackupManifestRef = shift;    # Manifest for the current backup
 
+    # Iterate through the path sections of the manifest to backup
     my $strSectionPath;
-    my $strCommand;
 
-    # Create the backup file dir
-    my $strBackupDestinationTmpFile = "${strBackupTmpPath}/file.tmp";
-
-    # Iterate through the path sections to backup
     foreach $strSectionPath (sort(keys $oBackupManifestRef))
     {
         # Skip non-path sections
@@ -787,107 +806,53 @@ sub backup
         }
 
         # Determine the source and destination backup paths
-        my $strBackupSourcePath;
-        my $strBackupDestinationPathOld; # Deprecated - will be remove when all file functions are migrated
-        my $strBackupDestinationPath;
-        my $strSectionFile;
-        my $strFile;
+        my $strBackupSourcePath;        # Absolute path to the database base directory or tablespace to backup
+        my $strBackupDestinationPath;   # Relative path to the backup directory where the data will be stored
+        my $strSectionFile;             # Manifest section that contains the file data
 
-        my $strTablespaceName;
-        my $strTablespaceLink;
-        my $strBackupTablespaceLink;
-
+        # Process the base database directory
         if ($strSectionPath =~ /^base\:/)
         {
             $strBackupSourcePath = "${strDbClusterPath}";
             $strBackupDestinationPath = "base";
-            $strBackupDestinationPathOld = "${strBackupTmpPath}/base";
             $strSectionFile = "base:file";
 
-            undef($strTablespaceName);
-            undef($strTablespaceLink);
-            undef($strBackupTablespaceLink);
+            # Create the archive log directory
+            path_create(PATH_BACKUP_TMP, "base/pg_xlog");
         }
+        # Process each tablespace
         elsif ($strSectionPath =~ /^tablespace\:/)
         {
-            $strTablespaceName = (split(":", $strSectionPath))[1];
+            my $strTablespaceName = (split(":", $strSectionPath))[1];
             $strBackupSourcePath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path};
-            #$strBackupDestinationPathOld = "${strBackupTmpPath}/tablespace";
-
-            # Create the tablespace path
-            #unless (-e $strBackupDestinationPath)
-            #{
-            #    execute("mkdir -p -m 0750 ${strBackupDestinationPath}");
-            #}
-            
             $strBackupDestinationPath = "tablespace/${strTablespaceName}";
-            $strBackupDestinationPathOld = "${strBackupTmpPath}/tablespace/${strTablespaceName}";
             $strSectionFile = "tablespace:${strTablespaceName}:file";
-            #my $strSectionLink = "tablespace:${strTablespaceName}:link";
-            
-            # Create link to the tablespace
-            $strTablespaceLink = "pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid};
-            $strBackupTablespaceLink = "${strBackupTmpPath}/base/${strTablespaceLink}";
-            #my $strBackupLinkPath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path};
+
+            # Create the tablespace directory and link
+            if ($bHardLink || $strType eq "full")
+            {
+                path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
+
+                link_create(PATH_BACKUP_TMP, $strBackupDestinationPath,
+                            PATH_BACKUP_TMP, "pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid});
+            }
         }
         else
         {
             confess &log(ASSERT, "cannot find type for section ${strSectionPath}");
         }
 
-        # Create all the paths required to store the files
-        my $strPath;
-
-        foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
+        # Create all the sub paths if this is a full backup or hardlinks are requested
+        if ($bHardLink || $strType eq "full")
         {
-#            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{modification_time};
-            my $strBackupDestinationSubPath = "${strBackupDestinationPathOld}/${strPath}";
-            my $iFileTotal = 0;
-
-            if (!$bHardLink && $strType ne "full" && !(!defined($strTablespaceName) && $strPath eq 'pg_xlog'))
-            {
-                &log(DEBUG, "skipping path: ${strPath}");
-
-                if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
-                {
-                    next;
-                }
-                
-                foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
-                {
-                    if (dirname($strFile) eq $strPath && !defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference}))
-                    {
-                        $iFileTotal += 1;
-                        last;
-                    }
-                }
-                
-                if ($iFileTotal == 0)
-                {
-                    next;
-                }
-            }
+            my $strPath;
             
-            if (defined($strTablespaceName))
+            foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
             {
-                unless (-e $strBackupTablespaceLink)
-                {
-                    execute("ln -s ../../tablespace/${strTablespaceName} $strBackupTablespaceLink");
-                }
-                
-                execute ("chmod " . ${$oBackupManifestRef}{"base:link"}{$strTablespaceLink}{permission} . " ${strBackupTablespaceLink}");
+                path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}",
+                            ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{permission});
             }
-
-            unless (-e $strBackupDestinationSubPath)
-            {
-                execute("mkdir -p ${strBackupDestinationSubPath}");
-            }
-            
-            execute ("chmod ${$oBackupManifestRef}{$strSectionPath}{$strPath}{permission} ${strBackupDestinationSubPath}");
-#            utime($lModificationTime, $lModificationTime, $strBackupDestinationTmpFile) or die "Unable to set time for ${strBackupDestinationTmpFile}";
         }
-
-        #&log(DEBUG, "Backing up ${strBackupSourcePath}");
 
         # Possible for the path section to exist with no files (i.e. empty tablespace)
         if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
@@ -896,49 +861,42 @@ sub backup
         }
 
         # Iterate through the files for each backup source path
+        my $strFile;
+        
         foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
 
             # If the file is a has reference it does not need to be copied since it can be retrieved from the referenced backup.
-            # However, if hard-linking is turned up the link will need to be created
+            # However, if hard-linking is turned on the link will need to be created
             my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference};
 
             if (defined($strReference))
             {
-                # If hardlinking is turned on then create the hard link
+                # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
                 if ($bHardLink)
                 {
-                    my $strLink;
-                    
-                    if (defined($strTablespaceName))
-                    {
-                        $strLink = "tablespace/${strTablespaceName}/${strFile}";
-                    }
-                    else
-                    {
-                        $strLink = "base/${strFile}";
-                    }
-                    
                     &log(DEBUG, "   hard-linking ${strBackupSourceFile} from ${strReference}");
 
-                    link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strLink}", PATH_BACKUP_TMP, $strLink, true);
+                    link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
+                                PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true);
                 }
-                
-                next;
             }
-
-            # Copy the file from db to backup
-            &log(DEBUG, "   backing up ${strBackupSourceFile}");
-            
-            my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
-            file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
-
-            # Write the hash into the backup manifest (if not suppressed)
-            if (!$bNoChecksum)
+            # Else copy/compress the file and generate a checksum
+            else
             {
-                ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
-                    file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+                # Copy the file from db to backup
+                &log(DEBUG, "   backing up ${strBackupSourceFile}");
+            
+                my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
+                file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+
+                # Write the hash into the backup manifest (if not suppressed)
+                if (!$bNoChecksum)
+                {
+                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
+                        file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+                }
             }
         }
     }
@@ -1312,8 +1270,7 @@ if ($strOperation eq "backup")
     # !!! do it
 
     # Perform the backup
-    backup($strCommandChecksum, $strCommandCompress, $strCommandDecompress, $strCommandCopy, $strDbClusterPath,
-           $strBackupTmpPath, \%oBackupManifest);
+    backup(\%oBackupManifest);
            
     #sleep(30);
 
