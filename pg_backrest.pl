@@ -167,7 +167,7 @@ sub data_hash_build
 use constant 
 {
     PATH_DB_ABSOLUTE    => 'db:absolute',
-    PATH_DB_RELATIVE    => 'db:relative',
+#    PATH_DB_RELATIVE    => 'db:relative',
     PATH_BACKUP         => 'backup',
     PATH_BACKUP_CLUSTER => 'backup:cluster',
     PATH_BACKUP_TMP     => 'backup:tmp',
@@ -177,7 +177,6 @@ use constant
 sub path_get
 {
     my $strType = shift;
-    my $strPath = shift;
     my $strFile = shift;
     my $bTemp = shift;
 
@@ -189,17 +188,17 @@ sub path_get
     # Parse paths on the db side
     if ($strType eq PATH_DB_ABSOLUTE)
     {
-        return (defined($strPath) ? $strPath : "") . (defined($strFile) ? (defined($strPath) ? "/" : "") . $strFile : "");
+        return $strFile;
     }
-    elsif ($strType eq PATH_DB_RELATIVE)
-    {
-        if (!defined($strDbClusterPath))
-        {
-            confess &log(ASSERT, "\$strDbClusterPath not yet defined");
-        }
-
-        return $strDbClusterPath . "/" . $strPath;
-    }
+#    elsif ($strType eq PATH_DB_RELATIVE)
+#    {
+#        if (!defined($strDbClusterPath))
+#        {
+#            confess &log(ASSERT, "\$strDbClusterPath not yet defined");
+#        }
+#
+#        return $strDbClusterPath . "/" . $strPath;
+#    }
     # Parse paths on the backup side
     elsif ($strType eq PATH_BACKUP)
     {
@@ -219,8 +218,7 @@ sub path_get
         
         if ($strType eq PATH_BACKUP_CLUSTER)
         {
-            return $strBackupClusterPath . (defined($strPath) ? "/${strPath}" : "") .
-                   (defined($strFile) ? "/${strFile}" : "");
+            return $strBackupClusterPath . (defined($strFile) ? "/${strFile}" : "");
         }
         elsif ($strType eq PATH_BACKUP_TMP)
         {
@@ -229,8 +227,7 @@ sub path_get
                 return $strBackupClusterPath . "/backup.tmp/file.tmp";
             }
             
-            return $strBackupClusterPath . "/backup.tmp" . (defined($strPath) ? "/${strPath}" : "") .
-                   (defined($strFile) ? "/${strFile}" : "");
+            return $strBackupClusterPath . "/backup.tmp" . (defined($strFile) ? "/${strFile}" : "");
         }
         elsif ($strType eq PATH_BACKUP_ARCHIVE)
         {
@@ -274,8 +271,8 @@ sub link_create
     my $bHard = shift;
     my $bRelative = shift;
     
-    my $strSource = path_get($strSourcePathType, undef, $strSourceFile);
-    my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
+    my $strSource = path_get($strSourcePathType, $strSourceFile);
+    my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
 
     # If the destination path does not exist, create it
     unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
@@ -329,7 +326,7 @@ sub path_create
     
     if (defined($strPathType))
     {
-        $strPathCreate = path_get($strPathType, undef, $strPath);
+        $strPathCreate = path_get($strPathType, $strPath);
     }
 
     # Create the path
@@ -347,9 +344,9 @@ sub file_copy
     my $strDestinationFile = shift;
     my $bNoCompressionOverride = shift;
 
-    my $strSource = path_get($strSourcePathType, undef, $strSourceFile);
-    my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
-    my $strDestinationTmp = path_get($strDestinationPathType, undef, $strDestinationFile, true);
+    my $strSource = path_get($strSourcePathType, $strSourceFile);
+    my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
+    my $strDestinationTmp = path_get($strDestinationPathType, $strDestinationFile, true);
     
     # Is this already a gzip file?
     my $bAlreadyCompressed = $strSource =~ /.*\.gz$/;
@@ -1306,7 +1303,7 @@ if ($strOperation eq "backup")
 
     foreach my $strArchive (@stryArchive)
     {
-        my $strArchivePath = dirname(path_get(PATH_BACKUP_ARCHIVE, undef, $strArchive));
+        my $strArchivePath = dirname(path_get(PATH_BACKUP_ARCHIVE, $strArchive));
         my @stryArchiveFile = file_list_get($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.gz){0,1}\$");
         
         if (scalar @stryArchiveFile != 1)
