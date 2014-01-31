@@ -41,6 +41,7 @@ my $strCommandCompress;
 my $strCommandDecompress;
 my $strCommandCopy;
 
+my $strCompressExtension = "gz";
 my $strDefaultPathPermission = "0750";
 
 # Global variables
@@ -282,14 +283,14 @@ sub link_create
 
     unless (-e $strSource)
     {
-        if (-e $strSource . ".gz")
+        if (-e $strSource . ".${strCompressExtension}")
         {
-            $strSource .= ".gz";
-            $strDestination .= ".gz";
+            $strSource .= ".${strCompressExtension}";
+            $strDestination .= ".${strCompressExtension}";
         }
         else
         {
-            confess &log(ASSERT, "unable to find ${strSource}(.gz) for checksum");
+            confess &log(ASSERT, "unable to find ${strSource}(.${strCompressExtension}) for checksum");
         }
     }
     
@@ -348,15 +349,15 @@ sub file_copy
     my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
     my $strDestinationTmp = path_get($strDestinationPathType, $strDestinationFile, true);
     
-    # Is this already a gzip file?
-    my $bAlreadyCompressed = $strSource =~ /.*\.gz$/;
+    # Is this already a compressed file?
+    my $bAlreadyCompressed = $strSource =~ "^.*\.${strCompressExtension}\$";
     
-    if ($bAlreadyCompressed && $strDestination !~ /.*\.gz$/)
+    if ($bAlreadyCompressed && $strDestination !~ "^.*\.${strCompressExtension}\$")
     {
-        $strDestination .= ".gz";
+        $strDestination .= ".${strCompressExtension}";
     }
     
-    !!!
+    # Generate the command
     my $strCommand;
 
     if ($bAlreadyCompressed ||
@@ -372,7 +373,7 @@ sub file_copy
         $strCommand = $strCommandCompress;
         $strCommand =~ s/\%file\%/${strSourceFile}/g;
         $strCommand .= " > ${strDestinationTmp}";
-        $strDestination .= ".gz";
+        $strDestination .= ".${strCompressExtension}";
     }
 
     #&log(DEBUG, "copy command $strSource to $strDestination ($strDestinationTmp)");
@@ -416,7 +417,7 @@ sub file_hash_get
         $strCommand = $strCommandChecksum;
         $strCommand =~ s/\%file\%/$strFile/g;
     }
-    elsif (-e $strPath . ".gz")
+    elsif (-e $strPath . ".${strCompressExtension}")
     {
         $strCommand = $strCommandDecompress;
         $strCommand =~ s/\%file\%/${strPath}/g;
@@ -425,7 +426,7 @@ sub file_hash_get
     }
     else
     {
-        confess &log(ASSERT, "unable to find $strPath(.gz) for checksum");
+        confess &log(ASSERT, "unable to find $strPath(.${strCompressExtension}) for checksum");
     }
     
     return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
@@ -1304,7 +1305,7 @@ if ($strOperation eq "backup")
     foreach my $strArchive (@stryArchive)
     {
         my $strArchivePath = dirname(path_get(PATH_BACKUP_ARCHIVE, $strArchive));
-        my @stryArchiveFile = file_list_get($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.gz){0,1}\$");
+        my @stryArchiveFile = file_list_get($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.${strCompressExtension}){0,1}\$");
         
         if (scalar @stryArchiveFile != 1)
         {
