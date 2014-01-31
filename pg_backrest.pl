@@ -351,9 +351,19 @@ sub file_copy
     my $strDestination = path_get($strDestinationPathType, undef, $strDestinationFile);
     my $strDestinationTmp = path_get($strDestinationPathType, undef, $strDestinationFile, true);
     
-    my $strCommand;
+    # Is this already a gzip file?
+    my $bAlreadyCompressed = $strSource =~ /.*\.gz$/;
     
-    if ((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
+    if ($bAlreadyCompressed && $strDestination !~ /.*\.gz$/)
+    {
+        $strDestination .= ".gz";
+    }
+    
+    !!!
+    my $strCommand;
+
+    if ($bAlreadyCompressed ||
+        (defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
         (!defined($bNoCompressionOverride) && $bNoCompression))
     {
         $strCommand = $strCommandCopy;
@@ -789,6 +799,9 @@ sub backup_manifest_build
 
 ####################################################################################################################################
 # BACKUP - Perform the backup
+#
+# Uses the information in the manifest to determine which files need to be copied.  Directories and tablespace links are only
+# created when needed, except in the case of a full backup or if hardlinks are requested.
 ####################################################################################################################################
 sub backup
 {
@@ -904,6 +917,8 @@ sub backup
 
 ####################################################################################################################################
 # ARCHIVE_LIST_GET
+# 
+# !!! Need to put code in here to cover pre-9.3 skipping log FF.
 ####################################################################################################################################
 sub archive_list_get
 {
@@ -1128,6 +1143,8 @@ unless (-e $strBackupClusterPath)
 ####################################################################################################################################
 if ($strOperation eq "archive-push")
 {
+    # !!! Need to think about locking here
+    
     # archive-push command must have two arguments
     if (@ARGV != 2)
     {
@@ -1137,15 +1154,18 @@ if ($strOperation eq "archive-push")
     # Get the source/destination file
     my $strSourceFile = $ARGV[1];
     my $strDestinationFile = basename($strSourceFile);
+    
+    # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
+    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/;
 
     # Append the checksum (if requested)
-    if (!$bNoChecksum)
+    if ($bArchiveFile && !$bNoChecksum)
     {
         $strDestinationFile .= "-" . file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
     }
     
     # Copy the archive file
-    file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile);
+    file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile, !$bArchiveFile);
 
     exit 0;
 }
@@ -1235,6 +1255,7 @@ if ($strOperation eq "backup")
     {
         &log(WARNING, "backup path $strBackupTmpPath already exists");
 
+        # !!! This is temporary until we can clean backup dirs
         rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete backup.tmp");
         #if (-e $strBackupConfFile)
         #{
@@ -1272,8 +1293,6 @@ if ($strOperation eq "backup")
     # Perform the backup
     backup(\%oBackupManifest);
            
-    #sleep(30);
-
     # Stop backup
     my $strArchiveStop = trim(execute($strCommandPsql .
         " -c \"set client_min_messages = 'warning'; copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout\" postgres"));
@@ -1287,7 +1306,7 @@ if ($strOperation eq "backup")
 
     foreach my $strArchive (@stryArchive)
     {
-        my $strArchivePath = "${strBackupClusterPath}/archive/" . substr($strArchive, 0, 16);
+        my $strArchivePath = dirname(path_get(PATH_BACKUP_ARCHIVE, undef, $strArchive));
         my @stryArchiveFile = file_list_get($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.gz){0,1}\$");
         
         if (scalar @stryArchiveFile != 1)
@@ -1295,15 +1314,9 @@ if ($strOperation eq "backup")
             die &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
         }
 
-        my $strArchiveFile = $strArchivePath . "/" . $stryArchiveFile[0];
-        my $strArchiveBackupFile = "$strBackupTmpPath/base/pg_xlog/${strArchive}";
-        
-        if ($strArchiveFile =~ /\.gz$/)
-        {
-            $strArchiveBackupFile .= ".gz";
-        }
-        
-        copy($strArchiveFile, $strArchiveBackupFile) or die "Unable to copy archive file: ${strArchiveFile}";
+        &log(DEBUG, "    archiving: ${strArchive} (${stryArchiveFile[0]})");
+
+        file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
     }
     
     # Save the backup conf file
