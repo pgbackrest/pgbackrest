@@ -982,7 +982,7 @@ sub backup_expire
         &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
 
         # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
-        # be consistent if the backup dies.
+        # be consistent if the process dies
         foreach $strPath (file_list_get($strBackupClusterPath, "^" . $stryPath[$iIndex] . ".*", "reverse"))
         {
             rmtree("$strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
@@ -1022,7 +1022,7 @@ sub backup_expire
         @stryPath = file_list_get($strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse");
     }
     
-    # if no backups were found then preserve current archive logs - too afraid to delete!
+    # if no backups were found then preserve current archive logs - too scary to delete them!
     my $iBackupTotal = scalar @stryPath;
     
     if ($iBackupTotal == 0)
@@ -1301,7 +1301,7 @@ if ($strOperation eq "backup")
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # Fetch the archive logs and put them in pg_xlog
+    # After the backup has been stopped, need to 
     my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop);
 
     foreach my $strArchive (@stryArchive)
@@ -1325,7 +1325,7 @@ if ($strOperation eq "backup")
     # Rename the backup tmp path to complete the backup
     rename($strBackupTmpPath, "${strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
-    # Expire backups
+    # Expire backups (!!! Need to read this from config file)
     backup_expire($strBackupClusterPath, 2, 2, "full", 2);
     
     exit 0;
