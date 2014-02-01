@@ -11,6 +11,7 @@ use JSON;
 use File::Copy;
 use File::Remove;
 use Carp;
+use Net::OpenSSH;
 
 # Process flags
 my $bNoCompression;
@@ -40,14 +41,19 @@ my $strCommandChecksum;
 my $strCommandCompress;
 my $strCommandDecompress;
 my $strCommandCopy;
+my $strCommandCat = "cat %file%";
 
 my $strCompressExtension = "gz";
 my $strDefaultPathPermission = "0750";
 
 # Global variables
-my $strDbClusterPath;          # Database cluster base path
+my $oSSH;                       # SSH Object
 
-my $strBackupPath;             # Backup base path
+my $strDbHost;                  # Database host
+my $strDbClusterPath;           # Database cluster base path
+
+my $strBackupHost;              # Backup host
+my $strBackupPath;              # Backup base path
 my $strBackupClusterPath;       # Backup cluster path
 
 ####################################################################################################################################
@@ -167,13 +173,32 @@ sub data_hash_build
 ####################################################################################################################################
 use constant 
 {
+    PATH_DB             => 'db',
     PATH_DB_ABSOLUTE    => 'db:absolute',
-#    PATH_DB_RELATIVE    => 'db:relative',
     PATH_BACKUP         => 'backup',
     PATH_BACKUP_CLUSTER => 'backup:cluster',
     PATH_BACKUP_TMP     => 'backup:tmp',
     PATH_BACKUP_ARCHIVE => 'backup:archive'
 };
+
+sub path_type_get
+{
+    my $strType = shift;
+    
+    # If db type
+    if ($strType =~ /^db(\:.*){0,1}/)
+    {
+        return PATH_DB;
+    }
+    # Else if backup type
+    elsif ($strType =~ /^backup(\:.*){0,1}/)
+    {
+        return PATH_BACKUP;
+    }
+    
+    # Error when path type not recognized
+    confess &log(ASSERT, "no known path types in '${strType}'");
+}
 
 sub path_get
 {
@@ -191,15 +216,6 @@ sub path_get
     {
         return $strFile;
     }
-#    elsif ($strType eq PATH_DB_RELATIVE)
-#    {
-#        if (!defined($strDbClusterPath))
-#        {
-#            confess &log(ASSERT, "\$strDbClusterPath not yet defined");
-#        }
-#
-#        return $strDbClusterPath . "/" . $strPath;
-#    }
     # Parse paths on the backup side
     elsif ($strType eq PATH_BACKUP)
     {
@@ -303,8 +319,8 @@ sub link_create
     }
     
     $strCommand .= " ${strSource} ${strDestination}";
+    &log(DEBUG, "        link_create: ${strCommand}");
     system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
-#    &log(DEBUG, "link command ($strSourcePathType): ${strCommand}");
 }
 
 ####################################################################################################################################
@@ -335,6 +351,36 @@ sub path_create
 }
 
 ####################################################################################################################################
+# REMOTE_GET
+#
+# Determine whether any operations are being performed remotely.  If $strPathType is defined, the function will return true if that
+# path is remote.  If $strPathType is not defined, then function will return true if any path is remote.
+####################################################################################################################################
+sub remote_get
+{
+    my $strPathType = shift;
+    
+    # If the SSH object is defined then some paths are remote
+    if (defined($oSSH))
+    {
+        # If path type is not defined but the SSH object is, then some paths are remote
+        if (!defined($strPathType))
+        {
+            return true;
+        }
+    
+        # If a host is defined for the path then it is remote
+        if (defined($strBackupHost) && path_type_get($strPathType) eq PATH_BACKUP ||
+            defined($strDbHost) && path_type_get($strPathType) eq PATH_DB)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+####################################################################################################################################
 # FILE_COPY
 ####################################################################################################################################
 sub file_copy
@@ -348,37 +394,21 @@ sub file_copy
     my $strSource = path_get($strSourcePathType, $strSourceFile);
     my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
     my $strDestinationTmp = path_get($strDestinationPathType, $strDestinationFile, true);
-    
+
     # Is this already a compressed file?
     my $bAlreadyCompressed = $strSource =~ "^.*\.${strCompressExtension}\$";
-    
+
     if ($bAlreadyCompressed && $strDestination !~ "^.*\.${strCompressExtension}\$")
     {
         $strDestination .= ".${strCompressExtension}";
     }
-    
-    # Generate the command
-    my $strCommand;
 
-    if ($bAlreadyCompressed ||
-        (defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
-        (!defined($bNoCompressionOverride) && $bNoCompression))
-    {
-        $strCommand = $strCommandCopy;
-        $strCommand =~ s/\%source\%/${strSource}/g;
-        $strCommand =~ s/\%destination\%/${strDestinationTmp}/g;
-    }
-    else
-    {
-        $strCommand = $strCommandCompress;
-        $strCommand =~ s/\%file\%/${strSourceFile}/g;
-        $strCommand .= " > ${strDestinationTmp}";
-        $strDestination .= ".${strCompressExtension}";
-    }
-
-    #&log(DEBUG, "copy command $strSource to $strDestination ($strDestinationTmp)");
-
-    # If the destination path does not exist, create it
+    # Does the file need compression?
+    my $bCompress = !($bAlreadyCompressed ||
+                      (defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
+                      (!defined($bNoCompressionOverride) && $bNoCompression));
+                      
+    # If the destination path is backup and does not exist, create it
     unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
     {
         path_create(undef, dirname($strDestination), $strDefaultPathPermission);
@@ -390,9 +420,75 @@ sub file_copy
         &log(ASSERT, "temp file ${strDestinationTmp} found - should not exist");
         unlink($strDestinationTmp) or die &log(ERROR, "unable to remove temp file ${strDestinationTmp}");
     }
+
+    # If this is a remote command
+    if (remote_get())
+    {
+        my $hFile;          # File handle for source or destination
+        my $strCommand;     # Command string
+
+        # If the source and destination are remote
+        if (remote_get($strSourcePathType) && remote_get($strDestinationPathType))
+        {
+            &log(ASSERT, "remote source and destination not supported");
+        }
+        # Else if the source is remote
+        elsif (remote_get($strSourcePathType))
+        {
+            &log(DEBUG, "        file_copy: remote ${strSource} to local ${strDestination}");
+
+            # Open the destination file for writing (will be streamed from the ssh session)
+            open($hFile, ">", $strDestinationTmp) or confess &log(ERROR, "cannot open ${strDestination}");
+
+            # Generate the command string depending on compression/copy
+            $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
+            $strCommand =~ s/\%file\%/${strSourceFile}/g;
+
+            # If the destination file is to be compressed add the extenstion
+            $strDestination .= $bCompress ? ".gz" : "";
+
+            # Execute the command
+            $oSSH->system({stdout_fh => $hFile}, $strCommand) or confess &log(ERROR, "unable to execute ssh '$strCommand'");
+        }
+        # Else if the destination is remote
+        elsif (remote_get($strDestinationPathType))
+        {
+            &log(DEBUG, "        file_copy: local ${strSource} to remote ${strDestination}");
+            open($hFile, "<", $strSource) or confess &log(ERROR, "cannot open ${strSource}");
+            &log(DEBUG, "        HERE");
+        }
+
+        # Close the source or destination file that was being streamed
+        close($hFile) or confess &log(ERROR, "cannot close file");
+    }
+    # Else this is a local command
+    else
+    {
+        # Generate the command
+        my $strCommand;
+
+        if ($bCompress)
+        {
+            $strCommand = $strCommandCompress;
+            $strCommand =~ s/\%file\%/${strSourceFile}/g;
+            $strCommand .= " > ${strDestinationTmp}";
+            $strDestination .= ".${strCompressExtension}";
+        }
+        else
+        {
+            $strCommand = $strCommandCopy;
+            $strCommand =~ s/\%source\%/${strSource}/g;
+            $strCommand =~ s/\%destination\%/${strDestinationTmp}/g;
+        }
+
+        #&log(DEBUG, "copy command $strSource to $strDestination ($strDestinationTmp)");
+
+        # Copy the file to temp and then move to the final destination
+        &log(DEBUG, "        file_copy: ${strCommand}");
+        system($strCommand) == 0 or die &log(ERROR, "unable to copy $strSource to $strDestinationTmp");
+    }
     
-    # Copy the file to temp and then move to the final destination
-    system($strCommand) == 0 or die &log(ERROR, "unable to copy $strSource to $strDestinationTmp");
+    # Move the file from tmp to final destination
     rename($strDestinationTmp, $strDestination) or die &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
 }
 
@@ -1110,7 +1206,7 @@ $strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$bNoCom
 $strCommandCopy = config_load(\%oConfig, "command", "copy", $bNoCompression);
 
 # Load and check the base backup path
-$strBackupPath = $oConfig{common}{backup_path};
+$strBackupPath = $oConfig{backup}{path};
 
 if (!defined($strBackupPath))
 {
@@ -1190,6 +1286,20 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
 # Load commands required for backup
 my $strCommandManifest = config_load(\%oConfig, "command", "manifest");
 my $strCommandPsql = config_load(\%oConfig, "command", "psql");
+
+# Load the database host (if it exists)
+$strDbHost = $oConfig{"cluster:$strCluster"}{host};
+
+if (defined($strDbHost))
+{
+    &log(INFO, "connecting to database ssh host ${strDbHost}");
+    $oSSH = Net::OpenSSH->new($strDbHost);
+}
+
+unlink("/Users/dsteele/test/backup/postgresql.conf");
+unlink("/Users/dsteele/test/backup/postgresql.conf.gz");
+file_copy(PATH_DB_ABSOLUTE, "/Users/dsteele/test/db/common/postgresql.conf", PATH_BACKUP_TMP, "postgresql.conf");
+exit 0;
 
 ####################################################################################################################################
 # BACKUP
