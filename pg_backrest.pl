@@ -12,6 +12,7 @@ use File::Copy;
 use File::Remove;
 use Carp;
 use Net::OpenSSH;
+use IPC::Open3;
 
 # Process flags
 my $bNoCompression;
@@ -391,6 +392,7 @@ sub file_copy
     my $strDestinationFile = shift;
     my $bNoCompressionOverride = shift;
 
+    # Generate source, destination and tmp filenames
     my $strSource = path_get($strSourcePathType, $strSourceFile);
     my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
     my $strDestinationTmp = path_get($strDestinationPathType, $strDestinationFile, true);
@@ -407,6 +409,9 @@ sub file_copy
     my $bCompress = !($bAlreadyCompressed ||
                       (defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
                       (!defined($bNoCompressionOverride) && $bNoCompression));
+
+    # If the destination file is to be compressed add the extenstion
+    $strDestination .= $bCompress ? ".gz" : "";
                       
     # If the destination path is backup and does not exist, create it
     unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
@@ -424,13 +429,14 @@ sub file_copy
     # If this is a remote command
     if (remote_get())
     {
-        my $hFile;          # File handle for source or destination
-        my $strCommand;     # Command string
+        # Generate the command string depending on compression/copy
+        my $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
+        $strCommand =~ s/\%file\%/${strSourceFile}/g;
 
         # If the source and destination are remote
         if (remote_get($strSourcePathType) && remote_get($strDestinationPathType))
         {
-            &log(ASSERT, "remote source and destination not supported");
+            confess &log(ASSERT, "remote source and destination not supported");
         }
         # Else if the source is remote
         elsif (remote_get($strSourcePathType))
@@ -438,28 +444,36 @@ sub file_copy
             &log(DEBUG, "        file_copy: remote ${strSource} to local ${strDestination}");
 
             # Open the destination file for writing (will be streamed from the ssh session)
+            my $hFile;
             open($hFile, ">", $strDestinationTmp) or confess &log(ERROR, "cannot open ${strDestination}");
 
-            # Generate the command string depending on compression/copy
-            $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
-            $strCommand =~ s/\%file\%/${strSourceFile}/g;
-
-            # If the destination file is to be compressed add the extenstion
-            $strDestination .= $bCompress ? ".gz" : "";
-
-            # Execute the command
+            # Execute the command through ssh
             $oSSH->system({stdout_fh => $hFile}, $strCommand) or confess &log(ERROR, "unable to execute ssh '$strCommand'");
+
+            # Close the destination file handle
+            close($hFile) or confess &log(ERROR, "cannot close file");
         }
         # Else if the destination is remote
         elsif (remote_get($strDestinationPathType))
         {
-            &log(DEBUG, "        file_copy: local ${strSource} to remote ${strDestination}");
-            open($hFile, "<", $strSource) or confess &log(ERROR, "cannot open ${strSource}");
-            &log(DEBUG, "        HERE");
-        }
+            &log(DEBUG, "        file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
 
-        # Close the source or destination file that was being streamed
-        close($hFile) or confess &log(ERROR, "cannot close file");
+            # Open the input command as a stream
+            my $hOut;
+            my $pId = open3(undef, $hOut, undef, $strCommand) or confess(ERROR, "unable to execute '${strCommand}'");
+
+            # Execute the command though ssh
+            $oSSH->system({stdin_fh => $hOut}, "cat > ${strDestinationTmp}") or confess &log(ERROR, "unable to execute ssh 'cat'");
+
+            # Wait for the stream process to finish
+            waitpid($pId, 0);
+            my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+            
+            if ($iExitStatus != 0)
+            {
+                confess &log(ERROR, "command '${strCommand}' returned", $iExitStatus);
+            }
+        }
     }
     # Else this is a local command
     else
@@ -472,7 +486,6 @@ sub file_copy
             $strCommand = $strCommandCompress;
             $strCommand =~ s/\%file\%/${strSourceFile}/g;
             $strCommand .= " > ${strDestinationTmp}";
-            $strDestination .= ".${strCompressExtension}";
         }
         else
         {
@@ -1232,6 +1245,16 @@ unless (-e $strBackupClusterPath)
     mkdir $strBackupClusterPath or die &log(ERROR, "cluster backup path '${strBackupClusterPath}' create failed");
 }
 
+# Load the backup host (if it exists)
+$strBackupHost = $oConfig{backup}{host};
+
+if (defined($strBackupHost))
+{
+    &log(INFO, "connecting to database ssh host ${strBackupHost}");
+    $oSSH = Net::OpenSSH->new($strBackupHost);
+    # !!! ERROR HANDLING HERE
+}
+
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
@@ -1296,10 +1319,14 @@ if (defined($strDbHost))
     $oSSH = Net::OpenSSH->new($strDbHost);
 }
 
-unlink("/Users/dsteele/test/backup/postgresql.conf");
-unlink("/Users/dsteele/test/backup/postgresql.conf.gz");
-file_copy(PATH_DB_ABSOLUTE, "/Users/dsteele/test/db/common/postgresql.conf", PATH_BACKUP_TMP, "postgresql.conf");
-exit 0;
+#unlink("/Users/dsteele/test/db/postgresql.conf");
+#unlink("/Users/dsteele/test/db/postgresql.conf.gz");
+#file_copy(PATH_BACKUP_TMP, "postgresql.conf", PATH_DB_ABSOLUTE, "/Users/dsteele/test/db/postgresql.conf");
+
+#unlink("/Users/dsteele/test/backup/postgresql.conf");
+#unlink("/Users/dsteele/test/backup/postgresql.conf.gz");
+#file_copy(PATH_DB_ABSOLUTE, "/Users/dsteele/test/db/common/postgresql.conf", PATH_BACKUP_TMP, "postgresql.conf");
+#exit 0;
 
 ####################################################################################################################################
 # BACKUP
