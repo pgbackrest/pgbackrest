@@ -43,6 +43,8 @@ my $strCommandCompress;
 my $strCommandDecompress;
 my $strCommandCopy;
 my $strCommandCat = "cat %file%";
+my $strCommandManifest;
+my $strCommandPsql;
 
 my $strCompressExtension = "gz";
 my $strDefaultPathPermission = "0750";
@@ -609,16 +611,34 @@ sub file_list_get
 ####################################################################################################################################
 sub manifest_get
 {
-    my $strCommandManifest = shift;
+    my $strPathType = shift;
     my $strPath = shift;
 
-    my $strCommand = $strCommandManifest;
-    $strCommand =~ s/\%path\%/$strPath/g;
+    # Get the root path for the manifest
+    my $strPathManifest = path_get($strPathType, $strPath);
 
-    my %oManifest = data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
-                                    execute($strCommand), "\t", ".");
+    # Builds the manifest command
+    my $strCommand = $strCommandManifest;
+    $strCommand =~ s/\%path\%/${strPathManifest}/g;
     
-    return %oManifest;
+    # Builds the manifest command
+    my $strManifest;
+    
+    if (is_remote($strPathType))
+    {
+        &log(DEBUG, "        manifest_get: remote ${strPathType}:${strPathManifest}");
+
+        my $oSSH = remote_get($strPathType);
+        $strManifest = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote command '${strCommand}'");
+    }
+    else
+    {
+        &log(DEBUG, "        manifest_get: local ${strPathType}:${strPathManifest}");
+        $strManifest = capture($strCommand) or confess &log(ERROR, "unable to execute local command '${strCommand}'");
+    }
+
+    return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
+                           $strManifest, "\t", ".");
 }
 
 ####################################################################################################################################
@@ -823,7 +843,7 @@ sub backup_manifest_build
         $strLevel = "base";
     }
     
-    my %oManifestHash = manifest_get($strCommandManifest, $strDbClusterPath);
+    my %oManifestHash = manifest_get(PATH_DB_ABSOLUTE, $strDbClusterPath);
     my $strName;
 
     foreach $strName (sort(keys $oManifestHash{name}))
@@ -1333,8 +1353,8 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
 }
 
 # Load commands required for backup
-my $strCommandManifest = config_load(\%oConfig, "command", "manifest");
-my $strCommandPsql = config_load(\%oConfig, "command", "psql");
+$strCommandManifest = config_load(\%oConfig, "command", "manifest");
+$strCommandPsql = config_load(\%oConfig, "command", "psql");
 
 # Load the database host (if it exists)
 $strDbHost = $oConfig{"cluster:$strCluster"}{host};
