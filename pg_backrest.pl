@@ -48,12 +48,12 @@ my $strCompressExtension = "gz";
 my $strDefaultPathPermission = "0750";
 
 # Global variables
-my $oSSH;                       # SSH Object
-
 my $strDbHost;                  # Database host
+my $oDbSSH;                     # Database SSH object
 my $strDbClusterPath;           # Database cluster base path
 
 my $strBackupHost;              # Backup host
+my $oBackupSSH;                 # Backup SSH object
 my $strBackupPath;              # Backup base path
 my $strBackupClusterPath;       # Backup cluster path
 
@@ -352,17 +352,17 @@ sub path_create
 }
 
 ####################################################################################################################################
-# REMOTE_GET
+# IS_REMOTE
 #
 # Determine whether any operations are being performed remotely.  If $strPathType is defined, the function will return true if that
 # path is remote.  If $strPathType is not defined, then function will return true if any path is remote.
 ####################################################################################################################################
-sub remote_get
+sub is_remote
 {
     my $strPathType = shift;
     
     # If the SSH object is defined then some paths are remote
-    if (defined($oSSH))
+    if (defined($oDbSSH) || defined($oBackupSSH))
     {
         # If path type is not defined but the SSH object is, then some paths are remote
         if (!defined($strPathType))
@@ -379,6 +379,29 @@ sub remote_get
     }
 
     return false;
+}
+
+####################################################################################################################################
+# REMOTE_GET
+#
+# Get remote SSH object depending on the path type.
+####################################################################################################################################
+sub remote_get
+{
+    my $strPathType = shift;
+    
+    # If the SSH object is defined then some paths are remote
+    if (path_type_get($strPathType) eq PATH_DB && defined($oDbSSH))
+    {
+        return $oDbSSH;
+    }
+
+    if (path_type_get($strPathType) eq PATH_BACKUP && defined($oBackupSSH))
+    {
+        return $oBackupSSH
+    }
+
+    confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
 }
 
 ####################################################################################################################################
@@ -427,19 +450,20 @@ sub file_copy
     }
 
     # If this is a remote command
-    if (remote_get())
+    if (is_remote())
     {
         # Generate the command string depending on compression/copy
         my $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
         $strCommand =~ s/\%file\%/${strSourceFile}/g;
 
         # If the source and destination are remote
-        if (remote_get($strSourcePathType) && remote_get($strDestinationPathType))
+        if (is_remote($strSourcePathType) && is_remote($strDestinationPathType))
         {
+            &log(DEBUG, "        file_copy: remote ${strSource} to remote ${strDestination}");
             confess &log(ASSERT, "remote source and destination not supported");
         }
         # Else if the source is remote
-        elsif (remote_get($strSourcePathType))
+        elsif (is_remote($strSourcePathType))
         {
             &log(DEBUG, "        file_copy: remote ${strSource} to local ${strDestination}");
 
@@ -448,13 +472,14 @@ sub file_copy
             open($hFile, ">", $strDestinationTmp) or confess &log(ERROR, "cannot open ${strDestination}");
 
             # Execute the command through ssh
+            my $oSSH = remote_get($strSourcePathType);
             $oSSH->system({stdout_fh => $hFile}, $strCommand) or confess &log(ERROR, "unable to execute ssh '$strCommand'");
 
             # Close the destination file handle
             close($hFile) or confess &log(ERROR, "cannot close file");
         }
         # Else if the destination is remote
-        elsif (remote_get($strDestinationPathType))
+        elsif (is_remote($strDestinationPathType))
         {
             &log(DEBUG, "        file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
 
@@ -463,6 +488,7 @@ sub file_copy
             my $pId = open3(undef, $hOut, undef, $strCommand) or confess(ERROR, "unable to execute '${strCommand}'");
 
             # Execute the command though ssh
+            my $oSSH = remote_get($strDestinationPathType);
             $oSSH->system({stdin_fh => $hOut}, "cat > ${strDestinationTmp}") or confess &log(ERROR, "unable to execute ssh 'cat'");
 
             # Wait for the stream process to finish
@@ -1251,7 +1277,7 @@ $strBackupHost = $oConfig{backup}{host};
 if (defined($strBackupHost))
 {
     &log(INFO, "connecting to database ssh host ${strBackupHost}");
-    $oSSH = Net::OpenSSH->new($strBackupHost);
+    $oBackupSSH = Net::OpenSSH->new($strBackupHost);
     # !!! ERROR HANDLING HERE
 }
 
@@ -1316,7 +1342,7 @@ $strDbHost = $oConfig{"cluster:$strCluster"}{host};
 if (defined($strDbHost))
 {
     &log(INFO, "connecting to database ssh host ${strDbHost}");
-    $oSSH = Net::OpenSSH->new($strDbHost);
+    $oDbSSH = Net::OpenSSH->new($strDbHost);
 }
 
 #unlink("/Users/dsteele/test/db/postgresql.conf");
