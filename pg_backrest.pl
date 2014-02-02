@@ -444,28 +444,16 @@ sub file_copy
         path_create(undef, dirname($strDestination), $strDefaultPathPermission);
     }
 
-    # Remove the temp file if it exists (indicates a previous failure)
-    if (-e $strDestinationTmp)
-    {
-        &log(ASSERT, "temp file ${strDestinationTmp} found - should not exist");
-        unlink($strDestinationTmp) or die &log(ERROR, "unable to remove temp file ${strDestinationTmp}");
-    }
+    # Generate the command string depending on compression/copy
+    my $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
+    $strCommand =~ s/\%file\%/${strSource}/g;
 
-    # If this is a remote command
-    if (is_remote())
+    # If this command is remote on only one side
+    if (is_remote($strSourcePathType) && !is_remote($strDestinationPathType) ||
+        !is_remote($strSourcePathType) && is_remote($strDestinationPathType))
     {
-        # Generate the command string depending on compression/copy
-        my $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
-        $strCommand =~ s/\%file\%/${strSourceFile}/g;
-
-        # If the source and destination are remote
-        if (is_remote($strSourcePathType) && is_remote($strDestinationPathType))
-        {
-            &log(DEBUG, "        file_copy: remote ${strSource} to remote ${strDestination}");
-            confess &log(ASSERT, "remote source and destination not supported");
-        }
         # Else if the source is remote
-        elsif (is_remote($strSourcePathType))
+        if (is_remote($strSourcePathType))
         {
             &log(DEBUG, "        file_copy: remote ${strSource} to local ${strDestination}");
 
@@ -503,30 +491,32 @@ sub file_copy
             }
         }
     }
-    # Else this is a local command
+    # If the source and destination are both remote but not the same remote
+    elsif (is_remote($strSourcePathType) && is_remote($strDestinationPathType) &&
+           path_type_get($strSourcePathType) ne path_type_get($strDestinationPathType))
+    {
+        &log(DEBUG, "        file_copy: remote ${strSource} to remote ${strDestination}");
+        confess &log(ASSERT, "remote source and destination not supported");
+    }
+    # Else this is a local command or remote where both sides are the same remote
     else
     {
-        # Generate the command
-        my $strCommand;
+        # Complete the command by redirecting to the destination tmp file
+        $strCommand .= " > ${strDestinationTmp}";
 
-        if ($bCompress)
+        if (is_remote())
         {
-            $strCommand = $strCommandCompress;
-            $strCommand =~ s/\%file\%/${strSourceFile}/g;
-            $strCommand .= " > ${strDestinationTmp}";
+            &log(DEBUG, "        file_copy: remote ${strSourcePathType} '${strCommand}'");
+
+            my $oSSH = remote_get($strSourcePathType);
+            $oSSH->system($strCommand) or confess &log(ERROR, "unable to execute remote command ${strCommand}:" . oSSH->error);
         }
         else
         {
-            $strCommand = $strCommandCopy;
-            $strCommand =~ s/\%source\%/${strSource}/g;
-            $strCommand =~ s/\%destination\%/${strDestinationTmp}/g;
+            &log(DEBUG, "        file_copy: local '${strCommand}'");
+
+            system($strCommand) == 0 or confess &log(ERROR, "unable to copy local $strSource to local $strDestinationTmp");
         }
-
-        #&log(DEBUG, "copy command $strSource to $strDestination ($strDestinationTmp)");
-
-        # Copy the file to temp and then move to the final destination
-        &log(DEBUG, "        file_copy: ${strCommand}");
-        system($strCommand) == 0 or die &log(ERROR, "unable to copy $strSource to $strDestinationTmp");
     }
     
     # Move the file from tmp to final destination
@@ -607,7 +597,10 @@ sub file_list_get
 }
 
 ####################################################################################################################################
-# MANIFEST_GET - Get a directory manifest
+# MANIFEST_GET
+#
+# Builds a path/file manifest starting with the base path and including all subpaths.  The manifest contains all the information
+# needed to perform a backup or a delta with a previous backup.
 ####################################################################################################################################
 sub manifest_get
 {
@@ -621,9 +614,10 @@ sub manifest_get
     my $strCommand = $strCommandManifest;
     $strCommand =~ s/\%path\%/${strPathManifest}/g;
     
-    # Builds the manifest command
+    # Run the manifest command
     my $strManifest;
-    
+
+    # Run remotely
     if (is_remote($strPathType))
     {
         &log(DEBUG, "        manifest_get: remote ${strPathType}:${strPathManifest}");
@@ -631,12 +625,14 @@ sub manifest_get
         my $oSSH = remote_get($strPathType);
         $strManifest = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote command '${strCommand}'");
     }
+    # Run locally
     else
     {
         &log(DEBUG, "        manifest_get: local ${strPathType}:${strPathManifest}");
         $strManifest = capture($strCommand) or confess &log(ERROR, "unable to execute local command '${strCommand}'");
     }
 
+    # Load the manifest into a hash
     return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
                            $strManifest, "\t", ".");
 }
@@ -1296,9 +1292,11 @@ $strBackupHost = $oConfig{backup}{host};
 
 if (defined($strBackupHost))
 {
-    &log(INFO, "connecting to database ssh host ${strBackupHost}");
-    $oBackupSSH = Net::OpenSSH->new($strBackupHost);
-    # !!! ERROR HANDLING HERE
+    &log(INFO, "connecting to backup ssh host ${strBackupHost}");
+
+    # !!! This could be improved by redirecting stderr to a file to get a better error message
+    $oBackupSSH = Net::OpenSSH->new($strBackupHost, master_stderr_discard => true);
+    $oBackupSSH->error and confess &log(ERROR, "unable to connect to ${strBackupHost}: " . $oBackupSSH->error);
 }
 
 ####################################################################################################################################
@@ -1362,17 +1360,11 @@ $strDbHost = $oConfig{"cluster:$strCluster"}{host};
 if (defined($strDbHost))
 {
     &log(INFO, "connecting to database ssh host ${strDbHost}");
-    $oDbSSH = Net::OpenSSH->new($strDbHost);
+
+    # !!! This could be improved by redirecting stderr to a file to get a better error message
+    $oDbSSH = Net::OpenSSH->new($strDbHost, master_stderr_discard => true);
+    $oDbSSH->error and confess &log(ERROR, "unable to connect to ${strDbHost}: " . $oDbSSH->error);
 }
-
-#unlink("/Users/dsteele/test/db/postgresql.conf");
-#unlink("/Users/dsteele/test/db/postgresql.conf.gz");
-#file_copy(PATH_BACKUP_TMP, "postgresql.conf", PATH_DB_ABSOLUTE, "/Users/dsteele/test/db/postgresql.conf");
-
-#unlink("/Users/dsteele/test/backup/postgresql.conf");
-#unlink("/Users/dsteele/test/backup/postgresql.conf.gz");
-#file_copy(PATH_DB_ABSOLUTE, "/Users/dsteele/test/db/common/postgresql.conf", PATH_BACKUP_TMP, "postgresql.conf");
-#exit 0;
 
 ####################################################################################################################################
 # BACKUP
