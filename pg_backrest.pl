@@ -648,26 +648,7 @@ if (!defined($strConfigFile))
 }
 
 my %oConfig;
-tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or die "Unable to find config file";
-
-# Load commands required for archive-push
-$pg_backrest_file::strCommandChecksum = config_load(\%oConfig, "command", "checksum", !$pg_backrest_file::bNoChecksum);
-$pg_backrest_file::strCommandCompress = config_load(\%oConfig, "command", "compress", !$pg_backrest_file::bNoCompression);
-$pg_backrest_file::strCommandDecompress = config_load(\%oConfig, "command", "decompress", !$pg_backrest_file::bNoCompression);
-$pg_backrest_file::strCommandCopy = config_load(\%oConfig, "command", "copy", $pg_backrest_file::bNoCompression);
-
-# Load and check the base backup path
-$pg_backrest_file::strBackupPath = $oConfig{backup}{path};
-
-if (!defined($pg_backrest_file::strBackupPath))
-{
-    die &log(ERROR, "common:backup_path undefined");
-}
-
-unless (-e $pg_backrest_file::strBackupPath)
-{
-    die &log(ERROR, "base path ${pg_backrest_file::strBackupPath} does not exist");
-}
+tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or confess &log(ERROR, "unable to find config file ${strConfigFile}");
 
 # Load and check the cluster
 if (!defined($strCluster))
@@ -675,34 +656,22 @@ if (!defined($strCluster))
     $strCluster = "db"; #!!! Modify to load cluster from conf if there is only one, else error
 }
 
-$pg_backrest_file::strBackupClusterPath = "${pg_backrest_file::strBackupPath}/${strCluster}";
-
-unless (-e $pg_backrest_file::strBackupClusterPath)
-{
-    &log(INFO, "creating cluster path ${pg_backrest_file::strBackupClusterPath}");
-    mkdir $pg_backrest_file::strBackupClusterPath or die &log(ERROR, "cluster backup path '${pg_backrest_file::strBackupClusterPath}' create failed");
-}
-
-# Load the backup host (if it exists)
-$pg_backrest_file::strBackupHost = $oConfig{backup}{host};
-
-if (defined($pg_backrest_file::strBackupHost))
-{
-    &log(INFO, "connecting to backup ssh host ${pg_backrest_file::strBackupHost}");
-
-    # !!! This could be improved by redirecting stderr to a file to get a better error message
-    $pg_backrest_file::oBackupSSH = Net::OpenSSH->new($pg_backrest_file::strBackupHost, master_stderr_discard => true);
-    $pg_backrest_file::oBackupSSH->error and confess &log(ERROR, "unable to connect to ${pg_backrest_file::strBackupHost}: " . $pg_backrest_file::oBackupSSH->error);
-}
+# Run file_init_archive - this is the minimal config needed to run archiving
+file_init_archive
+(
+    config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
+    config_load(\%oConfig, "command", "compress", !$pg_backrest_file::bNoCompression),
+    config_load(\%oConfig, "command", "decompress", !$pg_backrest_file::bNoCompression),
+    $oConfig{backup}{host},
+    $oConfig{backup}{path},
+    $strCluster,
+);
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
 if ($strOperation eq "archive-push")
 {
-    # Make sure that the db is local
-    
-    
     # archive-push command must have two arguments
     if (@ARGV != 2)
     {
@@ -747,21 +716,13 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
     die &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
 }
 
-# Load commands required for backup
-$pg_backrest_file::strCommandManifest = config_load(\%oConfig, "command", "manifest");
-$pg_backrest_file::strCommandPsql = config_load(\%oConfig, "command", "psql");
-
-# Load the database host (if it exists)
-$pg_backrest_file::strDbHost = $oConfig{"cluster:$strCluster"}{host};
-
-if (defined($pg_backrest_file::strDbHost))
-{
-    &log(INFO, "connecting to database ssh host ${pg_backrest_file::strDbHost}");
-
-    # !!! This could be improved by redirecting stderr to a file to get a better error message
-    $pg_backrest_file::oDbSSH = Net::OpenSSH->new($pg_backrest_file::strDbHost, master_stderr_discard => true);
-    $pg_backrest_file::oDbSSH->error and confess &log(ERROR, "unable to connect to ${pg_backrest_file::strDbHost}: " . $pg_backrest_file::oDbSSH->error);
-}
+# Run file_init_archive - this is the minimal config needed to run archiving
+file_init_backup
+(
+    config_load(\%oConfig, "command", "manifest"),
+    $pg_backrest_file::strCommandPsql = config_load(\%oConfig, "command", "psql"),
+    $oConfig{"cluster:$strCluster"}{host}
+);
 
 ####################################################################################################################################
 # BACKUP
