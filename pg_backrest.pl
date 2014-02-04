@@ -18,14 +18,15 @@ use pg_backrest_utility;
 use pg_backrest_file;
 use pg_backrest_backup;
 
-# Global variables
+# Command line parameters
 my $strConfigFile;
 my $strCluster;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
 my $bNoChecksum;
+my $bNoCompression;
 
-GetOptions ("no-compression" => \$pg_backrest_file::bNoCompression,
+GetOptions ("no-compression" => \$bNoCompression,
             "no-checksum" => \$bNoChecksum,
             "hardlink" => \$bHardLink,
             "config=s" => \$strConfigFile,
@@ -92,9 +93,10 @@ if (!defined($strCluster))
 # Run file_init_archive - this is the minimal config needed to run archiving
 file_init_archive
 (
+    $bNoCompression,
     config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
-    config_load(\%oConfig, "command", "compress", !$pg_backrest_file::bNoCompression),
-    config_load(\%oConfig, "command", "decompress", !$pg_backrest_file::bNoCompression),
+    config_load(\%oConfig, "command", "compress", !$bNoCompression),
+    config_load(\%oConfig, "command", "decompress", !$bNoCompression),
     $oConfig{backup}{host},
     $oConfig{backup}{path},
     $strCluster,
@@ -170,135 +172,6 @@ backup_init
 ####################################################################################################################################
 if ($strOperation eq "backup")
 {
-    # Make sure that the cluster data directory exists
-    $pg_backrest_file::strDbClusterPath = $oConfig{"cluster:$strCluster"}{path};
-
-    if (!defined($pg_backrest_file::strDbClusterPath))
-    {
-        confess &log(ERROR, "cluster data path is not defined");
-    }
-
-    unless (-e $pg_backrest_file::strDbClusterPath)
-    {
-        confess &log(ERROR, "cluster data path '${pg_backrest_file::strDbClusterPath}' does not exist");
-    }
-
-    # Find the previous backup based on the type
-    my $strBackupLastPath = backup_type_find($strType, $pg_backrest_file::strBackupClusterPath);
-
-    my %oLastManifest;
-
-    if (defined($strBackupLastPath))
-    {
-        %oLastManifest = backup_manifest_load("${pg_backrest_file::strBackupClusterPath}/$strBackupLastPath/backup.manifest");
-        &log(INFO, "Last backup label: $oLastManifest{common}{backup}{label}");
-    }
-
-    # Create the path for the new backup
-    my $strBackupPath;
-
-    if ($strType eq "full" || !defined($strBackupLastPath))
-    {
-        $strBackupPath = date_string_get() . "F";
-        $strType = "full";
-    }
-    else
-    {
-        $strBackupPath = substr($strBackupLastPath, 0, 16);
-
-        $strBackupPath .= "_" . date_string_get();
-        
-        if ($strType eq "differential")
-        {
-            $strBackupPath .= "D";
-        }
-        else
-        {
-            $strBackupPath .= "I";
-        }
-    }
-
-    # Build backup tmp and config
-    my $strBackupTmpPath = "${pg_backrest_file::strBackupClusterPath}/backup.tmp";
-    my $strBackupConfFile = "${strBackupTmpPath}/backup.manifest";
-
-    # If the backup tmp path already exists, delete the conf file
-    if (-e $strBackupTmpPath)
-    {
-        &log(WARNING, "backup path $strBackupTmpPath already exists");
-
-        # !!! This is temporary until we can clean backup dirs
-        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete backup.tmp");
-        #if (-e $strBackupConfFile)
-        #{
-        #    unlink $strBackupConfFile or die &log(ERROR, "backup config ${strBackupConfFile} could not be deleted");
-        #}
-    }
-    # Else create the backup tmp path
-    else
-    {
-        &log(INFO, "creating backup path $strBackupTmpPath");
-        mkdir $strBackupTmpPath or confess &log(ERROR, "backup path ${strBackupTmpPath} could not be created");
-    }
-
-    # Create a new backup manifest hash
-    my %oBackupManifest;
-
-    # Start backup
-    my $strLabel = $strBackupPath;
-    ${oBackupManifest}{common}{backup}{label} = $strLabel;
-
-    my $strArchiveStart = trim(execute($pg_backrest_file::strCommandPsql .
-        " -c \"set client_min_messages = 'warning';copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
-        
-    ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
-
-    &log(INFO, 'Backup archive start: ' . $strArchiveStart);
-
-    # Build the backup manifest
-    my %oTablespaceMap = tablespace_map_get($pg_backrest_file::strCommandPsql);
-    backup_manifest_build($pg_backrest_file::strCommandManifest, $pg_backrest_file::strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
-
-    # Delete files leftover from a partial backup
-    # !!! do it
-
-    # Perform the backup
-    backup(\%oBackupManifest);
-           
-    # Stop backup
-    my $strArchiveStop = trim(execute($pg_backrest_file::strCommandPsql .
-        " -c \"set client_min_messages = 'warning'; copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout\" postgres"));
-
-    ${oBackupManifest}{archive}{archive_location}{stop} = $strArchiveStop;
-
-    &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
-
-    # After the backup has been stopped, need to 
-    my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop);
-
-    foreach my $strArchive (@stryArchive)
-    {
-        my $strArchivePath = dirname(path_get(PATH_BACKUP_ARCHIVE, $strArchive));
-        my @stryArchiveFile = file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.${pg_backrest_file::strCompressExtension}){0,1}\$");
-        
-        if (scalar @stryArchiveFile != 1)
-        {
-            confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
-        }
-
-        &log(DEBUG, "    archiving: ${strArchive} (${stryArchiveFile[0]})");
-
-        file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
-    }
-    
-    # Save the backup conf file
-    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
-
-    # Rename the backup tmp path to complete the backup
-    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
-
-    # Expire backups (!!! Need to read this from config file)
-    backup_expire($pg_backrest_file::strBackupClusterPath, 2, 2, "full", 2);
-    
+    backup($oConfig{"cluster:$strCluster"}{path});
     exit 0;
 }

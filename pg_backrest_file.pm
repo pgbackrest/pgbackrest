@@ -17,7 +17,7 @@ use pg_backrest_utility;
 use Exporter qw(import);
 
 our @EXPORT = qw(file_init_archive file_init_backup
-                 path_get path_type_get link_create path_create file_copy file_list_get manifest_get file_hash_get
+                 path_get path_type_get link_create path_create file_copy file_list_get manifest_get file_hash_get is_remote
                  PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
 
 # Extension and permissions
@@ -50,6 +50,7 @@ our $bNoCompression;
 ####################################################################################################################################
 sub file_init_archive
 {
+    my $bNoCompressionParam = shift;
     my $strCommandChecksumParam = shift;
     my $strCommandCompressParam = shift;
     my $strCommandDecompressParam = shift;
@@ -58,6 +59,7 @@ sub file_init_archive
     my $strCluster = shift;
     
     # Assign parameters to module variables
+    $bNoCompression = $bNoCompressionParam;
     $strCommandChecksum = $strCommandChecksumParam;
     $strCommandCompress = $strCommandCompressParam;
     $strCommandDecompress = $strCommandDecompressParam;
