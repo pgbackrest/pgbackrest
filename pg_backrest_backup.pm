@@ -478,7 +478,7 @@ sub backup
 
     unless (-e $strDbClusterPath)
     {
-        confess &log(ERROR, "cluster data path '${pg_backrest_file::strDbClusterPath}' does not exist");
+        confess &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
     }
 
     # Find the previous backup based on the type

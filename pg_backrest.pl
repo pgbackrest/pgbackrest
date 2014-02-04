@@ -4,14 +4,9 @@ use strict;
 use warnings;
 
 use File::Basename;
-use File::Path;
 use Getopt::Long;
 use Config::IniFiles;
-use IPC::System::Simple qw(capture);
-use File::Copy;
-use File::Remove;
 use Carp;
-use Cwd qw(abs_path);
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -138,7 +133,7 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
     confess &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
 }
 
-# Run file_init_archive - the rest of the file config 
+# Run file_init_archive - the rest of the file config required for backup and restore
 file_init_backup
 (
     config_load(\%oConfig, "command", "manifest"),

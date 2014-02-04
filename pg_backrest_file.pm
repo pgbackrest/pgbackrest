@@ -22,28 +22,27 @@ our @EXPORT = qw(file_init_archive file_init_backup
 
 # Extension and permissions
 our $strCompressExtension = "gz";
-our $strDefaultPathPermission = "0750";
+my $strDefaultPathPermission = "0750";
 
 # Command strings
-our $strCommandChecksum;
-our $strCommandCompress;
-our $strCommandDecompress;
-our $strCommandCat = "cat %file%";
-our $strCommandManifest;
-our $strCommandPsql;
+my $strCommandChecksum;
+my $strCommandCompress;
+my $strCommandDecompress;
+my $strCommandCat = "cat %file%";
+my $strCommandManifest;
+my $strCommandPsql;
 
-# Global variables
-our $strDbHost;                  # Database host
-our $oDbSSH;                     # Database SSH object
-our $strDbClusterPath;           # Database cluster base path
+# Module variables
+my $strDbHost;                  # Database host
+my $oDbSSH;                     # Database SSH object
 
-our $strBackupHost;              # Backup host
-our $oBackupSSH;                 # Backup SSH object
-our $strBackupPath;              # Backup base path
+my $strBackupHost;              # Backup host
+my $oBackupSSH;                 # Backup SSH object
+my $strBackupPath;              # Backup base path
 our $strBackupClusterPath;       # Backup cluster path
 
 # Process flags
-our $bNoCompression;
+my $bNoCompression;
 
 ####################################################################################################################################
 # FILE_INIT_ARCHIVE
@@ -68,7 +67,7 @@ sub file_init_archive
     $strBackupHost = $strBackupHostParam;
     
     # Make sure the backup path is defined
-    if (!defined($pg_backrest_file::strBackupPath))
+    if (!defined($strBackupPath))
     {
         confess &log(ERROR, "common:backup_path undefined");
     }
@@ -76,19 +75,14 @@ sub file_init_archive
     # Create the backup cluster path
     $strBackupClusterPath = "${strBackupPath}/${strCluster}";
 
-#    unless (-e $pg_backrest_file::strBackupClusterPath)
-#    {
-#        &log(INFO, "creating cluster path ${pg_backrest_file::strBackupClusterPath}");
-#        mkdir $pg_backrest_file::strBackupClusterPath or die &log(ERROR, "cluster backup path '${pg_backrest_file::strBackupClusterPath}' create failed");
-#    }
-
-    if (defined($pg_backrest_file::strBackupHost))
+    # Connect SSH object if backup host is defined
+    if (defined($strBackupHost))
     {
-        &log(INFO, "connecting to backup ssh host ${pg_backrest_file::strBackupHost}");
+        &log(INFO, "connecting to backup ssh host ${strBackupHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $pg_backrest_file::oBackupSSH = Net::OpenSSH->new($pg_backrest_file::strBackupHost, master_stderr_discard => true);
-        $pg_backrest_file::oBackupSSH->error and confess &log(ERROR, "unable to connect to ${pg_backrest_file::strBackupHost}: " . $pg_backrest_file::oBackupSSH->error);
+        $oBackupSSH = Net::OpenSSH->new($strBackupHost, master_stderr_discard => true);
+        $oBackupSSH->error and confess &log(ERROR, "unable to connect to $strBackupHost}: " . $oBackupSSH->error);
     }
 }
 
@@ -102,13 +96,14 @@ sub file_init_backup
     $strCommandPsql = $strCommandPsqlParam;
     $strDbHost = $strDbHostParam;
     
+    # Connect SSH object if db host is defined
     if (defined($strDbHost))
     {
         &log(INFO, "connecting to database ssh host ${strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $pg_backrest_file::oDbSSH = Net::OpenSSH->new($pg_backrest_file::strDbHost, master_stderr_discard => true);
-        $pg_backrest_file::oDbSSH->error and confess &log(ERROR, "unable to connect to ${pg_backrest_file::strDbHost}: " . $pg_backrest_file::oDbSSH->error);
+        $oDbSSH = Net::OpenSSH->new($strDbHost, master_stderr_discard => true);
+        $oDbSSH->error and confess &log(ERROR, "unable to connect to ${strDbHost}: " . $oDbSSH->error);
     }
 }
 
