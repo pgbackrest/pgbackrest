@@ -18,6 +18,7 @@ use Exporter qw(import);
 
 our @EXPORT = qw(file_init_archive file_init_backup
                  path_get path_type_get link_create path_create file_copy file_list_get manifest_get file_hash_get is_remote
+                 psql_execute
                  PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
 
 # Extension and permissions
@@ -33,9 +34,11 @@ my $strCommandManifest;
 my $strCommandPsql;
 
 # Module variables
+my $strDbUser;                  # Database user
 my $strDbHost;                  # Database host
 my $oDbSSH;                     # Database SSH object
 
+my $strBackupUser;              # Backup user
 my $strBackupHost;              # Backup host
 my $oBackupSSH;                 # Backup SSH object
 my $strBackupPath;              # Backup base path
@@ -53,6 +56,7 @@ sub file_init_archive
     my $strCommandChecksumParam = shift;
     my $strCommandCompressParam = shift;
     my $strCommandDecompressParam = shift;
+    my $strBackupUserParam = shift;
     my $strBackupHostParam = shift;
     my $strBackupPathParam = shift;
     my $strCluster = shift;
@@ -64,6 +68,7 @@ sub file_init_archive
     $strCommandDecompress = $strCommandDecompressParam;
     $strBackupPath = $strBackupPathParam;
     #$strCluster = $strClusterParam;
+    $strBackupUser = $strBackupUserParam;
     $strBackupHost = $strBackupHostParam;
     
     # Make sure the backup path is defined
@@ -81,7 +86,7 @@ sub file_init_archive
         &log(INFO, "connecting to backup ssh host ${strBackupHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $oBackupSSH = Net::OpenSSH->new($strBackupHost, master_stderr_discard => true);
+        $oBackupSSH = Net::OpenSSH->new($strBackupHost, master_stderr_discard => true, user => $strBackupUser);
         $oBackupSSH->error and confess &log(ERROR, "unable to connect to $strBackupHost}: " . $oBackupSSH->error);
     }
 }
@@ -90,10 +95,12 @@ sub file_init_backup
 {
     my $strCommandManifestParam = shift;
     my $strCommandPsqlParam = shift;
+    my $strDbUserParam = shift;
     my $strDbHostParam = shift;
 
     $strCommandManifest = $strCommandManifestParam;
     $strCommandPsql = $strCommandPsqlParam;
+    $strDbUser = $strDbUserParam;
     $strDbHost = $strDbHostParam;
     
     # Connect SSH object if db host is defined
@@ -102,7 +109,7 @@ sub file_init_backup
         &log(INFO, "connecting to database ssh host ${strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $oDbSSH = Net::OpenSSH->new($strDbHost, master_stderr_discard => true);
+        $oDbSSH = Net::OpenSSH->new($strDbHost, master_stderr_discard => true, user => $strDbUser);
         $oDbSSH->error and confess &log(ERROR, "unable to connect to ${strDbHost}: " . $oDbSSH->error);
     }
 }
@@ -386,6 +393,45 @@ sub remote_get
 }
 
 ####################################################################################################################################
+# FILE_MOVE
+#
+# Moves a file locally or remotely.
+####################################################################################################################################
+sub file_move
+{
+    my $strPathType = shift;
+    my $strSourceFile = shift;
+    my $strDestinationFile = shift;
+    
+    my $strSource = path_get($strPathType, $strSourceFile);
+    my $strDestination = path_get($strPathType, $strDestinationFile);
+    
+    # If the destination path is backup and does not exist, create it
+    if (path_type_get($strPathType) eq PATH_BACKUP)
+    {
+        path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
+    }
+
+    my $strCommand = "mv ${strSource} ${strDestination}";
+
+    # Run remotely
+    if (is_remote($strPathType))
+    {
+        &log(DEBUG, "        file_move: remote ${strPathType} '${strCommand}'");
+
+        my $oSSH = remote_get($strPathType);
+        $oSSH->system($strCommand) or confess &log("unable to move remote ${strPathType}:${strSourceFile} to ${strDestinationFile}");
+    }
+    # Run locally
+    else
+    {
+        &log(DEBUG, "        file_move: '${strCommand}'");
+
+        system($strCommand) == 0 or confess &log("unable to move local ${strSourceFile} to ${strDestinationFile}");
+    }
+}
+
+####################################################################################################################################
 # FILE_COPY
 ####################################################################################################################################
 sub file_copy
@@ -499,7 +545,7 @@ sub file_copy
     }
     
     # Move the file from tmp to final destination
-    rename($strDestinationTmp, $strDestination) or confess &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
+    file_move(path_type_get($strDestinationPathType) . ":absolute", $strDestinationTmp, $strDestination);
 }
 
 ####################################################################################################################################
@@ -631,6 +677,35 @@ sub manifest_get
     # Load the manifest into a hash
     return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
                            $strManifest, "\t", ".");
+}
+
+####################################################################################################################################
+# PSQL_EXECUTE
+####################################################################################################################################
+sub psql_execute
+{
+    my $strScript = shift;  # psql script to execute
+    
+    # Get the user-defined command for psql
+    my $strCommand = $strCommandPsql . " -c \"${strScript}\" postgres";
+    my $strResult;
+
+    # Run remotely
+    if (is_remote(PATH_DB))
+    {
+        &log(DEBUG, "        psql execute: remote ${strScript}");
+
+        my $oSSH = remote_get(PATH_DB);
+        $strResult = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote psql command '${strCommand}'");
+    }
+    # Run locally
+    else
+    {
+        &log(DEBUG, "        psql execute: ${strScript}");
+        $strResult = capture($strCommand) or confess &log(ERROR, "unable to execute local psql command '${strCommand}'");
+    }
+    
+    return $strResult;
 }
 
 1;

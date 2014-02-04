@@ -145,8 +145,8 @@ sub tablespace_map_get
 {
     my $strCommandPsql = shift;
 
-    my %oTablespaceMap = data_hash_build("oid\tname\n" . execute($strCommandPsql .
-                                         " -c 'copy (select oid, spcname from pg_tablespace) to stdout' postgres"), "\t");
+    my %oTablespaceMap = data_hash_build("oid\tname\n" . psql_execute(
+                                         "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
     
     return %oTablespaceMap;
 }
@@ -475,11 +475,15 @@ sub backup
     {
         confess &log(ERROR, "cluster data path is not defined");
     }
+    
+    &log(DEBUG, "cluster path is $strDbClusterPath");
+    
+    path_create(PATH_BACKUP_CLUSTER);
 
-    unless (-e $strDbClusterPath)
-    {
-        confess &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
-    }
+#    unless (-e $strDbClusterPath)
+#    {
+#        confess &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
+#    }
 
     # Find the previous backup based on the type
     my $strBackupLastPath = backup_type_find($strType, $pg_backrest_file::strBackupClusterPath);
@@ -546,9 +550,10 @@ sub backup
     my $strLabel = $strBackupPath;
     ${oBackupManifest}{common}{backup}{label} = $strLabel;
 
-    my $strArchiveStart = trim(execute($pg_backrest_file::strCommandPsql .
-        " -c \"set client_min_messages = 'warning';copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout\" postgres"));
-        
+    my $strArchiveStart = trim(psql_execute(
+        "set client_min_messages = 'warning';" . 
+        "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout"));
+
     ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
 
     &log(INFO, 'Backup archive start: ' . $strArchiveStart);
@@ -564,8 +569,9 @@ sub backup
     backup_file($strDbClusterPath, \%oBackupManifest);
            
     # Stop backup
-    my $strArchiveStop = trim(execute($pg_backrest_file::strCommandPsql .
-        " -c \"set client_min_messages = 'warning'; copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout\" postgres"));
+    my $strArchiveStop = trim(psql_execute(
+        "set client_min_messages = 'warning';" .
+        "copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout"));
 
     ${oBackupManifest}{archive}{archive_location}{stop} = $strArchiveStop;
 

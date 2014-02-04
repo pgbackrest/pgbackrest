@@ -92,6 +92,7 @@ file_init_archive
     config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
     config_load(\%oConfig, "command", "compress", !$bNoCompression),
     config_load(\%oConfig, "command", "decompress", !$bNoCompression),
+    $oConfig{backup}{user},
     $oConfig{backup}{host},
     $oConfig{backup}{path},
     $strCluster,
@@ -138,6 +139,7 @@ file_init_backup
 (
     config_load(\%oConfig, "command", "manifest"),
     $pg_backrest_file::strCommandPsql = config_load(\%oConfig, "command", "psql"),
+    $oConfig{"cluster:$strCluster"}{user},
     $oConfig{"cluster:$strCluster"}{host}
 );
 
