@@ -50,7 +50,7 @@ sub backup_regexp_get
     
     if (!$bFull && !$bDifferential && !$bIncremental)
     {
-        die &log(ERROR, 'one parameter must be true');
+        confess &log(ERROR, 'one parameter must be true');
     }
     
     my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
@@ -107,12 +107,12 @@ sub backup_type_find
 
     if ($strType eq 'incremental')
     {
-        $strDirectory = (file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse"))[0];
+        $strDirectory = (file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse"))[0];
     }
 
     if (!defined($strDirectory) && $strType ne "full")
     {
-        $strDirectory = (file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse"))[0];
+        $strDirectory = (file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse"))[0];
     }
     
     return $strDirectory;
@@ -137,7 +137,7 @@ sub config_load
     
     if ($bRequired && !defined($strValue))
     {
-        die &log(ERROR, 'config value ${strSection}->${strKey} is undefined');
+        confess &log(ERROR, 'config value ${strSection}->${strKey} is undefined');
     }
     
     return $strValue;
@@ -164,7 +164,7 @@ sub backup_manifest_load
     my $strBackupManifestFile = shift;
     
     my %oBackupManifestFile;
-    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or die &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
+    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or confess &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
 
     my %oBackupManifest;
     my $strSection;
@@ -196,7 +196,7 @@ sub backup_manifest_save
     my $oBackupManifestRef = shift;
     
     my %oBackupManifest;
-    tie %oBackupManifest, 'Config::IniFiles' or die &log(ERROR, "Unable to create backup config");
+    tie %oBackupManifest, 'Config::IniFiles' or confess &log(ERROR, "Unable to create backup config");
 
     my $strSection;
 
@@ -476,7 +476,7 @@ sub archive_list_get
 
     if ($strTimeline ne substr($strArchiveStop, 0, 8))
     {
-        die "Timelines between ${strArchiveStart} and ${strArchiveStop} differ";
+        confess "Timelines between ${strArchiveStart} and ${strArchiveStop} differ";
     }
         
     my $iStartMajor = hex substr($strArchiveStart, 8, 8);
@@ -520,7 +520,7 @@ sub backup_expire
     # Find all the expired full backups
     my $iIndex = $iFullRetention;
     my $strPath;
-    my @stryPath = file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse");
+    my @stryPath = file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
 
     while (defined($stryPath[$iIndex]))
     {
@@ -528,26 +528,26 @@ sub backup_expire
 
         # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
         # be consistent if the process dies
-        foreach $strPath (file_list_get($pg_backrest_file::strBackupClusterPath, "^" . $stryPath[$iIndex] . ".*", "reverse"))
+        foreach $strPath (file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
         {
-            rmtree("$pg_backrest_file::strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
+            rmtree("$pg_backrest_file::strBackupClusterPath/$strPath") or confess &log(ERROR, "unable to delete backup ${strPath}");
         }
         
         $iIndex++;
     }
     
     # Find all the expired differential backups
-    @stryPath = file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(0, 1, 0), "reverse");
+    @stryPath = file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
      
     if (defined($stryPath[$iDifferentialRetention]))
     {
         # Get a list of all differential and incremental backups
-        foreach $strPath (file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(0, 1, 1), "reverse"))
+        foreach $strPath (file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
         {
             # Remove all differential and incremental backups before the oldest valid differential
             if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
             {
-                rmtree("$pg_backrest_file::strBackupClusterPath/$strPath") or die &log(ERROR, "unable to delete backup ${strPath}");
+                rmtree("$pg_backrest_file::strBackupClusterPath/$strPath") or confess &log(ERROR, "unable to delete backup ${strPath}");
                 &log(INFO, "removed expired diff/incr backup ${strPath}");
             }
         }
@@ -556,15 +556,15 @@ sub backup_expire
     # Determine which backup type to use for archive retention (full, differential, incremental)
     if ($strArchiveRetentionType eq "full")
     {
-        @stryPath = file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(1, 0, 0), "reverse");
+        @stryPath = file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "differential")
     {
-        @stryPath = file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(1, 1, 0), "reverse");
+        @stryPath = file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
     }
     else
     {
-        @stryPath = file_list_get($pg_backrest_file::strBackupClusterPath, backup_regexp_get(1, 1, 1), "reverse");
+        @stryPath = file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse");
     }
     
     # if no backups were found then preserve current archive logs - too scary to delete them!
@@ -598,12 +598,12 @@ sub backup_expire
     &log(INFO, "archive retention starts at " . $strArchiveLast);
 
     # Remove any archive directories or files that are out of date
-    foreach $strPath (file_list_get($pg_backrest_file::strBackupClusterPath . "/archive", "^[0-F]{16}\$"))
+    foreach $strPath (file_list_get(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
     {
         # If less than first 16 characters of current archive file, then remove the directory
         if ($strPath lt substr($strArchiveLast, 0, 16))
         {
-            rmtree($pg_backrest_file::strBackupClusterPath . "/archive/" . $strPath) or die &log(ERROR, "unable to remove " . $strPath);
+            rmtree($pg_backrest_file::strBackupClusterPath . "/archive/" . $strPath) or confess &log(ERROR, "unable to remove " . $strPath);
             &log(DEBUG, "removed major archive directory " . $strPath);
         }
         # If equals the first 16 characters of the current archive file, then delete individual files instead
@@ -612,12 +612,12 @@ sub backup_expire
             my $strSubPath;
         
             # Look for archive files in the archive directory
-            foreach $strSubPath (file_list_get($pg_backrest_file::strBackupClusterPath . "/archive/" . $strPath, "^[0-F]{24}.*\$"))
+            foreach $strSubPath (file_list_get(PATH_BACKUP_ARCHIVE, $strPath, "^[0-F]{24}.*\$"))
             {
                 # Delete if the first 24 characters less than the current archive file
                 if ($strSubPath lt substr($strArchiveLast, 0, 24))
                 {
-                    unlink("${pg_backrest_file::strBackupClusterPath}/archive/${strPath}/${strSubPath}") or die &log(ERROR, "unable to remove " . $strSubPath);
+                    unlink("${pg_backrest_file::strBackupClusterPath}/archive/${strPath}/${strSubPath}") or confess &log(ERROR, "unable to remove " . $strSubPath);
                     &log(DEBUG, "removed expired archive file " . $strSubPath);
                 }
             }
@@ -675,7 +675,7 @@ if ($strOperation eq "archive-push")
     # archive-push command must have two arguments
     if (@ARGV != 2)
     {
-        die "not enough arguments - show usage";
+        confess "not enough arguments - show usage";
     }
 
     # Get the source/destination file
@@ -713,7 +713,7 @@ if ($strType eq "incr")
 
 if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental")
 {
-    die &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
+    confess &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
 }
 
 # Run file_init_archive - this is the minimal config needed to run archiving
@@ -734,12 +734,12 @@ if ($strOperation eq "backup")
 
     if (!defined($pg_backrest_file::strDbClusterPath))
     {
-        die &log(ERROR, "cluster data path is not defined");
+        confess &log(ERROR, "cluster data path is not defined");
     }
 
     unless (-e $pg_backrest_file::strDbClusterPath)
     {
-        die &log(ERROR, "cluster data path '${pg_backrest_file::strDbClusterPath}' does not exist");
+        confess &log(ERROR, "cluster data path '${pg_backrest_file::strDbClusterPath}' does not exist");
     }
 
     # Find the previous backup based on the type
@@ -797,7 +797,7 @@ if ($strOperation eq "backup")
     else
     {
         &log(INFO, "creating backup path $strBackupTmpPath");
-        mkdir $strBackupTmpPath or die &log(ERROR, "backup path ${strBackupTmpPath} could not be created");
+        mkdir $strBackupTmpPath or confess &log(ERROR, "backup path ${strBackupTmpPath} could not be created");
     }
 
     # Create a new backup manifest hash
@@ -838,11 +838,11 @@ if ($strOperation eq "backup")
     foreach my $strArchive (@stryArchive)
     {
         my $strArchivePath = dirname(path_get(PATH_BACKUP_ARCHIVE, $strArchive));
-        my @stryArchiveFile = file_list_get($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.${pg_backrest_file::strCompressExtension}){0,1}\$");
+        my @stryArchiveFile = file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.${pg_backrest_file::strCompressExtension}){0,1}\$");
         
         if (scalar @stryArchiveFile != 1)
         {
-            die &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
+            confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
         }
 
         &log(DEBUG, "    archiving: ${strArchive} (${stryArchiveFile[0]})");
@@ -854,7 +854,7 @@ if ($strOperation eq "backup")
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
-    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or die &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
+    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
     # Expire backups (!!! Need to read this from config file)
     backup_expire($pg_backrest_file::strBackupClusterPath, 2, 2, "full", 2);

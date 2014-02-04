@@ -18,7 +18,7 @@ use Exporter qw(import);
 
 our @EXPORT = qw(file_init_archive file_init_backup
                  path_get path_type_get link_create path_create file_copy file_list_get manifest_get file_hash_get
-                 PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
+                 PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
 
 # Extension and permissions
 our $strCompressExtension = "gz";
@@ -68,7 +68,7 @@ sub file_init_archive
     # Make sure the backup path is defined
     if (!defined($pg_backrest_file::strBackupPath))
     {
-        die &log(ERROR, "common:backup_path undefined");
+        confess &log(ERROR, "common:backup_path undefined");
     }
     
     # Create the backup cluster path
@@ -115,12 +115,13 @@ sub file_init_backup
 ####################################################################################################################################
 use constant 
 {
-    PATH_DB             => 'db',
-    PATH_DB_ABSOLUTE    => 'db:absolute',
-    PATH_BACKUP         => 'backup',
-    PATH_BACKUP_CLUSTER => 'backup:cluster',
-    PATH_BACKUP_TMP     => 'backup:tmp',
-    PATH_BACKUP_ARCHIVE => 'backup:archive'
+    PATH_DB              => 'db',
+    PATH_DB_ABSOLUTE     => 'db:absolute',
+    PATH_BACKUP          => 'backup',
+    PATH_BACKUP_ABSOLUTE => 'backup:absolute',
+    PATH_BACKUP_CLUSTER  => 'backup:cluster',
+    PATH_BACKUP_TMP      => 'backup:tmp',
+    PATH_BACKUP_ARCHIVE  => 'backup:archive'
 };
 
 sub path_type_get
@@ -165,8 +166,13 @@ sub path_get
         {
             confess &log(ASSERT, "\$strBackupPath not yet defined");
         }
-        
+
         return $strBackupPath;
+    }
+    # Parse absolute db path
+    if ($strType eq PATH_BACKUP_ABSOLUTE)
+    {
+        return $strFile;
     }
     elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_TMP || $strType eq PATH_BACKUP_ARCHIVE)
     {
@@ -174,7 +180,7 @@ sub path_get
         {
             confess &log(ASSERT, "\$strBackupClusterPath not yet defined");
         }
-        
+
         if ($strType eq PATH_BACKUP_CLUSTER)
         {
             return $strBackupClusterPath . (defined($strFile) ? "/${strFile}" : "");
@@ -185,7 +191,7 @@ sub path_get
             {
                 return $strBackupClusterPath . "/backup.tmp/file.tmp";
             }
-            
+
             return $strBackupClusterPath . "/backup.tmp" . (defined($strFile) ? "/${strFile}" : "");
         }
         elsif ($strType eq PATH_BACKUP_ARCHIVE)
@@ -197,19 +203,19 @@ sub path_get
             else
             {
                 my $strArchive;
-            
+
                 if (defined($strFile))
                 {
-                    $strArchive = substr($strFile, 0, 24);
-            
+                    $strArchive = substr(basename($strFile), 0, 24);
+
                     if ($strArchive !~ /^([0-F]){24}$/)
                     {
-                        croak &log(ERROR, "$strFile not a valid archive file");
+                        return $strBackupClusterPath . "/archive/${strFile}";
                     }
                 }
-            
+
                 return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
-                       substr($strArchive, 0, 16) : "") . "/" . $strFile;
+                       substr($strArchive, 0, 16) : "") . (defined($strFile) ? "/" . $strFile : "");
             }
         }
     }
@@ -230,13 +236,18 @@ sub link_create
     my $bHard = shift;
     my $bRelative = shift;
     
+    if (path_type_get($strSourcePathType) ne path_type_get($strDestinationPathType))
+    {
+        confess &log(ASSERT, "path types must be equal in link create");
+    }
+
     my $strSource = path_get($strSourcePathType, $strSourceFile);
     my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
 
-    # If the destination path does not exist, create it
-    unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
+    # If the destination path is backup and does not exist, create it
+    if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
-        path_create(undef, dirname($strDestination), $strDefaultPathPermission);
+        path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
 
     unless (-e $strSource)
@@ -261,12 +272,28 @@ sub link_create
     }
     
     $strCommand .= " ${strSource} ${strDestination}";
-    &log(DEBUG, "        link_create: ${strCommand}");
-    system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
+    
+    # Run remotely
+    if (is_remote($strSourcePathType))
+    {
+        &log(DEBUG, "        link_create: remote ${strSourcePathType} '${strCommand}'");
+
+        my $oSSH = remote_get($strSourcePathType);
+        $oSSH->system($strCommand) or confess &log("unable to create link from ${strSource} to ${strDestination}");
+    }
+    # Run locally
+    else
+    {
+        &log(DEBUG, "        link_create: local '${strCommand}'");
+        system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
+    }
 }
 
 ####################################################################################################################################
 # PATH_CREATE
+#
+# Creates a path locally or remotely.  Currently does not error if the path already exists.  Also does not set permissions if the
+# path aleady exists.
 ####################################################################################################################################
 sub path_create
 {
@@ -274,10 +301,10 @@ sub path_create
     my $strPath = shift;
     my $strPermission = shift;
     
-    # If no permission are given then use the default
+    # If no permissions are given then use the default
     if (!defined($strPermission))
     {
-        $strPermission = "0750";
+        $strPermission = $strDefaultPathPermission;
     }
 
     # Get the path to create
@@ -288,8 +315,22 @@ sub path_create
         $strPathCreate = path_get($strPathType, $strPath);
     }
 
-    # Create the path
-    system("mkdir -p -m ${strPermission} ${strPathCreate}") == 0 or confess &log(ERROR, "unable to create path ${strPathCreate}");
+    my $strCommand = "mkdir -p -m ${strPermission} ${strPathCreate}";
+
+    # Run remotely
+    if (is_remote($strPathType))
+    {
+        &log(DEBUG, "        path_create: remote ${strPathType} '${strCommand}'");
+
+        my $oSSH = remote_get($strPathType);
+        $oSSH->system($strCommand) or confess &log("unable to create remote path ${strPathType}:${strPath}");
+    }
+    # Run locally
+    else
+    {
+        &log(DEBUG, "        path_create: local '${strCommand}'");
+        system($strCommand) == 0 or confess &log(ERROR, "unable to create path ${strPath}");
+    }
 }
 
 ####################################################################################################################################
@@ -331,17 +372,19 @@ sub remote_get
 {
     my $strPathType = shift;
     
-    # If the SSH object is defined then some paths are remote
+    # Get the db SSH object
     if (path_type_get($strPathType) eq PATH_DB && defined($oDbSSH))
     {
         return $oDbSSH;
     }
 
+    # Get the backup SSH object
     if (path_type_get($strPathType) eq PATH_BACKUP && defined($oBackupSSH))
     {
         return $oBackupSSH
     }
 
+    # Error when no ssh object is found
     confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
 }
 
@@ -378,9 +421,9 @@ sub file_copy
     $strDestination .= $bCompress ? ".gz" : "";
                       
     # If the destination path is backup and does not exist, create it
-    unless ($strDestinationPathType =~ /^backup\:.*/ and -e dirname($strDestination))
+    if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
-        path_create(undef, dirname($strDestination), $strDefaultPathPermission);
+        path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
 
     # Generate the command string depending on compression/copy
@@ -443,7 +486,7 @@ sub file_copy
         # Complete the command by redirecting to the destination tmp file
         $strCommand .= " > ${strDestinationTmp}";
 
-        if (is_remote())
+        if (is_remote($strSourcePathType))
         {
             &log(DEBUG, "        file_copy: remote ${strSourcePathType} '${strCommand}'");
 
@@ -459,7 +502,7 @@ sub file_copy
     }
     
     # Move the file from tmp to final destination
-    rename($strDestinationTmp, $strDestination) or die &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
+    rename($strDestinationTmp, $strDestination) or confess &log(ERROR, "unable to move $strDestinationTmp to $strDestination");
 }
 
 ####################################################################################################################################
@@ -469,6 +512,12 @@ sub file_hash_get
 {
     my $strPathType = shift;
     my $strFile = shift;
+    
+    # For now this operation is not supported remotely.  Not currently needed.
+    if (is_remote($strPathType))
+    {
+        confess &log(ASSERT, "remote operation not supported");
+    }
     
     if (!defined($strCommandChecksum))
     {
@@ -503,14 +552,23 @@ sub file_hash_get
 ####################################################################################################################################
 sub file_list_get
 {
+    my $strPathType = shift;
     my $strPath = shift;
     my $strExpression = shift;
     my $strSortOrder = shift;
+
+    # For now this operation is not supported remotely.  Not currently needed.
+    if (is_remote($strPathType))
+    {
+        confess &log(ASSERT, "remote operation not supported");
+    }
+    
+    my $strPathList = path_get($strPathType, $strPath);
     
     my $hDir;
     
-    opendir $hDir, $strPath or die &log(ERROR, "unable to open path ${strPath}");
-    my @stryFileAll = readdir $hDir or die &log(ERROR, "unable to get files for path ${strPath}, expression ${strExpression}");
+    opendir $hDir, $strPathList or confess &log(ERROR, "unable to open path ${strPathList}");
+    my @stryFileAll = readdir $hDir or confess &log(ERROR, "unable to get files for path ${strPathList}, expression ${strExpression}");
     close $hDir;
     
     my @stryFile;
