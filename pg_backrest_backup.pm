@@ -16,7 +16,7 @@ use pg_backrest_file;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup);
+our @EXPORT = qw(backup_init archive_push backup);
 
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
@@ -34,6 +34,29 @@ sub backup_init
     $strType = $strTypeParam;
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
+}
+
+####################################################################################################################################
+# ARCHIVE_PUSH
+####################################################################################################################################
+sub archive_push
+{
+    my $strSourceFile = shift;
+
+    # Get the destination file
+    my $strDestinationFile = basename($strSourceFile);
+    
+    # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
+    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/;
+
+    # Append the checksum (if requested)
+    if ($bArchiveFile && !$bNoChecksum)
+    {
+        $strDestinationFile .= "-" . file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
+    }
+    
+    # Copy the archive file
+    file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile, !$bArchiveFile);
 }
 
 ####################################################################################################################################

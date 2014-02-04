@@ -113,21 +113,8 @@ if ($strOperation eq "archive-push")
         confess "not enough arguments - show usage";
     }
 
-    # Get the source/destination file
-    my $strSourceFile = $ARGV[1];
-    my $strDestinationFile = basename($strSourceFile);
-    
-    # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/;
-
-    # Append the checksum (if requested)
-    if ($bArchiveFile && !$bNoChecksum)
-    {
-        $strDestinationFile .= "-" . file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
-    }
-    
-    # Copy the archive file
-    file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile, !$bArchiveFile);
+    # Call the archive function
+    archive_push($ARGV[1]);
 
     exit 0;
 }
