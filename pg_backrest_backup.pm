@@ -3,6 +3,8 @@
 ####################################################################################################################################
 package pg_backrest_backup;
 
+#use Class::Struct;
+
 use strict;
 use warnings;
 use Carp;
@@ -490,13 +492,13 @@ sub backup
     path_create(PATH_BACKUP_CLUSTER);
 
     # Find the previous backup based on the type
-    my $strBackupLastPath = backup_type_find($strType, $pg_backrest_file::strBackupClusterPath);
+    my $strBackupLastPath = backup_type_find($strType, path_get(PATH_BACKUP_CLUSTER));
 
     my %oLastManifest;
 
     if (defined($strBackupLastPath))
     {
-        %oLastManifest = backup_manifest_load("${pg_backrest_file::strBackupClusterPath}/$strBackupLastPath/backup.manifest");
+        %oLastManifest = backup_manifest_load(path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
         &log(INFO, "Last backup label: $oLastManifest{common}{backup}{label}");
     }
 
@@ -608,7 +610,7 @@ sub backup
 #    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
     # Expire backups (!!! Need to read this from config file)
-    backup_expire($pg_backrest_file::strBackupClusterPath, 2, 2, "full", 2);
+    backup_expire(path_get(PATH_BACKUP_CLUSTER), 2, 2, "full", 2);
 }
 
 ####################################################################################################################################
@@ -681,7 +683,7 @@ sub backup_expire
         # be consistent if the process dies
         foreach $strPath (file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
         {
-            rmtree("$pg_backrest_file::strBackupClusterPath/$strPath") or confess &log(ERROR, "unable to delete backup ${strPath}");
+            rmtree("${strBackupClusterPath}/${strPath}") or confess &log(ERROR, "unable to delete backup ${strPath}");
         }
         
         $iIndex++;
@@ -698,7 +700,7 @@ sub backup_expire
             # Remove all differential and incremental backups before the oldest valid differential
             if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
             {
-                rmtree("$pg_backrest_file::strBackupClusterPath/$strPath") or confess &log(ERROR, "unable to delete backup ${strPath}");
+                rmtree("${strBackupClusterPath}/${strPath}") or confess &log(ERROR, "unable to delete backup ${strPath}");
                 &log(INFO, "removed expired diff/incr backup ${strPath}");
             }
         }

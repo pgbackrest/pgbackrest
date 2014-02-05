@@ -44,7 +44,7 @@ my $strBackupUser;              # Backup user
 my $strBackupHost;              # Backup host
 my $oBackupSSH;                 # Backup SSH object
 my $strBackupPath;              # Backup base path
-our $strBackupClusterPath;       # Backup cluster path
+my $strBackupClusterPath;       # Backup cluster path
 
 # Process flags
 my $bNoCompression;
