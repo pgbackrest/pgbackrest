@@ -24,6 +24,7 @@ our @EXPORT = qw(file_init_archive file_init_backup
 # Extension and permissions
 our $strCompressExtension = "gz";
 my $strDefaultPathPermission = "0750";
+our $strDefaultFilePermission = "0640";
 
 # Command strings
 my $strCommandChecksum;
@@ -457,6 +458,14 @@ sub file_copy
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
     my $bNoCompressionOverride = shift;
+    my $lModificationTime = shift;
+    my $strPermission = shift;
+
+    # Modification time and permissions cannot be set remotely
+    if ((defined($lModificationTime) || defined($strPermission)) && is_remote($strDestinationPathType))
+    {
+        confess &log(ASSERT, "modification time and permissions cannot be set on remote destination file");
+    }
 
     # Generate source, destination and tmp filenames
     my $strSource = path_get($strSourcePathType, $strSourceFile);
@@ -567,9 +576,26 @@ sub file_copy
         else
         {
             &log(DEBUG, "        file_copy: local '${strCommand}'");
-
             system($strCommand) == 0 or confess &log(ERROR, "unable to copy local $strSource to local $strDestinationTmp");
         }
+    }
+
+    # Set the file permission if required (this only works locally for now)
+    if (defined($strPermission))
+    {
+        &log(DEBUG, "        file_copy: chmod ${strPermission}");
+
+        system("chmod ${strPermission} ${strDestinationTmp}") == 0
+            or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmp}");
+    }
+    
+    # Set the file modification time if required (this only works locally for now)
+    if (defined($lModificationTime))
+    {
+        &log(DEBUG, "        file_copy: time ${lModificationTime}");
+
+        utime($lModificationTime, $lModificationTime, $strDestinationTmp)
+            or confess &log(ERROR, "unable to set time for local ${strDestinationTmp}");
     }
     
     # Move the file from tmp to final destination

@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# /Library/PostgreSQL/9.3/bin/pg_ctl start -o "-c port=7000" -D /Users/backrest/test/backup/db/20140205-103801F/base -l /Users/backrest/test/backup/db/20140205-103801F/base/postgresql.log -w -s
+
 #use strict;
 use DBI;
 use IPC::System::Simple qw(capture);

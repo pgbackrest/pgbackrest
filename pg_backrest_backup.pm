@@ -423,7 +423,7 @@ sub backup_file
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
 
-            # If the file is a has reference it does not need to be copied since it can be retrieved from the referenced backup.
+            # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
             # However, if hard-linking is turned on the link will need to be created
             my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference};
 
@@ -444,8 +444,9 @@ sub backup_file
                 # Copy the file from db to backup
                 &log(DEBUG, "   backing up ${strBackupSourceFile}");
             
-                my $lModificationTime = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
-                file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+                file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}",
+                          undef, ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time},
+                          $pg_backrest_file::strDefaultFilePermission);
 
                 # Write the hash into the backup manifest (if not suppressed)
                 if (!$bNoChecksum)
