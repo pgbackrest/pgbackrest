@@ -456,21 +456,33 @@ sub file_copy
     }
 
     # Does the file need compression?
-    my $bCompress = !($bAlreadyCompressed ||
-                      (defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
+    my $bCompress = !((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
                       (!defined($bNoCompressionOverride) && $bNoCompression));
 
-    # If the destination file is to be compressed add the extenstion
-    $strDestination .= $bCompress ? ".gz" : "";
-                      
     # If the destination path is backup and does not exist, create it
     if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
         path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
 
-    # Generate the command string depending on compression/copy
-    my $strCommand = $bCompress ? $strCommandCompress : $strCommandCat;
+    # Generate the command string depending on compression/decompression/cat
+    my $strCommand = $strCommandCat;
+    
+    if ($bAlreadyCompressed && $bCompress)
+    {
+        $strDestination .= $strDestination =~ "^.*\.${strCompressExtension}\$" ? ".gz" : "";
+    }
+    elsif (!$bAlreadyCompressed && $bCompress)
+    {
+        $strCommand = $strCommandCompress;
+        $strDestination .= ".gz";
+    }
+    elsif ($bAlreadyCompressed && !$bCompress)
+    {
+        $strCommand = $strCommandDecompress;
+        $strDestination = substr($strDestination, 0, length($strDestination) - length($strCompressExtension) - 1);
+    }
+
     $strCommand =~ s/\%file\%/${strSource}/g;
 
     # If this command is remote on only one side
@@ -573,7 +585,7 @@ sub file_hash_get
     if (-e $strPath)
     {
         $strCommand = $strCommandChecksum;
-        $strCommand =~ s/\%file\%/$strFile/g;
+        $strCommand =~ s/\%file\%/${strPath}/g;
     }
     elsif (-e $strPath . ".${strCompressExtension}")
     {
