@@ -486,6 +486,9 @@ sub backup
 #        confess &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
 #    }
 
+    # Create the cluster backup path
+    path_create(PATH_BACKUP_CLUSTER);
+
     # Find the previous backup based on the type
     my $strBackupLastPath = backup_type_find($strType, $pg_backrest_file::strBackupClusterPath);
 

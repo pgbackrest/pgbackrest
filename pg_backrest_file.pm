@@ -152,90 +152,84 @@ sub path_type_get
 
 sub path_get
 {
-    my $strType = shift;
-    my $strFile = shift;
-    my $bTemp = shift;
+    my $strType = shift;    # Base type of the path to get (PATH_DB_ABSOLUTE, PATH_BACKUP_TMP, etc)
+    my $strFile = shift;    # File to append to the base path (can include a path as well)
+    my $bTemp = shift;      # Return the temp file for this path type - only some types have temp files
 
+    # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP
     if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP))
     {
         confess &log(ASSERT, "temp file not supported on path " . $strType);
     }
 
-    # Parse paths on the db side
+    # Get absolute db path
     if ($strType eq PATH_DB_ABSOLUTE)
     {
         return $strFile;
     }
-    # Parse absolute backup path
-    elsif ($strType eq PATH_BACKUP_ABSOLUTE)
+
+    # Make sure the base backup path is defined
+    if (!defined($strBackupPath))
     {
+        confess &log(ASSERT, "\$strBackupPath not yet defined");
+    }
+
+    # Get absolute backup path
+    if ($strType eq PATH_BACKUP_ABSOLUTE)
+    {
+        # Need a check in here to make sure this is relative to the backup path
+
         return $strFile;
     }
-    # Parse paths on the backup side
-    elsif ($strType eq PATH_BACKUP || $strType eq PATH_BACKUP_TMP)
+
+    # Get base backup path
+    if ($strType eq PATH_BACKUP)
     {
-        if (!defined($strBackupPath))
-        {
-            confess &log(ASSERT, "\$strBackupPath not yet defined");
-        }
-
-        if ($strType eq PATH_BACKUP)
-        {
-            return $strBackupPath;
-        }
-
-        if ($strType eq PATH_BACKUP_TMP)
-        {
-            if (!defined($strCluster))
-            {
-                confess &log(ASSERT, "\$strCluster not yet defined");
-            }
-
-            my $strTempPath = "tmp/${strCluster}.tmp";
-
-            if (defined($bTemp) && $bTemp)
-            {
-                return $strBackupPath . "/${strTempPath}/file.tmp";
-            }
-
-            return $strBackupPath . "/${strTempPath}" . (defined($strFile) ? "/${strFile}" : "");
-        }
+        return $strBackupPath . (defined($strFile) ? "/${strFile}" : "");
     }
-    elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_ARCHIVE)
+
+    # Make sure the cluster is defined
+    if (!defined($strCluster))
     {
-        if (!defined($strBackupClusterPath))
+        confess &log(ASSERT, "\$strCluster not yet defined");
+    }
+
+    # Get the backup tmp path
+    if ($strType eq PATH_BACKUP_TMP)
+    {
+        my $strTempPath = "${strBackupPath}/tmp/${strCluster}.tmp";
+
+        if (defined($bTemp) && $bTemp)
         {
-            confess &log(ASSERT, "\$strBackupClusterPath not yet defined");
+            return "${strTempPath}/file.tmp";
         }
 
-        if ($strType eq PATH_BACKUP_CLUSTER)
+        return "${strTempPath}" . (defined($strFile) ? "/${strFile}" : "");
+    }
+
+    # Get the backup archive path
+    if ($strType eq PATH_BACKUP_ARCHIVE)
+    {
+        my $strArchivePath = "$strBackupPath/archive/${strCluster}";
+        my $strArchive;
+
+        if (defined($strFile))
         {
-            return $strBackupClusterPath . (defined($strFile) ? "/${strFile}" : "");
-        }
-        elsif ($strType eq PATH_BACKUP_ARCHIVE)
-        {
-            if (defined($bTemp) && $bTemp)
+            $strArchive = substr(basename($strFile), 0, 24);
+
+            if ($strArchive !~ /^([0-F]){24}$/)
             {
-                return $strBackupClusterPath . "/archive/archive.tmp";
-            }
-            else
-            {
-                my $strArchive;
-
-                if (defined($strFile))
-                {
-                    $strArchive = substr(basename($strFile), 0, 24);
-
-                    if ($strArchive !~ /^([0-F]){24}$/)
-                    {
-                        return $strBackupClusterPath . "/archive/${strFile}";
-                    }
-                }
-
-                return $strBackupClusterPath . "/archive" . (defined($strArchive) ? "/" . 
-                       substr($strArchive, 0, 16) : "") . (defined($strFile) ? "/" . $strFile : "");
+                return "${strArchivePath}/${strFile}";
             }
         }
+
+        return $strArchivePath . (defined($strArchive) ? "/" . substr($strArchive, 0, 16) : "") .
+               (defined($strFile) ? "/" . $strFile : "");
+    }
+
+    if ($strType eq PATH_BACKUP_CLUSTER)
+    {
+        return $strBackupPath . "/backup/${strCluster}" . (defined($strFile) ? "/${strFile}" : "");
     }
 
     # Error when path type not recognized
