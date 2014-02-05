@@ -17,7 +17,8 @@ use pg_backrest_utility;
 use Exporter qw(import);
 
 our @EXPORT = qw(file_init_archive file_init_backup
-                 path_get path_type_get link_create path_create file_copy file_list_get manifest_get file_hash_get is_remote
+                 path_get path_type_get is_remote
+                 link_create path_create file_move file_copy file_list_get manifest_get file_hash_get
                  psql_execute
                  PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
 
@@ -47,6 +48,7 @@ our $strBackupClusterPath;       # Backup cluster path
 
 # Process flags
 my $bNoCompression;
+my $strCluster;
 
 ####################################################################################################################################
 # FILE_INIT_ARCHIVE
@@ -60,7 +62,7 @@ sub file_init_archive
     my $strBackupUserParam = shift;
     my $strBackupHostParam = shift;
     my $strBackupPathParam = shift;
-    my $strCluster = shift;
+    my $strClusterParam = shift;
     
     # Assign parameters to module variables
     $bNoCompression = $bNoCompressionParam;
@@ -68,7 +70,7 @@ sub file_init_archive
     $strCommandCompress = $strCommandCompressParam;
     $strCommandDecompress = $strCommandDecompressParam;
     $strBackupPath = $strBackupPathParam;
-    #$strCluster = $strClusterParam;
+    $strCluster = $strClusterParam;
     $strBackupUser = $strBackupUserParam;
     $strBackupHost = $strBackupHostParam;
     
@@ -164,22 +166,42 @@ sub path_get
     {
         return $strFile;
     }
+    # Parse absolute backup path
+    elsif ($strType eq PATH_BACKUP_ABSOLUTE)
+    {
+        return $strFile;
+    }
     # Parse paths on the backup side
-    elsif ($strType eq PATH_BACKUP)
+    elsif ($strType eq PATH_BACKUP || $strType eq PATH_BACKUP_TMP)
     {
         if (!defined($strBackupPath))
         {
             confess &log(ASSERT, "\$strBackupPath not yet defined");
         }
 
-        return $strBackupPath;
+        if ($strType eq PATH_BACKUP)
+        {
+            return $strBackupPath;
+        }
+
+        if ($strType eq PATH_BACKUP_TMP)
+        {
+            if (!defined($strCluster))
+            {
+                confess &log(ASSERT, "\$strCluster not yet defined");
+            }
+
+            my $strTempPath = "tmp/${strCluster}.tmp";
+
+            if (defined($bTemp) && $bTemp)
+            {
+                return $strBackupPath . "/${strTempPath}/file.tmp";
+            }
+
+            return $strBackupPath . "/${strTempPath}" . (defined($strFile) ? "/${strFile}" : "");
+        }
     }
-    # Parse absolute db path
-    if ($strType eq PATH_BACKUP_ABSOLUTE)
-    {
-        return $strFile;
-    }
-    elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_TMP || $strType eq PATH_BACKUP_ARCHIVE)
+    elsif ($strType eq PATH_BACKUP_CLUSTER || $strType eq PATH_BACKUP_ARCHIVE)
     {
         if (!defined($strBackupClusterPath))
         {
@@ -189,15 +211,6 @@ sub path_get
         if ($strType eq PATH_BACKUP_CLUSTER)
         {
             return $strBackupClusterPath . (defined($strFile) ? "/${strFile}" : "");
-        }
-        elsif ($strType eq PATH_BACKUP_TMP)
-        {
-            if (defined($bTemp) && $bTemp)
-            {
-                return $strBackupClusterPath . "/backup.tmp/file.tmp";
-            }
-
-            return $strBackupClusterPath . "/backup.tmp" . (defined($strFile) ? "/${strFile}" : "");
         }
         elsif ($strType eq PATH_BACKUP_ARCHIVE)
         {
@@ -416,15 +429,21 @@ sub remote_get
 ####################################################################################################################################
 sub file_move
 {
-    my $strPathType = shift;
+    my $strSourcePathType = shift;
     my $strSourceFile = shift;
+    my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
-    
-    my $strSource = path_get($strPathType, $strSourceFile);
-    my $strDestination = path_get($strPathType, $strDestinationFile);
+
+    if (path_type_get($strSourcePathType) ne path_type_get($strSourcePathType))
+    {
+        confess &log(ASSERT, "source and destination path types must be equal");
+    }
+
+    my $strSource = path_get($strSourcePathType, $strSourceFile);
+    my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
     
     # If the destination path is backup and does not exist, create it
-    if (path_type_get($strPathType) eq PATH_BACKUP)
+    if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
         path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
@@ -432,12 +451,13 @@ sub file_move
     my $strCommand = "mv ${strSource} ${strDestination}";
 
     # Run remotely
-    if (is_remote($strPathType))
+    if (is_remote($strDestinationPathType))
     {
-        &log(DEBUG, "        file_move: remote ${strPathType} '${strCommand}'");
+        &log(DEBUG, "        file_move: remote ${strDestinationPathType} '${strCommand}'");
 
-        my $oSSH = remote_get($strPathType);
-        $oSSH->system($strCommand) or confess &log("unable to move remote ${strPathType}:${strSourceFile} to ${strDestinationFile}");
+        my $oSSH = remote_get($strDestinationPathType);
+        $oSSH->system($strCommand)
+            or confess &log("unable to move remote ${strDestinationPathType}:${strSourceFile} to ${strDestinationFile}");
     }
     # Run locally
     else
@@ -599,7 +619,8 @@ sub file_copy
     }
     
     # Move the file from tmp to final destination
-    file_move(path_type_get($strDestinationPathType) . ":absolute", $strDestinationTmp, $strDestination);
+    file_move(path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
+              path_type_get($strDestinationPathType) . ":absolute",  $strDestination);
 }
 
 ####################################################################################################################################

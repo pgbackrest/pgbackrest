@@ -481,8 +481,6 @@ sub backup
     
     &log(DEBUG, "cluster path is $strDbClusterPath");
     
-    path_create(PATH_BACKUP_CLUSTER);
-
 #    unless (-e $strDbClusterPath)
 #    {
 #        confess &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
@@ -524,8 +522,8 @@ sub backup
     }
 
     # Build backup tmp and config
-    my $strBackupTmpPath = "${pg_backrest_file::strBackupClusterPath}/backup.tmp";
-    my $strBackupConfFile = "${strBackupTmpPath}/backup.manifest";
+    my $strBackupTmpPath = path_get(PATH_BACKUP_TMP);
+    my $strBackupConfFile = path_get(PATH_BACKUP_TMP, "backup.manifest");
 
     # If the backup tmp path already exists, delete the conf file
     if (-e $strBackupTmpPath)
@@ -533,7 +531,8 @@ sub backup
         &log(WARNING, "backup path $strBackupTmpPath already exists");
 
         # !!! This is temporary until we can clean backup dirs
-        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete backup.tmp");
+        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
+        path_create(PATH_BACKUP_TMP);
         #if (-e $strBackupConfFile)
         #{
         #    unlink $strBackupConfFile or die &log(ERROR, "backup config ${strBackupConfFile} could not be deleted");
@@ -543,7 +542,7 @@ sub backup
     else
     {
         &log(INFO, "creating backup path $strBackupTmpPath");
-        mkdir $strBackupTmpPath or confess &log(ERROR, "backup path ${strBackupTmpPath} could not be created");
+        path_create(PATH_BACKUP_TMP);
     }
 
     # Create a new backup manifest hash
@@ -602,7 +601,8 @@ sub backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
-    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
+    file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+#    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
     # Expire backups (!!! Need to read this from config file)
     backup_expire($pg_backrest_file::strBackupClusterPath, 2, 2, "full", 2);
