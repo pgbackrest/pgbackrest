@@ -11,7 +11,8 @@ use IPC::System::Simple qw(capture);
 use Exporter qw(import);
 
 #our @EXPORT_OK = qw(data_hash_build trim date_string_get);
-our @EXPORT = qw(data_hash_build trim date_string_get execute log DEBUG ERROR ASSERT WARNING INFO true false);
+our @EXPORT = qw(data_hash_build trim common_prefix date_string_get execute log
+                 DEBUG ERROR ASSERT WARNING INFO true false);
 
 # Global constants
 use constant
@@ -67,6 +68,30 @@ sub trim
     $strBuffer =~ s/^\s+|\s+$//g;
 
     return $strBuffer;
+}
+
+####################################################################################################################################
+# COMMON_PREFIX
+####################################################################################################################################
+sub common_prefix
+{
+    my $strString1 = shift;
+    my $strString2 = shift;
+    
+    my $iCommonLen = 0;
+    my $iCompareLen = length($strString1) < length($strString2) ? length($strString1) : length($strString2);
+    
+    for (my $iIndex = 0; $iIndex < $iCompareLen; $iIndex++)
+    {
+        if (substr($strString1, $iIndex, 1) ne substr($strString2, $iIndex, 1))
+        {
+            last;
+        }
+        
+        $iCommonLen ++;
+    }
+
+    return $iCommonLen;
 }
 
 ####################################################################################################################################

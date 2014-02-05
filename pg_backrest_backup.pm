@@ -345,7 +345,8 @@ sub backup_manifest_build
 ####################################################################################################################################
 sub backup_file
 {
-    my $strDbClusterPath = shift;
+    my $strBackupPath = shift;         # Path where the final backup will go (e.g. 20120101F)
+    my $strDbClusterPath = shift;      # Database base data path
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
     # Iterate through the path sections of the manifest to backup
@@ -387,8 +388,9 @@ sub backup_file
             {
                 path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
 
-                link_create(PATH_BACKUP_TMP, $strBackupDestinationPath,
-                            PATH_BACKUP_TMP, "pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid});
+                link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
+                            PATH_BACKUP_TMP, "base/pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid},
+                            false, true);
             }
         }
         else
@@ -566,7 +568,7 @@ sub backup
     # !!! do it
 
     # Perform the backup
-    backup_file($strDbClusterPath, \%oBackupManifest);
+    backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
            
     # Stop backup
     my $strArchiveStop = trim(psql_execute(

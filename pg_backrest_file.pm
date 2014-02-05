@@ -240,11 +240,19 @@ sub link_create
     my $bHard = shift;
     my $bRelative = shift;
     
+    # if bHard is not defined default to false
+    $bHard = defined($bHard) ? $bHard : false;
+    
+    # if bRelative is not defined or bHard is true, default to false
+    $bRelative = !defined($bRelative) || $bHard ? false : $bRelative;
+    
+    # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
     if (path_type_get($strSourcePathType) ne path_type_get($strDestinationPathType))
     {
         confess &log(ASSERT, "path types must be equal in link create");
     }
 
+    # Generate source and destination files
     my $strSource = path_get($strSourcePathType, $strSourceFile);
     my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
 
@@ -253,7 +261,7 @@ sub link_create
     {
         path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
-
+    
     unless (-e $strSource)
     {
         if (-e $strSource . ".${strCompressExtension}")
@@ -263,19 +271,27 @@ sub link_create
         }
         else
         {
-            confess &log(ASSERT, "unable to find ${strSource}(.${strCompressExtension}) for checksum");
+            # Error when a hardlink will be created on a missing file
+            if ($bHard)
+            {
+                confess &log(ASSERT, "unable to find ${strSource}(.${strCompressExtension}) for link");
+            }
         }
     }
     
-    # Create the link
-    my $strCommand = "ln";
-    
-    if (!defined($bHard) || !$bHard)
+    # Generate relative path if requested
+    if ($bRelative)
     {
-        $strCommand .= " -s";
+        my $iCommonLen = common_prefix($strSource, $strDestination);
+
+        if ($iCommonLen != 0)
+        {
+            $strSource = ("../" x substr($strDestination, $iCommonLen) =~ tr/\///) . substr($strSource, $iCommonLen);
+        }
     }
-    
-    $strCommand .= " ${strSource} ${strDestination}";
+
+    # Create the command
+    my $strCommand = "ln" . (!$bHard ? " -s" : "") . " ${strSource} ${strDestination}";
     
     # Run remotely
     if (is_remote($strSourcePathType))
