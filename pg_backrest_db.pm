@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# FILE MODULE
+# DB MODULE
 ####################################################################################################################################
 package pg_backrest_db;
 
@@ -14,9 +14,6 @@ use IPC::System::Simple qw(capture);
 use lib dirname($0);
 use pg_backrest_utility;
 
-#use Exporter qw(import);
-#our @EXPORT = qw(PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
-
 # Command strings
 has strCommandPsql => (is => 'bare');   # PSQL command
 
@@ -25,6 +22,9 @@ has strDbUser => (is => 'ro');          # Database user
 has strDbHost => (is => 'ro');          # Database host
 has oDbSSH => (is => 'bare');           # Database SSH object
 
+####################################################################################################################################
+# CONSTRUCTOR
+####################################################################################################################################
 sub BUILD
 {
     my $self = shift;
@@ -48,7 +48,7 @@ sub BUILD
 sub is_remote
 {
     my $self = shift;
-    
+
     # If the SSH object is defined then db is remote
     return defined($self->{oDbSSH}) ? true : false;
 }
@@ -65,6 +65,8 @@ sub psql_execute
     my $strCommand = $self->{strCommandPsql} . " -c \"${strScript}\" postgres";
     my $strResult;
 
+    # !!! Need to capture error output with open3 and log it
+
     # Run remotely
     if ($self->is_remote())
     {
@@ -79,8 +81,42 @@ sub psql_execute
         &log(DEBUG, "        psql execute: ${strScript}");
         $strResult = capture($strCommand) or confess &log(ERROR, "unable to execute local psql command '${strCommand}'");
     }
-    
+
     return $strResult;
+}
+
+####################################################################################################################################
+# TABLESPACE_MAP_GET - Get the mapping between oid and tablespace name
+####################################################################################################################################
+sub tablespace_map_get
+{
+    my $self = shift;
+
+    return data_hash_build("oid\tname\n" . $self->psql_execute(
+                           "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
+}
+
+####################################################################################################################################
+# BACKUP_START
+####################################################################################################################################
+sub backup_start
+{
+    my $self = shift;
+    my $strLabel = shift;
+
+    return trim($self->psql_execute("set client_min_messages = 'warning';" . 
+                                    "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout"));
+}
+
+####################################################################################################################################
+# BACKUP_STOP
+####################################################################################################################################
+sub backup_stop
+{
+    my $self = shift;
+
+    return trim($self->psql_execute("set client_min_messages = 'warning';" .
+                                    "copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout"))
 }
 
 no Moose;

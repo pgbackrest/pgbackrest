@@ -45,6 +45,9 @@ has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 has bNoCompression => (is => 'bare');
 has strStanza => (is => 'bare');
 
+####################################################################################################################################
+# CONSTRUCTOR
+####################################################################################################################################
 sub BUILD
 {
     my $self = shift;
@@ -97,7 +100,7 @@ sub path_type_get
 {
     my $self = shift;
     my $strType = shift;
-    
+
     # If db type
     if ($strType =~ /^db(\:.*){0,1}/)
     {
@@ -108,7 +111,7 @@ sub path_type_get
     {
         return PATH_BACKUP;
     }
-    
+
     # Error when path type not recognized
     confess &log(ASSERT, "no known path types in '${strType}'");
 }
@@ -212,10 +215,10 @@ sub link_create
     my $strDestinationFile = shift;
     my $bHard = shift;
     my $bRelative = shift;
-    
+
     # if bHard is not defined default to false
     $bHard = defined($bHard) ? $bHard : false;
-    
+
     # if bRelative is not defined or bHard is true, default to false
     $bRelative = !defined($bRelative) || $bHard ? false : $bRelative;
     
@@ -234,7 +237,7 @@ sub link_create
     {
         $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
-    
+
     unless (-e $strSource)
     {
         if (-e $strSource . ".$self->{strCompressExtension}")
@@ -251,7 +254,7 @@ sub link_create
             }
         }
     }
-    
+
     # Generate relative path if requested
     if ($bRelative)
     {
@@ -265,7 +268,7 @@ sub link_create
 
     # Create the command
     my $strCommand = "ln" . (!$bHard ? " -s" : "") . " ${strSource} ${strDestination}";
-    
+
     # Run remotely
     if ($self->is_remote($strSourcePathType))
     {
@@ -294,7 +297,7 @@ sub path_create
     my $strPathType = shift;
     my $strPath = shift;
     my $strPermission = shift;
-    
+
     # If no permissions are given then use the default
     if (!defined($strPermission))
     {
@@ -337,7 +340,7 @@ sub is_remote
 {
     my $self = shift;
     my $strPathType = shift;
-    
+
     # If the SSH object is defined then some paths are remote
     if (defined($self->{oDbSSH}) || defined($self->{oBackupSSH}))
     {
@@ -346,7 +349,7 @@ sub is_remote
         {
             return true;
         }
-    
+
         # If a host is defined for the path then it is remote
         if (defined($self->{strBackupHost}) && $self->path_type_get($strPathType) eq PATH_BACKUP ||
             defined($self->{strDbHost}) && $self->path_type_get($strPathType) eq PATH_DB)
@@ -572,7 +575,7 @@ sub file_copy
         system("chmod ${strPermission} ${strDestinationTmp}") == 0
             or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmp}");
     }
-    
+
     # Set the file modification time if required (this only works locally for now)
     if (defined($lModificationTime))
     {
@@ -581,7 +584,7 @@ sub file_copy
         utime($lModificationTime, $lModificationTime, $strDestinationTmp)
             or confess &log(ERROR, "unable to set time for local ${strDestinationTmp}");
     }
-    
+
     # Move the file from tmp to final destination
     $self->file_move($self->path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
                      $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination);
@@ -595,21 +598,21 @@ sub file_hash_get
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
-    
+
     # For now this operation is not supported remotely.  Not currently needed.
     if ($self->is_remote($strPathType))
     {
         confess &log(ASSERT, "remote operation not supported");
     }
-    
+
     if (!defined($self->{strCommandChecksum}))
     {
         confess &log(ASSERT, "\$strCommandChecksum not defined");
     }
-    
+
     my $strPath = $self->path_get($strPathType, $strFile);
     my $strCommand;
-    
+
     if (-e $strPath)
     {
         $strCommand = $self->{strCommandChecksum};
@@ -626,7 +629,7 @@ sub file_hash_get
     {
         confess &log(ASSERT, "unable to find $strPath(.$self->{strCompressExtension}) for checksum");
     }
-    
+
     return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
 }
 
@@ -646,22 +649,21 @@ sub file_list_get
     {
         confess &log(ASSERT, "remote operation not supported");
     }
-    
+
     my $strPathList = $self->path_get($strPathType, $strPath);
-    
     my $hDir;
-    
+
     opendir $hDir, $strPathList or confess &log(ERROR, "unable to open path ${strPathList}");
     my @stryFileAll = readdir $hDir or confess &log(ERROR, "unable to get files for path ${strPathList}, expression ${strExpression}");
     close $hDir;
-    
+
     my @stryFile;
 
     if (@stryFileAll)
     {
         @stryFile = grep(/$strExpression/i, @stryFileAll)
     }
-    
+
     if (@stryFile)
     {
         if (defined($strSortOrder) && $strSortOrder eq "reverse")
@@ -673,7 +675,7 @@ sub file_list_get
             return sort @stryFile;
         }
     }
-    
+
     return @stryFile;
 }
 

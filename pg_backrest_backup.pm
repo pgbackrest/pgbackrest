@@ -149,19 +149,6 @@ sub backup_type_find
 }
 
 ####################################################################################################################################
-# TABLESPACE_MAP_GET - Get the mapping between oid and tablespace name
-####################################################################################################################################
-sub tablespace_map_get
-{
-    my $strCommandPsql = shift;
-
-    my %oTablespaceMap = data_hash_build("oid\tname\n" . $oDb->psql_execute(
-                                         "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
-    
-    return %oTablespaceMap;
-}
-
-####################################################################################################################################
 # BACKUP_MANIFEST_LOAD - Load the backup manifest
 ####################################################################################################################################
 sub backup_manifest_load
@@ -492,11 +479,6 @@ sub backup
     
     &log(DEBUG, "cluster path is $strDbClusterPath");
     
-#    unless (-e $strDbClusterPath)
-#    {
-#        confess &log(ERROR, "cluster data path '${strDbClusterPath}' does not exist");
-#    }
-
     # Create the cluster backup path
     $oFile->path_create(PATH_BACKUP_CLUSTER);
 
@@ -564,19 +546,16 @@ sub backup
     my %oBackupManifest;
 
     # Start backup
-    my $strLabel = $strBackupPath;
-    ${oBackupManifest}{common}{backup}{label} = $strLabel;
+    ${oBackupManifest}{common}{backup}{label} = $strBackupPath;
 
-    my $strArchiveStart = trim($oDb->psql_execute(
-        "set client_min_messages = 'warning';" . 
-        "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout"));
+    my $strArchiveStart = $oDb->backup_start($strBackupPath);
 
     ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
 
     &log(INFO, 'Backup archive start: ' . $strArchiveStart);
 
     # Build the backup manifest
-    my %oTablespaceMap = tablespace_map_get($oFile->{strCommandPsql});
+    my %oTablespaceMap = $oDb->tablespace_map_get();
     backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
     # Delete files leftover from a partial backup
@@ -586,9 +565,7 @@ sub backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
            
     # Stop backup
-    my $strArchiveStop = trim($oDb->psql_execute(
-        "set client_min_messages = 'warning';" .
-        "copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout"));
+    my $strArchiveStop = $oDb->backup_stop();
 
     ${oBackupManifest}{archive}{archive_location}{stop} = $strArchiveStop;
 
@@ -670,13 +647,13 @@ sub archive_list_get
 ####################################################################################################################################
 # BACKUP_EXPIRE
 # 
-# Removes expired backups and archive logs from the backup directory.
+# Removes expired backups and archive logs from the backup directory.  Partial backups are not counted for expiration, so if full
+# or differential retention is set to 2, there must be three complete backups before the oldest one can be deleted.
 #
-# iFullRetention - Optional, must be greater than 0 when supplied.  Defines the number of full backups that will be retained.
-# Partial backups do not count, so if iFullRetention is set to 2, there must be 3 complete full backups before the oldest one can
-# be deleted.
-#
-# iDifferentialRetention - 
+# iFullRetention - Optional, must be greater than 0 when supplied.
+# iDifferentialRetention - Optional, must be greater than 0 when supplied.
+# strArchiveRetention - Optional, must be (full,differential/diff,incremental/incr) when supplied
+# iArchiveRetention - Required when strArchiveRetention is supplied.  Must be greater than 0.
 ####################################################################################################################################
 sub backup_expire
 {
@@ -774,9 +751,9 @@ sub backup_expire
         return;
     }
 
-    if (!looks_like_number($iArchiveRetention) || $iArchiveRetention < 0)
+    if (!looks_like_number($iArchiveRetention) || $iArchiveRetention < 1)
     {
-        confess &log(ERROR, "archive_rentention must be a number >= 0");
+        confess &log(ERROR, "archive_rentention must be a number >= 1");
     }
     
     # if no backups were found then preserve current archive logs - too scary to delete them!

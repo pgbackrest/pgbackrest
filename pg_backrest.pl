@@ -41,15 +41,15 @@ sub config_load
     my $strSection = shift;
     my $strKey = shift;
     my $bRequired = shift;
-    
+
     # Default is that the key is not required
     if (!defined($bRequired))
     {
         $bRequired = false;
     }
-    
+
     my $strValue;
-    
+
     # Look in the default stanza section
     if ($strSection eq "stanza")
     {
@@ -67,12 +67,12 @@ sub config_load
             $strValue = $oConfig{"global:${strSection}"}{"${strKey}"};
         }
     }
-    
+
     if (!defined($strValue) && $bRequired)
     {
         confess &log(ERROR, "config value " . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
     }
-    
+
     if ($strSection eq "command")
     {
         my $strOption = config_load("command:option", $strKey);
@@ -82,14 +82,13 @@ sub config_load
             $strValue =~ s/\%option\%/${strOption}/g;
         } 
     }
-    
+
     return $strValue;
 }
 
 ####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
-
 # Error if no operation is specified
 if (@ARGV < 1)
 {
@@ -104,7 +103,7 @@ my $strLogFile = "";
 # 
 if ($strOperation eq "archive-push")
 {
-    
+
 }
 
 ####################################################################################################################################
