@@ -85,24 +85,43 @@ if (!defined($strCluster))
     $strCluster = "db"; #!!! Modify to load cluster from conf if there is only one, else error
 }
 
-# Run file_init_archive - this is the minimal config needed to run archiving
-file_init_archive
-(
-    $bNoCompression,
-    config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
-    config_load(\%oConfig, "command", "compress", !$bNoCompression),
-    config_load(\%oConfig, "command", "decompress", !$bNoCompression),
-    $oConfig{backup}{user},
-    $oConfig{backup}{host},
-    $oConfig{backup}{path},
-    $strCluster,
-);
+#file_init_archive
+#(
+#    $bNoCompression,
+#    config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
+#    config_load(\%oConfig, "command", "compress", !$bNoCompression),
+#    config_load(\%oConfig, "command", "decompress", !$bNoCompression),
+#    $oConfig{backup}{user},
+#    $oConfig{backup}{host},
+#    $oConfig{backup}{path},
+#    $strCluster,
+#);
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
 if ($strOperation eq "archive-push")
 {
+    # Run file_init_archive - this is the minimal config needed to run archiving
+    my $oFile = pg_backrest_file->new
+    (
+        bNoCompression => $bNoCompression,
+        strCommandChecksum => config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
+        strCommandCompress => config_load(\%oConfig, "command", "compress", !$bNoCompression),
+        strCommandDecompress => config_load(\%oConfig, "command", "decompress", !$bNoCompression),
+        strBackupUser => $oConfig{backup}{user},
+        strBackupHost => $oConfig{backup}{host},
+        strBackupPath => $oConfig{backup}{path},
+        strCluster => $strCluster
+    );
+
+    $oFile->build();
+
+    backup_init
+    (
+        $oFile
+    );
+
     # archive-push command must have two arguments
     if (@ARGV != 2)
     {
@@ -135,17 +154,36 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
 }
 
 # Run file_init_archive - the rest of the file config required for backup and restore
-file_init_backup
+my $oFile = pg_backrest_file->new
 (
-    config_load(\%oConfig, "command", "manifest"),
-    $pg_backrest_file::strCommandPsql = config_load(\%oConfig, "command", "psql"),
-    $oConfig{"cluster:$strCluster"}{user},
-    $oConfig{"cluster:$strCluster"}{host}
+    bNoCompression => $bNoCompression,
+    strCommandChecksum => config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
+    strCommandCompress => config_load(\%oConfig, "command", "compress", !$bNoCompression),
+    strCommandDecompress => config_load(\%oConfig, "command", "decompress", !$bNoCompression),
+    strCommandManifest => config_load(\%oConfig, "command", "manifest"),
+    strCommandPsql => config_load(\%oConfig, "command", "psql"),
+    strBackupUser => $oConfig{backup}{user},
+    strBackupHost => $oConfig{backup}{host},
+    strBackupPath => $oConfig{backup}{path},
+    strCluster => $strCluster,
+    strDbUser => $oConfig{"cluster:$strCluster"}{user},
+    strDbHost => $oConfig{"cluster:$strCluster"}{host}
 );
+
+$oFile->build();
+
+#file_init_backup
+#(
+#    config_load(\%oConfig, "command", "manifest"),
+#    $pg_backrest_file::strCommandPsql = config_load(\%oConfig, "command", "psql"),
+#    $oConfig{"cluster:$strCluster"}{user},
+#    $oConfig{"cluster:$strCluster"}{host}
+#);
 
 # Run backup_init - parameters required for backup and restore operations
 backup_init
 (
+    $oFile,
     $strType,
     $bHardLink,
     $bNoChecksum

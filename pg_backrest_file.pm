@@ -3,6 +3,7 @@
 ####################################################################################################################################
 package pg_backrest_file;
 
+use Moose;
 use strict;
 use warnings;
 use Carp;
@@ -15,105 +16,67 @@ use lib dirname($0);
 use pg_backrest_utility;
 
 use Exporter qw(import);
-
-our @EXPORT = qw(file_init_archive file_init_backup
-                 path_get path_type_get is_remote
-                 link_create path_create file_move file_copy file_list_get manifest_get file_hash_get
-                 psql_execute
-                 PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
+our @EXPORT = qw(PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
 
 # Extension and permissions
-our $strCompressExtension = "gz";
-my $strDefaultPathPermission = "0750";
-our $strDefaultFilePermission = "0640";
+has strCompressExtension => (is => 'ro', default => 'gz');
+has strDefaultPathPermission => (is => 'bare', default => '0750');
+has strDefaultFilePermission => (is => 'ro', default => '0640');
 
 # Command strings
-my $strCommandChecksum;
-my $strCommandCompress;
-my $strCommandDecompress;
-my $strCommandCat = "cat %file%";
-my $strCommandManifest;
-my $strCommandPsql;
+has strCommandChecksum => (is => 'bare');
+has strCommandCompress => (is => 'bare');
+has strCommandDecompress => (is => 'bare');
+has strCommandCat => (is => 'bare', default => 'cat %file%');
+has strCommandManifest => (is => 'bare');
+has strCommandPsql => (is => 'bare');
 
 # Module variables
-my $strDbUser;                  # Database user
-my $strDbHost;                  # Database host
-my $oDbSSH;                     # Database SSH object
+has strDbUser => (is => 'bare');                # Database user
+has strDbHost => (is => 'bare');                # Database host
+has oDbSSH => (is => 'bare');                   # Database SSH object
 
-my $strBackupUser;              # Backup user
-my $strBackupHost;              # Backup host
-my $oBackupSSH;                 # Backup SSH object
-my $strBackupPath;              # Backup base path
-my $strBackupClusterPath;       # Backup cluster path
+has strBackupUser => (is => 'bare');            # Backup user
+has strBackupHost => (is => 'bare');            # Backup host
+has oBackupSSH => (is => 'bare');               # Backup SSH object
+has strBackupPath => (is => 'bare');            # Backup base path
+has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 
 # Process flags
-my $bNoCompression;
-my $strCluster;
+has bNoCompression => (is => 'bare');
+has strCluster => (is => 'bare');
 
-####################################################################################################################################
-# FILE_INIT_ARCHIVE
-####################################################################################################################################
-sub file_init_archive
+sub build
 {
-    my $bNoCompressionParam = shift;
-    my $strCommandChecksumParam = shift;
-    my $strCommandCompressParam = shift;
-    my $strCommandDecompressParam = shift;
-    my $strBackupUserParam = shift;
-    my $strBackupHostParam = shift;
-    my $strBackupPathParam = shift;
-    my $strClusterParam = shift;
-    
-    # Assign parameters to module variables
-    $bNoCompression = $bNoCompressionParam;
-    $strCommandChecksum = $strCommandChecksumParam;
-    $strCommandCompress = $strCommandCompressParam;
-    $strCommandDecompress = $strCommandDecompressParam;
-    $strBackupPath = $strBackupPathParam;
-    $strCluster = $strClusterParam;
-    $strBackupUser = $strBackupUserParam;
-    $strBackupHost = $strBackupHostParam;
+    my $self = shift;
     
     # Make sure the backup path is defined
-    if (!defined($strBackupPath))
+    if (!defined($self->{strBackupPath}))
     {
         confess &log(ERROR, "common:backup_path undefined");
     }
-    
+
     # Create the backup cluster path
-    $strBackupClusterPath = "${strBackupPath}/${strCluster}";
+    $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strCluster};
 
     # Connect SSH object if backup host is defined
-    if (defined($strBackupHost))
+    if (defined($self->{strBackupHost}))
     {
-        &log(INFO, "connecting to backup ssh host ${strBackupHost}");
+        &log(INFO, "connecting to backup ssh host " . $self->{strBackupHost});
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $oBackupSSH = Net::OpenSSH->new($strBackupHost, master_stderr_discard => true, user => $strBackupUser);
-        $oBackupSSH->error and confess &log(ERROR, "unable to connect to $strBackupHost}: " . $oBackupSSH->error);
+        $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser});
+        $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
     }
-}
 
-sub file_init_backup
-{
-    my $strCommandManifestParam = shift;
-    my $strCommandPsqlParam = shift;
-    my $strDbUserParam = shift;
-    my $strDbHostParam = shift;
-
-    $strCommandManifest = $strCommandManifestParam;
-    $strCommandPsql = $strCommandPsqlParam;
-    $strDbUser = $strDbUserParam;
-    $strDbHost = $strDbHostParam;
-    
     # Connect SSH object if db host is defined
-    if (defined($strDbHost))
+    if (defined($self->{strDbHost}))
     {
-        &log(INFO, "connecting to database ssh host ${strDbHost}");
+        &log(INFO, "connecting to database ssh host $self->{strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $oDbSSH = Net::OpenSSH->new($strDbHost, master_stderr_discard => true, user => $strDbUser);
-        $oDbSSH->error and confess &log(ERROR, "unable to connect to ${strDbHost}: " . $oDbSSH->error);
+        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser});
+        $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
     }
 }
 
@@ -133,6 +96,7 @@ use constant
 
 sub path_type_get
 {
+    my $self = shift;
     my $strType = shift;
     
     # If db type
@@ -152,6 +116,7 @@ sub path_type_get
 
 sub path_get
 {
+    my $self = shift;
     my $strType = shift;    # Base type of the path to get (PATH_DB_ABSOLUTE, PATH_BACKUP_TMP, etc)
     my $strFile = shift;    # File to append to the base path (can include a path as well)
     my $bTemp = shift;      # Return the temp file for this path type - only some types have temp files
@@ -169,7 +134,7 @@ sub path_get
     }
 
     # Make sure the base backup path is defined
-    if (!defined($strBackupPath))
+    if (!defined($self->{strBackupPath}))
     {
         confess &log(ASSERT, "\$strBackupPath not yet defined");
     }
@@ -185,11 +150,11 @@ sub path_get
     # Get base backup path
     if ($strType eq PATH_BACKUP)
     {
-        return $strBackupPath . (defined($strFile) ? "/${strFile}" : "");
+        return $self->{strBackupPath} . (defined($strFile) ? "/${strFile}" : "");
     }
 
     # Make sure the cluster is defined
-    if (!defined($strCluster))
+    if (!defined($self->{strCluster}))
     {
         confess &log(ASSERT, "\$strCluster not yet defined");
     }
@@ -197,7 +162,7 @@ sub path_get
     # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
-        my $strTempPath = "${strBackupPath}/tmp/${strCluster}.tmp";
+        my $strTempPath = "$self->{strBackupPath}/tmp/$self->{strCluster}.tmp";
 
         if (defined($bTemp) && $bTemp)
         {
@@ -210,7 +175,7 @@ sub path_get
     # Get the backup archive path
     if ($strType eq PATH_BACKUP_ARCHIVE)
     {
-        my $strArchivePath = "$strBackupPath/archive/${strCluster}";
+        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strCluster}";
         my $strArchive;
 
         if (defined($strFile))
@@ -229,7 +194,7 @@ sub path_get
 
     if ($strType eq PATH_BACKUP_CLUSTER)
     {
-        return $strBackupPath . "/backup/${strCluster}" . (defined($strFile) ? "/${strFile}" : "");
+        return $self->{strBackupPath} . "/backup/$self->{strCluster}" . (defined($strFile) ? "/${strFile}" : "");
     }
 
     # Error when path type not recognized
@@ -241,6 +206,7 @@ sub path_get
 ####################################################################################################################################
 sub link_create
 {
+    my $self = shift;
     my $strSourcePathType = shift;
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
@@ -255,34 +221,34 @@ sub link_create
     $bRelative = !defined($bRelative) || $bHard ? false : $bRelative;
     
     # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
-    if (path_type_get($strSourcePathType) ne path_type_get($strDestinationPathType))
+    if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
         confess &log(ASSERT, "path types must be equal in link create");
     }
 
     # Generate source and destination files
-    my $strSource = path_get($strSourcePathType, $strSourceFile);
-    my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
+    my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
+    my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
 
     # If the destination path is backup and does not exist, create it
-    if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
+    if ($self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
-        path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
+        $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
     
     unless (-e $strSource)
     {
-        if (-e $strSource . ".${strCompressExtension}")
+        if (-e $strSource . ".$self->{strCompressExtension}")
         {
-            $strSource .= ".${strCompressExtension}";
-            $strDestination .= ".${strCompressExtension}";
+            $strSource .= ".$self->{strCompressExtension}";
+            $strDestination .= ".$self->{strCompressExtension}";
         }
         else
         {
             # Error when a hardlink will be created on a missing file
             if ($bHard)
             {
-                confess &log(ASSERT, "unable to find ${strSource}(.${strCompressExtension}) for link");
+                confess &log(ASSERT, "unable to find ${strSource}(.$self->{strCompressExtension}) for link");
             }
         }
     }
@@ -302,11 +268,11 @@ sub link_create
     my $strCommand = "ln" . (!$bHard ? " -s" : "") . " ${strSource} ${strDestination}";
     
     # Run remotely
-    if (is_remote($strSourcePathType))
+    if ($self->is_remote($strSourcePathType))
     {
         &log(DEBUG, "        link_create: remote ${strSourcePathType} '${strCommand}'");
 
-        my $oSSH = remote_get($strSourcePathType);
+        my $oSSH = $self->remote_get($strSourcePathType);
         $oSSH->system($strCommand) or confess &log("unable to create link from ${strSource} to ${strDestination}");
     }
     # Run locally
@@ -325,6 +291,7 @@ sub link_create
 ####################################################################################################################################
 sub path_create
 {
+    my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
     my $strPermission = shift;
@@ -332,7 +299,7 @@ sub path_create
     # If no permissions are given then use the default
     if (!defined($strPermission))
     {
-        $strPermission = $strDefaultPathPermission;
+        $strPermission = $self->{strDefaultPathPermission};
     }
 
     # Get the path to create
@@ -340,17 +307,17 @@ sub path_create
     
     if (defined($strPathType))
     {
-        $strPathCreate = path_get($strPathType, $strPath);
+        $strPathCreate = $self->path_get($strPathType, $strPath);
     }
 
     my $strCommand = "mkdir -p -m ${strPermission} ${strPathCreate}";
 
     # Run remotely
-    if (is_remote($strPathType))
+    if ($self->is_remote($strPathType))
     {
         &log(DEBUG, "        path_create: remote ${strPathType} '${strCommand}'");
 
-        my $oSSH = remote_get($strPathType);
+        my $oSSH = $self->remote_get($strPathType);
         $oSSH->system($strCommand) or confess &log("unable to create remote path ${strPathType}:${strPath}");
     }
     # Run locally
@@ -369,10 +336,11 @@ sub path_create
 ####################################################################################################################################
 sub is_remote
 {
+    my $self = shift;
     my $strPathType = shift;
     
     # If the SSH object is defined then some paths are remote
-    if (defined($oDbSSH) || defined($oBackupSSH))
+    if (defined($self->{oDbSSH}) || defined($self->{oBackupSSH}))
     {
         # If path type is not defined but the SSH object is, then some paths are remote
         if (!defined($strPathType))
@@ -381,8 +349,8 @@ sub is_remote
         }
     
         # If a host is defined for the path then it is remote
-        if (defined($strBackupHost) && path_type_get($strPathType) eq PATH_BACKUP ||
-            defined($strDbHost) && path_type_get($strPathType) eq PATH_DB)
+        if (defined($self->{strBackupHost}) && $self->path_type_get($strPathType) eq PATH_BACKUP ||
+            defined($self->{strDbHost}) && $self->path_type_get($strPathType) eq PATH_DB)
         {
             return true;
         }
@@ -398,18 +366,19 @@ sub is_remote
 ####################################################################################################################################
 sub remote_get
 {
+    my $self = shift;
     my $strPathType = shift;
     
     # Get the db SSH object
-    if (path_type_get($strPathType) eq PATH_DB && defined($oDbSSH))
+    if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
     {
-        return $oDbSSH;
+        return $self->{oDbSSH};
     }
 
     # Get the backup SSH object
-    if (path_type_get($strPathType) eq PATH_BACKUP && defined($oBackupSSH))
+    if ($self->path_type_get($strPathType) eq PATH_BACKUP && defined($self->{oBackupSSH}))
     {
-        return $oBackupSSH
+        return $self->{oBackupSSH}
     }
 
     # Error when no ssh object is found
@@ -423,33 +392,34 @@ sub remote_get
 ####################################################################################################################################
 sub file_move
 {
+    my $self = shift;
     my $strSourcePathType = shift;
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
 
-    if (path_type_get($strSourcePathType) ne path_type_get($strSourcePathType))
+    if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strSourcePathType))
     {
         confess &log(ASSERT, "source and destination path types must be equal");
     }
 
-    my $strSource = path_get($strSourcePathType, $strSourceFile);
-    my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
+    my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
+    my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
     
     # If the destination path is backup and does not exist, create it
-    if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
+    if ($self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
-        path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
+        $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
 
     my $strCommand = "mv ${strSource} ${strDestination}";
 
     # Run remotely
-    if (is_remote($strDestinationPathType))
+    if ($self->is_remote($strDestinationPathType))
     {
         &log(DEBUG, "        file_move: remote ${strDestinationPathType} '${strCommand}'");
 
-        my $oSSH = remote_get($strDestinationPathType);
+        my $oSSH = $self->remote_get($strDestinationPathType);
         $oSSH->system($strCommand)
             or confess &log("unable to move remote ${strDestinationPathType}:${strSourceFile} to ${strDestinationFile}");
     }
@@ -467,6 +437,7 @@ sub file_move
 ####################################################################################################################################
 sub file_copy
 {
+    my $self = shift;
     my $strSourcePathType = shift;
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
@@ -476,60 +447,60 @@ sub file_copy
     my $strPermission = shift;
 
     # Modification time and permissions cannot be set remotely
-    if ((defined($lModificationTime) || defined($strPermission)) && is_remote($strDestinationPathType))
+    if ((defined($lModificationTime) || defined($strPermission)) && $self->is_remote($strDestinationPathType))
     {
         confess &log(ASSERT, "modification time and permissions cannot be set on remote destination file");
     }
 
     # Generate source, destination and tmp filenames
-    my $strSource = path_get($strSourcePathType, $strSourceFile);
-    my $strDestination = path_get($strDestinationPathType, $strDestinationFile);
-    my $strDestinationTmp = path_get($strDestinationPathType, $strDestinationFile, true);
+    my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
+    my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
+    my $strDestinationTmp = $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
     # Is this already a compressed file?
-    my $bAlreadyCompressed = $strSource =~ "^.*\.${strCompressExtension}\$";
+    my $bAlreadyCompressed = $strSource =~ "^.*\.$self->{strCompressExtension}\$";
 
-    if ($bAlreadyCompressed && $strDestination !~ "^.*\.${strCompressExtension}\$")
+    if ($bAlreadyCompressed && $strDestination !~ "^.*\.$self->{strCompressExtension}\$")
     {
-        $strDestination .= ".${strCompressExtension}";
+        $strDestination .= ".$self->{strCompressExtension}";
     }
 
     # Does the file need compression?
     my $bCompress = !((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
-                      (!defined($bNoCompressionOverride) && $bNoCompression));
+                      (!defined($bNoCompressionOverride) && $self->{bNoCompression}));
 
     # If the destination path is backup and does not exist, create it
-    if (path_type_get($strDestinationPathType) eq PATH_BACKUP)
+    if ($self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
-        path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
+        $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
 
     # Generate the command string depending on compression/decompression/cat
-    my $strCommand = $strCommandCat;
+    my $strCommand = $self->{strCommandCat};
     
     if ($bAlreadyCompressed && $bCompress)
     {
-        $strDestination .= $strDestination =~ "^.*\.${strCompressExtension}\$" ? ".gz" : "";
+        $strDestination .= $strDestination =~ "^.*\.$self->{strCompressExtension}\$" ? ".gz" : "";
     }
     elsif (!$bAlreadyCompressed && $bCompress)
     {
-        $strCommand = $strCommandCompress;
+        $strCommand = $self->{strCommandCompress};
         $strDestination .= ".gz";
     }
     elsif ($bAlreadyCompressed && !$bCompress)
     {
-        $strCommand = $strCommandDecompress;
-        $strDestination = substr($strDestination, 0, length($strDestination) - length($strCompressExtension) - 1);
+        $strCommand = $self->{strCommandDecompress};
+        $strDestination = substr($strDestination, 0, length($strDestination) - length($self->{strCompressExtension}) - 1);
     }
 
     $strCommand =~ s/\%file\%/${strSource}/g;
 
     # If this command is remote on only one side
-    if (is_remote($strSourcePathType) && !is_remote($strDestinationPathType) ||
-        !is_remote($strSourcePathType) && is_remote($strDestinationPathType))
+    if ($self->is_remote($strSourcePathType) && !$self->is_remote($strDestinationPathType) ||
+        !$self->is_remote($strSourcePathType) && $self->is_remote($strDestinationPathType))
     {
         # Else if the source is remote
-        if (is_remote($strSourcePathType))
+        if ($self->is_remote($strSourcePathType))
         {
             &log(DEBUG, "        file_copy: remote ${strSource} to local ${strDestination}");
 
@@ -538,14 +509,14 @@ sub file_copy
             open($hFile, ">", $strDestinationTmp) or confess &log(ERROR, "cannot open ${strDestination}");
 
             # Execute the command through ssh
-            my $oSSH = remote_get($strSourcePathType);
+            my $oSSH = $self->remote_get($strSourcePathType);
             $oSSH->system({stdout_fh => $hFile}, $strCommand) or confess &log(ERROR, "unable to execute ssh '$strCommand'");
 
             # Close the destination file handle
             close($hFile) or confess &log(ERROR, "cannot close file");
         }
         # Else if the destination is remote
-        elsif (is_remote($strDestinationPathType))
+        elsif ($self->is_remote($strDestinationPathType))
         {
             &log(DEBUG, "        file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
 
@@ -554,7 +525,7 @@ sub file_copy
             my $pId = open3(undef, $hOut, undef, $strCommand) or confess(ERROR, "unable to execute '${strCommand}'");
 
             # Execute the command though ssh
-            my $oSSH = remote_get($strDestinationPathType);
+            my $oSSH = $self->remote_get($strDestinationPathType);
             $oSSH->system({stdin_fh => $hOut}, "cat > ${strDestinationTmp}") or confess &log(ERROR, "unable to execute ssh 'cat'");
 
             # Wait for the stream process to finish
@@ -568,8 +539,8 @@ sub file_copy
         }
     }
     # If the source and destination are both remote but not the same remote
-    elsif (is_remote($strSourcePathType) && is_remote($strDestinationPathType) &&
-           path_type_get($strSourcePathType) ne path_type_get($strDestinationPathType))
+    elsif ($self->is_remote($strSourcePathType) && $self->is_remote($strDestinationPathType) &&
+           $self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
         &log(DEBUG, "        file_copy: remote ${strSource} to remote ${strDestination}");
         confess &log(ASSERT, "remote source and destination not supported");
@@ -584,7 +555,7 @@ sub file_copy
         {
             &log(DEBUG, "        file_copy: remote ${strSourcePathType} '${strCommand}'");
 
-            my $oSSH = remote_get($strSourcePathType);
+            my $oSSH = $self->remote_get($strSourcePathType);
             $oSSH->system($strCommand) or confess &log(ERROR, "unable to execute remote command ${strCommand}:" . oSSH->error);
         }
         else
@@ -613,8 +584,8 @@ sub file_copy
     }
     
     # Move the file from tmp to final destination
-    file_move(path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
-              path_type_get($strDestinationPathType) . ":absolute",  $strDestination);
+    $self->file_move($self->path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
+                     $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination);
 }
 
 ####################################################################################################################################
@@ -622,38 +593,39 @@ sub file_copy
 ####################################################################################################################################
 sub file_hash_get
 {
+    my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
     
     # For now this operation is not supported remotely.  Not currently needed.
-    if (is_remote($strPathType))
+    if ($self->is_remote($strPathType))
     {
         confess &log(ASSERT, "remote operation not supported");
     }
     
-    if (!defined($strCommandChecksum))
+    if (!defined($self->{strCommandChecksum}))
     {
         confess &log(ASSERT, "\$strCommandChecksum not defined");
     }
     
-    my $strPath = path_get($strPathType, $strFile);
+    my $strPath = $self->path_get($strPathType, $strFile);
     my $strCommand;
     
     if (-e $strPath)
     {
-        $strCommand = $strCommandChecksum;
+        $strCommand = $self->{strCommandChecksum};
         $strCommand =~ s/\%file\%/${strPath}/g;
     }
-    elsif (-e $strPath . ".${strCompressExtension}")
+    elsif (-e $strPath . ".$self->{strCompressExtension}")
     {
-        $strCommand = $strCommandDecompress;
+        $strCommand = $self->{strCommandDecompress};
         $strCommand =~ s/\%file\%/${strPath}/g;
-        $strCommand .= " | " . $strCommandChecksum;
+        $strCommand .= " | " . $self->{strCommandChecksum};
         $strCommand =~ s/\%file\%//g;
     }
     else
     {
-        confess &log(ASSERT, "unable to find $strPath(.${strCompressExtension}) for checksum");
+        confess &log(ASSERT, "unable to find $strPath(.$self->{strCompressExtension}) for checksum");
     }
     
     return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
@@ -664,18 +636,19 @@ sub file_hash_get
 ####################################################################################################################################
 sub file_list_get
 {
+    my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
     my $strExpression = shift;
     my $strSortOrder = shift;
 
     # For now this operation is not supported remotely.  Not currently needed.
-    if (is_remote($strPathType))
+    if ($self->is_remote($strPathType))
     {
         confess &log(ASSERT, "remote operation not supported");
     }
     
-    my $strPathList = path_get($strPathType, $strPath);
+    my $strPathList = $self->path_get($strPathType, $strPath);
     
     my $hDir;
     
@@ -713,27 +686,28 @@ sub file_list_get
 ####################################################################################################################################
 sub manifest_get
 {
+    my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
 
-    &log(DEBUG, "manifest: " . $strCommandManifest);
+    &log(DEBUG, "manifest: " . $self->{strCommandManifest});
 
     # Get the root path for the manifest
-    my $strPathManifest = path_get($strPathType, $strPath);
+    my $strPathManifest = $self->path_get($strPathType, $strPath);
 
     # Builds the manifest command
-    my $strCommand = $strCommandManifest;
+    my $strCommand = $self->{strCommandManifest};
     $strCommand =~ s/\%path\%/${strPathManifest}/g;
     
     # Run the manifest command
     my $strManifest;
 
     # Run remotely
-    if (is_remote($strPathType))
+    if ($self->is_remote($strPathType))
     {
         &log(DEBUG, "        manifest_get: remote ${strPathType}:${strPathManifest}");
 
-        my $oSSH = remote_get($strPathType);
+        my $oSSH = $self->remote_get($strPathType);
         $strManifest = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote command '${strCommand}'");
     }
     # Run locally
@@ -753,18 +727,19 @@ sub manifest_get
 ####################################################################################################################################
 sub psql_execute
 {
+    my $self = shift;
     my $strScript = shift;  # psql script to execute
     
     # Get the user-defined command for psql
-    my $strCommand = $strCommandPsql . " -c \"${strScript}\" postgres";
+    my $strCommand = $self->{strCommandPsql} . " -c \"${strScript}\" postgres";
     my $strResult;
 
     # Run remotely
-    if (is_remote(PATH_DB))
+    if ($self->is_remote(PATH_DB))
     {
         &log(DEBUG, "        psql execute: remote ${strScript}");
 
-        my $oSSH = remote_get(PATH_DB);
+        my $oSSH = $self->remote_get(PATH_DB);
         $strResult = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote psql command '${strCommand}'");
     }
     # Run locally
@@ -777,4 +752,5 @@ sub psql_execute
     return $strResult;
 }
 
-1;
+no Moose;
+  __PACKAGE__->meta->make_immutable;
