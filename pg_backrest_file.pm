@@ -44,7 +44,7 @@ has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 
 # Process flags
 has bNoCompression => (is => 'bare');
-has strCluster => (is => 'bare');
+has strStanza => (is => 'bare');
 
 sub BUILD
 {
@@ -57,7 +57,7 @@ sub BUILD
     }
 
     # Create the backup cluster path
-    $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strCluster};
+    $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strStanza};
 
     # Connect SSH object if backup host is defined
     if (defined($self->{strBackupHost}))
@@ -154,15 +154,15 @@ sub path_get
     }
 
     # Make sure the cluster is defined
-    if (!defined($self->{strCluster}))
+    if (!defined($self->{strStanza}))
     {
-        confess &log(ASSERT, "\$strCluster not yet defined");
+        confess &log(ASSERT, "\$strStanza not yet defined");
     }
 
     # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
-        my $strTempPath = "$self->{strBackupPath}/tmp/$self->{strCluster}.tmp";
+        my $strTempPath = "$self->{strBackupPath}/tmp/$self->{strStanza}.tmp";
 
         if (defined($bTemp) && $bTemp)
         {
@@ -175,7 +175,7 @@ sub path_get
     # Get the backup archive path
     if ($strType eq PATH_BACKUP_ARCHIVE)
     {
-        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strCluster}";
+        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
         my $strArchive;
 
         if (defined($strFile))
@@ -194,7 +194,7 @@ sub path_get
 
     if ($strType eq PATH_BACKUP_CLUSTER)
     {
-        return $self->{strBackupPath} . "/backup/$self->{strCluster}" . (defined($strFile) ? "/${strFile}" : "");
+        return $self->{strBackupPath} . "/backup/$self->{strStanza}" . (defined($strFile) ? "/${strFile}" : "");
     }
 
     # Error when path type not recognized

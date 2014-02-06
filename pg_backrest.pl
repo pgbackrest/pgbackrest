@@ -15,7 +15,7 @@ use pg_backrest_backup;
 
 # Command line parameters
 my $strConfigFile;
-my $strCluster;
+my $strStanza;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
 my $bNoChecksum;
@@ -25,30 +25,61 @@ GetOptions ("no-compression" => \$bNoCompression,
             "no-checksum" => \$bNoChecksum,
             "hardlink" => \$bHardLink,
             "config=s" => \$strConfigFile,
-            "cluster=s" => \$strCluster,
+            "stanza=s" => \$strStanza,
             "type=s" => \$strType)
     or die("Error in command line arguments\n");
+    
+# Global variables
+my %oConfig;
 
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
 ####################################################################################################################################
 sub config_load
 {
-    my $oConfigRef = shift;
     my $strSection = shift;
     my $strKey = shift;
     my $bRequired = shift;
     
+    # Default is that the key is not required
     if (!defined($bRequired))
     {
-        $bRequired = 1;
+        $bRequired = false;
     }
     
-    my $strValue = ${$oConfigRef}{"${strSection}"}{"${strKey}"};
+    my $strValue;
     
-    if ($bRequired && !defined($strValue))
+    # Look in the default stanza section
+    if ($strSection eq "stanza")
     {
-        confess &log(ERROR, 'config value ${strSection}->${strKey} is undefined');
+        $strValue = $oConfig{"${strStanza}"}{"${strKey}"};
+    }
+    # Else look in the supplied section
+    else
+    {
+        # First check the stanza section
+        $strValue = $oConfig{"${strStanza}:${strSection}"}{"${strKey}"};
+        
+        # If the stanza section value is undefined then check global
+        if (!defined($strValue))
+        {
+            $strValue = $oConfig{"global:${strSection}"}{"${strKey}"};
+        }
+    }
+    
+    if (!defined($strValue) && $bRequired)
+    {
+        confess &log(ERROR, "config value " . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
+    }
+    
+    if ($strSection eq "command")
+    {
+        my $strOption = config_load("command:option", $strKey);
+        
+        if (defined($strOption))
+        {
+            $strValue =~ s/\%option\%/${strOption}/g;
+        } 
     }
     
     return $strValue;
@@ -57,6 +88,13 @@ sub config_load
 ####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
+
+# Error if no operation is specified
+if (@ARGV < 1)
+{
+    confess "operation my be specified (backup, expire, archive_push, ...) - show usage";
+}
+
 # Get the command
 my $strOperation = $ARGV[0];
 my $strLogFile = "";
@@ -76,57 +114,42 @@ if (!defined($strConfigFile))
     $strConfigFile = "/etc/pg_backrest.conf";
 }
 
-my %oConfig;
 tie %oConfig, 'Config::IniFiles', (-file => $strConfigFile) or confess &log(ERROR, "unable to find config file ${strConfigFile}");
 
 # Load and check the cluster
-if (!defined($strCluster))
+if (!defined($strStanza))
 {
-    $strCluster = "db"; #!!! Modify to load cluster from conf if there is only one, else error
+    confess "a backup stanza must be specified - show usage";
 }
-
-#file_init_archive
-#(
-#    $bNoCompression,
-#    config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
-#    config_load(\%oConfig, "command", "compress", !$bNoCompression),
-#    config_load(\%oConfig, "command", "decompress", !$bNoCompression),
-#    $oConfig{backup}{user},
-#    $oConfig{backup}{host},
-#    $oConfig{backup}{path},
-#    $strCluster,
-#);
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
 if ($strOperation eq "archive-push")
 {
-    # Run file_init_archive - this is the minimal config needed to run archiving
-    my $oFile = pg_backrest_file->new
-    (
-        bNoCompression => $bNoCompression,
-        strCommandChecksum => config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
-        strCommandCompress => config_load(\%oConfig, "command", "compress", !$bNoCompression),
-        strCommandDecompress => config_load(\%oConfig, "command", "decompress", !$bNoCompression),
-        strBackupUser => $oConfig{backup}{user},
-        strBackupHost => $oConfig{backup}{host},
-        strBackupPath => $oConfig{backup}{path},
-        strCluster => $strCluster
-    );
-
-#    $oFile->build();
-
-    backup_init
-    (
-        $oFile
-    );
-
     # archive-push command must have two arguments
     if (@ARGV != 2)
     {
         confess "not enough arguments - show usage";
     }
+
+    # Run file_init_archive - this is the minimal config needed to run archiving
+    my $oFile = pg_backrest_file->new
+    (
+        strStanza => $strStanza,
+        bNoCompression => $bNoCompression,
+        strBackupUser => config_load("backup", "user"),
+        strBackupHost => config_load("backup", "host"),
+        strBackupPath => config_load("backup", "path", true),
+        strCommandChecksum => config_load("command", "checksum", !$bNoChecksum),
+        strCommandCompress => config_load("command", "compress", !$bNoCompression),
+        strCommandDecompress => config_load("command", "decompress", !$bNoCompression)
+    );
+
+    backup_init
+    (
+        $oFile
+    );
 
     # Call the archive function
     archive_push($ARGV[1]);
@@ -156,29 +179,19 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
 # Run file_init_archive - the rest of the file config required for backup and restore
 my $oFile = pg_backrest_file->new
 (
+    strStanza => $strStanza,
     bNoCompression => $bNoCompression,
-    strCommandChecksum => config_load(\%oConfig, "command", "checksum", !$bNoChecksum),
-    strCommandCompress => config_load(\%oConfig, "command", "compress", !$bNoCompression),
-    strCommandDecompress => config_load(\%oConfig, "command", "decompress", !$bNoCompression),
-    strCommandManifest => config_load(\%oConfig, "command", "manifest"),
-    strCommandPsql => config_load(\%oConfig, "command", "psql"),
-    strBackupUser => $oConfig{backup}{user},
-    strBackupHost => $oConfig{backup}{host},
-    strBackupPath => $oConfig{backup}{path},
-    strCluster => $strCluster,
-    strDbUser => $oConfig{"cluster:$strCluster"}{user},
-    strDbHost => $oConfig{"cluster:$strCluster"}{host}
+    strBackupUser => config_load("backup", "user"),
+    strBackupHost => config_load("backup", "host"),
+    strBackupPath => config_load("backup", "path", true),
+    strDbUser => config_load("stanza", "user"),
+    strDbHost => config_load("stanza", "host"),
+    strCommandChecksum => config_load("command", "checksum", !$bNoChecksum),
+    strCommandCompress => config_load("command", "compress", !$bNoCompression),
+    strCommandDecompress => config_load("command", "decompress", !$bNoCompression),
+    strCommandManifest => config_load("command", "manifest"),
+    strCommandPsql => config_load("command", "psql")
 );
-
-#$oFile->build();
-
-#file_init_backup
-#(
-#    config_load(\%oConfig, "command", "manifest"),
-#    $pg_backrest_file::strCommandPsql = config_load(\%oConfig, "command", "psql"),
-#    $oConfig{"cluster:$strCluster"}{user},
-#    $oConfig{"cluster:$strCluster"}{host}
-#);
 
 # Run backup_init - parameters required for backup and restore operations
 backup_init
@@ -194,6 +207,24 @@ backup_init
 ####################################################################################################################################
 if ($strOperation eq "backup")
 {
-    backup($oConfig{"cluster:$strCluster"}{path});
+    backup(config_load("stanza", "path"));
+
+    $strOperation = "expire";
+}
+
+####################################################################################################################################
+# EXPIRE
+####################################################################################################################################
+if ($strOperation eq "expire")
+{
+    backup_expire
+    (
+        $oFile->path_get(PATH_BACKUP_CLUSTER),
+        config_load("retention", "full_retention"),
+        config_load("retention", "differential_retention"),
+        config_load("retention", "archive_retention_type"),
+        config_load("retention", "archive_retention")
+    );
+
     exit 0;
 }

@@ -11,6 +11,7 @@ use Carp;
 use File::Basename;
 use File::Path;
 use JSON;
+use Scalar::Util qw(looks_like_number);
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -18,7 +19,7 @@ use pg_backrest_file;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init archive_push backup);
+our @EXPORT = qw(backup_init archive_push backup backup_expire);
 
 my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
@@ -612,11 +613,8 @@ sub backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
+    &log(DEBUG, "    moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
     $oFile->file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
-#    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
-
-    # Expire backups (!!! Need to read this from config file)
-    backup_expire($oFile->path_get(PATH_BACKUP_CLUSTER), 2, 2, "full", 2);
 }
 
 ####################################################################################################################################
@@ -667,6 +665,14 @@ sub archive_list_get
 
 ####################################################################################################################################
 # BACKUP_EXPIRE
+# 
+# Removes expired backups and archive logs from the backup directory.
+#
+# iFullRetention - Optional, must be greater than 0 when supplied.  Defines the number of full backups that will be retained.
+# Partial backups do not count, so if iFullRetention is set to 2, there must be 3 complete full backups before the oldest one can
+# be deleted.
+#
+# iDifferentialRetention - 
 ####################################################################################################################################
 sub backup_expire
 {
@@ -676,54 +682,97 @@ sub backup_expire
     my $strArchiveRetentionType = shift;    # Type of backup to base archive retention on
     my $iArchiveRetention = shift;          # Number of backups worth of archive to keep
     
-    # Find all the expired full backups
-    my $iIndex = $iFullRetention;
     my $strPath;
-    my @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
-
-    while (defined($stryPath[$iIndex]))
+    my @stryPath;
+    
+    # Find all the expired full backups
+    if (defined($iFullRetention))
     {
-        &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
-
-        # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
-        # be consistent if the process dies
-        foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
+        # Make sure iFullRetention is valid
+        if (!looks_like_number($iFullRetention) || $iFullRetention < 1)
         {
-            system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
+            confess &log(ERROR, "full_rentention must be a number >= 1");
         }
+
+        my $iIndex = $iFullRetention;
+        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
+
+        while (defined($stryPath[$iIndex]))
+        {
+            &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
+
+            # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
+            # be consistent if the process dies
+            foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
+            {
+                system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
+            }
         
-        $iIndex++;
+            $iIndex++;
+        }
     }
     
     # Find all the expired differential backups
-    @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
-     
-    if (defined($stryPath[$iDifferentialRetention]))
+    if (defined($iDifferentialRetention))
     {
-        # Get a list of all differential and incremental backups
-        foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
+        # Make sure iDifferentialRetention is valid
+        if (!looks_like_number($iDifferentialRetention) || $iDifferentialRetention < 1)
         {
-            # Remove all differential and incremental backups before the oldest valid differential
-            if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
+            confess &log(ERROR, "differential_rentention must be a number >= 1");
+        }
+        
+        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
+     
+        if (defined($stryPath[$iDifferentialRetention]))
+        {
+            # Get a list of all differential and incremental backups
+            foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
             {
-                system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
-                &log(INFO, "removed expired diff/incr backup ${strPath}");
+                # Remove all differential and incremental backups before the oldest valid differential
+                if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
+                {
+                    system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
+                    &log(INFO, "removed expired diff/incr backup ${strPath}");
+                }
             }
         }
     }
     
+    # If no archive retention type is set then exit
+    if (!defined($strArchiveRetentionType))
+    {
+        &log(INFO, "archive rentention type not set - archive logs will not be expired");
+        return;
+    }
+
     # Determine which backup type to use for archive retention (full, differential, incremental)
     if ($strArchiveRetentionType eq "full")
     {
         @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
     }
-    elsif ($strArchiveRetentionType eq "differential")
+    elsif ($strArchiveRetentionType eq "differential" || $strArchiveRetentionType eq "diff")
     {
         @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
     }
-    else
+    elsif ($strArchiveRetentionType eq "incremental" || $strArchiveRetentionType eq "incr")
     {
         @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse");
+    }
+    else
+    {
+        confess &log(ERROR, "unknown archive_retention_type '${strArchiveRetentionType}'");
+    }
+
+    # Make sure that iArchiveRetention is set and valid
+    if (!defined($iArchiveRetention))
+    {
+        confess &log(ERROR, "archive_rentention must be set if archive_retention_type is set");
+        return;
+    }
+
+    if (!looks_like_number($iArchiveRetention) || $iArchiveRetention < 0)
+    {
+        confess &log(ERROR, "archive_rentention must be a number >= 0");
     }
     
     # if no backups were found then preserve current archive logs - too scary to delete them!

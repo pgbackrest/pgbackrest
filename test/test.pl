@@ -101,7 +101,7 @@ sub archive_command_build
     my $bCompression = shift;
     my $bChecksum = shift;
     
-    my $strCommand = "$strBackRestBinPath/pg_backrest.pl --cluster=db --config=$strBackRestBinPath/pg_backrest.conf";
+    my $strCommand = "$strBackRestBinPath/pg_backrest.pl --stanza=db --config=$strBackRestBinPath/pg_backrest.conf";
     
     if (!$bCompression)
     {
