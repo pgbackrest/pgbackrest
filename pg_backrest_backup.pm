@@ -3,8 +3,6 @@
 ####################################################################################################################################
 package pg_backrest_backup;
 
-#use Class::Struct;
-
 use strict;
 use warnings;
 use Carp;
@@ -20,7 +18,7 @@ use pg_backrest_db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init archive_push backup backup_expire);
+our @EXPORT = qw(backup_init archive_push backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
@@ -571,8 +569,8 @@ sub backup
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # After the backup has been stopped, need to 
-    my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop);
+    # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
+    my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
 
     foreach my $strArchive (@stryArchive)
     {
@@ -600,13 +598,27 @@ sub backup
 
 ####################################################################################################################################
 # ARCHIVE_LIST_GET
-# 
-# !!! Need to put code in here to cover pre-9.3 skipping log FF.
+#
+# Generates a range of archive log file names given the start and end log file name.  For pre-9.3 databases, use bSkipFF to exclude
+# the FF that prior versions did not generate.
 ####################################################################################################################################
 sub archive_list_get
 {
     my $strArchiveStart = shift;
     my $strArchiveStop = shift;
+    my $bSkipFF = shift;
+    
+    # strSkipFF default to false
+    $bSkipFF = defined($bSkipFF) ? $bSkipFF : false;
+    
+    if ($bSkipFF)
+    {
+        &log(DEBUG, "    archive_list_get: pre-9.3 database, skipping log FF");
+    }
+    else
+    {
+        &log(DEBUG, "    archive_list_get: post-9.3 database, including log FF");
+    }
     
     my $strTimeline = substr($strArchiveStart, 0, 8);
     my @stryArchive;
@@ -623,23 +635,27 @@ sub archive_list_get
     my $iStopMajor = hex substr($strArchiveStop, 8, 8);
     my $iStopMinor = hex substr($strArchiveStop, 16, 8);
 
-    do
-    {
-        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+    $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+    $iArchiveIdx += 1;
 
+    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
+    {
         if ($strArchiveStart ne $strArchiveStop)
         {
             $iArchiveIdx += 1;
             $iStartMinor += 1;
 
-            if ($iStartMinor == 256)
+            if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
             {
                 $iStartMajor += 1;
                 $iStartMinor = 0;
             }
         }
+
+        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
     }
-    while !($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor);    
+
+    &log(DEBUG, "    archive_list_get: $strArchiveStart-$strArchiveStop (@stryArchive)");
 
     return @stryArchive;
 }

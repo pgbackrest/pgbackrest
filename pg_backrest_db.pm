@@ -21,6 +21,7 @@ has strCommandPsql => (is => 'bare');   # PSQL command
 has strDbUser => (is => 'ro');          # Database user
 has strDbHost => (is => 'ro');          # Database host
 has oDbSSH => (is => 'bare');           # Database SSH object
+has fVersion => (is => 'ro');           # Database version
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -94,6 +95,26 @@ sub tablespace_map_get
 
     return data_hash_build("oid\tname\n" . $self->psql_execute(
                            "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
+}
+
+####################################################################################################################################
+# VERSION_GET
+####################################################################################################################################
+sub version_get
+{
+    my $self = shift;
+    
+    if (defined($self->{fVersion}))
+    {
+        return $self->{fVersion};
+    }
+
+    $self->{fVersion} = 
+        trim($self->psql_execute("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
+
+    &log(DEBUG, "        database version is $self->{fVersion}");
+
+    return $self->{fVersion};
 }
 
 ####################################################################################################################################
