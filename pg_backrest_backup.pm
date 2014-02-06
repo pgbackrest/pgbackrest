@@ -452,7 +452,7 @@ sub backup_file
             
                 $oFile->file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}",
                                   undef, ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time},
-                                  $pg_backrest_file::strDefaultFilePermission);
+                                  $oFile->{strDefaultFilePermission});
 
                 # Write the hash into the backup manifest (if not suppressed)
                 if (!$bNoChecksum)
@@ -540,7 +540,8 @@ sub backup
         &log(WARNING, "backup path $strBackupTmpPath already exists");
 
         # !!! This is temporary until we can clean backup dirs
-        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
+        system("rm -rf $strBackupTmpPath") == 0 or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
+#        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
         $oFile->path_create(PATH_BACKUP_TMP);
         #if (-e $strBackupConfFile)
         #{
@@ -570,8 +571,8 @@ sub backup
     &log(INFO, 'Backup archive start: ' . $strArchiveStart);
 
     # Build the backup manifest
-    my %oTablespaceMap = tablespace_map_get($pg_backrest_file::strCommandPsql);
-    backup_manifest_build($pg_backrest_file::strCommandManifest, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
+    my %oTablespaceMap = tablespace_map_get($oFile->{strCommandPsql});
+    backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
     # Delete files leftover from a partial backup
     # !!! do it
@@ -611,7 +612,7 @@ sub backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
-    file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+    $oFile->file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
 #    rename($strBackupTmpPath, "${pg_backrest_file::strBackupClusterPath}/${strBackupPath}") or confess &log(ERROR, "unable to ${strBackupTmpPath} rename to ${strBackupPath}"); 
 
     # Expire backups (!!! Need to read this from config file)
@@ -688,7 +689,7 @@ sub backup_expire
         # be consistent if the process dies
         foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
         {
-            rmtree("${strBackupClusterPath}/${strPath}") or confess &log(ERROR, "unable to delete backup ${strPath}");
+            system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
         }
         
         $iIndex++;
@@ -705,7 +706,7 @@ sub backup_expire
             # Remove all differential and incremental backups before the oldest valid differential
             if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
             {
-                rmtree("${strBackupClusterPath}/${strPath}") or confess &log(ERROR, "unable to delete backup ${strPath}");
+                system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
                 &log(INFO, "removed expired diff/incr backup ${strPath}");
             }
         }
@@ -745,7 +746,7 @@ sub backup_expire
     # even though they are also in the pg_xlog directory (since they have been copied more than once).
     &log(INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
 
-    my %oManifest = backup_manifest_load("${pg_backrest_file::strBackupClusterPath}/$strArchiveRetentionBackup/backup.manifest");
+    my %oManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest");
     my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
     
     if (!defined($strArchiveLast))
@@ -761,7 +762,8 @@ sub backup_expire
         # If less than first 16 characters of current archive file, then remove the directory
         if ($strPath lt substr($strArchiveLast, 0, 16))
         {
-            rmtree($pg_backrest_file::strBackupClusterPath . "/archive/" . $strPath) or confess &log(ERROR, "unable to remove " . $strPath);
+            system("rm -rf " . $oFile->{strBackupClusterPath} . "/archive/" . $strPath) == 0
+                or confess &log(ERROR, "unable to remove " . $strPath);
             &log(DEBUG, "removed major archive directory " . $strPath);
         }
         # If equals the first 16 characters of the current archive file, then delete individual files instead
@@ -775,7 +777,7 @@ sub backup_expire
                 # Delete if the first 24 characters less than the current archive file
                 if ($strSubPath lt substr($strArchiveLast, 0, 24))
                 {
-                    unlink("${pg_backrest_file::strBackupClusterPath}/archive/${strPath}/${strSubPath}") or confess &log(ERROR, "unable to remove " . $strSubPath);
+                    unlink($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSubPath)) or confess &log(ERROR, "unable to remove " . $strSubPath);
                     &log(DEBUG, "removed expired archive file " . $strSubPath);
                 }
             }

@@ -115,7 +115,7 @@ if ($strOperation eq "archive-push")
         strCluster => $strCluster
     );
 
-    $oFile->build();
+#    $oFile->build();
 
     backup_init
     (
@@ -170,7 +170,7 @@ my $oFile = pg_backrest_file->new
     strDbHost => $oConfig{"cluster:$strCluster"}{host}
 );
 
-$oFile->build();
+#$oFile->build();
 
 #file_init_backup
 #(

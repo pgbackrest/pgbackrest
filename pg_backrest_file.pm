@@ -46,7 +46,7 @@ has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 has bNoCompression => (is => 'bare');
 has strCluster => (is => 'bare');
 
-sub build
+sub BUILD
 {
     my $self = shift;
     
@@ -551,7 +551,7 @@ sub file_copy
         # Complete the command by redirecting to the destination tmp file
         $strCommand .= " > ${strDestinationTmp}";
 
-        if (is_remote($strSourcePathType))
+        if ($self->is_remote($strSourcePathType))
         {
             &log(DEBUG, "        file_copy: remote ${strSourcePathType} '${strCommand}'");
 
