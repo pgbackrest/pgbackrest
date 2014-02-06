@@ -16,11 +16,13 @@ use Scalar::Util qw(looks_like_number);
 use lib dirname($0);
 use pg_backrest_utility;
 use pg_backrest_file;
+use pg_backrest_db;
 
 use Exporter qw(import);
 
 our @EXPORT = qw(backup_init archive_push backup backup_expire);
 
+my $oDb;
 my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
@@ -31,11 +33,13 @@ my $bNoChecksum;
 ####################################################################################################################################
 sub backup_init
 {
+    my $oDbParam = shift;
     my $oFileParam = shift;
     my $strTypeParam = shift;
     my $bHardLinkParam = shift;
     my $bNoChecksumParam = shift;
 
+    $oDb = $oDbParam;
     $oFile = $oFileParam;
     $strType = $strTypeParam;
     $bHardLink = $bHardLinkParam;
@@ -151,7 +155,7 @@ sub tablespace_map_get
 {
     my $strCommandPsql = shift;
 
-    my %oTablespaceMap = data_hash_build("oid\tname\n" . $oFile->psql_execute(
+    my %oTablespaceMap = data_hash_build("oid\tname\n" . $oDb->psql_execute(
                                          "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
     
     return %oTablespaceMap;
@@ -563,7 +567,7 @@ sub backup
     my $strLabel = $strBackupPath;
     ${oBackupManifest}{common}{backup}{label} = $strLabel;
 
-    my $strArchiveStart = trim($oFile->psql_execute(
+    my $strArchiveStart = trim($oDb->psql_execute(
         "set client_min_messages = 'warning';" . 
         "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout"));
 
@@ -582,7 +586,7 @@ sub backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
            
     # Stop backup
-    my $strArchiveStop = trim($oFile->psql_execute(
+    my $strArchiveStop = trim($oDb->psql_execute(
         "set client_min_messages = 'warning';" .
         "copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout"));
 

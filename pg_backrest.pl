@@ -12,6 +12,7 @@ use lib dirname($0);
 use pg_backrest_utility;
 use pg_backrest_file;
 use pg_backrest_backup;
+use pg_backrest_db;
 
 # Command line parameters
 my $strConfigFile;
@@ -148,6 +149,7 @@ if ($strOperation eq "archive-push")
 
     backup_init
     (
+        undef,
         $oFile
     );
 
@@ -193,9 +195,17 @@ my $oFile = pg_backrest_file->new
     strCommandPsql => config_load("command", "psql")
 );
 
+my $oDb = pg_backrest_db->new
+(
+    strDbUser => config_load("stanza", "user"),
+    strDbHost => config_load("stanza", "host"),
+    strCommandPsql => config_load("command", "psql")
+);
+
 # Run backup_init - parameters required for backup and restore operations
 backup_init
 (
+    $oDb,
     $oFile,
     $strType,
     $bHardLink,

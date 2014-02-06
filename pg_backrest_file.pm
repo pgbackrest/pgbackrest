@@ -29,7 +29,6 @@ has strCommandCompress => (is => 'bare');
 has strCommandDecompress => (is => 'bare');
 has strCommandCat => (is => 'bare', default => 'cat %file%');
 has strCommandManifest => (is => 'bare');
-has strCommandPsql => (is => 'bare');
 
 # Module variables
 has strDbUser => (is => 'bare');                # Database user
@@ -720,36 +719,6 @@ sub manifest_get
     # Load the manifest into a hash
     return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
                            $strManifest, "\t", ".");
-}
-
-####################################################################################################################################
-# PSQL_EXECUTE
-####################################################################################################################################
-sub psql_execute
-{
-    my $self = shift;
-    my $strScript = shift;  # psql script to execute
-    
-    # Get the user-defined command for psql
-    my $strCommand = $self->{strCommandPsql} . " -c \"${strScript}\" postgres";
-    my $strResult;
-
-    # Run remotely
-    if ($self->is_remote(PATH_DB))
-    {
-        &log(DEBUG, "        psql execute: remote ${strScript}");
-
-        my $oSSH = $self->remote_get(PATH_DB);
-        $strResult = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote psql command '${strCommand}'");
-    }
-    # Run locally
-    else
-    {
-        &log(DEBUG, "        psql execute: ${strScript}");
-        $strResult = capture($strCommand) or confess &log(ERROR, "unable to execute local psql command '${strCommand}'");
-    }
-    
-    return $strResult;
 }
 
 no Moose;
