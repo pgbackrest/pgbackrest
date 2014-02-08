@@ -11,6 +11,11 @@ use File::Path;
 use JSON;
 use Scalar::Util qw(looks_like_number);
 
+use threads ('yield',
+             'stack_size' => 64*4096,
+             'exit' => 'threads_only',
+             'stringify');
+
 use lib dirname($0);
 use pg_backrest_utility;
 use pg_backrest_file;
@@ -344,6 +349,13 @@ sub backup_file
     my $strDbClusterPath = shift;      # Database base data path
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
+    # Hash table used to store files for parallel copy
+    my $iThreadTotal = 1;
+    my %oFileCopyMap;
+    my $lTablespaceIdx = 0;
+    my $lFileIdx = 0;
+    my $lFileSizeTotal = 0;
+
     # Iterate through the path sections of the manifest to backup
     my $strSectionPath;
 
@@ -363,6 +375,7 @@ sub backup_file
         # Process the base database directory
         if ($strSectionPath =~ /^base\:/)
         {
+            $lTablespaceIdx++;
             $strBackupSourcePath = $strDbClusterPath;
             $strBackupDestinationPath = "base";
             $strSectionFile = "base:file";
@@ -373,6 +386,7 @@ sub backup_file
         # Process each tablespace
         elsif ($strSectionPath =~ /^tablespace\:/)
         {
+            $lTablespaceIdx++;
             my $strTablespaceName = (split(":", $strSectionPath))[1];
             $strBackupSourcePath = ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{path};
             $strBackupDestinationPath = "tablespace/${strTablespaceName}";
@@ -437,22 +451,38 @@ sub backup_file
             # Else copy/compress the file and generate a checksum
             else
             {
-                # Copy the file from db to backup
-                &log(DEBUG, "   backing up ${strBackupSourceFile}");
-            
-                $oFile->file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}",
-                                  undef, ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time},
-                                  $oFile->{strDefaultFilePermission});
+                $lFileIdx++;
 
-                # Write the hash into the backup manifest (if not suppressed)
-                if (!$bNoChecksum)
-                {
-                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
-                        $oFile->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
-                }
+                my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
+                                     ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size}, $lFileIdx);
+
+#                &log(DEBUG, "   storing ${strKey}");
+
+                $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
+                $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
+                $oFileCopyMap{"${strKey}"}{modification_time} = 
+                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
+                    
+                $lFileSizeTotal += ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+
+#                # Copy the file from db to backup
+#                &log(DEBUG, "   backing up ${strBackupSourceFile}");
+#            
+#                $oFile->file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}",
+#                                  undef, ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time},
+#                                  $oFile->{strDefaultFilePermission});
+#
+#                # Write the hash into the backup manifest (if not suppressed)
+#                if (!$bNoChecksum)
+#                {
+#                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
+#                        $oFile->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+#                }
             }
         }
     }
+    
+    &log(DEBUG, "    total file size: ${lFileSizeTotal}");
 }
 
 ####################################################################################################################################
