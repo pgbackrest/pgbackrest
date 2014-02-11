@@ -44,6 +44,7 @@ has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 # Process flags
 has bNoCompression => (is => 'bare');
 has strStanza => (is => 'bare');
+has iThreadIdx => (is => 'bare');
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -80,6 +81,36 @@ sub BUILD
         $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser});
         $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
     }
+}
+
+####################################################################################################################################
+# CLONE
+####################################################################################################################################
+sub clone
+{
+    my $self = shift;
+    my $iThreadIdx = shift;
+
+    return pg_backrest_file->new
+    (
+        strCompressExtension => $self->{strCompressExtension},
+        strDefaultPathPermission => $self->{strDefaultPathPermission},
+        strDefaultFilePermission => $self->{strDefaultFilePermission},
+        strCommandChecksum => $self->{strCommandChecksum},
+        strCommandCompress => $self->{strCommandCompress},
+        strCommandDecompress => $self->{strCommandDecompress},
+        strCommandCat => $self->{strCommandCat},
+        strCommandManifest => $self->{strCommandManifest},
+        strDbUser => $self->{strDbUser},
+        strDbHost => $self->{strDbHost},
+        strBackupUser => $self->{strBackupUser},
+        strBackupHost => $self->{strBackupHost},
+        strBackupPath => $self->{strBackupPath},
+        strBackupClusterPath => $self->{strBackupClusterPath},
+        bNoCompression => $self->{bNoCompression},
+        strStanza => $self->{strStanza},
+        iThreadIdx => $iThreadIdx
+    );
 }
 
 ####################################################################################################################################
@@ -164,11 +195,11 @@ sub path_get
     # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
-        my $strTempPath = "$self->{strBackupPath}/tmp/$self->{strStanza}.tmp";
+        my $strTempPath = "$self->{strBackupPath}/temp/$self->{strStanza}.tmp";
 
         if (defined($bTemp) && $bTemp)
         {
-            return "${strTempPath}/file.tmp";
+            return "${strTempPath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "");
         }
 
         return "${strTempPath}" . (defined($strFile) ? "/${strFile}" : "");

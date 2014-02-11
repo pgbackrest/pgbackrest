@@ -10,6 +10,8 @@ use File::Basename;
 use File::Path;
 use JSON;
 use Scalar::Util qw(looks_like_number);
+use threads;
+use Thread::Queue;
 
 use threads ('yield',
              'stack_size' => 64*4096,
@@ -30,6 +32,11 @@ my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
 my $bNoChecksum;
+
+# Thread variables
+my @oThreadQueue;
+my %oFileCopyMap;
+my @oThreadFile;
 
 ####################################################################################################################################
 # BACKUP_INIT
@@ -350,8 +357,7 @@ sub backup_file
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
     # Hash table used to store files for parallel copy
-    my $iThreadTotal = 1;
-    my %oFileCopyMap;
+    my $iThreadTotal = 8;
     my $lTablespaceIdx = 0;
     my $lFileIdx = 0;
     my $lFileSizeTotal = 0;
@@ -452,11 +458,9 @@ sub backup_file
             else
             {
                 $lFileIdx++;
-
+                
                 my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
                                      ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size}, $lFileIdx);
-
-#                &log(DEBUG, "   storing ${strKey}");
 
                 $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
                 $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
@@ -464,25 +468,74 @@ sub backup_file
                     ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
                     
                 $lFileSizeTotal += ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
-
-#                # Copy the file from db to backup
-#                &log(DEBUG, "   backing up ${strBackupSourceFile}");
-#            
-#                $oFile->file_copy(PATH_DB_ABSOLUTE, $strBackupSourceFile, PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}",
-#                                  undef, ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time},
-#                                  $oFile->{strDefaultFilePermission});
-#
-#                # Write the hash into the backup manifest (if not suppressed)
-#                if (!$bNoChecksum)
-#                {
-#                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
-#                        $oFile->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
-#                }
             }
         }
     }
     
+    # Build the thread queues
+    my $iThreadIdx;
+    my @oThread;
+    
+    for ($iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
+    {
+        $oThreadFile[$iThreadIdx] = $oFile->clone($iThreadIdx);
+        $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
+    }
+    
+    # Assign files to each thread queue
+    $iThreadIdx = 0;
+    
+    foreach my $strFile (sort(keys %oFileCopyMap))
+    {
+        $oThreadQueue[$iThreadIdx]->enqueue($strFile);
+        
+        $iThreadIdx++;
+        
+        if ($iThreadIdx == $iThreadTotal)
+        {
+            $iThreadIdx = 0;
+        }
+    }
+    
+    # End each thread queue and start the thread
+    for ($iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
+    {
+        $oThreadQueue[$iThreadIdx]->enqueue(undef);
+        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum);
+    }
+    
+    # Rejoin the threads
+    for ($iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
+    {
+        $oThread[$iThreadIdx]->join();
+    }
+
     &log(DEBUG, "    total file size: ${lFileSizeTotal}");
+}
+
+sub backup_file_thread
+{
+    my @args = @_;
+
+    my $iThreadIdx = $args[0];
+    my $bNoChecksum = $args[1];
+    
+    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
+    {
+        &log(DEBUG, "    thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file}");
+
+        $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
+                                             PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
+                                             undef, $oFileCopyMap{$strFile}{modification_time},
+                                             $oFile->{strDefaultFilePermission});
+
+        #                # Write the hash into the backup manifest (if not suppressed)
+        #                if (!$bNoChecksum)
+        #                {
+        #                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
+        #                        $oFile->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+        #                }
+    }
 }
 
 ####################################################################################################################################
