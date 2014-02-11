@@ -357,7 +357,7 @@ sub backup_file
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
     # Hash table used to store files for parallel copy
-    my $iThreadTotal = 8;
+    my $iThreadTotal = 16;
     my $lTablespaceIdx = 0;
     my $lFileIdx = 0;
     my $lFileSizeTotal = 0;
@@ -464,6 +464,7 @@ sub backup_file
 
                 $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
                 $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
+                $oFileCopyMap{"${strKey}"}{size} = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
                 $oFileCopyMap{"${strKey}"}{modification_time} = 
                     ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
                     
@@ -484,16 +485,18 @@ sub backup_file
     
     # Assign files to each thread queue
     $iThreadIdx = 0;
+    my $fThreadFileSizeMax = $lFileSizeTotal / $iThreadTotal;
+    my $fThreadFileSize = 0;
     
-    foreach my $strFile (sort(keys %oFileCopyMap))
+    foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
         $oThreadQueue[$iThreadIdx]->enqueue($strFile);
         
-        $iThreadIdx++;
+        $fThreadFileSize += $oFileCopyMap{"${strFile}"}{size};
         
-        if ($iThreadIdx == $iThreadTotal)
+        if ($fThreadFileSize >= $fThreadFileSizeMax && $iThreadIdx < $iThreadTotal - 1)
         {
-            $iThreadIdx = 0;
+            $iThreadIdx++;
         }
     }
     
@@ -522,7 +525,7 @@ sub backup_file_thread
     
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(DEBUG, "    thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file}");
+        &log(DEBUG, "    thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} ($strFile)");
 
         $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
