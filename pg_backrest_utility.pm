@@ -126,7 +126,7 @@ sub log
         $strMessage = "(undefined)";
     }
 
-    print "${strLevel}: ${strMessage}\n";
+    print date_string_get() . ": ${strLevel}: ${strMessage}\n";
 
     return $strMessage;
 }
