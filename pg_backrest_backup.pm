@@ -32,6 +32,7 @@ my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
 my $bNoChecksum;
+my $iThreadTotal;
 
 # Thread variables
 my @oThreadQueue;
@@ -48,12 +49,19 @@ sub backup_init
     my $strTypeParam = shift;
     my $bHardLinkParam = shift;
     my $bNoChecksumParam = shift;
+    my $iThreadTotalParam = shift;
 
     $oDb = $oDbParam;
     $oFile = $oFileParam;
     $strType = $strTypeParam;
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
+    $iThreadTotal = $iThreadTotalParam;
+    
+    if (!defined($iThreadTotal))
+    {
+        $iThreadTotal = 1;
+    }
 }
 
 ####################################################################################################################################
@@ -357,7 +365,6 @@ sub backup_file
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
     # Hash table used to store files for parallel copy
-    my $iThreadTotal = 16;
     my $lTablespaceIdx = 0;
     my $lFileIdx = 0;
     my $lFileSizeTotal = 0;

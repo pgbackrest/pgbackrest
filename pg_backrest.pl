@@ -208,7 +208,8 @@ backup_init
     $oFile,
     $strType,
     $bHardLink,
-    $bNoChecksum
+    $bNoChecksum,
+    config_load("backup", "thread")
 );
 
 ####################################################################################################################################
