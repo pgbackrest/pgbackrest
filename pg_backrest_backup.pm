@@ -466,20 +466,22 @@ sub backup_file
             {
                 $lFileIdx++;
                 
+                my $lFileSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+                
                 my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
-                                     ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size}, $lFileIdx);
+                                     $lFileSize, $lFileIdx);
 
                 $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
                 $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
-                $oFileCopyMap{"${strKey}"}{size} = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+                $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
                 $oFileCopyMap{"${strKey}"}{modification_time} = 
                     ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
                     
-                $lFileSizeTotal += ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+                $lFileSizeTotal += $lFileSize;
             }
         }
     }
-    
+
     # Build the thread queues
     my $iThreadIdx;
     my @oThread;
@@ -494,7 +496,10 @@ sub backup_file
     $iThreadIdx = 0;
     my $fThreadFileSizeMax = $lFileSizeTotal / $iThreadTotal;
     my $fThreadFileSize = 0;
-    
+
+    &log(DEBUG, "    total file size: ${lFileSizeTotal}, per thread ${fThreadFileSizeMax}");
+
+
     foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
         $oThreadQueue[$iThreadIdx]->enqueue($strFile);
@@ -504,6 +509,8 @@ sub backup_file
         if ($fThreadFileSize >= $fThreadFileSizeMax && $iThreadIdx < $iThreadTotal - 1)
         {
             $iThreadIdx++;
+            &log(DEBUG, "    switch to thread ${iThreadIdx} at size ${fThreadFileSize}");
+            $fThreadFileSize = 0;
         }
     }
     
@@ -519,8 +526,6 @@ sub backup_file
     {
         $oThread[$iThreadIdx]->join();
     }
-
-    &log(DEBUG, "    total file size: ${lFileSizeTotal}");
 }
 
 sub backup_file_thread
@@ -532,7 +537,7 @@ sub backup_file_thread
     
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(DEBUG, "    thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} ($strFile)");
+        &log(DEBUG, "    thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} ($strFile) - " . $oFileCopyMap{$strFile}{size} . " bytes");
 
         $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
