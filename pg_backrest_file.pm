@@ -68,7 +68,7 @@ sub BUILD
         &log(INFO, "connecting to backup ssh host " . $self->{strBackupHost});
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser});
+        $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser}, master_opts => [-o => "Compression=yes"]);
         $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
     }
 
@@ -78,7 +78,7 @@ sub BUILD
         &log(INFO, "connecting to database ssh host $self->{strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser});
+        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser}, master_opts => [-o => "Compression=yes"]);
         $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
     }
 }
