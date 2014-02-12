@@ -15,9 +15,9 @@ use pg_backrest_backup;
 use pg_backrest_db;
 
 # Command line parameters
-my $strConfigFile;
-my $strStanza;
-my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
+my $strConfigFile;      # Configuration file
+my $strStanza;          # Stanza in the configuration file to load
+my $strType;            # Type of backup: full, differential (diff), incremental (incr)
 
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
@@ -89,18 +89,31 @@ sub config_load
 ####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
-# Error if no operation is specified
-if (@ARGV < 1)
+# Get the operation
+my $strOperation = $ARGV[0];
+
+# Validate the operation
+if (!defined($strOperation))
 {
-    confess "operation my be specified (backup, expire, archive_push, ...) - show usage";
+    confess &log(ERROR, "operation is not defined");
 }
 
-# Get the command
-my $strOperation = $ARGV[0];
-my $strLogFile = "";
+if ($strOperation ne "archive-push" &&
+    $strOperation ne "backup" &&
+    $strOperation ne "expire")
+{
+    confess &log(ERROR, "invalid operation ${strOperation}");
+}
+
+# Type should only be specified for backups
+if (defined($strType) && $strOperation ne "backup")
+{
+    confess &log(ERROR, "type can only be specified for the backup operation")
+}
 
 # !!! Pick the log file name here (backup, restore, archive-YYYYMMDD)
-# 
+my $strLogFile = "";
+
 if ($strOperation eq "archive-push")
 {
 
@@ -171,18 +184,20 @@ if ($strOperation eq "archive-push")
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
-# Check the backup type
-if ($strType eq "diff")
-{
-    $strType = "differential";
-}
-
-if ($strType eq "incr")
+# Set the backup type
+if (!defined($strType))
 {
     $strType = "incremental";
 }
-
-if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental")
+elsif ($strType eq "diff")
+{
+    $strType = "differential";
+}
+elsif ($strType eq "incr")
+{
+    $strType = "incremental";
+}
+elsif ($strType ne "full" && $strType ne "differential" && $strType ne "incremental")
 {
     confess &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
 }
@@ -253,3 +268,5 @@ if ($strOperation eq "expire")
 
     exit 0;
 }
+
+confess &log(ASSERT, "invalid operation ${strOperation} - missing handler block");
