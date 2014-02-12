@@ -23,6 +23,15 @@ use constant
     OP_EXPIRE       => "expire",
 };
 
+use constant
+{
+    CONFIG_SECTION_COMMAND => "command",
+    CONFIG_SECTION_COMMAND_OPTION => "command:option",
+    CONFIG_SECTION_BACKUP  => "backup",
+    CONFIG_SECTION_ARCHIVE => "archive",
+    CONFIG_SECTION_RETENTION => "retention",
+};
+
 # Command line parameters
 my $strConfigFile;      # Configuration file
 my $strStanza;          # Stanza in the configuration file to load
@@ -82,9 +91,9 @@ sub config_load
         confess &log(ERROR, "config value " . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
     }
 
-    if ($strSection eq "command")
+    if ($strSection eq CONFIG_SECTION_COMMAND)
     {
-        my $strOption = config_load("command:option", $strKey);
+        my $strOption = config_load(CONFIG_SECTION_COMMAND_OPTION, $strKey);
         
         if (defined($strOption))
         {
@@ -108,7 +117,6 @@ if (!defined($strOperation))
 }
 
 if ($strOperation ne OP_ARCHIVE_PUSH &&
-    $strOperation ne OP_ARCHIVE_PULL &&
     $strOperation ne OP_BACKUP &&
     $strOperation ne OP_EXPIRE)
 {
@@ -148,10 +156,10 @@ if (!defined($strStanza))
 ####################################################################################################################################
 # ARCHIVE-PUSH and ARCHIVE-PULL Command
 ####################################################################################################################################
-if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
+if ($strOperation eq OP_ARCHIVE_PUSH)
 {
     # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
-    my $strSection = $strOperation eq OP_ARCHIVE_PUSH && defined(config_load("archive", "path")) ? "archive" : "backup";
+    my $strSection = defined(config_load(CONFIG_SECTION_ARCHIVE, "path")) ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
     
     # Get the operational flags
     my $bCompress = config_load($strSection, "compress", true, "y") eq "y" ? true : false;
@@ -165,9 +173,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         strBackupUser => config_load($strSection, "user"),
         strBackupHost => config_load($strSection, "host"),
         strBackupPath => config_load($strSection, "path", true),
-        strCommandChecksum => config_load("command", "checksum", $bChecksum),
-        strCommandCompress => config_load("command", "compress", $bCompress),
-        strCommandDecompress => config_load("command", "decompress", $bCompress)
+        strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, "checksum", $bChecksum),
+        strCommandCompress => config_load(CONFIG_SECTION_COMMAND, "compress", $bCompress),
+        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, "decompress", $bCompress)
     );
 
     backup_init
@@ -188,6 +196,17 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         }
         
         archive_push($ARGV[1]);
+        
+        if ($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load($strSection, "host")))
+        {
+            if (fork())
+            {
+                exit 0;
+            }
+        }
+        
+        sleep(5);
+        &log(INFO, "GOT HERE");
     }
 
     exit 0;
@@ -215,31 +234,31 @@ elsif ($strType ne "full" && $strType ne "differential" && $strType ne "incremen
 }
 
 # Get the operational flags
-my $bCompress = config_load("backup", "compress", true, "y") eq "y" ? true : false;
-my $bChecksum = config_load("backup", "checksum", true, "y") eq "y" ? true : false;
+my $bCompress = config_load(CONFIG_SECTION_BACKUP, "compress", true, "y") eq "y" ? true : false;
+my $bChecksum = config_load(CONFIG_SECTION_BACKUP, "checksum", true, "y") eq "y" ? true : false;
 
 # Run file_init_archive - the rest of the file config required for backup and restore
 my $oFile = pg_backrest_file->new
 (
     strStanza => $strStanza,
     bNoCompression => !$bCompress,
-    strBackupUser => config_load("backup", "user"),
-    strBackupHost => config_load("backup", "host"),
-    strBackupPath => config_load("backup", "path", true),
+    strBackupUser => config_load(CONFIG_SECTION_BACKUP, "user"),
+    strBackupHost => config_load(CONFIG_SECTION_BACKUP, "host"),
+    strBackupPath => config_load(CONFIG_SECTION_BACKUP, "path", true),
     strDbUser => config_load("stanza", "user"),
     strDbHost => config_load("stanza", "host"),
-    strCommandChecksum => config_load("command", "checksum", $bChecksum),
-    strCommandCompress => config_load("command", "compress", $bCompress),
-    strCommandDecompress => config_load("command", "decompress", $bCompress),
-    strCommandManifest => config_load("command", "manifest"),
-    strCommandPsql => config_load("command", "psql")
+    strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, "checksum", $bChecksum),
+    strCommandCompress => config_load(CONFIG_SECTION_COMMAND, "compress", $bCompress),
+    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, "decompress", $bCompress),
+    strCommandManifest => config_load(CONFIG_SECTION_COMMAND, "manifest"),
+    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, "psql")
 );
 
 my $oDb = pg_backrest_db->new
 (
     strDbUser => config_load("stanza", "user"),
     strDbHost => config_load("stanza", "host"),
-    strCommandPsql => config_load("command", "psql")
+    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, "psql")
 );
 
 # Run backup_init - parameters required for backup and restore operations
@@ -248,10 +267,10 @@ backup_init
     $oDb,
     $oFile,
     $strType,
-    config_load("backup", "hardlink", true, "n") eq "y" ? true : false,
+    config_load(CONFIG_SECTION_BACKUP, "hardlink", true, "n") eq "y" ? true : false,
     !$bChecksum,
-    config_load("backup", "thread"),
-    config_load("backup", "archive_required", true, "y") eq "y" ? true : false
+    config_load(CONFIG_SECTION_BACKUP, "thread"),
+    config_load(CONFIG_SECTION_BACKUP, "archive_required", true, "y") eq "y" ? true : false
 );
 
 ####################################################################################################################################
@@ -272,10 +291,10 @@ if ($strOperation eq OP_EXPIRE)
     backup_expire
     (
         $oFile->path_get(PATH_BACKUP_CLUSTER),
-        config_load("retention", "full_retention"),
-        config_load("retention", "differential_retention"),
-        config_load("retention", "archive_retention_type"),
-        config_load("retention", "archive_retention")
+        config_load(CONFIG_SECTION_RETENTION, "full_retention"),
+        config_load(CONFIG_SECTION_RETENTION, "differential_retention"),
+        config_load(CONFIG_SECTION_RETENTION, "archive_retention_type"),
+        config_load(CONFIG_SECTION_RETENTION, "archive_retention")
     );
 
     exit 0;
