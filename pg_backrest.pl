@@ -18,10 +18,8 @@ use pg_backrest_db;
 my $strConfigFile;
 my $strStanza;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
-my $bHardLink;
 
-GetOptions ("hardlink" => \$bHardLink,
-            "config=s" => \$strConfigFile,
+GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
             "type=s" => \$strType)
     or die("Error in command line arguments\n");
@@ -223,7 +221,7 @@ backup_init
     $oDb,
     $oFile,
     $strType,
-    $bHardLink,
+    config_load("backup", "hardlink", true, "n") eq "y" ? true : false,
     !$bChecksum,
     config_load("backup", "thread"),
     config_load("backup", "archive_required", true, "y") eq "y" ? true : false
