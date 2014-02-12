@@ -14,6 +14,15 @@ use pg_backrest_file;
 use pg_backrest_backup;
 use pg_backrest_db;
 
+# Operation constants
+use constant
+{
+    OP_ARCHIVE_PUSH => "archive-push",
+    OP_ARCHIVE_PULL => "archive-pull",
+    OP_BACKUP       => "backup",
+    OP_EXPIRE       => "expire",
+};
+
 # Command line parameters
 my $strConfigFile;      # Configuration file
 my $strStanza;          # Stanza in the configuration file to load
@@ -98,15 +107,16 @@ if (!defined($strOperation))
     confess &log(ERROR, "operation is not defined");
 }
 
-if ($strOperation ne "archive-push" &&
-    $strOperation ne "backup" &&
-    $strOperation ne "expire")
+if ($strOperation ne OP_ARCHIVE_PUSH &&
+    $strOperation ne OP_ARCHIVE_PULL &&
+    $strOperation ne OP_BACKUP &&
+    $strOperation ne OP_EXPIRE)
 {
     confess &log(ERROR, "invalid operation ${strOperation}");
 }
 
 # Type should only be specified for backups
-if (defined($strType) && $strOperation ne "backup")
+if (defined($strType) && $strOperation ne OP_BACKUP)
 {
     confess &log(ERROR, "type can only be specified for the backup operation")
 }
@@ -114,7 +124,7 @@ if (defined($strType) && $strOperation ne "backup")
 # !!! Pick the log file name here (backup, restore, archive-YYYYMMDD)
 my $strLogFile = "";
 
-if ($strOperation eq "archive-push")
+if ($strOperation eq OP_ARCHIVE_PUSH)
 {
 
 }
@@ -136,18 +146,12 @@ if (!defined($strStanza))
 }
 
 ####################################################################################################################################
-# ARCHIVE-PUSH Command
+# ARCHIVE-PUSH and ARCHIVE-PULL Command
 ####################################################################################################################################
-if ($strOperation eq "archive-push")
+if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 {
-    # archive-push command must have two arguments
-    if (@ARGV != 2)
-    {
-        confess "not enough arguments - show usage";
-    }
-
-    # If an archive section has been defined, use that instead of the backup section
-    my $strSection = defined(config_load("archive", "path")) ? "archive" : "backup";
+    # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
+    my $strSection = $strOperation eq OP_ARCHIVE_PUSH && defined(config_load("archive", "path")) ? "archive" : "backup";
     
     # Get the operational flags
     my $bCompress = config_load($strSection, "compress", true, "y") eq "y" ? true : false;
@@ -176,7 +180,15 @@ if ($strOperation eq "archive-push")
     );
 
     # Call the archive function
-    archive_push($ARGV[1]);
+    if ($strOperation eq OP_ARCHIVE_PUSH)
+    {
+        if (!defined($ARGV[1]))
+        {
+            confess &log(ERROR, "source archive file not provided - show usage");
+        }
+        
+        archive_push($ARGV[1]);
+    }
 
     exit 0;
 }
@@ -245,17 +257,17 @@ backup_init
 ####################################################################################################################################
 # BACKUP
 ####################################################################################################################################
-if ($strOperation eq "backup")
+if ($strOperation eq OP_BACKUP)
 {
     backup(config_load("stanza", "path"));
 
-    $strOperation = "expire";
+    $strOperation = OP_EXPIRE;
 }
 
 ####################################################################################################################################
 # EXPIRE
 ####################################################################################################################################
-if ($strOperation eq "expire")
+if ($strOperation eq OP_EXPIRE)
 {
     backup_expire
     (
