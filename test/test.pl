@@ -103,15 +103,15 @@ sub archive_command_build
     
     my $strCommand = "$strBackRestBinPath/pg_backrest.pl --stanza=db --config=$strBackRestBinPath/pg_backrest.conf";
     
-    if (!$bCompression)
-    {
-        $strCommand .= " --no-compression"
-    }
-
-    if (!$bChecksum)
-    {
-        $strCommand .= " --no-checksum"
-    }
+#    if (!$bCompression)
+#    {
+#        $strCommand .= " --no-compression"
+#    }
+#
+#    if (!$bChecksum)
+#    {
+#        $strCommand .= " --no-checksum"
+#    }
     
     return $strCommand . " archive-push %p";
 }

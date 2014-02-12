@@ -19,12 +19,8 @@ my $strConfigFile;
 my $strStanza;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
-my $bNoChecksum;
-my $bNoCompression;
 
-GetOptions ("no-compression" => \$bNoCompression,
-            "no-checksum" => \$bNoChecksum,
-            "hardlink" => \$bHardLink,
+GetOptions ("hardlink" => \$bHardLink,
             "config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
             "type=s" => \$strType)
@@ -41,6 +37,7 @@ sub config_load
     my $strSection = shift;
     my $strKey = shift;
     my $bRequired = shift;
+    my $strDefault = shift;
 
     # Default is that the key is not required
     if (!defined($bRequired))
@@ -70,6 +67,11 @@ sub config_load
 
     if (!defined($strValue) && $bRequired)
     {
+        if (defined($strDefault))
+        {
+            return $strDefault;
+        }
+        
         confess &log(ERROR, "config value " . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
     }
 
@@ -133,23 +135,33 @@ if ($strOperation eq "archive-push")
         confess "not enough arguments - show usage";
     }
 
+    # If an archive section has been defined, use that instead of the backup section
+    my $strSection = defined(config_load("archive", "path")) ? "archive" : "backup";
+    
+    # Get the operational flags
+    my $bCompress = config_load($strSection, "compress", true, "y") eq "y" ? true : false;
+    my $bChecksum = config_load($strSection, "checksum", true, "y") eq "y" ? true : false;
+
     # Run file_init_archive - this is the minimal config needed to run archiving
     my $oFile = pg_backrest_file->new
     (
         strStanza => $strStanza,
-        bNoCompression => $bNoCompression,
-        strBackupUser => config_load("backup", "user"),
-        strBackupHost => config_load("backup", "host"),
-        strBackupPath => config_load("backup", "path", true),
-        strCommandChecksum => config_load("command", "checksum", !$bNoChecksum),
-        strCommandCompress => config_load("command", "compress", !$bNoCompression),
-        strCommandDecompress => config_load("command", "decompress", !$bNoCompression)
+        bNoCompression => !$bCompress,
+        strBackupUser => config_load($strSection, "user"),
+        strBackupHost => config_load($strSection, "host"),
+        strBackupPath => config_load($strSection, "path", true),
+        strCommandChecksum => config_load("command", "checksum", $bChecksum),
+        strCommandCompress => config_load("command", "compress", $bCompress),
+        strCommandDecompress => config_load("command", "decompress", $bCompress)
     );
 
     backup_init
     (
         undef,
-        $oFile
+        $oFile,
+        undef,
+        undef,
+        !$bChecksum
     );
 
     # Call the archive function
@@ -177,19 +189,23 @@ if ($strType ne "full" && $strType ne "differential" && $strType ne "incremental
     confess &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
 }
 
+# Get the operational flags
+my $bCompress = config_load("backup", "compress", true, "y") eq "y" ? true : false;
+my $bChecksum = config_load("backup", "checksum", true, "y") eq "y" ? true : false;
+
 # Run file_init_archive - the rest of the file config required for backup and restore
 my $oFile = pg_backrest_file->new
 (
     strStanza => $strStanza,
-    bNoCompression => $bNoCompression,
+    bNoCompression => !$bCompress,
     strBackupUser => config_load("backup", "user"),
     strBackupHost => config_load("backup", "host"),
     strBackupPath => config_load("backup", "path", true),
     strDbUser => config_load("stanza", "user"),
     strDbHost => config_load("stanza", "host"),
-    strCommandChecksum => config_load("command", "checksum", !$bNoChecksum),
-    strCommandCompress => config_load("command", "compress", !$bNoCompression),
-    strCommandDecompress => config_load("command", "decompress", !$bNoCompression),
+    strCommandChecksum => config_load("command", "checksum", $bChecksum),
+    strCommandCompress => config_load("command", "compress", $bCompress),
+    strCommandDecompress => config_load("command", "decompress", $bCompress),
     strCommandManifest => config_load("command", "manifest"),
     strCommandPsql => config_load("command", "psql")
 );
@@ -208,8 +224,9 @@ backup_init
     $oFile,
     $strType,
     $bHardLink,
-    $bNoChecksum,
-    config_load("backup", "thread")
+    !$bChecksum,
+    config_load("backup", "thread"),
+    config_load("backup", "archive_required", true, "y") eq "y" ? true : false
 );
 
 ####################################################################################################################################

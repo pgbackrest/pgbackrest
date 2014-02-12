@@ -14,7 +14,7 @@ use threads;
 use Thread::Queue;
 
 use threads ('yield',
-             'stack_size' => 64*4096,
+             'stack_size' => 64 * 4096,
              'exit' => 'threads_only',
              'stringify');
 
@@ -33,6 +33,7 @@ my $strType = "incremental";        # Type of backup: full, differential (diff),
 my $bHardLink;
 my $bNoChecksum;
 my $iThreadTotal;
+my $bArchiveRequired;
 
 # Thread variables
 my @oThreadQueue;
@@ -50,6 +51,7 @@ sub backup_init
     my $bHardLinkParam = shift;
     my $bNoChecksumParam = shift;
     my $iThreadTotalParam = shift;
+    my $bArchiveRequiredParam = shift;
 
     $oDb = $oDbParam;
     $oFile = $oFileParam;
@@ -57,6 +59,7 @@ sub backup_init
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
     $iThreadTotal = $iThreadTotalParam;
+    $bArchiveRequired = $bArchiveRequiredParam;
     
     if (!defined($iThreadTotal))
     {
@@ -75,16 +78,17 @@ sub archive_push
     my $strDestinationFile = basename($strSourceFile);
     
     # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/;
+    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
 
     # Append the checksum (if requested)
     if ($bArchiveFile && !$bNoChecksum)
     {
         $strDestinationFile .= "-" . $oFile->file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
     }
-    
+
     # Copy the archive file
-    $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile, !$bArchiveFile);
+    $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile,
+                      $bArchiveFile ? undef : true);
 }
 
 ####################################################################################################################################
@@ -673,23 +677,27 @@ sub backup
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
-    my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
-
-    foreach my $strArchive (@stryArchive)
+    # If archive logs are required to complete the backup, then fetch them (this is the default)
+    if ($bArchiveRequired)
     {
-        my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchive));
-        my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, 
-            "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
-        
-        if (scalar @stryArchiveFile != 1)
+        # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
+        my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
+
+        foreach my $strArchive (@stryArchive)
         {
-            confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
+            my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchive));
+            my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, 
+                "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
+
+            if (scalar @stryArchiveFile != 1)
+            {
+                confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
+            }
+
+            &log(DEBUG, "    archiving: ${strArchive} (${stryArchiveFile[0]})");
+
+            $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
         }
-
-        &log(DEBUG, "    archiving: ${strArchive} (${stryArchiveFile[0]})");
-
-        $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
     }
     
     # Save the backup conf file
