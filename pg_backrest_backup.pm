@@ -366,7 +366,8 @@ sub backup_file
 
     # Hash table used to store files for parallel copy
     my $lTablespaceIdx = 0;
-    my $lFileIdx = 0;
+    my $lFileTotal = 0;
+    my $lFileZeroTotal = 0;
     my $lFileSizeTotal = 0;
 
     # Iterate through the path sections of the manifest to backup
@@ -464,20 +465,20 @@ sub backup_file
             # Else copy/compress the file and generate a checksum
             else
             {
-                $lFileIdx++;
-                
                 my $lFileSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+
+                $lFileTotal++;
+                $lFileSizeTotal += $lFileSize;
+                $lFileZeroTotal += $lFileSize == 0 ? 1 : 0; 
                 
                 my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
-                                     $lFileSize, $lFileIdx);
+                                     $lFileSize, $lFileTotal);
 
                 $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
                 $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
                 $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
                 $oFileCopyMap{"${strKey}"}{modification_time} = 
                     ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
-                    
-                $lFileSizeTotal += $lFileSize;
             }
         }
     }
@@ -496,23 +497,28 @@ sub backup_file
     $iThreadIdx = 0;
     my $fThreadFileSizeMax = $lFileSizeTotal / $iThreadTotal;
     my $fThreadFileSize = 0;
+    my $iThreadFileTotal = 0;
 
-    &log(DEBUG, "    total file size: ${lFileSizeTotal}, per thread ${fThreadFileSizeMax}");
-
+    &log(DEBUG, "    files ${lFileTotal}, zero files ${lFileZeroTotal}, file size: ${lFileSizeTotal}, per thread ${fThreadFileSizeMax}");
 
     foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
         $oThreadQueue[$iThreadIdx]->enqueue($strFile);
         
         $fThreadFileSize += $oFileCopyMap{"${strFile}"}{size};
+        $iThreadFileTotal++;
         
         if ($fThreadFileSize >= $fThreadFileSizeMax && $iThreadIdx < $iThreadTotal - 1)
         {
+            &log(DEBUG, "    thread ${iThreadIdx} files ${iThreadFileTotal} size ${fThreadFileSize}");
+
             $iThreadIdx++;
-            &log(DEBUG, "    switch to thread ${iThreadIdx} at size ${fThreadFileSize}");
+            $iThreadFileTotal = 0;
             $fThreadFileSize = 0;
         }
     }
+
+    &log(DEBUG, "    thread ${iThreadIdx} files ${iThreadFileTotal} size ${fThreadFileSize}");
     
     # End each thread queue and start the thread
     for ($iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
