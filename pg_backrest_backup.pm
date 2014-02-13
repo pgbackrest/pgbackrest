@@ -166,7 +166,7 @@ sub archive_pull
 
     if ($lFileTotal == 0)
     {
-        &log(INFO, "no archive logs to be copied to backup");
+        &log(DEBUG, "no archive logs to be copied to backup");
         
         return 0;
     }
