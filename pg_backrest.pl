@@ -28,6 +28,7 @@ use constant
 {
     CONFIG_SECTION_COMMAND        => "command",
     CONFIG_SECTION_COMMAND_OPTION => "command:option",
+    CONFIG_SECTION_LOG            => "log",
     CONFIG_SECTION_BACKUP         => "backup",
     CONFIG_SECTION_ARCHIVE        => "archive",
     CONFIG_SECTION_RETENTION      => "retention",
@@ -40,6 +41,9 @@ use constant
     CONFIG_KEY_THREAD_MAX         => "thread-max",
     CONFIG_KEY_HARDLINK           => "hardlink",
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
+
+    CONFIG_KEY_LEVEL_FILE         => "level-file",
+    CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
 
     CONFIG_KEY_COMPRESS           => "compress",
     CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
@@ -162,6 +166,10 @@ if (!defined($strStanza))
 {
     confess "a backup stanza must be specified - show usage";
 }
+
+# Set the log levels
+log_level_set(uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, "INFO")),
+              uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, "ERROR")));
 
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
@@ -308,7 +316,6 @@ if (defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
     confess &log(ASSERT, "backup/expire operations must be performed locally on the backup server");
 }
 
-#my $strLogFile = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/${strStanza}.log";
 log_file_set(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/${strStanza}");
 
 ####################################################################################################################################

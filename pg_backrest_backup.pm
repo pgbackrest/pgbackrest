@@ -34,6 +34,7 @@ my $bHardLink;
 my $bNoChecksum;
 my $iThreadMax;
 my $iThreadThreshold = 10;
+my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
 
 # Thread variables
@@ -619,10 +620,10 @@ sub backup_file
                 my $lFileSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
 
                 $lFileTotal++;
-                $lFileLargeSize += $lFileSize > 8192 ? $lFileSize : 0;
-                $lFileLargeTotal += $lFileSize > 8192 ? 1 : 0;
-                $lFileSmallSize += $lFileSize <= 8192 ? $lFileSize : 0; 
-                $lFileSmallTotal += $lFileSize <= 8192 ? 1 : 0; 
+                $lFileLargeSize += $lFileSize > $iSmallFileThreshold ? $lFileSize : 0;
+                $lFileLargeTotal += $lFileSize > $iSmallFileThreshold ? 1 : 0;
+                $lFileSmallSize += $lFileSize <= $iSmallFileThreshold ? $lFileSize : 0; 
+                $lFileSmallTotal += $lFileSize <= $iSmallFileThreshold ? 1 : 0; 
                 
                 my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
                                      $lFileSize, $lFileTotal);
@@ -656,15 +657,15 @@ sub backup_file
     my $fThreadFileLargeSize = 0;
     my $iThreadFileLargeTotal = 0;
 
-    &log(DEBUG, "file total ${lFileTotal}, ");
-    &log(DEBUG, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) . ", small thread avg total ${iThreadFileSmallTotalMax}");
-    &log(DEBUG, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) . ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
+    &log(INFO, "file total ${lFileTotal}");
+    &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) . ", small thread avg total ${iThreadFileSmallTotalMax}");
+    &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) . ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
     foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
         my $lFileSize = $oFileCopyMap{"${strFile}"}{size};
 
-        if ($lFileSize > 65536)
+        if ($lFileSize > $iSmallFileThreshold)
         {
             $oThreadQueue[$iThreadFileLargeIdx]->enqueue($strFile);
 
@@ -673,7 +674,7 @@ sub backup_file
 
             if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadMax - 1)
             {
-                &log(DEBUG, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
+                &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
 
                 $iThreadFileLargeIdx++;
                 $fThreadFileLargeSize = 0;
@@ -689,7 +690,7 @@ sub backup_file
 
             if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadMax - 1)
             {
-                &log(DEBUG, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
+                &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
 
                 $iThreadFileSmallIdx++;
                 $fThreadFileSmallSize = 0;
@@ -698,8 +699,8 @@ sub backup_file
         }
     }
 
-    &log(DEBUG, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
-    &log(DEBUG, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
+    &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
+    &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
     
     # End each thread queue and start the thread
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
@@ -724,8 +725,8 @@ sub backup_file_thread
     
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(DEBUG, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
-                    file_size_format($oFileCopyMap{$strFile}{size}) . ")");
+        &log(INFO, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
+                   file_size_format($oFileCopyMap{$strFile}{size}) . ")");
 
         $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
@@ -774,7 +775,7 @@ sub backup
     if (defined($strBackupLastPath))
     {
         %oLastManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
-        &log(INFO, "Last backup label: $oLastManifest{common}{backup}{label}");
+        &log(INFO, "last backup label: $oLastManifest{common}{backup}{label}");
     }
 
     # Create the path for the new backup
@@ -801,6 +802,8 @@ sub backup
         }
     }
 
+    &log(INFO, "new backup label: ${strBackupPath}");
+
     # Build backup tmp and config
     my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, "backup.manifest");
@@ -808,7 +811,7 @@ sub backup
     # If the backup tmp path already exists, delete the conf file
     if (-e $strBackupTmpPath)
     {
-        &log(WARNING, "backup path $strBackupTmpPath already exists");
+        &log(WARN, "backup path $strBackupTmpPath already exists");
 
         # !!! This is temporary until we can clean backup dirs
         system("rm -rf $strBackupTmpPath") == 0 or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
@@ -822,7 +825,7 @@ sub backup
     # Else create the backup tmp path
     else
     {
-        &log(INFO, "creating backup path $strBackupTmpPath");
+        &log(DEBUG, "creating backup path $strBackupTmpPath");
         $oFile->path_create(PATH_BACKUP_TMP);
     }
 
@@ -836,7 +839,7 @@ sub backup
 
     ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
 
-    &log(INFO, 'Backup archive start: ' . $strArchiveStart);
+    &log(INFO, 'archive start: ' . $strArchiveStart);
 
     # Build the backup manifest
     my %oTablespaceMap = $oDb->tablespace_map_get();
@@ -856,13 +859,15 @@ sub backup
 
     ${oBackupManifest}{archive}{archive_location}{stop} = $strArchiveStop;
 
-    &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
+    &log(INFO, 'archive stop: ' . $strArchiveStop);
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the 
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
     # consistent - at least not in this routine.  
     if ($bArchiveRequired)
     {
+        sleep(10);
+        
         # Save the backup conf file second time - before getting archive logs in case that fails
         backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 

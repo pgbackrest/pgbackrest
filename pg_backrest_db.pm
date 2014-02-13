@@ -33,7 +33,7 @@ sub BUILD
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}))
     {
-        &log(INFO, "connecting to database ssh host $self->{strDbHost}");
+        &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
         $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser});

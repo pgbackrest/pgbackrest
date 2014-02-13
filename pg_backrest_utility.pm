@@ -10,8 +10,8 @@ use IPC::System::Simple qw(capture);
 
 use Exporter qw(import);
 
-our @EXPORT = qw(data_hash_build trim common_prefix date_string_get file_size_format execute log log_file_set
-                 TRACE DEBUG ERROR ASSERT WARNING INFO true false);
+our @EXPORT = qw(data_hash_build trim common_prefix date_string_get file_size_format execute log log_file_set log_level_set
+                 TRACE DEBUG ERROR ASSERT WARN INFO true false);
 
 # Global constants
 use constant
@@ -20,7 +20,29 @@ use constant
     false => 0
 };
 
+use constant
+{
+    TRACE  => 'TRACE',
+    DEBUG  => 'DEBUG',
+    INFO   => 'INFO',
+    WARN   => 'WARN',
+    ERROR  => 'ERROR',
+    ASSERT => 'ASSERT',
+    OFF    => 'OFF'
+};
+
 my $hLogFile;
+my $strLogLevelFile = ERROR;
+my $strLogLevelConsole = ERROR;
+my %oLogLevelRank;
+
+$oLogLevelRank{TRACE}{rank} = 6;
+$oLogLevelRank{DEBUG}{rank} = 5;
+$oLogLevelRank{INFO}{rank} = 4;
+$oLogLevelRank{WARN}{rank} = 3;
+$oLogLevelRank{ERROR}{rank} = 2;
+$oLogLevelRank{ASSERT}{rank} = 1;
+$oLogLevelRank{OFF}{rank} = 0;
 
 ####################################################################################################################################
 # DATA_HASH_BUILD - Hash a delimited file with header
@@ -143,17 +165,17 @@ sub date_string_get
 sub log_file_set
 {
     my $strFile = shift;
-    
+
     $strFile .= "-" . date_string_get("%4d%02d%02d") . ".log";
     my $bExists = false;
-    
+
     if (-e $strFile)
     {
         $bExists = true;
     }
-    
+
     open($hLogFile, '>>', $strFile) or confess "unable to open log file ${strFile}";
-    
+
     if ($bExists)
     {
         print $hLogFile "\n";
@@ -163,23 +185,40 @@ sub log_file_set
 }
 
 ####################################################################################################################################
+# LOG_LEVEL_SET - set the log level for file and console
+####################################################################################################################################
+sub log_level_set
+{
+    my $strLevelFileParam = shift;
+    my $strLevelConsoleParam = shift;
+
+    if (!defined($oLogLevelRank{"${strLevelFileParam}"}{rank}))
+    {
+        confess &log(ERROR, "file log level ${strLevelFileParam} does not exist");
+    }
+
+    if (!defined($oLogLevelRank{"${strLevelConsoleParam}"}{rank}))
+    {
+        confess &log(ERROR, "console log level ${strLevelConsoleParam} does not exist");
+    }
+
+    $strLogLevelFile = $strLevelFileParam;
+    $strLogLevelConsole = $strLevelConsoleParam;
+}
+
+####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
-use constant 
-{
-    TRACE   => 'TRACE',
-    DEBUG   => 'DEBUG',
-    INFO    => 'INFO',
-    WARNING => 'WARN',
-    ERROR   => 'ERROR',
-    ASSERT  => 'ASSERT'
-};
-
 sub log
 {
     my $strLevel = shift;
     my $strMessage = shift;
 
+    if (!defined($oLogLevelRank{"${strLevel}"}{rank}))
+    {
+        confess &log(ASSERT, "log level ${strLevel} does not exist");
+    }
+    
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
     if (!defined($strMessage))
@@ -199,12 +238,18 @@ sub log
     $strMessage = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
                   (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessage}\n";
 
-    if (defined($hLogFile))
+    if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank})
     {
-        print $hLogFile $strMessage;
+        print $strMessage;
     }
-    
-    print $strMessage;
+
+    if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelFile}"}{rank})
+    {
+        if (defined($hLogFile))
+        {
+            print $hLogFile $strMessage;
+        }
+    }
 
     return $strMessage;
 }

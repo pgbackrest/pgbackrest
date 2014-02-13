@@ -65,7 +65,7 @@ sub BUILD
     # Connect SSH object if backup host is defined
     if (defined($self->{strBackupHost}))
     {
-        &log(INFO, "connecting to backup ssh host " . $self->{strBackupHost});
+        &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
         $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser}, master_opts => [-o => "Compression=yes"]);
@@ -75,7 +75,7 @@ sub BUILD
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}))
     {
-        &log(INFO, "connecting to database ssh host $self->{strDbHost}");
+        &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
         $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser}, master_opts => [-o => "Compression=yes"]);
