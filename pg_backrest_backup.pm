@@ -609,7 +609,7 @@ sub backup_file
                 # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
                 if ($bHardLink)
                 {
-                    &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
+                    &log(INFO, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
                     $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
                                         PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true);
