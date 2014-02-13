@@ -659,8 +659,10 @@ sub backup_file
     my $iThreadFileLargeTotal = 0;
 
     &log(INFO, "file total ${lFileTotal}");
-    &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) . ", small thread avg total ${iThreadFileSmallTotalMax}");
-    &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) . ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
+    &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
+         ", small thread avg total ${iThreadFileSmallTotalMax} (");
+    &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
+         ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
     foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
@@ -675,7 +677,8 @@ sub backup_file
 
             if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadMax - 1)
             {
-                &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
+                &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}" . 
+                           " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
 
                 $iThreadFileLargeIdx++;
                 $fThreadFileLargeSize = 0;
@@ -691,8 +694,9 @@ sub backup_file
 
             if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadMax - 1)
             {
-                &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
-
+                &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
+                           " (" . file_size_format(int(${fThreadFileSmallSize})) . ")");
+                           
                 $iThreadFileSmallIdx++;
                 $fThreadFileSmallSize = 0;
                 $iThreadFileSmallTotal = 0;
@@ -700,8 +704,10 @@ sub backup_file
         }
     }
 
-    &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
-    &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
+    &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}" . 
+               " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
+    &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
+               " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
     
     # End each thread queue and start the thread
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
