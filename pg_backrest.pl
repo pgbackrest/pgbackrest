@@ -7,6 +7,7 @@ use File::Basename;
 use Getopt::Long;
 use Config::IniFiles;
 use Carp;
+use Fcntl qw(:DEFAULT :flock);
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -25,11 +26,22 @@ use constant
 
 use constant
 {
-    CONFIG_SECTION_COMMAND => "command",
+    CONFIG_SECTION_COMMAND        => "command",
     CONFIG_SECTION_COMMAND_OPTION => "command:option",
-    CONFIG_SECTION_BACKUP  => "backup",
-    CONFIG_SECTION_ARCHIVE => "archive",
-    CONFIG_SECTION_RETENTION => "retention",
+    CONFIG_SECTION_BACKUP         => "backup",
+    CONFIG_SECTION_ARCHIVE        => "archive",
+    CONFIG_SECTION_RETENTION      => "retention",
+    CONFIG_SECTION_STANZA         => "stanza",
+
+    CONFIG_KEY_USER               => "user",
+    CONFIG_KEY_HOST               => "host",
+    CONFIG_KEY_PATH               => "path",
+
+    CONFIG_KEY_COMPRESS           => "compress",
+    CONFIG_KEY_DECOMPRESS         => "decompress",
+    CONFIG_KEY_CHECKSUM           => "checksum",
+    CONFIG_KEY_MANIFEST           => "manifest",
+    CONFIG_KEY_PSQL               => "psql"
 };
 
 # Command line parameters
@@ -64,7 +76,7 @@ sub config_load
     my $strValue;
 
     # Look in the default stanza section
-    if ($strSection eq "stanza")
+    if ($strSection eq CONFIG_SECTION_STANZA)
     {
         $strValue = $oConfig{"${strStanza}"}{"${strKey}"};
     }
@@ -154,28 +166,28 @@ if (!defined($strStanza))
 }
 
 ####################################################################################################################################
-# ARCHIVE-PUSH and ARCHIVE-PULL Command
+# ARCHIVE-PUSH Command
 ####################################################################################################################################
 if ($strOperation eq OP_ARCHIVE_PUSH)
 {
     # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
-    my $strSection = defined(config_load(CONFIG_SECTION_ARCHIVE, "path")) ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
+    my $strSection = defined(config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH)) ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
     
     # Get the operational flags
-    my $bCompress = config_load($strSection, "compress", true, "y") eq "y" ? true : false;
-    my $bChecksum = config_load($strSection, "checksum", true, "y") eq "y" ? true : false;
+    my $bCompress = config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+    my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
 
     # Run file_init_archive - this is the minimal config needed to run archiving
     my $oFile = pg_backrest_file->new
     (
         strStanza => $strStanza,
         bNoCompression => !$bCompress,
-        strBackupUser => config_load($strSection, "user"),
-        strBackupHost => config_load($strSection, "host"),
-        strBackupPath => config_load($strSection, "path", true),
-        strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, "checksum", $bChecksum),
-        strCommandCompress => config_load(CONFIG_SECTION_COMMAND, "compress", $bCompress),
-        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, "decompress", $bCompress)
+        strBackupUser => config_load($strSection, CONFIG_KEY_USER),
+        strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
+        strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
+        strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+        strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
     );
 
     backup_init
@@ -187,27 +199,61 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         !$bChecksum
     );
 
-    # Call the archive function
-    if ($strOperation eq OP_ARCHIVE_PUSH)
+    # Call the archive_push function
+    if (!defined($ARGV[1]))
     {
-        if (!defined($ARGV[1]))
-        {
-            confess &log(ERROR, "source archive file not provided - show usage");
-        }
-        
-        archive_push($ARGV[1]);
-        
-        if ($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load($strSection, "host")))
-        {
-            if (fork())
-            {
-                exit 0;
-            }
-        }
-        
-        sleep(5);
-        &log(INFO, "GOT HERE");
+        confess &log(ERROR, "source archive file not provided - show usage");
     }
+
+    archive_push($ARGV[1]);
+
+    # Is backup section defined?  If so fork, exit parent, and push archive logs to the backup server asynchronously afterwards
+    if ($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)) && fork())
+    {
+        exit 0;
+    }
+
+    # Create a lock file to make sure archive-pull does not run more than once
+    my $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
+    my $fLockFile;
+    
+    sysopen($fLockFile, "${strArchivePath}/${strStanza}/archive.lock", O_WRONLY | O_CREAT) or die;
+
+    if (!flock($fLockFile, LOCK_EX | LOCK_NB))
+    {
+        &log(INFO, "archive-pull process is already running - exiting");
+        exit 0
+    }
+
+    # Get the new operational flags
+    $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+    $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+
+    # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
+    $oFile = pg_backrest_file->new
+    (
+        strStanza => $strStanza,
+        bNoCompression => !$bCompress,
+        strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+        strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
+        strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+        strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+        strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
+        strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
+    );
+
+    backup_init
+    (
+        undef,
+        $oFile,
+        undef,
+        undef,
+        !$bChecksum
+    );
+
+    # Call the archive_pull function
+    archive_pull($strArchivePath);
 
     exit 0;
 }
@@ -234,31 +280,31 @@ elsif ($strType ne "full" && $strType ne "differential" && $strType ne "incremen
 }
 
 # Get the operational flags
-my $bCompress = config_load(CONFIG_SECTION_BACKUP, "compress", true, "y") eq "y" ? true : false;
-my $bChecksum = config_load(CONFIG_SECTION_BACKUP, "checksum", true, "y") eq "y" ? true : false;
+my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
 
 # Run file_init_archive - the rest of the file config required for backup and restore
 my $oFile = pg_backrest_file->new
 (
     strStanza => $strStanza,
     bNoCompression => !$bCompress,
-    strBackupUser => config_load(CONFIG_SECTION_BACKUP, "user"),
-    strBackupHost => config_load(CONFIG_SECTION_BACKUP, "host"),
-    strBackupPath => config_load(CONFIG_SECTION_BACKUP, "path", true),
-    strDbUser => config_load("stanza", "user"),
-    strDbHost => config_load("stanza", "host"),
-    strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, "checksum", $bChecksum),
-    strCommandCompress => config_load(CONFIG_SECTION_COMMAND, "compress", $bCompress),
-    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, "decompress", $bCompress),
-    strCommandManifest => config_load(CONFIG_SECTION_COMMAND, "manifest"),
-    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, "psql")
+    strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+    strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
+    strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+    strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
+    strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
+    strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+    strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
+    strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST),
+    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL)
 );
 
 my $oDb = pg_backrest_db->new
 (
-    strDbUser => config_load("stanza", "user"),
-    strDbHost => config_load("stanza", "host"),
-    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, "psql")
+    strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
+    strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
+    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL)
 );
 
 # Run backup_init - parameters required for backup and restore operations
@@ -278,7 +324,7 @@ backup_init
 ####################################################################################################################################
 if ($strOperation eq OP_BACKUP)
 {
-    backup(config_load("stanza", "path"));
+    backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
 
     $strOperation = OP_EXPIRE;
 }

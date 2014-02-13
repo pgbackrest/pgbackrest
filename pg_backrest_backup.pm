@@ -25,7 +25,7 @@ use pg_backrest_db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init archive_push backup backup_expire archive_list_get);
+our @EXPORT = qw(backup_init archive_push archive_pull backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
@@ -89,6 +89,25 @@ sub archive_push
     # Copy the archive file
     $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile,
                       $bArchiveFile ? undef : true);
+}
+
+####################################################################################################################################
+# ARCHIVE_PULL
+####################################################################################################################################
+sub archive_pull
+{
+    my $strArchivePath = shift;
+
+    # Load the archive manifest - all the files that need to be pushed
+    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath . "/archive/" . ${oFile}->{strStanza});
+
+    foreach my $strFile (sort(keys $oManifestHash{name}))
+    {
+        if ($strFile =~ /^[0-F]{16}\/[0-F]{24}.*/)
+        {
+            &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -667,6 +686,9 @@ sub backup
     # Delete files leftover from a partial backup
     # !!! do it
 
+    # Save the backup conf file first time - so we can see what is happening in the backup
+    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+
     # Perform the backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
            
@@ -677,9 +699,14 @@ sub backup
 
     &log(INFO, 'Backup archive stop: ' . $strArchiveStop);
 
-    # If archive logs are required to complete the backup, then fetch them (this is the default)
+    # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the 
+    # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
+    # consistent - at least not in this routine.  
     if ($bArchiveRequired)
     {
+        # Save the backup conf file second time - before getting archive logs in case that fails
+        backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
 
@@ -700,7 +727,7 @@ sub backup
         }
     }
     
-    # Save the backup conf file
+    # Save the backup conf file final time
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
