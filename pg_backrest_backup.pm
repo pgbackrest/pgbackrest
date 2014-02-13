@@ -855,8 +855,8 @@ sub backup
     # Delete files leftover from a partial backup
     # !!! do it
 
-    # Save the backup conf file first time - so we can see what is happening in the backup
-    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+#    # Save the backup conf file first time - so we can see what is happening in the backup
+#    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Perform the backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
@@ -875,8 +875,8 @@ sub backup
     {
         sleep(10);
         
-        # Save the backup conf file second time - before getting archive logs in case that fails
-        backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+#        # Save the backup conf file second time - before getting archive logs in case that fails
+#        backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
