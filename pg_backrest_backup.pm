@@ -97,16 +97,31 @@ sub archive_push
 sub archive_pull
 {
     my $strArchivePath = shift;
+    my $strCompressLocal = shift;
 
     # Load the archive manifest - all the files that need to be pushed
     my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath . "/archive/" . ${oFile}->{strStanza});
+
+    # Get all the files to be transferred and calculate the total size
+    my @stryFile;
+    my $lFileSize = 0;
 
     foreach my $strFile (sort(keys $oManifestHash{name}))
     {
         if ($strFile =~ /^[0-F]{16}\/[0-F]{24}.*/)
         {
-            &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
+            push @stryFile, $strFile;
+
+            $lFileSize += $oManifestHash{name}{"$strFile"}{size};
         }
+    }
+
+    &log(INFO, "total archive to be copied to backup " . (${lFileSize} / 1024 / 1024 ) . "MB");
+
+    # Find all the archive files
+    foreach my $strFile (@stryFile)
+    {
+        &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
     }
 }
 
