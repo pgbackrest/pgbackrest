@@ -32,7 +32,8 @@ my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
 my $bNoChecksum;
-my $iThreadTotal;
+my $iThreadMax;
+my $iThreadThreshold = 10;
 my $bArchiveRequired;
 
 # Thread variables
@@ -50,7 +51,7 @@ sub backup_init
     my $strTypeParam = shift;
     my $bHardLinkParam = shift;
     my $bNoChecksumParam = shift;
-    my $iThreadTotalParam = shift;
+    my $iThreadMaxParam = shift;
     my $bArchiveRequiredParam = shift;
 
     $oDb = $oDbParam;
@@ -58,13 +59,57 @@ sub backup_init
     $strType = $strTypeParam;
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
-    $iThreadTotal = $iThreadTotalParam;
+    $iThreadMax = $iThreadMaxParam;
     $bArchiveRequired = $bArchiveRequiredParam;
     
-    if (!defined($iThreadTotal))
+    if (!defined($iThreadMax))
     {
-        $iThreadTotal = 1;
+        $iThreadMax = 1;
     }
+    
+    if ($iThreadMax < 1 || $iThreadMax > 32)
+    {
+        confess &log(ERROR, "thread_max must be between 1 and 32");
+    }
+}
+
+####################################################################################################################################
+# THREAD_INIT
+####################################################################################################################################
+sub thread_init
+{
+    my $iThreadRequestTotal = shift;  # Number of threads that were requested
+    
+    my $iThreadActualTotal;           # Number of actual threads assigned
+    
+    if (!defined($iThreadRequestTotal))
+    {
+        $iThreadActualTotal = $iThreadMax;
+    }
+    else
+    {
+        $iThreadActualTotal = $iThreadRequestTotal < $iThreadMax ? $iThreadRequestTotal : $iThreadMax;
+        
+        if ($iThreadActualTotal < 1)
+        {
+            $iThreadActualTotal = 1;
+        }
+    }
+    
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadActualTotal; $iThreadIdx++)
+    {
+        if (!defined($oThreadQueue[$iThreadIdx]))
+        {
+            $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
+        }
+
+        if (!defined($oThreadFile[$iThreadIdx]))
+        {
+            $oThreadFile[$iThreadIdx] = $oFile->clone($iThreadIdx);
+        }
+    }
+    
+    return $iThreadActualTotal;
 }
 
 ####################################################################################################################################
@@ -97,14 +142,15 @@ sub archive_push
 sub archive_pull
 {
     my $strArchivePath = shift;
-    my $strCompressLocal = shift;
+    my $strCompressAsync = shift;
 
     # Load the archive manifest - all the files that need to be pushed
-    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath . "/archive/" . ${oFile}->{strStanza});
+    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
 
     # Get all the files to be transferred and calculate the total size
     my @stryFile;
     my $lFileSize = 0;
+    my $lFileTotal = 0;
 
     foreach my $strFile (sort(keys $oManifestHash{name}))
     {
@@ -113,15 +159,80 @@ sub archive_pull
             push @stryFile, $strFile;
 
             $lFileSize += $oManifestHash{name}{"$strFile"}{size};
+            $lFileTotal++;
         }
     }
 
-    &log(INFO, "total archive to be copied to backup " . (${lFileSize} / 1024 / 1024 ) . "MB");
-
-    # Find all the archive files
-    foreach my $strFile (@stryFile)
+    if ($lFileTotal == 0)
     {
-        &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
+        &log(INFO, "no archive logs to be copied to backup");
+        
+        return 0;
+    }
+
+    # Output files to be moved to backup
+    &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . (${lFileSize} / 1024 / 1024 ) . "MB");
+
+    # Init the thread variables
+    my $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold));
+    my @oThread;
+    my $iThreadIdx = 0;
+
+    &log(INFO, "actual threads ${iThreadLocalMax}/${iThreadMax}");
+
+    # If compress async then go and compress all uncompressed archive files
+#    if ($bCompressAsync)
+#    {
+#        # Find all the archive files
+#        foreach my $strFile (@stryFile)
+#        {
+#            &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
+#        }
+#    }
+
+    foreach my $strFile (sort @stryFile)
+    {
+        $oThreadQueue[$iThreadIdx]->enqueue($strFile);
+
+        $iThreadIdx = ($iThreadIdx + 1 == $iThreadLocalMax) ? 0 : $iThreadIdx + 1;
+    }
+
+    # End each thread queue and start the thread
+    for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+    {
+        $oThreadQueue[$iThreadIdx]->enqueue(undef);
+        $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
+    }
+    
+    # Rejoin the threads
+    for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+    {
+        $oThread[$iThreadIdx]->join();
+    }
+    
+    return $lFileTotal;
+}
+
+sub archive_pull_copy_thread
+{
+    my @args = @_;
+
+    my $iThreadIdx = $args[0];
+    my $strArchivePath = $args[1];
+
+    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
+    {
+        &log(DEBUG, "    thread ${iThreadIdx} backing up archive file ${strFile}");
+        my $strArchiveFile = "${strArchivePath}/${strFile}";
+
+        # Copy the file
+        $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
+                                             PATH_BACKUP_ARCHIVE, basename($strFile),
+                                             undef, undef,
+                                             undef); # cannot set permissions remotely yet $oFile->{strDefaultFilePermission});
+                                             
+        #  Remove the source archive file
+        unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
     }
 }
 
@@ -528,7 +639,7 @@ sub backup_file
     # Build the thread queues
     my @oThread;
     
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
     {
         $oThreadFile[$iThreadIdx] = $oFile->clone($iThreadIdx);
         $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
@@ -536,12 +647,12 @@ sub backup_file
     
     # Assign files to each thread queue
     my $iThreadFileSmallIdx = 0;
-    my $iThreadFileSmallTotalMax = $lFileSmallTotal / $iThreadTotal;
+    my $iThreadFileSmallTotalMax = $lFileSmallTotal / $iThreadMax;
     my $fThreadFileSmallSize = 0;
     my $iThreadFileSmallTotal = 0;
     
     my $iThreadFileLargeIdx = 0;
-    my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadTotal;
+    my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadMax;
     my $fThreadFileLargeSize = 0;
     my $iThreadFileLargeTotal = 0;
 
@@ -560,7 +671,7 @@ sub backup_file
             $fThreadFileLargeSize += $lFileSize;
             $iThreadFileLargeTotal++;
 
-            if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadTotal - 1)
+            if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadMax - 1)
             {
                 &log(DEBUG, "    thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
 
@@ -576,7 +687,7 @@ sub backup_file
             $fThreadFileSmallSize += $lFileSize;
             $iThreadFileSmallTotal++;
 
-            if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadTotal - 1)
+            if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadMax - 1)
             {
                 &log(DEBUG, "    thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
 
@@ -591,14 +702,14 @@ sub backup_file
     &log(DEBUG, "    thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
     
     # End each thread queue and start the thread
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
     {
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
         $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum);
     }
     
     # Rejoin the threads
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadTotal; $iThreadIdx++)
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
     {
         $oThread[$iThreadIdx]->join();
     }
@@ -773,6 +884,9 @@ sub backup
             $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
         }
     }
+    
+    # Need some sort of backup validate - create a manifest and compare the backup manifest
+    # !!! DO IT
     
     # Save the backup conf file final time
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);

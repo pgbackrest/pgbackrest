@@ -37,7 +37,10 @@ use constant
     CONFIG_KEY_HOST               => "host",
     CONFIG_KEY_PATH               => "path",
 
+    CONFIG_KEY_THREAD_MAX         => "thread-max",
+
     CONFIG_KEY_COMPRESS           => "compress",
+    CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
     CONFIG_KEY_DECOMPRESS         => "decompress",
     CONFIG_KEY_CHECKSUM           => "checksum",
     CONFIG_KEY_MANIFEST           => "manifest",
@@ -129,6 +132,7 @@ if (!defined($strOperation))
 }
 
 if ($strOperation ne OP_ARCHIVE_PUSH &&
+    $strOperation ne OP_ARCHIVE_PULL &&
     $strOperation ne OP_BACKUP &&
     $strOperation ne OP_EXPIRE)
 {
@@ -168,93 +172,137 @@ if (!defined($strStanza))
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
-if ($strOperation eq OP_ARCHIVE_PUSH)
+if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 {
     # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
     my $strSection = defined(config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH)) ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
+
+    # Get the async compress flag.  If compress_async=y then compression is off for the initial push
+    my $bCompressAsync = config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
+
+    if ($strOperation eq OP_ARCHIVE_PUSH)
+    {
+        # Make sure that archive-push is running locally
+        if (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
+        {
+            confess &log(ERROR, "stanza host cannot be set on archive-push - must be run locally on db server");
+        }
     
-    # Get the operational flags
-    my $bCompress = config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-    my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+        # Make sure that compress and compress_async are not both set
+    #    if (defined(config_load($strSection, CONFIG_KEY_COMPRESS)) && defined(config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC)))
+    #    {
+    #        confess &log(ERROR, "compress and compress_async cannot both be set");
+    #    }
 
-    # Run file_init_archive - this is the minimal config needed to run archiving
-    my $oFile = pg_backrest_file->new
-    (
-        strStanza => $strStanza,
-        bNoCompression => !$bCompress,
-        strBackupUser => config_load($strSection, CONFIG_KEY_USER),
-        strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
-        strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
-        strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
-        strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
-    );
+        # Get the compress flag
+        my $bCompress = $bCompressAsync ? false : config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
 
-    backup_init
-    (
-        undef,
-        $oFile,
-        undef,
-        undef,
-        !$bChecksum
-    );
+        # Get the checksum flag
+        my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
 
-    # Call the archive_push function
-    if (!defined($ARGV[1]))
-    {
-        confess &log(ERROR, "source archive file not provided - show usage");
+        # Run file_init_archive - this is the minimal config needed to run archiving
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => !$bCompress,
+            strBackupUser => config_load($strSection, CONFIG_KEY_USER),
+            strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
+            strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
+            strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+            strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+            strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
+        );
+
+        backup_init
+        (
+            undef,
+            $oFile,
+            undef,
+            undef,
+            !$bChecksum
+        );
+
+        # Call the archive_push function
+        if (!defined($ARGV[1]))
+        {
+            confess &log(ERROR, "source archive file not provided - show usage");
+        }
+
+        archive_push($ARGV[1]);
+
+        # Only continue if we are archiving local and a backup server is defined 
+        if (!($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))
+        {
+            exit 0;
+        }
+
+        # Set the operation so that archive-pull will be called next
+        $strOperation = OP_ARCHIVE_PULL;
+        
+        # fork and exit the parent process
+        if (fork())
+        {
+            exit 0;
+        }
     }
 
-    archive_push($ARGV[1]);
-
-    # Is backup section defined?  If so fork, exit parent, and push archive logs to the backup server asynchronously afterwards
-    if ($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)) && fork())
+    if ($strOperation eq OP_ARCHIVE_PULL)
     {
-        exit 0;
-    }
+        # Make sure that archive-pull is running on the db server
+        if (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
+        {
+            confess &log(ERROR, "stanza host cannot be set on archive-pull - must be run locally on db server");
+        }
+        
+        # Create a lock file to make sure archive-pull does not run more than once
+        my $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
+        my $strLockFile = "${strArchivePath}/lock/archive-${strStanza}.lock";
+        my $fLockFile;
 
-    # Create a lock file to make sure archive-pull does not run more than once
-    my $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
-    my $fLockFile;
+        sysopen($fLockFile, $strLockFile, O_WRONLY | O_CREAT)
+            or confess &log(ERROR, "unable to open lock file ${strLockFile}");
+
+        if (!flock($fLockFile, LOCK_EX | LOCK_NB))
+        {
+            &log(INFO, "archive-pull process is already running - exiting");
+            exit 0
+        }
+
+        # Get the new operational flags
+        my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+        my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+
+        # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => !$bCompress,
+            strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+            strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
+            strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+            strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+            strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+            strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
+            strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
+        );
+
+        backup_init
+        (
+            undef,
+            $oFile,
+            undef,
+            undef,
+            !$bChecksum,
+            config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
+        );
+
+        # Call the archive_pull function  Continue to loop as long as there are files to process.
+        while (archive_pull($strArchivePath . "/archive/${strStanza}", $bCompressAsync))
+        {
+            sleep(5);
+        }
+    }
     
-    sysopen($fLockFile, "${strArchivePath}/${strStanza}/archive.lock", O_WRONLY | O_CREAT) or die;
-
-    if (!flock($fLockFile, LOCK_EX | LOCK_NB))
-    {
-        &log(INFO, "archive-pull process is already running - exiting");
-        exit 0
-    }
-
-    # Get the new operational flags
-    $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-    $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
-
-    # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
-    $oFile = pg_backrest_file->new
-    (
-        strStanza => $strStanza,
-        bNoCompression => !$bCompress,
-        strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
-        strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
-        strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-        strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
-        strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-        strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
-    );
-
-    backup_init
-    (
-        undef,
-        $oFile,
-        undef,
-        undef,
-        !$bChecksum
-    );
-
-    # Call the archive_pull function
-    archive_pull($strArchivePath);
-
     exit 0;
 }
 
@@ -315,7 +363,7 @@ backup_init
     $strType,
     config_load(CONFIG_SECTION_BACKUP, "hardlink", true, "n") eq "y" ? true : false,
     !$bChecksum,
-    config_load(CONFIG_SECTION_BACKUP, "thread"),
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
     config_load(CONFIG_SECTION_BACKUP, "archive_required", true, "y") eq "y" ? true : false
 );
 
