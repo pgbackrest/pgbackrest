@@ -545,9 +545,9 @@ sub backup_file
     my $fThreadFileLargeSize = 0;
     my $iThreadFileLargeTotal = 0;
 
-    &log(DEBUG, "    files ${lFileTotal}, " . 
-         "small total ${lFileSmallTotal}, small size: ${lFileSmallSize}, small thread avg total ${iThreadFileSmallTotalMax} " .
-         "large total ${lFileLargeTotal}, large size: ${lFileLargeSize}, large thread avg size ${fThreadFileLargeSizeMax}");
+    &log(DEBUG, "    files ${lFileTotal}, ");
+    &log(DEBUG, "        small total ${lFileSmallTotal}, small size: ${lFileSmallSize}, small thread avg total ${iThreadFileSmallTotalMax}");
+    &log(DEBUG, "        large total ${lFileLargeTotal}, large size: ${lFileLargeSize}, large thread avg size ${fThreadFileLargeSizeMax}");
 
     foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
