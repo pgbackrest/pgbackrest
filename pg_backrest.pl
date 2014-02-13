@@ -230,6 +230,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             confess &log(ERROR, "source archive file not provided - show usage");
         }
 
+        &log(INFO, "pushing archive log " . $ARGV[1] . ($bCompressAsync ? " asynchronously" : ""));
+
         archive_push($ARGV[1]);
 
         # Only continue if we are archiving local and a backup server is defined 

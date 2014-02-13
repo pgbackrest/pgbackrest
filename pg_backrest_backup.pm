@@ -179,7 +179,7 @@ sub archive_pull
     my @oThread;
     my $iThreadIdx = 0;
 
-    &log(INFO, "actual threads ${iThreadLocalMax}/${iThreadMax}");
+    &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
 
     # If compress async then go and compress all uncompressed archive files
 #    if ($bCompressAsync)
@@ -223,7 +223,8 @@ sub archive_pull_copy_thread
 
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(DEBUG, "thread ${iThreadIdx} backing up archive file ${strFile}");
+        &log(INFO, "thread ${iThreadIdx} backing up archive file ${strFile}");
+        
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
         # Copy the file
