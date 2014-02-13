@@ -211,6 +211,11 @@ sub path_get
         my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
         my $strArchive;
 
+        if (defined($bTemp) && $bTemp)
+        {
+            return "${strArchivePath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "");
+        }
+
         if (defined($strFile))
         {
             $strArchive = substr(basename($strFile), 0, 24);
