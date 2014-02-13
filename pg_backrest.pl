@@ -38,6 +38,8 @@ use constant
     CONFIG_KEY_PATH               => "path",
 
     CONFIG_KEY_THREAD_MAX         => "thread-max",
+    CONFIG_KEY_HARDLINK           => "hardlink",
+    CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
 
     CONFIG_KEY_COMPRESS           => "compress",
     CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
@@ -364,10 +366,10 @@ backup_init
     $oDb,
     $oFile,
     $strType,
-    config_load(CONFIG_SECTION_BACKUP, "hardlink", true, "n") eq "y" ? true : false,
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, "n") eq "y" ? true : false,
     !$bChecksum,
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
-    config_load(CONFIG_SECTION_BACKUP, "archive_required", true, "y") eq "y" ? true : false
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, "y") eq "y" ? true : false
 );
 
 ####################################################################################################################################
