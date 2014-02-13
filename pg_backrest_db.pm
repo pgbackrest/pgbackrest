@@ -71,7 +71,7 @@ sub psql_execute
     # Run remotely
     if ($self->is_remote())
     {
-        &log(DEBUG, "        psql execute: remote ${strScript}");
+        &log(TRACE, "psql execute: remote ${strScript}");
 
         $strResult = $self->{oDbSSH}->capture($strCommand)
             or confess &log(ERROR, "unable to execute remote psql command '${strCommand}'");
@@ -79,7 +79,7 @@ sub psql_execute
     # Else run locally
     else
     {
-        &log(DEBUG, "        psql execute: ${strScript}");
+        &log(TRACE, "psql execute: ${strScript}");
         $strResult = capture($strCommand) or confess &log(ERROR, "unable to execute local psql command '${strCommand}'");
     }
 
@@ -112,7 +112,7 @@ sub version_get
     $self->{fVersion} = 
         trim($self->psql_execute("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
 
-    &log(DEBUG, "        database version is $self->{fVersion}");
+    &log(DEBUG, "database version is $self->{fVersion}");
 
     return $self->{fVersion};
 }

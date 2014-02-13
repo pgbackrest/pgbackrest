@@ -10,9 +10,8 @@ use IPC::System::Simple qw(capture);
 
 use Exporter qw(import);
 
-#our @EXPORT_OK = qw(data_hash_build trim date_string_get);
-our @EXPORT = qw(data_hash_build trim common_prefix date_string_get execute log
-                 DEBUG ERROR ASSERT WARNING INFO true false);
+our @EXPORT = qw(data_hash_build trim common_prefix date_string_get file_size_format execute log log_file_set
+                 TRACE DEBUG ERROR ASSERT WARNING INFO true false);
 
 # Global constants
 use constant
@@ -20,6 +19,8 @@ use constant
     true  => 1,
     false => 0
 };
+
+my $hLogFile;
 
 ####################################################################################################################################
 # DATA_HASH_BUILD - Hash a delimited file with header
@@ -95,13 +96,70 @@ sub common_prefix
 }
 
 ####################################################################################################################################
+# FILE_SIZE_FORMAT - Format file sizes in human-readable form
+####################################################################################################################################
+sub file_size_format
+{
+    my $lFileSize = shift;
+
+    if ($lFileSize < 1024)
+    {
+        return $lFileSize . "B";
+    }
+
+    if ($lFileSize < (1024 * 1024))
+    {
+        return int($lFileSize / 1024) . "KB";
+    }
+
+    if ($lFileSize < (1024 * 1024 * 1024))
+    {
+        return int($lFileSize / 1024 / 1024) . "MB";
+    }
+
+    return int($lFileSize / 1024 / 1024 / 1024) . "GB";
+}
+
+####################################################################################################################################
 # DATE_STRING_GET - Get the date and time string
 ####################################################################################################################################
 sub date_string_get
 {
+    my $strFormat = shift;
+    
+    if (!defined($strFormat))
+    {
+        $strFormat = "%4d%02d%02d-%02d%02d%02d";
+    }
+    
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
-    return(sprintf("%4d%02d%02d-%02d%02d%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec));
+    return(sprintf($strFormat, $year+1900, $mon+1, $mday, $hour, $min, $sec));
+}
+
+####################################################################################################################################
+# LOG_FILE_SET - set the file messages will be logged to
+####################################################################################################################################
+sub log_file_set
+{
+    my $strFile = shift;
+    
+    $strFile .= "-" . date_string_get("%4d%02d%02d") . ".log";
+    my $bExists = false;
+    
+    if (-e $strFile)
+    {
+        $bExists = true;
+    }
+    
+    open($hLogFile, '>>', $strFile) or confess "unable to open log file ${strFile}";
+    
+    if ($bExists)
+    {
+        print $hLogFile "\n";
+    }
+
+    print $hLogFile "-------------------PROCESS START-------------------\n";
 }
 
 ####################################################################################################################################
@@ -109,9 +167,10 @@ sub date_string_get
 ####################################################################################################################################
 use constant 
 {
+    TRACE   => 'TRACE',
     DEBUG   => 'DEBUG',
     INFO    => 'INFO',
-    WARNING => 'WARNING',
+    WARNING => 'WARN',
     ERROR   => 'ERROR',
     ASSERT  => 'ASSERT'
 };
@@ -121,12 +180,31 @@ sub log
     my $strLevel = shift;
     my $strMessage = shift;
 
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+
     if (!defined($strMessage))
     {
         $strMessage = "(undefined)";
     }
 
-    print date_string_get() . ": ${strLevel}: ${strMessage}\n";
+    if ($strLevel eq "TRACE")
+    {
+        $strMessage = "        " . $strMessage;
+    }
+    elsif ($strLevel eq "DEBUG")
+    {
+        $strMessage = "    " . $strMessage;
+    }
+
+    $strMessage = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
+                  (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessage}\n";
+
+    if (defined($hLogFile))
+    {
+        print $hLogFile $strMessage;
+    }
+    
+    print $strMessage;
 
     return $strMessage;
 }

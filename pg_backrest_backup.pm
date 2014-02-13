@@ -171,8 +171,8 @@ sub archive_pull
     }
 
     # Output files to be moved to backup
-    &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . (${lFileSize} / 1024 / 1024 ) . "MB");
-
+    &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
+    
     # Init the thread variables
     my $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold));
     my @oThread;
@@ -222,7 +222,7 @@ sub archive_pull_copy_thread
 
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(DEBUG, "    thread ${iThreadIdx} backing up archive file ${strFile}");
+        &log(DEBUG, "thread ${iThreadIdx} backing up archive file ${strFile}");
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
         # Copy the file
@@ -338,7 +338,7 @@ sub backup_manifest_load
         {
             my $strValue = ${oBackupManifestFile}{"${strSection}"}{"$strKey"};
 
-            #&log(DEBUG, "    key: ${strKey}=${strValue}");
+            #&log(DEBUG, "key: ${strKey}=${strValue}");
             $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
         }
     }
@@ -607,7 +607,7 @@ sub backup_file
                 # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
                 if ($bHardLink)
                 {
-                    &log(DEBUG, "   hard-linking ${strBackupSourceFile} from ${strReference}");
+                    &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
                     $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
                                         PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true);
@@ -656,15 +656,15 @@ sub backup_file
     my $fThreadFileLargeSize = 0;
     my $iThreadFileLargeTotal = 0;
 
-    &log(DEBUG, "    files ${lFileTotal}, ");
-    &log(DEBUG, "        small total ${lFileSmallTotal}, small size: ${lFileSmallSize}, small thread avg total ${iThreadFileSmallTotalMax}");
-    &log(DEBUG, "        large total ${lFileLargeTotal}, large size: ${lFileLargeSize}, large thread avg size ${fThreadFileLargeSizeMax}");
+    &log(DEBUG, "file total ${lFileTotal}, ");
+    &log(DEBUG, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) . ", small thread avg total ${iThreadFileSmallTotalMax}");
+    &log(DEBUG, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) . ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
     foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
     {
         my $lFileSize = $oFileCopyMap{"${strFile}"}{size};
 
-        if ($lFileSize > 8192)
+        if ($lFileSize > 65536)
         {
             $oThreadQueue[$iThreadFileLargeIdx]->enqueue($strFile);
 
@@ -673,7 +673,7 @@ sub backup_file
 
             if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadMax - 1)
             {
-                &log(DEBUG, "    thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
+                &log(DEBUG, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
 
                 $iThreadFileLargeIdx++;
                 $fThreadFileLargeSize = 0;
@@ -689,7 +689,7 @@ sub backup_file
 
             if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadMax - 1)
             {
-                &log(DEBUG, "    thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
+                &log(DEBUG, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
 
                 $iThreadFileSmallIdx++;
                 $fThreadFileSmallSize = 0;
@@ -698,8 +698,8 @@ sub backup_file
         }
     }
 
-    &log(DEBUG, "    thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
-    &log(DEBUG, "    thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
+    &log(DEBUG, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}");
+    &log(DEBUG, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}");
     
     # End each thread queue and start the thread
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
@@ -724,7 +724,8 @@ sub backup_file_thread
     
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(DEBUG, "    thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} ($strFile) - " . $oFileCopyMap{$strFile}{size} . " bytes");
+        &log(DEBUG, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
+                    file_size_format($oFileCopyMap{$strFile}{size}) . ")");
 
         $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
@@ -879,7 +880,7 @@ sub backup
                 confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
             }
 
-            &log(DEBUG, "    archiving: ${strArchive} (${stryArchiveFile[0]})");
+            &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
             $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
         }
@@ -892,7 +893,7 @@ sub backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
-    &log(DEBUG, "    moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
+    &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
     $oFile->file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
 }
 
@@ -913,11 +914,11 @@ sub archive_list_get
     
     if ($bSkipFF)
     {
-        &log(DEBUG, "    archive_list_get: pre-9.3 database, skipping log FF");
+        &log(TRACE, "archive_list_get: pre-9.3 database, skipping log FF");
     }
     else
     {
-        &log(DEBUG, "    archive_list_get: post-9.3 database, including log FF");
+        &log(TRACE, "archive_list_get: post-9.3 database, including log FF");
     }
     
     my $strTimeline = substr($strArchiveStart, 0, 8);
@@ -955,7 +956,7 @@ sub archive_list_get
         $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
     }
 
-    &log(DEBUG, "    archive_list_get: $strArchiveStart-$strArchiveStop (@stryArchive)");
+    &log(TRACE, "    archive_list_get: $strArchiveStart-$strArchiveStop (@stryArchive)");
 
     return @stryArchive;
 }

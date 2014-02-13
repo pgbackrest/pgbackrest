@@ -145,14 +145,6 @@ if (defined($strType) && $strOperation ne OP_BACKUP)
     confess &log(ERROR, "type can only be specified for the backup operation")
 }
 
-# !!! Pick the log file name here (backup, restore, archive-YYYYMMDD)
-my $strLogFile = "";
-
-if ($strOperation eq OP_ARCHIVE_PUSH)
-{
-
-}
-
 ####################################################################################################################################
 # LOAD CONFIG FILE
 ####################################################################################################################################
@@ -307,6 +299,17 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 }
 
 ####################################################################################################################################
+# OPEN THE LOG FILE
+####################################################################################################################################
+if (defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
+{
+    confess &log(ASSERT, "backup/expire operations must be performed locally on the backup server");
+}
+
+#my $strLogFile = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/${strStanza}.log";
+log_file_set(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/${strStanza}");
+
+####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
 # Set the backup type
@@ -372,6 +375,9 @@ backup_init
 ####################################################################################################################################
 if ($strOperation eq OP_BACKUP)
 {
+    # !!! Pick the log file name here (backup, restore, archive-YYYYMMDD)
+    my $strLogFile = "";
+    
     backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
 
     $strOperation = OP_EXPIRE;

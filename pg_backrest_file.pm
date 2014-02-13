@@ -303,7 +303,7 @@ sub link_create
     # Run remotely
     if ($self->is_remote($strSourcePathType))
     {
-        &log(DEBUG, "        link_create: remote ${strSourcePathType} '${strCommand}'");
+        &log(TRACE, "link_create: remote ${strSourcePathType} '${strCommand}'");
 
         my $oSSH = $self->remote_get($strSourcePathType);
         $oSSH->system($strCommand) or confess &log("unable to create link from ${strSource} to ${strDestination}");
@@ -311,7 +311,7 @@ sub link_create
     # Run locally
     else
     {
-        &log(DEBUG, "        link_create: local '${strCommand}'");
+        &log(TRACE, "link_create: local '${strCommand}'");
         system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
     }
 }
@@ -348,7 +348,7 @@ sub path_create
     # Run remotely
     if ($self->is_remote($strPathType))
     {
-        &log(DEBUG, "        path_create: remote ${strPathType} '${strCommand}'");
+        &log(TRACE, "path_create: remote ${strPathType} '${strCommand}'");
 
         my $oSSH = $self->remote_get($strPathType);
         $oSSH->system($strCommand) or confess &log("unable to create remote path ${strPathType}:${strPath}");
@@ -356,7 +356,7 @@ sub path_create
     # Run locally
     else
     {
-        &log(DEBUG, "        path_create: local '${strCommand}'");
+        &log(TRACE, "path_create: local '${strCommand}'");
         system($strCommand) == 0 or confess &log(ERROR, "unable to create path ${strPath}");
     }
 }
@@ -450,7 +450,7 @@ sub file_move
     # Run remotely
     if ($self->is_remote($strDestinationPathType))
     {
-        &log(DEBUG, "        file_move: remote ${strDestinationPathType} '${strCommand}'");
+        &log(TRACE, "file_move: remote ${strDestinationPathType} '${strCommand}'");
 
         my $oSSH = $self->remote_get($strDestinationPathType);
         $oSSH->system($strCommand)
@@ -459,7 +459,7 @@ sub file_move
     # Run locally
     else
     {
-        &log(DEBUG, "        file_move: '${strCommand}'");
+        &log(TRACE, "file_move: '${strCommand}'");
 
         system($strCommand) == 0 or confess &log("unable to move local ${strSourceFile} to ${strDestinationFile}");
     }
@@ -535,7 +535,7 @@ sub file_copy
         # Else if the source is remote
         if ($self->is_remote($strSourcePathType))
         {
-            &log(DEBUG, "        file_copy: remote ${strSource} to local ${strDestination}");
+            &log(TRACE, "file_copy: remote ${strSource} to local ${strDestination}");
 
             # Open the destination file for writing (will be streamed from the ssh session)
             my $hFile;
@@ -551,7 +551,7 @@ sub file_copy
         # Else if the destination is remote
         elsif ($self->is_remote($strDestinationPathType))
         {
-            &log(DEBUG, "        file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
+            &log(TRACE, "file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
 
             # Open the input command as a stream
             my $hOut;
@@ -575,7 +575,7 @@ sub file_copy
     elsif ($self->is_remote($strSourcePathType) && $self->is_remote($strDestinationPathType) &&
            $self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
-        &log(DEBUG, "        file_copy: remote ${strSource} to remote ${strDestination}");
+        &log(TRACE, "file_copy: remote ${strSource} to remote ${strDestination}");
         confess &log(ASSERT, "remote source and destination not supported");
     }
     # Else this is a local command or remote where both sides are the same remote
@@ -586,14 +586,14 @@ sub file_copy
 
         if ($self->is_remote($strSourcePathType))
         {
-            &log(DEBUG, "        file_copy: remote ${strSourcePathType} '${strCommand}'");
+            &log(TRACE, "file_copy: remote ${strSourcePathType} '${strCommand}'");
 
             my $oSSH = $self->remote_get($strSourcePathType);
             $oSSH->system($strCommand) or confess &log(ERROR, "unable to execute remote command ${strCommand}:" . oSSH->error);
         }
         else
         {
-            &log(DEBUG, "        file_copy: local '${strCommand}'");
+            &log(TRACE, "file_copy: local '${strCommand}'");
             system($strCommand) == 0 or confess &log(ERROR, "unable to copy local $strSource to local $strDestinationTmp");
         }
     }
@@ -601,7 +601,7 @@ sub file_copy
     # Set the file permission if required (this only works locally for now)
     if (defined($strPermission))
     {
-        &log(DEBUG, "        file_copy: chmod ${strPermission}");
+        &log(TRACE, "file_copy: chmod ${strPermission}");
 
         system("chmod ${strPermission} ${strDestinationTmp}") == 0
             or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmp}");
@@ -610,7 +610,7 @@ sub file_copy
     # Set the file modification time if required (this only works locally for now)
     if (defined($lModificationTime))
     {
-        &log(DEBUG, "        file_copy: time ${lModificationTime}");
+        &log(TRACE, "file_copy: time ${lModificationTime}");
 
         utime($lModificationTime, $lModificationTime, $strDestinationTmp)
             or confess &log(ERROR, "unable to set time for local ${strDestinationTmp}");
@@ -722,7 +722,7 @@ sub manifest_get
     my $strPathType = shift;
     my $strPath = shift;
 
-    &log(DEBUG, "manifest: " . $self->{strCommandManifest});
+    &log(TRACE, "manifest: " . $self->{strCommandManifest});
 
     # Get the root path for the manifest
     my $strPathManifest = $self->path_get($strPathType, $strPath);
@@ -737,7 +737,7 @@ sub manifest_get
     # Run remotely
     if ($self->is_remote($strPathType))
     {
-        &log(DEBUG, "        manifest_get: remote ${strPathType}:${strPathManifest}");
+        &log(TRACE, "manifest_get: remote ${strPathType}:${strPathManifest}");
 
         my $oSSH = $self->remote_get($strPathType);
         $strManifest = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote command '${strCommand}'");
@@ -745,7 +745,7 @@ sub manifest_get
     # Run locally
     else
     {
-        &log(DEBUG, "        manifest_get: local ${strPathType}:${strPathManifest}");
+        &log(TRACE, "manifest_get: local ${strPathType}:${strPathManifest}");
         $strManifest = capture($strCommand) or confess &log(ERROR, "unable to execute local command '${strCommand}'");
     }
 
