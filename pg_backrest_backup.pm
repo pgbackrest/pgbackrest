@@ -328,20 +328,23 @@ sub backup_manifest_load
     tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or confess &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
 
     my %oBackupManifest;
-    my $strSection;
 
-    foreach $strSection (sort(keys %oBackupManifestFile))
+    foreach my $strSection (keys %oBackupManifestFile)
     {
-        my $strKey;
-        
-        #&log(DEBUG, "section: ${strSection}");
-
-        foreach $strKey (sort(keys ${oBackupManifestFile}{"${strSection}"}))
+        foreach my $strKey (keys ${oBackupManifestFile}{"${strSection}"})
         {
             my $strValue = ${oBackupManifestFile}{"${strSection}"}{"$strKey"};
+            
+            if ($strValue =~ /^\{.*\}$/)
+            {
+                $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
+            }
+            else
+            {
+#                &log(ERROR, "scalar key ${strKey}, value ${strValue}");
 
-            #&log(DEBUG, "key: ${strKey}=${strValue}");
-            $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
+                $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
+            }
         }
     }
     
@@ -359,20 +362,20 @@ sub backup_manifest_save
     my %oBackupManifest;
     tie %oBackupManifest, 'Config::IniFiles' or confess &log(ERROR, "Unable to create backup config");
 
-    my $strSection;
-
-    foreach $strSection (sort(keys $oBackupManifestRef))
+    foreach my $strSection (sort (keys $oBackupManifestRef))
     {
-        my $strKey;
-        
-        #&log(DEBUG, "section: ${strSection}");
-
-        foreach $strKey (sort(keys ${$oBackupManifestRef}{"${strSection}"}))
+        foreach my $strKey (sort (keys ${$oBackupManifestRef}{"${strSection}"}))
         {
-            my $strValue = encode_json(${$oBackupManifestRef}{"${strSection}"}{"$strKey"});
-
-            #&log(DEBUG, "    key: ${strKey}=${strValue}");
-            $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
+            my $strValue = ${$oBackupManifestRef}{"${strSection}"}{"$strKey"};
+            
+            if (ref($strValue) eq "HASH")
+            {
+                $oBackupManifest{"${strSection}"}{"$strKey"} = encode_json($strValue);
+            }
+            else
+            {
+                $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
+            }
         }
     }
     
@@ -431,20 +434,27 @@ sub backup_manifest_build
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
             (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
 
+        if ($cType eq "f")
+        {
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
+        }
+
         if ($cType eq "f" || $cType eq "l")
         {
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
 
-            my $bSizeMatch = true;
-            
-            if ($cType eq "f")
-            {
-                $bSizeMatch = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} =
-                              ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size};
-            }
-
             if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
             {
+                my $bSizeMatch = true;
+
+                if ($cType eq "f")
+                {
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
+
+                    $bSizeMatch = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
+                                  ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size};
+                }
+
                 if ($bSizeMatch &&
                     ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
                         ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
@@ -457,29 +467,24 @@ sub backup_manifest_build
                     else
                     {
                         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                            ${$oLastManifestRef}{common}{backup}{label};
+                            ${$oLastManifestRef}{backup}{label};
                     }
-                    
+
                     my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
-                    
-                    if (!defined(${$oBackupManifestRef}{common}{backup}{reference}))
+
+                    if (!defined(${$oBackupManifestRef}{backup}{reference}))
                     {
-                        ${$oBackupManifestRef}{common}{backup}{reference} = $strReference;
+                        ${$oBackupManifestRef}{backup}{reference} = $strReference;
                     }
                     else
                     {
-                        if (${$oBackupManifestRef}{common}{backup}{reference} !~ /$strReference/)
+                        if (${$oBackupManifestRef}{backup}{reference} !~ /$strReference/)
                         {
-                            ${$oBackupManifestRef}{common}{backup}{reference} .= ",$strReference";
+                            ${$oBackupManifestRef}{backup}{reference} .= ",$strReference";
                         }
                     }
                 }
             }
-        }
-
-        if ($cType eq "f")
-        {
-            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
         }
 
         if ($cType eq "l")
@@ -491,11 +496,10 @@ sub backup_manifest_build
             {
                 my $strTablespaceOid = basename($strName);
                 my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"$strTablespaceOid"}{name};
-                #&log(DEBUG, "tablespace: ${strTablespace}");
 
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
-                
+
                 backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
                                       $oTablespaceMapRef, "tablespace:${strTablespaceName}");
             }
@@ -792,12 +796,12 @@ sub backup
     {
         %oLastManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
         
-        if (!defined($oLastManifest{common}{backup}{label}))
+        if (!defined($oLastManifest{backup}{label}))
         {
             confess &log(ERROR, "unable to find label in backup $strBackupLastPath");
         }
         
-        &log(INFO, "last backup label: $oLastManifest{common}{backup}{label}");
+        &log(INFO, "last backup label: $oLastManifest{backup}{label}");
     }
 
     # Create the path for the new backup
@@ -855,11 +859,10 @@ sub backup
     my %oBackupManifest;
 
     # Start backup
-    ${oBackupManifest}{common}{backup}{label} = $strBackupPath;
-    ${oBackupManifest}{common}{test}{test} = "test";
+    ${oBackupManifest}{backup}{label} = $strBackupPath;
 
     my $strArchiveStart = $oDb->backup_start($strBackupPath);
-    ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
+    ${oBackupManifest}{backup}{archive_start} = $strArchiveStart;
 
     &log(INFO, 'archive start: ' . $strArchiveStart);
 
@@ -879,7 +882,7 @@ sub backup
     # Stop backup
     my $strArchiveStop = $oDb->backup_stop();
 
-    ${oBackupManifest}{archive}{archive_location}{stop} = $strArchiveStop;
+    ${oBackupManifest}{backup}{archive_stop} = $strArchiveStop;
 
     &log(INFO, 'archive stop: ' . $strArchiveStop);
 
