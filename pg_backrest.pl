@@ -268,7 +268,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 
         if (!flock($fLockFile, LOCK_EX | LOCK_NB))
         {
-            &log(INFO, "archive-pull process is already running - exiting");
+            &log(DEBUG, "archive-pull process is already running - exiting");
             exit 0
         }
 
