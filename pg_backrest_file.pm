@@ -251,12 +251,16 @@ sub link_create
     my $strDestinationFile = shift;
     my $bHard = shift;
     my $bRelative = shift;
+    my $bPathCreate = shift;
 
     # if bHard is not defined default to false
     $bHard = defined($bHard) ? $bHard : false;
 
     # if bRelative is not defined or bHard is true, default to false
     $bRelative = !defined($bRelative) || $bHard ? false : $bRelative;
+
+    # if bPathCreate is not defined, default to true
+    $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
     
     # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
@@ -269,7 +273,7 @@ sub link_create
     my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
 
     # If the destination path is backup and does not exist, create it
-    if ($self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
+    if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
         $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
@@ -435,6 +439,10 @@ sub file_move
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
+    my $bPathCreate = shift;
+
+    # if bPathCreate is not defined, default to true
+    $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
 
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strSourcePathType))
     {
@@ -445,7 +453,7 @@ sub file_move
     my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
     
     # If the destination path is backup and does not exist, create it
-    if ($self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
+    if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
         $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
@@ -483,6 +491,10 @@ sub file_copy
     my $bNoCompressionOverride = shift;
     my $lModificationTime = shift;
     my $strPermission = shift;
+    my $bPathCreate = shift;
+
+    # if bPathCreate is not defined, default to true
+    $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
 
     # Modification time and permissions cannot be set remotely
     if ((defined($lModificationTime) || defined($strPermission)) && $self->is_remote($strDestinationPathType))
@@ -508,7 +520,7 @@ sub file_copy
                       (!defined($bNoCompressionOverride) && $self->{bNoCompression}));
 
     # If the destination path is backup and does not exist, create it
-    if ($self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
+    if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
         $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
     }
@@ -623,7 +635,7 @@ sub file_copy
 
     # Move the file from tmp to final destination
     $self->file_move($self->path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
-                     $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination);
+                     $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination, $bPathCreate);
 }
 
 ####################################################################################################################################

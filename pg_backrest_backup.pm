@@ -519,13 +519,16 @@ sub backup_file
     my $strDbClusterPath = shift;      # Database base data path
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
-    # Hash table used to store files for parallel copy
+    # Variables used for parallel copy
     my $lTablespaceIdx = 0;
     my $lFileTotal = 0;
     my $lFileLargeSize = 0;
     my $lFileLargeTotal = 0;
     my $lFileSmallSize = 0;
     my $lFileSmallTotal = 0;
+
+    # Decide if all the paths will be created in advance
+    my $bPathCreate = $bHardLink || $strType eq "full";
 
     # Iterate through the path sections of the manifest to backup
     my $strSectionPath;
@@ -564,7 +567,7 @@ sub backup_file
             $strSectionFile = "tablespace:${strTablespaceName}:file";
 
             # Create the tablespace directory and link
-            if ($bHardLink || $strType eq "full")
+            if ($bPathCreate)
             {
                 $oFile->path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
 
@@ -580,7 +583,7 @@ sub backup_file
         }
 
         # Create all the sub paths if this is a full backup or hardlinks are requested
-        if ($bHardLink || $strType eq "full")
+        if ($bPathCreate)
         {
             my $strPath;
 
@@ -613,10 +616,10 @@ sub backup_file
                 # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
                 if ($bHardLink)
                 {
-                    &log(INFO, "hard-linking ${strBackupSourceFile} from ${strReference}");
+                    &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
                     $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
-                                        PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true);
+                                        PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, !$bPathCreate);
                 }
             }
             # Else copy/compress the file and generate a checksum
@@ -646,12 +649,14 @@ sub backup_file
     my $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
     &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
 
+    # Initialize the thread size array
+    my @lyThreadFileSize;
+
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
-        $oThreadFile[$iThreadIdx] = $oFile->clone($iThreadIdx);
-        $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
+        $lyThreadFileSize[$iThreadIdx] = 0;
     }
-
+    
     # Assign files to each thread queue
     my $iThreadFileSmallIdx = 0;
     my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadLocalMax);
@@ -669,7 +674,7 @@ sub backup_file
     &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
          ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
-    foreach my $strFile (sort {$b cmp $a} (keys %oFileCopyMap))
+    foreach my $strFile (sort (keys %oFileCopyMap))
     {
         my $lFileSize = $oFileCopyMap{"${strFile}"}{size};
 
@@ -679,6 +684,7 @@ sub backup_file
 
             $fThreadFileLargeSize += $lFileSize;
             $iThreadFileLargeTotal++;
+            $lyThreadFileSize[$iThreadFileLargeIdx] += $lFileSize;
 
             if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadLocalMax - 1)
             {
@@ -696,12 +702,13 @@ sub backup_file
             
             $fThreadFileSmallSize += $lFileSize;
             $iThreadFileSmallTotal++;
+            $lyThreadFileSize[$iThreadFileSmallIdx] += $lFileSize;
 
             if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadLocalMax - 1)
             {
                 &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
                            " (" . file_size_format(int(${fThreadFileSmallSize})) . ")");
-                           
+
                 $iThreadFileSmallIdx++;
                 $fThreadFileSmallSize = 0;
                 $iThreadFileSmallTotal = 0;
@@ -720,7 +727,8 @@ sub backup_file
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
-        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum);
+        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum, !$bPathCreate,
+                                                $lyThreadFileSize[$iThreadIdx]);
     }
     
     # Rejoin the threads
@@ -745,18 +753,25 @@ sub backup_file_thread
 
     my $iThreadIdx = $args[0];
     my $bNoChecksum = $args[1];
+    my $bPathCreate = $args[2];
+    my $lSizeTotal = $args[3];
+    
+    my $lSize = 0;
     
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
+#        &log(INFO, "total ${lSizeTotal} size ${lSize}");
+        
         &log(INFO, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
-                   file_size_format($oFileCopyMap{$strFile}{size}) . ")");
-
-#                   !!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD PERCENT COMPLETE !!!!!!!!!!!!!!!!!!!!!!!!!!
+                   file_size_format($oFileCopyMap{$strFile}{size}) .
+                   ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")");
 
         $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
                                              undef, $oFileCopyMap{$strFile}{modification_time},
-                                             $oFile->{strDefaultFilePermission});
+                                             undef, $bPathCreate);
+
+        $lSize += $oFileCopyMap{$strFile}{size};
 
         #                # Write the hash into the backup manifest (if not suppressed)
         #                if (!$bNoChecksum)
