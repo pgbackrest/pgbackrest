@@ -721,6 +721,15 @@ sub backup_file
     {
         $oThread[$iThreadIdx]->join();
     }
+
+    # Look for errors
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
+    {
+        if (defined($oThread[$iThreadIdx]->error()))
+        {
+            confess &log(ERROR, "error in thread ${iThreadIdx}: check log for details");
+        }
+    }
 }
 
 sub backup_file_thread
@@ -782,6 +791,12 @@ sub backup
     if (defined($strBackupLastPath))
     {
         %oLastManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
+        
+        if (!defined($oLastManifest{common}{backup}{label}))
+        {
+            confess &log(ERROR, "unable to find label in backup $strBackupLastPath");
+        }
+        
         &log(INFO, "last backup label: $oLastManifest{common}{backup}{label}");
     }
 
@@ -840,8 +855,6 @@ sub backup
     my %oBackupManifest;
 
     # Start backup
-    ${oBackupManifest}{common}{backup}{label} = $strBackupPath;
-
     my $strArchiveStart = $oDb->backup_start($strBackupPath);
 
     ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
@@ -898,7 +911,10 @@ sub backup
             $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
         }
     }
-    
+
+    # Store the label in the manifest
+    ${oBackupManifest}{common}{backup}{label} = $strBackupPath;
+
     # Need some sort of backup validate - create a manifest and compare the backup manifest
     # !!! DO IT
     
