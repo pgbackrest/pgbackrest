@@ -855,8 +855,10 @@ sub backup
     my %oBackupManifest;
 
     # Start backup
-    my $strArchiveStart = $oDb->backup_start($strBackupPath);
+    ${oBackupManifest}{common}{backup}{label} = $strBackupPath;
+    ${oBackupManifest}{common}{test}{test} = "test";
 
+    my $strArchiveStart = $oDb->backup_start($strBackupPath);
     ${oBackupManifest}{archive}{archive_location}{start} = $strArchiveStart;
 
     &log(INFO, 'archive start: ' . $strArchiveStart);
@@ -911,9 +913,6 @@ sub backup
             $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
         }
     }
-
-    # Store the label in the manifest
-    ${oBackupManifest}{common}{backup}{label} = $strBackupPath;
 
     # Need some sort of backup validate - create a manifest and compare the backup manifest
     # !!! DO IT
