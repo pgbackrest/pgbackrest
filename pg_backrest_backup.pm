@@ -643,22 +643,23 @@ sub backup_file
     }
 
     # Build the thread queues
-    my @oThread;
-    
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
+    my $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
+    &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
+
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         $oThreadFile[$iThreadIdx] = $oFile->clone($iThreadIdx);
         $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
     }
-    
+
     # Assign files to each thread queue
     my $iThreadFileSmallIdx = 0;
-    my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadMax);
+    my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadLocalMax);
     my $fThreadFileSmallSize = 0;
     my $iThreadFileSmallTotal = 0;
-    
+
     my $iThreadFileLargeIdx = 0;
-    my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadMax;
+    my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadLocalMax;
     my $fThreadFileLargeSize = 0;
     my $iThreadFileLargeTotal = 0;
 
@@ -679,7 +680,7 @@ sub backup_file
             $fThreadFileLargeSize += $lFileSize;
             $iThreadFileLargeTotal++;
 
-            if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadMax - 1)
+            if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadLocalMax - 1)
             {
                 &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}" . 
                            " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
@@ -696,7 +697,7 @@ sub backup_file
             $fThreadFileSmallSize += $lFileSize;
             $iThreadFileSmallTotal++;
 
-            if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadMax - 1)
+            if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadLocalMax - 1)
             {
                 &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
                            " (" . file_size_format(int(${fThreadFileSmallSize})) . ")");
@@ -712,22 +713,24 @@ sub backup_file
                " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
     &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
                " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
-    
+
     # End each thread queue and start the thread
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
+    my @oThread;
+
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
         $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum);
     }
     
     # Rejoin the threads
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         $oThread[$iThreadIdx]->join();
     }
 
     # Look for errors
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
+    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         if (defined($oThread[$iThreadIdx]->error()))
         {
@@ -747,6 +750,8 @@ sub backup_file_thread
     {
         &log(INFO, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
                    file_size_format($oFileCopyMap{$strFile}{size}) . ")");
+
+#                   !!!!!!!!!!!!!!!!!!!!!!!!!!!! ADD PERCENT COMPLETE !!!!!!!!!!!!!!!!!!!!!!!!!!
 
         $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
