@@ -124,7 +124,7 @@ sub wait_for_file
     
     my $lTime = time();
     my $hDir;
-    
+
     while ($lTime > time() - $iSeconds)
     {
         opendir $hDir, $strDir or die "Could not open dir: $!\n";
@@ -135,11 +135,7 @@ sub wait_for_file
         {
             return;
         }
-#        if (glob($strFile))
-#        {
-#            return;
-#        }
-        
+
         sleep(1);
     }
 

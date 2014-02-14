@@ -649,7 +649,7 @@ sub backup_file
     
     # Assign files to each thread queue
     my $iThreadFileSmallIdx = 0;
-    my $iThreadFileSmallTotalMax = $lFileSmallTotal / $iThreadMax;
+    my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadMax);
     my $fThreadFileSmallSize = 0;
     my $iThreadFileSmallTotal = 0;
     
@@ -660,7 +660,7 @@ sub backup_file
 
     &log(INFO, "file total ${lFileTotal}");
     &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
-         ", small thread avg total ${iThreadFileSmallTotalMax} (");
+         ", small thread avg total " . file_size_format(int($iThreadFileSmallTotalMax)));
     &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
          ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
@@ -855,8 +855,8 @@ sub backup
     # Delete files leftover from a partial backup
     # !!! do it
 
-#    # Save the backup conf file first time - so we can see what is happening in the backup
-#    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+    # Save the backup conf file first time - so we can see what is happening in the backup
+    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Perform the backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
@@ -873,10 +873,8 @@ sub backup
     # consistent - at least not in this routine.  
     if ($bArchiveRequired)
     {
-        sleep(10);
-        
-#        # Save the backup conf file second time - before getting archive logs in case that fails
-#        backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+        # Save the backup conf file second time - before getting archive logs in case that fails
+        backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
@@ -884,6 +882,9 @@ sub backup
         foreach my $strArchive (@stryArchive)
         {
             my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchive));
+
+            wait_for_file($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 30);
+
             my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, 
                 "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
 

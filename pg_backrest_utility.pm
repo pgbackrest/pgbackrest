@@ -10,7 +10,8 @@ use IPC::System::Simple qw(capture);
 
 use Exporter qw(import);
 
-our @EXPORT = qw(data_hash_build trim common_prefix date_string_get file_size_format execute log log_file_set log_level_set
+our @EXPORT = qw(data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
+                 log log_file_set log_level_set
                  TRACE DEBUG ERROR ASSERT WARN INFO true false);
 
 # Global constants
@@ -91,6 +92,35 @@ sub trim
     $strBuffer =~ s/^\s+|\s+$//g;
 
     return $strBuffer;
+}
+
+####################################################################################################################################
+# WAIT_FOR_FILE
+####################################################################################################################################
+sub wait_for_file
+{
+    my $strDir = shift;
+    my $strRegEx = shift;
+    my $iSeconds = shift;
+    
+    my $lTime = time();
+    my $hDir;
+
+    while ($lTime > time() - $iSeconds)
+    {
+        opendir $hDir, $strDir or die "Could not open dir: $!\n";
+        my @stryFile = grep(/$strRegEx/i, readdir $hDir);
+        close $hDir;
+
+        if (scalar @stryFile == 1)
+        {
+            return;
+        }
+
+        sleep(1);
+    }
+
+    confess &log(ERROR, "could not find $strDir/$strRegEx after $iSeconds second(s)");
 }
 
 ####################################################################################################################################
