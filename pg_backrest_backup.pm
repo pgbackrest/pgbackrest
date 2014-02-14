@@ -175,7 +175,7 @@ sub archive_pull
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
     
     # Init the thread variables
-    my $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold));
+    my $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
     my @oThread;
     my $iThreadIdx = 0;
 
