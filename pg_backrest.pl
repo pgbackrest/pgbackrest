@@ -129,30 +129,7 @@ sub config_load
 ####################################################################################################################################
 sub safe_exit
 {
-    my $iTotal = 0;
-
-#    for (my $iThreadIndex = 0; $iThreadIndex < scalar @pg_backrest_backup::oThread; $iThreadIndex++)
-#    {
-#        &log(INFO, "dequeueing thread ${iThreadIndex}");
-#
-#        $pg_backrest_backup::oThreadQueue[$iThreadIndex]->dequeue_nb(10000000000000);
-#        $pg_backrest_backup::oThreadQueue[$iThreadIndex]->enqueue(undef);
-#    }
-
-    for (my $iThreadIndex = 0; $iThreadIndex < scalar @pg_backrest_backup::oThread; $iThreadIndex++)
-    {
-        &log(INFO, "joining thread ${iThreadIndex}");
-
-        $pg_backrest_backup::oThread[$iThreadIndex]->kill('KILL')->join();
-        undef($pg_backrest_backup::oThread[$iThreadIndex]);
-        $iTotal++;
-    }
-
-#    for (my $iIndex = 0; $iIndex < scalar @pg_backrest_db::oGlobalSSH; $iIndex++)
-#    {
-#        undef $pg_backrest_db::oGlobalSSH[$iIndex];
-#        $iTotal++;
-#    }
+    my $iTotal = backup_thread_kill();
 
     confess &log(ERROR, "process was terminated on signal, ${iTotal} threads stopped");
 }
@@ -303,6 +280,34 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Get the new operational flags
         my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
         my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+
+        # Do async compression
+        if ($bCompressAsync)
+        {
+            # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
+            my $oFile = pg_backrest_file->new
+            (
+                strStanza => $strStanza,
+                bNoCompression => false,
+                strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+                strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+                strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+                strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
+                strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
+            );
+
+            backup_init
+            (
+                undef,
+                $oFile,
+                undef,
+                undef,
+                !$bChecksum,
+                config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
+            );
+
+            archive_compress($strArchivePath . "/archive/${strStanza}");
+        }
 
         # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
         my $oFile = pg_backrest_file->new

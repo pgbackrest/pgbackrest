@@ -528,11 +528,11 @@ sub file_copy
     # Generate the command string depending on compression/decompression/cat
     my $strCommand = $self->{strCommandCat};
     
-    if ($bAlreadyCompressed && $bCompress)
-    {
-        $strDestination .= $strDestination =~ "^.*\.$self->{strCompressExtension}\$" ? ".gz" : "";
-    }
-    elsif (!$bAlreadyCompressed && $bCompress)
+#    if ($bAlreadyCompressed && $bCompress)
+#    {
+#        $strDestination .= $strDestination =~ "^.*\.$self->{strCompressExtension}\$" ? ".gz" : "";
+#    }
+    if (!$bAlreadyCompressed && $bCompress)
     {
         $strCommand = $self->{strCommandCompress};
         $strDestination .= ".gz";
@@ -679,6 +679,35 @@ sub file_hash_get
     }
 
     return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
+}
+####################################################################################################################################
+# FILE_COMPRESS
+####################################################################################################################################
+sub file_compress
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+
+    # For now this operation is not supported remotely.  Not currently needed.
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "remote operation not supported");
+    }
+
+    if (!defined($self->{strCommandCompress}))
+    {
+        confess &log(ASSERT, "\$strCommandChecksum not defined");
+    }
+
+    my $strPath = $self->path_get($strPathType, $strFile);
+
+    # Build the command
+    my $strCommand = $self->{strCommandCompress};
+    $strCommand =~ s/\%file\%/${strPath}/g;
+    $strCommand =~ s/\ \-\-stdout//g;
+
+    system($strCommand) == 0 or confess &log(ERROR, "unable to compress ${strPath}: ${strCommand}");
 }
 
 ####################################################################################################################################
