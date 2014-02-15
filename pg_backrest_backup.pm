@@ -878,20 +878,32 @@ sub backup_file
                                                 $oyThreadData[$iThreadIdx]{size});
     }
 
-    # Rejoin the threads
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-    {
-        $oThread[$iThreadIdx]->join();
-    }
+    # Wait for all threads to complete and handle errors
+    my $iThreadComplete = 0;
 
-    # Look for errors
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+    # Rejoin the threads
+    while ($iThreadComplete < $iThreadLocalMax)
     {
-        if (defined($oThread[$iThreadIdx]->error()))
+        sleep(1);
+        
+        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
         {
-            confess &log(ERROR, "error in thread ${iThreadIdx}: check log for details");
+            if ($oThread[$iThreadIdx]->is_joinable())
+            {
+                $oThread[$iThreadIdx]->join();
+                $iThreadComplete++;
+            }
         }
     }
+    
+#    # Look for errors
+#    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+#    {
+#        if (defined($oThread[$iThreadIdx]->error()))
+#        {
+#            confess &log(ERROR, "error in thread ${iThreadIdx}: check log for details");
+#        }
+#    }
 }
 
 sub backup_file_thread
