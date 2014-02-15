@@ -31,7 +31,7 @@ sub BUILD
     my $self = shift;
 
     # Connect SSH object if db host is defined
-    if (defined($self->{strDbHost}))
+    if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
     {
         &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 

@@ -371,7 +371,8 @@ my $oDb = pg_backrest_db->new
 (
     strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
     strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
-    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL)
+    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
+    oDbSSH => $oFile->{oDbSSH}
 );
 
 # Run backup_init - parameters required for backup and restore operations

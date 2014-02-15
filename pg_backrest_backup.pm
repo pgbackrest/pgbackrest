@@ -28,7 +28,7 @@ use Exporter qw(import);
 our @EXPORT = qw(backup_init archive_push archive_pull backup backup_expire archive_list_get);
 
 my $oDb;
-my $oFile;
+my @oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
 my $bNoChecksum;
@@ -40,7 +40,6 @@ my $bArchiveRequired;
 # Thread variables
 my @oThreadQueue;
 my %oFileCopyMap;
-my @oThreadFile;
 
 ####################################################################################################################################
 # BACKUP_INIT
@@ -56,7 +55,7 @@ sub backup_init
     my $bArchiveRequiredParam = shift;
 
     $oDb = $oDbParam;
-    $oFile = $oFileParam;
+    $oFile[0] = $oFileParam;
     $strType = $strTypeParam;
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
@@ -104,9 +103,9 @@ sub thread_init
             $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
         }
 
-        if (!defined($oThreadFile[$iThreadIdx]))
+        if (!defined($oFile[$iThreadIdx]))
         {
-            $oThreadFile[$iThreadIdx] = $oFile->clone($iThreadIdx);
+            $oFile[$iThreadIdx] = $oFile[0]->clone($iThreadIdx);
         }
     }
     
@@ -129,11 +128,11 @@ sub archive_push
     # Append the checksum (if requested)
     if ($bArchiveFile && !$bNoChecksum)
     {
-        $strDestinationFile .= "-" . $oFile->file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
+        $strDestinationFile .= "-" . $oFile[0]->file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
     }
 
     # Copy the archive file
-    $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile,
+    $oFile[0]->file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile,
                       $bArchiveFile ? undef : true);
 }
 
@@ -146,7 +145,7 @@ sub archive_pull
     my $strCompressAsync = shift;
 
     # Load the archive manifest - all the files that need to be pushed
-    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
+    my %oManifestHash = $oFile[0]->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
 
     # Get all the files to be transferred and calculate the total size
     my @stryFile;
@@ -231,10 +230,10 @@ sub archive_pull_copy_thread
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
         # Copy the file
-        $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
-                                             PATH_BACKUP_ARCHIVE, basename($strFile),
-                                             undef, undef,
-                                             undef); # cannot set permissions remotely yet $oFile->{strDefaultFilePermission});
+        $oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
+                                       PATH_BACKUP_ARCHIVE, basename($strFile),
+                                       undef, undef,
+                                       undef); # cannot set permissions remotely yet $oFile[0]->{strDefaultFilePermission});
                                              
         #  Remove the source archive file
         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
@@ -309,12 +308,12 @@ sub backup_type_find
 
     if ($strType eq 'incremental')
     {
-        $strDirectory = ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse"))[0];
+        $strDirectory = ($oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse"))[0];
     }
 
     if (!defined($strDirectory) && $strType ne "full")
     {
-        $strDirectory = ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse"))[0];
+        $strDirectory = ($oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse"))[0];
     }
     
     return $strDirectory;
@@ -393,7 +392,7 @@ sub backup_file_not_in_manifest
     my $strPathType = shift;
     my $oManifestRef = shift;
     
-    my %oFileHash = $oFile->manifest_get($strPathType);
+    my %oFileHash = $oFile[0]->manifest_get($strPathType);
     my @stryFile;
     my $iFileTotal = 0;
 
@@ -486,15 +485,15 @@ sub backup_tmp_clean
     &log(INFO, "cleaning backup tmp path");
 
     # Remove the pg_xlog directory since it contains nothing useful for the new backup
-    if (-e $oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog"))
+    if (-e $oFile[0]->path_get(PATH_BACKUP_TMP, "base/pg_xlog"))
     {
-        rmtree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog")) or confess &log(ERROR, "unable to delete tmp pg_xlog path");
+        rmtree($oFile[0]->path_get(PATH_BACKUP_TMP, "base/pg_xlog")) or confess &log(ERROR, "unable to delete tmp pg_xlog path");
     }
 
     # Remove the pg_tblspc directory since it is trivial to rebuild, but hard to compare
-    if (-e $oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc"))
+    if (-e $oFile[0]->path_get(PATH_BACKUP_TMP, "base/pg_tblspc"))
     {
-        rmtree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc")) or confess &log(ERROR, "unable to delete tmp pg_tblspc path");
+        rmtree($oFile[0]->path_get(PATH_BACKUP_TMP, "base/pg_tblspc")) or confess &log(ERROR, "unable to delete tmp pg_tblspc path");
     }
 
     # Get the list of files that should be deleted from temp
@@ -502,7 +501,7 @@ sub backup_tmp_clean
 
     foreach my $strFile (sort {$b cmp $a} @stryFile)
     {
-        my $strDelete = $oFile->path_get(PATH_BACKUP_TMP, $strFile);
+        my $strDelete = $oFile[0]->path_get(PATH_BACKUP_TMP, $strFile);
         
         # If a path then delete it, all the files should have already been deleted since we are going in reverse order
         if (-d $strDelete)
@@ -536,7 +535,7 @@ sub backup_manifest_build
         $strLevel = "base";
     }
 
-    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strDbClusterPath);
+    my %oManifestHash = $oFile[0]->manifest_get(PATH_DB_ABSOLUTE, $strDbClusterPath);
     my $strName;
 
     foreach $strName (sort(keys $oManifestHash{name}))
@@ -692,7 +691,7 @@ sub backup_file
             $strSectionFile = "base:file";
 
             # Create the archive log directory
-            $oFile->path_create(PATH_BACKUP_TMP, "base/pg_xlog");
+            $oFile[0]->path_create(PATH_BACKUP_TMP, "base/pg_xlog");
         }
         # Process each tablespace
         elsif ($strSectionPath =~ /^tablespace\:/)
@@ -706,9 +705,9 @@ sub backup_file
             # Create the tablespace directory and link
             if ($bPathCreate)
             {
-                $oFile->path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
+                $oFile[0]->path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
 
-                $oFile->link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
+                $oFile[0]->link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
                                    PATH_BACKUP_TMP, 
                                    "base/pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid},
                                    false, true);
@@ -733,7 +732,7 @@ sub backup_file
                 }
                 else
                 {
-                    $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}",
+                    $oFile[0]->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}",
                                         ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{permission});
                 }
             }
@@ -770,7 +769,7 @@ sub backup_file
                     {
                         &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
-                        $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
+                        $oFile[0]->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
                                             PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, !$bPathCreate);
                     }
                 }
@@ -912,10 +911,10 @@ sub backup_file_thread
                    file_size_format($oFileCopyMap{$strFile}{size}) .
                    ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")");
 
-        $oThreadFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                             PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
-                                             undef, $oFileCopyMap{$strFile}{modification_time},
-                                             undef, $bPathCreate);
+        $oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
+                                       PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
+                                       undef, $oFileCopyMap{$strFile}{modification_time},
+                                       undef, $bPathCreate);
 
         $lSize += $oFileCopyMap{$strFile}{size};
 
@@ -923,7 +922,7 @@ sub backup_file_thread
         #                if (!$bNoChecksum)
         #                {
         #                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
-        #                        $oFile->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
+        #                        $oFile[0]->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
         #                }
     }
 }
@@ -938,7 +937,7 @@ sub backup
     my $strDbClusterPath = shift;
     
     # Not supporting remote backup hosts yet
-    if ($oFile->is_remote(PATH_BACKUP))
+    if ($oFile[0]->is_remote(PATH_BACKUP))
     {
         confess &log(ERROR, "remote backup host not currently supported");
     }
@@ -951,16 +950,16 @@ sub backup
     &log(DEBUG, "cluster path is $strDbClusterPath");
     
     # Create the cluster backup path
-    $oFile->path_create(PATH_BACKUP_CLUSTER);
+    $oFile[0]->path_create(PATH_BACKUP_CLUSTER);
 
     # Find the previous backup based on the type
-    my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
+    my $strBackupLastPath = backup_type_find($strType, $oFile[0]->path_get(PATH_BACKUP_CLUSTER));
 
     my %oLastManifest;
 
     if (defined($strBackupLastPath))
     {
-        %oLastManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
+        %oLastManifest = backup_manifest_load($oFile[0]->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
         
         if (!defined($oLastManifest{backup}{label}))
         {
@@ -997,8 +996,8 @@ sub backup
     &log(INFO, "new backup label: ${strBackupPath}");
 
     # Build backup tmp and config
-    my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
-    my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, "backup.manifest");
+    my $strBackupTmpPath = $oFile[0]->path_get(PATH_BACKUP_TMP);
+    my $strBackupConfFile = $oFile[0]->path_get(PATH_BACKUP_TMP, "backup.manifest");
 
     # Start backup
     my %oBackupManifest;
@@ -1012,7 +1011,7 @@ sub backup
     # Build the backup manifest
     my %oTablespaceMap = $oDb->tablespace_map_get();
 
-    backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
+    backup_manifest_build($oFile[0]->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
     # If the backup tmp path already exists, remove invalid files
     if (-e $strBackupTmpPath)
@@ -1026,7 +1025,7 @@ sub backup
     else
     {
         &log(DEBUG, "creating backup path $strBackupTmpPath");
-        $oFile->path_create(PATH_BACKUP_TMP);
+        $oFile[0]->path_create(PATH_BACKUP_TMP);
     }
 
     # Save the backup conf file first time - so we can see what is happening in the backup
@@ -1054,12 +1053,12 @@ sub backup
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchive));
+            my $strArchivePath = dirname($oFile[0]->path_get(PATH_BACKUP_ARCHIVE, $strArchive));
 
-            wait_for_file($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 600);
+            wait_for_file($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.$oFile[0]->{strCompressExtension}){0,1}\$", 600);
 
-            my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, 
-                "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
+            my @stryArchiveFile = $oFile[0]->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, 
+                "^${strArchive}(-[0-f]+){0,1}(\\.$oFile[0]->{strCompressExtension}){0,1}\$");
 
             if (scalar @stryArchiveFile != 1)
             {
@@ -1068,7 +1067,7 @@ sub backup
 
             &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
-            $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
+            $oFile[0]->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
         }
     }
 
@@ -1079,8 +1078,8 @@ sub backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
-    &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
-    $oFile->file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+    &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile[0]->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
+    $oFile[0]->file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
 }
 
 ####################################################################################################################################
@@ -1179,7 +1178,7 @@ sub backup_expire
         }
 
         my $iIndex = $iFullRetention;
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
+        @stryPath = $oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
 
         while (defined($stryPath[$iIndex]))
         {
@@ -1187,7 +1186,7 @@ sub backup_expire
 
             # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
             # be consistent if the process dies
-            foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
+            foreach $strPath ($oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
             {
                 system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
             }
@@ -1205,12 +1204,12 @@ sub backup_expire
             confess &log(ERROR, "differential_rentention must be a number >= 1");
         }
         
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
+        @stryPath = $oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
      
         if (defined($stryPath[$iDifferentialRetention]))
         {
             # Get a list of all differential and incremental backups
-            foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
+            foreach $strPath ($oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
             {
                 # Remove all differential and incremental backups before the oldest valid differential
                 if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
@@ -1232,15 +1231,15 @@ sub backup_expire
     # Determine which backup type to use for archive retention (full, differential, incremental)
     if ($strArchiveRetentionType eq "full")
     {
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
+        @stryPath = $oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "differential" || $strArchiveRetentionType eq "diff")
     {
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
+        @stryPath = $oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "incremental" || $strArchiveRetentionType eq "incr")
     {
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse");
+        @stryPath = $oFile[0]->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse");
     }
     else
     {
@@ -1279,7 +1278,7 @@ sub backup_expire
     # even though they are also in the pg_xlog directory (since they have been copied more than once).
     &log(INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
 
-    my %oManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest");
+    my %oManifest = backup_manifest_load($oFile[0]->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest");
     my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
     
     if (!defined($strArchiveLast))
@@ -1290,12 +1289,12 @@ sub backup_expire
     &log(INFO, "archive retention starts at " . $strArchiveLast);
 
     # Remove any archive directories or files that are out of date
-    foreach $strPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
+    foreach $strPath ($oFile[0]->file_list_get(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
     {
         # If less than first 16 characters of current archive file, then remove the directory
         if ($strPath lt substr($strArchiveLast, 0, 16))
         {
-            system("rm -rf " . $oFile->{strBackupClusterPath} . "/archive/" . $strPath) == 0
+            system("rm -rf " . $oFile[0]->{strBackupClusterPath} . "/archive/" . $strPath) == 0
                 or confess &log(ERROR, "unable to remove " . $strPath);
             &log(DEBUG, "removed major archive directory " . $strPath);
         }
@@ -1305,12 +1304,12 @@ sub backup_expire
             my $strSubPath;
         
             # Look for archive files in the archive directory
-            foreach $strSubPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, $strPath, "^[0-F]{24}.*\$"))
+            foreach $strSubPath ($oFile[0]->file_list_get(PATH_BACKUP_ARCHIVE, $strPath, "^[0-F]{24}.*\$"))
             {
                 # Delete if the first 24 characters less than the current archive file
                 if ($strSubPath lt substr($strArchiveLast, 0, 24))
                 {
-                    unlink($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSubPath)) or confess &log(ERROR, "unable to remove " . $strSubPath);
+                    unlink($oFile[0]->path_get(PATH_BACKUP_ARCHIVE, $strSubPath)) or confess &log(ERROR, "unable to remove " . $strSubPath);
                     &log(DEBUG, "removed expired archive file " . $strSubPath);
                 }
             }
