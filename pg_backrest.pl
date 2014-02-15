@@ -125,6 +125,18 @@ sub config_load
 }
 
 ####################################################################################################################################
+# SAFE_EXIT - cleanly exit when the script is terminated externally
+####################################################################################################################################
+sub safe_exit
+{
+    confess &log(ERROR, "process was terminated on signal");
+}
+
+$SIG{TERM} = \&safe_exit;
+$SIG{HUP} = \&safe_exit;
+$SIG{INT} = \&safe_exit;
+
+####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
 # Get the operation
@@ -390,6 +402,8 @@ if ($strOperation eq OP_BACKUP)
     backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
 
     $strOperation = OP_EXPIRE;
+    
+    sleep(30);
 
     lock_file_remove();
 }

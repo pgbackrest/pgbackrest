@@ -181,16 +181,6 @@ sub archive_pull
 
     &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
 
-    # If compress async then go and compress all uncompressed archive files
-#    if ($bCompressAsync)
-#    {
-#        # Find all the archive files
-#        foreach my $strFile (@stryFile)
-#        {
-#            &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
-#        }
-#    }
-
     foreach my $strFile (sort @stryFile)
     {
         $oThreadQueue[$iThreadIdx]->enqueue($strFile);
@@ -210,6 +200,19 @@ sub archive_pull
     {
         $oThread[$iThreadIdx]->join();
     }
+
+    # If there are errors then compress
+    # If compress async then go and compress all uncompressed archive files
+#    if ($bCompressAsync)
+#    {
+#        # Find all the archive files
+#        foreach my $strFile (@stryFile)
+#        {
+#            &log(DEBUG, "SHOULD BE LOGGING ${strFile}");
+#        }
+#    }
+
+
     
     return $lFileTotal;
 }

@@ -29,7 +29,7 @@ has fVersion => (is => 'ro');           # Database version
 sub BUILD
 {
     my $self = shift;
-    
+
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}))
     {
@@ -61,7 +61,7 @@ sub psql_execute
 {
     my $self = shift;
     my $strScript = shift;  # psql script to execute
-    
+
     # Get the user-defined command for psql
     my $strCommand = $self->{strCommandPsql} . " -c \"${strScript}\" postgres";
     my $strResult;
