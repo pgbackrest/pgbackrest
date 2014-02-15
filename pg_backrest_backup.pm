@@ -12,6 +12,7 @@ use JSON;
 use Scalar::Util qw(looks_like_number);
 use threads;
 use Thread::Queue;
+use Storable;
 
 use threads ('yield',
              'stack_size' => 64 * 4096,
@@ -481,32 +482,8 @@ sub backup_type_find
 sub backup_manifest_load
 {
     my $strBackupManifestFile = shift;
-    
-    my %oBackupManifestFile;
-    tie %oBackupManifestFile, 'Config::IniFiles', (-file => $strBackupManifestFile) or confess &log(ERROR, "backup manifest '${strBackupManifestFile}' could not be loaded");
 
-    my %oBackupManifest;
-
-    foreach my $strSection (keys %oBackupManifestFile)
-    {
-        foreach my $strKey (keys ${oBackupManifestFile}{"${strSection}"})
-        {
-            my $strValue = ${oBackupManifestFile}{"${strSection}"}{"$strKey"};
-            
-            if ($strValue =~ /^\{.*\}$/)
-            {
-                $oBackupManifest{"${strSection}"}{"$strKey"} = decode_json($strValue);
-            }
-            else
-            {
-#                &log(ERROR, "scalar key ${strKey}, value ${strValue}");
-
-                $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
-            }
-        }
-    }
-    
-    return %oBackupManifest;
+    return %{retrieve($strBackupManifestFile) or confess &log(ERROR, "unable to read ${strBackupManifestFile}")};
 }
 
 ####################################################################################################################################
@@ -516,28 +493,8 @@ sub backup_manifest_save
 {
     my $strBackupManifestFile = shift;
     my $oBackupManifestRef = shift;
-    
-    my %oBackupManifest;
-    tie %oBackupManifest, 'Config::IniFiles' or confess &log(ERROR, "Unable to create backup config");
 
-    foreach my $strSection (sort (keys $oBackupManifestRef))
-    {
-        foreach my $strKey (sort (keys ${$oBackupManifestRef}{"${strSection}"}))
-        {
-            my $strValue = ${$oBackupManifestRef}{"${strSection}"}{"$strKey"};
-            
-            if (ref($strValue) eq "HASH")
-            {
-                $oBackupManifest{"${strSection}"}{"$strKey"} = encode_json($strValue);
-            }
-            else
-            {
-                $oBackupManifest{"${strSection}"}{"$strKey"} = $strValue;
-            }
-        }
-    }
-    
-    tied(%oBackupManifest)->WriteConfig($strBackupManifestFile);
+    store($oBackupManifestRef, $strBackupManifestFile) or confess &log(ERROR, "unable to open ${strBackupManifestFile}");
 }
 
 ####################################################################################################################################
