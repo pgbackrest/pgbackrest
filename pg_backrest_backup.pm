@@ -383,6 +383,140 @@ sub backup_manifest_save
 }
 
 ####################################################################################################################################
+# BACKUP_FILE_NOT_IN_MANIFEST - Find all files in a backup path that are not in the supplied manifest
+####################################################################################################################################
+sub backup_file_not_in_manifest
+{
+    my $strPathType = shift;
+    my $oManifestRef = shift;
+    
+    my %oFileHash = $oFile->manifest_get($strPathType);
+    my @stryFile;
+    my $iFileTotal = 0;
+
+    foreach my $strName (sort(keys $oFileHash{name}))
+    {
+        # Ignore certain files that will never be in the manifest
+        if ($strName eq "backup.manifest" ||
+            $strName eq ".")
+        {
+            next;
+        }
+
+        # Get the base directory
+        my $strBasePath = (split("/", $strName))[0];
+
+        if ($strBasePath eq $strName)
+        {
+            my $strSection = $strBasePath eq "tablespace" ? "base:tablespace" : "${strBasePath}:path";
+
+            if (defined(${$oManifestRef}{"${strSection}"}))
+            {
+                next;
+            }
+        }
+        else
+        {
+            my $strPath = substr($strName, length($strBasePath) + 1);
+
+            # Create the section from the base path
+            my $strSection = $strBasePath;
+
+            if ($strSection eq "tablespace")
+            {
+                my $strTablespace = (split("/", $strPath))[0];
+
+                $strSection = $strSection . ":" . $strTablespace;
+
+                if ($strTablespace eq $strPath)
+                {
+                    if (defined(${$oManifestRef}{"${strSection}:path"}))
+                    {
+                        next;
+                    }
+                }
+
+                $strPath = substr($strPath, length($strTablespace) + 1);
+            }
+
+            my $cType = $oFileHash{name}{"${strName}"}{type};
+
+            if ($cType eq "d")
+            {
+                if (defined(${$oManifestRef}{"${strSection}:path"}{"${strPath}"}))
+                {
+                    next;
+                }
+            }
+            else
+            {
+                if (defined(${$oManifestRef}{"${strSection}:file"}{"${strPath}"}))
+                {
+                    if (${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{size} ==
+                            $oFileHash{name}{"${strName}"}{size} &&
+                        ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{modification_time} == 
+                            $oFileHash{name}{"${strName}"}{modification_time})
+                    {
+                        ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{exists} = true;
+                        next;
+                    }
+                }
+            }
+        }
+
+        $stryFile[$iFileTotal] = $strName;
+        $iFileTotal++;
+    }
+
+    return @stryFile;
+}
+
+####################################################################################################################################
+# BACKUP_TMP_CLEAN
+# 
+# Cleans the temp directory from a previous failed backup so it can be reused
+####################################################################################################################################
+sub backup_tmp_clean
+{
+    my $oManifestRef = shift;
+    
+    &log(INFO, "cleaning backup tmp path");
+
+    # Remove the pg_xlog directory since it contains nothing useful for the new backup
+    if (-e $oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog"))
+    {
+        rmtree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog")) or confess &log(ERROR, "unable to delete tmp pg_xlog path");
+    }
+
+    # Remove the pg_tblspc directory since it is trivial to rebuild, but hard to compare
+    if (-e $oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc"))
+    {
+        rmtree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc")) or confess &log(ERROR, "unable to delete tmp pg_tblspc path");
+    }
+
+    # Get the list of files that should be deleted from temp
+    my @stryFile = backup_file_not_in_manifest(PATH_BACKUP_TMP, $oManifestRef);
+
+    foreach my $strFile (sort {$b cmp $a} @stryFile)
+    {
+        my $strDelete = $oFile->path_get(PATH_BACKUP_TMP, $strFile);
+        
+        # If a path then delete it, all the files should have already been deleted since we are going in reverse order
+        if (-d $strDelete)
+        {
+            &log(DEBUG, "remove path ${strDelete}");
+            rmdir($strDelete) or confess &log(ERROR, "unable to delete path ${strDelete}, is it empty?");
+        }
+        # Else delete a file
+        else
+        {
+            &log(DEBUG, "remove file ${strDelete}");
+            unlink($strDelete) or confess &log(ERROR, "unable to delete file ${strDelete}");
+        }
+    }
+}
+
+####################################################################################################################################
 # BACKUP_MANIFEST_BUILD - Create the backup manifest
 ####################################################################################################################################
 sub backup_manifest_build
@@ -393,12 +527,12 @@ sub backup_manifest_build
     my $oLastManifestRef = shift;
     my $oTablespaceMapRef = shift;
     my $strLevel = shift;
-    
+
     if (!defined($strLevel))
     {
         $strLevel = "base";
     }
-    
+
     my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strDbClusterPath);
     my $strName;
 
@@ -589,8 +723,16 @@ sub backup_file
 
             foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
             {
-                $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}",
-                                    ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{permission});
+                if (defined(${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{exists}))
+                {
+                    &log(TRACE, "path ${strPath} already exists from previous backup attempt");
+                    ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{exists} = undef;
+                }
+                else
+                {
+                    $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}",
+                                        ${$oBackupManifestRef}{"${strSectionPath}"}{"$strPath"}{permission});
+                }
             }
         }
 
@@ -606,41 +748,51 @@ sub backup_file
         foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
-
-            # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
-            # However, if hard-linking is turned on the link will need to be created
-            my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference};
-
-            if (defined($strReference))
+            
+            if (defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{exists}))
             {
-                # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
-                if ($bHardLink)
-                {
-                    &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
-
-                    $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
-                                        PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, !$bPathCreate);
-                }
+                &log(TRACE, "file ${strFile} already exists from previous backup attempt");
+                ${$oBackupManifestRef}{"${strSectionPath}"}{"$strFile"}{exists} = undef;
             }
-            # Else copy/compress the file and generate a checksum
             else
             {
-                my $lFileSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+                # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
+                # However, if hard-linking is turned on the link will need to be created
+                my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{reference};
 
-                $lFileTotal++;
-                $lFileLargeSize += $lFileSize > $iSmallFileThreshold ? $lFileSize : 0;
-                $lFileLargeTotal += $lFileSize > $iSmallFileThreshold ? 1 : 0;
-                $lFileSmallSize += $lFileSize <= $iSmallFileThreshold ? $lFileSize : 0; 
-                $lFileSmallTotal += $lFileSize <= $iSmallFileThreshold ? 1 : 0; 
-                
-                my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
-                                     $lFileSize, $lFileTotal);
+                if (defined($strReference))
+                {
+                    # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
+                    if ($bHardLink)
+                    {
+                        &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
-                $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
-                $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
-                $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
-                $oFileCopyMap{"${strKey}"}{modification_time} = 
-                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
+                        $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
+                                            PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, !$bPathCreate);
+                    }
+                }
+                # Else copy/compress the file and generate a checksum
+                else
+                {
+                    my $lFileSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{size};
+
+                    # Setup variables needed for threaded copy
+                    $lFileTotal++;
+                    $lFileLargeSize += $lFileSize > $iSmallFileThreshold ? $lFileSize : 0;
+                    $lFileLargeTotal += $lFileSize > $iSmallFileThreshold ? 1 : 0;
+                    $lFileSmallSize += $lFileSize <= $iSmallFileThreshold ? $lFileSize : 0; 
+                    $lFileSmallTotal += $lFileSize <= $iSmallFileThreshold ? 1 : 0; 
+
+                    # Load the hash used by threaded copy
+                    my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
+                                         $lFileSize, $lFileTotal);
+
+                    $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
+                    $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
+                    $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
+                    $oFileCopyMap{"${strKey}"}{modification_time} = 
+                        ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
+                }
             }
         }
     }
@@ -650,23 +802,24 @@ sub backup_file
     &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
 
     # Initialize the thread size array
-    my @lyThreadFileSize;
+    my @oyThreadData;
 
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
-        $lyThreadFileSize[$iThreadIdx] = 0;
+        $oyThreadData[$iThreadIdx]{size} = 0;
+        $oyThreadData[$iThreadIdx]{total} = 0;
+        $oyThreadData[$iThreadIdx]{large_size} = 0;
+        $oyThreadData[$iThreadIdx]{large_total} = 0;
+        $oyThreadData[$iThreadIdx]{small_size} = 0;
+        $oyThreadData[$iThreadIdx]{small_total} = 0;
     }
     
     # Assign files to each thread queue
     my $iThreadFileSmallIdx = 0;
     my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadLocalMax);
-    my $fThreadFileSmallSize = 0;
-    my $iThreadFileSmallTotal = 0;
 
     my $iThreadFileLargeIdx = 0;
     my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadLocalMax;
-    my $fThreadFileLargeSize = 0;
-    my $iThreadFileLargeTotal = 0;
 
     &log(INFO, "file total ${lFileTotal}");
     &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
@@ -682,55 +835,47 @@ sub backup_file
         {
             $oThreadQueue[$iThreadFileLargeIdx]->enqueue($strFile);
 
-            $fThreadFileLargeSize += $lFileSize;
-            $iThreadFileLargeTotal++;
-            $lyThreadFileSize[$iThreadFileLargeIdx] += $lFileSize;
+            $oyThreadData[$iThreadFileLargeIdx]{large_size} += $lFileSize;
+            $oyThreadData[$iThreadFileLargeIdx]{large_total}++;
+            $oyThreadData[$iThreadFileLargeIdx]{size} += $lFileSize;
 
-            if ($fThreadFileLargeSize >= $fThreadFileLargeSizeMax && $iThreadFileLargeIdx < $iThreadLocalMax - 1)
+            if ($oyThreadData[$iThreadFileLargeIdx]{large_size} >= $fThreadFileLargeSizeMax &&
+                $iThreadFileLargeIdx < $iThreadLocalMax - 1)
             {
-                &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}" . 
-                           " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
-
                 $iThreadFileLargeIdx++;
-                $fThreadFileLargeSize = 0;
-                $iThreadFileLargeTotal = 0;
             }
         }
         else
         {
             $oThreadQueue[$iThreadFileSmallIdx]->enqueue($strFile);
             
-            $fThreadFileSmallSize += $lFileSize;
-            $iThreadFileSmallTotal++;
-            $lyThreadFileSize[$iThreadFileSmallIdx] += $lFileSize;
+            $oyThreadData[$iThreadFileSmallIdx]{small_size} += $lFileSize;
+            $oyThreadData[$iThreadFileSmallIdx]{small_total}++;
+            $oyThreadData[$iThreadFileSmallIdx]{size} += $lFileSize;
 
-            if ($iThreadFileSmallTotal >= $iThreadFileSmallTotalMax && $iThreadFileSmallIdx < $iThreadLocalMax - 1)
+            if ($oyThreadData[$iThreadFileSmallIdx]{small_total} >= $iThreadFileSmallTotalMax &&
+                $iThreadFileSmallIdx < $iThreadLocalMax - 1)
             {
-                &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
-                           " (" . file_size_format(int(${fThreadFileSmallSize})) . ")");
-
                 $iThreadFileSmallIdx++;
-                $fThreadFileSmallSize = 0;
-                $iThreadFileSmallTotal = 0;
             }
         }
     }
-
-    &log(INFO, "thread ${iThreadFileLargeIdx} large total ${iThreadFileLargeTotal}, size ${fThreadFileLargeSize}" . 
-               " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
-    &log(INFO, "thread ${iThreadFileSmallIdx} small total ${iThreadFileSmallTotal}, size ${fThreadFileSmallSize}" . 
-               " (" . file_size_format(int(${fThreadFileLargeSize})) . ")");
 
     # End each thread queue and start the thread
     my @oThread;
 
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
+        &log(INFO, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
+                   "size $oyThreadData[$iThreadIdx]{large_size}");
+        &log(INFO, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
+                   "size $oyThreadData[$iThreadIdx]{small_size}");
+
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
         $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum, !$bPathCreate,
-                                                $lyThreadFileSize[$iThreadIdx]);
+                                                $oyThreadData[$iThreadIdx]{size});
     }
-    
+
     # Rejoin the threads
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
@@ -760,8 +905,6 @@ sub backup_file_thread
     
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-#        &log(INFO, "total ${lSizeTotal} size ${lSize}");
-        
         &log(INFO, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
                    file_size_format($oFileCopyMap{$strFile}{size}) .
                    ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")");
@@ -854,19 +997,27 @@ sub backup
     my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, "backup.manifest");
 
-    # If the backup tmp path already exists, delete the conf file
+    # Start backup
+    my %oBackupManifest;
+    ${oBackupManifest}{backup}{label} = $strBackupPath;
+
+    my $strArchiveStart = $oDb->backup_start($strBackupPath);
+    ${oBackupManifest}{backup}{archive_start} = $strArchiveStart;
+
+    &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{archive_start});
+
+    # Build the backup manifest
+    my %oTablespaceMap = $oDb->tablespace_map_get();
+
+    backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
+
+    # If the backup tmp path already exists, remove invalid files
     if (-e $strBackupTmpPath)
     {
-        &log(WARN, "backup path $strBackupTmpPath already exists");
-
-        # !!! This is temporary until we can clean backup dirs
-        system("rm -rf $strBackupTmpPath") == 0 or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
-#        rmtree($strBackupTmpPath) or confess &log(ERROR, "unable to delete ${strBackupTmpPath}");
-        $oFile->path_create(PATH_BACKUP_TMP);
-        #if (-e $strBackupConfFile)
-        #{
-        #    unlink $strBackupConfFile or die &log(ERROR, "backup config ${strBackupConfFile} could not be deleted");
-        #}
+        &log(WARN, "aborted backup already exists, will be cleaned to remove invalid files and resumed");
+        
+        # Clean the old backup tmp path
+        backup_tmp_clean(\%oBackupManifest);
     }
     # Else create the backup tmp path
     else
@@ -874,24 +1025,6 @@ sub backup
         &log(DEBUG, "creating backup path $strBackupTmpPath");
         $oFile->path_create(PATH_BACKUP_TMP);
     }
-
-    # Create a new backup manifest hash
-    my %oBackupManifest;
-
-    # Start backup
-    ${oBackupManifest}{backup}{label} = $strBackupPath;
-
-    my $strArchiveStart = $oDb->backup_start($strBackupPath);
-    ${oBackupManifest}{backup}{archive_start} = $strArchiveStart;
-
-    &log(INFO, 'archive start: ' . $strArchiveStart);
-
-    # Build the backup manifest
-    my %oTablespaceMap = $oDb->tablespace_map_get();
-    backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
-
-    # Delete files leftover from a partial backup
-    # !!! do it
 
     # Save the backup conf file first time - so we can see what is happening in the backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
@@ -903,8 +1036,7 @@ sub backup
     my $strArchiveStop = $oDb->backup_stop();
 
     ${oBackupManifest}{backup}{archive_stop} = $strArchiveStop;
-
-    &log(INFO, 'archive stop: ' . $strArchiveStop);
+    &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{archive_stop});
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the 
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be

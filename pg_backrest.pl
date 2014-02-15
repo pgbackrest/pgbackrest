@@ -7,7 +7,6 @@ use File::Basename;
 use Getopt::Long;
 use Config::IniFiles;
 use Carp;
-use Fcntl qw(:DEFAULT :flock);
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -182,6 +181,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push
     my $bCompressAsync = config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
 
+    # Perform the archive-push
     if ($strOperation eq OP_ARCHIVE_PUSH)
     {
         # Make sure that archive-push is running locally
@@ -189,12 +189,6 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         {
             confess &log(ERROR, "stanza host cannot be set on archive-push - must be run locally on db server");
         }
-    
-        # Make sure that compress and compress_async are not both set
-    #    if (defined(config_load($strSection, CONFIG_KEY_COMPRESS)) && defined(config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC)))
-    #    {
-    #        confess &log(ERROR, "compress and compress_async cannot both be set");
-    #    }
 
         # Get the compress flag
         my $bCompress = $bCompressAsync ? false : config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
@@ -250,6 +244,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         }
     }
 
+    # Perform the archive-pull
     if ($strOperation eq OP_ARCHIVE_PULL)
     {
         # Make sure that archive-pull is running on the db server
@@ -260,13 +255,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         
         # Create a lock file to make sure archive-pull does not run more than once
         my $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
-        my $strLockFile = "${strArchivePath}/lock/archive-${strStanza}.lock";
-        my $fLockFile;
+        my $strLockFile = "${strArchivePath}/lock/${strStanza}-archive.lock";
 
-        sysopen($fLockFile, $strLockFile, O_WRONLY | O_CREAT)
-            or confess &log(ERROR, "unable to open lock file ${strLockFile}");
-
-        if (!flock($fLockFile, LOCK_EX | LOCK_NB))
+        if (!lock_file_create($strLockFile))
         {
             &log(DEBUG, "archive-pull process is already running - exiting");
             exit 0
@@ -305,6 +296,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         {
             sleep(5);
         }
+        
+        lock_file_remove();
     }
     
     exit 0;
@@ -386,12 +379,19 @@ backup_init
 ####################################################################################################################################
 if ($strOperation eq OP_BACKUP)
 {
-    # !!! Pick the log file name here (backup, restore, archive-YYYYMMDD)
-    my $strLogFile = "";
-    
+    my $strLockFile = $oFile->path_get(PATH_BACKUP, "lock/${strStanza}-backup.lock");
+
+    if (!lock_file_create($strLockFile))
+    {
+        &log(DEBUG, "backup process is already running for stanza ${strStanza} - exiting");
+        exit 0
+    }
+
     backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
 
     $strOperation = OP_EXPIRE;
+
+    lock_file_remove();
 }
 
 ####################################################################################################################################
@@ -399,6 +399,14 @@ if ($strOperation eq OP_BACKUP)
 ####################################################################################################################################
 if ($strOperation eq OP_EXPIRE)
 {
+    my $strLockFile = $oFile->path_get(PATH_BACKUP, "lock/${strStanza}-expire.lock");
+
+    if (!lock_file_create($strLockFile))
+    {
+        &log(DEBUG, "expire process is already running for stanza ${strStanza} - exiting");
+        exit 0
+    }
+
     backup_expire
     (
         $oFile->path_get(PATH_BACKUP_CLUSTER),
@@ -407,6 +415,8 @@ if ($strOperation eq OP_EXPIRE)
         config_load(CONFIG_SECTION_RETENTION, "archive_retention_type"),
         config_load(CONFIG_SECTION_RETENTION, "archive_retention")
     );
+
+    lock_file_remove();
 
     exit 0;
 }

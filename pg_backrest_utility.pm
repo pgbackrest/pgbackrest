@@ -7,11 +7,13 @@ use strict;
 use warnings;
 use Carp;
 use IPC::System::Simple qw(capture);
+use Fcntl qw(:DEFAULT :flock);
 
 use Exporter qw(import);
 
 our @EXPORT = qw(data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
                  log log_file_set log_level_set
+                 lock_file_create lock_file_remove
                  TRACE DEBUG ERROR ASSERT WARN INFO true false);
 
 # Global constants
@@ -37,6 +39,9 @@ my $strLogLevelFile = ERROR;
 my $strLogLevelConsole = ERROR;
 my %oLogLevelRank;
 
+my $strLockFile;
+my $hLockFile;
+
 $oLogLevelRank{TRACE}{rank} = 6;
 $oLogLevelRank{DEBUG}{rank} = 5;
 $oLogLevelRank{INFO}{rank} = 4;
@@ -44,6 +49,51 @@ $oLogLevelRank{WARN}{rank} = 3;
 $oLogLevelRank{ERROR}{rank} = 2;
 $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
+
+####################################################################################################################################
+# LOCK_FILE_CREATE
+####################################################################################################################################
+sub lock_file_create
+{
+    my $strLockFileParam = shift;
+    
+    $strLockFile = $strLockFileParam;
+
+    if (defined($hLockFile))
+    {
+        confess &lock(ASSERT, "${strLockFile} lock is already held, cannot create lock ${strLockFile}");
+    }
+
+    sysopen($hLockFile, $strLockFile, O_WRONLY | O_CREAT)
+        or confess &log(ERROR, "unable to open lock file ${strLockFile}");
+
+    if (!flock($hLockFile, LOCK_EX | LOCK_NB))
+    {
+        close($hLockFile);
+        return 0;
+    }
+    
+    return $hLockFile;
+}
+
+####################################################################################################################################
+# LOCK_FILE_REMOVE
+####################################################################################################################################
+sub lock_file_remove
+{
+    if (defined($hLockFile))
+    {
+        close($hLockFile);
+        unlink($strLockFile) or confess &log(ERROR, "unable to remove lock file ${strLockFile}");
+        
+        $hLockFile = undef;
+        $strLockFile = undef;
+    }
+    else
+    {
+        confess &log(ASSERT, "there is no lock to free");
+    }
+}
 
 ####################################################################################################################################
 # DATA_HASH_BUILD - Hash a delimited file with header
