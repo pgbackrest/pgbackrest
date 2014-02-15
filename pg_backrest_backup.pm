@@ -252,13 +252,13 @@ sub archive_pull
     if ($lFileTotal == 0)
     {
         &log(DEBUG, "no archive logs to be copied to backup");
-        
+
         return 0;
     }
 
     # Output files to be moved to backup
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
-    
+
     # Init the thread variables
     $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
     my $iThreadIdx = 0;
@@ -279,9 +279,23 @@ sub archive_pull
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
         $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
     }
-    
+
     backup_thread_complete();
-    
+
+    # Find the archive paths that need to be removed
+    my $strPathMax = substr((sort {$b cmp $a} @stryFile)[0], 0, 16);
+
+    &log(DEBUG, "local archive path max = ${strPathMax}");
+
+    foreach my $strPath ($oFile[0]->file_list_get(PATH_DB_ABSOLUTE, $strArchivePath, "^[0-F]{16}\$"))
+    {
+        if ($strPath lt $strPathMax)
+        {
+            &log(DEBUG, "removing local archive path ${strPath}");
+            rmdir($strArchivePath . "/" . $strPath) or confess &log(ERROR, "unable to remove archive path ${strPath}, is it empty?");
+        }
+    }
+
     # Return 1 indicating that processing should continue
     return $lFileTotal;
 }
