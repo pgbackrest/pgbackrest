@@ -125,11 +125,36 @@ sub config_load
 }
 
 ####################################################################################################################################
-# SAFE_EXIT - cleanly exit when the script is terminated externally
+# SAFE_EXIT - terminate all SSH sessions when the script is terminated
 ####################################################################################################################################
 sub safe_exit
 {
-    confess &log(ERROR, "process was terminated on signal");
+    my $iTotal = 0;
+
+#    for (my $iThreadIndex = 0; $iThreadIndex < scalar @pg_backrest_backup::oThread; $iThreadIndex++)
+#    {
+#        &log(INFO, "dequeueing thread ${iThreadIndex}");
+#
+#        $pg_backrest_backup::oThreadQueue[$iThreadIndex]->dequeue_nb(10000000000000);
+#        $pg_backrest_backup::oThreadQueue[$iThreadIndex]->enqueue(undef);
+#    }
+
+    for (my $iThreadIndex = 0; $iThreadIndex < scalar @pg_backrest_backup::oThread; $iThreadIndex++)
+    {
+        &log(INFO, "joining thread ${iThreadIndex}");
+
+        $pg_backrest_backup::oThread[$iThreadIndex]->kill('KILL')->join();
+        undef($pg_backrest_backup::oThread[$iThreadIndex]);
+        $iTotal++;
+    }
+
+#    for (my $iIndex = 0; $iIndex < scalar @pg_backrest_db::oGlobalSSH; $iIndex++)
+#    {
+#        undef $pg_backrest_db::oGlobalSSH[$iIndex];
+#        $iTotal++;
+#    }
+
+    confess &log(ERROR, "process was terminated on signal, ${iTotal} threads stopped");
 }
 
 $SIG{TERM} = \&safe_exit;

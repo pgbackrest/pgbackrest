@@ -38,7 +38,8 @@ my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
 
 # Thread variables
-my @oThreadQueue;
+our @oThread;
+our @oThreadQueue;
 my %oFileCopyMap;
 
 ####################################################################################################################################
@@ -864,8 +865,6 @@ sub backup_file
     }
 
     # End each thread queue and start the thread
-    my @oThread;
-
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         &log(INFO, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
@@ -891,6 +890,7 @@ sub backup_file
             if ($oThread[$iThreadIdx]->is_joinable())
             {
                 $oThread[$iThreadIdx]->join();
+                undef($oThread[$iThreadIdx]);
                 $iThreadComplete++;
             }
         }
