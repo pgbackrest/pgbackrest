@@ -1142,9 +1142,9 @@ sub backup
     ${oBackupManifest}{backup}{label} = $strBackupPath;
 
     my $strArchiveStart = $oDb->backup_start($strBackupPath);
-    ${oBackupManifest}{backup}{archive_start} = $strArchiveStart;
+    ${oBackupManifest}{backup}{"archive-start"} = $strArchiveStart;
 
-    &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{archive_start});
+    &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{"archive-start"});
 
     # Build the backup manifest
     my %oTablespaceMap = $oDb->tablespace_map_get();
@@ -1175,8 +1175,8 @@ sub backup
     # Stop backup
     my $strArchiveStop = $oDb->backup_stop();
 
-    ${oBackupManifest}{backup}{archive_stop} = $strArchiveStop;
-    &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{archive_stop});
+    ${oBackupManifest}{backup}{"archive-stop"} = $strArchiveStop;
+    &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{"archive-stop"});
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the 
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
@@ -1417,7 +1417,7 @@ sub backup_expire
     &log(INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
 
     my %oManifest = backup_manifest_load($oFile[0]->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest");
-    my $strArchiveLast = ${oManifest}{archive}{archive_location}{start};
+    my $strArchiveLast = ${oManifest}{backup}{"archive-start"};
     
     if (!defined($strArchiveLast))
     {
