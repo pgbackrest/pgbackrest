@@ -257,7 +257,7 @@ sub archive_pull
         return 0;
     }
 
-    $0 = "${strCommand} archive-push " . substr($stryFile[0], 17, 24) . "-" . substr($stryFile[scalar @stryFile - 1], 17, 24);
+    $0 = "${strCommand} archive-push-async " . substr($stryFile[0], 17, 24) . "-" . substr($stryFile[scalar @stryFile - 1], 17, 24);
 
     # Output files to be moved to backup
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
@@ -358,7 +358,7 @@ sub archive_compress
         return;
     }
 
-    $0 = "${strCommand} archive-compress " . substr($stryFile[0], 17, 24) . "-" . substr($stryFile[scalar @stryFile - 1], 17, 24);
+    $0 = "${strCommand} archive-compress-async " . substr($stryFile[0], 17, 24) . "-" . substr($stryFile[scalar @stryFile - 1], 17, 24);
 
     # Output files to be compressed
     &log(INFO, "archive to be compressed total ${lFileTotal}, size " . file_size_format($lFileSize));
