@@ -229,7 +229,9 @@ sub archive_push
 sub archive_pull
 {
     my $strArchivePath = shift;
+    my $strStopFile = shift;
     my $strCommand = shift;
+    my $iArchiveMaxMB = shift;
 
     # Load the archive manifest - all the files that need to be pushed
     my %oManifestHash = $oFile[0]->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
@@ -247,6 +249,18 @@ sub archive_pull
 
             $lFileSize += $oManifestHash{name}{"$strFile"}{size};
             $lFileTotal++;
+        }
+    }
+
+    if (defined($iArchiveMaxMB))
+    {
+        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
+        {
+            &log(ERROR, "local archive store has exceeded limit of ${iArchiveMaxMB}MB, archive logs will be discarded");
+
+            my $hStopFile;
+            open($hStopFile, ">", $strStopFile) or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
+            close($hStopFile);
         }
     }
 
@@ -299,7 +313,7 @@ sub archive_pull
         }
     }
 
-    # Return 1 indicating that processing should continue
+    # Return number of files indicating that processing should continue
     return $lFileTotal;
 }
 
@@ -331,6 +345,7 @@ sub archive_compress
 {
     my $strArchivePath = shift;
     my $strCommand = shift;
+    my $iFileCompressMax = shift;
 
     # Load the archive manifest - all the files that need to be pushed
     my %oManifestHash = $oFile[0]->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
@@ -348,6 +363,11 @@ sub archive_compress
 
             $lFileSize += $oManifestHash{name}{"$strFile"}{size};
             $lFileTotal++;
+
+            if ($lFileTotal >= $iFileCompressMax)
+            {
+                last;
+            }
         }
     }
 
@@ -382,8 +402,8 @@ sub archive_compress
         $oThread[$iThreadIdx] = threads->create(\&archive_pull_compress_thread, $iThreadIdx, $strArchivePath);
     }
 
-    # Don't die on an error because we'd still like to try transferring
-    backup_thread_complete(false);
+    # Complete the threads
+    backup_thread_complete();
 }
 
 sub archive_pull_compress_thread

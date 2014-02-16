@@ -40,6 +40,7 @@ use constant
     CONFIG_KEY_THREAD_MAX         => "thread-max",
     CONFIG_KEY_HARDLINK           => "hardlink",
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
+    CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
 
     CONFIG_KEY_LEVEL_FILE         => "level-file",
     CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
@@ -194,10 +195,37 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push
     my $bCompressAsync = config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
+    
+    # Get the async compress flag.  If compress_async=y then compression is off for the initial push
+    my $strStopFile;
+    my $strArchivePath;
+
+    # If logging locally then create the stop archiving file name
+    if ($strSection eq CONFIG_SECTION_ARCHIVE)
+    {
+        $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
+        $strStopFile = "${strArchivePath}/lock/${strStanza}-archive.stop";
+    }
 
     # Perform the archive-push
     if ($strOperation eq OP_ARCHIVE_PUSH)
     {
+        # Call the archive_push function
+        if (!defined($ARGV[1]))
+        {
+            confess &log(ERROR, "source archive file not provided - show usage");
+        }
+
+        # If the stop file exists then discard the archive log
+        if (defined($strStopFile))
+        {
+            if (-e $strStopFile)
+            {
+                &log(ERROR, "archive stop file exists ($strStopFile), discarding " . basename($ARGV[1]));
+                exit 0;
+            }
+        }
+    
         # Make sure that archive-push is running locally
         if (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
         {
@@ -232,12 +260,6 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             !$bChecksum
         );
 
-        # Call the archive_push function
-        if (!defined($ARGV[1]))
-        {
-            confess &log(ERROR, "source archive file not provided - show usage");
-        }
-
         &log(INFO, "pushing archive log " . $ARGV[1] . ($bCompressAsync ? " asynchronously" : ""));
 
         archive_push($ARGV[1]);
@@ -268,7 +290,6 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         }
         
         # Create a lock file to make sure archive-pull does not run more than once
-        my $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
         my $strLockFile = "${strArchivePath}/lock/${strStanza}-archive.lock";
 
         if (!lock_file_create($strLockFile))
@@ -283,15 +304,17 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Get the new operational flags
         my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
         my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+        my $iArchiveMaxMB = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_ARCHIVE_MAX_MB);
 
-        # Do async compression
-        if ($bCompressAsync)
+        eval
         {
-            # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
+            # Run file_init_archive - this is the minimal config needed to run archive pulling
             my $oFile = pg_backrest_file->new
             (
                 strStanza => $strStanza,
-                bNoCompression => false,
+                bNoCompression => !$bCompress,
+                strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+                strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
                 strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
                 strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
                 strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
@@ -309,43 +332,53 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
             );
 
-            archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand);
-        }
+            # Call the archive_pull function  Continue to loop as long as there are files to process.
+            while (archive_pull($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB))
+            {
+            }
+        };
 
-        # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
-        my $oFile = pg_backrest_file->new
-        (
-            strStanza => $strStanza,
-            bNoCompression => !$bCompress,
-            strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
-            strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
-            strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-            strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
-            strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-            strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-            strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
-        );
-
-        backup_init
-        (
-            undef,
-            $oFile,
-            undef,
-            undef,
-            !$bChecksum,
-            config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
-        );
-
-        # Call the archive_pull function  Continue to loop as long as there are files to process.
-        while (archive_pull($strArchivePath . "/archive/${strStanza}", $strCommand))
+        # If there were errors above then start compressing
+        if ($@)
         {
-            sleep(5);
-            archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand);
+            if ($bCompressAsync)
+            {
+                &log(ERROR, "error during transfer: $@");
+                &log(WARN, "errors during transter, starting compression");
+
+                # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
+                my $oFile = pg_backrest_file->new
+                (
+                    strStanza => $strStanza,
+                    bNoCompression => false,
+                    strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+                    strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+                    strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+                    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
+                    strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
+                );
+
+                backup_init
+                (
+                    undef,
+                    $oFile,
+                    undef,
+                    undef,
+                    !$bChecksum,
+                    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
+                );
+
+                archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand, 256);
+            }
+            else
+            {
+                confess $@;
+            }
         }
-        
+
         lock_file_remove();
     }
-    
+
     exit 0;
 }
 
