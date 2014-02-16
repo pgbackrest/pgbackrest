@@ -278,7 +278,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         }
 
         # Build the basic command string that will be used to modify the command during processing
-        my $strCommand = $^X . " " . $0;
+        my $strCommand = $^X . " " . $0 . " --stanza=${strStanza}";
 
         # Get the new operational flags
         my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
