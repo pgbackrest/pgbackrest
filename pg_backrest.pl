@@ -337,6 +337,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         while (archive_pull($strArchivePath . "/archive/${strStanza}", $bCompressAsync))
         {
             sleep(5);
+            archive_compress($strArchivePath . "/archive/${strStanza}");
         }
         
         lock_file_remove();
