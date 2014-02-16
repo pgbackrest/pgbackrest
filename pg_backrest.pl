@@ -284,6 +284,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Do async compression
         if ($bCompressAsync)
         {
+            $0 = "${strStanza} async";
+            
             # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
             my $oFile = pg_backrest_file->new
             (

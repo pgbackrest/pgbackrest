@@ -350,7 +350,7 @@ sub archive_compress
 
     if ($lFileTotal == 0)
     {
-        &log(ERROR, "no archive logs to be compressed");
+        &log(DEBUG, "no archive logs to be compressed");
     
         return;
     }
