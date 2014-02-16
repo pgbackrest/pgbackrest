@@ -229,7 +229,7 @@ sub archive_push
 sub archive_pull
 {
     my $strArchivePath = shift;
-    my $bCompressAsync = shift;
+    my $strCommand = shift;
 
     # Load the archive manifest - all the files that need to be pushed
     my %oManifestHash = $oFile[0]->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
@@ -256,6 +256,8 @@ sub archive_pull
 
         return 0;
     }
+
+    $0 = "${strCommand} archive-push " . substr($stryFile[0], 17, 24) . "-" . substr($stryFile[scalar @stryFile - 1], 17, 24);
 
     # Output files to be moved to backup
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
@@ -328,6 +330,7 @@ sub archive_pull_copy_thread
 sub archive_compress
 {
     my $strArchivePath = shift;
+    my $strCommand = shift;
 
     # Load the archive manifest - all the files that need to be pushed
     my %oManifestHash = $oFile[0]->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
@@ -351,9 +354,11 @@ sub archive_compress
     if ($lFileTotal == 0)
     {
         &log(DEBUG, "no archive logs to be compressed");
-    
+
         return;
     }
+
+    $0 = "${strCommand} archive-compress " . substr($stryFile[0], 17, 24) . "-" . substr($stryFile[scalar @stryFile - 1], 17, 24);
 
     # Output files to be compressed
     &log(INFO, "archive to be compressed total ${lFileTotal}, size " . file_size_format($lFileSize));

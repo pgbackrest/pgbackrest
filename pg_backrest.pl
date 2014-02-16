@@ -277,6 +277,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             exit 0
         }
 
+        # Build the basic command string that will be used to modify the command during processing
+        my $strCommand = $^X . " " . $0;
+
         # Get the new operational flags
         my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
         my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
@@ -284,8 +287,6 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Do async compression
         if ($bCompressAsync)
         {
-            $0 = "${strStanza} async";
-            
             # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
             my $oFile = pg_backrest_file->new
             (
@@ -308,7 +309,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
             );
 
-            archive_compress($strArchivePath . "/archive/${strStanza}");
+            archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand);
         }
 
         # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
@@ -336,10 +337,10 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         );
 
         # Call the archive_pull function  Continue to loop as long as there are files to process.
-        while (archive_pull($strArchivePath . "/archive/${strStanza}", $bCompressAsync))
+        while (archive_pull($strArchivePath . "/archive/${strStanza}", $strCommand))
         {
             sleep(5);
-            archive_compress($strArchivePath . "/archive/${strStanza}");
+            archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand);
         }
         
         lock_file_remove();
