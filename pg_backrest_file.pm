@@ -62,24 +62,35 @@ sub BUILD
     # Create the backup cluster path
     $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strStanza};
 
-    # Connect SSH object if backup host is defined
-    if (defined($self->{strBackupHost}))
+    # Create the ssh options string
+    if (defined($self->{strBackupHost}) || defined($self->{strDbHost}))
     {
-        &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
+        my $strOptionSSH = "Compression=no";
 
-        # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser}, master_opts => [-o => "Compression=yes"]);
-        $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
-    }
+        if ($self->{bNoCompression})
+        {
+            $strOptionSSH = "Compression=yes";
+        }
 
-    # Connect SSH object if db host is defined
-    if (defined($self->{strDbHost}))
-    {
-        &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
+        # Connect SSH object if backup host is defined
+        if (defined($self->{strBackupHost}))
+        {
+            &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
 
-        # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser}, master_opts => [-o => "Compression=yes"]);
-        $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
+            # !!! This could be improved by redirecting stderr to a file to get a better error message
+            $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser}, master_opts => [-o => $strOptionSSH]);
+            $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
+        }
+
+        # Connect SSH object if db host is defined
+        if (defined($self->{strDbHost}))
+        {
+            &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
+
+            # !!! This could be improved by redirecting stderr to a file to get a better error message
+            $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser}, master_opts => [-o => $strOptionSSH]);
+            $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
+        }
     }
 }
 
