@@ -53,7 +53,7 @@ sub pg_create
 sub pg_start
 {
     local($strPgBinPath, $strDbPath, $strPort, $strAchiveCommand) = @_;
-    my $strCommand = "$strPgBinPath/pg_ctl start -o \"-c port=$strPort -c wal_level=archive -c archive_mode=on -c archive_command=\'$strAchiveCommand\'\" -D $strDbPath -l $strDbPath/postgresql.log -w -s";
+    my $strCommand = "$strPgBinPath/pg_ctl start -o \"-c port=$strPort -c checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command=\'$strAchiveCommand\'\" -D $strDbPath -l $strDbPath/postgresql.log -w -s";
     
     execute($strCommand);
 }

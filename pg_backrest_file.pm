@@ -503,9 +503,11 @@ sub file_copy
     my $lModificationTime = shift;
     my $strPermission = shift;
     my $bPathCreate = shift;
+    my $bConfessCopyError = shift;
 
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
+    $bConfessCopyError = defined($bConfessCopyError) ? $bConfessCopyError : false;
 
     # Modification time and permissions cannot be set remotely
     if ((defined($lModificationTime) || defined($strPermission)) && $self->is_remote($strDestinationPathType))
@@ -539,10 +541,6 @@ sub file_copy
     # Generate the command string depending on compression/decompression/cat
     my $strCommand = $self->{strCommandCat};
     
-#    if ($bAlreadyCompressed && $bCompress)
-#    {
-#        $strDestination .= $strDestination =~ "^.*\.$self->{strCompressExtension}\$" ? ".gz" : "";
-#    }
     if (!$bAlreadyCompressed && $bCompress)
     {
         $strCommand = $self->{strCommandCompress};
@@ -571,10 +569,17 @@ sub file_copy
 
             # Execute the command through ssh
             my $oSSH = $self->remote_get($strSourcePathType);
-            $oSSH->system({stdout_fh => $hFile}, $strCommand) or confess &log(ERROR, "unable to execute ssh '$strCommand'");
+            
+            unless ($oSSH->system({stdout_fh => $hFile, stderr_discard => true}, $strCommand))
+            {
+                close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
+                
+                my $strResult = "unable to execute ssh '${strCommand}'";
+                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
+            }
 
             # Close the destination file handle
-            close($hFile) or confess &log(ERROR, "cannot close file");
+            close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
         }
         # Else if the destination is remote
         elsif ($self->is_remote($strDestinationPathType))
@@ -595,7 +600,8 @@ sub file_copy
             
             if ($iExitStatus != 0)
             {
-                confess &log(ERROR, "command '${strCommand}' returned", $iExitStatus);
+                my $strResult = "command '${strCommand}' returned " . $iExitStatus;
+                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
             }
         }
     }
@@ -617,12 +623,22 @@ sub file_copy
             &log(TRACE, "file_copy: remote ${strSourcePathType} '${strCommand}'");
 
             my $oSSH = $self->remote_get($strSourcePathType);
-            $oSSH->system($strCommand) or confess &log(ERROR, "unable to execute remote command ${strCommand}:" . oSSH->error);
+
+            unless($oSSH->system({stderr_discard => true}, $strCommand))
+            {
+                my $strResult = "unable to execute remote command ${strCommand}:" . oSSH->error;
+                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
+            }
         }
         else
         {
             &log(TRACE, "file_copy: local '${strCommand}'");
-            system($strCommand) == 0 or confess &log(ERROR, "unable to copy local $strSource to local $strDestinationTmp");
+            
+            unless(system($strCommand) == 0)
+            {
+                my $strResult = "unable to copy local ${strSource} to local ${strDestinationTmp}";
+                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
+            }
         }
     }
 
@@ -647,6 +663,8 @@ sub file_copy
     # Move the file from tmp to final destination
     $self->file_move($self->path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
                      $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination, $bPathCreate);
+                     
+    return true;
 }
 
 ####################################################################################################################################
@@ -765,6 +783,81 @@ sub file_list_get
     }
 
     return @stryFile;
+}
+
+####################################################################################################################################
+# FILE_EXISTS
+####################################################################################################################################
+sub file_exists
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+
+    # Get the root path for the manifest
+    my $strPathExists = $self->path_get($strPathType, $strPath);
+
+    # Builds the exists command
+    my $strCommand = "ls ${strPathExists}";
+    
+    # Run the file exists command
+    my $strExists = "";
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        &log(TRACE, "file_exists: remote ${strPathType}:${strPathExists}");
+
+        my $oSSH = $self->remote_get($strPathType);
+        $strExists = $oSSH->capture({stderr_discard => true}, $strCommand);
+    }
+    # Run locally
+    else
+    {
+        &log(TRACE, "file_exists: local ${strPathType}:${strPathExists}");
+        $strExists = capture($strCommand);
+    }
+
+    # If the return from ls eq strPathExists then true
+    return ($strExists eq $strPathExists);
+}
+
+####################################################################################################################################
+# FILE_REMOVE
+####################################################################################################################################
+sub file_remove
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $bTemp = shift;
+    my $bErrorIfNotExists = shift;
+    
+    if (!defined($bErrorIfNotExists))
+    {
+        $bErrorIfNotExists = false;
+    }
+
+    # Get the root path for the manifest
+    my $strPathRemove = $self->path_get($strPathType, $strPath, $bTemp);
+
+    # Builds the exists command
+    my $strCommand = "rm -f ${strPathRemove}";
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        &log(TRACE, "file_remove: remote ${strPathType}:${strPathRemove}");
+
+        my $oSSH = $self->remote_get($strPathType);
+        $oSSH->system({stderr_discard => true}, $strCommand) or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove remote ${strPathType}:${strPathRemove}") : true;
+    }
+    # Run locally
+    else
+    {
+        &log(TRACE, "file_exists: local ${strPathType}:${strPathRemove}");
+        system($strCommand) == 0 or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove local ${strPathType}:${strPathRemove}") : true;
+    }
 }
 
 ####################################################################################################################################

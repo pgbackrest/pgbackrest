@@ -1045,12 +1045,27 @@ sub backup_file_thread
                    file_size_format($oFileCopyMap{$strFile}{size}) .
                    ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")");
 
-        $oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                       PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
-                                       undef, $oFileCopyMap{$strFile}{modification_time},
-                                       undef, $bPathCreate);
-
         $lSize += $oFileCopyMap{$strFile}{size};
+
+        # Copy the file.  If the copy fails see if the file exists.  During normal operation the database wil remove files.
+        # Don't error out in that case.  
+        unless($oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
+                                           PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
+                                           undef, $oFileCopyMap{$strFile}{modification_time},
+                                           undef, $bPathCreate, false))
+        {
+            if (!$oFile[$iThreadIdx]->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
+            {
+                &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
+                
+                # Remove the file and the temp file just in case
+                $oFile[$iThreadIdx]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
+                $oFile[$iThreadIdx]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
+            }
+
+            next;
+        }
+        
 
         #                # Write the hash into the backup manifest (if not suppressed)
         #                if (!$bNoChecksum)
@@ -1165,6 +1180,10 @@ sub backup
     # Save the backup conf file first time - so we can see what is happening in the backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
+    &log(INFO, "sleeping");
+    sleep(10);
+    &log(INFO, "waking");
+
     # Perform the backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
            
@@ -1183,6 +1202,7 @@ sub backup
         backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
+        &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
         my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
 
         foreach my $strArchive (@stryArchive)
@@ -1260,22 +1280,19 @@ sub archive_list_get
 
     while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
     {
-        if ($strArchiveStart ne $strArchiveStop)
-        {
-            $iArchiveIdx += 1;
-            $iStartMinor += 1;
+        $iStartMinor += 1;
 
-            if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
-            {
-                $iStartMajor += 1;
-                $iStartMinor = 0;
-            }
+        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
+        {
+            $iStartMajor += 1;
+            $iStartMinor = 0;
         }
 
         $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+        $iArchiveIdx += 1;
     }
 
-    &log(TRACE, "    archive_list_get: $strArchiveStart-$strArchiveStop (@stryArchive)");
+    &log(TRACE, "    archive_list_get: $strArchiveStart:$strArchiveStop (@stryArchive)");
 
     return @stryArchive;
 }
