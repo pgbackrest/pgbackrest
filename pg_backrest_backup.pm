@@ -107,14 +107,11 @@ sub thread_init
 
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadActualTotal; $iThreadIdx++)
     {
-        if (!defined($oThreadQueue[$iThreadIdx]))
-        {
-            $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
-        }
+        $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
 
-        if (!defined($oFile[$iThreadIdx]))
+        if (!defined($oFile[$iThreadIdx + 1]))
         {
-            $oFile[$iThreadIdx] = $oFile[0]->clone($iThreadIdx);
+            $oFile[$iThreadIdx + 1] = $oFile[0]->clone($iThreadIdx + 1);
         }
     }
     
@@ -191,14 +188,20 @@ sub backup_thread_complete
 
                 if ($oThread[$iThreadIdx]->is_joinable())
                 {
+                    &log(DEBUG, "thread ${iThreadIdx} exited");
                     $oThread[$iThreadIdx]->join();
+                    &log(TRACE, "thread ${iThreadIdx} object undef");
                     undef($oThread[$iThreadIdx]);
+                    &log(TRACE, "thread ${iThreadIdx} file object undef");
+                    undef($oFile[$iThreadIdx + 1]);
                     $iThreadComplete++;
                 }
             }
         }
     }
-    
+
+    &log(DEBUG, "all threads exited");
+
     return true;
 }
 
@@ -334,10 +337,10 @@ sub archive_pull_copy_thread
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
         # Copy the file
-        $oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
-                                       PATH_BACKUP_ARCHIVE, basename($strFile),
-                                       undef, undef,
-                                       undef); # cannot set permissions remotely yet $oFile[0]->{strDefaultFilePermission});
+        $oFile[$iThreadIdx + 1]->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
+                                           PATH_BACKUP_ARCHIVE, basename($strFile),
+                                           undef, undef,
+                                           undef); # cannot set permissions remotely yet $oFile[0]->{strDefaultFilePermission});
                                              
         #  Remove the source archive file
         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
@@ -421,7 +424,7 @@ sub archive_pull_compress_thread
         &log(INFO, "thread ${iThreadIdx} compressing archive file ${strFile}");
         
         # Compress the file
-        $oFile[$iThreadIdx]->file_compress(PATH_DB_ABSOLUTE, "${strArchivePath}/${strFile}");
+        $oFile[$iThreadIdx + 1]->file_compress(PATH_DB_ABSOLUTE, "${strArchivePath}/${strFile}");
     }
 }
 
@@ -1101,20 +1104,20 @@ sub backup_file_thread
                   ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")";
 
         # Copy the file from the database to the backup
-        unless($oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
+        unless($oFile[$iThreadIdx + 1]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                               PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
                                               undef, $oFileCopyMap{$strFile}{modification_time},
                                               undef, $bPathCreate, false))
         {
             # If the copy fails then see if the file still exists on the database
-            if (!$oFile[$iThreadIdx]->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
+            if (!$oFile[$iThreadIdx + 1]->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
             {
                 # If it is missing then the database must have removed it (or is now corrupt)
                 &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
 
                 # Remove the destination file and the temp file just in case they had already been written
-                $oFile[$iThreadIdx]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
-                $oFile[$iThreadIdx]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
+                $oFile[$iThreadIdx + 1]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
+                $oFile[$iThreadIdx + 1]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
             }
 
             # Write a message into the master queue to have the file removed from the manifest
@@ -1128,7 +1131,7 @@ sub backup_file_thread
         if ($bChecksum)
         {
             # Generate the checksum
-            my $strChecksum = $oFile[$iThreadIdx]->file_hash_get(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
+            my $strChecksum = $oFile[$iThreadIdx + 1]->file_hash_get(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
 
             # Write the checksum message into the master queue
             $oMasterQueue->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
@@ -1140,6 +1143,8 @@ sub backup_file_thread
             &log(INFO, $strLog);
         }
     }
+    
+    &log(DEBUG, "thread ${iThreadIdx} exiting");
 }
 
 ####################################################################################################################################

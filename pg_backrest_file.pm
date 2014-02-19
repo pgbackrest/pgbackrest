@@ -73,22 +73,22 @@ sub BUILD
         }
 
         # Connect SSH object if backup host is defined
-        if (defined($self->{strBackupHost}))
+        if (!defined($self->{oBackupSSH}) && defined($self->{strBackupHost}))
         {
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
 
             # !!! This could be improved by redirecting stderr to a file to get a better error message
-            $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, user => $self->{strBackupUser}, master_opts => [-o => $strOptionSSH]);
+            $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, master_stderr_discard => true, timeout => 300, user => $self->{strBackupUser}, master_opts => [-o => $strOptionSSH]);
             $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
         }
 
         # Connect SSH object if db host is defined
-        if (defined($self->{strDbHost}))
+        if (!defined($self->{oDbSSH}) && defined($self->{strDbHost}))
         {
             &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
             # !!! This could be improved by redirecting stderr to a file to get a better error message
-            $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, user => $self->{strDbUser}, master_opts => [-o => $strOptionSSH]);
+            $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, master_stderr_discard => true, timeout => 300, user => $self->{strDbUser}, master_opts => [-o => $strOptionSSH]);
             $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
         }
     }
@@ -112,8 +112,10 @@ sub clone
         strCommandDecompress => $self->{strCommandDecompress},
         strCommandCat => $self->{strCommandCat},
         strCommandManifest => $self->{strCommandManifest},
+        oDbSSH => $self->{strDbSSH},
         strDbUser => $self->{strDbUser},
         strDbHost => $self->{strDbHost},
+        oBackupSSH => $self->{strBackupSSH},
         strBackupUser => $self->{strBackupUser},
         strBackupHost => $self->{strBackupHost},
         strBackupPath => $self->{strBackupPath},
@@ -455,6 +457,10 @@ sub file_move
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
 
+    &log(TRACE, "file_move: ${strSourcePathType}: " . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
+                " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : ""));
+
+    # Get source and desination files
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strSourcePathType))
     {
         confess &log(ASSERT, "source and destination path types must be equal");
@@ -462,7 +468,7 @@ sub file_move
 
     my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
     my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
-    
+
     # If the destination path is backup and does not exist, create it
     if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
     {
@@ -508,6 +514,9 @@ sub file_copy
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
     $bConfessCopyError = defined($bConfessCopyError) ? $bConfessCopyError : false;
+
+    &log(TRACE, "file_copy: ${strSourcePathType}: " . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
+                " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : ""));
 
     # Modification time and permissions cannot be set remotely
     if ((defined($lModificationTime) || defined($strPermission)) && $self->is_remote($strDestinationPathType))
