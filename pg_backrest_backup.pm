@@ -3,6 +3,8 @@
 ####################################################################################################################################
 package pg_backrest_backup;
 
+use threads;
+
 use strict;
 use warnings;
 use Carp;
@@ -10,14 +12,8 @@ use File::Basename;
 use File::Path;
 use JSON;
 use Scalar::Util qw(looks_like_number);
-use threads;
-use Thread::Queue;
 use Storable;
-
-use threads ('yield',
-             'stack_size' => 64 * 4096,
-             'exit' => 'threads_only',
-             'stringify');
+use Thread::Queue;
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -181,8 +177,6 @@ sub backup_thread_complete
                     $oThread[$iThreadIdx]->join();
                     &log(TRACE, "thread ${iThreadIdx} object undef");
                     undef($oThread[$iThreadIdx]);
-#                    &log(TRACE, "thread ${iThreadIdx} file object undef");
-#                    undef($oFile[$iThreadIdx + 1]);
                     $iThreadComplete++;
                 }
             }

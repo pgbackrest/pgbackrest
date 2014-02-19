@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use threads;
+
 use strict;
 use warnings;
 
