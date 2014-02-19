@@ -42,6 +42,7 @@ my $bArchiveRequired;
 # Thread variables
 my @oThread;
 my @oThreadQueue;
+my $oMasterQueue;
 my %oFileCopyMap;
 
 ####################################################################################################################################
@@ -116,6 +117,8 @@ sub thread_init
             $oFile[$iThreadIdx] = $oFile[0]->clone($iThreadIdx);
         }
     }
+    
+    $oMasterQueue = Thread::Queue->new();
     
     return $iThreadActualTotal;
 }
@@ -928,6 +931,8 @@ sub backup_file
                                          $lFileSize, $lFileTotal);
 
                     $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
+                    $oFileCopyMap{"${strKey}"}{file_section} = $strSectionFile;
+                    $oFileCopyMap{"${strKey}"}{file} = ${strFile};
                     $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
                     $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
                     $oFileCopyMap{"${strKey}"}{modification_time} = 
@@ -1001,78 +1006,139 @@ sub backup_file
         }
     }
 
-    # End each thread queue and start the thread
+    # End each thread queue and start the backu_file threads
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
+        # Output info about how much work each thread is going to do
         &log(INFO, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
                    "size $oyThreadData[$iThreadIdx]{large_size}");
         &log(INFO, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
                    "size $oyThreadData[$iThreadIdx]{small_size}");
 
+        # End each queue
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
-        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, $bNoChecksum, !$bPathCreate,
+
+        # Start the thread
+        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, !$bNoChecksum, !$bPathCreate,
                                                 $oyThreadData[$iThreadIdx]{size});
     }
 
+    # Wait for the threads to complete
     backup_thread_complete();
     
-#    # Look for errors
-#    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-#    {
-#        if (defined($oThread[$iThreadIdx]->error()))
-#        {
-#            confess &log(ERROR, "error in thread ${iThreadIdx}: check log for details");
-#        }
-#    }
+    # Read the messages that we passed back from the threads.  These should be two types:
+    # 1) remove - files that were skipped because they were removed from the database during backup
+    # 2) checksum - file checksums calculated by the threads
+    while (my $strMessage = $oMasterQueue->dequeue_nb())
+    {
+        &log (DEBUG, "message received in master queue: ${strMessage}");
+
+        # Split the message.  Currently using | as the split character.  Not ideal, but it will do for now.
+        my @strSplit = split(/\|/, $strMessage);
+
+        my $strCommand = $strSplit[0];      # Command to execute on a file
+        my $strFileSection = $strSplit[1];  # File section where the file is located
+        my $strFile = $strSplit[2];         # The file to act on
+
+        # These three parts are required
+        if (!defined($strCommand) || !defined($strFileSection) || !defined($strFile))
+        {
+            confess &log(ASSERT, "thread messages must have strCommand, strFileSection and strFile defined");
+        }
+
+        &log (DEBUG, "command = ${strCommand}, file_section = ${strFileSection}, file = ${strFile}");
+
+        # If command is "remove" then mark the skipped file in the manifest
+        if ($strCommand eq "remove")
+        {
+            delete ${$oBackupManifestRef}{"${strFileSection}"}{"$strFile"};
+
+            &log (INFO, "marked skipped ${strFileSection}:${strFile} from the manifest");
+        }
+        # If command is "checksum" then record the checksum in the manifest
+        elsif ($strCommand eq "checksum")
+        {
+            my $strChecksum = $strSplit[3];  # File checksum calculated by the thread
+
+            # Checksum must be defined
+            if (!defined($strChecksum))
+            {
+                confess &log(ASSERT, "thread checksum messages must have strChecksum defined");
+            }
+
+            ${$oBackupManifestRef}{"${strFileSection}"}{"$strFile"}{checksum} = $strChecksum;
+
+            # Log the checksum
+            &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum}");
+        }
+    }
 }
 
 sub backup_file_thread
 {
     my @args = @_;
 
-    my $iThreadIdx = $args[0];
-    my $bNoChecksum = $args[1];
-    my $bPathCreate = $args[2];
-    my $lSizeTotal = $args[3];
+    my $iThreadIdx = $args[0];      # Defines the index of this thread
+    my $bChecksum = $args[1];       # Should checksums be generated on files after they have been backed up?
+    my $bPathCreate = $args[2];     # Should paths be created automatically?
+    my $lSizeTotal = $args[3];      # Total size of the files to be copied by this thread
 
-    my $lSize = 0;
+    my $lSize = 0;                  # Size of files currently copied by this thread
+    my $strLog;                     # Store the log message
 
+    # When a KILL signal is received, immediately abort
     $SIG{'KILL'} = sub {threads->exit();};
 
+    # Iterate through all the files in this thread's queue to be copied from the database to the backup
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
-        &log(INFO, "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" . 
-                   file_size_format($oFileCopyMap{$strFile}{size}) .
-                   ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")");
-
+        # Add the size of the current file to keep track of percent complete
         $lSize += $oFileCopyMap{$strFile}{size};
 
-        # Copy the file.  If the copy fails see if the file exists.  During normal operation the database wil remove files.
-        # Don't error out in that case.  
+        # Output information about the file to be copied
+        $strLog = "thread ${iThreadIdx} backed up file $oFileCopyMap{$strFile}{db_file} (" . 
+                  file_size_format($oFileCopyMap{$strFile}{size}) .
+                  ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")";
+
+        # Copy the file from the database to the backup
         unless($oFile[$iThreadIdx]->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                           PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
-                                           undef, $oFileCopyMap{$strFile}{modification_time},
-                                           undef, $bPathCreate, false))
+                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
+                                              undef, $oFileCopyMap{$strFile}{modification_time},
+                                              undef, $bPathCreate, false))
         {
+            # If the copy fails then see if the file still exists on the database
             if (!$oFile[$iThreadIdx]->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
             {
+                # If it is missing then the database must have removed it (or is now corrupt)
                 &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
-                
-                # Remove the file and the temp file just in case
+
+                # Remove the destination file and the temp file just in case they had already been written
                 $oFile[$iThreadIdx]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
                 $oFile[$iThreadIdx]->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
             }
 
+            # Write a message into the master queue to have the file removed from the manifest
+            $oMasterQueue->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}");
+
+            # Move on to the next file
             next;
         }
-        
 
-        #                # Write the hash into the backup manifest (if not suppressed)
-        #                if (!$bNoChecksum)
-        #                {
-        #                    ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{checksum} =
-        #                        $oFile[0]->file_hash_get(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}");
-        #                }
+        # Generate checksum for file if requested
+        if ($bChecksum)
+        {
+            # Generate the checksum
+            my $strChecksum = $oFile[$iThreadIdx]->file_hash_get(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
+
+            # Write the checksum message into the master queue
+            $oMasterQueue->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
+            
+            &log(INFO, $strLog . " checksum ${strChecksum}");
+        }
+        else
+        {
+            &log(INFO, $strLog);
+        }
     }
 }
 
@@ -1084,20 +1150,20 @@ sub backup_file_thread
 sub backup
 {
     my $strDbClusterPath = shift;
-    
+
     # Not supporting remote backup hosts yet
     if ($oFile[0]->is_remote(PATH_BACKUP))
     {
         confess &log(ERROR, "remote backup host not currently supported");
     }
-    
+
     if (!defined($strDbClusterPath))
     {
         confess &log(ERROR, "cluster data path is not defined");
     }
-    
+
     &log(DEBUG, "cluster path is $strDbClusterPath");
-    
+
     # Create the cluster backup path
     $oFile[0]->path_create(PATH_BACKUP_CLUSTER);
 
@@ -1109,12 +1175,12 @@ sub backup
     if (defined($strBackupLastPath))
     {
         %oLastManifest = backup_manifest_load($oFile[0]->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
-        
+
         if (!defined($oLastManifest{backup}{label}))
         {
             confess &log(ERROR, "unable to find label in backup $strBackupLastPath");
         }
-        
+
         &log(INFO, "last backup label: $oLastManifest{backup}{label}");
     }
 
@@ -1131,7 +1197,7 @@ sub backup
         $strBackupPath = substr($strBackupLastPath, 0, 16);
 
         $strBackupPath .= "_" . date_string_get();
-        
+
         if ($strType eq "differential")
         {
             $strBackupPath .= "D";
@@ -1180,18 +1246,17 @@ sub backup
     # Save the backup conf file first time - so we can see what is happening in the backup
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
-    &log(INFO, "sleeping");
-    sleep(10);
-    &log(INFO, "waking");
-
     # Perform the backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
-           
+
     # Stop backup
     my $strArchiveStop = $oDb->backup_stop();
 
     ${oBackupManifest}{backup}{"archive-stop"} = $strArchiveStop;
     &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{"archive-stop"});
+
+    # Need to remove empty directories that were caused by skipped files
+    # !!! DO IT
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the 
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
@@ -1227,7 +1292,7 @@ sub backup
 
     # Need some sort of backup validate - create a manifest and compare the backup manifest
     # !!! DO IT
-    
+
     # Save the backup conf file final time
     backup_manifest_save($strBackupConfFile, \%oBackupManifest);
 
