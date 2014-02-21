@@ -581,7 +581,7 @@ sub file_copy
             # Execute the command through ssh
             my $oSSH = $self->remote_get($strSourcePathType);
             
-            unless ($oSSH->system({stdout_fh => $hFile, stderr_discard => true}, $strCommand))
+            unless ($oSSH->system({stdout_fh => $hFile}, $strCommand))
             {
                 close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
                 
