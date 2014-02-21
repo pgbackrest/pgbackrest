@@ -635,7 +635,7 @@ sub file_copy
 
             my $oSSH = $self->remote_get($strSourcePathType);
 
-            unless($oSSH->system({stderr_discard => true}, $strCommand))
+            unless($oSSH->system($strCommand))
             {
                 my $strResult = "unable to execute remote command ${strCommand}:" . oSSH->error;
                 $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
@@ -820,7 +820,7 @@ sub file_exists
         &log(TRACE, "file_exists: remote ${strPathType}:${strPathExists}");
 
         my $oSSH = $self->remote_get($strPathType);
-        $strExists = $oSSH->capture({stderr_discard => true}, $strCommand);
+        $strExists = $oSSH->capture($strCommand);
     }
     # Run locally
     else
@@ -861,7 +861,7 @@ sub file_remove
         &log(TRACE, "file_remove: remote ${strPathType}:${strPathRemove}");
 
         my $oSSH = $self->remote_get($strPathType);
-        $oSSH->system({stderr_discard => true}, $strCommand) or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove remote ${strPathType}:${strPathRemove}") : true;
+        $oSSH->system($strCommand) or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove remote ${strPathType}:${strPathRemove}") : true;
     }
     # Run locally
     else
