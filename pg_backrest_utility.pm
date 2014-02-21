@@ -316,7 +316,7 @@ sub log
     }
 
     $strMessage = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
-                  (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessage}\n";
+                  (" " x (7 - length($strLevel))) . "${strLevel} $$: ${strMessage}\n";
 
     if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank})
     {

@@ -1121,7 +1121,7 @@ sub backup_file_thread
         }
 
         # Generate checksum for file if requested
-        if ($bChecksum)
+        if ($bChecksum && $lSize != 0)
         {
             # Generate the checksum
             my $strChecksum = $oFileThread->file_hash_get(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
