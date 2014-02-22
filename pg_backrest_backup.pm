@@ -1485,7 +1485,16 @@ sub backup_expire
     
     if (!defined($strArchiveRetentionBackup))
     {
-        return;
+        if ($strArchiveRetentionType eq "full" && scalar @stryPath > 0)
+        {
+            &log(INFO, "fewer than required backups for retention, but since archive_retention_type = full using oldest full backup");
+            $strArchiveRetentionBackup = $stryPath[scalar @stryPath - 1];
+        }
+
+        if (!defined($strArchiveRetentionBackup))
+        {
+            return;
+        }
     }
 
     # Get the archive logs that need to be kept.  To be cautious we will keep all the archive logs starting from this backup
@@ -1497,7 +1506,7 @@ sub backup_expire
     
     if (!defined($strArchiveLast))
     {
-        confess &log(INFO, "invalid archive location retrieved ${strArchiveRetentionBackup}");
+        confess &log(ERROR, "invalid archive location retrieved ${strArchiveRetentionBackup}");
     }
     
     &log(INFO, "archive retention starts at " . $strArchiveLast);
