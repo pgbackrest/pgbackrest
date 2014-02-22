@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use Carp;
 use File::Basename;
-use File::Path;
+use File::Path qw(remove_tree);
 use JSON;
 use Scalar::Util qw(looks_like_number);
 use Storable;
@@ -1514,12 +1514,16 @@ sub backup_expire
     # Remove any archive directories or files that are out of date
     foreach $strPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
     {
+        &log(DEBUG, "found major archive path " . $strPath);
+        
         # If less than first 16 characters of current archive file, then remove the directory
         if ($strPath lt substr($strArchiveLast, 0, 16))
         {
-            system("rm -rf " . $oFile->{strBackupClusterPath} . "/archive/" . $strPath) == 0
-                or confess &log(ERROR, "unable to remove " . $strPath);
-            &log(DEBUG, "removed major archive directory " . $strPath);
+            my $strFullPath = $oFile->path_get(PATH_BACKUP_ARCHIVE) . "/$strPath";
+            
+            remove_tree($strFullPath) > 0 or confess &log(ERROR, "unable to remove ${strFullPath}");
+            
+            &log(DEBUG, "removed major archive path " . $strFullPath);
         }
         # If equals the first 16 characters of the current archive file, then delete individual files instead
         elsif ($strPath eq substr($strArchiveLast, 0, 16))
