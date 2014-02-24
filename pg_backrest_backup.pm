@@ -34,6 +34,7 @@ my $iThreadLocalMax;
 my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
+my $iThreadTimeout;
 
 # Thread variables
 my @oThread;
@@ -53,6 +54,7 @@ sub backup_init
     my $bNoChecksumParam = shift;
     my $iThreadMaxParam = shift;
     my $bArchiveRequiredParam = shift;
+    my $iThreadTimeoutParam = shift;
 
     $oDb = $oDbParam;
     $oFile = $oFileParam;
@@ -61,7 +63,8 @@ sub backup_init
     $bNoChecksum = $bNoChecksumParam;
     $iThreadMax = $iThreadMaxParam;
     $bArchiveRequired = $bArchiveRequiredParam;
-
+    $iThreadTimeout = $iThreadTimeoutParam;
+    
     if (!defined($iThreadMax))
     {
         $iThreadMax = 1;
@@ -138,6 +141,7 @@ sub backup_thread_kill
 ####################################################################################################################################
 sub backup_thread_complete
 {
+    my $iTimeout = shift;
     my $bConfessOnError = shift;
     
     if (!defined($bConfessOnError))
@@ -145,13 +149,30 @@ sub backup_thread_complete
         $bConfessOnError = true;
     }
 
+    if (!defined($iTimeout))
+    {
+        &log(WARN, "no thread timeout was set");
+    }
+
     # Wait for all threads to complete and handle errors
     my $iThreadComplete = 0;
+    my $lTimeBegin = time();
 
     # Rejoin the threads
     while ($iThreadComplete < $iThreadLocalMax)
     {
         sleep(1);
+        
+        # If a timeout has been defined, make sure we have not been running longer than that
+        if (defined($iTimeout))
+        {
+            if (time() - $lTimeBegin >= $iTimeout)
+            {
+                backup_thread_kill();
+
+                confess &log(WARN, "threads have been running more than ${iTimeout} seconds, exiting...")
+            }
+        }
         
         for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
         {
@@ -160,7 +181,7 @@ sub backup_thread_complete
                 if (defined($oThread[$iThreadIdx]->error()))
                 {
                     backup_thread_kill();
-                
+
                     if ($bConfessOnError)
                     {
                         confess &log(ERROR, "error in thread ${iThreadIdx}: check log for details");
@@ -286,7 +307,7 @@ sub archive_pull
         $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
     }
 
-    backup_thread_complete();
+    backup_thread_complete($iThreadTimeout);
 
     # Find the archive paths that need to be removed
     my $strPathMax = substr((sort {$b cmp $a} @stryFile)[0], 0, 16);
@@ -314,6 +335,9 @@ sub archive_pull_copy_thread
     my $strArchivePath = $args[1];
 
     my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
+
+    # When a KILL signal is received, immediately abort
+    $SIG{'KILL'} = sub {threads->exit();};
 
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
@@ -394,7 +418,7 @@ sub archive_compress
     }
 
     # Complete the threads
-    backup_thread_complete();
+    backup_thread_complete($iThreadTimeout);
 }
 
 sub archive_pull_compress_thread
@@ -405,6 +429,9 @@ sub archive_pull_compress_thread
     my $strArchivePath = $args[1];
 
     my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
+
+    # When a KILL signal is received, immediately abort
+    $SIG{'KILL'} = sub {threads->exit();};
 
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
@@ -618,13 +645,13 @@ sub backup_tmp_clean
     # Remove the pg_xlog directory since it contains nothing useful for the new backup
     if (-e $oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog"))
     {
-        rmtree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog")) or confess &log(ERROR, "unable to delete tmp pg_xlog path");
+        remove_tree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_xlog")) or confess &log(ERROR, "unable to delete tmp pg_xlog path");
     }
 
     # Remove the pg_tblspc directory since it is trivial to rebuild, but hard to compare
     if (-e $oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc"))
     {
-        rmtree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc")) or confess &log(ERROR, "unable to delete tmp pg_tblspc path");
+        remove_tree($oFile->path_get(PATH_BACKUP_TMP, "base/pg_tblspc")) or confess &log(ERROR, "unable to delete tmp pg_tblspc path");
     }
 
     # Get the list of files that should be deleted from temp
@@ -1014,7 +1041,7 @@ sub backup_file
     }
 
     # Wait for the threads to complete
-    backup_thread_complete();
+    backup_thread_complete($iThreadTimeout);
     
     # Read the messages that we passed back from the threads.  These should be two types:
     # 1) remove - files that were skipped because they were removed from the database during backup

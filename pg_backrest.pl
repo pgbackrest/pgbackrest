@@ -40,6 +40,7 @@ use constant
     CONFIG_KEY_PATH               => "path",
 
     CONFIG_KEY_THREAD_MAX         => "thread-max",
+    CONFIG_KEY_THREAD_TIMEOUT     => "thread-timeout",
     CONFIG_KEY_HARDLINK           => "hardlink",
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
     CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
@@ -331,7 +332,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 undef,
                 undef,
                 !$bChecksum,
-                config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
+                config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
+                undef,
+                config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
             );
 
             # Call the archive_pull function  Continue to loop as long as there are files to process.
@@ -346,7 +349,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             if ($bCompressAsync)
             {
                 &log(ERROR, "error during transfer: $@");
-                &log(WARN, "errors during transter, starting compression");
+                &log(WARN, "errors during transfer, starting compression");
 
                 # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
                 my $oFile = pg_backrest_file->new
@@ -367,7 +370,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                     undef,
                     undef,
                     !$bChecksum,
-                    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)
+                    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
+                    undef,
+                    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
                 );
 
                 archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand, 256);
@@ -453,7 +458,8 @@ backup_init
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, "n") eq "y" ? true : false,
     !$bChecksum,
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
-    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, "y") eq "y" ? true : false
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, "y") eq "y" ? true : false,
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
 );
 
 ####################################################################################################################################
