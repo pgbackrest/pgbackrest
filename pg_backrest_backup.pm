@@ -288,28 +288,43 @@ sub archive_pull
     # Output files to be moved to backup
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
 
-    # Init the thread variables
-    $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
-    my $iThreadIdx = 0;
+    # # Init the thread variables
+    # $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
+    # my $iThreadIdx = 0;
+    # 
+    # &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
+    # 
+    # # Distribute files among the threads
+    # foreach my $strFile (sort @stryFile)
+    # {
+    #     $oThreadQueue[$iThreadIdx]->enqueue($strFile);
+    # 
+    #     $iThreadIdx = ($iThreadIdx + 1 == $iThreadLocalMax) ? 0 : $iThreadIdx + 1;
+    # }
+    # 
+    # # End each thread queue and start the thread
+    # for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+    # {
+    #     $oThreadQueue[$iThreadIdx]->enqueue(undef);
+    #     $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
+    # }
+    # 
+    # backup_thread_complete($iThreadTimeout);
 
-    &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
-
-    # Distribute files among the threads
+    # Transfer each file
     foreach my $strFile (sort @stryFile)
     {
-        $oThreadQueue[$iThreadIdx]->enqueue($strFile);
+        &log(INFO, "backing up archive file ${strFile}");
+        
+        my $strArchiveFile = "${strArchivePath}/${strFile}";
 
-        $iThreadIdx = ($iThreadIdx + 1 == $iThreadLocalMax) ? 0 : $iThreadIdx + 1;
+        # Copy the file
+        $oFile->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
+                          PATH_BACKUP_ARCHIVE, basename($strFile));
+                                             
+        #  Remove the source archive file
+        unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
     }
-
-    # End each thread queue and start the thread
-    for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-    {
-        $oThreadQueue[$iThreadIdx]->enqueue(undef);
-        $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
-    }
-
-    backup_thread_complete($iThreadTimeout);
 
     # Find the archive paths that need to be removed
     my $strPathMax = substr((sort {$b cmp $a} @stryFile)[0], 0, 16);
@@ -329,34 +344,34 @@ sub archive_pull
     return $lFileTotal;
 }
 
-sub archive_pull_copy_thread
-{
-    my @args = @_;
-
-    my $iThreadIdx = $args[0];
-    my $strArchivePath = $args[1];
-
-    my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
-
-    # When a KILL signal is received, immediately abort
-    $SIG{'KILL'} = sub {threads->exit();};
-
-    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
-    {
-        &log(INFO, "thread ${iThreadIdx} backing up archive file ${strFile}");
-        
-        my $strArchiveFile = "${strArchivePath}/${strFile}";
-
-        # Copy the file
-        $oFileThread->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
-                                           PATH_BACKUP_ARCHIVE, basename($strFile),
-                                           undef, undef,
-                                           undef); # cannot set permissions remotely yet $oFile->{strDefaultFilePermission});
-                                             
-        #  Remove the source archive file
-        unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
-    }
-}
+# sub archive_pull_copy_thread
+# {
+#     my @args = @_;
+# 
+#     my $iThreadIdx = $args[0];
+#     my $strArchivePath = $args[1];
+# 
+#     my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
+# 
+#     # When a KILL signal is received, immediately abort
+#     $SIG{'KILL'} = sub {threads->exit();};
+# 
+#     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
+#     {
+#         &log(INFO, "thread ${iThreadIdx} backing up archive file ${strFile}");
+#         
+#         my $strArchiveFile = "${strArchivePath}/${strFile}";
+# 
+#         # Copy the file
+#         $oFileThread->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
+#                                            PATH_BACKUP_ARCHIVE, basename($strFile),
+#                                            undef, undef,
+#                                            undef); # cannot set permissions remotely yet $oFile->{strDefaultFilePermission});
+#                                              
+#         #  Remove the source archive file
+#         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
+#     }
+# }
 
 sub archive_compress
 {
