@@ -564,6 +564,7 @@ sub file_copy
     }
 
     $strCommand =~ s/\%file\%/${strSource}/g;
+    $strCommand .= " 2> /dev/null";
 
     # If this command is remote on only one side
     if ($self->is_remote($strSourcePathType) && !$self->is_remote($strDestinationPathType) ||
@@ -809,7 +810,7 @@ sub file_exists
     my $strPathExists = $self->path_get($strPathType, $strPath);
 
     # Builds the exists command
-    my $strCommand = "ls ${strPathExists}";
+    my $strCommand = "ls ${strPathExists} 2> /dev/null";
     
     # Run the file exists command
     my $strExists = "";
