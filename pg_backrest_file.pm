@@ -892,6 +892,7 @@ sub manifest_get
     # Builds the manifest command
     my $strCommand = $self->{strCommandManifest};
     $strCommand =~ s/\%path\%/${strPathManifest}/g;
+    $strCommand .= " 2> /dev/null";
     
     # Run the manifest command
     my $strManifest;
