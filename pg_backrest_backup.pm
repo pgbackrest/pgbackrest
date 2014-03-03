@@ -168,7 +168,7 @@ sub backup_thread_complete
         {
             if (time() - $lTimeBegin >= $iTimeout)
             {
-                confess &log(WARN, "threads have been running more than ${iTimeout} seconds, exiting...");
+                confess &log(ERROR, "threads have been running more than ${iTimeout} seconds, exiting...");
 
                 #backup_thread_kill();
 
