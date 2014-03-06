@@ -6,7 +6,7 @@ Simple Postgres Backup and Restore
 release notes
 =============
 
-v0.01: Backup and archiving are functional
+v0.10: Backup and archiving are functional
 
 This version has been put into production at Resonate, so it does work, but there are a number of major caveats.
 
