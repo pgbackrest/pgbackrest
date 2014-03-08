@@ -6,6 +6,12 @@ Simple Postgres Backup and Restore
 release notes
 =============
 
+v0.15: Added archive-get [THIS IS PLANNED FUNCTIONALITY FOR THIS RELEASE]
+
+* Added archive-get functionality to aid in restores.
+
+* Default restore.conf is written to each backup.
+
 v0.10: Backup and archiving are functional
 
 This version has been put into production at Resonate, so it does work, but there are a number of major caveats.
