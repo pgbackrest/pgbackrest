@@ -738,7 +738,7 @@ sub file_compress
 
     if (!defined($self->{strCommandCompress}))
     {
-        confess &log(ASSERT, "\$strCommandChecksum not defined");
+        confess &log(ASSERT, "\$strCommandCompress not defined");
     }
 
     my $strPath = $self->path_get($strPathType, $strFile);
@@ -762,39 +762,66 @@ sub file_list_get
     my $strExpression = shift;
     my $strSortOrder = shift;
 
-    # For now this operation is not supported remotely.  Not currently needed.
+    # Get the root path for the manifest
+    my $strPathList = $self->path_get($strPathType, $strPath);
+
+    # Builds the exists command
+    my $strCommand = "ls ${strPathList} | egrep \"$strExpression\" 2> /dev/null";
+    
+    # Run the file exists command
+    my $strExists = "";
+
+    # Run remotely
     if ($self->is_remote($strPathType))
     {
-        confess &log(ASSERT, "remote operation not supported");
+        &log(TRACE, "file_exists: remote ${strPathType}:${strPathExists}");
+
+        my $oSSH = $self->remote_get($strPathType);
+        $strExists = $oSSH->capture($strCommand);
     }
-
-    my $strPathList = $self->path_get($strPathType, $strPath);
-    my $hDir;
-
-    opendir $hDir, $strPathList or confess &log(ERROR, "unable to open path ${strPathList}");
-    my @stryFileAll = readdir $hDir or confess &log(ERROR, "unable to get files for path ${strPathList}, expression ${strExpression}");
-    close $hDir;
-
-    my @stryFile;
-
-    if (@stryFileAll)
+    # Run locally
+    else
     {
-        @stryFile = grep(/$strExpression/i, @stryFileAll)
+        &log(TRACE, "file_exists: local ${strPathType}:${strPathExists}");
+        $strExists = capture($strCommand);
     }
 
-    if (@stryFile)
-    {
-        if (defined($strSortOrder) && $strSortOrder eq "reverse")
-        {
-            return sort {$b cmp $a} @stryFile;
-        }
-        else
-        {
-            return sort @stryFile;
-        }
-    }
+    # If the return from ls eq strPathExists then true
+    return ($strExists eq $strPathExists);
 
-    return @stryFile;
+    # # For now this operation is not supported remotely.  Not currently needed.
+    # if ($self->is_remote($strPathType))
+    # {
+    #     confess &log(ASSERT, "remote operation not supported");
+    # }
+    # 
+    # my $strPathList = $self->path_get($strPathType, $strPath);
+    # my $hDir;
+    # 
+    # opendir $hDir, $strPathList or confess &log(ERROR, "unable to open path ${strPathList}");
+    # my @stryFileAll = readdir $hDir or confess &log(ERROR, "unable to get files for path ${strPathList}, expression ${strExpression}");
+    # close $hDir;
+    # 
+    # my @stryFile;
+    # 
+    # if (@stryFileAll)
+    # {
+    #     @stryFile = grep(/$strExpression/i, @stryFileAll)
+    # }
+    # 
+    # if (@stryFile)
+    # {
+    #     if (defined($strSortOrder) && $strSortOrder eq "reverse")
+    #     {
+    #         return sort {$b cmp $a} @stryFile;
+    #     }
+    #     else
+    #     {
+    #         return sort @stryFile;
+    #     }
+    # }
+    # 
+    # return @stryFile;
 }
 
 ####################################################################################################################################
@@ -892,7 +919,7 @@ sub manifest_get
     # Builds the manifest command
     my $strCommand = $self->{strCommandManifest};
     $strCommand =~ s/\%path\%/${strPathManifest}/g;
-    $strCommand .= " 2> /dev/null";
+        $strCommand .= " 2> /dev/null";
     
     # Run the manifest command
     my $strManifest;

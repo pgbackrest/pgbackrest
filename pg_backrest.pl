@@ -1,7 +1,7 @@
+#!/usr/bin/perl
 ####################################################################################################################################
 # pg_backrest.pl - Simple Postgres Backup and Restore
 ####################################################################################################################################
-#!/usr/bin/perl
 
 ####################################################################################################################################
 # Perl includes
@@ -26,10 +26,11 @@ use pg_backrest_db;
 ####################################################################################################################################
 use constant
 {
+    OP_ARCHIVE_GET  => "archive-get",
     OP_ARCHIVE_PUSH => "archive-push",
     OP_ARCHIVE_PULL => "archive-pull",
     OP_BACKUP       => "backup",
-    OP_EXPIRE       => "expire",
+    OP_EXPIRE       => "expire"
 };
 
 ####################################################################################################################################
@@ -168,7 +169,8 @@ if (!defined($strOperation))
     confess &log(ERROR, "operation is not defined");
 }
 
-if ($strOperation ne OP_ARCHIVE_PUSH &&
+if ($strOperation ne OP_ARCHIVE_GET &&
+    $strOperation ne OP_ARCHIVE_PUSH &&
     $strOperation ne OP_ARCHIVE_PULL &&
     $strOperation ne OP_BACKUP &&
     $strOperation ne OP_EXPIRE)
@@ -203,7 +205,51 @@ log_level_set(uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, "I
               uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, "ERROR")));
 
 ####################################################################################################################################
-# ARCHIVE-PUSH Command
+# ARCHIVE-GET Command
+####################################################################################################################################
+if ($strOperation eq OP_ARCHIVE_GET)
+{
+    # Make sure the archive file is defined
+    if (!defined($ARGV[1]))
+    {
+        confess &log(ERROR, "archive file not provided - show usage");
+    }
+
+    # Make sure the destination file is defined
+    if (!defined($ARGV[2]))
+    {
+        confess &log(ERROR, "destination file not provided - show usage");
+    }
+
+    # Init the file object
+    my $oFile = pg_backrest_file->new
+    (
+        strStanza => $strStanza,
+        bNoCompression => true,
+        strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+        strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
+        strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, true)
+    );
+
+    # Init the backup object
+    backup_init
+    (
+        undef,
+        $oFile
+    );
+
+    # Info for the Postgres log
+    &log(INFO, "getting archive log " . $ARGV[1]);
+
+    # Get the archive file
+    archive_get($ARGV[1], $ARGV[2]);
+
+    exit 0;
+}
+
+####################################################################################################################################
+# ARCHIVE-PUSH and ARCHIVE-PULL Commands
 ####################################################################################################################################
 if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 {
