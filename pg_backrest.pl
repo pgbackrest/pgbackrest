@@ -471,7 +471,7 @@ if ($strOperation eq OP_BACKUP)
 
     if (!lock_file_create($strLockFile))
     {
-        &log(DEBUG, "backup process is already running for stanza ${strStanza} - exiting");
+        &log(ERROR, "backup process is already running for stanza ${strStanza} - exiting");
         exit 0
     }
 
@@ -493,7 +493,7 @@ if ($strOperation eq OP_EXPIRE)
 
     if (!lock_file_create($strLockFile))
     {
-        &log(DEBUG, "expire process is already running for stanza ${strStanza} - exiting");
+        &log(ERROR, "expire process is already running for stanza ${strStanza} - exiting");
         exit 0
     }
 
