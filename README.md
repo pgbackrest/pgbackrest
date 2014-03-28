@@ -20,6 +20,16 @@ v0.15: Added archive-get [PLANNED FUNCTIONALITY FOR THIS RELEASE]
 
 -------------
 
+v0.11: Minor fixes
+
+Tweaking a few settings after running backups for about a month.
+
+* Removed master_stderr_discard option on database SSH connections.  There have been occasional lockups and they could be related issues originally seen in the file code.
+
+* Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
+
+-------------
+
 v0.10: Backup and archiving are functional
 
 This version has been put into production at Resonate, so it does work, but there are a number of major caveats.

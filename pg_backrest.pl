@@ -83,7 +83,7 @@ GetOptions ("config=s" => \$strConfigFile,
 # Global variables
 ####################################################################################################################################
 my %oConfig;            # Configuration hash
-
+    
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
 ####################################################################################################################################
@@ -523,6 +523,12 @@ backup_init
 );
 
 ####################################################################################################################################
+# DEBUG
+####################################################################################################################################
+#print "out: " . ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, "0000000100000000", ".*", 'asc'))[0];
+#exit 0;
+
+####################################################################################################################################
 # BACKUP
 ####################################################################################################################################
 if ($strOperation eq OP_BACKUP)
@@ -531,15 +537,13 @@ if ($strOperation eq OP_BACKUP)
 
     if (!lock_file_create($strLockFile))
     {
-        &log(DEBUG, "backup process is already running for stanza ${strStanza} - exiting");
+        &log(ERROR, "backup process is already running for stanza ${strStanza} - exiting");
         exit 0
     }
 
     backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
 
     $strOperation = OP_EXPIRE;
-    
-    sleep(30);
 
     lock_file_remove();
 }
@@ -553,7 +557,7 @@ if ($strOperation eq OP_EXPIRE)
 
     if (!lock_file_create($strLockFile))
     {
-        &log(DEBUG, "expire process is already running for stanza ${strStanza} - exiting");
+        &log(ERROR, "expire process is already running for stanza ${strStanza} - exiting");
         exit 0
     }
 

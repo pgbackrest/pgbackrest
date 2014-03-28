@@ -1440,8 +1440,6 @@ sub backup_expire
 
         while (defined($stryPath[$iIndex]))
         {
-            &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
-
             # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
             # be consistent if the process dies
             foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
@@ -1449,6 +1447,8 @@ sub backup_expire
                 system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
             }
         
+            &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
+
             $iIndex++;
         }
     }
