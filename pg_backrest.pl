@@ -55,6 +55,7 @@ use constant
     CONFIG_KEY_HARDLINK           => "hardlink",
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
     CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
+    CONFIG_KEY_START_FAST         => "start_fast",
 
     CONFIG_KEY_LEVEL_FILE         => "level-file",
     CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
@@ -535,7 +536,8 @@ if ($strOperation eq OP_BACKUP)
         exit 0
     }
 
-    backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
+    backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
+           config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, "n") eq "y" ? true : false);
 
     $strOperation = OP_EXPIRE;
 

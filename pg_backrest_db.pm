@@ -126,9 +126,11 @@ sub backup_start
 {
     my $self = shift;
     my $strLabel = shift;
+    my $bStartFast = shift;
 
     return trim($self->psql_execute("set client_min_messages = 'warning';" . 
-                                    "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}') as xlog) to stdout"));
+                                    "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
+                                    ($bStartFast ? ", true" : "") . ") as xlog) to stdout"));
 }
 
 ####################################################################################################################################

@@ -22,7 +22,8 @@ use pg_backrest_db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_pull archive_compress backup backup_expire archive_list_get);
+our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_pull archive_get archive_compress
+                 backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
@@ -209,6 +210,29 @@ sub backup_thread_complete
     &log(DEBUG, "all threads exited");
 
     return true;
+}
+
+####################################################################################################################################
+# ARCHIVE_GET
+####################################################################################################################################
+sub archive_get
+{
+    my $strSourceArchive = shift;
+    my $strDestinationFile = shift;
+
+    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSourceArchive));
+
+    my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath,
+        "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
+
+    if (scalar @stryArchiveFile != 1)
+    {
+        confess &log(ERROR, (scalar @stryArchiveFile) . " archive file(s) found for ${strSourceArchive}"); 
+    }
+
+    &log(DEBUG, "archive_get: cp ${stryArchiveFile[0]} ${strDestinationFile}");
+
+    $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_DB_ABSOLUTE, $strDestinationFile);
 }
 
 ####################################################################################################################################
@@ -1192,6 +1216,7 @@ sub backup_file_thread
 sub backup
 {
     my $strDbClusterPath = shift;
+    my $bStartFast = shift;
 
     # Not supporting remote backup hosts yet
     if ($oFile->is_remote(PATH_BACKUP))
@@ -1260,7 +1285,7 @@ sub backup
     my %oBackupManifest;
     ${oBackupManifest}{backup}{label} = $strBackupPath;
 
-    my $strArchiveStart = $oDb->backup_start($strBackupPath);
+    my $strArchiveStart = $oDb->backup_start($strBackupPath, $bStartFast);
     ${oBackupManifest}{backup}{"archive-start"} = $strArchiveStart;
 
     &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{"archive-start"});

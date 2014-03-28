@@ -170,7 +170,7 @@ sub path_get
     my $bTemp = shift;      # Return the temp file for this path type - only some types have temp files
 
     # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP
-    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP))
+    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $strType eq PATH_DB_ABSOLUTE))
     {
         confess &log(ASSERT, "temp file not supported on path " . $strType);
     }
@@ -178,6 +178,11 @@ sub path_get
     # Get absolute db path
     if ($strType eq PATH_DB_ABSOLUTE)
     {
+        if (defined($bTemp) && $bTemp)
+        {
+            return $strFile . ".backrest.tmp";
+        }
+
         return $strFile;
     }
 
@@ -789,12 +794,6 @@ sub file_list_get
 
     # Split the files into an array
     my @stryFileList = grep(/$strExpression/i, split(/\n/, $strFileList));
-
-    # If nothing was found return undef
-#    if (undef(@stryFileList) || scalar @stryFileList == 0)
-#    {
-#        return undef;
-#    }
 
     # Return the array in reverse order if specified
     if (defined($strSortOrder) && $strSortOrder eq "reverse")
