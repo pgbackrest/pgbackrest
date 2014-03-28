@@ -767,7 +767,7 @@ sub file_list_get
 
     # Builds the file list command
 #    my $strCommand = "ls ${strPathList} | egrep \"$strExpression\" 2> /dev/null";
-    my $strCommand = "ls ${strPathList} | cat 2> /dev/null";
+    my $strCommand = "ls -1 ${strPathList} 2> /dev/null";
     
     # Run the file list command
     my $strFileList = "";
@@ -787,14 +787,14 @@ sub file_list_get
         $strFileList = capture($strCommand) or confess("error in ${strCommand}");
     }
 
-    # If nothing was found return undef
-    if ($strFileList eq "")
-    {
-        return undef;
-    }
-
     # Split the files into an array
     my @stryFileList = grep(/$strExpression/i, split(/\n/, $strFileList));
+
+    # If nothing was found return undef
+#    if (undef(@stryFileList) || scalar @stryFileList == 0)
+#    {
+#        return undef;
+#    }
 
     # Return the array in reverse order if specified
     if (defined($strSortOrder) && $strSortOrder eq "reverse")
