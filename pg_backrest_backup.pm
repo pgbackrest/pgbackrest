@@ -1025,10 +1025,10 @@ sub backup_file
     my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadLocalMax;
 
     &log(INFO, "file total ${lFileTotal}");
-    &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
-         ", small thread avg total " . file_size_format(int($iThreadFileSmallTotalMax)));
-    &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
-         ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
+    &log(DEBUG, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
+                ", small thread avg total " . file_size_format(int($iThreadFileSmallTotalMax)));
+    &log(DEBUG, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
+                ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
     foreach my $strFile (sort (keys %oFileCopyMap))
     {
@@ -1068,10 +1068,10 @@ sub backup_file
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         # Output info about how much work each thread is going to do
-        &log(INFO, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
-                   "size $oyThreadData[$iThreadIdx]{large_size}");
-        &log(INFO, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
-                   "size $oyThreadData[$iThreadIdx]{small_size}");
+        &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
+                    "size $oyThreadData[$iThreadIdx]{large_size}");
+        &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
+                    "size $oyThreadData[$iThreadIdx]{small_size}");
 
         # End each queue
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
