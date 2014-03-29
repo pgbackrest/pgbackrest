@@ -22,7 +22,8 @@ use pg_backrest_db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_pull archive_compress backup backup_expire archive_list_get);
+our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_pull archive_get archive_compress
+                 backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
@@ -209,6 +210,29 @@ sub backup_thread_complete
     &log(DEBUG, "all threads exited");
 
     return true;
+}
+
+####################################################################################################################################
+# ARCHIVE_GET
+####################################################################################################################################
+sub archive_get
+{
+    my $strSourceArchive = shift;
+    my $strDestinationFile = shift;
+
+    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSourceArchive));
+
+    my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath,
+        "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
+
+    if (scalar @stryArchiveFile != 1)
+    {
+        confess &log(ERROR, (scalar @stryArchiveFile) . " archive file(s) found for ${strSourceArchive}"); 
+    }
+
+    &log(DEBUG, "archive_get: cp ${stryArchiveFile[0]} ${strDestinationFile}");
+
+    $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_DB_ABSOLUTE, $strDestinationFile);
 }
 
 ####################################################################################################################################
@@ -1001,10 +1025,10 @@ sub backup_file
     my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadLocalMax;
 
     &log(INFO, "file total ${lFileTotal}");
-    &log(INFO, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
-         ", small thread avg total " . file_size_format(int($iThreadFileSmallTotalMax)));
-    &log(INFO, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
-         ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
+    &log(DEBUG, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
+                ", small thread avg total " . file_size_format(int($iThreadFileSmallTotalMax)));
+    &log(DEBUG, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
+                ", large thread avg size " . file_size_format(int($fThreadFileLargeSizeMax)));
 
     foreach my $strFile (sort (keys %oFileCopyMap))
     {
@@ -1044,10 +1068,10 @@ sub backup_file
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         # Output info about how much work each thread is going to do
-        &log(INFO, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
-                   "size $oyThreadData[$iThreadIdx]{large_size}");
-        &log(INFO, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
-                   "size $oyThreadData[$iThreadIdx]{small_size}");
+        &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
+                    "size $oyThreadData[$iThreadIdx]{large_size}");
+        &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
+                    "size $oyThreadData[$iThreadIdx]{small_size}");
 
         # End each queue
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
@@ -1192,6 +1216,7 @@ sub backup_file_thread
 sub backup
 {
     my $strDbClusterPath = shift;
+    my $bStartFast = shift;
 
     # Not supporting remote backup hosts yet
     if ($oFile->is_remote(PATH_BACKUP))
@@ -1260,7 +1285,7 @@ sub backup
     my %oBackupManifest;
     ${oBackupManifest}{backup}{label} = $strBackupPath;
 
-    my $strArchiveStart = $oDb->backup_start($strBackupPath);
+    my $strArchiveStart = $oDb->backup_start($strBackupPath, $bStartFast);
     ${oBackupManifest}{backup}{"archive-start"} = $strArchiveStart;
 
     &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{"archive-start"});
@@ -1440,8 +1465,6 @@ sub backup_expire
 
         while (defined($stryPath[$iIndex]))
         {
-            &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
-
             # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
             # be consistent if the process dies
             foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
@@ -1449,6 +1472,8 @@ sub backup_expire
                 system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
             }
         
+            &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
+
             $iIndex++;
         }
     }

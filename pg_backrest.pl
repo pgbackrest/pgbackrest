@@ -1,9 +1,14 @@
 #!/usr/bin/perl
+####################################################################################################################################
+# pg_backrest.pl - Simple Postgres Backup and Restore
+####################################################################################################################################
 
-use threads;
-
+####################################################################################################################################
+# Perl includes
+####################################################################################################################################
 use strict;
 use warnings;
+use threads;
 
 use File::Basename;
 use Getopt::Long;
@@ -16,15 +21,21 @@ use pg_backrest_file;
 use pg_backrest_backup;
 use pg_backrest_db;
 
-# Operation constants
+####################################################################################################################################
+# Operation constants - basic operations that are allowed in backrest
+####################################################################################################################################
 use constant
 {
+    OP_ARCHIVE_GET  => "archive-get",
     OP_ARCHIVE_PUSH => "archive-push",
     OP_ARCHIVE_PULL => "archive-pull",
     OP_BACKUP       => "backup",
-    OP_EXPIRE       => "expire",
+    OP_EXPIRE       => "expire"
 };
 
+####################################################################################################################################
+# Configuration constants - configuration sections and keys
+####################################################################################################################################
 use constant
 {
     CONFIG_SECTION_COMMAND        => "command",
@@ -44,6 +55,7 @@ use constant
     CONFIG_KEY_HARDLINK           => "hardlink",
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
     CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
+    CONFIG_KEY_START_FAST         => "start_fast",
 
     CONFIG_KEY_LEVEL_FILE         => "level-file",
     CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
@@ -56,7 +68,9 @@ use constant
     CONFIG_KEY_PSQL               => "psql"
 };
 
+####################################################################################################################################
 # Command line parameters
+####################################################################################################################################
 my $strConfigFile;      # Configuration file
 my $strStanza;          # Stanza in the configuration file to load
 my $strType;            # Type of backup: full, differential (diff), incremental (incr)
@@ -65,10 +79,12 @@ GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
             "type=s" => \$strType)
     or die("Error in command line arguments\n");
-    
-# Global variables
-my %oConfig;
 
+####################################################################################################################################
+# Global variables
+####################################################################################################################################
+my %oConfig;            # Configuration hash
+    
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
 ####################################################################################################################################
@@ -154,7 +170,8 @@ if (!defined($strOperation))
     confess &log(ERROR, "operation is not defined");
 }
 
-if ($strOperation ne OP_ARCHIVE_PUSH &&
+if ($strOperation ne OP_ARCHIVE_GET &&
+    $strOperation ne OP_ARCHIVE_PUSH &&
     $strOperation ne OP_ARCHIVE_PULL &&
     $strOperation ne OP_BACKUP &&
     $strOperation ne OP_EXPIRE)
@@ -189,7 +206,51 @@ log_level_set(uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, "I
               uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, "ERROR")));
 
 ####################################################################################################################################
-# ARCHIVE-PUSH Command
+# ARCHIVE-GET Command
+####################################################################################################################################
+if ($strOperation eq OP_ARCHIVE_GET)
+{
+    # Make sure the archive file is defined
+    if (!defined($ARGV[1]))
+    {
+        confess &log(ERROR, "archive file not provided - show usage");
+    }
+
+    # Make sure the destination file is defined
+    if (!defined($ARGV[2]))
+    {
+        confess &log(ERROR, "destination file not provided - show usage");
+    }
+
+    # Init the file object
+    my $oFile = pg_backrest_file->new
+    (
+        strStanza => $strStanza,
+        bNoCompression => true,
+        strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+        strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
+        strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, true)
+    );
+
+    # Init the backup object
+    backup_init
+    (
+        undef,
+        $oFile
+    );
+
+    # Info for the Postgres log
+    &log(INFO, "getting archive log " . $ARGV[1]);
+
+    # Get the archive file
+    archive_get($ARGV[1], $ARGV[2]);
+
+    exit 0;
+}
+
+####################################################################################################################################
+# ARCHIVE-PUSH and ARCHIVE-PULL Commands
 ####################################################################################################################################
 if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 {
@@ -475,11 +536,10 @@ if ($strOperation eq OP_BACKUP)
         exit 0
     }
 
-    backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH));
+    backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
+           config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, "n") eq "y" ? true : false);
 
     $strOperation = OP_EXPIRE;
-    
-    sleep(30);
 
     lock_file_remove();
 }

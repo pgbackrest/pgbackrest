@@ -170,7 +170,7 @@ sub path_get
     my $bTemp = shift;      # Return the temp file for this path type - only some types have temp files
 
     # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP
-    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP))
+    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $strType eq PATH_DB_ABSOLUTE))
     {
         confess &log(ASSERT, "temp file not supported on path " . $strType);
     }
@@ -178,6 +178,11 @@ sub path_get
     # Get absolute db path
     if ($strType eq PATH_DB_ABSOLUTE)
     {
+        if (defined($bTemp) && $bTemp)
+        {
+            return $strFile . ".backrest.tmp";
+        }
+
         return $strFile;
     }
 
@@ -738,7 +743,7 @@ sub file_compress
 
     if (!defined($self->{strCommandCompress}))
     {
-        confess &log(ASSERT, "\$strCommandChecksum not defined");
+        confess &log(ASSERT, "\$strCommandCompress not defined");
     }
 
     my $strPath = $self->path_get($strPathType, $strFile);
@@ -762,39 +767,42 @@ sub file_list_get
     my $strExpression = shift;
     my $strSortOrder = shift;
 
-    # For now this operation is not supported remotely.  Not currently needed.
+    # Get the root path for the file list
+    my $strPathList = $self->path_get($strPathType, $strPath);
+
+    # Builds the file list command
+#    my $strCommand = "ls ${strPathList} | egrep \"$strExpression\" 2> /dev/null";
+    my $strCommand = "ls -1 ${strPathList} 2> /dev/null";
+    
+    # Run the file list command
+    my $strFileList = "";
+
+    # Run remotely
     if ($self->is_remote($strPathType))
     {
-        confess &log(ASSERT, "remote operation not supported");
+        &log(TRACE, "file_list_get: remote ${strPathType}:${strPathList} ${strCommand}");
+
+        my $oSSH = $self->remote_get($strPathType);
+        $strFileList = $oSSH->capture($strCommand);
     }
-
-    my $strPathList = $self->path_get($strPathType, $strPath);
-    my $hDir;
-
-    opendir $hDir, $strPathList or confess &log(ERROR, "unable to open path ${strPathList}");
-    my @stryFileAll = readdir $hDir or confess &log(ERROR, "unable to get files for path ${strPathList}, expression ${strExpression}");
-    close $hDir;
-
-    my @stryFile;
-
-    if (@stryFileAll)
+    # Run locally
+    else
     {
-        @stryFile = grep(/$strExpression/i, @stryFileAll)
+        &log(TRACE, "file_list_get: local ${strPathType}:${strPathList} ${strCommand}");
+        $strFileList = capture($strCommand) or confess("error in ${strCommand}");
     }
 
-    if (@stryFile)
+    # Split the files into an array
+    my @stryFileList = grep(/$strExpression/i, split(/\n/, $strFileList));
+
+    # Return the array in reverse order if specified
+    if (defined($strSortOrder) && $strSortOrder eq "reverse")
     {
-        if (defined($strSortOrder) && $strSortOrder eq "reverse")
-        {
-            return sort {$b cmp $a} @stryFile;
-        }
-        else
-        {
-            return sort @stryFile;
-        }
+        return sort {$b cmp $a} @stryFileList;
     }
-
-    return @stryFile;
+    
+    # Return in normal sorted order
+    return sort @stryFileList;
 }
 
 ####################################################################################################################################
