@@ -1,27 +1,22 @@
-pg_backrest
-===========
+# pg_backrest
 
 Simple Postgres Backup and Restore
 
-planned for next release
-========================
+## planned for next release
 
 * Default restore.conf is written to each backup.
 
 * Able to set timeout on ssh connection in config file.
 
-release notes
-=============
+## release notes
 
-v0.15: Added archive-get
+### v0.15: Added archive-get
 
 * Added archive-get functionality to aid in restores.
 
 * Added option to force a checkpoint when starting the backup (start_fast=y).
 
--------------
-
-v0.11: Minor fixes
+### v0.11: Minor fixes
 
 Tweaking a few settings after running backups for about a month.
 
@@ -29,9 +24,7 @@ Tweaking a few settings after running backups for about a month.
 
 * Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
 
--------------
-
-v0.10: Backup and archiving are functional
+### v0.10: Backup and archiving are functional
 
 This version has been put into production at Resonate, so it does work, but there are a number of major caveats.
 
