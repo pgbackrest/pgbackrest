@@ -35,10 +35,13 @@ sub BUILD
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
     {
+        my $strOptionSSHRequestTTY = "RequestTTY=yes";
+        
         &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, user => $self->{strDbUser});
+        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, user => $self->{strDbUser},
+                              master_opts => [-o => $strOptionSSHRequestTTY]);
         $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
     }
 }
