@@ -362,6 +362,10 @@ sub archive_pull
             &log(DEBUG, "removing local archive path ${strPath}");
             rmdir($strArchivePath . "/" . $strPath) or confess &log(ERROR, "unable to remove archive path ${strPath}, is it empty?");
         }
+        
+        # If the dir is not empty check if the files are in the manifest
+        # If they are error - there has been some issue
+        # If not, they are new - continue processing without error - they'll be picked up on the next run
     }
 
     # Return number of files indicating that processing should continue

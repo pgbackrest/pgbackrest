@@ -401,6 +401,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             # Call the archive_pull function  Continue to loop as long as there are files to process.
             while (archive_pull($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB))
             {
+                &log(DEBUG, "archive logs were transferred, calling archive_pull() again")
             }
         };
 

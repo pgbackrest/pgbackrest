@@ -67,11 +67,12 @@ sub BUILD
     # Create the ssh options string
     if (defined($self->{strBackupHost}) || defined($self->{strDbHost}))
     {
-        my $strOptionSSH = "Compression=no";
+        my $strOptionSSHRequestTTY = "RequestTTY=yes";
+        my $strOptionSSHCompression = "Compression=no";
 
         if ($self->{bNoCompression})
         {
-            $strOptionSSH = "Compression=yes";
+            $strOptionSSHCompression = "Compression=yes";
         }
 
         # Connect SSH object if backup host is defined
@@ -80,7 +81,8 @@ sub BUILD
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
 
             # !!! This could be improved by redirecting stderr to a file to get a better error message
-            $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser}, master_opts => [-o => $strOptionSSH]);
+            $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
+                                      master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
         }
 
@@ -90,7 +92,8 @@ sub BUILD
             &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
             # !!! This could be improved by redirecting stderr to a file to get a better error message
-            $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser}, master_opts => [-o => $strOptionSSH]);
+            $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser},
+                                  master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
         }
     }

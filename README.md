@@ -8,7 +8,15 @@ Simple Postgres Backup and Restore
 
 * Able to set timeout on ssh connection in config file.
 
+* Fix bug where .backup files written into old directories can cause the archive process to error.
+
+* Add configurable sleep to archiver process to reduce ssh connections.
+
 ## release notes
+
+### v0.16: RequestTTY=yes for SSH sessions
+
+* Added RequestTTY=yes to ssh sesssions.  Hoping this will prevent random lockups.
 
 ### v0.15: Added archive-get
 
