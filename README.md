@@ -12,6 +12,12 @@ Simple Postgres Backup and Restore
 
 * Add configurable sleep to archiver process to reduce ssh connections.
 
+## feature backlog
+
+* Database restore.
+
+* --version param.
+
 ## release notes
 
 ### v0.16: RequestTTY=yes for SSH sessions
