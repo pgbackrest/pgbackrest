@@ -20,6 +20,10 @@ Simple Postgres Backup and Restore
 
 ## release notes
 
+### v0.17: Warn when archive directories cannot be deleted
+
+* If an archive directory which should be empty could not be deleted backrest was throwing an error.  There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue.  This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).
+
 ### v0.16: RequestTTY=yes for SSH sessions
 
 * Added RequestTTY=yes to ssh sesssions.  Hoping this will prevent random lockups.
