@@ -16,7 +16,9 @@ Simple Postgres Backup and Restore
 
 * Database restore.
 
-* --version param.
+* --version param (with VERSION file written to directory).
+
+* Move backups to be removed to temp before deleting.
 
 ## release notes
 
