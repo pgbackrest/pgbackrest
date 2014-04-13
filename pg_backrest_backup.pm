@@ -220,19 +220,36 @@ sub archive_get
     my $strSourceArchive = shift;
     my $strDestinationFile = shift;
 
+    # Determine the path where the requested archive file is located
     my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSourceArchive));
 
+    # Get the name of the requested archive file (may have hash info and compression extension)
     my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath,
         "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
 
-    if (scalar @stryArchiveFile != 1)
+    # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
+    if (scalar @stryArchiveFile > 1)
     {
-        confess &log(ERROR, (scalar @stryArchiveFile) . " archive file(s) found for ${strSourceArchive}"); 
+        confess &log(ASSERT, (scalar @stryArchiveFile) . " archive files found for ${strSourceArchive}."); 
+    }
+    
+    # If there are no matching archive files then there are two possibilities:
+    # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
+    # 2) There is a hole in the archive stream so return a hard error (!!! However if turns out that due to race conditions this
+    #    is harder than it looks.  Postponed and added to the backlog.  For now treated as case #1.)
+    elsif (scalar @stryArchiveFile == 0)
+    {
+        &log(INFO, "${strSourceArchive} was not found in the archive repository"); 
+
+        return 1;
     }
 
     &log(DEBUG, "archive_get: cp ${stryArchiveFile[0]} ${strDestinationFile}");
 
+    # Copy the archive file to the requested location
     $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_DB_ABSOLUTE, $strDestinationFile);
+    
+    return 0;
 }
 
 ####################################################################################################################################

@@ -244,9 +244,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     &log(INFO, "getting archive log " . $ARGV[1]);
 
     # Get the archive file
-    archive_get($ARGV[1], $ARGV[2]);
-
-    exit 0;
+    exit archive_get($ARGV[1], $ARGV[2]);
 }
 
 ####################################################################################################################################
