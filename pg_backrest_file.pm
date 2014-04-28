@@ -32,6 +32,13 @@ has strCommandDecompress => (is => 'bare');
 has strCommandCat => (is => 'bare', default => 'cat %file%');
 has strCommandManifest => (is => 'bare');
 
+# Lock path
+has strLockPath => (is => 'bare');
+
+# Files to hold stderr
+#has strBackupStdErrFile => (is => 'bare');
+#has strDbStdErrFile => (is => 'bare');
+
 # Module variables
 has strDbUser => (is => 'bare');                # Database user
 has strDbHost => (is => 'bare');                # Database host
@@ -47,6 +54,21 @@ has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 has bNoCompression => (is => 'bare');
 has strStanza => (is => 'bare');
 has iThreadIdx => (is => 'bare');
+
+####################################################################################################################################
+# PATH_GET Constants
+####################################################################################################################################
+use constant
+{
+    PATH_DB              => 'db',
+    PATH_DB_ABSOLUTE     => 'db:absolute',
+    PATH_BACKUP          => 'backup',
+    PATH_BACKUP_ABSOLUTE => 'backup:absolute',
+    PATH_BACKUP_CLUSTER  => 'backup:cluster',
+    PATH_BACKUP_TMP      => 'backup:tmp',
+    PATH_BACKUP_ARCHIVE  => 'backup:archive',
+    PATH_LOCK_ERR        => 'lock:err'
+};
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -79,9 +101,10 @@ sub BUILD
         if (!defined($self->{oBackupSSH}) && defined($self->{strBackupHost}))
         {
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
-
-            # !!! This could be improved by redirecting stderr to a file to get a better error message
+            
             $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
+#                                      master_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
+                                      default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                       master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
         }
@@ -91,13 +114,25 @@ sub BUILD
         {
             &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
-            # !!! This could be improved by redirecting stderr to a file to get a better error message
             $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser},
+#                                  master_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
+                                  default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                   master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
         }
     }
 }
+
+####################################################################################################################################
+# LOCK_PATH_SET
+####################################################################################################################################
+#sub lock_path_set
+#{
+#    my $self = shift;
+#    my $strLockPathParam = shift;
+#    
+#    $self->{strLockPath} = $strLockPathParam;
+#}
 
 ####################################################################################################################################
 # CLONE
@@ -127,24 +162,31 @@ sub clone
         strBackupClusterPath => $self->{strBackupClusterPath},
         bNoCompression => $self->{bNoCompression},
         strStanza => $self->{strStanza},
-        iThreadIdx => $iThreadIdx
+        iThreadIdx => $iThreadIdx,
+        strLockPath => $self->{strLockPath}
     );
+}
+
+####################################################################################################################################
+# ERROR_GET
+####################################################################################################################################
+sub error_get
+{
+    my $self = shift;
+    
+    my $strErrorFile = $self->path_get(PATH_LOCK_ERR, "file");
+    
+    open my $hFile, '<', $strErrorFile or return "error opening ${strErrorFile} to read STDERR output";
+    
+    my $strError = do {local $/; <$hFile>};
+    close $hFile;
+    
+    return trim($strError);
 }
 
 ####################################################################################################################################
 # PATH_GET
 ####################################################################################################################################
-use constant 
-{
-    PATH_DB              => 'db',
-    PATH_DB_ABSOLUTE     => 'db:absolute',
-    PATH_BACKUP          => 'backup',
-    PATH_BACKUP_ABSOLUTE => 'backup:absolute',
-    PATH_BACKUP_CLUSTER  => 'backup:cluster',
-    PATH_BACKUP_TMP      => 'backup:tmp',
-    PATH_BACKUP_ARCHIVE  => 'backup:archive'
-};
-
 sub path_type_get
 {
     my $self = shift;
@@ -216,6 +258,15 @@ sub path_get
     }
 
     # Get the backup tmp path
+    if ($strType eq PATH_LOCK_ERR)
+    {
+        my $strTempPath = "$self->{strLockPath}";
+
+        return ${strTempPath} . (defined($strFile) ? "/${strFile}" .
+                                (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "") . ".err" : "");
+    }
+
+    # Get the backup tmp error path
     if ($strType eq PATH_BACKUP_TMP)
     {
         my $strTempPath = "$self->{strBackupPath}/temp/$self->{strStanza}.tmp";
@@ -774,8 +825,8 @@ sub file_list_get
     my $strPathList = $self->path_get($strPathType, $strPath);
 
     # Builds the file list command
-#    my $strCommand = "ls ${strPathList} | egrep \"$strExpression\" 2> /dev/null";
-    my $strCommand = "ls -1 ${strPathList} 2> /dev/null";
+#    my $strCommand = "ls ${strPathList} | egrep \"$strExpression\"";
+    my $strCommand = "ls -1 ${strPathList}";
     
     # Run the file list command
     my $strFileList = "";
@@ -787,16 +838,30 @@ sub file_list_get
 
         my $oSSH = $self->remote_get($strPathType);
         $strFileList = $oSSH->capture($strCommand);
+        
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "unable to execute file list (${strCommand}): " . $self->error_get());
+        }
     }
     # Run locally
     else
     {
         &log(TRACE, "file_list_get: local ${strPathType}:${strPathList} ${strCommand}");
-        $strFileList = capture($strCommand) or confess("error in ${strCommand}");
+        $strFileList = capture($strCommand);
     }
 
     # Split the files into an array
-    my @stryFileList = grep(/$strExpression/i, split(/\n/, $strFileList));
+    my @stryFileList;
+    
+    if (defined($strExpression))
+    {
+        @stryFileList = grep(/$strExpression/i, split(/\n/, $strFileList));
+    }
+    else
+    {
+        @stryFileList = split(/\n/, $strFileList);
+    }
 
     # Return the array in reverse order if specified
     if (defined($strSortOrder) && $strSortOrder eq "reverse")
@@ -903,7 +968,6 @@ sub manifest_get
     # Builds the manifest command
     my $strCommand = $self->{strCommandManifest};
     $strCommand =~ s/\%path\%/${strPathManifest}/g;
-    $strCommand .= " 2> /dev/null";
     
     # Run the manifest command
     my $strManifest;
@@ -914,7 +978,8 @@ sub manifest_get
         &log(TRACE, "manifest_get: remote ${strPathType}:${strPathManifest}");
 
         my $oSSH = $self->remote_get($strPathType);
-        $strManifest = $oSSH->capture($strCommand) or confess &log(ERROR, "unable to execute remote command '${strCommand}'");
+        $strManifest = $oSSH->capture($strCommand) or
+            confess &log(ERROR, "unable to execute remote manifest (${strCommand}): " . $self->error_get());
     }
     # Run locally
     else

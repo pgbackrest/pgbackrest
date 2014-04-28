@@ -14,11 +14,17 @@ Simple Postgres Backup and Restore
 
 ## feature backlog
 
+* Capture SDTERR in file functions - start with file_list_get().
+
+* Move backups to be removed to temp before deleting.
+
+* Async archive-get.
+
 * Database restore.
 
 * --version param (with VERSION file written to directory).
 
-* Move backups to be removed to temp before deleting.
+* Threading for archive-get and archive-put.
 
 ## release notes
 
