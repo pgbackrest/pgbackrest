@@ -352,9 +352,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         }
         
         # Create a lock file to make sure archive-pull does not run more than once
-        my $strLockFile = "${strArchivePath}/lock/${strStanza}-archive.lock";
+        my $strLockPath = "${strArchivePath}/lock/${strStanza}-archive.lock";
 
-        if (!lock_file_create($strLockFile))
+        if (!lock_file_create($strLockPath))
         {
             &log(DEBUG, "archive-pull process is already running - exiting");
             exit 0
@@ -381,7 +381,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
                 strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
                 strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-                strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
+                strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST),
+                strLockPath => $strLockPath
             );
 
             backup_init
@@ -484,6 +485,15 @@ elsif ($strType ne "full" && $strType ne "differential" && $strType ne "incremen
 my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
 my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
 
+# Set the lock path
+my $strLockPath = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) .  "/lock/${strStanza}-${strOperation}.lock";
+
+if (!lock_file_create($strLockPath))
+{
+    &log(ERROR, "backup process is already running for stanza ${strStanza} - exiting");
+    exit 0
+}
+
 # Run file_init_archive - the rest of the file config required for backup and restore
 my $oFile = pg_backrest_file->new
 (
@@ -498,7 +508,8 @@ my $oFile = pg_backrest_file->new
     strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
     strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
     strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST),
-    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL)
+    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
+    strLockPath => $strLockPath
 );
 
 my $oDb = pg_backrest_db->new
@@ -527,20 +538,10 @@ backup_init
 ####################################################################################################################################
 if ($strOperation eq OP_BACKUP)
 {
-    my $strLockFile = $oFile->path_get(PATH_BACKUP, "lock/${strStanza}-backup.lock");
-
-    if (!lock_file_create($strLockFile))
-    {
-        &log(ERROR, "backup process is already running for stanza ${strStanza} - exiting");
-        exit 0
-    }
-
     backup(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
            config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, "n") eq "y" ? true : false);
 
     $strOperation = OP_EXPIRE;
-
-    lock_file_remove();
 }
 
 ####################################################################################################################################
@@ -548,14 +549,6 @@ if ($strOperation eq OP_BACKUP)
 ####################################################################################################################################
 if ($strOperation eq OP_EXPIRE)
 {
-    my $strLockFile = $oFile->path_get(PATH_BACKUP, "lock/${strStanza}-expire.lock");
-
-    if (!lock_file_create($strLockFile))
-    {
-        &log(ERROR, "expire process is already running for stanza ${strStanza} - exiting");
-        exit 0
-    }
-
     backup_expire
     (
         $oFile->path_get(PATH_BACKUP_CLUSTER),

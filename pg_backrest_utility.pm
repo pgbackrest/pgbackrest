@@ -10,6 +10,7 @@ use warnings;
 use Carp;
 use IPC::System::Simple qw(capture);
 use Fcntl qw(:DEFAULT :flock);
+use File::Path qw(remove_tree);
 
 use Exporter qw(import);
 
@@ -41,7 +42,7 @@ my $strLogLevelFile = ERROR;
 my $strLogLevelConsole = ERROR;
 my %oLogLevelRank;
 
-my $strLockFile;
+my $strLockPath;
 my $hLockFile;
 
 $oLogLevelRank{TRACE}{rank} = 6;
@@ -57,13 +58,23 @@ $oLogLevelRank{OFF}{rank} = 0;
 ####################################################################################################################################
 sub lock_file_create
 {
-    my $strLockFileParam = shift;
-    
-    $strLockFile = $strLockFileParam;
+    my $strLockPathParam = shift;
+
+    my $strLockFile = $strLockPathParam . "/process.lock";
 
     if (defined($hLockFile))
     {
-        confess &lock(ASSERT, "${strLockFile} lock is already held, cannot create lock ${strLockFile}");
+        confess &lock(ASSERT, "${strLockFile} lock is already held");
+    }
+    
+    $strLockPath = $strLockPathParam;
+    
+    unless (-e $strLockPath)
+    {
+        if (system("mkdir -p ${strLockPath}") != 0)
+        {
+            confess &log(ERROR, "Unable to create lock path ${strLockPath}");
+        }
     }
 
     sysopen($hLockFile, $strLockFile, O_WRONLY | O_CREAT)
@@ -86,10 +97,11 @@ sub lock_file_remove
     if (defined($hLockFile))
     {
         close($hLockFile);
-        unlink($strLockFile) or confess &log(ERROR, "unable to remove lock file ${strLockFile}");
+        
+        remove_tree($strLockPath) or confess &log(ERROR, "unable to delete lock path ${strLockPath}");
         
         $hLockFile = undef;
-        $strLockFile = undef;
+        $strLockPath = undef;
     }
     else
     {
