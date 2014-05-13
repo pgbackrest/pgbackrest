@@ -103,7 +103,6 @@ sub BUILD
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
             
             $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
-#                                      master_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                       default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                       master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
@@ -115,24 +114,12 @@ sub BUILD
             &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
             $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser},
-#                                  master_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                   default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                   master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
         }
     }
 }
-
-####################################################################################################################################
-# LOCK_PATH_SET
-####################################################################################################################################
-#sub lock_path_set
-#{
-#    my $self = shift;
-#    my $strLockPathParam = shift;
-#    
-#    $self->{strLockPath} = $strLockPathParam;
-#}
 
 ####################################################################################################################################
 # CLONE
@@ -257,7 +244,7 @@ sub path_get
         confess &log(ASSERT, "\$strStanza not yet defined");
     }
 
-    # Get the backup tmp path
+    # Get the lock error path
     if ($strType eq PATH_LOCK_ERR)
     {
         my $strTempPath = "$self->{strLockPath}";
@@ -266,7 +253,7 @@ sub path_get
                                 (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "") . ".err" : "");
     }
 
-    # Get the backup tmp error path
+    # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
         my $strTempPath = "$self->{strBackupPath}/temp/$self->{strStanza}.tmp";
@@ -574,7 +561,7 @@ sub file_copy
 
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
-    $bConfessCopyError = defined($bConfessCopyError) ? $bConfessCopyError : false;
+    $bConfessCopyError = defined($bConfessCopyError) ? $bConfessCopyError : true;
 
     &log(TRACE, "file_copy: ${strSourcePathType}: " . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
                 " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : ""));
@@ -886,7 +873,7 @@ sub file_exists
     my $strPathExists = $self->path_get($strPathType, $strPath);
 
     # Builds the exists command
-    my $strCommand = "ls ${strPathExists} 2> /dev/null";
+    my $strCommand = "ls ${strPathExists}";
     
     # Run the file exists command
     my $strExists = "";
@@ -897,14 +884,21 @@ sub file_exists
         &log(TRACE, "file_exists: remote ${strPathType}:${strPathExists}");
 
         my $oSSH = $self->remote_get($strPathType);
-        $strExists = $oSSH->capture($strCommand);
+        $strExists = trim($oSSH->capture($strCommand));
+        
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "unable to execute file exists (${strCommand}): " . $self->error_get());
+        }
     }
     # Run locally
     else
     {
         &log(TRACE, "file_exists: local ${strPathType}:${strPathExists}");
-        $strExists = capture($strCommand);
+        $strExists = trim(capture($strCommand));
     }
+
+    &log(TRACE, "file_exists: search = ${strPathExists}, result = ${strExists}");
 
     # If the return from ls eq strPathExists then true
     return ($strExists eq $strPathExists);
@@ -939,11 +933,16 @@ sub file_remove
 
         my $oSSH = $self->remote_get($strPathType);
         $oSSH->system($strCommand) or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove remote ${strPathType}:${strPathRemove}") : true;
+        
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "unable to execute file_remove (${strCommand}): " . $self->error_get());
+        }
     }
     # Run locally
     else
     {
-        &log(TRACE, "file_exists: local ${strPathType}:${strPathRemove}");
+        &log(TRACE, "file_remove: local ${strPathType}:${strPathRemove}");
         system($strCommand) == 0 or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove local ${strPathType}:${strPathRemove}") : true;
     }
 }

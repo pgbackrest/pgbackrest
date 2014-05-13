@@ -1191,16 +1191,21 @@ sub backup_file_thread
         {
             &log(DEBUG, "thread ${iThreadIdx} unable to copy file: " . $oFileCopyMap{$strFile}{db_file});
 
-            # If the copy fails then see if the file still exists on the database
-            if (!$oFileThread->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
+            # If the copy fails then then check if the file exists.  The database frequently removes files so it is normal for
+            # files to be missing after the manifest is built.  However, if the file exists then it means there was some other
+            # sort of fatal copy error and an abort is required to prevent a corrupted backup
+            if ($oFileThread->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
             {
-                # If it is missing then the database must have removed it (or is now corrupt)
-                &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
-
-                # Remove the destination file and the temp file just in case they had already been written
-                $oFileThread->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
-                $oFileThread->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
+                # !!! Improve this error when able to retrieve error text from the File object
+                confess &log(ERROR, "unable to copy file $oFileCopyMap{$strFile}{db_file}");
             }
+
+            # If file is missing assume the database removed it (else corruption and nothing we can do!)
+            &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
+
+            # Remove the destination file and the temp file just in case they had already been written
+            $oFileThread->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
+            $oFileThread->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
 
             # Write a message into the master queue to have the file removed from the manifest
             $oMasterQueue[$iThreadIdx]->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}");
@@ -1209,7 +1214,7 @@ sub backup_file_thread
             next;
         }
 
-        # Generate checksum for file if requested
+        # Generate checksum for file if configured
         if ($bChecksum && $lSize != 0)
         {
             # Generate the checksum

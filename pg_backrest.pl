@@ -542,12 +542,6 @@ if ($strOperation eq OP_BACKUP)
            config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, "n") eq "y" ? true : false);
 
     $strOperation = OP_EXPIRE;
-
-#    my %hash = $oFile->manifest_get(PATH_DB_ABSOLUTE, "/Users/dsteele/pg_backrest");
-#    print "hash " . %hash . "\n";
-
-#    lock_file_remove();
-#    exit 0;
 }
 
 ####################################################################################################################################
