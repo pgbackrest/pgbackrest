@@ -4,15 +4,44 @@ Simple Postgres Backup and Restore
 
 ## planned for next release
 
+* Capture SDTERR in file functions - start with file_list_get() - IN PROGRESS.
+
+## feature backlog
+
+* Move backups to be removed to temp before deleting.
+
+* Async archive-get.
+
+* Database restore.
+
+* --version param (with VERSION file written to directory).
+
+* Threading for archive-get and archive-put.
+
+* Add configurable sleep to archiver process to reduce ssh connections.
+
+* Fix bug where .backup files written into old directories can cause the archive process to error.
+
 * Default restore.conf is written to each backup.
 
 * Able to set timeout on ssh connection in config file.
 
-* Fix bug where .backup files written into old directories can cause the archive process to error.
+## required perl modules
 
-* Add configurable sleep to archiver process to reduce ssh connections.
+Config::IniFiles
+Moose
+IPC::System::Simple
+Net::OpenSSH
+JSON
+IPC::Open3
 
 ## release notes
+
+### v0.19: Improved error reporting/handling
+
+* Working on improving error handling in the file object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).
+
+* Found and squashed a nasty bug where file_copy was defaulted to ignore errors.  There was also an issue in file_exists that was causing the test to fail when the file actually did exist.  Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.
 
 ### v0.18: Return soft error from archive-get when file is missing
 
