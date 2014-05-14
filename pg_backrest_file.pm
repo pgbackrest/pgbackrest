@@ -202,7 +202,8 @@ sub path_get
     my $bTemp = shift;      # Return the temp file for this path type - only some types have temp files
 
     # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP
-    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $strType eq PATH_DB_ABSOLUTE))
+    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || 
+                                       $strType eq PATH_DB_ABSOLUTE || $strType eq PATH_BACKUP_ABSOLUTE))
     {
         confess &log(ASSERT, "temp file not supported on path " . $strType);
     }
@@ -227,7 +228,10 @@ sub path_get
     # Get absolute backup path
     if ($strType eq PATH_BACKUP_ABSOLUTE)
     {
-        # Need a check in here to make sure this is relative to the backup path
+        if (defined($bTemp) && $bTemp)
+        {
+            return "${strFile}.backrest.tmp";
+        }
 
         return $strFile;
     }
@@ -610,7 +614,6 @@ sub file_copy
     }
 
     $strCommand =~ s/\%file\%/${strSource}/g;
-    $strCommand .= " 2> /dev/null";
 
     # If this command is remote on only one side
     if ($self->is_remote($strSourcePathType) && !$self->is_remote($strDestinationPathType) ||
@@ -681,10 +684,11 @@ sub file_copy
             &log(TRACE, "file_copy: remote ${strSourcePathType} '${strCommand}'");
 
             my $oSSH = $self->remote_get($strSourcePathType);
+            $oSSH->system($strCommand);
 
-            unless($oSSH->system($strCommand))
+            if ($oSSH->error)
             {
-                my $strResult = "unable to execute remote command ${strCommand}:" . oSSH->error;
+                my $strResult = "unable to execute copy ${strCommand}: " . $oSSH->error;
                 $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
             }
         }

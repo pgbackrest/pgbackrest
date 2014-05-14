@@ -15,9 +15,11 @@ use Getopt::Long;
 use Carp;
 
 use lib dirname($0) . "/lib";
-use BackRestTest::File;
+use BackRestTest::FileTest;
 
 ####################################################################################################################################
 # Perl includes
 ####################################################################################################################################
 BackRestTestFile();
+
+print "TEST COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)\n";

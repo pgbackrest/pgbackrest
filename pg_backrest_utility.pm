@@ -17,7 +17,7 @@ use Exporter qw(import);
 our @EXPORT = qw(data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
                  log log_file_set log_level_set
                  lock_file_create lock_file_remove
-                 TRACE DEBUG ERROR ASSERT WARN INFO true false);
+                 TRACE DEBUG ERROR ASSERT WARN INFO OFF true false);
 
 # Global constants
 use constant
