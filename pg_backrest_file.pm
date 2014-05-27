@@ -89,6 +89,11 @@ sub BUILD
     # Create the ssh options string
     if (defined($self->{strBackupHost}) || defined($self->{strDbHost}))
     {
+#        if (defined($self->{strBackupHost}) && defined($self->{strDbHost}))
+#        {
+#            confess &log(ASSERT, "backup and db hosts cannot both be remote");
+#        }
+        
         my $strOptionSSHRequestTTY = "RequestTTY=yes";
         my $strOptionSSHCompression = "Compression=no";
 
@@ -103,7 +108,7 @@ sub BUILD
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
             
             $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
-                                      default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
+#                                      default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                       master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
         }
@@ -114,7 +119,7 @@ sub BUILD
             &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
             $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser},
-                                  default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
+#                                  default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                   master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
         }
@@ -169,6 +174,16 @@ sub error_get
     close $hFile;
     
     return trim($strError);
+}
+
+####################################################################################################################################
+# ERROR_CLEAR
+####################################################################################################################################
+sub error_clear
+{
+    my $self = shift;
+
+    unlink($self->path_get(PATH_LOCK_ERR, "file"));
 }
 
 ####################################################################################################################################
@@ -251,7 +266,12 @@ sub path_get
     # Get the lock error path
     if ($strType eq PATH_LOCK_ERR)
     {
-        my $strTempPath = "$self->{strLockPath}";
+        my $strTempPath = $self->{strLockPath};
+        
+        if (!defined($strTempPath))
+        {
+            return undef;
+        }
 
         return ${strTempPath} . (defined($strFile) ? "/${strFile}" .
                                 (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "") . ".err" : "");
@@ -631,11 +651,11 @@ sub file_copy
             # Execute the command through ssh
             my $oSSH = $self->remote_get($strSourcePathType);
             
-            unless ($oSSH->system({stdout_fh => $hFile}, $strCommand))
+            unless ($oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file"), stdout_fh => $hFile}, $strCommand))
             {
                 close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
                 
-                my $strResult = "unable to execute ssh '${strCommand}'";
+                my $strResult = "unable to execute ssh '${strCommand}': " . $self->error_get();
                 $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
             }
 
@@ -647,21 +667,26 @@ sub file_copy
         {
             &log(TRACE, "file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
 
+            if (defined($self->path_get(PATH_LOCK_ERR, "file")))
+            {
+                $strCommand .= " 2> " . $self->path_get(PATH_LOCK_ERR, "file");
+            }
+
             # Open the input command as a stream
             my $hOut;
             my $pId = open3(undef, $hOut, undef, $strCommand) or confess(ERROR, "unable to execute '${strCommand}'");
 
             # Execute the command though ssh
             my $oSSH = $self->remote_get($strDestinationPathType);
-            $oSSH->system({stdin_fh => $hOut}, "cat > ${strDestinationTmp}") or confess &log(ERROR, "unable to execute ssh 'cat'");
+            $oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file"), stdin_fh => $hOut}, "cat > ${strDestinationTmp}") or confess &log(ERROR, "unable to execute ssh 'cat'");
 
             # Wait for the stream process to finish
             waitpid($pId, 0);
             my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-            
+
             if ($iExitStatus != 0)
             {
-                my $strResult = "command '${strCommand}' returned " . $iExitStatus;
+                my $strResult = "command '${strCommand}' returned " . $iExitStatus . ": " . $self->error_get();
                 $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
             }
         }
@@ -684,7 +709,7 @@ sub file_copy
             &log(TRACE, "file_copy: remote ${strSourcePathType} '${strCommand}'");
 
             my $oSSH = $self->remote_get($strSourcePathType);
-            $oSSH->system($strCommand);
+            $oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file")}, $strCommand);
 
             if ($oSSH->error)
             {
@@ -696,6 +721,11 @@ sub file_copy
         {
             &log(TRACE, "file_copy: local '${strCommand}'");
             
+            if (defined($self->path_get(PATH_LOCK_ERR, "file")))
+            {
+                $strCommand .= " 2> " . $self->path_get(PATH_LOCK_ERR, "file");
+            }
+
             unless(system($strCommand) == 0)
             {
                 my $strResult = "unable to copy local ${strSource} to local ${strDestinationTmp}";
@@ -876,36 +906,55 @@ sub file_exists
     # Get the root path for the manifest
     my $strPathExists = $self->path_get($strPathType, $strPath);
 
-    # Builds the exists command
-    my $strCommand = "ls ${strPathExists}";
-    
-    # Run the file exists command
-    my $strExists = "";
+    &log(TRACE, "file_exists: " . ($self->is_remote($strPathType) ? "remote" : "local") . " ${strPathType}:${strPathExists}");
 
     # Run remotely
     if ($self->is_remote($strPathType))
     {
-        &log(TRACE, "file_exists: remote ${strPathType}:${strPathExists}");
+        # Builds the exists command
+        my $strCommand = "ls ${strPathExists}";
+
+        # Run the file exists command
+        my $strExists;
+        my $strError;
+
+        &log(TRACE, "file_exists: command: ${strCommand}");
 
         my $oSSH = $self->remote_get($strPathType);
-        $strExists = trim($oSSH->capture($strCommand));
-        
+        $strExists = $oSSH->capture({stderr_file => $self->path_get(PATH_LOCK_ERR, "file")}, $strCommand);
+
+        &log(TRACE, "file_exists: search = ${strPathExists}, result = " . (defined($strExists) ? $strExists : "<undef>"));
+
         if ($oSSH->error)
         {
-            confess &log(ERROR, "unable to execute file exists (${strCommand}): " . $self->error_get());
+            my $strError = $self->error_get();
+            &log(TRACE, "error detected: $strError");
+
+            if ($strError =~ /.*ls.*No such file or directory.*/)
+            {
+                return(false);
+            }
+
+            confess &log(ERROR, "unable to execute file exists (${strCommand}): " . $strError);
         }
+
+        # If the return from ls eq strPathExists then true
+        return trim($strExists) eq $strPathExists;
     }
     # Run locally
     else
     {
-        &log(TRACE, "file_exists: local ${strPathType}:${strPathExists}");
-        $strExists = trim(capture($strCommand));
+        if (-e $strPathExists)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    &log(TRACE, "file_exists: search = ${strPathExists}, result = ${strExists}");
-
-    # If the return from ls eq strPathExists then true
-    return ($strExists eq $strPathExists);
+    confess &log(ASSERT, "file_exists: true or false should have been returned");
 }
 
 ####################################################################################################################################

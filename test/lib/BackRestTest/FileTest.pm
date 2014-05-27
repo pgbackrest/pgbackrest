@@ -23,22 +23,109 @@ our @EXPORT = qw(BackRestTestFile);
 
 sub BackRestTestFile
 {
+    my $strLockPath = dirname(abs_path($0)) . "/lock";
     my $strTestPath = dirname(abs_path($0)) . "/test";
     my $iRun = 0;
     
     log_level_set(OFF, OFF);
 
-    # Test copy()
-    for (my $bSourceRemote = 0; $bSourceRemote <= 1; $bSourceRemote++)
+    # !!! NEED TO TEST WHERE LOCK PATH IS UNDEF
+
+    # Test file_exists()
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
-        my $strSourceHost = $bSourceRemote ? "127.0.0.1" : undef;
-        my $strSourceUser = $bSourceRemote ? "dsteele" : undef;
+        my $strHost = $bRemote ? "127.0.0.1" : undef;
+        my $strUser = $bRemote ? "dsteele" : undef;
+
+        system("rm -rf lock");
+        system("mkdir -p lock") == 0 or confess "Unable to create lock directory";
+
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => "db",
+            bNoCompression => true,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $strHost,
+            strBackupUser => $strUser,
+            strLockPath => $strLockPath
+        );
+
+        # Loop through exists
+        for (my $bExists = 0; $bExists <= 1; $bExists++)
+        {
+            # Loop through error
+            for (my $bError = 0; $bError <= $bRemote ? 1 : 0; $bError++)
+            {
+                $iRun++;
+
+                print "run ${iRun} - " .
+                      "rmt $bRemote, exist $bExists, error $bError\n";
+
+                # Drop the old test directory and create a new one
+                system("rm -rf test");
+                system("mkdir test") == 0 or confess "Unable to create test directory";
+
+                my $strFile = "${strTestPath}/test.txt";
+
+                if ($bExists)
+                {
+                    system("echo 'TESTDATA' > ${strFile}");
+                }
+
+                if ($bError)
+                {
+                    $strFile = "--backrest-error " . $strFile;
+                }
+                
+                # Execute in eval in case of error
+                eval
+                {
+                    if ($oFile->file_exists(PATH_BACKUP_ABSOLUTE, $strFile) != $bExists)
+                    {
+                        confess "bExists is set to $bExists, but file_exists() returned " . !$bExists;
+                    }
+                };
+                
+                if ($@)
+                {
+                    if (!$bError)
+                    {
+                        confess 'error was returned but no error generated';
+                    }
+                    
+                    my $strError = $oFile->error_get();
+                    
+                    if (!defined($strError) || ($strError eq ''))
+                    {
+                        confess 'no error message returned';
+                    }
+                    
+                    print "    error raised: ${strError}\n";
+                    next;
+                }
+            }
+        }
+    }
+
+    return;
+
+    # Test copy()
+    $iRun = 0;
+
+    system("rm -rf lock");
+    system("mkdir -p lock") == 0 or confess "Unable to create lock directory";
+
+    for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
+    {
+        my $strBackupHost = $bBackupRemote ? "127.0.0.1" : undef;
+        my $strBackupUser = $bBackupRemote ? "dsteele" : undef;
 
         # Loop through source compression
-        for (my $bDestinationRemote = 0; $bDestinationRemote <= 1; $bDestinationRemote++)
+        for (my $bDbRemote = 0; $bDbRemote <= 1; $bDbRemote++)
         {
-            my $strDestinationHost = $bDestinationRemote ? "127.0.0.1" : undef;
-            my $strDestinationUser = $bDestinationRemote ? "dsteele" : undef;
+            my $strDbHost = $bDbRemote ? "127.0.0.1" : undef;
+            my $strDbUser = $bDbRemote ? "dsteele" : undef;
 
             # Loop through destination compression
             for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 1; $bDestinationCompressed++)
@@ -49,10 +136,10 @@ sub BackRestTestFile
                     bNoCompression => !$bDestinationCompressed,
                     strBackupClusterPath => undef,
                     strBackupPath => ${strTestPath},
-                    strBackupHost => $strSourceHost,
-                    strBackupUser => $strSourceUser,
-                    strDbHost => $strDestinationHost,
-                    strDbUser => $strDestinationUser,
+                    strBackupHost => $strBackupHost,
+                    strBackupUser => $strBackupUser,
+                    strDbHost => $strDbHost,
+                    strDbUser => $strDbUser,
                     strCommandCompress => "gzip --stdout %file%",
                     strCommandDecompress => "gzip -dc %file%",
                     strLockPath => dirname($0) . "/test/lock"
@@ -75,8 +162,8 @@ sub BackRestTestFile
                                     $iRun++;
                                 
                                     print "run ${iRun} - " .
-                                          "srcpth ${strSourcePath}, srcrmt $bSourceRemote, srccmp $bSourceCompressed, " .
-                                          "dstpth ${strDestinationPath}, dstrmt $bDestinationRemote, dstcmp $bDestinationCompressed, " .
+                                          "srcpth ${strSourcePath}, bkprmt $bBackupRemote, srccmp $bSourceCompressed, " .
+                                          "dstpth ${strDestinationPath}, dbrmt $bDbRemote, dstcmp $bDestinationCompressed, " .
                                           "error $bError, confess_error $bConfessError\n";
 
                                     # Drop the old test directory and create a new one
@@ -118,13 +205,22 @@ sub BackRestTestFile
                                     if ($@)
                                     {
                                         # Different remote and destination with different path types should error
-                                        if ($bSourceRemote && $bDestinationRemote)
+                                        if ($bBackupRemote && $bDbRemote && ($strSourcePath ne $strDestinationPath))
                                         {
+                                            print "    different source and remote for same path not supported\n";
                                             next;
                                         }
                                         # If the error was intentional, then also continue
                                         elsif ($bError)
                                         {
+                                            my $strError = $oFile->error_get();
+                                            
+                                            if (!defined($strError) || ($strError eq ''))
+                                            {
+                                                confess 'no error message returned';
+                                            }
+                                            
+                                            print "    error raised: ${strError}\n";
                                             next;
                                         }
                                         # Else this is an unexpected error
@@ -147,6 +243,14 @@ sub BackRestTestFile
                                             }
                                             else
                                             {
+                                                my $strError = $oFile->error_get();
+                                                
+                                                if (!defined($strError) || ($strError eq ''))
+                                                {
+                                                    confess 'no error message returned';
+                                                }
+                                                
+                                                print "    error returned: ${strError}\n";
                                                 next;
                                             }
                                         }
@@ -158,6 +262,8 @@ sub BackRestTestFile
                                         {
                                             confess "error was returned when no error generated";
                                         }
+                                        
+                                        print "    true was returned\n";
                                     }
                                 
                                     # Check for errors after copy

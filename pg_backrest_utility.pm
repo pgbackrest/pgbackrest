@@ -153,6 +153,11 @@ sub trim
 {
     my $strBuffer = shift;
 
+    if (!defined($strBuffer))
+    {
+        return undef;
+    }
+
     $strBuffer =~ s/^\s+|\s+$//g;
 
     return $strBuffer;
