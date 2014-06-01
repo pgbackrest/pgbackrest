@@ -34,6 +34,7 @@ IPC::System::Simple
 Net::OpenSSH
 JSON
 IPC::Open3
+Digest::SHA
 
 ## release notes
 

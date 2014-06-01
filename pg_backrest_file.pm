@@ -13,12 +13,13 @@ use Net::OpenSSH;
 use IPC::Open3;
 use File::Basename;
 use IPC::System::Simple qw(capture);
+use Digest::SHA;
 
 use lib dirname($0);
 use pg_backrest_utility;
 
 use Exporter qw(import);
-our @EXPORT = qw(PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
+our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -26,6 +27,7 @@ has strDefaultPathPermission => (is => 'bare', default => '0750');
 has strDefaultFilePermission => (is => 'ro', default => '0640');
 
 # Command strings
+has strCommand => (is => 'bare');
 has strCommandChecksum => (is => 'bare');
 has strCommandCompress => (is => 'bare');
 has strCommandDecompress => (is => 'bare');
@@ -56,10 +58,20 @@ has strStanza => (is => 'bare');
 has iThreadIdx => (is => 'bare');
 
 ####################################################################################################################################
+# COMMAND Error Constants
+####################################################################################################################################
+use constant
+{
+    COMMAND_ERR_FILE_MISSING        => 1,
+    COMMAND_ERR_FILE_READ           => 2
+};
+
+####################################################################################################################################
 # PATH_GET Constants
 ####################################################################################################################################
 use constant
 {
+    PATH_ABSOLUTE        => 'absolute',
     PATH_DB              => 'db',
     PATH_DB_ABSOLUTE     => 'db:absolute',
     PATH_BACKUP          => 'backup',
@@ -78,13 +90,11 @@ sub BUILD
     my $self = shift;
     
     # Make sure the backup path is defined
-    if (!defined($self->{strBackupPath}))
+    if (defined($self->{strBackupPath}))
     {
-        confess &log(ERROR, "common:backup_path undefined");
+        # Create the backup cluster path
+        $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strStanza};
     }
-
-    # Create the backup cluster path
-    $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strStanza};
 
     # Create the ssh options string
     if (defined($self->{strBackupHost}) || defined($self->{strDbHost}))
@@ -139,15 +149,14 @@ sub clone
         strCompressExtension => $self->{strCompressExtension},
         strDefaultPathPermission => $self->{strDefaultPathPermission},
         strDefaultFilePermission => $self->{strDefaultFilePermission},
+        strCommand => $self->{strCommand},
         strCommandChecksum => $self->{strCommandChecksum},
         strCommandCompress => $self->{strCommandCompress},
         strCommandDecompress => $self->{strCommandDecompress},
         strCommandCat => $self->{strCommandCat},
         strCommandManifest => $self->{strCommandManifest},
-#        oDbSSH => $self->{strDbSSH},
         strDbUser => $self->{strDbUser},
         strDbHost => $self->{strDbHost},
-#        oBackupSSH => $self->{strBackupSSH},
         strBackupUser => $self->{strBackupUser},
         strBackupHost => $self->{strBackupHost},
         strBackupPath => $self->{strBackupPath},
@@ -221,6 +230,12 @@ sub path_get
                                        $strType eq PATH_DB_ABSOLUTE || $strType eq PATH_BACKUP_ABSOLUTE))
     {
         confess &log(ASSERT, "temp file not supported on path " . $strType);
+    }
+
+    # Get absolute path
+    if ($strType eq PATH_ABSOLUTE)
+    {
+        return $strFile;
     }
 
     # Get absolute db path
@@ -760,47 +775,73 @@ sub file_copy
 }
 
 ####################################################################################################################################
-# FILE_HASH_GET
+# HASH
 ####################################################################################################################################
-sub file_hash_get
+sub hash
 {
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
+    my $strHashType = shift;
 
     # For now this operation is not supported remotely.  Not currently needed.
-    if ($self->is_remote($strPathType))
-    {
-        confess &log(ASSERT, "remote operation not supported");
-    }
-
-    if (!defined($self->{strCommandChecksum}))
-    {
-        confess &log(ASSERT, "\$strCommandChecksum not defined");
-    }
-
+    my $strHash;
+    my $strErrorPrefix = "File->hash";
+    my $bRemote = $self->is_remote($strPathType);
     my $strPath = $self->path_get($strPathType, $strFile);
-    my $strCommand;
 
-    if (-e $strPath)
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPath}");
+
+    if ($bRemote)
     {
-        $strCommand = $self->{strCommandChecksum};
-        $strCommand =~ s/\%file\%/${strPath}/g;
-    }
-    elsif (-e $strPath . ".$self->{strCompressExtension}")
-    {
-        $strCommand = $self->{strCommandDecompress};
-        $strCommand =~ s/\%file\%/${strPath}/g;
-        $strCommand .= " | " . $self->{strCommandChecksum};
-        $strCommand =~ s/\%file\%//g;
+        # Run remotely
+        my $oSSH = $self->remote_get($strPathType);
+        my $strOutput = $oSSH->capture($self->{strCommand} . " hash ${strPath}");
+
+        # Capture any errors
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "${strErrorPrefix} remote: " . (defined($strOutput) ? $strOutput : $oSSH->error));
+        }
+
+        $strHash = $strOutput;
     }
     else
     {
-        confess &log(ASSERT, "unable to find $strPath(.$self->{strCompressExtension}) for checksum");
+        my $hFile;
+
+        if (!open($hFile, "<", $strPath))
+        {
+            my $strError = "${strPath} could not be read" . $!;
+            my $iErrorCode = 2;
+
+            unless (-e $strPath)
+            {
+                $strError = "${strPath} does not exist";
+                $iErrorCode = 1;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit ($iErrorCode);
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        }
+
+        my $oSHA = Digest::SHA->new(defined($strHashType) ? $strHashType : 'sha1');
+
+        $oSHA->addfile($hFile);
+
+        close($hFile);
+
+        $strHash = $oSHA->hexdigest();
     }
 
-    return trim(capture($strCommand)) or confess &log(ERROR, "unable to checksum ${strPath}");
+    return $strHash;
 }
+
 ####################################################################################################################################
 # FILE_COMPRESS
 ####################################################################################################################################
@@ -832,9 +873,9 @@ sub file_compress
 }
 
 ####################################################################################################################################
-# FILE_LIST_GET
+# LIST
 ####################################################################################################################################
-sub file_list_get
+sub list
 {
     my $self = shift;
     my $strPathType = shift;
@@ -843,161 +884,206 @@ sub file_list_get
     my $strSortOrder = shift;
 
     # Get the root path for the file list
-    my $strPathList = $self->path_get($strPathType, $strPath);
+    my @stryFileList;
+    my $strErrorPrefix = "File->list";
+    my $bRemote = $self->is_remote($strPathType);
+    my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    # Builds the file list command
-#    my $strCommand = "ls ${strPathList} | egrep \"$strExpression\"";
-    my $strCommand = "ls -1 ${strPathList}";
-    
-    # Run the file list command
-    my $strFileList = "";
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}" . 
+                                        ", expression " . (defined($strExpression) ? $strExpression : "[UNDEF]") .
+                                        ", sort " . (defined($strSortOrder) ? $strSortOrder : "[UNDEF]"));
 
     # Run remotely
     if ($self->is_remote($strPathType))
     {
-        &log(TRACE, "file_list_get: remote ${strPathType}:${strPathList} ${strCommand}");
+        my $strCommand = $self->{strCommand} .
+                         (defined($strSortOrder) && $strSortOrder eq "reverse" ? " --sort=reverse" : "") .
+                         (defined($strExpression) ? " --expression=\"" . $strExpression . "\"" : "") .
+                         " list ${strPathOp}";
 
+        # Run via SSH
         my $oSSH = $self->remote_get($strPathType);
-        $strFileList = $oSSH->capture($strCommand);
-        
+        my $strOutput = $oSSH->capture($strCommand);
+
+        # Handle any errors
         if ($oSSH->error)
         {
-            confess &log(ERROR, "unable to execute file list (${strCommand}): " . $self->error_get());
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
         }
+
+        @stryFileList = split(/\n/, $strOutput);
     }
     # Run locally
     else
     {
-        &log(TRACE, "file_list_get: local ${strPathType}:${strPathList} ${strCommand}");
-        $strFileList = capture($strCommand);
+        my $hPath;
+
+        if (!opendir($hPath, $strPathOp))
+        {
+            my $strError = "${strPathOp} could not be read:" . $!;
+            my $iErrorCode = 2;
+
+            unless (-e $strPath)
+            {
+                $strError = "${strPathOp} does not exist";
+                $iErrorCode = 1;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit ($iErrorCode);
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        }
+
+        @stryFileList = grep(!/^(\.)|(\.\.)$/i, readdir($hPath));
+
+        close($hPath);
+
+        if (defined($strExpression))
+        {
+            @stryFileList = grep(/$strExpression/i, @stryFileList);
+        }
+
+        # Reverse sort
+        if (defined($strSortOrder) && $strSortOrder eq "reverse")
+        {
+            @stryFileList = sort {$b cmp $a} @stryFileList;
+        }
+        # Normal sort
+        else
+        {
+            @stryFileList = sort @stryFileList;
+        }
     }
 
-    # Split the files into an array
-    my @stryFileList;
-    
-    if (defined($strExpression))
-    {
-        @stryFileList = grep(/$strExpression/i, split(/\n/, $strFileList));
-    }
-    else
-    {
-        @stryFileList = split(/\n/, $strFileList);
-    }
-
-    # Return the array in reverse order if specified
-    if (defined($strSortOrder) && $strSortOrder eq "reverse")
-    {
-        return sort {$b cmp $a} @stryFileList;
-    }
-    
-    # Return in normal sorted order
-    return sort @stryFileList;
+    # Return file list
+    return @stryFileList;
 }
 
 ####################################################################################################################################
-# FILE_EXISTS
+# EXISTS - Checks for the existence of a file, but does not imply that the file is readable/writeable.
+#
+# Return: true if file exists, false otherwise
 ####################################################################################################################################
-sub file_exists
+sub exists
 {
     my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
 
-    # Get the root path for the manifest
-    my $strPathExists = $self->path_get($strPathType, $strPath);
+    # Set error prefix, remote, and path
+    my $bExists = false;
+    my $strErrorPrefix = "File->exists";
+    my $bRemote = $self->is_remote($strPathType);
+    my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    &log(TRACE, "file_exists: " . ($self->is_remote($strPathType) ? "remote" : "local") . " ${strPathType}:${strPathExists}");
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
 
     # Run remotely
-    if ($self->is_remote($strPathType))
+    if ($bRemote)
     {
-        # Builds the exists command
-        my $strCommand = "ls ${strPathExists}";
-
-        # Run the file exists command
-        my $strExists;
-        my $strError;
-
-        &log(TRACE, "file_exists: command: ${strCommand}");
-
+        # Build the command
+        my $strCommand = $self->{strCommand} . " exists ${strPathOp}";
+        
+        # Run it remotely
         my $oSSH = $self->remote_get($strPathType);
-        $strExists = $oSSH->capture({stderr_file => $self->path_get(PATH_LOCK_ERR, "file")}, $strCommand);
+        my $strOutput = $oSSH->capture($strCommand);
 
-        &log(TRACE, "file_exists: search = ${strPathExists}, result = " . (defined($strExists) ? $strExists : "<undef>"));
-
+        # Capture any errors
         if ($oSSH->error)
         {
-            my $strError = $self->error_get();
-            &log(TRACE, "error detected: $strError");
-
-            if ($strError =~ /.*ls.*No such file or directory.*/)
-            {
-                return(false);
-            }
-
-            confess &log(ERROR, "unable to execute file exists (${strCommand}): " . $strError);
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
         }
 
-        # If the return from ls eq strPathExists then true
-        return trim($strExists) eq $strPathExists;
+        $bExists = $strOutput eq "Y";
     }
     # Run locally
     else
     {
-        if (-e $strPathExists)
+        if (-e $strPathOp)
         {
-            return true;
-        }
-        else
-        {
-            return false;
+            $bExists = true;
         }
     }
 
-    confess &log(ASSERT, "file_exists: true or false should have been returned");
+    return $bExists;
 }
 
 ####################################################################################################################################
-# FILE_REMOVE
+# REMOVE
 ####################################################################################################################################
-sub file_remove
+sub remove
 {
     my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
     my $bTemp = shift;
-    my $bErrorIfNotExists = shift;
+    my $bIgnoreMissing = shift;
     
-    if (!defined($bErrorIfNotExists))
+    if (!defined($bIgnoreMissing))
     {
-        $bErrorIfNotExists = false;
+        $bIgnoreMissing = true;
     }
 
     # Get the root path for the manifest
-    my $strPathRemove = $self->path_get($strPathType, $strPath, $bTemp);
+    my $bRemoved = true;
+    my $strErrorPrefix = "File->remove";
+    my $bRemote = $self->is_remote($strPathType);
+    my $strPathOp = $self->path_get($strPathType, $strPath, $bTemp);
 
-    # Builds the exists command
-    my $strCommand = "rm -f ${strPathRemove}";
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
 
     # Run remotely
-    if ($self->is_remote($strPathType))
+    if ($bRemote)
     {
-        &log(TRACE, "file_remove: remote ${strPathType}:${strPathRemove}");
-
-        my $oSSH = $self->remote_get($strPathType);
-        $oSSH->system($strCommand) or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove remote ${strPathType}:${strPathRemove}") : true;
+        # Build the command
+        my $strCommand = $self->{strCommand} . ($bIgnoreMissing ? " --ignore-missing" : "") . " remove ${strPathOp}";
         
+        # Run it remotely
+        my $oSSH = $self->remote_get($strPathType);
+        my $strOutput = $oSSH->capture($strCommand);
+
         if ($oSSH->error)
         {
-            confess &log(ERROR, "unable to execute file_remove (${strCommand}): " . $self->error_get());
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
         }
+
+        $bRemoved = $strOutput eq "Y";
     }
     # Run locally
     else
     {
-        &log(TRACE, "file_remove: local ${strPathType}:${strPathRemove}");
-        system($strCommand) == 0 or $bErrorIfNotExists ? confess &log(ERROR, "unable to remove local ${strPathType}:${strPathRemove}") : true;
+        if (unlink($strPathOp) != 1)
+        {
+            $bRemoved = false;
+
+            if (-e $strPathOp || !$bIgnoreMissing)
+            {
+                my $strError = "${strPathOp} could not be removed: " . $!;
+                my $iErrorCode = 2;
+
+                unless (-e $strPathOp)
+                {
+                    $strError = "${strPathOp} does not exist";
+                    $iErrorCode = 1;
+                }
+
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    print $strError;
+                    exit ($iErrorCode);
+                }
+
+                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+
+            }
+        }
     }
+    
+    return $bRemoved;
 }
 
 ####################################################################################################################################
@@ -1046,4 +1132,4 @@ sub manifest_get
 }
 
 no Moose;
-  __PACKAGE__->meta->make_immutable;
+__PACKAGE__->meta->make_immutable;

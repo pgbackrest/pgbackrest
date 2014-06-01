@@ -22,4 +22,4 @@ use BackRestTest::FileTest;
 ####################################################################################################################################
 BackRestTestFile();
 
-print "TEST COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)\n";
+print "\nTEST COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)\n";

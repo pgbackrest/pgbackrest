@@ -25,85 +25,285 @@ sub BackRestTestFile
 {
     my $strLockPath = dirname(abs_path($0)) . "/lock";
     my $strTestPath = dirname(abs_path($0)) . "/test";
-    my $iRun = 0;
-    
-    log_level_set(OFF, OFF);
+    my $iRun;
 
-    # !!! NEED TO TEST WHERE LOCK PATH IS UNDEF
+    my $strStanza = "db";
+    my $strCommand = "/Users/dsteele/pg_backrest/bin/pg_backrest_command.pl";
+    my $strHost = "127.0.0.1";
+    my $strUser = "dsteele";
 
-    # Test file_exists()
+    log_level_set(TRACE, TRACE);
+
+    # Test list()
+    $iRun = 0;
+
+    print "\ntest File->list()\n";
+
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+    {
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => true,
+            strCommand => $strCommand,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
+        );
+
+        # Loop through exists
+        for (my $bSort = 0; $bSort <= 1; $bSort++)
+        {
+            my $strSort = $bSort ? undef : "reverse";
+
+            # Loop through expression
+            for (my $iExpression = 0; $iExpression <= 2; $iExpression++)
+            {
+                my $strExpression;
+
+                # Expression tha returns results
+                if ($iExpression == 1)
+                {
+                    $strExpression = "^test2\\..*\$";
+                }
+                # Expression that does not return results
+                elsif ($iExpression == 2)
+                {
+                    $strExpression = "^du\$";
+                }
+
+                # Loop through exists
+                for (my $bExists = 0; $bExists <= 1; $bExists++)
+                {
+                    $iRun++;
+
+                    print "run ${iRun} - " .
+                          "remote $bRemote, exists $bExists, " .
+                          "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
+                          "sort " . (defined($strSort) ? $strSort : "[undef]") . "\n";
+
+                    my $strPath = "${strTestPath}";
+
+                    # Drop the old test directory and create a new one
+                    system("rm -rf test");
+
+                    if ($bExists)
+                    {
+                        system("mkdir test") == 0 or confess "Unable to create test directory";
+                        system("echo 'TESTDATA' > ${strPath}/test.txt");
+                        system("echo 'TESTDATA2' > ${strPath}/test2.txt");
+                    }
+
+                    my @stryFileCompare = split(/\n/, "test.txt\ntest2.txt");
+
+                    # Execute in eval in case of error
+                    eval
+                    {
+                        my @stryFileList = $oFile->list(PATH_BACKUP_ABSOLUTE, $strPath, $strExpression, $strSort);
+
+                        if (defined($strExpression))
+                        {
+                            @stryFileCompare = grep(/$strExpression/i, @stryFileCompare);
+                        }
+
+                        if (defined($strSort))
+                        {
+                            @stryFileCompare = sort {$b cmp $a} @stryFileCompare;
+                        }
+
+                        my $strFileList = sprintf("@stryFileList");
+                        my $strFileCompare = sprintf("@stryFileCompare");
+
+                        if ($strFileList ne $strFileCompare)
+                        {
+                            confess "list (${strFileList})[" . @stryFileList . 
+                                    "] does not match compare (${strFileCompare})[" . @stryFileCompare . "]";
+                        }
+                    };
+
+                    if ($@ && $bExists)
+                    {
+                        confess "    error raised: " . $@ . "\n";
+                    }
+                }
+            }
+        }
+    }
+
+    # Test remove()
+    $iRun = 0;
+    print "test File->remove()\n";
+
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
         my $strHost = $bRemote ? "127.0.0.1" : undef;
         my $strUser = $bRemote ? "dsteele" : undef;
 
-        system("rm -rf lock");
-        system("mkdir -p lock") == 0 or confess "Unable to create lock directory";
-
         my $oFile = pg_backrest_file->new
         (
-            strStanza => "db",
+            strStanza => $strStanza,
             bNoCompression => true,
+            strCommand => ${strCommand},
             strBackupClusterPath => ${strTestPath},
             strBackupPath => ${strTestPath},
-            strBackupHost => $strHost,
-            strBackupUser => $strUser,
-            strLockPath => $strLockPath
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
         );
 
         # Loop through exists
         for (my $bExists = 0; $bExists <= 1; $bExists++)
         {
-            # Loop through error
-            for (my $bError = 0; $bError <= $bRemote ? 1 : 0; $bError++)
+            # Loop through temp
+            for (my $bTemp = 0; $bTemp <= 1; $bTemp++)
             {
-                $iRun++;
+                # Loop through ignore missing
+                for (my $bIgnoreMissing = 0; $bIgnoreMissing <= 1; $bIgnoreMissing++)
+                {
+                    $iRun++;
 
-                print "run ${iRun} - " .
-                      "rmt $bRemote, exist $bExists, error $bError\n";
+                    print "run ${iRun} - " .
+                          "remote ${bRemote}, exists ${bExists}, temp ${bTemp}, ignore missing ${bIgnoreMissing}\n";
 
-                # Drop the old test directory and create a new one
-                system("rm -rf test");
-                system("mkdir test") == 0 or confess "Unable to create test directory";
+                    # Drop the old test directory and create a new one
+                    system("rm -rf test");
+                    system("mkdir test") == 0 or confess "Unable to create test directory";
 
-                my $strFile = "${strTestPath}/test.txt";
+                    my $strFile = "${strTestPath}/test.txt";
+                    
+                    if ($bExists)
+                    {
+                        system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? ".backrest.tmp" : ""));
+                    }
 
+                    # Execute in eval in case of error
+                    eval
+                    {
+                        if ($oFile->remove(PATH_BACKUP_ABSOLUTE, $strFile, $bTemp, $bIgnoreMissing) != $bExists)
+                        {
+                            confess "hash did not match expected";
+                        }
+                    };
+
+                    if ($@ && $bExists)
+                    {
+                        confess "    error raised: " . $@ . "\n";
+                    }
+
+                    if (-e ($strFile . ($bTemp ? ".backrest.tmp" : "")))
+                    {
+                        confess "file still exists";
+                    }
+                }
+            }
+        }
+    }
+
+    # Test hash()
+    $iRun = 0;
+    
+    print "\ntest File->hash()\n";
+
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+    {
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => true,
+            strCommand => $strCommand,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
+        );
+
+        # Loop through exists
+        for (my $bExists = 0; $bExists <= 1; $bExists++)
+        {
+            $iRun++;
+
+            print "run ${iRun} - " .
+                  "remote $bRemote, exists $bExists\n";
+
+            # Drop the old test directory and create a new one
+            system("rm -rf test");
+            system("mkdir test") == 0 or confess "Unable to create test directory";
+
+            my $strFile = "${strTestPath}/test.txt";
+
+            if ($bExists)
+            {
+                system("echo 'TESTDATA' > ${strFile}");
+            }
+
+            # Execute in eval in case of error
+            eval
+            {
+                if ($oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile) ne '06364afe79d801433188262478a76d19777ef351')
+                {
+                    confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
+                }
+            };
+
+            if ($@)
+            {
                 if ($bExists)
                 {
-                    system("echo 'TESTDATA' > ${strFile}");
+                    confess "    error raised: " . $@ . "\n";
                 }
+            }
+        }
+    }
 
-                if ($bError)
+    # Test exists()
+    $iRun = 0;
+    
+    print "\ntest File->exists()\n";
+
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+    {
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => true,
+            strCommand => $strCommand,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
+        );
+
+        # Loop through exists
+        for (my $bExists = 0; $bExists <= 1; $bExists++)
+        {
+            $iRun++;
+
+            print "run ${iRun} - " .
+                  "remote $bRemote, exists $bExists\n";
+
+            # Drop the old test directory and create a new one
+            system("rm -rf test");
+            system("mkdir test") == 0 or confess "Unable to create test directory";
+
+            my $strFile = "${strTestPath}/test.txt";
+
+            if ($bExists)
+            {
+                system("echo 'TESTDATA' > ${strFile}");
+            }
+
+            # Execute in eval in case of error
+            eval
+            {
+                if ($oFile->exists(PATH_BACKUP_ABSOLUTE, $strFile) != $bExists)
                 {
-                    $strFile = "--backrest-error " . $strFile;
+                    confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
                 }
-                
-                # Execute in eval in case of error
-                eval
-                {
-                    if ($oFile->file_exists(PATH_BACKUP_ABSOLUTE, $strFile) != $bExists)
-                    {
-                        confess "bExists is set to $bExists, but file_exists() returned " . !$bExists;
-                    }
-                };
-                
-                if ($@)
-                {
-                    if (!$bError)
-                    {
-                        confess 'error was returned but no error generated';
-                    }
-                    
-                    my $strError = $oFile->error_get();
-                    
-                    if (!defined($strError) || ($strError eq ''))
-                    {
-                        confess 'no error message returned';
-                    }
-                    
-                    print "    error raised: ${strError}\n";
-                    next;
-                }
+            };
+            
+            if ($@)
+            {
+                confess "    error raised: " . $@ . "\n";
             }
         }
     }

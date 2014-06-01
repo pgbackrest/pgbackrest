@@ -230,6 +230,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
         strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
         strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
         strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+        strCommand => $0,
         strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, true)
     );
 
@@ -308,6 +309,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             strBackupUser => config_load($strSection, CONFIG_KEY_USER),
             strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
             strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
+            strCommand => $0,
             strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
             strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
             strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
@@ -378,6 +380,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
                 strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
                 strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+                strCommand => $0,
                 strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
                 strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
                 strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
@@ -418,6 +421,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                     strStanza => $strStanza,
                     bNoCompression => false,
                     strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+                    strCommand => $0,
                     strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
                     strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
                     strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
@@ -504,6 +508,7 @@ my $oFile = pg_backrest_file->new
     strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
     strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
     strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
+    strCommand => $0,
     strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
     strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
     strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
