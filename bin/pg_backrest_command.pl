@@ -136,10 +136,36 @@ if ($strOperation eq OP_REMOVE)
     
     if (!defined($strFile))
     {
-        confess "Filename must be specified for remove operation";
+        confess "filename must be specified for remove operation";
     }
 
     print $oFile->remove(PATH_ABSOLUTE, $strFile, undef, $bIgnoreMissing) ? "Y" : "N";
+
+    exit 0;
+}
+
+####################################################################################################################################
+# MANIFEST Command
+####################################################################################################################################
+if ($strOperation eq OP_MANIFEST)
+{
+    my $strPath = $ARGV[1];
+    
+    if (!defined($strPath))
+    {
+        confess "path must be specified for manifest operation";
+    }
+
+    my %oManifestHash;
+    $oFile->manifest(PATH_ABSOLUTE, $strPath, \%oManifestHash);
+    my $bFirst = true;
+
+    foreach my $strName (sort(keys $oManifestHash{name}))
+    {
+        $bFirst ? $bFirst = false : print "\n";
+
+        print "${strName}";
+    }
 
     exit 0;
 }

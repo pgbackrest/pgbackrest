@@ -32,7 +32,7 @@ sub BackRestTestFile
     my $strHost = "127.0.0.1";
     my $strUser = "dsteele";
 
-    log_level_set(TRACE, TRACE);
+#    log_level_set(TRACE, TRACE);
 
     # Test list()
     $iRun = 0;

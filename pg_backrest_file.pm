@@ -1087,48 +1087,57 @@ sub remove
 }
 
 ####################################################################################################################################
-# MANIFEST_GET
+# MANIFEST
 #
 # Builds a path/file manifest starting with the base path and including all subpaths.  The manifest contains all the information
 # needed to perform a backup or a delta with a previous backup.
 ####################################################################################################################################
-sub manifest_get
+sub manifest
 {
     my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
-
-    &log(TRACE, "manifest: " . $self->{strCommandManifest});
+    my $oManifestHashRef = shift;
 
     # Get the root path for the manifest
-    my $strPathManifest = $self->path_get($strPathType, $strPath);
+    my $strErrorPrefix = "File->manifest";
+    my $bRemote = $self->is_remote($strPathType);
+    my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    # Builds the manifest command
-    my $strCommand = $self->{strCommandManifest};
-    $strCommand =~ s/\%path\%/${strPathManifest}/g;
-    
-    # Run the manifest command
-    my $strManifest;
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
 
     # Run remotely
-    if ($self->is_remote($strPathType))
+    if ($bRemote)
     {
-        &log(TRACE, "manifest_get: remote ${strPathType}:${strPathManifest}");
-
+        # Build the command
+        my $strCommand = $self->{strCommand} . " manifest ${strPathOp}";
+        
+        # Run it remotely
         my $oSSH = $self->remote_get($strPathType);
-        $strManifest = $oSSH->capture($strCommand) or
-            confess &log(ERROR, "unable to execute remote manifest (${strCommand}): " . $self->error_get());
+        my $strOutput = $oSSH->capture($strCommand);
+
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
+        }
+        
+        return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
+                               $strOutput, "\t", ".");
     }
     # Run locally
     else
     {
-        &log(TRACE, "manifest_get: local ${strPathType}:${strPathManifest}");
-        $strManifest = capture($strCommand) or confess &log(ERROR, "unable to execute local command '${strCommand}'");
+        manifest_recurse($strPathOp, $oManifestHashRef);
     }
+}
 
-    # Load the manifest into a hash
-    return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
-                           $strManifest, "\t", ".");
+sub manifest_recurse
+{
+    my $strPath = shift;
+    my $oManifestHashRef = shift;
+
+    ${$oManifestHashRef}{name}{dude1}{user} = "dsteele";
+    ${$oManifestHashRef}{name}{dude2}{user} = "dsteele";
 }
 
 no Moose;
