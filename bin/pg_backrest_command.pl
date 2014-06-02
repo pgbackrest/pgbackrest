@@ -27,7 +27,8 @@ use constant
     OP_EXISTS   => "exists",
     OP_HASH     => "hash",
     OP_REMOVE   => "remove",
-    OP_MANIFEST => "manifest"
+    OP_MANIFEST => "manifest",
+    OP_COMPRESS => "compress"
 };
 
 ####################################################################################################################################
@@ -55,15 +56,6 @@ my $strOperation = $ARGV[0];
 if (!defined($strOperation))
 {
     confess &log(ERROR, "operation is not defined");
-}
-
-if ($strOperation ne OP_LIST &&
-    $strOperation ne OP_EXISTS &&
-    $strOperation ne OP_HASH &&
-    $strOperation ne OP_REMOVE &&
-    $strOperation ne OP_MANIFEST)
-{
-    confess &log(ERROR, "invalid operation ${strOperation}");
 }
 
 # Create the file object
@@ -178,3 +170,22 @@ if ($strOperation eq OP_MANIFEST)
 
     exit 0;
 }
+
+####################################################################################################################################
+# COMPRESS Command
+####################################################################################################################################
+if ($strOperation eq OP_COMPRESS)
+{
+    my $strFile = $ARGV[1];
+    
+    if (!defined($strFile))
+    {
+        confess "file must be specified for compress operation";
+    }
+
+    $oFile->compress(PATH_ABSOLUTE, $strFile);
+
+    exit 0;
+}
+
+confess &log(ERROR, "invalid operation ${strOperation}");

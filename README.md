@@ -35,6 +35,7 @@ Net::OpenSSH
 JSON
 IPC::Open3
 Digest::SHA
+IO::Compress::Gzip
 
 ## release notes
 

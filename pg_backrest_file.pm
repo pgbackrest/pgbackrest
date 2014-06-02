@@ -16,6 +16,7 @@ use IPC::System::Simple qw(capture);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
+use IO::Compress::Gzip qw(gzip $GzipError);
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -847,33 +848,60 @@ sub hash
 }
 
 ####################################################################################################################################
-# FILE_COMPRESS
+# COMPRESS
 ####################################################################################################################################
-sub file_compress
+sub compress
 {
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
 
-    # For now this operation is not supported remotely.  Not currently needed.
+    # Get the root path for the file list
+    my $strErrorPrefix = "File->compress";
+    my $bRemote = $self->is_remote($strPathType);
+    my $strPathOp = $self->path_get($strPathType, $strFile);
+
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
+
+    # Run remotely
     if ($self->is_remote($strPathType))
     {
-        confess &log(ASSERT, "remote operation not supported");
-    }
+        my $strCommand = $self->{strCommand} .
+                         " compress ${strPathOp}";
 
-    if (!defined($self->{strCommandCompress}))
+        # Run via SSH
+        my $oSSH = $self->remote_get($strPathType);
+        my $strOutput = $oSSH->capture($strCommand);
+
+        # Handle any errors
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
+        }
+    }
+    # Run locally
+    else
     {
-        confess &log(ASSERT, "\$strCommandCompress not defined");
+        if (!gzip($strPathOp => "${strPathOp}.gz"))
+        {
+            my $strError = "${strPathOp} could not be compressed:" . $!;
+            my $iErrorCode = 2;
+
+            unless (-e $strPathOp)
+            {
+                $strError = "${strPathOp} does not exist";
+                $iErrorCode = 1;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit ($iErrorCode);
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        }
     }
-
-    my $strPath = $self->path_get($strPathType, $strFile);
-
-    # Build the command
-    my $strCommand = $self->{strCommandCompress};
-    $strCommand =~ s/\%file\%/${strPath}/g;
-    $strCommand =~ s/\ \-\-stdout//g;
-
-    system($strCommand) == 0 or confess &log(ERROR, "unable to compress ${strPath}: ${strCommand}");
 }
 
 ####################################################################################################################################
