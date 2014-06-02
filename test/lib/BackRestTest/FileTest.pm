@@ -12,7 +12,7 @@ use english;
 
 use Carp;
 use File::Basename;
- use Cwd 'abs_path';
+use Cwd 'abs_path';
 
 use lib dirname($0) . "/..";
 use pg_backrest_file;
@@ -30,9 +30,143 @@ sub BackRestTestFile
     my $strStanza = "db";
     my $strCommand = "/Users/dsteele/pg_backrest/bin/pg_backrest_command.pl";
     my $strHost = "127.0.0.1";
-    my $strUser = "dsteele";
+    my $strUser = getpwuid($<);
+    my $strGroup = getgrgid($();
+    
+    umask(0);
+    
+#    print "user = ${strUser}, group = ${strGroup}";
 
 #    log_level_set(TRACE, TRACE);
+
+    # Test manifest()
+    $iRun = 0;
+
+    print "\ntest File->manifest()\n";
+
+    # Create the test data
+    system("rm -rf test");
+
+    system("mkdir -m 750 ${strTestPath}") == 0 or confess "Unable to create test directory";
+    system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess "Unable to create test directory";
+    system("mkdir -m 750 ${strTestPath}/sub1/sub2") == 0 or confess "Unable to create test directory";
+
+    system("echo 'TESTDATA' > ${strTestPath}/test.txt");
+    utime(1111111111, 1111111111, "${strTestPath}/test.txt");
+    system("chmod 1640 ${strTestPath}/test.txt");
+
+    system("echo 'TESTDATA_' > ${strTestPath}/sub1/test-sub1.txt");
+    utime(1111111112, 1111111112, "${strTestPath}/sub1/test-sub1.txt");
+    system("chmod 0640 ${strTestPath}/sub1/test-sub1.txt");
+
+    system("echo 'TESTDATA__' > ${strTestPath}/sub1/sub2/test-sub2.txt");
+    utime(1111111113, 1111111113, "${strTestPath}/sub1/sub2/test-sub2.txt");
+    system("chmod 0646 ${strTestPath}/sub1/test-sub1.txt");
+
+    system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/test-hardlink.txt");
+    system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/sub2/test-hardlink.txt");
+
+    system("ln -s .. ${strTestPath}/sub1/test");
+    system("chmod 0700 ${strTestPath}/sub1/test");
+    system("ln -s ../.. ${strTestPath}/sub1/sub2/test");
+    system("chmod 0750 ${strTestPath}/sub1/sub2/test");
+
+    my $strManifestCompare =
+        ".,d,${strUser},${strGroup},0750,,,,\n" .
+        "sub1,d,${strUser},${strGroup},0750,,,,\n" .
+        "sub1/sub2,d,${strUser},${strGroup},0750,,,,\n" .
+        "sub1/sub2/test,l,${strUser},${strGroup},,,,,../..\n" .
+        "sub1/sub2/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
+        "sub1/sub2/test-sub2.txt,f,${strUser},${strGroup},0666,1111111113,0,11,\n" .
+        "sub1/test,l,${strUser},${strGroup},,,,,..\n" .
+        "sub1/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
+        "sub1/test-sub1.txt,f,${strUser},${strGroup},0646,1111111112,0,10,\n" .
+        "test.txt,f,${strUser},${strGroup},1640,1111111111,0,9,";
+
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+    {
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => true,
+            strCommand => $strCommand,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
+        );
+
+        for (my $bError = 0; $bError <= 1; $bError++)
+        {
+            $iRun++;
+
+            print "run ${iRun} - " .
+                  "remote $bRemote, error $bError\n";
+            
+            my $strPath = $strTestPath;
+
+            if ($bError)
+            {
+                $strPath .= "-error";
+            }
+
+            # Execute in eval in case of error
+            eval
+            {
+                my %oManifestHash;
+                $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash);
+
+                my $strManifest;
+
+                foreach my $strName (sort(keys $oManifestHash{name}))
+                {
+                    if (!defined($strManifest))
+                    {
+                        $strManifest = "";
+                    }
+                    else
+                    {
+                        $strManifest .= "\n";
+                    }
+
+                    if (defined($oManifestHash{name}{"${strName}"}{inode}))
+                    {
+                        $oManifestHash{name}{"${strName}"}{inode} = 0;
+                    }
+
+                    $strManifest .= 
+                        "${strName}," .
+                        $oManifestHash{name}{"${strName}"}{type} . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{user}) ?
+                            $oManifestHash{name}{"${strName}"}{user} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{group}) ?
+                            $oManifestHash{name}{"${strName}"}{group} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{permission}) ?
+                            $oManifestHash{name}{"${strName}"}{permission} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
+                            $oManifestHash{name}{"${strName}"}{modification_time} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{inode}) ?
+                            $oManifestHash{name}{"${strName}"}{inode} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{size}) ?
+                            $oManifestHash{name}{"${strName}"}{size} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
+                            $oManifestHash{name}{"${strName}"}{link_destination} : "");
+                }
+
+                if ($strManifest ne $strManifestCompare)
+                {
+                    confess "manifest is not equal:\n\n${strManifest}\n\ncompare:\n\n${strManifestCompare}\n\n";
+                }
+            };
+
+            if ($@ && !$bError)
+            {
+                confess "error raised: " . $@ . "\n";
+            }
+        }
+    }
+
+    return;
 
     # Test list()
     $iRun = 0;
@@ -124,7 +258,7 @@ sub BackRestTestFile
 
                     if ($@ && $bExists)
                     {
-                        confess "    error raised: " . $@ . "\n";
+                        confess "error raised: " . $@ . "\n";
                     }
                 }
             }
@@ -187,7 +321,7 @@ sub BackRestTestFile
 
                     if ($@ && $bExists)
                     {
-                        confess "    error raised: " . $@ . "\n";
+                        confess "error raised: " . $@ . "\n";
                     }
 
                     if (-e ($strFile . ($bTemp ? ".backrest.tmp" : "")))
@@ -249,7 +383,7 @@ sub BackRestTestFile
             {
                 if ($bExists)
                 {
-                    confess "    error raised: " . $@ . "\n";
+                    confess "error raised: " . $@ . "\n";
                 }
             }
         }
@@ -303,7 +437,7 @@ sub BackRestTestFile
             
             if ($@)
             {
-                confess "    error raised: " . $@ . "\n";
+                confess "error raised: " . $@ . "\n";
             }
         }
     }
@@ -414,12 +548,12 @@ sub BackRestTestFile
                                         elsif ($bError)
                                         {
                                             my $strError = $oFile->error_get();
-                                            
+
                                             if (!defined($strError) || ($strError eq ''))
                                             {
                                                 confess 'no error message returned';
                                             }
-                                            
+
                                             print "    error raised: ${strError}\n";
                                             next;
                                         }
@@ -449,12 +583,11 @@ sub BackRestTestFile
                                                 {
                                                     confess 'no error message returned';
                                                 }
-                                                
+
                                                 print "    error returned: ${strError}\n";
                                                 next;
                                             }
                                         }
-                                    
                                     }
                                     else
                                     {
@@ -465,7 +598,7 @@ sub BackRestTestFile
                                         
                                         print "    true was returned\n";
                                     }
-                                
+
                                     # Check for errors after copy
                                     if ($bDestinationCompressed)
                                     {

@@ -4,16 +4,18 @@
 package pg_backrest_file;
 
 use threads;
-
-use Moose;
 use strict;
 use warnings;
 use Carp;
+
+use Moose;
 use Net::OpenSSH;
 use IPC::Open3;
 use File::Basename;
 use IPC::System::Simple qw(capture);
 use Digest::SHA;
+use File::stat;
+use Fcntl ':mode';
 
 use lib dirname($0);
 use pg_backrest_utility;
@@ -62,8 +64,10 @@ has iThreadIdx => (is => 'bare');
 ####################################################################################################################################
 use constant
 {
-    COMMAND_ERR_FILE_MISSING        => 1,
-    COMMAND_ERR_FILE_READ           => 2
+    COMMAND_ERR_FILE_MISSING           => 1,
+    COMMAND_ERR_FILE_READ              => 2,
+    COMMAND_ERR_FILE_TYPE              => 3,
+    COMMAND_ERR_LINK_READ              => 4
 };
 
 ####################################################################################################################################
@@ -1078,7 +1082,6 @@ sub remove
                 }
 
                 confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-
             }
         }
     }
@@ -1121,23 +1124,165 @@ sub manifest
             confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
         }
         
-        return data_hash_build("name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\n" .
-                               $strOutput, "\t", ".");
+        return data_hash_build($oManifestHashRef, $strOutput, "\t", ".");
     }
     # Run locally
     else
     {
-        manifest_recurse($strPathOp, $oManifestHashRef);
+        manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
     }
 }
 
 sub manifest_recurse
 {
-    my $strPath = shift;
+    my $strPathType = shift;
+    my $strPathOp = shift;
+    my $strPathFileOp = shift;
+    my $iDepth = shift;
     my $oManifestHashRef = shift;
 
-    ${$oManifestHashRef}{name}{dude1}{user} = "dsteele";
-    ${$oManifestHashRef}{name}{dude2}{user} = "dsteele";
+    my $strErrorPrefix = "File->manifest";
+    my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : "");
+    my $hPath;
+
+    if (!opendir($hPath, $strPathRead))
+    {
+        my $strError = "${strPathRead} could not be read:" . $!;
+        my $iErrorCode = 2;
+
+        unless (-e $strPathRead)
+        {
+            $strError = "${strPathRead} does not exist";
+            $iErrorCode = 1;
+        }
+
+        if ($strPathType eq PATH_ABSOLUTE)
+        {
+            print $strError;
+            exit ($iErrorCode);
+        }
+
+        confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+    }
+
+    my @stryFileList = grep(!/^\..$/i, readdir($hPath));
+
+    close($hPath);
+
+    foreach my $strFile (@stryFileList)
+    {
+        my $strPathFile = "${strPathRead}/$strFile";
+        my $bCurrentDir = $strFile eq ".";
+
+        if ($iDepth != 0)
+        {
+            if ($bCurrentDir)
+            {
+                $strFile = $strPathFileOp;
+                $strPathFile = $strPathRead;
+            }
+            else
+            {
+                $strFile = "${strPathFileOp}/${strFile}";
+            }
+        }
+
+        my $oStat = lstat($strPathFile);
+
+        if (!defined($oStat))
+        {
+            if (-e $strPathFile)
+            {
+                my $strError = "${strPathFile} could not be read: " . $!;
+
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    print $strError;
+                    exit COMMAND_ERR_FILE_READ;
+                }
+
+                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+            }
+            
+            next;
+        }
+
+        # Check for regular file
+        if (S_ISREG($oStat->mode))
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "f";
+
+            # Get inode
+            ${$oManifestHashRef}{name}{"${strFile}"}{inode} = $oStat->ino;
+
+            # Get size
+            ${$oManifestHashRef}{name}{"${strFile}"}{size} = $oStat->size;
+
+            # Get modification time
+            ${$oManifestHashRef}{name}{"${strFile}"}{modification_time} = $oStat->mtime;
+        }
+        # Check for directory
+        elsif (S_ISDIR($oStat->mode))
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "d";
+        }
+        # Check for link
+        elsif (S_ISLNK($oStat->mode))
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "l";
+
+            # Get link destination
+            ${$oManifestHashRef}{name}{"${strFile}"}{link_destination} = readlink($strPathFile);
+            
+            if (!defined(${$oManifestHashRef}{name}{"${strFile}"}{link_destination}))
+            {
+                if (-e $strPathFile)
+                {
+                    my $strError = "${strPathFile} error reading link: " . $!;
+
+                    if ($strPathType eq PATH_ABSOLUTE)
+                    {
+                        print $strError;
+                        exit COMMAND_ERR_LINK_READ;
+                    }
+
+                    confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+                }
+            }
+        }
+        else
+        {
+            my $strError = "${strPathFile} is not of type directory, file, or link";
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit COMMAND_ERR_FILE_TYPE;
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        }
+
+        # Get user name
+        ${$oManifestHashRef}{name}{"${strFile}"}{user} = getpwuid($oStat->uid);
+
+        # Get group name
+        ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
+
+        # Get permissions
+        if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne "l")
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf("%04o", S_IMODE($oStat->mode));
+        }
+
+        # Recurse into directories
+        if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
+        {
+            manifest_recurse($strPathType, $strPathOp,
+                             $strFile, 
+                             $iDepth + 1, $oManifestHashRef);
+        }
+    }
 }
 
 no Moose;

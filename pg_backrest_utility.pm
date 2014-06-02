@@ -114,6 +114,7 @@ sub lock_file_remove
 ####################################################################################################################################
 sub data_hash_build
 {
+    my $oHashRef = shift;
     my $strData = shift;
     my $strDelimiter = shift;
     my $strUndefinedKey = shift;
@@ -121,8 +122,6 @@ sub data_hash_build
     my @stryFile = split("\n", $strData);
     my @stryHeader = split($strDelimiter, $stryFile[0]);
     
-    my %oHash;
-
     for (my $iLineIdx = 1; $iLineIdx < scalar @stryFile; $iLineIdx++)
     {
         my @stryLine = split($strDelimiter, $stryFile[$iLineIdx]);
@@ -134,16 +133,17 @@ sub data_hash_build
 
         for (my $iColumnIdx = 1; $iColumnIdx < scalar @stryHeader; $iColumnIdx++)
         {
-            if (defined($oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
+            if (defined(${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
             {
                 confess "the first column must be unique to build the hash";
             }
             
-            $oHash{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
+            if (defined($stryLine[$iColumnIdx]) && $stryLine[$iColumnIdx] ne "")
+            {
+                ${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
+            }
         }
     }
-
-    return %oHash;
 }
 
 ####################################################################################################################################

@@ -158,13 +158,22 @@ if ($strOperation eq OP_MANIFEST)
 
     my %oManifestHash;
     $oFile->manifest(PATH_ABSOLUTE, $strPath, \%oManifestHash);
-    my $bFirst = true;
+
+    print "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination";
 
     foreach my $strName (sort(keys $oManifestHash{name}))
     {
-        $bFirst ? $bFirst = false : print "\n";
-
-        print "${strName}";
+        print "\n${strName}\t" .
+            $oManifestHash{name}{"${strName}"}{type} . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{permission}) ? $oManifestHash{name}{"${strName}"}{permission} : "") . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
+                $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
+            (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
+                $oManifestHash{name}{"${strName}"}{link_destination} : "");
     }
 
     exit 0;
