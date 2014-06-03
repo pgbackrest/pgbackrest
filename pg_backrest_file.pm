@@ -67,8 +67,10 @@ use constant
 {
     COMMAND_ERR_FILE_MISSING           => 1,
     COMMAND_ERR_FILE_READ              => 2,
-    COMMAND_ERR_FILE_TYPE              => 3,
-    COMMAND_ERR_LINK_READ              => 4
+    COMMAND_ERR_FILE_MOVE              => 3,
+    COMMAND_ERR_FILE_TYPE              => 4,
+    COMMAND_ERR_LINK_READ              => 5,
+    COMMAND_ERR_PATH_MISSING           => 6
 };
 
 ####################################################################################################################################
@@ -201,7 +203,7 @@ sub error_clear
 }
 
 ####################################################################################################################################
-# PATH_GET
+# PATH_TYPE_GET
 ####################################################################################################################################
 sub path_type_get
 {
@@ -209,7 +211,11 @@ sub path_type_get
     my $strType = shift;
 
     # If db type
-    if ($strType =~ /^db(\:.*){0,1}/)
+    if ($strType eq PATH_ABSOLUTE)
+    {
+        return PATH_ABSOLUTE;
+    }
+    elsif ($strType =~ /^db(\:.*){0,1}/)
     {
         return PATH_DB;
     }
@@ -223,6 +229,9 @@ sub path_type_get
     confess &log(ASSERT, "no known path types in '${strType}'");
 }
 
+####################################################################################################################################
+# PATH_GET
+####################################################################################################################################
 sub path_get
 {
     my $self = shift;
@@ -230,21 +239,24 @@ sub path_get
     my $strFile = shift;    # File to append to the base path (can include a path as well)
     my $bTemp = shift;      # Return the temp file for this path type - only some types have temp files
 
-    # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP
-    if (defined($bTemp) && $bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || 
-                                       $strType eq PATH_DB_ABSOLUTE || $strType eq PATH_BACKUP_ABSOLUTE))
+    # Make sure that any absolute path starts with /, otherwise it will actually be relative
+    my $bAbsolute = $strType =~ /.*absolute.*/;
+
+    if ($bAbsolute && $strFile !~ /^\/.*/)
+    {
+        confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
+    }
+
+    # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP and any absolute path
+    $bTemp = defined($bTemp) ? $bTemp : false;
+
+    if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $bAbsolute))
     {
         confess &log(ASSERT, "temp file not supported on path " . $strType);
     }
 
     # Get absolute path
-    if ($strType eq PATH_ABSOLUTE)
-    {
-        return $strFile;
-    }
-
-    # Get absolute db path
-    if ($strType eq PATH_DB_ABSOLUTE)
+    if ($bAbsolute)
     {
         if (defined($bTemp) && $bTemp)
         {
@@ -254,21 +266,10 @@ sub path_get
         return $strFile;
     }
 
-    # Make sure the base backup path is defined
+    # Make sure the base backup path is defined (since all other path types are backup)
     if (!defined($self->{strBackupPath}))
     {
         confess &log(ASSERT, "\$strBackupPath not yet defined");
-    }
-
-    # Get absolute backup path
-    if ($strType eq PATH_BACKUP_ABSOLUTE)
-    {
-        if (defined($bTemp) && $bTemp)
-        {
-            return "${strFile}.backrest.tmp";
-        }
-
-        return $strFile;
     }
 
     # Get base backup path
@@ -302,7 +303,7 @@ sub path_get
     {
         my $strTempPath = "$self->{strBackupPath}/temp/$self->{strStanza}.tmp";
 
-        if (defined($bTemp) && $bTemp)
+        if ($bTemp)
         {
             return "${strTempPath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "");
         }
@@ -316,7 +317,7 @@ sub path_get
         my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
         my $strArchive;
 
-        if (defined($bTemp) && $bTemp)
+        if ($bTemp)
         {
             return "${strArchivePath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "");
         }
@@ -533,24 +534,28 @@ sub remote_get
 }
 
 ####################################################################################################################################
-# FILE_MOVE
+# MOVE
 #
 # Moves a file locally or remotely.
 ####################################################################################################################################
-sub file_move
+sub move
 {
     my $self = shift;
     my $strSourcePathType = shift;
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
-    my $bPathCreate = shift;
+    my $bDestinationPathCreate = shift;
 
-    # if bPathCreate is not defined, default to true
-    $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
+    # Get the root path for the file list
+    my $strErrorPrefix = "File->move";
+    my $bRemote = $self->is_remote($strSourcePathType);
+    $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : true;
 
-    &log(TRACE, "file_move: ${strSourcePathType}: " . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
-                " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : ""));
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") .
+                " ${strSourcePathType}" . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
+                " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
+                ", dest_path_create = " . ($bDestinationPathCreate ? "true" : "false"));
 
     # Get source and desination files
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strSourcePathType))
@@ -558,32 +563,69 @@ sub file_move
         confess &log(ASSERT, "source and destination path types must be equal");
     }
 
-    my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
-    my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
-
-    # If the destination path is backup and does not exist, create it
-    if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
-    {
-        $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
-    }
-
-    my $strCommand = "mv ${strSource} ${strDestination}";
+    my $strPathOpSource = $self->path_get($strSourcePathType, $strSourceFile);
+    my $strPathOpDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
 
     # Run remotely
-    if ($self->is_remote($strDestinationPathType))
+    if ($bRemote)
     {
-        &log(TRACE, "file_move: remote ${strDestinationPathType} '${strCommand}'");
+        my $strCommand = $self->{strCommand} .
+                         ($bDestinationPathCreate ? " --dest-path-create" : "") .
+                         " move ${strPathOpSource} ${strPathOpDestination}";
 
-        my $oSSH = $self->remote_get($strDestinationPathType);
-        $oSSH->system($strCommand)
-            or confess &log("unable to move remote ${strDestinationPathType}:${strSourceFile} to ${strDestinationFile}");
+        # Run via SSH
+        my $oSSH = $self->remote_get($strSourcePathType);
+        my $strOutput = $oSSH->capture($strCommand);
+
+        # Handle any errors
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
+        }
     }
     # Run locally
     else
     {
-        &log(TRACE, "file_move: '${strCommand}'");
+        # If the destination path does not exist, create it
+        unless (-e dirname($strPathOpDestination))
+        {
+            if ($bDestinationPathCreate)
+            {
+                $self->path_create($strDestinationPathType, dirname($strDestinationFile));
+            }
+            else
+            {
+                my $strError = "destination " . dirname($strPathOpDestination) . " does not exist";
 
-        system($strCommand) == 0 or confess &log("unable to move local ${strSourceFile} to ${strDestinationFile}");
+                if ($strSourcePathType eq PATH_ABSOLUTE)
+                {
+                    print $strError;
+                    exit (COMMAND_ERR_PATH_MISSING);
+                }
+
+                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+            }
+        }
+        
+        if (!rename($strPathOpSource, $strPathOpDestination))
+        {
+            my $strError = "${strPathOpSource} could not be moved:" . $!;
+            my $iErrorCode = COMMAND_ERR_FILE_MOVE;
+
+            unless (-e $strPathOpSource)
+            {
+                $strError = "${strPathOpSource} does not exist";
+                $iErrorCode = COMMAND_ERR_FILE_MISSING;
+            }
+
+            if ($strSourcePathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit ($iErrorCode);
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        }
     }
 }
 
@@ -864,7 +906,7 @@ sub compress
     &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
 
     # Run remotely
-    if ($self->is_remote($strPathType))
+    if ($bRemote)
     {
         my $strCommand = $self->{strCommand} .
                          " compress ${strPathOp}";

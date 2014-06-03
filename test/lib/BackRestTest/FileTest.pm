@@ -37,10 +37,98 @@ sub BackRestTestFile
     
 #    print "user = ${strUser}, group = ${strGroup}";
 
-#    log_level_set(TRACE, TRACE);
+    log_level_set(TRACE, TRACE);
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Test hash()
+    # Test move()
+    #-------------------------------------------------------------------------------------------------------------------------------
+    $iRun = 0;
+
+    print "\ntest File->move()\n";
+
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+    {
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => true,
+            strCommand => $strCommand,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
+        );
+
+        # Loop through source exists
+        for (my $bSourceExists = 0; $bSourceExists <= 1; $bSourceExists++)
+        {
+            # Loop through destination exists
+            for (my $bDestinationExists = 0; $bDestinationExists <= 1; $bDestinationExists++)
+            {
+                # Loop through create
+                for (my $bCreate = 0; $bCreate <= $bDestinationExists; $bCreate++)
+                {
+                    $iRun++;
+
+                    print "run ${iRun} - " .
+                          "remote $bRemote, src_exists $bSourceExists, dst_exists $bDestinationExists, create $bCreate\n";
+
+                    # Drop the old test directory and create a new one
+                    system("rm -rf test");
+                    system("mkdir test") == 0 or confess "Unable to create test directory";
+
+                    my $strSourceFile = "${strTestPath}/test.txt";
+                    my $strDestinationFile = "${strTestPath}/test-dest.txt";
+                    
+                    if ($bCreate)
+                    {
+                        $strDestinationFile = "${strTestPath}/sub/test-dest.txt"
+                    }
+
+                    if ($bSourceExists)
+                    {
+                        system("echo 'TESTDATA' > ${strSourceFile}");
+                    }
+
+                    if (!$bDestinationExists)
+                    {
+                        $strDestinationFile = "error" . $strDestinationFile;
+                    }
+
+                    # Execute in eval in case of error
+                    eval
+                    {
+                        $oFile->move(PATH_BACKUP_ABSOLUTE, $strSourceFile, PATH_BACKUP_ABSOLUTE, $strDestinationFile, $bCreate);
+                    };
+
+                    if ($@)
+                    {
+                        if (!$bSourceExists || !$bDestinationExists)
+                        {
+                            next;
+                        }
+
+                        confess "error raised: " . $@ . "\n";
+                    }
+                
+                    if (!$bSourceExists || !$bDestinationExists)
+                    {
+                        confess "error should have been raised";
+                    }
+
+                    unless (-e $strDestinationFile)
+                    {
+                        confess "file was not moved";
+                    }
+                }
+            }
+        }
+    }
+    
+    return;
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test compress()
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
 

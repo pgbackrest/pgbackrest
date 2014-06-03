@@ -28,17 +28,20 @@ use constant
     OP_HASH     => "hash",
     OP_REMOVE   => "remove",
     OP_MANIFEST => "manifest",
-    OP_COMPRESS => "compress"
+    OP_COMPRESS => "compress",
+    OP_MOVE     => "move"
 };
 
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
-my $bIgnoreMissing = false;     # Ignore errors due to missing file
-my $strExpression = undef;      # Expression to use for filtering
-my $strSort = undef;            # Sort order (undef = forward)
+my $bIgnoreMissing = false;          # Ignore errors due to missing file
+my $bDestinationPathCreate = false;  # Create destination path if it does not exist
+my $strExpression = undef;           # Expression to use for filtering (undef = no filtering)
+my $strSort = undef;                 # Sort order (undef = forward)
 
 GetOptions ("ignore-missing" => \$bIgnoreMissing,
+            "dest-path-create" => \$bDestinationPathCreate,
             "expression=s" => \$strExpression,
             "sort=s" => \$strSort)
     or die("Error in command line arguments\n");
@@ -67,12 +70,12 @@ my $oFile = pg_backrest_file->new();
 if ($strOperation eq OP_LIST)
 {
     my $strPath = $ARGV[1];
-    
+
     if (!defined($strPath))
     {
         confess "path must be specified for list operation";
     }
-    
+
     my $bFirst = true;
 
     foreach my $strFile ($oFile->list(PATH_ABSOLUTE, $strPath, $strExpression, $strSort))
@@ -91,7 +94,7 @@ if ($strOperation eq OP_LIST)
 if ($strOperation eq OP_EXISTS)
 {
     my $strFile = $ARGV[1];
-    
+
     if (!defined($strFile))
     {
         confess "filename must be specified for exist operation";
@@ -142,7 +145,7 @@ if ($strOperation eq OP_REMOVE)
 if ($strOperation eq OP_MANIFEST)
 {
     my $strPath = $ARGV[1];
-    
+
     if (!defined($strPath))
     {
         confess "path must be specified for manifest operation";
@@ -177,13 +180,37 @@ if ($strOperation eq OP_MANIFEST)
 if ($strOperation eq OP_COMPRESS)
 {
     my $strFile = $ARGV[1];
-    
+
     if (!defined($strFile))
     {
         confess "file must be specified for compress operation";
     }
 
     $oFile->compress(PATH_ABSOLUTE, $strFile);
+
+    exit 0;
+}
+
+####################################################################################################################################
+# MOVE Command
+####################################################################################################################################
+if ($strOperation eq OP_MOVE)
+{
+    my $strFileSource = $ARGV[1];
+
+    if (!defined($strFileSource))
+    {
+        confess "source file source must be specified for compress operation";
+    }
+
+    my $strFileDestination = $ARGV[2];
+
+    if (!defined($strFileDestination))
+    {
+        confess "destination file must be specified for compress operation";
+    }
+
+    $oFile->move(PATH_ABSOLUTE, $strFileSource, PATH_ABSOLUTE, $strFileDestination, $bDestinationPathCreate);
 
     exit 0;
 }
