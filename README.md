@@ -28,14 +28,14 @@ Simple Postgres Backup and Restore
 
 ## required perl modules
 
-Config::IniFiles
-Moose
-IPC::System::Simple
-Net::OpenSSH
-JSON
-IPC::Open3
-Digest::SHA
-IO::Compress::Gzip
+* Config::IniFiles
+* Moose
+* IPC::System::Simple
+* Net::OpenSSH
+* JSON
+* IPC::Open3
+* Digest::SHA
+* IO::Compress::Gzip
 
 ## release notes
 
