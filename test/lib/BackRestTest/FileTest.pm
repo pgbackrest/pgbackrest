@@ -112,7 +112,7 @@ sub BackRestFileTest
                     {
                         next;
                     }
-                    
+
                     confess "error raised: " . $@ . "\n";
                 }
                 else
@@ -122,17 +122,17 @@ sub BackRestFileTest
                     {
                         confess "path was not created";
                     }
-                    
+
                     # Check that the permissions were set correctly
                     my $oStat = lstat($strPath);
-                    
+
                     if (!defined($oStat))
                     {
                         confess "unable to stat ${strPath}";
                     }
-                    
+
                     my $strPermissionCompare = defined($strPermission) ? $strPermission : $oFile->{strDefaultPathPermission};
-                    
+
                     if ($strPermissionCompare ne sprintf("%04o", S_IMODE($oStat->mode)))
                     {
                         confess "permissions were not set to {$strPermissionCompare}";
@@ -183,7 +183,7 @@ sub BackRestFileTest
 
                     my $strSourceFile = "${strTestPath}/test.txt";
                     my $strDestinationFile = "${strTestPath}/test-dest.txt";
-                    
+
                     if ($bCreate)
                     {
                         $strDestinationFile = "${strTestPath}/sub/test-dest.txt"
@@ -348,7 +348,7 @@ sub BackRestFileTest
 
             &log(INFO, "run ${iRun} - " .
                        "remote $bRemote, error $bError");
-            
+
             my $strPath = $strTestPath;
 
             if ($bError)
@@ -380,7 +380,7 @@ sub BackRestFileTest
                         $oManifestHash{name}{"${strName}"}{inode} = 0;
                     }
 
-                    $strManifest .= 
+                    $strManifest .=
                         "${strName}," .
                         $oManifestHash{name}{"${strName}"}{type} . "," .
                         (defined($oManifestHash{name}{"${strName}"}{user}) ?
@@ -498,7 +498,7 @@ sub BackRestFileTest
 
                         if ($strFileList ne $strFileCompare)
                         {
-                            confess "list (${strFileList})[" . @stryFileList . 
+                            confess "list (${strFileList})[" . @stryFileList .
                                     "] does not match compare (${strFileCompare})[" . @stryFileCompare . "]";
                         }
                     };
@@ -555,7 +555,7 @@ sub BackRestFileTest
                     system("mkdir test") == 0 or confess "Unable to create test directory";
 
                     my $strFile = "${strTestPath}/test.txt";
-                    
+
                     if ($bExists)
                     {
                         system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? ".backrest.tmp" : ""));
@@ -588,7 +588,7 @@ sub BackRestFileTest
     # Test hash()
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
-    
+
     &log(INFO, "--------------------------------------------------------------------------------");
     &log(INFO, "test File->hash()\n");
 
@@ -647,7 +647,7 @@ sub BackRestFileTest
     # Test exists()
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
-    
+
     &log(INFO, "--------------------------------------------------------------------------------");
     &log(INFO, "test File->exists()\n");
 
@@ -691,7 +691,7 @@ sub BackRestFileTest
                     confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
                 }
             };
-            
+
             if ($@)
             {
                 confess "error raised: " . $@ . "\n";
@@ -753,7 +753,7 @@ sub BackRestFileTest
                                 for (my $bConfessError = 0; $bConfessError <= 1; $bConfessError++)
                                 {
                                     $iRun++;
-                                
+
                                     print "run ${iRun} - " .
                                           "srcpth ${strSourcePath}, bkprmt $bBackupRemote, srccmp $bSourceCompressed, " .
                                           "dstpth ${strDestinationPath}, dbrmt $bDbRemote, dstcmp $bDestinationCompressed, " .
@@ -837,7 +837,7 @@ sub BackRestFileTest
                                             else
                                             {
                                                 my $strError = $oFile->error_get();
-                                                
+
                                                 if (!defined($strError) || ($strError eq ''))
                                                 {
                                                     confess 'no error message returned';
@@ -854,7 +854,7 @@ sub BackRestFileTest
                                         {
                                             confess "error was returned when no error generated";
                                         }
-                                        
+
                                         print "    true was returned\n";
                                     }
 

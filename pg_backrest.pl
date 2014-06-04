@@ -82,7 +82,7 @@ GetOptions ("config=s" => \$strConfigFile,
 # Global variables
 ####################################################################################################################################
 my %oConfig;            # Configuration hash
-    
+
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
 ####################################################################################################################################
@@ -111,7 +111,7 @@ sub config_load
     {
         # First check the stanza section
         $strValue = $oConfig{"${strStanza}:${strSection}"}{"${strKey}"};
-        
+
         # If the stanza section value is undefined then check global
         if (!defined($strValue))
         {
@@ -125,18 +125,18 @@ sub config_load
         {
             return $strDefault;
         }
-        
+
         confess &log(ERROR, "config value " . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
     }
 
     if ($strSection eq CONFIG_SECTION_COMMAND)
     {
         my $strOption = config_load(CONFIG_SECTION_COMMAND_OPTION, $strKey);
-        
+
         if (defined($strOption))
         {
             $strValue =~ s/\%option\%/${strOption}/g;
-        } 
+        }
     }
 
     return $strValue;
@@ -256,7 +256,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push
     my $bCompressAsync = config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
-    
+
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push
     my $strStopFile;
     my $strArchivePath;
@@ -286,7 +286,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 exit 0;
             }
         }
-    
+
         # Make sure that archive-push is running locally
         if (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
         {
@@ -326,7 +326,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 
         archive_push($ARGV[1]);
 
-        # Only continue if we are archiving local and a backup server is defined 
+        # Only continue if we are archiving local and a backup server is defined
         if (!($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))
         {
             exit 0;
@@ -334,7 +334,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 
         # Set the operation so that archive-pull will be called next
         $strOperation = OP_ARCHIVE_PULL;
-        
+
         # fork and exit the parent process
         if (fork())
         {
@@ -350,7 +350,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         {
             confess &log(ERROR, "stanza host cannot be set on archive-pull - must be run locally on db server");
         }
-        
+
         # Create a lock file to make sure archive-pull does not run more than once
         my $strLockPath = "${strArchivePath}/lock/${strStanza}-archive.lock";
 

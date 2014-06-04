@@ -93,7 +93,7 @@ sub thread_init
     else
     {
         $iThreadActualTotal = $iThreadRequestTotal < $iThreadMax ? $iThreadRequestTotal : $iThreadMax;
-        
+
         if ($iThreadActualTotal < 1)
         {
             $iThreadActualTotal = 1;
@@ -144,7 +144,7 @@ sub backup_thread_complete
 {
     my $iTimeout = shift;
     my $bConfessOnError = shift;
-    
+
     if (!defined($bConfessOnError))
     {
         $bConfessOnError = true;
@@ -230,7 +230,7 @@ sub archive_get
     # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
     if (scalar @stryArchiveFile > 1)
     {
-        confess &log(ASSERT, (scalar @stryArchiveFile) . " archive files found for ${strSourceArchive}."); 
+        confess &log(ASSERT, (scalar @stryArchiveFile) . " archive files found for ${strSourceArchive}.");
     }
 
     # If there are no matching archive files then there are two possibilities:
@@ -239,7 +239,7 @@ sub archive_get
     #    is harder than it looks.  Postponed and added to the backlog.  For now treated as case #1.)
     elsif (scalar @stryArchiveFile == 0)
     {
-        &log(INFO, "${strSourceArchive} was not found in the archive repository"); 
+        &log(INFO, "${strSourceArchive} was not found in the archive repository");
 
         return 1;
     }
@@ -332,24 +332,24 @@ sub archive_pull
     # # Init the thread variables
     # $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
     # my $iThreadIdx = 0;
-    # 
+    #
     # &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
-    # 
+    #
     # # Distribute files among the threads
     # foreach my $strFile (sort @stryFile)
     # {
     #     $oThreadQueue[$iThreadIdx]->enqueue($strFile);
-    # 
+    #
     #     $iThreadIdx = ($iThreadIdx + 1 == $iThreadLocalMax) ? 0 : $iThreadIdx + 1;
     # }
-    # 
+    #
     # # End each thread queue and start the thread
     # for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     # {
     #     $oThreadQueue[$iThreadIdx]->enqueue(undef);
     #     $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
     # }
-    # 
+    #
     # backup_thread_complete($iThreadTimeout);
 
     # Transfer each file
@@ -392,27 +392,27 @@ sub archive_pull
 # sub archive_pull_copy_thread
 # {
 #     my @args = @_;
-# 
+#
 #     my $iThreadIdx = $args[0];
 #     my $strArchivePath = $args[1];
-# 
+#
 #     my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
-# 
+#
 #     # When a KILL signal is received, immediately abort
 #     $SIG{'KILL'} = sub {threads->exit();};
-# 
+#
 #     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
 #     {
 #         &log(INFO, "thread ${iThreadIdx} backing up archive file ${strFile}");
-#         
+#
 #         my $strArchiveFile = "${strArchivePath}/${strFile}";
-# 
+#
 #         # Copy the file
 #         $oFileThread->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
 #                                            PATH_BACKUP_ARCHIVE, basename($strFile),
 #                                            undef, undef,
 #                                            undef); # cannot set permissions remotely yet $oFile->{strDefaultFilePermission});
-#                                              
+#
 #         #  Remove the source archive file
 #         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
 #     }
@@ -611,7 +611,7 @@ sub backup_file_not_in_manifest
 {
     my $strPathType = shift;
     my $oManifestRef = shift;
-    
+
     my %oFileHash = $oFile->manifest_get($strPathType);
     my @stryFile;
     my $iFileTotal = 0;
@@ -676,7 +676,7 @@ sub backup_file_not_in_manifest
                 {
                     if (${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{size} ==
                             $oFileHash{name}{"${strName}"}{size} &&
-                        ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{modification_time} == 
+                        ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{modification_time} ==
                             $oFileHash{name}{"${strName}"}{modification_time})
                     {
                         ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{exists} = true;
@@ -695,13 +695,13 @@ sub backup_file_not_in_manifest
 
 ####################################################################################################################################
 # BACKUP_TMP_CLEAN
-# 
+#
 # Cleans the temp directory from a previous failed backup so it can be reused
 ####################################################################################################################################
 sub backup_tmp_clean
 {
     my $oManifestRef = shift;
-    
+
     &log(INFO, "cleaning backup tmp path");
 
     # Remove the pg_xlog directory since it contains nothing useful for the new backup
@@ -722,7 +722,7 @@ sub backup_tmp_clean
     foreach my $strFile (sort {$b cmp $a} @stryFile)
     {
         my $strDelete = $oFile->path_get(PATH_BACKUP_TMP, $strFile);
-        
+
         # If a path then delete it, all the files should have already been deleted since we are going in reverse order
         if (-d $strDelete)
         {
@@ -766,7 +766,7 @@ sub backup_manifest_build
         {
             next;
         }
-        
+
         my $cType = $oManifestHash{name}{"${strName}"}{type};
         my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
         my $strSection = "${strLevel}:path";
@@ -787,7 +787,7 @@ sub backup_manifest_build
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = 
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} =
             (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
 
         if ($cType eq "f")
@@ -928,7 +928,7 @@ sub backup_file
                 $oFile->path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
 
                 $oFile->link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
-                                   PATH_BACKUP_TMP, 
+                                   PATH_BACKUP_TMP,
                                    "base/pg_tblspc/" . ${$oBackupManifestRef}{"base:tablespace"}{"${strTablespaceName}"}{oid},
                                    false, true);
             }
@@ -966,11 +966,11 @@ sub backup_file
 
         # Iterate through the files for each backup source path
         my $strFile;
-        
+
         foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
-            
+
             if (defined(${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{exists}))
             {
                 &log(TRACE, "file ${strFile} already exists from previous backup attempt");
@@ -1002,8 +1002,8 @@ sub backup_file
                     $lFileTotal++;
                     $lFileLargeSize += $lFileSize > $iSmallFileThreshold ? $lFileSize : 0;
                     $lFileLargeTotal += $lFileSize > $iSmallFileThreshold ? 1 : 0;
-                    $lFileSmallSize += $lFileSize <= $iSmallFileThreshold ? $lFileSize : 0; 
-                    $lFileSmallTotal += $lFileSize <= $iSmallFileThreshold ? 1 : 0; 
+                    $lFileSmallSize += $lFileSize <= $iSmallFileThreshold ? $lFileSize : 0;
+                    $lFileSmallTotal += $lFileSize <= $iSmallFileThreshold ? 1 : 0;
 
                     # Load the hash used by threaded copy
                     my $strKey = sprintf("ts%012x-fs%012x-fn%012x", $lTablespaceIdx,
@@ -1014,7 +1014,7 @@ sub backup_file
                     $oFileCopyMap{"${strKey}"}{file} = ${strFile};
                     $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
                     $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
-                    $oFileCopyMap{"${strKey}"}{modification_time} = 
+                    $oFileCopyMap{"${strKey}"}{modification_time} =
                         ${$oBackupManifestRef}{"${strSectionFile}"}{"$strFile"}{modification_time};
                 }
             }
@@ -1037,7 +1037,7 @@ sub backup_file
         $oyThreadData[$iThreadIdx]{small_size} = 0;
         $oyThreadData[$iThreadIdx]{small_total} = 0;
     }
-    
+
     # Assign files to each thread queue
     my $iThreadFileSmallIdx = 0;
     my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadLocalMax);
@@ -1072,7 +1072,7 @@ sub backup_file
         else
         {
             $oThreadQueue[$iThreadFileSmallIdx]->enqueue($strFile);
-            
+
             $oyThreadData[$iThreadFileSmallIdx]{small_size} += $lFileSize;
             $oyThreadData[$iThreadFileSmallIdx]{small_total}++;
             $oyThreadData[$iThreadFileSmallIdx]{size} += $lFileSize;
@@ -1089,9 +1089,9 @@ sub backup_file
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         # Output info about how much work each thread is going to do
-        &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " . 
+        &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " .
                     "size $oyThreadData[$iThreadIdx]{large_size}");
-        &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " . 
+        &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " .
                     "size $oyThreadData[$iThreadIdx]{small_size}");
 
         # End each queue
@@ -1104,7 +1104,7 @@ sub backup_file
 
     # Wait for the threads to complete
     backup_thread_complete($iThreadTimeout);
-    
+
     # Read the messages that we passed back from the threads.  These should be two types:
     # 1) remove - files that were skipped because they were removed from the database during backup
     # 2) checksum - file checksums calculated by the threads
@@ -1179,7 +1179,7 @@ sub backup_file_thread
         $lSize += $oFileCopyMap{$strFile}{size};
 
         # Output information about the file to be copied
-        $strLog = "thread ${iThreadIdx} backed up file $oFileCopyMap{$strFile}{db_file} (" . 
+        $strLog = "thread ${iThreadIdx} backed up file $oFileCopyMap{$strFile}{db_file} (" .
                   file_size_format($oFileCopyMap{$strFile}{size}) .
                   ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")";
 
@@ -1222,7 +1222,7 @@ sub backup_file_thread
 
             # Write the checksum message into the master queue
             $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
-            
+
             &log(INFO, $strLog . " checksum ${strChecksum}");
         }
         else
@@ -1230,13 +1230,13 @@ sub backup_file_thread
             &log(INFO, $strLog);
         }
     }
-    
+
     &log(DEBUG, "thread ${iThreadIdx} exiting");
 }
 
 ####################################################################################################################################
 # BACKUP
-# 
+#
 # Performs the entire database backup.
 ####################################################################################################################################
 sub backup
@@ -1325,7 +1325,7 @@ sub backup
     if (-e $strBackupTmpPath)
     {
         &log(WARN, "aborted backup already exists, will be cleaned to remove invalid files and resumed");
-        
+
         # Clean the old backup tmp path
         backup_tmp_clean(\%oBackupManifest);
     }
@@ -1351,9 +1351,9 @@ sub backup
     # Need to remove empty directories that were caused by skipped files
     # !!! DO IT
 
-    # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the 
+    # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
-    # consistent - at least not in this routine.  
+    # consistent - at least not in this routine.
     if ($bArchiveRequired)
     {
         # Save the backup conf file second time - before getting archive logs in case that fails
@@ -1369,12 +1369,12 @@ sub backup
 
             wait_for_file($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 600);
 
-            my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath, 
+            my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath,
                 "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
 
             if (scalar @stryArchiveFile != 1)
             {
-                confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}"); 
+                confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}");
             }
 
             &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
@@ -1405,10 +1405,10 @@ sub archive_list_get
     my $strArchiveStart = shift;
     my $strArchiveStop = shift;
     my $bSkipFF = shift;
-    
+
     # strSkipFF default to false
     $bSkipFF = defined($bSkipFF) ? $bSkipFF : false;
-    
+
     if ($bSkipFF)
     {
         &log(TRACE, "archive_list_get: pre-9.3 database, skipping log FF");
@@ -1417,7 +1417,7 @@ sub archive_list_get
     {
         &log(TRACE, "archive_list_get: post-9.3 database, including log FF");
     }
-    
+
     my $strTimeline = substr($strArchiveStart, 0, 8);
     my @stryArchive;
     my $iArchiveIdx = 0;
@@ -1426,7 +1426,7 @@ sub archive_list_get
     {
         confess "Timelines between ${strArchiveStart} and ${strArchiveStop} differ";
     }
-        
+
     my $iStartMajor = hex substr($strArchiveStart, 8, 8);
     my $iStartMinor = hex substr($strArchiveStart, 16, 8);
 
@@ -1457,7 +1457,7 @@ sub archive_list_get
 
 ####################################################################################################################################
 # BACKUP_EXPIRE
-# 
+#
 # Removes expired backups and archive logs from the backup directory.  Partial backups are not counted for expiration, so if full
 # or differential retention is set to 2, there must be three complete backups before the oldest one can be deleted.
 #
@@ -1473,10 +1473,10 @@ sub backup_expire
     my $iDifferentialRetention = shift;     # Number of differential backups to keep
     my $strArchiveRetentionType = shift;    # Type of backup to base archive retention on
     my $iArchiveRetention = shift;          # Number of backups worth of archive to keep
-    
+
     my $strPath;
     my @stryPath;
-    
+
     # Find all the expired full backups
     if (defined($iFullRetention))
     {
@@ -1497,13 +1497,13 @@ sub backup_expire
             {
                 system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
             }
-        
+
             &log(INFO, "removed expired full backup: " . $stryPath[$iIndex]);
 
             $iIndex++;
         }
     }
-    
+
     # Find all the expired differential backups
     if (defined($iDifferentialRetention))
     {
@@ -1512,9 +1512,9 @@ sub backup_expire
         {
             confess &log(ERROR, "differential_rentention must be a number >= 1");
         }
-        
+
         @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
-     
+
         if (defined($stryPath[$iDifferentialRetention]))
         {
             # Get a list of all differential and incremental backups
@@ -1529,7 +1529,7 @@ sub backup_expire
             }
         }
     }
-    
+
     # If no archive retention type is set then exit
     if (!defined($strArchiveRetentionType))
     {
@@ -1566,18 +1566,18 @@ sub backup_expire
     {
         confess &log(ERROR, "archive_rentention must be a number >= 1");
     }
-    
+
     # if no backups were found then preserve current archive logs - too scary to delete them!
     my $iBackupTotal = scalar @stryPath;
-    
+
     if ($iBackupTotal == 0)
     {
         return;
     }
-    
+
     # See if enough backups exist for expiration to start
     my $strArchiveRetentionBackup = $stryPath[$iArchiveRetention - 1];
-    
+
     if (!defined($strArchiveRetentionBackup))
     {
         if ($strArchiveRetentionType eq "full" && scalar @stryPath > 0)
@@ -1598,33 +1598,33 @@ sub backup_expire
 
     my %oManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest");
     my $strArchiveLast = ${oManifest}{backup}{"archive-start"};
-    
+
     if (!defined($strArchiveLast))
     {
         confess &log(ERROR, "invalid archive location retrieved ${strArchiveRetentionBackup}");
     }
-    
+
     &log(INFO, "archive retention starts at " . $strArchiveLast);
 
     # Remove any archive directories or files that are out of date
     foreach $strPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
     {
         &log(DEBUG, "found major archive path " . $strPath);
-        
+
         # If less than first 16 characters of current archive file, then remove the directory
         if ($strPath lt substr($strArchiveLast, 0, 16))
         {
             my $strFullPath = $oFile->path_get(PATH_BACKUP_ARCHIVE) . "/$strPath";
-            
+
             remove_tree($strFullPath) > 0 or confess &log(ERROR, "unable to remove ${strFullPath}");
-            
+
             &log(DEBUG, "removed major archive path " . $strFullPath);
         }
         # If equals the first 16 characters of the current archive file, then delete individual files instead
         elsif ($strPath eq substr($strArchiveLast, 0, 16))
         {
             my $strSubPath;
-        
+
             # Look for archive files in the archive directory
             foreach $strSubPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, $strPath, "^[0-F]{24}.*\$"))
             {

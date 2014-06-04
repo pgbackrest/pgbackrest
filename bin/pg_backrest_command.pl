@@ -84,7 +84,7 @@ if ($strOperation eq OP_LIST)
     foreach my $strFile ($oFile->list(PATH_ABSOLUTE, $strPath, $strExpression, $strSort))
     {
         $bFirst ? $bFirst = false : print "\n";
-        
+
         print $strFile;
     }
 
@@ -114,7 +114,7 @@ if ($strOperation eq OP_EXISTS)
 if ($strOperation eq OP_HASH)
 {
     my $strFile = $ARGV[1];
-    
+
     if (!defined($strFile))
     {
         confess "filename must be specified for ${strOperation} operation";
@@ -131,7 +131,7 @@ if ($strOperation eq OP_HASH)
 if ($strOperation eq OP_REMOVE)
 {
     my $strFile = $ARGV[1];
-    
+
     if (!defined($strFile))
     {
         confess "filename must be specified for ${strOperation} operation";

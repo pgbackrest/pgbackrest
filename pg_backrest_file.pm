@@ -91,7 +91,7 @@ use constant
 sub BUILD
 {
     my $self = shift;
-    
+
     # Make sure the backup path is defined
     if (defined($self->{strBackupPath}))
     {
@@ -106,7 +106,7 @@ sub BUILD
         {
             confess &log(ASSERT, "backup and db hosts cannot both be remote");
         }
-        
+
         my $strOptionSSHRequestTTY = "RequestTTY=yes";
         my $strOptionSSHCompression = "Compression=no";
 
@@ -119,7 +119,7 @@ sub BUILD
         if (!defined($self->{oBackupSSH}) && defined($self->{strBackupHost}))
         {
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
-            
+
             $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
 #                                      default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                       master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
@@ -175,14 +175,14 @@ sub clone
 sub error_get
 {
     my $self = shift;
-    
+
     my $strErrorFile = $self->path_get(PATH_LOCK_ERR, "file");
-    
+
     open my $hFile, '<', $strErrorFile or return "error opening ${strErrorFile} to read STDERR output";
-    
+
     my $strError = do {local $/; <$hFile>};
     close $hFile;
-    
+
     return trim($strError);
 }
 
@@ -283,7 +283,7 @@ sub path_get
     if ($strType eq PATH_LOCK_ERR)
     {
         my $strTempPath = $self->{strLockPath};
-        
+
         if (!defined($strTempPath))
         {
             return undef;
@@ -380,7 +380,7 @@ sub remote_get
 {
     my $self = shift;
     my $strPathType = shift;
-    
+
     # Get the db SSH object
     if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
     {
@@ -420,7 +420,7 @@ sub link_create
 
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
-    
+
     # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
@@ -502,7 +502,7 @@ sub path_create
     my $bRemote = $self->is_remote($strPathType);
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPath}, " . 
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPath}, " .
                 "permission " . (defined($strPermission) ? $strPermission : "[undef]"));
 
     if ($bRemote)
@@ -613,7 +613,7 @@ sub move
                 confess &log(ERROR, "${strErrorPrefix}: " . $strError);
             }
         }
-        
+
         if (!rename($strPathOpSource, $strPathOpDestination))
         {
             my $strError = "${strPathOpSource} could not be moved:" . $!;
@@ -690,7 +690,7 @@ sub file_copy
 
     # Generate the command string depending on compression/decompression/cat
     my $strCommand = $self->{strCommandCat};
-    
+
     if (!$bAlreadyCompressed && $bCompress)
     {
         $strCommand = $self->{strCommandCompress};
@@ -719,11 +719,11 @@ sub file_copy
 
             # Execute the command through ssh
             my $oSSH = $self->remote_get($strSourcePathType);
-            
+
             unless ($oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file"), stdout_fh => $hFile}, $strCommand))
             {
                 close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
-                
+
                 my $strResult = "unable to execute ssh '${strCommand}': " . $self->error_get();
                 $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
             }
@@ -789,7 +789,7 @@ sub file_copy
         else
         {
             &log(TRACE, "file_copy: local '${strCommand}'");
-            
+
             if (defined($self->path_get(PATH_LOCK_ERR, "file")))
             {
                 $strCommand .= " 2> " . $self->path_get(PATH_LOCK_ERR, "file");
@@ -970,7 +970,7 @@ sub list
     my $bRemote = $self->is_remote($strPathType);
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}" . 
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}" .
                                         ", expression " . (defined($strExpression) ? $strExpression : "[UNDEF]") .
                                         ", sort " . (defined($strSortOrder) ? $strSortOrder : "[UNDEF]"));
 
@@ -1068,7 +1068,7 @@ sub exists
     {
         # Build the command
         my $strCommand = $self->{strCommand} . " exists ${strPathOp}";
-        
+
         # Run it remotely
         my $oSSH = $self->remote_get($strPathType);
         my $strOutput = $oSSH->capture($strCommand);
@@ -1103,7 +1103,7 @@ sub remove
     my $strPath = shift;
     my $bTemp = shift;
     my $bIgnoreMissing = shift;
-    
+
     if (!defined($bIgnoreMissing))
     {
         $bIgnoreMissing = true;
@@ -1122,7 +1122,7 @@ sub remove
     {
         # Build the command
         my $strCommand = $self->{strCommand} . ($bIgnoreMissing ? " --ignore-missing" : "") . " remove ${strPathOp}";
-        
+
         # Run it remotely
         my $oSSH = $self->remote_get($strPathType);
         my $strOutput = $oSSH->capture($strCommand);
@@ -1191,7 +1191,7 @@ sub manifest
     {
         # Build the command
         my $strCommand = $self->{strCommand} . " manifest ${strPathOp}";
-        
+
         # Run it remotely
         my $oSSH = $self->remote_get($strPathType);
         my $strOutput = $oSSH->capture($strCommand);
@@ -1310,7 +1310,7 @@ sub manifest_recurse
 
             # Get link destination
             ${$oManifestHashRef}{name}{"${strFile}"}{link_destination} = readlink($strPathFile);
-            
+
             if (!defined(${$oManifestHashRef}{name}{"${strFile}"}{link_destination}))
             {
                 if (-e $strPathFile)
@@ -1356,7 +1356,7 @@ sub manifest_recurse
         if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
         {
             manifest_recurse($strPathType, $strPathOp,
-                             $strFile, 
+                             $strFile,
                              $iDepth + 1, $oManifestHashRef);
         }
     }
