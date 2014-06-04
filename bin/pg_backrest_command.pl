@@ -23,13 +23,14 @@ use pg_backrest_file;
 ####################################################################################################################################
 use constant
 {
-    OP_LIST     => "list",
-    OP_EXISTS   => "exists",
-    OP_HASH     => "hash",
-    OP_REMOVE   => "remove",
-    OP_MANIFEST => "manifest",
-    OP_COMPRESS => "compress",
-    OP_MOVE     => "move"
+    OP_LIST        => "list",
+    OP_EXISTS      => "exists",
+    OP_HASH        => "hash",
+    OP_REMOVE      => "remove",
+    OP_MANIFEST    => "manifest",
+    OP_COMPRESS    => "compress",
+    OP_MOVE        => "move",
+    OP_PATH_CREATE => "path_create"
 };
 
 ####################################################################################################################################
@@ -38,11 +39,13 @@ use constant
 my $bIgnoreMissing = false;          # Ignore errors due to missing file
 my $bDestinationPathCreate = false;  # Create destination path if it does not exist
 my $strExpression = undef;           # Expression to use for filtering (undef = no filtering)
+my $strPermission = undef;           # Permission when creating directory or file (undef = default)
 my $strSort = undef;                 # Sort order (undef = forward)
 
 GetOptions ("ignore-missing" => \$bIgnoreMissing,
             "dest-path-create" => \$bDestinationPathCreate,
             "expression=s" => \$strExpression,
+            "permission=s" => \$strPermission,
             "sort=s" => \$strSort)
     or die("Error in command line arguments\n");
 
@@ -73,7 +76,7 @@ if ($strOperation eq OP_LIST)
 
     if (!defined($strPath))
     {
-        confess "path must be specified for list operation";
+        confess "path must be specified for ${strOperation} operation";
     }
 
     my $bFirst = true;
@@ -97,7 +100,7 @@ if ($strOperation eq OP_EXISTS)
 
     if (!defined($strFile))
     {
-        confess "filename must be specified for exist operation";
+        confess "filename must be specified for ${strOperation} operation";
     }
 
     print $oFile->exists(PATH_ABSOLUTE, $strFile) ? "Y" : "N";
@@ -114,7 +117,7 @@ if ($strOperation eq OP_HASH)
     
     if (!defined($strFile))
     {
-        confess "filename must be specified for hash operation";
+        confess "filename must be specified for ${strOperation} operation";
     }
 
     print $oFile->hash(PATH_ABSOLUTE, $strFile);
@@ -131,7 +134,7 @@ if ($strOperation eq OP_REMOVE)
     
     if (!defined($strFile))
     {
-        confess "filename must be specified for remove operation";
+        confess "filename must be specified for ${strOperation} operation";
     }
 
     print $oFile->remove(PATH_ABSOLUTE, $strFile, undef, $bIgnoreMissing) ? "Y" : "N";
@@ -148,7 +151,7 @@ if ($strOperation eq OP_MANIFEST)
 
     if (!defined($strPath))
     {
-        confess "path must be specified for manifest operation";
+        confess "path must be specified for ${strOperation} operation";
     }
 
     my %oManifestHash;
@@ -183,7 +186,7 @@ if ($strOperation eq OP_COMPRESS)
 
     if (!defined($strFile))
     {
-        confess "file must be specified for compress operation";
+        confess "file must be specified for ${strOperation} operation";
     }
 
     $oFile->compress(PATH_ABSOLUTE, $strFile);
@@ -200,17 +203,34 @@ if ($strOperation eq OP_MOVE)
 
     if (!defined($strFileSource))
     {
-        confess "source file source must be specified for compress operation";
+        confess "source file source must be specified for ${strOperation} operation";
     }
 
     my $strFileDestination = $ARGV[2];
 
     if (!defined($strFileDestination))
     {
-        confess "destination file must be specified for compress operation";
+        confess "destination file must be specified for ${strOperation} operation";
     }
 
     $oFile->move(PATH_ABSOLUTE, $strFileSource, PATH_ABSOLUTE, $strFileDestination, $bDestinationPathCreate);
+
+    exit 0;
+}
+
+####################################################################################################################################
+# PATH_CREATE Command
+####################################################################################################################################
+if ($strOperation eq OP_PATH_CREATE)
+{
+    my $strPath = $ARGV[1];
+
+    if (!defined($strPath))
+    {
+        confess "path must be specified for ${strOperation} operation";
+    }
+
+    $oFile->path_create(PATH_ABSOLUTE, $strPath, $strPermission);
 
     exit 0;
 }

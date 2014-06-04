@@ -291,18 +291,25 @@ sub log_level_set
     my $strLevelFileParam = shift;
     my $strLevelConsoleParam = shift;
 
-    if (!defined($oLogLevelRank{"${strLevelFileParam}"}{rank}))
+    if (defined($strLevelFileParam))
     {
-        confess &log(ERROR, "file log level ${strLevelFileParam} does not exist");
+        if (!defined($oLogLevelRank{"${strLevelFileParam}"}{rank}))
+        {
+            confess &log(ERROR, "file log level ${strLevelFileParam} does not exist");
+        }
+
+        $strLogLevelFile = $strLevelFileParam;
     }
 
-    if (!defined($oLogLevelRank{"${strLevelConsoleParam}"}{rank}))
+    if (defined($strLevelConsoleParam))
     {
-        confess &log(ERROR, "console log level ${strLevelConsoleParam} does not exist");
-    }
+        if (!defined($oLogLevelRank{"${strLevelConsoleParam}"}{rank}))
+        {
+            confess &log(ERROR, "console log level ${strLevelConsoleParam} does not exist");
+        }
 
-    $strLogLevelFile = $strLevelFileParam;
-    $strLogLevelConsole = $strLevelConsoleParam;
+        $strLogLevelConsole = $strLevelConsoleParam;
+    }
 }
 
 ####################################################################################################################################

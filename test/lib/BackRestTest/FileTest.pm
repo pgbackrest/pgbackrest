@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# File.pl - Unit Tests for BackRest::File
+# FileTest.pl - Unit Tests for BackRest::File
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -13,15 +13,17 @@ use english;
 use Carp;
 use File::Basename;
 use Cwd 'abs_path';
+use File::stat;
+use Fcntl ':mode';
 
 use lib dirname($0) . "/..";
 use pg_backrest_file;
 use pg_backrest_utility;
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestFile);
+our @EXPORT = qw(BackRestFileTest);
 
-sub BackRestTestFile
+sub BackRestFileTest
 {
     my $strLockPath = dirname(abs_path($0)) . "/lock";
     my $strTestPath = dirname(abs_path($0)) . "/test";
@@ -32,19 +34,121 @@ sub BackRestTestFile
     my $strHost = "127.0.0.1";
     my $strUser = getpwuid($<);
     my $strGroup = getgrgid($();
-    
-    umask(0);
-    
-#    print "user = ${strUser}, group = ${strGroup}";
 
-    log_level_set(TRACE, TRACE);
+    # Print test parameters
+    &log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
+
+    &log(INFO, "FILE MODULE ********************************************************************");
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test path_create()
+    #-------------------------------------------------------------------------------------------------------------------------------
+    $iRun = 0;
+
+    &log(INFO, "Test File->path_create()\n");
+
+    # Loop through local/remote
+    for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+    {
+        my $oFile = pg_backrest_file->new
+        (
+            strStanza => $strStanza,
+            bNoCompression => true,
+            strCommand => $strCommand,
+            strBackupClusterPath => ${strTestPath},
+            strBackupPath => ${strTestPath},
+            strBackupHost => $bRemote ? $strHost : undef,
+            strBackupUser => $bRemote ? $strUser : undef
+        );
+
+        # Loop through exists (does the paren path exist?)
+        for (my $bExists = 0; $bExists <= 1; $bExists++)
+        {
+            # Loop through permission (permission will be set on true)
+            for (my $bPermission = 0; $bPermission <= $bExists; $bPermission++)
+            {
+                $iRun++;
+
+                &log(INFO, "run ${iRun} - " .
+                           "remote $bRemote, exists $bExists, permission $bPermission");
+
+                # Drop the old test directory and create a new one
+                system("rm -rf test");
+                system("mkdir test") == 0 or confess "Unable to create test directory";
+
+                my $strPath = "${strTestPath}/path";
+                my $strPermission;
+
+                # If permission then set one (other than the default)
+                if ($bPermission)
+                {
+                    $strPermission = "0700";
+
+                    # Make sure that we are not testing with the default permission
+                    if ($strPermission eq $oFile->{strDefaultPathPermission})
+                    {
+                        confess 'cannot set test permission ${strPermission} equal to default permission' .
+                                $oFile->{strDefaultPathPermission};
+                    }
+                }
+
+                # If not exists then set the path to something bogus
+                if (!$bExists)
+                {
+                    $strPath = "${strTestPath}/error/path";
+                }
+
+                # Execute in eval to catch errors
+                eval
+                {
+                    $oFile->path_create(PATH_BACKUP_ABSOLUTE, $strPath, $strPermission);
+                };
+
+                # Check for errors
+                if ($@)
+                {
+                    # Ignore errors if the path did not exist
+                    if (!$bExists)
+                    {
+                        next;
+                    }
+                    
+                    confess "error raised: " . $@ . "\n";
+                }
+                else
+                {
+                    # Make sure the path was actually created
+                    unless (-e $strPath)
+                    {
+                        confess "path was not created";
+                    }
+                    
+                    # Check that the permissions were set correctly
+                    my $oStat = lstat($strPath);
+                    
+                    if (!defined($oStat))
+                    {
+                        confess "unable to stat ${strPath}";
+                    }
+                    
+                    my $strPermissionCompare = defined($strPermission) ? $strPermission : $oFile->{strDefaultPathPermission};
+                    
+                    if ($strPermissionCompare ne sprintf("%04o", S_IMODE($oStat->mode)))
+                    {
+                        confess "permissions were not set to {$strPermissionCompare}";
+                    }
+                }
+            }
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test move()
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
 
-    print "\ntest File->move()\n";
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "Test File->move()\n");
 
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
@@ -70,8 +174,8 @@ sub BackRestTestFile
                 {
                     $iRun++;
 
-                    print "run ${iRun} - " .
-                          "remote $bRemote, src_exists $bSourceExists, dst_exists $bDestinationExists, create $bCreate\n";
+                    &log(INFO, "run ${iRun} - " .
+                               "remote $bRemote, src_exists $bSourceExists, dst_exists $bDestinationExists, create $bCreate");
 
                     # Drop the old test directory and create a new one
                     system("rm -rf test");
@@ -110,7 +214,7 @@ sub BackRestTestFile
 
                         confess "error raised: " . $@ . "\n";
                     }
-                
+
                     if (!$bSourceExists || !$bDestinationExists)
                     {
                         confess "error should have been raised";
@@ -124,15 +228,14 @@ sub BackRestTestFile
             }
         }
     }
-    
-    return;
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test compress()
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
 
-    print "\ntest File->compress()\n";
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "Test File->compress()\n");
 
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
@@ -152,8 +255,8 @@ sub BackRestTestFile
         {
             $iRun++;
 
-            print "run ${iRun} - " .
-                  "remote $bRemote, exists $bExists\n";
+            &log(INFO, "run ${iRun} - " .
+                       "remote $bRemote, exists $bExists");
 
             # Drop the old test directory and create a new one
             system("rm -rf test");
@@ -184,7 +287,8 @@ sub BackRestTestFile
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
 
-    print "\ntest File->manifest()\n";
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "Test File->manifest()\n");
 
     # Create the test data
     system("rm -rf test");
@@ -242,8 +346,8 @@ sub BackRestTestFile
         {
             $iRun++;
 
-            print "run ${iRun} - " .
-                  "remote $bRemote, error $bError\n";
+            &log(INFO, "run ${iRun} - " .
+                       "remote $bRemote, error $bError");
             
             my $strPath = $strTestPath;
 
@@ -313,7 +417,8 @@ sub BackRestTestFile
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
 
-    print "\ntest File->list()\n";
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "Test File->list()\n");
 
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
@@ -354,10 +459,10 @@ sub BackRestTestFile
                 {
                     $iRun++;
 
-                    print "run ${iRun} - " .
-                          "remote $bRemote, exists $bExists, " .
-                          "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
-                          "sort " . (defined($strSort) ? $strSort : "[undef]") . "\n";
+                    &log(INFO, "run ${iRun} - " .
+                               "remote $bRemote, exists $bExists, " .
+                               "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
+                               "sort " . (defined($strSort) ? $strSort : "[undef]"));
 
                     my $strPath = "${strTestPath}";
 
@@ -411,7 +516,9 @@ sub BackRestTestFile
     # Test remove()
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
-    print "test File->remove()\n";
+
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "Test File->remove()\n");
 
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
@@ -440,8 +547,8 @@ sub BackRestTestFile
                 {
                     $iRun++;
 
-                    print "run ${iRun} - " .
-                          "remote ${bRemote}, exists ${bExists}, temp ${bTemp}, ignore missing ${bIgnoreMissing}\n";
+                    &log(INFO, "run ${iRun} - " .
+                               "remote ${bRemote}, exists ${bExists}, temp ${bTemp}, ignore missing ${bIgnoreMissing}");
 
                     # Drop the old test directory and create a new one
                     system("rm -rf test");
@@ -482,7 +589,8 @@ sub BackRestTestFile
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
     
-    print "\ntest File->hash()\n";
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "test File->hash()\n");
 
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
@@ -502,8 +610,8 @@ sub BackRestTestFile
         {
             $iRun++;
 
-            print "run ${iRun} - " .
-                  "remote $bRemote, exists $bExists\n";
+            &log(INFO, "run ${iRun} - " .
+                       "remote $bRemote, exists $bExists");
 
             # Drop the old test directory and create a new one
             system("rm -rf test");
@@ -540,7 +648,8 @@ sub BackRestTestFile
     #-------------------------------------------------------------------------------------------------------------------------------
     $iRun = 0;
     
-    print "\ntest File->exists()\n";
+    &log(INFO, "--------------------------------------------------------------------------------");
+    &log(INFO, "test File->exists()\n");
 
     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
     {
@@ -560,8 +669,8 @@ sub BackRestTestFile
         {
             $iRun++;
 
-            print "run ${iRun} - " .
-                  "remote $bRemote, exists $bExists\n";
+            &log(INFO, "run ${iRun} - " .
+                       "remote $bRemote, exists $bExists");
 
             # Drop the old test directory and create a new one
             system("rm -rf test");

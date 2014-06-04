@@ -70,7 +70,8 @@ use constant
     COMMAND_ERR_FILE_MOVE              => 3,
     COMMAND_ERR_FILE_TYPE              => 4,
     COMMAND_ERR_LINK_READ              => 5,
-    COMMAND_ERR_PATH_MISSING           => 6
+    COMMAND_ERR_PATH_MISSING           => 6,
+    COMMAND_ERR_PATH_CREATE            => 7
 };
 
 ####################################################################################################################################
@@ -106,10 +107,10 @@ sub BUILD
     # Create the ssh options string
     if (defined($self->{strBackupHost}) || defined($self->{strDbHost}))
     {
-#        if (defined($self->{strBackupHost}) && defined($self->{strDbHost}))
-#        {
-#            confess &log(ASSERT, "backup and db hosts cannot both be remote");
-#        }
+        if (defined($self->{strBackupHost}) && defined($self->{strDbHost}))
+        {
+            confess &log(ASSERT, "backup and db hosts cannot both be remote");
+        }
         
         my $strOptionSSHRequestTTY = "RequestTTY=yes";
         my $strOptionSSHCompression = "Compression=no";
@@ -346,6 +347,64 @@ sub path_get
 }
 
 ####################################################################################################################################
+# IS_REMOTE
+#
+# Determine whether any operations are being performed remotely.  If $strPathType is defined, the function will return true if that
+# path is remote.  If $strPathType is not defined, then function will return true if any path is remote.
+####################################################################################################################################
+sub is_remote
+{
+    my $self = shift;
+    my $strPathType = shift;
+
+    # If the SSH object is defined then some paths are remote
+    if (defined($self->{oDbSSH}) || defined($self->{oBackupSSH}))
+    {
+        # If path type is not defined but the SSH object is, then some paths are remote
+        if (!defined($strPathType))
+        {
+            return true;
+        }
+
+        # If a host is defined for the path then it is remote
+        if (defined($self->{strBackupHost}) && $self->path_type_get($strPathType) eq PATH_BACKUP ||
+            defined($self->{strDbHost}) && $self->path_type_get($strPathType) eq PATH_DB)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+####################################################################################################################################
+# REMOTE_GET
+#
+# Get remote SSH object depending on the path type.
+####################################################################################################################################
+sub remote_get
+{
+    my $self = shift;
+    my $strPathType = shift;
+    
+    # Get the db SSH object
+    if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
+    {
+        return $self->{oDbSSH};
+    }
+
+    # Get the backup SSH object
+    if ($self->path_type_get($strPathType) eq PATH_BACKUP && defined($self->{oBackupSSH}))
+    {
+        return $self->{oBackupSSH}
+    }
+
+    # Error when no ssh object is found
+    confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
+}
+
+
+####################################################################################################################################
 # LINK_CREATE
 ####################################################################################################################################
 sub link_create
@@ -444,93 +503,47 @@ sub path_create
     my $strPath = shift;
     my $strPermission = shift;
 
-    # If no permissions are given then use the default
-    if (!defined($strPermission))
+    # Setup standard variables
+    my $strErrorPrefix = "File->path_create";
+    my $bRemote = $self->is_remote($strPathType);
+    my $strPathOp = $self->path_get($strPathType, $strPath);
+
+    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPath}, " . 
+                "permission " . (defined($strPermission) ? $strPermission : "[undef]"));
+
+    if ($bRemote)
     {
-        $strPermission = $self->{strDefaultPathPermission};
-    }
-
-    # Get the path to create
-    my $strPathCreate = $strPath;
-    
-    if (defined($strPathType))
-    {
-        $strPathCreate = $self->path_get($strPathType, $strPath);
-    }
-
-    my $strCommand = "mkdir -p -m ${strPermission} ${strPathCreate}";
-
-    # Run remotely
-    if ($self->is_remote($strPathType))
-    {
-        &log(TRACE, "path_create: remote ${strPathType} '${strCommand}'");
-
+        # Run remotely
         my $oSSH = $self->remote_get($strPathType);
-        $oSSH->system($strCommand) or confess &log("unable to create remote path ${strPathType}:${strPath}");
+        my $strOutput = $oSSH->capture($self->{strCommand} .
+                        (defined($strPermission) ? " --permission=${strPermission}" : "") .
+                        " path_create ${strPath}");
+
+        # Capture any errors
+        if ($oSSH->error)
+        {
+            confess &log(ERROR, "${strErrorPrefix} remote: " . (defined($strOutput) ? $strOutput : $oSSH->error));
+        }
     }
-    # Run locally
     else
     {
-        &log(TRACE, "path_create: local '${strCommand}'");
-        system($strCommand) == 0 or confess &log(ERROR, "unable to create path ${strPath}");
-    }
-}
-
-####################################################################################################################################
-# IS_REMOTE
-#
-# Determine whether any operations are being performed remotely.  If $strPathType is defined, the function will return true if that
-# path is remote.  If $strPathType is not defined, then function will return true if any path is remote.
-####################################################################################################################################
-sub is_remote
-{
-    my $self = shift;
-    my $strPathType = shift;
-
-    # If the SSH object is defined then some paths are remote
-    if (defined($self->{oDbSSH}) || defined($self->{oBackupSSH}))
-    {
-        # If path type is not defined but the SSH object is, then some paths are remote
-        if (!defined($strPathType))
+        # Attempt the create the directory
+        if (!mkdir($strPathOp, oct(defined($strPermission) ? $strPermission : $self->{strDefaultPathPermission})))
         {
-            return true;
-        }
+            # Capture the error
+            my $strError = "${strPath} could not be created: " . $!;
 
-        # If a host is defined for the path then it is remote
-        if (defined($self->{strBackupHost}) && $self->path_type_get($strPathType) eq PATH_BACKUP ||
-            defined($self->{strDbHost}) && $self->path_type_get($strPathType) eq PATH_DB)
-        {
-            return true;
+            # If running on command line the return directly
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit COMMAND_ERR_PATH_CREATE;
+            }
+
+            # Error the normal way
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
         }
     }
-
-    return false;
-}
-
-####################################################################################################################################
-# REMOTE_GET
-#
-# Get remote SSH object depending on the path type.
-####################################################################################################################################
-sub remote_get
-{
-    my $self = shift;
-    my $strPathType = shift;
-    
-    # Get the db SSH object
-    if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
-    {
-        return $self->{oDbSSH};
-    }
-
-    # Get the backup SSH object
-    if ($self->path_type_get($strPathType) eq PATH_BACKUP && defined($self->{oBackupSSH}))
-    {
-        return $self->{oBackupSSH}
-    }
-
-    # Error when no ssh object is found
-    confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
 }
 
 ####################################################################################################################################
