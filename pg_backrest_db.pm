@@ -36,7 +36,7 @@ sub BUILD
     if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
     {
         my $strOptionSSHRequestTTY = "RequestTTY=yes";
-        
+
         &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
         # !!! This could be improved by redirecting stderr to a file to get a better error message
@@ -108,13 +108,13 @@ sub tablespace_map_get
 sub version_get
 {
     my $self = shift;
-    
+
     if (defined($self->{fVersion}))
     {
         return $self->{fVersion};
     }
 
-    $self->{fVersion} = 
+    $self->{fVersion} =
         trim($self->psql_execute("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
 
     &log(DEBUG, "database version is $self->{fVersion}");
@@ -131,7 +131,7 @@ sub backup_start
     my $strLabel = shift;
     my $bStartFast = shift;
 
-    return trim($self->psql_execute("set client_min_messages = 'warning';" . 
+    return trim($self->psql_execute("set client_min_messages = 'warning';" .
                                     "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
                                     ($bStartFast ? ", true" : "") . ") as xlog) to stdout"));
 }

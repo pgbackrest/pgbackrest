@@ -66,9 +66,9 @@ sub lock_file_create
     {
         confess &lock(ASSERT, "${strLockFile} lock is already held");
     }
-    
+
     $strLockPath = $strLockPathParam;
-    
+
     unless (-e $strLockPath)
     {
         if (system("mkdir -p ${strLockPath}") != 0)
@@ -85,7 +85,7 @@ sub lock_file_create
         close($hLockFile);
         return 0;
     }
-    
+
     return $hLockFile;
 }
 
@@ -97,9 +97,9 @@ sub lock_file_remove
     if (defined($hLockFile))
     {
         close($hLockFile);
-        
+
         remove_tree($strLockPath) or confess &log(ERROR, "unable to delete lock path ${strLockPath}");
-        
+
         $hLockFile = undef;
         $strLockPath = undef;
     }
@@ -121,7 +121,7 @@ sub data_hash_build
 
     my @stryFile = split("\n", $strData);
     my @stryHeader = split($strDelimiter, $stryFile[0]);
-    
+
     for (my $iLineIdx = 1; $iLineIdx < scalar @stryFile; $iLineIdx++)
     {
         my @stryLine = split($strDelimiter, $stryFile[$iLineIdx]);
@@ -137,7 +137,7 @@ sub data_hash_build
             {
                 confess "the first column must be unique to build the hash";
             }
-            
+
             if (defined($stryLine[$iColumnIdx]) && $stryLine[$iColumnIdx] ne "")
             {
                 ${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
@@ -171,7 +171,7 @@ sub wait_for_file
     my $strDir = shift;
     my $strRegEx = shift;
     my $iSeconds = shift;
-    
+
     my $lTime = time();
     my $hDir;
 
@@ -199,17 +199,17 @@ sub common_prefix
 {
     my $strString1 = shift;
     my $strString2 = shift;
-    
+
     my $iCommonLen = 0;
     my $iCompareLen = length($strString1) < length($strString2) ? length($strString1) : length($strString2);
-    
+
     for (my $iIndex = 0; $iIndex < $iCompareLen; $iIndex++)
     {
         if (substr($strString1, $iIndex, 1) ne substr($strString2, $iIndex, 1))
         {
             last;
         }
-        
+
         $iCommonLen ++;
     }
 
@@ -247,12 +247,12 @@ sub file_size_format
 sub date_string_get
 {
     my $strFormat = shift;
-    
+
     if (!defined($strFormat))
     {
         $strFormat = "%4d%02d%02d-%02d%02d%02d";
     }
-    
+
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
     return(sprintf($strFormat, $year+1900, $mon+1, $mday, $hour, $min, $sec));
@@ -324,7 +324,7 @@ sub log
     {
         confess &log(ASSERT, "log level ${strLevel} does not exist");
     }
-    
+
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
     if (!defined($strMessage))
@@ -364,15 +364,15 @@ sub log
 ####################################################################################################################################
 # EXECUTE - execute a command
 ####################################################################################################################################
-sub execute
-{
-    my $strCommand = shift;
-    my $strOutput;
-
+#sub execute
+#{
+#    my $strCommand = shift;
+#    my $strOutput;
+#
 #    print("$strCommand");
-    $strOutput = capture($strCommand) or confess &log(ERROR, "unable to execute command ${strCommand}: " . $_);
-
-    return $strOutput;
-}
+#    $strOutput = capture($strCommand) or confess &log(ERROR, "unable to execute command ${strCommand}: " . $_);
+#
+#    return $strOutput;
+#}
 
 1;

@@ -26,21 +26,21 @@ sub execute
     $strOutput = trim(capture($strCommand));
 
     if ($strOutput eq "")
-    {  
+    {
         print(" ... complete\n\n");
     }
     else
     {
         print(" ... complete\n$strOutput\n\n");
     }
-    
+
     return $strOutput;
 }
 
 sub pg_create
 {
     local($strPgBinPath, $strTestPath, $strTestDir, $strArchiveDir, $strBackupDir) = @_;
-    
+
     execute("mkdir $strTestPath");
     execute("mkdir $strTestPath/$strTestDir");
     execute("mkdir $strTestPath/$strTestDir/ts1");
@@ -54,7 +54,7 @@ sub pg_start
 {
     local($strPgBinPath, $strDbPath, $strPort, $strAchiveCommand) = @_;
     my $strCommand = "$strPgBinPath/pg_ctl start -o \"-c port=$strPort -c checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command=\'$strAchiveCommand\'\" -D $strDbPath -l $strDbPath/postgresql.log -w -s";
-    
+
     execute($strCommand);
 }
 
@@ -62,7 +62,7 @@ sub pg_password_set
 {
     local($strPgBinPath, $strPath, $strUser, $strPort) = @_;
     my $strCommand = "$strPgBinPath/psql --port=$strPort -c \"alter user $strUser with password 'password'\" postgres";
-    
+
     execute($strCommand);
 }
 
@@ -70,7 +70,7 @@ sub pg_stop
 {
     local($strPgBinPath, $strPath) = @_;
     my $strCommand = "$strPgBinPath/pg_ctl stop -D $strPath -w -s -m fast";
-    
+
     execute($strCommand);
 }
 
@@ -78,7 +78,7 @@ sub pg_drop
 {
     local($strTestPath) = @_;
     my $strCommand = "rm -rf $strTestPath";
-    
+
     execute($strCommand);
 }
 
@@ -100,9 +100,9 @@ sub archive_command_build
     my $strDestinationPath = shift;
     my $bCompression = shift;
     my $bChecksum = shift;
-    
+
     my $strCommand = "$strBackRestBinPath/pg_backrest.pl --stanza=db --config=$strBackRestBinPath/pg_backrest.conf";
-    
+
 #    if (!$bCompression)
 #    {
 #        $strCommand .= " --no-compression"
@@ -112,7 +112,7 @@ sub archive_command_build
 #    {
 #        $strCommand .= " --no-checksum"
 #    }
-    
+
     return $strCommand . " archive-push %p";
 }
 
@@ -121,7 +121,7 @@ sub wait_for_file
     my $strDir = shift;
     my $strRegEx = shift;
     my $iSeconds = shift;
-    
+
     my $lTime = time();
     my $hDir;
 
@@ -146,7 +146,7 @@ sub pgbr_backup
 {
     my $strBackRestBinPath = shift;
     my $strCluster = shift;
-    
+
     my $strCommand = "$strBackRestBinPath/pg_backrest.pl --config=$strBackRestBinPath/pg_backrest.conf backup $strCluster";
 
     execute($strCommand);

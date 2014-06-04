@@ -22,7 +22,8 @@ use lib dirname($0);
 use pg_backrest_utility;
 
 use Exporter qw(import);
-our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE);
+our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTERPATH_BACKUP_TMP
+                 PATH_BACKUP_ARCHIVE);
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -31,18 +32,12 @@ has strDefaultFilePermission => (is => 'ro', default => '0640');
 
 # Command strings
 has strCommand => (is => 'bare');
-has strCommandChecksum => (is => 'bare');
 has strCommandCompress => (is => 'bare');
 has strCommandDecompress => (is => 'bare');
 has strCommandCat => (is => 'bare', default => 'cat %file%');
-has strCommandManifest => (is => 'bare');
 
 # Lock path
 has strLockPath => (is => 'bare');
-
-# Files to hold stderr
-#has strBackupStdErrFile => (is => 'bare');
-#has strDbStdErrFile => (is => 'bare');
 
 # Module variables
 has strDbUser => (is => 'bare');                # Database user
@@ -158,11 +153,9 @@ sub clone
         strDefaultPathPermission => $self->{strDefaultPathPermission},
         strDefaultFilePermission => $self->{strDefaultFilePermission},
         strCommand => $self->{strCommand},
-        strCommandChecksum => $self->{strCommandChecksum},
         strCommandCompress => $self->{strCommandCompress},
         strCommandDecompress => $self->{strCommandDecompress},
         strCommandCat => $self->{strCommandCat},
-        strCommandManifest => $self->{strCommandManifest},
         strDbUser => $self->{strDbUser},
         strDbHost => $self->{strDbHost},
         strBackupUser => $self->{strBackupUser},
@@ -211,11 +204,12 @@ sub path_type_get
     my $self = shift;
     my $strType = shift;
 
-    # If db type
+    # If absolute type
     if ($strType eq PATH_ABSOLUTE)
     {
         return PATH_ABSOLUTE;
     }
+    # If db type
     elsif ($strType =~ /^db(\:.*){0,1}/)
     {
         return PATH_DB;
@@ -405,7 +399,7 @@ sub remote_get
 
 
 ####################################################################################################################################
-# LINK_CREATE
+# LINK_CREATE !!! NEEDS TO BE CONVERTED
 ####################################################################################################################################
 sub link_create
 {
@@ -643,7 +637,7 @@ sub move
 }
 
 ####################################################################################################################################
-# FILE_COPY
+# COPY !!! NEEDS TO BE CONVERTED
 ####################################################################################################################################
 sub file_copy
 {
@@ -830,7 +824,7 @@ sub file_copy
     # Move the file from tmp to final destination
     $self->file_move($self->path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
                      $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination, $bPathCreate);
-                     
+
     return true;
 }
 
@@ -1168,7 +1162,7 @@ sub remove
             }
         }
     }
-    
+
     return $bRemoved;
 }
 
@@ -1206,7 +1200,7 @@ sub manifest
         {
             confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
         }
-        
+
         return data_hash_build($oManifestHashRef, $strOutput, "\t", ".");
     }
     # Run locally
@@ -1286,7 +1280,7 @@ sub manifest_recurse
 
                 confess &log(ERROR, "${strErrorPrefix}: " . $strError);
             }
-            
+
             next;
         }
 

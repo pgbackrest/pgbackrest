@@ -65,7 +65,7 @@ sub backup_init
     $iThreadMax = $iThreadMaxParam;
     $bArchiveRequired = $bArchiveRequiredParam;
     $iThreadTimeout = $iThreadTimeoutParam;
-    
+
     if (!defined($iThreadMax))
     {
         $iThreadMax = 1;
@@ -105,7 +105,7 @@ sub thread_init
         $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
         $oMasterQueue[$iThreadIdx] = Thread::Queue->new();
     }
-    
+
     return $iThreadActualTotal;
 }
 
@@ -163,7 +163,7 @@ sub backup_thread_complete
     while ($iThreadComplete < $iThreadLocalMax)
     {
         sleep(1);
-        
+
         # If a timeout has been defined, make sure we have not been running longer than that
         if (defined($iTimeout))
         {
@@ -176,7 +176,7 @@ sub backup_thread_complete
                 #confess &log(WARN, "all threads have exited, aborting...");
             }
         }
-        
+
         for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
         {
             if (defined($oThread[$iThreadIdx]))
@@ -232,7 +232,7 @@ sub archive_get
     {
         confess &log(ASSERT, (scalar @stryArchiveFile) . " archive files found for ${strSourceArchive}."); 
     }
-    
+
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
     # 2) There is a hole in the archive stream so return a hard error (!!! However if turns out that due to race conditions this
@@ -248,7 +248,7 @@ sub archive_get
 
     # Copy the archive file to the requested location
     $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_DB_ABSOLUTE, $strDestinationFile);
-    
+
     return 0;
 }
 
@@ -261,7 +261,7 @@ sub archive_push
 
     # Get the destination file
     my $strDestinationFile = basename($strSourceFile);
-    
+
     # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
     my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
 
@@ -356,13 +356,13 @@ sub archive_pull
     foreach my $strFile (sort @stryFile)
     {
         &log(INFO, "backing up archive file ${strFile}");
-        
+
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
         # Copy the file
         $oFile->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
                           PATH_BACKUP_ARCHIVE, basename($strFile));
-                                             
+
         #  Remove the source archive file
         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
     }
@@ -379,7 +379,7 @@ sub archive_pull
             &log(DEBUG, "removing local archive path ${strPath}");
             rmdir($strArchivePath . "/" . $strPath) or &log(WARN, "unable to remove archive path ${strPath}, is it empty?");
         }
-        
+
         # If the dir is not empty check if the files are in the manifest
         # If they are error - there has been some issue
         # If not, they are new - continue processing without error - they'll be picked up on the next run
@@ -498,7 +498,7 @@ sub archive_pull_compress_thread
     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
     {
         &log(INFO, "thread ${iThreadIdx} compressing archive file ${strFile}");
-        
+
         # Compress the file
         $oFileThread->file_compress(PATH_DB_ABSOLUTE, "${strArchivePath}/${strFile}");
     }
@@ -512,29 +512,29 @@ sub backup_regexp_get
     my $bFull = shift;
     my $bDifferential = shift;
     my $bIncremental = shift;
-    
+
     if (!$bFull && !$bDifferential && !$bIncremental)
     {
         confess &log(ERROR, 'one parameter must be true');
     }
-    
+
     my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
     my $strRegExp = "^";
-    
+
     if ($bFull || $bDifferential || $bIncremental)
     {
         $strRegExp .= $strDateTimeRegExp . "F";
     }
-    
+
     if ($bDifferential || $bIncremental)
     {
         if ($bFull)
         {
             $strRegExp .= "(\\_";
         }
-        
+
         $strRegExp .= $strDateTimeRegExp;
-        
+
         if ($bDifferential && $bIncremental)
         {
             $strRegExp .= "(D|I)";
@@ -553,11 +553,11 @@ sub backup_regexp_get
             $strRegExp .= "){0,1}";
         }
     }
-    
+
     $strRegExp .= "\$";
-    
+
 #    &log(DEBUG, "backup_regexp_get($bFull, $bDifferential, $bIncremental): $strRegExp");
-    
+
     return $strRegExp;
 }
 
@@ -579,7 +579,7 @@ sub backup_type_find
     {
         $strDirectory = ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse"))[0];
     }
-    
+
     return $strDirectory;
 }
 

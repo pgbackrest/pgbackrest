@@ -63,8 +63,6 @@ use constant
     CONFIG_KEY_COMPRESS           => "compress",
     CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
     CONFIG_KEY_DECOMPRESS         => "decompress",
-    CONFIG_KEY_CHECKSUM           => "checksum",
-    CONFIG_KEY_MANIFEST           => "manifest",
     CONFIG_KEY_PSQL               => "psql"
 };
 
@@ -381,10 +379,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
                 strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
                 strCommand => $0,
-                strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
                 strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
                 strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-                strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST),
                 strLockPath => $strLockPath
             );
 
@@ -422,10 +418,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                     bNoCompression => false,
                     strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
                     strCommand => $0,
-                    strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
                     strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-                    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-                    strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST)
+                    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
                 );
 
                 backup_init
@@ -509,10 +503,8 @@ my $oFile = pg_backrest_file->new
     strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
     strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
     strCommand => $0,
-    strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
     strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
     strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-    strCommandManifest => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_MANIFEST),
     strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
     strLockPath => $strLockPath
 );
