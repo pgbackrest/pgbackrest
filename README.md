@@ -38,6 +38,7 @@ Simple Postgres Backup and Restore
 * IPC::Open3
 * Digest::SHA
 * IO::Compress::Gzip
+* IO::Uncompress::Gunzip
 
 ## release notes
 

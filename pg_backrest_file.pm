@@ -17,13 +17,16 @@ use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
 use IO::Compress::Gzip qw(gzip $GzipError);
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 use lib dirname($0);
 use pg_backrest_utility;
 
 use Exporter qw(import);
-our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTERPATH_BACKUP_TMP
-                 PATH_BACKUP_ARCHIVE);
+our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
+                 PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE 
+                 COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE
+                 COMMAND_ERR_FILE_TYPE COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE);
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -83,6 +86,14 @@ use constant
     PATH_BACKUP_TMP      => 'backup:tmp',
     PATH_BACKUP_ARCHIVE  => 'backup:archive',
     PATH_LOCK_ERR        => 'lock:err'
+};
+
+####################################################################################################################################
+# File copy block size constant
+####################################################################################################################################
+use constant
+{
+    BLOCK_SIZE  => 8192
 };
 
 ####################################################################################################################################
@@ -172,29 +183,29 @@ sub clone
 ####################################################################################################################################
 # ERROR_GET
 ####################################################################################################################################
-sub error_get
-{
-    my $self = shift;
-
-    my $strErrorFile = $self->path_get(PATH_LOCK_ERR, "file");
-
-    open my $hFile, '<', $strErrorFile or return "error opening ${strErrorFile} to read STDERR output";
-
-    my $strError = do {local $/; <$hFile>};
-    close $hFile;
-
-    return trim($strError);
-}
+# sub error_get
+# {
+#     my $self = shift;
+# 
+#     my $strErrorFile = $self->path_get(PATH_LOCK_ERR, "file");
+# 
+#     open my $hFile, '<', $strErrorFile or return "error opening ${strErrorFile} to read STDERR output";
+# 
+#     my $strError = do {local $/; <$hFile>};
+#     close $hFile;
+# 
+#     return trim($strError);
+# }
 
 ####################################################################################################################################
 # ERROR_CLEAR
 ####################################################################################################################################
-sub error_clear
-{
-    my $self = shift;
-
-    unlink($self->path_get(PATH_LOCK_ERR, "file"));
-}
+# sub error_clear
+# {
+#     my $self = shift;
+# 
+#     unlink($self->path_get(PATH_LOCK_ERR, "file"));
+# }
 
 ####################################################################################################################################
 # PATH_TYPE_GET
@@ -636,194 +647,236 @@ sub move
     }
 }
 
+
 ####################################################################################################################################
-# COPY !!! NEEDS TO BE CONVERTED
+# PIPE Function
+#
+# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
 ####################################################################################################################################
-sub file_copy
+sub pipe()
+{
+    my $self = shift;
+    my $hIn = shift;
+    my $hOut = shift;
+    my $bCompress = shift;
+    my $bUncompress = shift;
+
+    # If compression is requested and the file is not already compressed
+    if (defined($bCompress) && $bCompress)
+    {
+        if (!gzip($hIn => $hOut))
+        {
+            confess $GzipError;
+        }
+    }
+    # If no compression is requested and the file is already compressed
+    elsif (defined($bUncompress) && $bUncompress)
+    {
+        if (!gunzip($hIn => $hOut))
+        {
+            confess $GunzipError;
+        }
+    }
+    # Else it's a straight copy
+    else
+    {
+        my $strBuffer;
+        my $iResultRead;
+        my $iResultWrite;
+        
+        # Read from the input handle
+        while (($iResultRead = sysread($hIn, $strBuffer, BLOCK_SIZE)) != 0)
+        {
+            if (!defined($iResultRead))
+            {
+                confess $!;
+                last;
+            }
+            else
+            {
+                # Write to the output handle
+                $iResultWrite = syswrite($hOut, $strBuffer, $iResultRead);
+                
+                if (!defined($iResultWrite) || $iResultWrite != $iResultRead)
+                {
+                    confess $!;
+                    last;
+                }
+            }
+        }
+    }
+}
+
+####################################################################################################################################
+# COPY
+#
+# Copies a file from one location to another:
+# 
+# * source and destination can be local or remote
+# * wire and output compression/decompression are supported
+# * intermediate temp files are used to prevent partial copies
+# * modification time and permissions can be set on destination file
+# * destination path can optionally be created
+####################################################################################################################################
+sub copy
 {
     my $self = shift;
     my $strSourcePathType = shift;
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
-    my $bNoCompressionOverride = shift;
+    my $bIgnoreMissingSource = shift;
+    my $bCompress = shift;
+    my $bPathCreate = shift;
     my $lModificationTime = shift;
     my $strPermission = shift;
-    my $bPathCreate = shift;
-    my $bConfessCopyError = shift;
 
-    # if bPathCreate is not defined, default to true
-    $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
-    $bConfessCopyError = defined($bConfessCopyError) ? $bConfessCopyError : true;
+    # Set defaults
+    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bNoCompression}) ? !$self->{bNoCompression} : true;
+    $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
+    $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
-    &log(TRACE, "file_copy: ${strSourcePathType}: " . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
-                " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : ""));
+    # Set working variables
+    my $strErrorPrefix = "File->copy";
+    my $bSourceRemote = $self->is_remote($strSourcePathType);
+    my $bDestinationRemote = $self->is_remote($strDestinationPathType);
+    my $strSourceOp = $self->path_get($strSourcePathType, $strSourceFile);
+    my $strDestinationOp = $self->path_get($strDestinationPathType, $strDestinationFile);
+    my $strDestinationTmpOp = $self->path_get($strDestinationPathType, $strDestinationFile, true);
+    my $strError;
 
-    # Modification time and permissions cannot be set remotely
-    if ((defined($lModificationTime) || defined($strPermission)) && $self->is_remote($strDestinationPathType))
+    # Output trace info
+    &log(TRACE, "${strErrorPrefix}:" . ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}:${strSourceFile}" .
+                " to " . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}");
+
+    # If source or destination are remote
+    if ($bSourceRemote || $bDestinationRemote)
     {
-        confess &log(ASSERT, "modification time and permissions cannot be set on remote destination file");
-    }
+        # Get the ssh connection
+        my $oSSH;
 
-    # Generate source, destination and tmp filenames
-    my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
-    my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
-    my $strDestinationTmp = $self->path_get($strDestinationPathType, $strDestinationFile, true);
-
-    # Is this already a compressed file?
-    my $bAlreadyCompressed = $strSource =~ "^.*\.$self->{strCompressExtension}\$";
-
-    if ($bAlreadyCompressed && $strDestination !~ "^.*\.$self->{strCompressExtension}\$")
-    {
-        $strDestination .= ".$self->{strCompressExtension}";
-    }
-
-    # Does the file need compression?
-    my $bCompress = !((defined($bNoCompressionOverride) && $bNoCompressionOverride) ||
-                      (!defined($bNoCompressionOverride) && $self->{bNoCompression}));
-
-    # If the destination path is backup and does not exist, create it
-    if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
-    {
-        $self->path_create(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
-    }
-
-    # Generate the command string depending on compression/decompression/cat
-    my $strCommand = $self->{strCommandCat};
-
-    if (!$bAlreadyCompressed && $bCompress)
-    {
-        $strCommand = $self->{strCommandCompress};
-        $strDestination .= ".gz";
-    }
-    elsif ($bAlreadyCompressed && !$bCompress)
-    {
-        $strCommand = $self->{strCommandDecompress};
-        $strDestination = substr($strDestination, 0, length($strDestination) - length($self->{strCompressExtension}) - 1);
-    }
-
-    $strCommand =~ s/\%file\%/${strSource}/g;
-
-    # If this command is remote on only one side
-    if ($self->is_remote($strSourcePathType) && !$self->is_remote($strDestinationPathType) ||
-        !$self->is_remote($strSourcePathType) && $self->is_remote($strDestinationPathType))
-    {
-        # Else if the source is remote
-        if ($self->is_remote($strSourcePathType))
+        # If source is local and destination is remote then use the destination connection
+        if (!$bSourceRemote && $bDestinationRemote)
         {
-            &log(TRACE, "file_copy: remote ${strSource} to local ${strDestination}");
-
-            # Open the destination file for writing (will be streamed from the ssh session)
-            my $hFile;
-            open($hFile, ">", $strDestinationTmp) or confess &log(ERROR, "cannot open ${strDestination}");
-
-            # Execute the command through ssh
-            my $oSSH = $self->remote_get($strSourcePathType);
-
-            unless ($oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file"), stdout_fh => $hFile}, $strCommand))
-            {
-                close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
-
-                my $strResult = "unable to execute ssh '${strCommand}': " . $self->error_get();
-                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
-            }
-
-            # Close the destination file handle
-            close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmp}");
+            $oSSH = $self->remote_get($strDestinationPathType);
         }
-        # Else if the destination is remote
-        elsif ($self->is_remote($strDestinationPathType))
-        {
-            &log(TRACE, "file_copy: local ${strSource} ($strCommand) to remote ${strDestination}");
-
-            if (defined($self->path_get(PATH_LOCK_ERR, "file")))
-            {
-                $strCommand .= " 2> " . $self->path_get(PATH_LOCK_ERR, "file");
-            }
-
-            # Open the input command as a stream
-            my $hOut;
-            my $pId = open3(undef, $hOut, undef, $strCommand) or confess(ERROR, "unable to execute '${strCommand}'");
-
-            # Execute the command though ssh
-            my $oSSH = $self->remote_get($strDestinationPathType);
-            $oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file"), stdin_fh => $hOut}, "cat > ${strDestinationTmp}") or confess &log(ERROR, "unable to execute ssh 'cat'");
-
-            # Wait for the stream process to finish
-            waitpid($pId, 0);
-            my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-
-            if ($iExitStatus != 0)
-            {
-                my $strResult = "command '${strCommand}' returned " . $iExitStatus . ": " . $self->error_get();
-                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
-            }
-        }
-    }
-    # If the source and destination are both remote but not the same remote
-    elsif ($self->is_remote($strSourcePathType) && $self->is_remote($strDestinationPathType) &&
-           $self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
-    {
-        &log(TRACE, "file_copy: remote ${strSource} to remote ${strDestination}");
-        confess &log(ASSERT, "remote source and destination not supported");
-    }
-    # Else this is a local command or remote where both sides are the same remote
-    else
-    {
-        # Complete the command by redirecting to the destination tmp file
-        $strCommand .= " > ${strDestinationTmp}";
-
-        if ($self->is_remote($strSourcePathType))
-        {
-            &log(TRACE, "file_copy: remote ${strSourcePathType} '${strCommand}'");
-
-            my $oSSH = $self->remote_get($strSourcePathType);
-            $oSSH->system({stderr_file => $self->path_get(PATH_LOCK_ERR, "file")}, $strCommand);
-
-            if ($oSSH->error)
-            {
-                my $strResult = "unable to execute copy ${strCommand}: " . $oSSH->error;
-                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
-            }
-        }
+        # Else source connection is always used (because if both are remote they must be the same remote)
         else
         {
-            &log(TRACE, "file_copy: local '${strCommand}'");
+            $oSSH = $self->remote_get($strSourcePathType);
+        }
 
-            if (defined($self->path_get(PATH_LOCK_ERR, "file")))
+        # Build the command and open the local file
+        my $hFile;
+        my $strCommand;
+
+        # If source is remote and destination is local
+        if ($bSourceRemote && !$bDestinationRemote)
+        {
+            # Build the command string
+            $strCommand = $self->{strCommand} .
+                          " --compress copy_in ${strSourceOp}";
+
+            open($hFile, ">", $strDestinationTmpOp)
+                or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
+        }
+        # Else if source is local and destination is remote
+        elsif (!$bSourceRemote && $bDestinationRemote)
+        {
+            # !!! SOURCE LOCAL DESTINATION REMOTE COPY NOT YET IMPLEMENTED
+            return false;
+            
+            # Build the command string
+            $strCommand = $self->{strCommand} .
+                          " --compress copy_out ${strDestinationOp}";
+
+            # Open source file for reading
+            open($hFile, "<", $strSourceOp)
+                or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
+        }
+        # Else source and destination are remote
+        else
+        {
+            if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
             {
-                $strCommand .= " 2> " . $self->path_get(PATH_LOCK_ERR, "file");
+                confess &log(ASSERT, "remote source and destination not supported");
             }
 
-            unless(system($strCommand) == 0)
-            {
-                my $strResult = "unable to copy local ${strSource} to local ${strDestinationTmp}";
-                $bConfessCopyError ? confess &log(ERROR, $strResult) : return false;
-            }
+            # !!! MULTIPLE REMOTE COPY NOT YET IMPLEMENTED
+            return false;
+        }
+
+        # Execute the ssh command
+        my ($hIn, $hOut, $hErr, $pId) = $oSSH->open3($strCommand)
+            or confess &log("unable to execute ssh '${strCommand}': " . $self->error_get());
+
+        # If source is remote and destination is local
+        if ($bSourceRemote && !$bDestinationRemote)
+        {
+            $self->pipe($hOut, $hFile, $bCompress, !$bCompress);
+        }
+        # Else if source is local and destination is remote
+        elsif (!$bSourceRemote && $bDestinationRemote)
+        {
+            $self->pipe($hFile, $hIn, $bCompress, !$bCompress);
+        }
+
+        # Read STDERR into a string
+        my $strError = "";
+        
+        open my ($hErrOut), '>', $strError;
+        $self->pipe($hErr, $hErrOut);
+        close($hErrOut);
+
+        # Read STDOUT into a string
+        my $strOutput = "";
+        
+        open my ($hOutString), '>', $strOutput;
+        $self->pipe($hOut, $hOutString);
+        close($hOutString);
+
+        # Wait for the process to finish and report any errors
+        waitpid($pId, 0);
+        my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+
+        if ($iExitStatus != 0)
+        {
+            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " . $strError);
+        }
+
+        # Close the destination file handle
+        if (defined($hFile))
+        {
+            close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
         }
     }
-
-    # Set the file permission if required (this only works locally for now)
-    if (defined($strPermission))
+    else
     {
-        &log(TRACE, "file_copy: chmod ${strPermission}");
-
-        system("chmod ${strPermission} ${strDestinationTmp}") == 0
-            or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmp}");
+        # !!! LOCAL COPY NOT YET IMPLEMENTED
+        return false;
     }
 
-    # Set the file modification time if required (this only works locally for now)
-    if (defined($lModificationTime))
+    if (!$bDestinationRemote)
     {
-        &log(TRACE, "file_copy: time ${lModificationTime}");
-
-        utime($lModificationTime, $lModificationTime, $strDestinationTmp)
-            or confess &log(ERROR, "unable to set time for local ${strDestinationTmp}");
+        # Set the file permission if required
+        if (defined($strPermission))
+        {
+            system("chmod ${strPermission} ${strDestinationTmpOp}") == 0
+                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
+        }
+        
+        # Set the file modification time if required (this only works locally for now)
+        if (defined($lModificationTime))
+        {
+            utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
+                or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
+        }
+        
+        
+        # Move the file from tmp to final destination
+        $self->move($self->path_type_get($strDestinationPathType) . ":absolute", $strDestinationTmpOp,
+                    $self->path_type_get($strDestinationPathType) . ":absolute", $strDestinationOp, $bPathCreate);
     }
-
-    # Move the file from tmp to final destination
-    $self->file_move($self->path_type_get($strSourcePathType) . ":absolute", $strDestinationTmp,
-                     $self->path_type_get($strDestinationPathType) . ":absolute",  $strDestination, $bPathCreate);
 
     return true;
 }
