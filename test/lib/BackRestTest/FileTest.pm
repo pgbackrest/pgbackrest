@@ -26,7 +26,7 @@ our @EXPORT = qw(BackRestFileTest);
 sub BackRestFileTest
 {
     my $strTest = shift;
-    
+
     # If no test was specified, then run them all
     if (!defined($strTest))
     {
@@ -737,29 +737,6 @@ sub BackRestFileTest
     if ($strTest eq 'all' || $strTest eq 'copy')
     {
         $iRun = 0;
-        
-        # my $strLockPath = dirname(abs_path($0)) . "/test/lock";
-        # 
-        # 
-        # my $oFile = pg_backrest_file->new
-        # (
-        #     strStanza => "db",
-        #     bNoCompression => false,
-        #     strBackupClusterPath => undef,
-        #     strBackupPath => ${strTestPath},
-        #     strBackupHost => $strHost,
-        #     strBackupUser => $strUser,
-        #     strDbHost => undef,
-        #     strDbUser => undef,
-        #     strLockPath => $strLockPath
-        # );
-        # 
-        # my $strSourceFile = "${strTestPath}/backup/test.txt";
-        # my $strDestinationFile = "${strTestPath}/db/test.txt";
-        # 
-        # system("echo 'TESTDATA' > ${strSourceFile}");
-        # 
-        # $oFile->copy(PATH_BACKUP_ABSOLUTE, $strSourceFile, PATH_DB_ABSOLUTE, $strDestinationFile, undef, false);
 
         for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
         {
@@ -771,7 +748,7 @@ sub BackRestFileTest
                 {
                     next;
                 }
-                
+
                 # Loop through destination compression
                 for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 1; $bDestinationCompressed++)
                 {
@@ -779,7 +756,7 @@ sub BackRestFileTest
                     (
                         strStanza => "db",
                         strCommand => $strCommand,
-                        bNoCompression => !$bDestinationCompressed,
+                        bCompress => $bDestinationCompressed,
                         strBackupClusterPath => undef,
                         strBackupPath => ${strTestPath},
                         strBackupHost => $bBackupRemote ? $strHost : undef,
@@ -787,14 +764,14 @@ sub BackRestFileTest
                         strDbHost => $bDbRemote ? $strHost : undef,
                         strDbUser => $bDbRemote ? $strUser : undef
                     );
-        
+
                     for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
                     {
                         for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
                         {
                             my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                             my $strSourcePath = $bSourcePathType ? "db" : "backup";
-        
+
                             for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
                             {
                                 my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
@@ -825,7 +802,6 @@ sub BackRestFileTest
                                 {
                                     system("echo 'TESTDATA' > ${strSourceFile}");
                                 }
-                                # Create the file object based on current values
 
                                 # Run file copy in an eval block because some errors are expected
                                 my $bReturn;
@@ -840,29 +816,29 @@ sub BackRestFileTest
                                 if ($@)
                                 {
                                     # Different remote and destination with different path types should error
-                                    if (($bBackupRemote || $bDbRemote) && ($strSourcePathType ne $strDestinationPathType))
-                                    {
-                                        print "    different source and remote for same path not supported\n";
-                                        next;
-                                    }
+                                    # if (($bBackupRemote || $bDbRemote) && ($strSourcePathType ne $strDestinationPathType))
+                                    # {
+                                    #     print "    different source and remote for same path not supported\n";
+                                    #     next;
+                                    # }
                                     # If the error was intentional, then also continue
                                     # elsif ($bError)
                                     # {
                                     #     my $strError = $oFile->error_get();
-                                    # 
+                                    #
                                     #     if (!defined($strError) || ($strError eq ''))
                                     #     {
                                     #         confess 'no error message returned';
                                     #     }
-                                    # 
+                                    #
                                     #     print "    error raised: ${strError}\n";
                                     #     next;
                                     # }
                                     # Else this is an unexpected error
-                                    else
-                                    {
+                                    # else
+                                    # {
                                         confess $@;
-                                    }
+                                    # }
                                 }
                                 # elsif ($bError)
                                 # {
@@ -879,12 +855,12 @@ sub BackRestFileTest
                                 #         else
                                 #         {
                                 #             my $strError = $oFile->error_get();
-                                # 
+                                #
                                 #             if (!defined($strError) || ($strError eq ''))
                                 #             {
                                 #                 confess 'no error message returned';
                                 #             }
-                                # 
+                                #
                                 #             print "    error returned: ${strError}\n";
                                 #             next;
                                 #         }
@@ -896,15 +872,15 @@ sub BackRestFileTest
                                 #     {
                                 #         confess "error was returned when no error generated";
                                 #     }
-                                # 
+                                #
                                 #     print "    true was returned\n";
                                 # }
 
                                 # Check for errors after copy
-                                # if ($bDestinationCompressed)
-                                # {
-                                #     $strDestinationFile .= ".gz";
-                                # }
+                                if ($bDestinationCompressed)
+                                {
+                                    $strDestinationFile .= ".gz";
+                                }
 
                                 if ($bReturn)
                                 {
@@ -912,10 +888,6 @@ sub BackRestFileTest
                                     {
                                         confess "could not find destination file ${strDestinationFile}";
                                     }
-                                }
-                                else
-                                {
-                                    &log(INFO, "Not yet implemented");
                                 }
                             }
                         }

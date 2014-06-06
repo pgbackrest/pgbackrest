@@ -18,15 +18,16 @@ use File::stat;
 use Fcntl ':mode';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use IO::String;
 
 use lib dirname($0);
 use pg_backrest_utility;
 
 use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
-                 PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE 
-                 COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE
-                 COMMAND_ERR_FILE_TYPE COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE);
+                 PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
+                 COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
+                 COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM);
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -35,9 +36,6 @@ has strDefaultFilePermission => (is => 'ro', default => '0640');
 
 # Command strings
 has strCommand => (is => 'bare');
-has strCommandCompress => (is => 'bare');
-has strCommandDecompress => (is => 'bare');
-has strCommandCat => (is => 'bare', default => 'cat %file%');
 
 # Lock path
 has strLockPath => (is => 'bare');
@@ -54,7 +52,7 @@ has strBackupPath => (is => 'bare');            # Backup base path
 has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 
 # Process flags
-has bNoCompression => (is => 'bare');
+has bCompress => (is => 'bare');
 has strStanza => (is => 'bare');
 has iThreadIdx => (is => 'bare');
 
@@ -69,7 +67,8 @@ use constant
     COMMAND_ERR_FILE_TYPE              => 4,
     COMMAND_ERR_LINK_READ              => 5,
     COMMAND_ERR_PATH_MISSING           => 6,
-    COMMAND_ERR_PATH_CREATE            => 7
+    COMMAND_ERR_PATH_CREATE            => 7,
+    COMMAND_ERR_PARAM                  => 8
 };
 
 ####################################################################################################################################
@@ -121,10 +120,10 @@ sub BUILD
         my $strOptionSSHRequestTTY = "RequestTTY=yes";
         my $strOptionSSHCompression = "Compression=no";
 
-        if ($self->{bNoCompression})
-        {
-            $strOptionSSHCompression = "Compression=yes";
-        }
+        # if ($self->{bNoCompression})
+        # {
+        #     $strOptionSSHCompression = "Compression=yes";
+        # }
 
         # Connect SSH object if backup host is defined
         if (!defined($self->{oBackupSSH}) && defined($self->{strBackupHost}))
@@ -132,7 +131,6 @@ sub BUILD
             &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
 
             $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
-#                                      default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                       master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
         }
@@ -143,7 +141,6 @@ sub BUILD
             &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
             $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser},
-#                                  default_stderr_file => $self->path_get(PATH_LOCK_ERR, "file"),
                                   master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
             $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
         }
@@ -164,16 +161,13 @@ sub clone
         strDefaultPathPermission => $self->{strDefaultPathPermission},
         strDefaultFilePermission => $self->{strDefaultFilePermission},
         strCommand => $self->{strCommand},
-        strCommandCompress => $self->{strCommandCompress},
-        strCommandDecompress => $self->{strCommandDecompress},
-        strCommandCat => $self->{strCommandCat},
         strDbUser => $self->{strDbUser},
         strDbHost => $self->{strDbHost},
         strBackupUser => $self->{strBackupUser},
         strBackupHost => $self->{strBackupHost},
         strBackupPath => $self->{strBackupPath},
         strBackupClusterPath => $self->{strBackupClusterPath},
-        bNoCompression => $self->{bNoCompression},
+        bCompress => $self->{bCompress},
         strStanza => $self->{strStanza},
         iThreadIdx => $iThreadIdx,
         strLockPath => $self->{strLockPath}
@@ -186,14 +180,14 @@ sub clone
 # sub error_get
 # {
 #     my $self = shift;
-# 
+#
 #     my $strErrorFile = $self->path_get(PATH_LOCK_ERR, "file");
-# 
+#
 #     open my $hFile, '<', $strErrorFile or return "error opening ${strErrorFile} to read STDERR output";
-# 
+#
 #     my $strError = do {local $/; <$hFile>};
 #     close $hFile;
-# 
+#
 #     return trim($strError);
 # }
 
@@ -203,7 +197,7 @@ sub clone
 # sub error_clear
 # {
 #     my $self = shift;
-# 
+#
 #     unlink($self->path_get(PATH_LOCK_ERR, "file"));
 # }
 
@@ -407,7 +401,6 @@ sub remote_get
     # Error when no ssh object is found
     confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
 }
-
 
 ####################################################################################################################################
 # LINK_CREATE !!! NEEDS TO BE CONVERTED
@@ -647,13 +640,12 @@ sub move
     }
 }
 
-
 ####################################################################################################################################
 # PIPE Function
 #
 # Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
 ####################################################################################################################################
-sub pipe()
+sub pipe
 {
     my $self = shift;
     my $hIn = shift;
@@ -683,7 +675,7 @@ sub pipe()
         my $strBuffer;
         my $iResultRead;
         my $iResultWrite;
-        
+
         # Read from the input handle
         while (($iResultRead = sysread($hIn, $strBuffer, BLOCK_SIZE)) != 0)
         {
@@ -696,7 +688,7 @@ sub pipe()
             {
                 # Write to the output handle
                 $iResultWrite = syswrite($hOut, $strBuffer, $iResultRead);
-                
+
                 if (!defined($iResultWrite) || $iResultWrite != $iResultRead)
                 {
                     confess $!;
@@ -711,7 +703,7 @@ sub pipe()
 # COPY
 #
 # Copies a file from one location to another:
-# 
+#
 # * source and destination can be local or remote
 # * wire and output compression/decompression are supported
 # * intermediate temp files are used to prevent partial copies
@@ -732,7 +724,7 @@ sub copy
     my $strPermission = shift;
 
     # Set defaults
-    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bNoCompression}) ? !$self->{bNoCompression} : true;
+    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : true;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
@@ -745,9 +737,16 @@ sub copy
     my $strDestinationTmpOp = $self->path_get($strDestinationPathType, $strDestinationFile, true);
     my $strError;
 
+    # Determine if the file needs compression extension
+    if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
+    {
+        $strDestinationOp .= "." . $self->{strCompressExtension};
+    }
+
     # Output trace info
     &log(TRACE, "${strErrorPrefix}:" . ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}:${strSourceFile}" .
-                " to " . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}");
+                " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}" .
+                ", compress = " . ($bCompress ? "true" : "false"));
 
     # If source or destination are remote
     if ($bSourceRemote || $bDestinationRemote)
@@ -783,12 +782,10 @@ sub copy
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
-            # !!! SOURCE LOCAL DESTINATION REMOTE COPY NOT YET IMPLEMENTED
-            return false;
-            
             # Build the command string
             $strCommand = $self->{strCommand} .
-                          " --compress copy_out ${strDestinationOp}";
+                          ($bCompress ? " --compress" : " --uncompress") .
+                          " copy_out ${strDestinationOp}";
 
             # Open source file for reading
             open($hFile, "<", $strSourceOp)
@@ -806,6 +803,8 @@ sub copy
             return false;
         }
 
+        &log(TRACE, "${strErrorPrefix} command:" . $strCommand);
+
         # Execute the ssh command
         my ($hIn, $hOut, $hErr, $pId) = $oSSH->open3($strCommand)
             or confess &log("unable to execute ssh '${strCommand}': " . $self->error_get());
@@ -821,27 +820,23 @@ sub copy
             $self->pipe($hFile, $hIn, $bCompress, !$bCompress);
         }
 
-        # Read STDERR into a string
-        my $strError = "";
-        
-        open my ($hErrOut), '>', $strError;
-        $self->pipe($hErr, $hErrOut);
-        close($hErrOut);
+        # Close hIn
+        close($hIn);
 
-        # Read STDOUT into a string
-        my $strOutput = "";
-        
-        open my ($hOutString), '>', $strOutput;
-        $self->pipe($hOut, $hOutString);
-        close($hOutString);
+        # Read STDERR into a string
+        my $strError;
+        my $hErrString = IO::String->new($strError);
+        $self->pipe($hErr, $hErrString);
 
         # Wait for the process to finish and report any errors
         waitpid($pId, 0);
         my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+        # close($hErrString);
 
         if ($iExitStatus != 0)
         {
-            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " . $strError);
+            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
+                                (defined($strError) ? $strError : "[unknown]"));
         }
 
         # Close the destination file handle
@@ -864,15 +859,15 @@ sub copy
             system("chmod ${strPermission} ${strDestinationTmpOp}") == 0
                 or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
         }
-        
+
         # Set the file modification time if required (this only works locally for now)
         if (defined($lModificationTime))
         {
             utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
                 or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
         }
-        
-        
+
+
         # Move the file from tmp to final destination
         $self->move($self->path_type_get($strDestinationPathType) . ":absolute", $strDestinationTmpOp,
                     $self->path_type_get($strDestinationPathType) . ":absolute", $strDestinationOp, $bPathCreate);

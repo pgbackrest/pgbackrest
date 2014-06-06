@@ -46,14 +46,17 @@ my $strExpression = undef;           # Expression to use for filtering (undef = 
 my $strPermission = undef;           # Permission when creating directory or file (undef = default)
 my $strSort = undef;                 # Sort order (undef = forward)
 
-GetOptions ("ignore-missing" => \$bIgnoreMissing,
+if (!GetOptions ("ignore-missing" => \$bIgnoreMissing,
             "dest-path-create" => \$bDestinationPathCreate,
             "compress" => \$bCompress,
             "uncompress" => \$bUncompress,
             "expression=s" => \$strExpression,
             "permission=s" => \$strPermission,
-            "sort=s" => \$strSort)
-    or die("Error in command line arguments\n");
+            "sort=s" => \$strSort))
+{
+    print(STDERR "error in command line arguments");
+    exit COMMAND_ERR_PARAM;
+}
 
 ####################################################################################################################################
 # START MAIN
@@ -67,13 +70,15 @@ my $strOperation = $ARGV[0];
 # Validate the operation
 if (!defined($strOperation))
 {
-    confess &log(ERROR, "operation is not defined");
+    print(STDERR "operation is not defined");
+    exit COMMAND_ERR_PARAM;
 }
 
 # Make sure compress and uncompress are not both set
 if ($bCompress && $bUncompress)
 {
-    confess "compress and uncompress options cannot both be set";
+    print(STDERR "compress and uncompress options cannot both be set");
+    exit COMMAND_ERR_PARAM;
 }
 
 # Create the file object
@@ -248,7 +253,7 @@ if ($strOperation eq OP_COPY_IN)
 
     # Open the source file
     my $hIn;
-    
+
     if (!open($hIn, "<", ${strFileSource}))
     {
         $strError = $!;
@@ -269,7 +274,7 @@ if ($strOperation eq OP_COPY_IN)
         {
             $oFile->pipe($hIn, *STDOUT, $bCompress && !$bAlreadyCompressed, $bUncompress && $bAlreadyCompressed);
         };
-        
+
         $strError = $@;
 
         # Close the input file
@@ -298,7 +303,7 @@ if ($strOperation eq OP_COPY_OUT)
         confess "destination file must be specified for ${strOperation} operation";
     }
 
-    # Determine of the file needs compression extension
+    # Determine if the file needs compression extension
     if ($bCompress && $strFileDestination !~ "^.*\.$oFile->{strCompressExtension}\$")
     {
         $strFileDestination .= "." . $oFile->{strCompressExtension};
@@ -309,7 +314,7 @@ if ($strOperation eq OP_COPY_OUT)
 
     # Open the destination file
     my $hOut;
-    
+
     if (!open($hOut, ">", ${strFileDestination}))
     {
         $strError = $!;
@@ -354,4 +359,5 @@ if ($strOperation eq OP_PATH_CREATE)
     exit 0;
 }
 
-confess &log(ERROR, "invalid operation ${strOperation}");
+print(STDERR "invalid operation ${strOperation}");
+exit COMMAND_ERR_PARAM;
