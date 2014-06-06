@@ -27,7 +27,8 @@ use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
                  PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
                  COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
-                 COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM);
+                 COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
+                 PIPE_STDIN PIPE_STDOUT PIPE_STDERR);
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -93,6 +94,16 @@ use constant
 use constant
 {
     BLOCK_SIZE  => 8192
+};
+
+####################################################################################################################################
+# STD Pipe Constants
+####################################################################################################################################
+use constant
+{
+    PIPE_STDIN   => "<STDIN>",
+    PIPE_STDOUT  => "<STDOUT>",
+    PIPE_STDERR  => "<STDERR>"
 };
 
 ####################################################################################################################################
@@ -641,6 +652,23 @@ sub move
 }
 
 ####################################################################################################################################
+# PIPE_TO_STRING Function
+#
+# Copies data from a file handle into a string.
+####################################################################################################################################
+sub pipe_to_string
+{
+    my $self = shift;
+    my $hOut = shift;
+
+    my $strBuffer;
+    my $hString = IO::String->new($strBuffer);
+    $self->pipe($hOut, $hString);
+
+    return $strBuffer;
+}
+
+####################################################################################################################################
 # PIPE Function
 #
 # Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
@@ -700,6 +728,35 @@ sub pipe
 }
 
 ####################################################################################################################################
+# WAIT_PID
+####################################################################################################################################
+sub wait_pid
+{
+    my $self = shift;
+    my $pId = shift;
+    my $strCommand = shift;
+    my $hIn = shift;
+    my $hOut = shift;
+    my $hErr = shift;
+
+    # Close hIn
+    close($hIn);
+
+    # Read STDERR into a string
+    my $strError = defined($hErr) ? $self->pipe_to_string($hErr) : "[unknown]";
+
+    # Wait for the process to finish and report any errors
+    waitpid($pId, 0);
+    my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+
+    if ($iExitStatus != 0)
+    {
+        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
+                            (defined($strError) ? $strError : "[unknown]"));
+    }
+}
+
+####################################################################################################################################
 # COPY
 #
 # Copies a file from one location to another:
@@ -732,10 +789,12 @@ sub copy
     my $strErrorPrefix = "File->copy";
     my $bSourceRemote = $self->is_remote($strSourcePathType);
     my $bDestinationRemote = $self->is_remote($strDestinationPathType);
-    my $strSourceOp = $self->path_get($strSourcePathType, $strSourceFile);
-    my $strDestinationOp = $self->path_get($strDestinationPathType, $strDestinationFile);
-    my $strDestinationTmpOp = $self->path_get($strDestinationPathType, $strDestinationFile, true);
-    my $strError;
+    my $strSourceOp = $strSourcePathType eq PIPE_STDIN ?
+        $strSourcePathType : $self->path_get($strSourcePathType, $strSourceFile);
+    my $strDestinationOp = $strDestinationPathType eq PIPE_STDOUT ?
+        $strDestinationPathType : $self->path_get($strDestinationPathType, $strDestinationFile);
+    my $strDestinationTmpOp = $strDestinationPathType eq PIPE_STDOUT ?
+        undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
     # Determine if the file needs compression extension
     if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
@@ -747,6 +806,38 @@ sub copy
     &log(TRACE, "${strErrorPrefix}:" . ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}:${strSourceFile}" .
                 " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}" .
                 ", compress = " . ($bCompress ? "true" : "false"));
+
+    # Open the source file
+    my $hSourceFile;
+
+    if (!$bSourceRemote)
+    {
+        if ($strSourcePathType eq PIPE_STDIN)
+        {
+            $hSourceFile = *STDIN;
+        }
+        else
+        {
+            open($hSourceFile, "<", $strSourceOp)
+                or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
+        }
+    }
+
+    # Open the destination file
+    my $hDestinationFile;
+
+    if (!$bDestinationRemote)
+    {
+        if ($strSourcePathType eq PIPE_STDOUT)
+        {
+            $hDestinationFile = *STDOUT;
+        }
+        else
+        {
+            open($hDestinationFile, ">", $strDestinationTmpOp)
+                or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
+        }
+    }
 
     # If source or destination are remote
     if ($bSourceRemote || $bDestinationRemote)
@@ -775,9 +866,6 @@ sub copy
             # Build the command string
             $strCommand = $self->{strCommand} .
                           " --compress copy_in ${strSourceOp}";
-
-            open($hFile, ">", $strDestinationTmpOp)
-                or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
         }
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
@@ -786,10 +874,6 @@ sub copy
             $strCommand = $self->{strCommand} .
                           ($bCompress ? " --compress" : " --uncompress") .
                           " copy_out ${strDestinationOp}";
-
-            # Open source file for reading
-            open($hFile, "<", $strSourceOp)
-                or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
         }
         # Else source and destination are remote
         else
@@ -803,52 +887,43 @@ sub copy
             return false;
         }
 
+        # Trace command
         &log(TRACE, "${strErrorPrefix} command:" . $strCommand);
 
         # Execute the ssh command
-        my ($hIn, $hOut, $hErr, $pId) = $oSSH->open3($strCommand)
-            or confess &log("unable to execute ssh '${strCommand}': " . $self->error_get());
+        my ($hIn, $hOut, $hErr, $pId) = $oSSH->open3($strCommand);
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
         {
-            $self->pipe($hOut, $hFile, $bCompress, !$bCompress);
+            $self->pipe($hOut, $hDestinationFile, $bCompress, !$bCompress);
         }
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
-            $self->pipe($hFile, $hIn, $bCompress, !$bCompress);
+            $self->pipe($hSourceFile, $hIn, $bCompress, !$bCompress);
         }
 
-        # Close hIn
-        close($hIn);
-
-        # Read STDERR into a string
-        my $strError;
-        my $hErrString = IO::String->new($strError);
-        $self->pipe($hErr, $hErrString);
-
-        # Wait for the process to finish and report any errors
-        waitpid($pId, 0);
-        my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-        # close($hErrString);
-
-        if ($iExitStatus != 0)
-        {
-            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
-                                (defined($strError) ? $strError : "[unknown]"));
-        }
-
-        # Close the destination file handle
-        if (defined($hFile))
-        {
-            close($hFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
-        }
+        # Wait for process exit (and error)
+        $self->wait_pid($pId, $strCommand, $hIn, $hOut, $hErr);
     }
     else
     {
+        # !!! Implement this with pipes from above (refactor copy_in and and copy_out)
         # !!! LOCAL COPY NOT YET IMPLEMENTED
         return false;
+    }
+
+    # Close the source file
+    if (defined($hSourceFile))
+    {
+        close($hSourceFile) or confess &log(ERROR, "cannot close file ${strSourceOp}");
+    }
+
+    # Close the destination file
+    if (defined($hDestinationFile))
+    {
+        close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
     }
 
     if (!$bDestinationRemote)
