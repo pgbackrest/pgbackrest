@@ -23,7 +23,7 @@ use IO::String;
 use lib dirname($0);
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
-use pg_backrest_utility;
+use BackRest::Utility;
 use pg_backrest_remote;
 
 use Exporter qw(import);

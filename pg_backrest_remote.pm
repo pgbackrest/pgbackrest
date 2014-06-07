@@ -12,10 +12,9 @@ use Moose;
 use Net::OpenSSH;
 use File::Basename;
 
-use lib dirname($0);
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
-use pg_backrest_utility;
+use BackRest::Utility;
 
 # Protocol strings
 has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE');

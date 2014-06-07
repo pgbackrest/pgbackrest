@@ -15,7 +15,8 @@ use Getopt::Long;
 use Carp;
 
 use lib dirname($0) . '/..';
-use pg_backrest_utility;
+use lib dirname($0) . '/../lib';
+use BackRest::Utility;
 use pg_backrest_file;
 use pg_backrest_remote;
 
