@@ -65,9 +65,42 @@ use constant
 # Turn off logging
 log_level_set(OFF, OFF);
 
+# Creat the file object
+my $oFile = pg_backrest_file->new();
+
+# Create the remote object for writing to stdout
 my $oRemote = pg_backrest_remote->new();
 
-$oRemote->welcome_send();
+# Write the greeting so remote process knows who we are
+$oRemote->greeting_write();
+
+# Get the first command
+my ($strCommand, $strOptions) = $oRemote->command_read();
+
+# Loop until the exit command is received
+while ($strCommand ne 'exit')
+{
+    eval
+    {
+        # File->exists
+        if ($strCommand eq OP_EXISTS)
+        {
+            $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, $strOptions) ? "Y" : "N");
+        }
+        else
+        {
+            confess "invalid command: ${strCommand}";
+        }
+    };
+    
+    if ($@)
+    {
+        $oRemote->error_write($@);
+    }
+
+    # Get the next command
+    ($strCommand, $strOptions) = $oRemote->command_read();
+}
 
 # # Get the operation
 # my $strOperation = $ARGV[0];

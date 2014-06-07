@@ -21,6 +21,8 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::String;
 
 use lib dirname($0);
+use lib dirname($0) . "/../lib";
+use BackRest::Exception;
 use pg_backrest_utility;
 use pg_backrest_remote;
 
@@ -1126,7 +1128,7 @@ sub exists
     my $strPath = shift;
 
     # Set error prefix, remote, and path
-    my $bExists = false;
+    my $bExists = true;
     my $strErrorPrefix = "File->exists";
     my $bRemote = $self->is_remote($strPathType);
     my $strPathOp = $self->path_get($strPathType, $strPath);
@@ -1136,19 +1138,17 @@ sub exists
     # Run remotely
     if ($bRemote)
     {
-        my $strCommand = $self->{strCommand} . " exists ${strPathOp}";
-
-#        syswrite(self->{hIn}, )
-        # Build the command
+        my $strCommand = "EXISTS:${strPathOp}";
+        
+        $self->{oRemote}->command_write($strCommand);
 
         # Run it remotely
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($strCommand);
+        my ($strOutput, $bError, $iErrorCode) = $self->{oRemote}->output_read();
 
         # Capture any errors
-        if ($oSSH->error)
+        if ($bError)
         {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
+            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . $strOutput);
         }
 
         $bExists = $strOutput eq "Y";
@@ -1156,9 +1156,19 @@ sub exists
     # Run locally
     else
     {
-        if (-e $strPathOp)
+        # Stat the file/path to determine if it exists
+        my $oStat = lstat($strPathOp);
+
+        # Evaluate error
+        if (!defined($oStat))
         {
-            $bExists = true;
+            # If the error is not entry missing, then throw error
+            if (!$!{ENOENT})
+            {
+                confess &log(ERROR, $!, COMMAND_ERR_FILE_READ);
+            }
+
+            $bExists = false;
         }
     }
 

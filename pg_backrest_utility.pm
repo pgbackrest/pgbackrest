@@ -11,6 +11,10 @@ use Carp;
 use IPC::System::Simple qw(capture);
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
+use File::Basename;
+
+use lib dirname($0) . "/../lib";
+use BackRest::Exception;
 
 use Exporter qw(import);
 
@@ -319,6 +323,9 @@ sub log
 {
     my $strLevel = shift;
     my $strMessage = shift;
+    my $iCode = shift;
+
+    my $strMessageFormat = $strMessage;
 
     if (!defined($oLogLevelRank{"${strLevel}"}{rank}))
     {
@@ -327,35 +334,40 @@ sub log
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
-    if (!defined($strMessage))
+    if (!defined($strMessageFormat))
     {
-        $strMessage = "(undefined)";
+        $strMessageFormat = "(undefined)";
     }
 
     if ($strLevel eq "TRACE")
     {
-        $strMessage = "        " . $strMessage;
+        $strMessageFormat = "        " . $strMessageFormat;
     }
     elsif ($strLevel eq "DEBUG")
     {
-        $strMessage = "    " . $strMessage;
+        $strMessageFormat = "    " . $strMessageFormat;
     }
 
-    $strMessage = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
-                  (" " x (7 - length($strLevel))) . "${strLevel} " . (" " x (2 - length(threads->tid()))) .
-                  threads->tid() . ": ${strMessage}\n";
+    $strMessageFormat = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
+                        (" " x (7 - length($strLevel))) . "${strLevel} " . (" " x (2 - length(threads->tid()))) .
+                        threads->tid() . ": ${strMessageFormat}\n";
 
     if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank})
     {
-        print $strMessage;
+        print $strMessageFormat;
     }
 
     if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelFile}"}{rank})
     {
         if (defined($hLogFile))
         {
-            print $hLogFile $strMessage;
+            print $hLogFile $strMessageFormat;
         }
+    }
+
+    if (defined($iCode))
+    {
+        return BackRest::Exception->new(iCode => $iCode, strMessage => $strMessage);
     }
 
     return $strMessage;

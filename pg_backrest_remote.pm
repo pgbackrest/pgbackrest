@@ -13,10 +13,12 @@ use Net::OpenSSH;
 use File::Basename;
 
 use lib dirname($0);
+use lib dirname($0) . "/../lib";
+use BackRest::Exception;
 use pg_backrest_utility;
 
 # Protocol strings
-has strGreeting => (is => 'ro', default => 'pg_backrest_remote 0.20');
+has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE 0.20');
 
 # Command strings
 has strCommand => (is => 'bare');
@@ -96,7 +98,6 @@ sub clone
 sub greeting_read
 {
     my $self = shift;
-    my $hOut = shift;
 
     # Make sure that the remote is running the right version
     if (trim(readline($self->{hOut})) ne $self->{strGreeting})
@@ -111,11 +112,156 @@ sub greeting_read
 sub greeting_write
 {
     my $self = shift;
-    my $hOut = shift;
 
     if (!syswrite(*STDOUT, "$self->{strGreeting}\n"))
     {
         confess "unable to write greeting";
+    }
+}
+
+####################################################################################################################################
+# STRING_WRITE
+####################################################################################################################################
+sub string_write
+{
+    my $self = shift;
+    my $hOut = shift;
+    my $strBuffer = shift;
+    
+    $strBuffer =~ s/\n/\n\./g;
+    
+    if (!syswrite($hOut, "." . $strBuffer))
+    {
+        confess "unable to write string";
+    }
+}
+
+####################################################################################################################################
+# ERROR_WRITE
+####################################################################################################################################
+sub error_write
+{
+    my $self = shift;
+    my $oMessage = shift;
+    
+    my $iCode;
+    my $strMessage;
+    
+    if (blessed($oMessage))
+    {
+        if ($oMessage->isa("BackRest::Exception")) 
+        {
+            $iCode = $oMessage->code();
+            $strMessage = $oMessage->message();
+        }
+        else
+        {
+            $strMessage = 'unknown error object';
+        }
+    }
+    else
+    {
+        $strMessage = $oMessage;
+    }
+
+    if (defined($strMessage))
+    {
+        $self->string_write(*STDOUT, trim($strMessage));
+    }
+
+    if (!syswrite(*STDOUT, "\nERROR" . (defined($iCode) ? " $iCode" : "") . "\n"))
+    {
+        confess "unable to write error";
+    }
+}
+
+####################################################################################################################################
+# OUTPUT_READ
+####################################################################################################################################
+sub output_read
+{
+    my $self = shift;
+
+    my $strLine;
+    my $strOutput;
+    my $bError = false;
+    my $iErrorCode;
+
+    while ($strLine = readline($self->{hOut}))
+    {
+        if ($strLine =~ /^ERROR.*/)
+        {
+            $bError = true;
+            last;
+        }
+
+        if (trim($strLine) =~ /^OK$/)
+        {
+            last;
+        }
+
+        $strOutput .= trim(substr($strLine, 1));
+    }
+
+    return ($strOutput, $bError, $iErrorCode);
+}
+
+####################################################################################################################################
+# OUTPUT_WRITE
+####################################################################################################################################
+sub output_write
+{
+    my $self = shift;
+    my $strOutput = shift;
+    
+    $self->string_write(*STDOUT, $strOutput);
+
+    if (!syswrite(*STDOUT, "\nOK\n"))
+    {
+        confess "unable to write output";
+    }
+}
+
+####################################################################################################################################
+# COMMAND_READ
+####################################################################################################################################
+sub command_read
+{
+    my $self = shift;
+
+    my $strOut = readline(*STDIN);
+    my $iPos = index($strOut, ':');
+    
+    my $strCommand;
+    my $strOptions;
+    
+    # If no colon then there are no options
+    if ($iPos == -1)
+    {
+        $strCommand = lc(trim($strOut));
+    }
+    # Else parse options
+    else
+    {
+        $strCommand = lc(substr($strOut, 0, $iPos));
+        $strOptions = trim(substr($strOut, $iPos + 1));
+    }
+
+    return $strCommand, $strOptions;
+}
+
+####################################################################################################################################
+# COMMAND_WRITE
+####################################################################################################################################
+sub command_write
+{
+    my $self = shift;
+    my $strCommand = shift;
+    my $strOptions = shift;
+
+    if (!syswrite($self->{hIn}, "$strCommand" . (defined($strOptions) ? ":${strOptions}" : "") . "\n"))
+    {
+        confess "unable to write command";
     }
 }
 
