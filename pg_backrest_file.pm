@@ -1129,21 +1129,25 @@ sub exists
 
     # Set error prefix, remote, and path
     my $bExists = true;
-    my $bRemote = $self->is_remote($strPathType);
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
     my $strErrorPrefix = "File->exists";
     my $strTrace = "${strPathType}:${strPathOp}";
 
     # Run remotely
-    if ($bRemote)
+    if ($self->is_remote($strPathType))
     {
-        my $strCommandOptions = "${strPathOp}";
-        $strTrace = "${strErrorPrefix}: remote ($strCommandOptions): " . $strTrace;
-
+        # Build param hash
+        my %oParamHash;
+        
+        $oParamHash{path} = ${strPathOp};
+        
+        # Build trace string
+        $strTrace = "${strErrorPrefix}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strTrace;
         &log(TRACE, $strTrace);
 
-        $bExists = $self->{oRemote}->command_execute("EXISTS", $strCommandOptions, $strTrace) eq "Y";
+        # Execute the command
+        $bExists = $self->{oRemote}->command_execute("exists", \%oParamHash, $strTrace) eq "Y";
     }
     # Run locally
     else

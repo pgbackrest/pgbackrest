@@ -74,22 +74,34 @@ my $oRemote = pg_backrest_remote->new();
 # Write the greeting so remote process knows who we are
 $oRemote->greeting_write();
 
-# Get the first command
-my ($strCommand, $strOptions) = $oRemote->command_read();
+# Command string
+my $strCommand = '';
 
 # Loop until the exit command is received
 while ($strCommand ne 'exit')
 {
+    my %oParamHash;
+
+    $strCommand = $oRemote->command_read(\%oParamHash);
+
     eval
     {
         # File->exists
         if ($strCommand eq OP_EXISTS)
         {
-            $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, $strOptions) ? "Y" : "N");
+            if (!defined($oParamHash{path}))
+            {
+                confess "path must be defined";
+            }
+            
+            $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, $oParamHash{path}) ? "Y" : "N");
         }
         else
         {
-            confess "invalid command: ${strCommand}";
+            if ($strCommand ne 'noop')
+            {
+                confess "invalid command: ${strCommand}";
+            }
         }
     };
     
@@ -97,9 +109,6 @@ while ($strCommand ne 'exit')
     {
         $oRemote->error_write($@);
     }
-
-    # Get the next command
-    ($strCommand, $strOptions) = $oRemote->command_read();
 }
 
 # # Get the operation

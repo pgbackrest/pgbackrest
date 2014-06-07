@@ -64,7 +64,7 @@ sub BUILD
         #     $strOptionSSHCompression = "Compression=yes";
         # }
 
-        &log(TRACE, "connecting to remote ssh host " . $self->{strHost});
+#        &log(TRACE, "connecting to remote ssh host " . $self->{strHost});
 
         # Make SSH connection
         $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 300, user => $self->{strUser},
@@ -74,6 +74,8 @@ sub BUILD
 
         # Execute remote command
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
+        
+        $self->greeting_read();
     }
 }
 
@@ -100,7 +102,7 @@ sub greeting_read
     my $self = shift;
 
     # Make sure that the remote is running the right version
-    if (trim(readline($self->{hOut})) ne $self->{strGreeting})
+    if (readline($self->{hOut}) ne $self->{strGreeting} . "\n")
     {
         confess &log(ERROR, "remote version mismatch");
     }
@@ -182,7 +184,7 @@ sub output_read
 {
     my $self = shift;
 
-    &log(TRACE, "Remote->output_read");
+#    &log(TRACE, "Remote->output_read");
 
     my $strLine;
     my $strOutput;
@@ -205,7 +207,7 @@ sub output_read
             last;
         }
 
-        $strOutput .= trim(substr($strLine, 1));
+        $strOutput .= (defined($strOutput) ? "\n" : "") . trim(substr($strLine, 1));
     }
 
     return ($strOutput, $bError, $iErrorCode);
@@ -228,31 +230,79 @@ sub output_write
 }
 
 ####################################################################################################################################
+# COMMAND_PARAM_STRING
+####################################################################################################################################
+sub command_param_string
+{
+    my $self = shift;
+    my $oParamHashRef = shift;
+    
+    my $strParamList;
+    
+    foreach my $strParam (sort(keys $oParamHashRef))
+    {
+        $strParamList .= (defined($strParamList) ? "," : "") . "${strParam}=" .
+                         (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : "[undef]");
+    }
+
+    return $strParamList;
+}
+
+####################################################################################################################################
 # COMMAND_READ
 ####################################################################################################################################
 sub command_read
 {
     my $self = shift;
+    my $oParamHashRef = shift;
 
-    my $strOut = readline(*STDIN);
-    my $iPos = index($strOut, ':');
-    
+#    &log(TRACE, "Remote->command_read");
+
+    my $strLine;
     my $strCommand;
-    my $strOptions;
-    
-    # If no colon then there are no options
-    if ($iPos == -1)
+
+    while ($strLine = readline(*STDIN))
     {
-        $strCommand = lc(trim($strOut));
-    }
-    # Else parse options
-    else
-    {
-        $strCommand = lc(substr($strOut, 0, $iPos));
-        $strOptions = trim(substr($strOut, $iPos + 1));
+        $strLine = trim($strLine);
+        
+        if (!defined($strCommand))
+        {
+            if ($strLine =~ /:$/)
+            {
+                $strCommand = substr($strLine, 0, length($strLine) - 1);
+#                print "command ${strCommand} continues\n";
+            }
+            else
+            {
+                $strCommand = $strLine;
+#                print "command ${strCommand}\n";
+                last;
+            }
+        }
+        else
+        {
+            if ($strLine eq 'end')
+            {
+                last;
+            }
+            
+            my $iPos = index($strLine, "=");
+            
+            if ($iPos == -1)
+            {
+                confess "param \"${strLine}\" is missing = character";
+            }
+            
+            my $strParam = substr($strLine, 0, $iPos);
+            my $strValue = substr($strLine, $iPos + 1);
+            
+            ${$oParamHashRef}{"${strParam}"} = ${strValue};
+            
+#            print "${strParam}=${strValue}\n";
+        }
     }
 
-    return $strCommand, $strOptions;
+    return $strCommand;
 }
 
 ####################################################################################################################################
@@ -262,11 +312,40 @@ sub command_write
 {
     my $self = shift;
     my $strCommand = shift;
-    my $strOptions = shift;
+    my $oParamRef = shift;
 
-    &log(TRACE, "Remote->command_write: $strCommand" . (defined($strOptions) ? ":$strOptions" : ""));
+    my $strOutput = $strCommand;
 
-    if (!syswrite($self->{hIn}, "$strCommand" . (defined($strOptions) ? ":${strOptions}" : "") . "\n"))
+    if (defined($oParamRef))
+    {
+        $strOutput = "${strCommand}:\n";
+        
+        foreach my $strParam (sort(keys $oParamRef))
+        {
+            if ($strParam =~ /=/)
+            {
+                confess &log(ASSERT, "param \"${strParam}\" cannot contain = character");
+            }
+
+            my $strValue = ${$oParamRef}{"${strParam}"};
+
+            if ($strParam =~ /\n\$/)
+            {
+                confess &log(ASSERT, "param \"${strParam}\" value cannot end with LF");
+            }
+            
+            if (defined(${strValue}))
+            {
+                $strOutput .= "${strParam}=${strValue}\n";
+            }
+        }
+
+        $strOutput .= "end";
+    }
+
+#    &log(TRACE, "Remote->command_write:\n" . trim($strOutput));
+
+    if (!syswrite($self->{hIn}, "${strOutput}\n"))
     {
         confess "unable to write command";
     }
