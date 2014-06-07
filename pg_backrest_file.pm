@@ -1129,33 +1129,27 @@ sub exists
 
     # Set error prefix, remote, and path
     my $bExists = true;
-    my $strErrorPrefix = "File->exists";
     my $bRemote = $self->is_remote($strPathType);
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
+    my $strErrorPrefix = "File->exists";
+    my $strTrace = "${strPathType}:${strPathOp}";
 
     # Run remotely
     if ($bRemote)
     {
-        my $strCommand = "EXISTS:${strPathOp}";
-        
-        $self->{oRemote}->command_write($strCommand);
+        my $strCommandOptions = "${strPathOp}";
+        $strTrace = "${strErrorPrefix}: remote ($strCommandOptions): " . $strTrace;
 
-        # Run it remotely
-        my ($strOutput, $bError, $iErrorCode) = $self->{oRemote}->output_read();
+        &log(TRACE, $strTrace);
 
-        # Capture any errors
-        if ($bError)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . $strOutput);
-        }
-
-        $bExists = $strOutput eq "Y";
+        $bExists = $self->{oRemote}->command_execute("EXISTS", $strCommandOptions, $strTrace) eq "Y";
     }
     # Run locally
     else
     {
+        &log(TRACE, "${strErrorPrefix}: ${strTrace}");
+
         # Stat the file/path to determine if it exists
         my $oStat = lstat($strPathOp);
 
@@ -1165,7 +1159,14 @@ sub exists
             # If the error is not entry missing, then throw error
             if (!$!{ENOENT})
             {
-                confess &log(ERROR, $!, COMMAND_ERR_FILE_READ);
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    confess &log(ERROR, $!, COMMAND_ERR_FILE_READ);
+                }
+                else
+                {
+                    confess &log(ERROR, "${strErrorPrefix}: ${strTrace}: " . $!, COMMAND_ERR_FILE_READ);
+                }
             }
 
             $bExists = false;

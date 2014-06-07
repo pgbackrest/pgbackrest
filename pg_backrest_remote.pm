@@ -182,6 +182,8 @@ sub output_read
 {
     my $self = shift;
 
+    &log(TRACE, "Remote->output_read");
+
     my $strLine;
     my $strOutput;
     my $bError = false;
@@ -192,6 +194,9 @@ sub output_read
         if ($strLine =~ /^ERROR.*/)
         {
             $bError = true;
+            
+            $iErrorCode = (split(' ', trim($strLine)))[1];
+            
             last;
         }
 
@@ -259,10 +264,36 @@ sub command_write
     my $strCommand = shift;
     my $strOptions = shift;
 
+    &log(TRACE, "Remote->command_write: $strCommand" . (defined($strOptions) ? ":$strOptions" : ""));
+
     if (!syswrite($self->{hIn}, "$strCommand" . (defined($strOptions) ? ":${strOptions}" : "") . "\n"))
     {
         confess "unable to write command";
     }
+}
+
+####################################################################################################################################
+# COMMAND_EXECUTE
+####################################################################################################################################
+sub command_execute
+{
+    my $self = shift;
+    my $strCommand = shift;
+    my $strOptions = shift;
+    my $strErrorPrefix = shift;
+
+    $self->command_write($strCommand, $strOptions);
+    
+    my ($strOutput, $bError, $iErrorCode) = $self->output_read();
+    
+    # Capture any errors
+    if ($bError)
+    {
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
+                            (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
+    }
+    
+    return $strOutput;
 }
 
 no Moose;

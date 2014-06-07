@@ -9,12 +9,13 @@
 use strict;
 use warnings;
 use english;
-
 use Carp;
+
 use File::Basename;
 use Cwd 'abs_path';
 use File::stat;
 use Fcntl ':mode';
+use Scalar::Util 'blessed';
 
 use lib dirname($0) . "/..";
 use pg_backrest_utility;
@@ -48,6 +49,8 @@ sub BackRestFileTest
     &log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
 
     &log(INFO, "FILE MODULE ********************************************************************");
+
+    system("ssh backrest\@${strHost} 'rm -rf ${strTestPath}/private'");
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
@@ -707,34 +710,74 @@ sub BackRestFileTest
             # Loop through exists
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
-                $iRun++;
-
-                &log(INFO, "run ${iRun} - " .
-                           "remote $bRemote, exists $bExists");
-
-                # Drop the old test directory and create a new one
-                system("rm -rf test");
-                system("mkdir test") == 0 or confess "Unable to create test directory";
-
-                my $strFile = "${strTestPath}/test.txt";
-
-                if ($bExists)
+                # Loop through exists
+                for (my $bError = 0; $bError <= $bExists; $bError++)
                 {
-                    system("echo 'TESTDATA' > ${strFile}");
-                }
+                    $iRun++;
 
-                # Execute in eval in case of error
-                eval
-                {
-                    if ($oFile->exists(PATH_BACKUP_ABSOLUTE, $strFile) != $bExists)
+                    &log(INFO, "run ${iRun} - " .
+                               "remote $bRemote, exists $bExists, error ${bError}");
+
+                    # Drop the old test directory and create a new one
+                    system("rm -rf test");
+                    system("mkdir test") == 0 or confess "Unable to create test directory";
+
+                    my $strFile = "${strTestPath}/test.txt";
+
+                    if ($bError)
                     {
-                        confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
+                        system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'");
+                        $strFile = "${strTestPath}/private/test.txt";
                     }
-                };
+                    elsif ($bExists)
+                    {
+                        system("echo 'TESTDATA' > ${strFile}");
+                    }
 
-                if ($@)
-                {
-                    confess "error raised: " . $@ . "\n";
+                    # Execute in eval in case of error
+                    eval
+                    {
+                        if ($oFile->exists(PATH_BACKUP_ABSOLUTE, $strFile) != $bExists)
+                        {
+                            confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
+                        }
+                    };
+
+                    if ($bError)
+                    {
+                        system("ssh backrest\@${strHost} 'rm -rf ${strTestPath}/private'");
+                    }
+
+                    if ($@)
+                    {
+                        my $oMessage = $@;
+                        my $iCode;
+                        my $strMessage;
+                        
+                        if (blessed($oMessage))
+                        {
+                            if ($oMessage->isa("BackRest::Exception")) 
+                            {
+                                $iCode = $oMessage->code();
+                                $strMessage = $oMessage->message();
+                            }
+                            else
+                            {
+                                confess 'unknown error object';
+                            }
+                        }
+                        else
+                        {
+                            $strMessage = $oMessage;
+                        }
+                        
+                        if ($bError && defined($iCode) && $iCode == COMMAND_ERR_FILE_READ)
+                        {
+                            next;
+                        }
+                        
+                        confess "error raised: " . $strMessage . "\n";
+                    }
                 }
             }
         }
