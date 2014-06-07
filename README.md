@@ -42,7 +42,9 @@ Simple Postgres Backup and Restore
 
 ## release notes
 
-### v0.20: ???
+### v0.30: ???
+
+* Complete rewrite of file module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  MORE???
 
 ### v0.19: Improved error reporting/handling
 

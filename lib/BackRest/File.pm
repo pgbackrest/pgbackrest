@@ -12,7 +12,6 @@ use Moose;
 use Net::OpenSSH;
 use IPC::Open3;
 use File::Basename;
-use IPC::System::Simple qw(capture);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';

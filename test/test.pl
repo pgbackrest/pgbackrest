@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# test.pl - Unit Tests for Simple Postgres Backup and Restore
+# test.pl - BackRest Unit Tests
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -41,6 +41,38 @@ log_level_set(undef, uc($strLogLevel));
 if ($strModuleTest ne 'all' && $strModule eq 'all')
 {
     confess "--module must be provided for test \"${strModuleTest}\"";
+}
+
+####################################################################################################################################
+# Clean whitespace
+####################################################################################################################################
+# find .. -not \( -path ../.git -prune \) -not \( -path ../test/test -prune \) -not \( -iname ".DS_Store" \)
+
+####################################################################################################################################
+# Make sure version number matches in README.md and VERSION
+####################################################################################################################################
+my $hReadMe;
+my $strLine;
+my $bMatch = false;
+my $strVersion = version_get();
+
+if (!open($hReadMe, '<', dirname($0) . "/../README.md"))
+{
+    confess "unable to open README.md";
+}
+
+while ($strLine = readline($hReadMe))
+{
+    if ($strLine =~ /^\#\#\# v/)
+    {
+        $bMatch = substr($strLine, 5, length($strVersion)) eq $strVersion;
+        last;
+    }
+}
+
+if (!$bMatch)
+{
+    confess "unable to find version ${strVersion} as last revision in README.md";
 }
 
 ####################################################################################################################################

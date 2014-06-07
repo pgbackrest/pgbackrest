@@ -8,7 +8,6 @@ use threads;
 use strict;
 use warnings;
 use Carp;
-use IPC::System::Simple qw(capture);
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
 use File::Basename;
