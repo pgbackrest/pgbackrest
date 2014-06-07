@@ -753,10 +753,10 @@ sub BackRestFileTest
                         my $oMessage = $@;
                         my $iCode;
                         my $strMessage;
-                        
+
                         if (blessed($oMessage))
                         {
-                            if ($oMessage->isa("BackRest::Exception")) 
+                            if ($oMessage->isa("BackRest::Exception"))
                             {
                                 $iCode = $oMessage->code();
                                 $strMessage = $oMessage->message();
@@ -770,12 +770,12 @@ sub BackRestFileTest
                         {
                             $strMessage = $oMessage;
                         }
-                        
+
                         if ($bError && defined($iCode) && $iCode == COMMAND_ERR_FILE_READ)
                         {
                             next;
                         }
-                        
+
                         confess "error raised: " . $strMessage . "\n";
                     }
                 }

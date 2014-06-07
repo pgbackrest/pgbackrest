@@ -64,7 +64,7 @@ sub BUILD
         #     $strOptionSSHCompression = "Compression=yes";
         # }
 
-#        &log(TRACE, "connecting to remote ssh host " . $self->{strHost});
+        &log(TRACE, "connecting to remote ssh host " . $self->{strHost});
 
         # Make SSH connection
         $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 300, user => $self->{strUser},
@@ -74,7 +74,7 @@ sub BUILD
 
         # Execute remote command
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
-        
+
         $self->greeting_read();
     }
 }
@@ -129,9 +129,9 @@ sub string_write
     my $self = shift;
     my $hOut = shift;
     my $strBuffer = shift;
-    
+
     $strBuffer =~ s/\n/\n\./g;
-    
+
     if (!syswrite($hOut, "." . $strBuffer))
     {
         confess "unable to write string";
@@ -145,13 +145,13 @@ sub error_write
 {
     my $self = shift;
     my $oMessage = shift;
-    
+
     my $iCode;
     my $strMessage;
-    
+
     if (blessed($oMessage))
     {
-        if ($oMessage->isa("BackRest::Exception")) 
+        if ($oMessage->isa("BackRest::Exception"))
         {
             $iCode = $oMessage->code();
             $strMessage = $oMessage->message();
@@ -196,9 +196,9 @@ sub output_read
         if ($strLine =~ /^ERROR.*/)
         {
             $bError = true;
-            
+
             $iErrorCode = (split(' ', trim($strLine)))[1];
-            
+
             last;
         }
 
@@ -220,7 +220,7 @@ sub output_write
 {
     my $self = shift;
     my $strOutput = shift;
-    
+
     $self->string_write(*STDOUT, $strOutput);
 
     if (!syswrite(*STDOUT, "\nOK\n"))
@@ -236,9 +236,9 @@ sub command_param_string
 {
     my $self = shift;
     my $oParamHashRef = shift;
-    
+
     my $strParamList;
-    
+
     foreach my $strParam (sort(keys $oParamHashRef))
     {
         $strParamList .= (defined($strParamList) ? "," : "") . "${strParam}=" .
@@ -264,7 +264,7 @@ sub command_read
     while ($strLine = readline(*STDIN))
     {
         $strLine = trim($strLine);
-        
+
         if (!defined($strCommand))
         {
             if ($strLine =~ /:$/)
@@ -285,19 +285,19 @@ sub command_read
             {
                 last;
             }
-            
+
             my $iPos = index($strLine, "=");
-            
+
             if ($iPos == -1)
             {
                 confess "param \"${strLine}\" is missing = character";
             }
-            
+
             my $strParam = substr($strLine, 0, $iPos);
             my $strValue = substr($strLine, $iPos + 1);
-            
+
             ${$oParamHashRef}{"${strParam}"} = ${strValue};
-            
+
 #            print "${strParam}=${strValue}\n";
         }
     }
@@ -319,7 +319,7 @@ sub command_write
     if (defined($oParamRef))
     {
         $strOutput = "${strCommand}:\n";
-        
+
         foreach my $strParam (sort(keys $oParamRef))
         {
             if ($strParam =~ /=/)
@@ -333,7 +333,7 @@ sub command_write
             {
                 confess &log(ASSERT, "param \"${strParam}\" value cannot end with LF");
             }
-            
+
             if (defined(${strValue}))
             {
                 $strOutput .= "${strParam}=${strValue}\n";
@@ -343,7 +343,7 @@ sub command_write
         $strOutput .= "end";
     }
 
-#    &log(TRACE, "Remote->command_write:\n" . trim($strOutput));
+    &log(TRACE, "Remote->command_write:\n" . trim($strOutput));
 
     if (!syswrite($self->{hIn}, "${strOutput}\n"))
     {
@@ -362,16 +362,16 @@ sub command_execute
     my $strErrorPrefix = shift;
 
     $self->command_write($strCommand, $strOptions);
-    
+
     my ($strOutput, $bError, $iErrorCode) = $self->output_read();
-    
+
     # Capture any errors
     if ($bError)
     {
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
                             (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
     }
-    
+
     return $strOutput;
 }
 

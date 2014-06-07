@@ -93,7 +93,7 @@ while ($strCommand ne 'exit')
             {
                 confess "path must be defined";
             }
-            
+
             $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, $oParamHash{path}) ? "Y" : "N");
         }
         else
@@ -104,7 +104,7 @@ while ($strCommand ne 'exit')
             }
         }
     };
-    
+
     if ($@)
     {
         $oRemote->error_write($@);

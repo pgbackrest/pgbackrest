@@ -341,16 +341,23 @@ sub log
 
     if ($strLevel eq "TRACE")
     {
+        $strMessageFormat =~ s/\n/\n                                           /g;
         $strMessageFormat = "        " . $strMessageFormat;
     }
     elsif ($strLevel eq "DEBUG")
     {
+        $strMessageFormat =~ s/\n/\n                                       /g;
         $strMessageFormat = "    " . $strMessageFormat;
+    }
+    else
+    {
+        $strMessageFormat =~ s/\n/\n                                   /g;
     }
 
     $strMessageFormat = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
                         (" " x (7 - length($strLevel))) . "${strLevel} " . (" " x (2 - length(threads->tid()))) .
-                        threads->tid() . ": ${strMessageFormat}\n";
+                        threads->tid() . ": ${strMessageFormat}" .
+                        (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 
     if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank})
     {

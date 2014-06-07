@@ -1132,27 +1132,28 @@ sub exists
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
     my $strErrorPrefix = "File->exists";
-    my $strTrace = "${strPathType}:${strPathOp}";
+    my $strDebug = "${strPathType}:${strPathOp}";
 
     # Run remotely
     if ($self->is_remote($strPathType))
     {
         # Build param hash
         my %oParamHash;
-        
+
         $oParamHash{path} = ${strPathOp};
-        
+
         # Build trace string
-        $strTrace = "${strErrorPrefix}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strTrace;
-        &log(TRACE, $strTrace);
+        $strDebug = "${strErrorPrefix}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
+        &log(DEBUG, $strDebug);
 
         # Execute the command
-        $bExists = $self->{oRemote}->command_execute("exists", \%oParamHash, $strTrace) eq "Y";
+        $bExists = $self->{oRemote}->command_execute("exists", \%oParamHash, $strDebug) eq "Y";
     }
     # Run locally
     else
     {
-        &log(TRACE, "${strErrorPrefix}: ${strTrace}");
+        $strDebug = "${strErrorPrefix}: local: " . $strDebug;
+        &log(DEBUG, ${strDebug});
 
         # Stat the file/path to determine if it exists
         my $oStat = lstat($strPathOp);
@@ -1169,7 +1170,7 @@ sub exists
                 }
                 else
                 {
-                    confess &log(ERROR, "${strErrorPrefix}: ${strTrace}: " . $!, COMMAND_ERR_FILE_READ);
+                    confess &log(ERROR, "${strDebug}: " . $!, COMMAND_ERR_FILE_READ);
                 }
             }
 
