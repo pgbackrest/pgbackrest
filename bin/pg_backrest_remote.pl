@@ -20,20 +20,12 @@ use pg_backrest_file;
 use pg_backrest_remote;
 
 ####################################################################################################################################
-# Operation constants - basic operations that are allowed in backrest command
+# Operation constants
 ####################################################################################################################################
 use constant
 {
-    OP_LIST        => "list",
-    OP_EXISTS      => "exists",
-    OP_HASH        => "hash",
-    OP_REMOVE      => "remove",
-    OP_MANIFEST    => "manifest",
-    OP_COMPRESS    => "compress",
-    OP_MOVE        => "move",
-    OP_COPY_OUT    => "copy_out",
-    OP_COPY_IN     => "copy_in",
-    OP_PATH_CREATE => "path_create"
+    OP_NOOP        => 'noop',
+    OP_EXIT        => 'exit'
 };
 
 ####################################################################################################################################
@@ -65,20 +57,20 @@ use constant
 # Turn off logging
 log_level_set(OFF, OFF);
 
-# Creat the file object
+# Create the file object
 my $oFile = pg_backrest_file->new();
 
-# Create the remote object for writing to stdout
+# Create the remote object
 my $oRemote = pg_backrest_remote->new();
 
 # Write the greeting so remote process knows who we are
 $oRemote->greeting_write();
 
 # Command string
-my $strCommand = '';
+my $strCommand = OP_NOOP;
 
 # Loop until the exit command is received
-while ($strCommand ne 'exit')
+while ($strCommand ne OP_EXIT)
 {
     my %oParamHash;
 
@@ -87,7 +79,7 @@ while ($strCommand ne 'exit')
     eval
     {
         # File->exists
-        if ($strCommand eq OP_EXISTS)
+        if ($strCommand eq OP_FILE_EXISTS)
         {
             if (!defined($oParamHash{path}))
             {
@@ -98,7 +90,7 @@ while ($strCommand ne 'exit')
         }
         else
         {
-            if ($strCommand ne 'noop')
+            if ($strCommand ne OP_NOOP)
             {
                 confess "invalid command: ${strCommand}";
             }

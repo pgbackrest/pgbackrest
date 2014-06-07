@@ -18,7 +18,7 @@ use BackRest::Exception;
 use pg_backrest_utility;
 
 # Protocol strings
-has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE 0.20');
+has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE');
 
 # Command strings
 has strCommand => (is => 'bare');
@@ -40,6 +40,8 @@ has hErr => (is => 'bare');               # SSH object
 sub BUILD
 {
     my $self = shift;
+    
+    $self->{strGreeting} .= " " . version_get();
 
     if (defined($self->{strHost}))
     {

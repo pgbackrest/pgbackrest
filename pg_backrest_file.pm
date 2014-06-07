@@ -29,9 +29,15 @@ use pg_backrest_remote;
 use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
                  PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
+                 
                  COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
                  COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
-                 PIPE_STDIN PIPE_STDOUT PIPE_STDERR);
+                 
+                 PIPE_STDIN PIPE_STDOUT PIPE_STDERR
+                 
+                 OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
+                 OP_FILE_MOVE OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
+
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -108,6 +114,23 @@ use constant
 {
     REMOTE_DB     => PATH_DB,
     REMOTE_BACKUP => PATH_BACKUP
+};
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant
+{
+    OP_FILE_LIST        => "list",
+    OP_FILE_EXISTS      => "File->exists",
+    OP_FILE_HASH        => "hash",
+    OP_FILE_REMOVE      => "remove",
+    OP_FILE_MANIFEST    => "manifest",
+    OP_FILE_COMPRESS    => "compress",
+    OP_FILE_MOVE        => "move",
+    OP_FILE_COPY_OUT    => "copy_out",
+    OP_FILE_COPY_IN     => "copy_in",
+    OP_FILE_PATH_CREATE => "path_create"
 };
 
 ####################################################################################################################################
@@ -1127,11 +1150,11 @@ sub exists
     my $strPathType = shift;
     my $strPath = shift;
 
-    # Set error prefix, remote, and path
-    my $bExists = true;
+    # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
-    my $strErrorPrefix = "File->exists";
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_EXISTS;
     my $strDebug = "${strPathType}:${strPathOp}";
 
     # Run remotely
@@ -1142,17 +1165,18 @@ sub exists
 
         $oParamHash{path} = ${strPathOp};
 
-        # Build trace string
-        $strDebug = "${strErrorPrefix}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
+        # Build debug string
+        $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
         &log(DEBUG, $strDebug);
 
         # Execute the command
-        $bExists = $self->{oRemote}->command_execute("exists", \%oParamHash, $strDebug) eq "Y";
+        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, $strDebug) eq "Y";
     }
     # Run locally
     else
     {
-        $strDebug = "${strErrorPrefix}: local: " . $strDebug;
+        # Build debug string
+        $strDebug = "${strOperation}: local: " . $strDebug;
         &log(DEBUG, ${strDebug});
 
         # Stat the file/path to determine if it exists
@@ -1174,11 +1198,11 @@ sub exists
                 }
             }
 
-            $bExists = false;
+            return false;
         }
     }
 
-    return $bExists;
+    return true;
 }
 
 ####################################################################################################################################
