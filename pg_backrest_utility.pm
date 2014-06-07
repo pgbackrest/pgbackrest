@@ -361,18 +361,4 @@ sub log
     return $strMessage;
 }
 
-####################################################################################################################################
-# EXECUTE - execute a command
-####################################################################################################################################
-#sub execute
-#{
-#    my $strCommand = shift;
-#    my $strOutput;
-#
-#    print("$strCommand");
-#    $strOutput = capture($strCommand) or confess &log(ERROR, "unable to execute command ${strCommand}: " . $_);
-#
-#    return $strOutput;
-#}
-
 1;

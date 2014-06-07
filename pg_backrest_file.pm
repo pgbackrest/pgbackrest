@@ -22,6 +22,7 @@ use IO::String;
 
 use lib dirname($0);
 use pg_backrest_utility;
+use pg_backrest_remote;
 
 use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
@@ -38,17 +39,10 @@ has strDefaultFilePermission => (is => 'ro', default => '0640');
 # Command strings
 has strCommand => (is => 'bare');
 
-# Lock path
-has strLockPath => (is => 'bare');
-
 # Module variables
-has strDbUser => (is => 'bare');                # Database user
-has strDbHost => (is => 'bare');                # Database host
-has oDbSSH => (is => 'bare');                   # Database SSH object
+has strRemote => (is => 'bare');                # Remote type (db or backup)
+has oRemote   => (is => 'bare');                # Remote object
 
-has strBackupUser => (is => 'bare');            # Backup user
-has strBackupHost => (is => 'bare');            # Backup host
-has oBackupSSH => (is => 'bare');               # Backup SSH object
 has strBackupPath => (is => 'bare');            # Backup base path
 has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 
@@ -84,8 +78,7 @@ use constant
     PATH_BACKUP_ABSOLUTE => 'backup:absolute',
     PATH_BACKUP_CLUSTER  => 'backup:cluster',
     PATH_BACKUP_TMP      => 'backup:tmp',
-    PATH_BACKUP_ARCHIVE  => 'backup:archive',
-    PATH_LOCK_ERR        => 'lock:err'
+    PATH_BACKUP_ARCHIVE  => 'backup:archive'
 };
 
 ####################################################################################################################################
@@ -107,6 +100,15 @@ use constant
 };
 
 ####################################################################################################################################
+# Remote Types
+####################################################################################################################################
+use constant
+{
+    REMOTE_DB     => PATH_DB,
+    REMOTE_BACKUP => PATH_BACKUP
+};
+
+####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub BUILD
@@ -120,40 +122,19 @@ sub BUILD
         $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strStanza};
     }
 
-    # Create the ssh options string
-    if (defined($self->{strBackupHost}) || defined($self->{strDbHost}))
+    # If remote is defined check parameters and open session
+    if (defined($self->{strRemote}))
     {
-        if (defined($self->{strBackupHost}) && defined($self->{strDbHost}))
+        # Make sure remote is valid
+        if ($self->{strRemote} ne REMOTE_DB && $self->{strRemote} ne REMOTE_BACKUP)
         {
-            confess &log(ASSERT, "backup and db hosts cannot both be remote");
+            confess &log(ASSERT, "strRemote must be \"" . REMOTE_DB . "\" or \"" . REMOTE_BACKUP . "\"");
         }
 
-        my $strOptionSSHRequestTTY = "RequestTTY=yes";
-        my $strOptionSSHCompression = "Compression=no";
-
-        # if ($self->{bNoCompression})
-        # {
-        #     $strOptionSSHCompression = "Compression=yes";
-        # }
-
-        # Connect SSH object if backup host is defined
-        if (!defined($self->{oBackupSSH}) && defined($self->{strBackupHost}))
+        # Remote object must be set
+        if (!defined($self->{oRemote}))
         {
-            &log(TRACE, "connecting to backup ssh host " . $self->{strBackupHost});
-
-            $self->{oBackupSSH} = Net::OpenSSH->new($self->{strBackupHost}, timeout => 300, user => $self->{strBackupUser},
-                                      master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
-            $self->{oBackupSSH}->error and confess &log(ERROR, "unable to connect to $self->{strBackupHost}: " . $self->{oBackupSSH}->error);
-        }
-
-        # Connect SSH object if db host is defined
-        if (!defined($self->{oDbSSH}) && defined($self->{strDbHost}))
-        {
-            &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
-
-            $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, timeout => 300, user => $self->{strDbUser},
-                                  master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
-            $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
+            confess &log(ASSERT, "oRemote must be defined");
         }
     }
 }
@@ -180,8 +161,7 @@ sub clone
         strBackupClusterPath => $self->{strBackupClusterPath},
         bCompress => $self->{bCompress},
         strStanza => $self->{strStanza},
-        iThreadIdx => $iThreadIdx,
-        strLockPath => $self->{strLockPath}
+        iThreadIdx => $iThreadIdx
     );
 }
 
@@ -295,20 +275,6 @@ sub path_get
         confess &log(ASSERT, "\$strStanza not yet defined");
     }
 
-    # Get the lock error path
-    if ($strType eq PATH_LOCK_ERR)
-    {
-        my $strTempPath = $self->{strLockPath};
-
-        if (!defined($strTempPath))
-        {
-            return undef;
-        }
-
-        return ${strTempPath} . (defined($strFile) ? "/${strFile}" .
-                                (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "") . ".err" : "");
-    }
-
     # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
@@ -359,32 +325,14 @@ sub path_get
 ####################################################################################################################################
 # IS_REMOTE
 #
-# Determine whether any operations are being performed remotely.  If $strPathType is defined, the function will return true if that
-# path is remote.  If $strPathType is not defined, then function will return true if any path is remote.
+# Determine whether the path type is remote
 ####################################################################################################################################
 sub is_remote
 {
     my $self = shift;
     my $strPathType = shift;
 
-    # If the SSH object is defined then some paths are remote
-    if (defined($self->{oDbSSH}) || defined($self->{oBackupSSH}))
-    {
-        # If path type is not defined but the SSH object is, then some paths are remote
-        if (!defined($strPathType))
-        {
-            return true;
-        }
-
-        # If a host is defined for the path then it is remote
-        if (defined($self->{strBackupHost}) && $self->path_type_get($strPathType) eq PATH_BACKUP ||
-            defined($self->{strDbHost}) && $self->path_type_get($strPathType) eq PATH_DB)
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return defined($self->{strRemote}) && $self->path_type_get($strPathType) eq $self->{strRemote};
 }
 
 ####################################################################################################################################
@@ -392,26 +340,25 @@ sub is_remote
 #
 # Get remote SSH object depending on the path type.
 ####################################################################################################################################
-sub remote_get
-{
-    my $self = shift;
-    my $strPathType = shift;
-
-    # Get the db SSH object
-    if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
-    {
-        return $self->{oDbSSH};
-    }
-
-    # Get the backup SSH object
-    if ($self->path_type_get($strPathType) eq PATH_BACKUP && defined($self->{oBackupSSH}))
-    {
-        return $self->{oBackupSSH}
-    }
-
-    # Error when no ssh object is found
-    confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
-}
+# sub remote_get
+# {
+#     my $self = shift;
+#
+#     # Get the db SSH object
+#     if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
+#     {
+#         return $self->{oDbSSH};
+#     }
+#
+#     # Get the backup SSH object
+#     if ($self->path_type_get($strPathType) eq PATH_BACKUP && defined($self->{oBackupSSH}))
+#     {
+#         return $self->{oBackupSSH}
+#     }
+#
+#     # Error when no ssh object is found
+#     confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
+# }
 
 ####################################################################################################################################
 # LINK_CREATE !!! NEEDS TO BE CONVERTED
@@ -1189,8 +1136,10 @@ sub exists
     # Run remotely
     if ($bRemote)
     {
-        # Build the command
         my $strCommand = $self->{strCommand} . " exists ${strPathOp}";
+
+#        syswrite(self->{hIn}, )
+        # Build the command
 
         # Run it remotely
         my $oSSH = $self->remote_get($strPathType);

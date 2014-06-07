@@ -17,8 +17,9 @@ use File::stat;
 use Fcntl ':mode';
 
 use lib dirname($0) . "/..";
-use pg_backrest_file;
 use pg_backrest_utility;
+use pg_backrest_file;
+use pg_backrest_remote;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestFileTest);
@@ -38,7 +39,7 @@ sub BackRestFileTest
     my $iRun;
 
     my $strStanza = "db";
-    my $strCommand = "/Users/dsteele/pg_backrest/bin/pg_backrest_command.pl";
+    my $strCommand = "/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl";
     my $strHost = "127.0.0.1";
     my $strUser = getpwuid($<);
     my $strGroup = getgrgid($();
@@ -47,6 +48,16 @@ sub BackRestFileTest
     &log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
 
     &log(INFO, "FILE MODULE ********************************************************************");
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Create remote
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $oRemote = pg_backrest_remote->new
+    (
+        strHost => $strHost,
+        strUser => $strUser,
+        strCommand => $strCommand,
+    );
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test path_create()
@@ -687,12 +698,10 @@ sub BackRestFileTest
             my $oFile = pg_backrest_file->new
             (
                 strStanza => $strStanza,
-                bNoCompression => true,
-                strCommand => $strCommand,
                 strBackupClusterPath => ${strTestPath},
                 strBackupPath => ${strTestPath},
-                strBackupHost => $bRemote ? $strHost : undef,
-                strBackupUser => $bRemote ? $strUser : undef
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
             );
 
             # Loop through exists
