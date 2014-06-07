@@ -14,11 +14,10 @@ use File::Basename;
 use Getopt::Long;
 use Carp;
 
-use lib dirname($0) . '/..';
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
-use pg_backrest_file;
-use pg_backrest_remote;
+use BackRest::File;
+use BackRest::Remote;
 
 ####################################################################################################################################
 # Operation constants
@@ -59,10 +58,10 @@ use constant
 log_level_set(OFF, OFF);
 
 # Create the file object
-my $oFile = pg_backrest_file->new();
+my $oFile = BackRest::File->new();
 
 # Create the remote object
-my $oRemote = pg_backrest_remote->new();
+my $oRemote = BackRest::Remote->new();
 
 # Write the greeting so remote process knows who we are
 $oRemote->greeting_write();

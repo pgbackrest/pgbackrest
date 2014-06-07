@@ -17,11 +17,10 @@ use File::stat;
 use Fcntl ':mode';
 use Scalar::Util 'blessed';
 
-use lib dirname($0) . "/..";
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
-use pg_backrest_file;
-use pg_backrest_remote;
+use BackRest::File;
+use BackRest::Remote;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestFileTest);
@@ -56,7 +55,7 @@ sub BackRestFileTest
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = pg_backrest_remote->new
+    my $oRemote = BackRest::Remote->new
     (
         strHost => $strHost,
         strUser => $strUser,
@@ -75,7 +74,7 @@ sub BackRestFileTest
         # Loop through local/remote
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -180,7 +179,7 @@ sub BackRestFileTest
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -270,7 +269,7 @@ sub BackRestFileTest
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -365,7 +364,7 @@ sub BackRestFileTest
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -459,7 +458,7 @@ sub BackRestFileTest
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -565,7 +564,7 @@ sub BackRestFileTest
             my $strHost = $bRemote ? "127.0.0.1" : undef;
             my $strUser = $bRemote ? "dsteele" : undef;
 
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -637,7 +636,7 @@ sub BackRestFileTest
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 bNoCompression => true,
@@ -699,7 +698,7 @@ sub BackRestFileTest
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
                 strBackupClusterPath => ${strTestPath},
@@ -805,7 +804,7 @@ sub BackRestFileTest
                 # Loop through destination compression
                 for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 1; $bDestinationCompressed++)
                 {
-                    my $oFile = pg_backrest_file->new
+                    my $oFile = BackRest::File->new
                     (
                         strStanza => "db",
                         strCommand => $strCommand,

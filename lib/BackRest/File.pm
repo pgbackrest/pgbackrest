@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # FILE MODULE
 ####################################################################################################################################
-package pg_backrest_file;
+package BackRest::File;
 
 use threads;
 use strict;
@@ -20,11 +20,10 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::String;
 
-use lib dirname($0);
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
 use BackRest::Utility;
-use pg_backrest_remote;
+use BackRest::Remote;
 
 use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
