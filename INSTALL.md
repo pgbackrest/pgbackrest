@@ -1,1 +1,1 @@
-# TEST
+# pg_backrest installation
