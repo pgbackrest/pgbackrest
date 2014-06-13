@@ -380,8 +380,8 @@ sub log
     }
 
     $strMessageFormat = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
-                        (" " x (7 - length($strLevel))) . "${strLevel} " . (" " x (2 - length(threads->tid()))) .
-                        threads->tid() . ": ${strMessageFormat}" .
+                        sprintf(" T%02d", threads->tid()) .
+                        (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
                         (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 
     if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank})

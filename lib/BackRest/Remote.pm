@@ -34,6 +34,14 @@ has hOut => (is => 'bare');               # SSH object
 has hErr => (is => 'bare');               # SSH object
 
 ####################################################################################################################################
+# Remote xfer block size constant
+####################################################################################################################################
+use constant
+{
+    BLOCK_SIZE  => 8192
+};
+
+####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub BUILD
@@ -175,6 +183,86 @@ sub error_write
     if (!syswrite(*STDOUT, "\nERROR" . (defined($iCode) ? " $iCode" : "") . "\n"))
     {
         confess "unable to write error";
+    }
+}
+
+####################################################################################################################################
+# BINARY_XFER
+#
+# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
+####################################################################################################################################
+sub binary_xfer
+{
+    my $self = shift;
+    my $hIn = shift;
+    my $hOut = shift;
+    my $strRemote = shift;
+    my $bCompress = shift;
+
+    my $bDone = false;
+    my $iBlockSize = BLOCK_SIZE;
+    my $iBlockIn;
+    my $strBlock;
+
+    print "got to begin\n";
+
+    while (!$bDone)
+    {
+        if ($strRemote eq 'in')
+        {
+            my $strBlockHeader = readline($hIn);
+
+            if ($strBlockHeader !~ /^block [0-9]+$/)
+            {
+                confess "unable to read block header ${strBlockHeader}";
+            }
+
+            $iBlockSize = substr($strBlockHeader, index($strBlockHeader, " ") + 1);
+            
+            $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+
+            if (!defined($iBlockIn) || $iBlockIn != $iBlockSize)
+            {
+                confess "unable to read ${iBlockSize} bytes from remote" . (defined($!) ? ": " . $! : "");
+            }
+        }
+        else
+        {
+            if (!defined($bCompress))
+            {
+                $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+                
+                if (!defined($iBlockIn))
+                {
+                    confess "unable to read ${iBlockSize} bytes from remote: " . $!;
+                }
+            }
+        }
+
+        if ($iBlockIn > 0)
+        {
+            if ($strRemote eq 'out')
+            {
+                print "wrote block header\n";
+                
+                if (!syswrite($hOut, "block ${iBlockIn}"))
+                {
+                    confess "unable to write block header";
+                }
+            }
+
+            # Write to the output handle
+            my $iBlockOut = syswrite($hOut, $strBlock, $iBlockIn);
+
+            if (!defined($iBlockOut) || $iBlockOut != $iBlockIn)
+            {
+                confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ": " . $! : "");
+            }
+        }
+        else
+        {
+            $bDone = true;
+        }
     }
 }
 
@@ -359,10 +447,10 @@ sub command_execute
 {
     my $self = shift;
     my $strCommand = shift;
-    my $strOptions = shift;
+    my $oParamRef = shift;
     my $strErrorPrefix = shift;
 
-    $self->command_write($strCommand, $strOptions);
+    $self->command_write($strCommand, $oParamRef);
 
     my ($strOutput, $bError, $iErrorCode) = $self->output_read();
 

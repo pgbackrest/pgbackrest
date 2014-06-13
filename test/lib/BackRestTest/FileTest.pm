@@ -671,7 +671,7 @@ sub BackRestFileTest
                 {
                     if ($oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile) ne '06364afe79d801433188262478a76d19777ef351')
                     {
-                        confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
+                        confess "incorrect hash returned";
                     }
                 };
 
@@ -790,10 +790,10 @@ sub BackRestFileTest
     {
         $iRun = 0;
 
-        for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
+        for (my $bBackupRemote = 0; $bBackupRemote <= 0; $bBackupRemote++)
         {
             # Loop through source compression
-            for (my $bDbRemote = 0; $bDbRemote <= 1; $bDbRemote++)
+            for (my $bDbRemote = 1; $bDbRemote <= 1; $bDbRemote++)
             {
                 # Backup and db cannot both be remote
                 if ($bBackupRemote && $bDbRemote)
@@ -802,13 +802,14 @@ sub BackRestFileTest
                 }
 
                 # Loop through destination compression
-                for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 1; $bDestinationCompressed++)
+                for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 0; $bDestinationCompressed++)
                 {
                     my $oFile = BackRest::File->new
                     (
                         strStanza => "db",
                         strCommand => $strCommand,
                         bCompress => $bDestinationCompressed,
+                        strRemote => $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef,
                         strBackupClusterPath => undef,
                         strBackupPath => ${strTestPath},
                         strBackupHost => $bBackupRemote ? $strHost : undef,
@@ -817,14 +818,14 @@ sub BackRestFileTest
                         strDbUser => $bDbRemote ? $strUser : undef
                     );
 
-                    for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
+                    for (my $bSourceCompressed = 0; $bSourceCompressed <= 0; $bSourceCompressed++)
                     {
-                        for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
+                        for (my $bSourcePathType = 0; $bSourcePathType <= 0; $bSourcePathType++)
                         {
                             my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                             my $strSourcePath = $bSourcePathType ? "db" : "backup";
 
-                            for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
+                            for (my $bDestinationPathType = 1; $bDestinationPathType <= 1; $bDestinationPathType++)
                             {
                                 my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                                 my $strDestinationPath = $bDestinationPathType ? "db" : "backup";

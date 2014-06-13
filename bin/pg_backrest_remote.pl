@@ -88,6 +88,15 @@ while ($strCommand ne OP_EXIT)
 
             $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, $oParamHash{path}) ? "Y" : "N");
         }
+        elsif ($strCommand eq OP_FILE_COPY_IN)
+        {
+            if (!defined($oParamHash{destination_file}))
+            {
+                confess "destination_file must be defined";
+            }
+
+            $oFile->copy(PIPE_STDOUT, undef, PATH_ABSOLUTE, $oParamHash{destination_file});
+        }
         else
         {
             if ($strCommand ne OP_NOOP)

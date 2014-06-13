@@ -189,33 +189,6 @@ sub clone
 }
 
 ####################################################################################################################################
-# ERROR_GET
-####################################################################################################################################
-# sub error_get
-# {
-#     my $self = shift;
-#
-#     my $strErrorFile = $self->path_get(PATH_LOCK_ERR, "file");
-#
-#     open my $hFile, '<', $strErrorFile or return "error opening ${strErrorFile} to read STDERR output";
-#
-#     my $strError = do {local $/; <$hFile>};
-#     close $hFile;
-#
-#     return trim($strError);
-# }
-
-####################################################################################################################################
-# ERROR_CLEAR
-####################################################################################################################################
-# sub error_clear
-# {
-#     my $self = shift;
-#
-#     unlink($self->path_get(PATH_LOCK_ERR, "file"));
-# }
-
-####################################################################################################################################
 # PATH_TYPE_GET
 ####################################################################################################################################
 sub path_type_get
@@ -808,42 +781,30 @@ sub copy
                 or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
         }
     }
-
+    
     # If source or destination are remote
     if ($bSourceRemote || $bDestinationRemote)
     {
-        # Get the ssh connection
-        my $oSSH;
-
-        # If source is local and destination is remote then use the destination connection
-        if (!$bSourceRemote && $bDestinationRemote)
-        {
-            $oSSH = $self->remote_get($strDestinationPathType);
-        }
-        # Else source connection is always used (because if both are remote they must be the same remote)
-        else
-        {
-            $oSSH = $self->remote_get($strSourcePathType);
-        }
-
+        print "got outside\n";
         # Build the command and open the local file
         my $hFile;
-        my $strCommand;
+        my $strOperation;
+        my %oParamHash;
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
         {
-            # Build the command string
-            $strCommand = $self->{strCommand} .
-                          " --compress copy_in ${strSourceOp}";
+            return false;
         }
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
-            # Build the command string
-            $strCommand = $self->{strCommand} .
-                          ($bCompress ? " --compress" : " --uncompress") .
-                          " copy_out ${strDestinationOp}";
+            $strOperation = OP_FILE_COPY_IN;
+            $oParamHash{destination_file} = ${strDestinationOp};
+
+            # Build debug string
+#            $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
+#            &log(DEBUG, $strDebug);
         }
         # Else source and destination are remote
         else
@@ -858,24 +819,25 @@ sub copy
         }
 
         # Trace command
-        &log(TRACE, "${strErrorPrefix} command:" . $strCommand);
+        &log(TRACE, "${strErrorPrefix} operation:" . $strOperation);
 
-        # Execute the ssh command
-        my ($hIn, $hOut, $hErr, $pId) = $oSSH->open3($strCommand);
+        # Execute the operation
+        $self->{oRemote}->command_write($strOperation, \%oParamHash);
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
         {
-            $self->pipe($hOut, $hDestinationFile, $bCompress, !$bCompress);
+            #$self->pipe($hOut, $hDestinationFile, $bCompress, !$bCompress);
         }
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
-            $self->pipe($hSourceFile, $hIn, $bCompress, !$bCompress);
+            $self->{oRemote}->binary_xfer($hSourceFile, $self->{hOut}, 'out');
+#            $self->pipe($hSourceFile, $hIn, $bCompress, !$bCompress);
         }
 
         # Wait for process exit (and error)
-        $self->wait_pid($pId, $strCommand, $hIn, $hOut, $hErr);
+#        $self->wait_pid($pId, $strCommand, $hIn, $hOut, $hErr);
     }
     else
     {
