@@ -127,7 +127,7 @@ use constant
     OP_FILE_COMPRESS    => "compress",
     OP_FILE_MOVE        => "move",
     OP_FILE_COPY_OUT    => "copy_out",
-    OP_FILE_COPY_IN     => "copy_in",
+    OP_FILE_COPY_IN     => "File->copy_in",
     OP_FILE_PATH_CREATE => "path_create"
 };
 
@@ -730,8 +730,8 @@ sub copy
 
     # Set working variables
     my $strErrorPrefix = "File->copy";
-    my $bSourceRemote = $self->is_remote($strSourcePathType);
-    my $bDestinationRemote = $self->is_remote($strDestinationPathType);
+    my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
+    my $bDestinationRemote = $self->is_remote($strDestinationPathType) || $strDestinationPathType eq PIPE_STDOUT;
     my $strSourceOp = $strSourcePathType eq PIPE_STDIN ?
         $strSourcePathType : $self->path_get($strSourcePathType, $strSourceFile);
     my $strDestinationOp = $strDestinationPathType eq PIPE_STDOUT ?
@@ -746,24 +746,17 @@ sub copy
     }
 
     # Output trace info
-    &log(TRACE, "${strErrorPrefix}:" . ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}:${strSourceFile}" .
-                " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}" .
-                ", compress = " . ($bCompress ? "true" : "false"));
+#    &log(TRACE, "${strErrorPrefix}:" . ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}:${strSourceFile}" .
+#                " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}" .
+#                ", compress = " . ($bCompress ? "true" : "false"));
 
     # Open the source file
     my $hSourceFile;
 
     if (!$bSourceRemote)
     {
-        if ($strSourcePathType eq PIPE_STDIN)
-        {
-            $hSourceFile = *STDIN;
-        }
-        else
-        {
-            open($hSourceFile, "<", $strSourceOp)
-                or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
-        }
+        open($hSourceFile, "<", $strSourceOp)
+            or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
     }
 
     # Open the destination file
@@ -771,36 +764,42 @@ sub copy
 
     if (!$bDestinationRemote)
     {
-        if ($strSourcePathType eq PIPE_STDOUT)
-        {
-            $hDestinationFile = *STDOUT;
-        }
-        else
-        {
-            open($hDestinationFile, ">", $strDestinationTmpOp)
-                or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
-        }
+        open($hDestinationFile, ">", $strDestinationTmpOp)
+            or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
     }
     
     # If source or destination are remote
     if ($bSourceRemote || $bDestinationRemote)
     {
-        print "got outside\n";
+#        print "got outside\n";
         # Build the command and open the local file
         my $hFile;
         my $strOperation;
         my %oParamHash;
+        my $hIn,
+        my $hOut;
+        my $strRemote;
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
         {
-            return false;
+            $strRemote = 'in';
+            $hOut = $hDestinationFile;
+            
+            if ($strSourcePathType eq PIPE_STDIN)
+            {
+                $hIn = *STDIN;
+            }
         }
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
+            $strRemote = 'out';
+            $hIn = $hSourceFile;
+            
             $strOperation = OP_FILE_COPY_IN;
             $oParamHash{destination_file} = ${strDestinationOp};
+            $hOut = $self->{oRemote}->{hIn};
 
             # Build debug string
 #            $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
@@ -818,24 +817,26 @@ sub copy
             return false;
         }
 
-        # Trace command
-        &log(TRACE, "${strErrorPrefix} operation:" . $strOperation);
-
-        # Execute the operation
-        $self->{oRemote}->command_write($strOperation, \%oParamHash);
-
-        # If source is remote and destination is local
-        if ($bSourceRemote && !$bDestinationRemote)
+        # If an operation is defined then write it
+        if (defined($strOperation))
         {
-            #$self->pipe($hOut, $hDestinationFile, $bCompress, !$bCompress);
-        }
-        # Else if source is local and destination is remote
-        elsif (!$bSourceRemote && $bDestinationRemote)
-        {
-            $self->{oRemote}->binary_xfer($hSourceFile, $self->{hOut}, 'out');
-#            $self->pipe($hSourceFile, $hIn, $bCompress, !$bCompress);
-        }
+            # Trace command
+            &log(TRACE, "${strErrorPrefix} operation:" . $strOperation);
 
+            # Execute the operation
+            $self->{oRemote}->command_write($strOperation, \%oParamHash);
+        }
+        
+        # Transfer the file
+#        print "binary xfer start\n";
+        $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote);
+#        print "binary xfer stop\n";
+
+        if ($strRemote eq 'out')
+        {
+            $self->{oRemote}->output_read(false, $strErrorPrefix);
+        }
+        
         # Wait for process exit (and error)
 #        $self->wait_pid($pId, $strCommand, $hIn, $hOut, $hErr);
     }
@@ -876,8 +877,7 @@ sub copy
 
 
         # Move the file from tmp to final destination
-        $self->move($self->path_type_get($strDestinationPathType) . ":absolute", $strDestinationTmpOp,
-                    $self->path_type_get($strDestinationPathType) . ":absolute", $strDestinationOp, $bPathCreate);
+        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, $bPathCreate);
     }
 
     return true;
@@ -1130,7 +1130,7 @@ sub exists
         &log(DEBUG, $strDebug);
 
         # Execute the command
-        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, $strDebug) eq "Y";
+        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq "Y";
     }
     # Run locally
     else

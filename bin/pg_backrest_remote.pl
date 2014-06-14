@@ -18,6 +18,7 @@ use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
+use BackRest::Exception;
 
 ####################################################################################################################################
 # Operation constants
@@ -57,11 +58,15 @@ use constant
 # Turn off logging
 log_level_set(OFF, OFF);
 
-# Create the file object
-my $oFile = BackRest::File->new();
-
 # Create the remote object
 my $oRemote = BackRest::Remote->new();
+
+# Create the file object
+my $oFile = BackRest::File->new
+(
+    bCompress => false,
+    oRemote => $oRemote
+);
 
 # Write the greeting so remote process knows who we are
 $oRemote->greeting_write();
@@ -95,7 +100,8 @@ while ($strCommand ne OP_EXIT)
                 confess "destination_file must be defined";
             }
 
-            $oFile->copy(PIPE_STDOUT, undef, PATH_ABSOLUTE, $oParamHash{destination_file});
+            $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file});
+            $oRemote->output_write();
         }
         else
         {
@@ -105,7 +111,7 @@ while ($strCommand ne OP_EXIT)
             }
         }
     };
-
+    
     if ($@)
     {
         $oRemote->error_write($@);

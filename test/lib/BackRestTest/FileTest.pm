@@ -807,15 +807,11 @@ sub BackRestFileTest
                     my $oFile = BackRest::File->new
                     (
                         strStanza => "db",
-                        strCommand => $strCommand,
                         bCompress => $bDestinationCompressed,
-                        strRemote => $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef,
                         strBackupClusterPath => undef,
                         strBackupPath => ${strTestPath},
-                        strBackupHost => $bBackupRemote ? $strHost : undef,
-                        strBackupUser => $bBackupRemote ? $strUser : undef,
-                        strDbHost => $bDbRemote ? $strHost : undef,
-                        strDbUser => $bDbRemote ? $strUser : undef
+                        strRemote => $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef,
+                        oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
                     );
 
                     for (my $bSourceCompressed = 0; $bSourceCompressed <= 0; $bSourceCompressed++)

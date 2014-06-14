@@ -11,11 +11,23 @@ use Carp;
 use Moose;
 use Net::OpenSSH;
 use File::Basename;
+use POSIX ":sys_wait_h";
 
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
 use BackRest::Utility;
 
+####################################################################################################################################
+# Remote xfer default block size constant
+####################################################################################################################################
+use constant
+{
+    DEFAULT_BLOCK_SIZE  => 8192
+};
+
+####################################################################################################################################
+# Module variables
+####################################################################################################################################
 # Protocol strings
 has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE');
 
@@ -33,13 +45,8 @@ has hIn => (is => 'bare');               # SSH object
 has hOut => (is => 'bare');               # SSH object
 has hErr => (is => 'bare');               # SSH object
 
-####################################################################################################################################
-# Remote xfer block size constant
-####################################################################################################################################
-use constant
-{
-    BLOCK_SIZE  => 8192
-};
+# Block size
+has iBlockSize => (is => 'bare', default => DEFAULT_BLOCK_SIZE);  # Set block size to default
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -86,6 +93,10 @@ sub BUILD
 
         $self->greeting_read();
     }
+    else
+    {
+        
+    }
 }
 
 ####################################################################################################################################
@@ -111,7 +122,7 @@ sub greeting_read
     my $self = shift;
 
     # Make sure that the remote is running the right version
-    if (readline($self->{hOut}) ne $self->{strGreeting} . "\n")
+    if ($self->read_line($self->{hOut}) ne $self->{strGreeting})
     {
         confess &log(ERROR, "remote version mismatch");
     }
@@ -148,6 +159,23 @@ sub string_write
 }
 
 ####################################################################################################################################
+# PIPE_TO_STRING Function
+#
+# Copies data from a file handle into a string.
+####################################################################################################################################
+sub pipe_to_string
+{
+    my $self = shift;
+    my $hOut = shift;
+
+    my $strBuffer;
+    my $hString = IO::String->new($strBuffer);
+    $self->binary_xfer($hOut, $hString);
+
+    return $strBuffer;
+}
+
+####################################################################################################################################
 # ERROR_WRITE
 ####################################################################################################################################
 sub error_write
@@ -167,12 +195,14 @@ sub error_write
         }
         else
         {
-            $strMessage = 'unknown error object';
+            syswrite(*STDERR, 'unknown error object: ' . $oMessage);
+            exit 1;
         }
     }
     else
     {
-        $strMessage = $oMessage;
+        syswrite(*STDERR, $oMessage);
+        exit 1;
     }
 
     if (defined($strMessage))
@@ -184,6 +214,44 @@ sub error_write
     {
         confess "unable to write error";
     }
+}
+
+####################################################################################################################################
+# READ_LINE
+####################################################################################################################################
+sub read_line
+{
+    my $self = shift;
+    my $hIn = shift;
+    my $bError = shift;
+    
+    my $strLine;
+    my $strChar;
+    my $iByteIn;
+    
+    while (1)
+    {
+        $iByteIn = sysread($hIn, $strChar, 1);
+        
+        if (!defined($iByteIn) || $iByteIn != 1)
+        {
+            if (defined($bError) and !$bError)
+            {
+                return undef;
+            }
+            
+            confess &log(ERROR, "unable to read 1 byte" . (defined($!) ? ": " . $! : ""));
+        }
+        
+        if ($strChar eq "\n")
+        {
+            last;
+        }
+
+        $strLine .= $strChar;
+    }
+    
+    return $strLine;
 }
 
 ####################################################################################################################################
@@ -199,31 +267,45 @@ sub binary_xfer
     my $strRemote = shift;
     my $bCompress = shift;
 
-    my $bDone = false;
-    my $iBlockSize = BLOCK_SIZE;
+    $strRemote = defined($strRemote) ? $strRemote : 'none';
+
+    my $iBlockSize = $self->{iBlockSize};
+    my $iHeaderSize = 12;
     my $iBlockIn;
+    my $iBlockOut;
+    my $strBlockHeader;
     my $strBlock;
 
-    print "got to begin\n";
-
-    while (!$bDone)
+    while (1)
     {
         if ($strRemote eq 'in')
         {
-            my $strBlockHeader = readline($hIn);
+            $strBlockHeader = $self->read_line($hIn);
 
             if ($strBlockHeader !~ /^block [0-9]+$/)
             {
                 confess "unable to read block header ${strBlockHeader}";
             }
 
-            $iBlockSize = substr($strBlockHeader, index($strBlockHeader, " ") + 1);
-            
-            $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, " ") + 1));
 
-            if (!defined($iBlockIn) || $iBlockIn != $iBlockSize)
+            if ($iBlockSize != 0)
             {
-                confess "unable to read ${iBlockSize} bytes from remote" . (defined($!) ? ": " . $! : "");
+                $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+
+                if (!defined($iBlockIn) || $iBlockIn != $iBlockSize)
+                {
+                    confess "unable to read ${iBlockSize} bytes from remote" . (defined($!) ? ": " . $! : "");
+                }
+            }
+            else
+            {
+                # 
+                # if ($strRemote eq 'in')
+                # {
+                #     confess &log(ERROR, "block size $iBlockSize");
+                # }
+                $iBlockIn = 0;
             }
         }
         else
@@ -239,20 +321,26 @@ sub binary_xfer
             }
         }
 
+        if ($strRemote eq 'out')
+        {
+            $strBlockHeader = "block ${iBlockIn}\n";
+            
+#            print "wrote block header: ${strBlockHeader}"; # REMOVE!
+            
+            $iBlockOut = syswrite($hOut, $strBlockHeader);
+            
+            if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
+            {
+                confess "unable to write block header";
+            }
+        }
+
         if ($iBlockIn > 0)
         {
-            if ($strRemote eq 'out')
-            {
-                print "wrote block header\n";
-                
-                if (!syswrite($hOut, "block ${iBlockIn}"))
-                {
-                    confess "unable to write block header";
-                }
-            }
-
             # Write to the output handle
-            my $iBlockOut = syswrite($hOut, $strBlock, $iBlockIn);
+#            print "writing: ${strBlock}\n"; # REMOVE!
+
+            $iBlockOut = syswrite($hOut, $strBlock, $iBlockIn);
 
             if (!defined($iBlockOut) || $iBlockOut != $iBlockIn)
             {
@@ -261,7 +349,7 @@ sub binary_xfer
         }
         else
         {
-            $bDone = true;
+            last;
         }
     }
 }
@@ -272,6 +360,8 @@ sub binary_xfer
 sub output_read
 {
     my $self = shift;
+    my $bOutputRequired = shift;
+    my $strErrorPrefix = shift;
 
 #    &log(TRACE, "Remote->output_read");
 
@@ -279,27 +369,100 @@ sub output_read
     my $strOutput;
     my $bError = false;
     my $iErrorCode;
+    my $strError;
 
-    while ($strLine = readline($self->{hOut}))
+    if (waitpid($self->{pId}, WNOHANG) != 0)
     {
+        print "process exited\n";
+        
+        my $strError = $self->pipe_to_string($self->{hErr});
+        
+        if (defined($strError))
+        {
+            $bError = true;
+            $strOutput = $strError;
+        }
+    
+        # Capture any errors
+        if ($bError)
+        {
+            print "error: " . $strOutput->message();
+            
+            confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
+                                (defined($strOutput) ? ": ${strOutput}" : ""));
+        }
+    }
+
+    # print "error read wait\n";
+    # 
+    # if (!eof($self->{hErr}))
+    # {
+    #     $strError = $self->pipe_to_string($self->{hErr});
+    # 
+    #     if (defined($strError))
+    #     {
+    #         $bError = true;
+    #         $strOutput = $strError;
+    #         $iErrorCode = undef;
+    #     }
+    # }
+
+    print "output read wait\n";
+
+    while ($strLine = $self->read_line($self->{hOut}, false))
+    {
+        print "read a line ${strLine}\n";
+        
         if ($strLine =~ /^ERROR.*/)
         {
             $bError = true;
 
-            $iErrorCode = (split(' ', trim($strLine)))[1];
+            $iErrorCode = (split(' ', $strLine))[1];
 
             last;
         }
 
-        if (trim($strLine) =~ /^OK$/)
+        if ($strLine =~ /^OK$/)
         {
+            print "found OK\n";
             last;
         }
 
-        $strOutput .= (defined($strOutput) ? "\n" : "") . trim(substr($strLine, 1));
+        $strOutput .= (defined($strOutput) ? "\n" : "") . substr($strLine, 1);
     }
 
-    return ($strOutput, $bError, $iErrorCode);
+    print "and here\n";
+    
+    # Capture any errors
+    if ($bError)
+    {
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
+                            (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
+    }
+    
+    if ($bOutputRequired && !defined($strOutput))
+    {
+        my $strError = $self->pipe_to_string($self->{hErr});
+        
+        if (defined($strError))
+        {
+            $bError = true;
+            $strOutput = $strError;
+        }
+    
+        # Capture any errors
+        if ($bError)
+        {
+            print "error: " . $strOutput->message();
+            
+            confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
+                                (defined($strOutput) ? ": ${strOutput}" : ""));
+        }
+
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : "") . "output is not defined");
+    }
+
+    return $strOutput;
 }
 
 ####################################################################################################################################
@@ -310,9 +473,17 @@ sub output_write
     my $self = shift;
     my $strOutput = shift;
 
-    $self->string_write(*STDOUT, $strOutput);
+    if (defined($strOutput))
+    {
+        $self->string_write(*STDOUT, "${strOutput}");
 
-    if (!syswrite(*STDOUT, "\nOK\n"))
+        if (!syswrite(*STDOUT, "\n"))
+        {
+            confess "unable to write output";
+        }
+    }
+
+    if (!syswrite(*STDOUT, "OK\n"))
     {
         confess "unable to write output";
     }
@@ -350,9 +521,9 @@ sub command_read
     my $strLine;
     my $strCommand;
 
-    while ($strLine = readline(*STDIN))
+    while ($strLine = $self->read_line(*STDIN))
     {
-        $strLine = trim($strLine);
+#        $strLine = trim($strLine);
 
         if (!defined($strCommand))
         {
@@ -432,7 +603,7 @@ sub command_write
         $strOutput .= "end";
     }
 
-    &log(TRACE, "Remote->command_write:\n" . trim($strOutput));
+    &log(TRACE, "Remote->command_write:\n" . $strOutput);
 
     if (!syswrite($self->{hIn}, "${strOutput}\n"))
     {
@@ -448,20 +619,12 @@ sub command_execute
     my $self = shift;
     my $strCommand = shift;
     my $oParamRef = shift;
+    my $bOutputRequired = shift;
     my $strErrorPrefix = shift;
 
     $self->command_write($strCommand, $oParamRef);
 
-    my ($strOutput, $bError, $iErrorCode) = $self->output_read();
-
-    # Capture any errors
-    if ($bError)
-    {
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
-                            (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
-    }
-
-    return $strOutput;
+    return $self->output_read($bOutputRequired, $strErrorPrefix);
 }
 
 no Moose;
