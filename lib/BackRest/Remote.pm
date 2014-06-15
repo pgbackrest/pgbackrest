@@ -12,7 +12,9 @@ use Moose;
 use Net::OpenSSH;
 use File::Basename;
 use POSIX ":sys_wait_h";
-
+use IO::Compress::Gzip qw(gzip $GzipError);
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+ 
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
 use BackRest::Utility;
@@ -22,7 +24,7 @@ use BackRest::Utility;
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 8192
+    DEFAULT_BLOCK_SIZE  => 4
 };
 
 ####################################################################################################################################
@@ -54,7 +56,7 @@ has iBlockSize => (is => 'bare', default => DEFAULT_BLOCK_SIZE);  # Set block si
 sub BUILD
 {
     my $self = shift;
-    
+
     $self->{strGreeting} .= " " . version_get();
 
     if (defined($self->{strHost}))
@@ -95,7 +97,7 @@ sub BUILD
     }
     else
     {
-        
+
     }
 }
 
@@ -224,7 +226,7 @@ sub read_line
     my $self = shift;
     my $hIn = shift;
     my $bError = shift;
-    
+
     my $strLine;
     my $strChar;
     my $iByteIn;
@@ -232,7 +234,7 @@ sub read_line
     while (1)
     {
         $iByteIn = sysread($hIn, $strChar, 1);
-        
+
         if (!defined($iByteIn) || $iByteIn != 1)
         {
             $self->wait_pid();
@@ -241,10 +243,10 @@ sub read_line
             {
                 return undef;
             }
-            
+
             confess &log(ERROR, "unable to read 1 byte" . (defined($!) ? ": " . $! : ""));
         }
-        
+
         if ($strChar eq "\n")
         {
             last;
@@ -252,7 +254,7 @@ sub read_line
 
         $strLine .= $strChar;
     }
-    
+
     return $strLine;
 }
 
@@ -266,7 +268,7 @@ sub wait_pid
     if (defined($self->{pId}) && waitpid($self->{pId}, WNOHANG) != 0)
     {
         my $strError = "no error on stderr";
-        
+
         if (!defined($self->{hErr}))
         {
             $strError = "no error captured because stderr is already closed";
@@ -280,7 +282,7 @@ sub wait_pid
         $self->{hIn} = undef;
         $self->{hOut} = undef;
         $self->{hErr} = undef;
-        
+
         confess &log(ERROR, "remote process terminated: ${strError}");
     }
 }
@@ -301,29 +303,84 @@ sub binary_xfer
     $strRemote = defined($strRemote) ? $strRemote : 'none';
 
     my $iBlockSize = $self->{iBlockSize};
-    my $iHeaderSize = 12;
     my $iBlockIn;
     my $iBlockOut;
     my $strBlockHeader;
     my $strBlock;
-    
+    my $oGzip;
+    my $hPipeIn;
+    my $hPipeOut;
+    my $pId;
+
     if (!defined($hIn) || !defined($hOut))
     {
         confess &log(ASSERT, "hIn or hOut is not defined");
+    }
+
+    if ($strRemote eq "out")
+    {
+        pipe $hPipeOut, $hPipeIn;
+        
+        # fork and exit the parent process
+        $pId = fork();
+        
+        if (!$pId)
+        {
+            close($hPipeOut);
+
+            gzip($hIn => $hPipeIn)
+                or die confess &log(ERROR, "unable to compress: " . $GzipError);
+                
+            close($hPipeIn);
+    
+            exit 0;
+        }
+        
+        close($hPipeIn);
+    
+        $hIn = $hPipeOut;
+    }
+    elsif ($strRemote eq "in" && defined($bCompress) && !$bCompress)
+    {
+        pipe $hPipeOut, $hPipeIn;
+
+        # fork and exit the parent process
+        $pId = fork();
+        
+        if (!$pId)
+        {
+            close($hPipeIn);
+
+            gunzip($hPipeOut => $hOut)
+                or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
+
+            close($hPipeOut);
+
+            exit 0;
+        }
+
+#        exit 0;
+        
+        close($hPipeOut);
+        
+        $hOut = $hPipeIn;
     }
 
     while (1)
     {
         if ($strRemote eq 'in')
         {
+        
             $strBlockHeader = $self->read_line($hIn);
 
             if ($strBlockHeader !~ /^block [0-9]+$/)
             {
                 confess "unable to read block header ${strBlockHeader}";
             }
-
+            
             $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, " ") + 1));
+
+#            confess "found $iBlockSize to write";
 
             if ($iBlockSize != 0)
             {
@@ -336,35 +393,73 @@ sub binary_xfer
             }
             else
             {
-                # 
-                # if ($strRemote eq 'in')
-                # {
-                #     confess &log(ERROR, "block size $iBlockSize");
-                # }
                 $iBlockIn = 0;
             }
         }
         else
         {
-            if (!defined($bCompress))
+            $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+            
+            if (!defined($iBlockIn))
             {
-                $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
-                
-                if (!defined($iBlockIn))
-                {
-                    confess "unable to read ${iBlockSize} bytes from remote: " . $!;
-                }
+                confess &log(ERROR, "unable to read");
             }
         }
+
+#         if (defined($bCompress))
+#         {
+#             if ($iBlockIn > 0)
+#             {
+#                 my $iBlockInTmp = $iBlockIn;
+#             
+# #                print "${iBlockIn} bytes to compress";
+#             
+#                 if ($bCompress)
+#                 {
+#                     $iBlockIn = $oGzip->syswrite($hIn, $iBlockInTmp);
+# 
+#                     if (!defined($iBlockIn))
+#                     {
+#                         confess &log(ERROR, "unable to compress stream: " . $GunzipError)
+#                     }
+#             
+#                     if ($iBlockIn != $iBlockInTmp)
+#                     {
+#                         confess &log(ERROR, "unable to read ${iBlockSize} bytes");
+#                     }
+#                 }
+#                 else
+#                 {
+#                     $iBlockIn = $oGzip->sysread($strBlock, 8192);
+#                     
+#                     if (!defined($iBlockIn))
+#                     {
+#                         confess &log(ERROR, "unable to read compressed stream: " . $GunzipError)
+#                     }
+#                     # $strBlock = $strBlockTmp;
+#                 }
+#             }
+#             else
+#             {
+#                 if ($bCompress)
+#                 {
+#                     $oGzip->flush()
+#                         or confess &log(ERROR, "unable to flush compressed stream");
+#                     $bDone = true;
+#                 }
+#             }
+# 
+#             $iBlockIn = length($strBlock);
+#         }
 
         if ($strRemote eq 'out')
         {
             $strBlockHeader = "block ${iBlockIn}\n";
-            
+
 #            print "wrote block header: ${strBlockHeader}"; # REMOVE!
-            
+
             $iBlockOut = syswrite($hOut, $strBlockHeader);
-            
+
             if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
             {
                 confess "unable to write block header";
@@ -382,12 +477,63 @@ sub binary_xfer
             {
                 confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ": " . $! : "");
             }
+            
+#            $strBlock = undef;
+
+#             if ($bDone && $strRemote eq 'out')
+#             {
+#                 $strBlockHeader = "block 0\n";
+# 
+# #                print "wrote block header: ${strBlockHeader}"; # REMOVE!
+# 
+#                 $iBlockOut = syswrite($hOut, $strBlockHeader);
+# 
+#                 if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
+#                 {
+#                     confess "unable to write block header";
+#                 }
+#             }
         }
         else
         {
             last;
+            
+            # if ($strRemote eq 'in')
+            # {
+            #     confess "got out\n";
+            # }
+            #     
+            # if (defined($hPipeIn))
+            # {
+            #     close($hPipeIn)
+            # };
+            # 
+            # $bDone = true;
         }
     }
+
+    if (defined($pId))
+    {
+        if ($strRemote eq "out")
+        {
+            close($hPipeOut);
+        }
+        elsif ($strRemote eq "in" && defined($bCompress) && !$bCompress)
+        {
+#            confess "waiting for child";
+            close($hPipeIn);
+        }
+
+        waitpid($pId, 0);
+        my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+                
+        if ($iExitStatus != 0)
+        {
+            confess &log(ERROR, "compression/decompression child process returned " . $iExitStatus);
+        }
+    }
+    
+#    print "got out\n";
 }
 
 ####################################################################################################################################
@@ -408,11 +554,11 @@ sub output_read
     my $strError;
 
     # print "error read wait\n";
-    # 
+    #
     # if (!eof($self->{hErr}))
     # {
     #     $strError = $self->pipe_to_string($self->{hErr});
-    # 
+    #
     #     if (defined($strError))
     #     {
     #         $bError = true;
@@ -446,19 +592,19 @@ sub output_read
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
                             (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
     }
-    
+
     $self->wait_pid();
-    
+
     if ($bOutputRequired && !defined($strOutput))
     {
         my $strError = $self->pipe_to_string($self->{hErr});
-        
+
         if (defined($strError))
         {
             $bError = true;
             $strOutput = $strError;
         }
-    
+
         # Capture any errors
         if ($bError)
         {

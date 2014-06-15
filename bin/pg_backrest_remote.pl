@@ -121,7 +121,7 @@ while ($strCommand ne OP_EXIT)
             }
         }
     };
-    
+
     if ($@)
     {
         $oRemote->error_write($@);

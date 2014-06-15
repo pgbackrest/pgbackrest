@@ -805,14 +805,14 @@ sub BackRestFileTest
                 for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 0; $bDestinationCompressed++)
                 {
                     my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
-        
+
                     # $oRemote = BackRest::Remote->new
                     # (
                     #     strHost => $strHost,
                     #     strUser => $strUser,
                     #     strCommand => $strCommand,
                     # );
-        
+
                     my $oFile = BackRest::File->new
                     (
                         strStanza => "db",
@@ -862,7 +862,7 @@ sub BackRestFileTest
                                 {
                                     system("echo 'TESTDATA' > ${strSourceFile}");
                                 }
-                                
+
                                 my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
 
                                 # Run file copy in an eval block because some errors are expected

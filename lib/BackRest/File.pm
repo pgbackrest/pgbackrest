@@ -27,12 +27,12 @@ use BackRest::Remote;
 use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
                  PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
-                 
+
                  COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
                  COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
-                 
+
                  PIPE_STDIN PIPE_STDOUT PIPE_STDERR
-                 
+
                  OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
                  OP_FILE_MOVE OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
@@ -603,11 +603,11 @@ sub move
 # {
 #     my $self = shift;
 #     my $hOut = shift;
-# 
+#
 #     my $strBuffer;
 #     my $hString = IO::String->new($strBuffer);
 #     $self->pipe($hOut, $hString);
-# 
+#
 #     return $strBuffer;
 # }
 
@@ -623,7 +623,7 @@ sub move
 #     my $hOut = shift;
 #     my $bCompress = shift;
 #     my $bUncompress = shift;
-# 
+#
 #     # If compression is requested and the file is not already compressed
 #     if (defined($bCompress) && $bCompress)
 #     {
@@ -646,7 +646,7 @@ sub move
 #         my $strBuffer;
 #         my $iResultRead;
 #         my $iResultWrite;
-# 
+#
 #         # Read from the input handle
 #         while (($iResultRead = sysread($hIn, $strBuffer, BLOCK_SIZE)) != 0)
 #         {
@@ -659,7 +659,7 @@ sub move
 #             {
 #                 # Write to the output handle
 #                 $iResultWrite = syswrite($hOut, $strBuffer, $iResultRead);
-# 
+#
 #                 if (!defined($iResultWrite) || $iResultWrite != $iResultRead)
 #                 {
 #                     confess $!;
@@ -681,23 +681,89 @@ sub move
 #     my $hIn = shift;
 #     my $hOut = shift;
 #     my $hErr = shift;
-# 
+#
 #     # Close hIn
 #     close($hIn);
-# 
+#
 #     # Read STDERR into a string
 #     my $strError = defined($hErr) ? $self->pipe_to_string($hErr) : "[unknown]";
-# 
+#
 #     # Wait for the process to finish and report any errors
 #     waitpid($pId, 0);
 #     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-# 
+#
 #     if ($iExitStatus != 0)
 #     {
 #         confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
 #                             (defined($strError) ? $strError : "[unknown]"));
 #     }
 # }
+
+####################################################################################################################################
+# EXISTS - Checks for the existence of a file, but does not imply that the file is readable/writeable.
+#
+# Return: true if file exists, false otherwise
+####################################################################################################################################
+sub exists
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strPath);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_EXISTS;
+    my $strDebug = "${strPathType}:${strPathOp}";
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{path} = ${strPathOp};
+
+        # Build debug string
+        $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
+        &log(DEBUG, $strDebug);
+
+        # Execute the command
+        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq "Y";
+    }
+    # Run locally
+    else
+    {
+        # Build debug string
+        $strDebug = "${strOperation}: local: " . $strDebug;
+        &log(DEBUG, ${strDebug});
+
+        # Stat the file/path to determine if it exists
+        my $oStat = lstat($strPathOp);
+
+        # Evaluate error
+        if (!defined($oStat))
+        {
+            # If the error is not entry missing, then throw error
+            if (!$!{ENOENT})
+            {
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    confess &log(ERROR, $!, COMMAND_ERR_FILE_READ);
+                }
+                else
+                {
+                    confess &log(ERROR, "${strDebug}: " . $!, COMMAND_ERR_FILE_READ);
+                }
+            }
+
+            return false;
+        }
+    }
+
+    return true;
+}
 
 ####################################################################################################################################
 # COPY
@@ -724,12 +790,12 @@ sub copy
     my $strPermission = shift;
 
     # Set defaults
+    my $bIsCompressed = false;
     $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : true;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
     # Set working variables
-    my $strErrorPrefix = "File->copy";
     my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
     my $bDestinationRemote = $self->is_remote($strDestinationPathType) || $strDestinationPathType eq PIPE_STDOUT;
     my $strSourceOp = $strSourcePathType eq PIPE_STDIN ?
@@ -739,22 +805,22 @@ sub copy
     my $strDestinationTmpOp = $strDestinationPathType eq PIPE_STDOUT ?
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
-    # Determine if the file needs compression extension
-    if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
-    {
-        $strDestinationOp .= "." . $self->{strCompressExtension};
-    }
-
-    # Output trace info
-#    &log(TRACE, "${strErrorPrefix}:" . ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}:${strSourceFile}" .
-#                " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}:${strDestinationFile}" .
-#                ", compress = " . ($bCompress ? "true" : "false"));
+    # Set operation and debug string
+    my $strOperation = "File->unknown";
+    my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
+                   (defined($strSourceFile) ? ":${strSourceFile}" : "") .
+                   " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
+                   (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
+                   ", compress = " . ($bCompress ? "true" : "false");
 
     # Open the source file
     my $hSourceFile;
 
     if (!$bSourceRemote)
     {
+        # Determine if the file is compressed
+        $bIsCompressed = $strSourceOp !~ "^.*\.$self->{strCompressExtension}\$";
+
         open($hSourceFile, "<", $strSourceOp)
             or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
     }
@@ -764,17 +830,21 @@ sub copy
 
     if (!$bDestinationRemote)
     {
+        # Determine if the file needs compression extension
+        if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
+        {
+            $strDestinationOp .= "." . $self->{strCompressExtension};
+        }
+
         open($hDestinationFile, ">", $strDestinationTmpOp)
             or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
     }
-    
+
     # If source or destination are remote
     if ($bSourceRemote || $bDestinationRemote)
     {
-#        print "got outside\n";
         # Build the command and open the local file
         my $hFile;
-        my $strOperation;
         my %oParamHash;
         my $hIn,
         my $hOut;
@@ -784,17 +854,26 @@ sub copy
         if ($bSourceRemote && !$bDestinationRemote)
         {
             $hOut = $hDestinationFile;
-            
+            $strOperation = OP_FILE_COPY_OUT;
+
+            $bCompress = $bCompress ? undef : $bCompress;
+
             if ($strSourcePathType eq PIPE_STDIN)
             {
                 $strRemote = 'in';
                 $hIn = *STDIN;
+                
             }
             else
             {
                 $strRemote = 'in';
-                $strOperation = OP_FILE_COPY_OUT;
                 $oParamHash{source_file} = ${strSourceOp};
+
+                if (defined($bCompress))
+                {
+                    $oParamHash{compress} = $bCompress;
+                }
+                
                 $hIn = $self->{oRemote}->{hOut};
             }
         }
@@ -802,7 +881,8 @@ sub copy
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
             $hIn = $hSourceFile;
-            
+            $strOperation = OP_FILE_COPY_IN;
+
             if ($strDestinationPathType eq PIPE_STDOUT)
             {
                 $strRemote = 'out';
@@ -811,14 +891,19 @@ sub copy
             else
             {
                 $strRemote = 'out';
-                $strOperation = OP_FILE_COPY_IN;
                 $oParamHash{destination_file} = ${strDestinationOp};
+
+                $bCompress = $bCompress ? undef : $bCompress;
+
+                if (defined($bCompress))
+                {
+                    $oParamHash{compress} = $bCompress;
+                }
+
                 $hOut = $self->{oRemote}->{hIn};
             }
-
-            # Build debug string
-#            $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
-#            &log(DEBUG, $strDebug);
+            
+            $bCompress = true;
         }
         # Else source and destination are remote
         else
@@ -832,28 +917,25 @@ sub copy
             return false;
         }
 
-        # If an operation is defined then write it
-        if (defined($strOperation))
-        {
-            # Trace command
-            &log(TRACE, "${strErrorPrefix} operation:" . $strOperation);
+        # Build debug string
+        $strDebug = "${strOperation}: " . (%oParamHash ? "remote (" .
+                    $self->{oRemote}->command_param_string(\%oParamHash) . ") :" : "") . $strDebug;
+        &log(DEBUG, $strDebug);
 
-            # Execute the operation
+        # If an operation is defined then write it
+        if (%oParamHash)
+        {
             $self->{oRemote}->command_write($strOperation, \%oParamHash);
         }
-        
-        # Transfer the file
-#        print "binary xfer start\n";
-        $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote);
-#        print "binary xfer stop\n";
 
-        if ($strSourcePathType ne PIPE_STDIN && $strDestinationPathType ne PIPE_STDOUT)
+        # Transfer the file
+        $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bCompress);
+
+        # If this is the controlling process then wait for OK from remote
+        if (%oParamHash)
         {
-            $self->{oRemote}->output_read(false, $strErrorPrefix);
+            $self->{oRemote}->output_read(false, $strDebug);
         }
-        
-        # Wait for process exit (and error)
-#        $self->wait_pid($pId, $strCommand, $hIn, $hOut, $hErr);
     }
     else
     {
@@ -889,7 +971,6 @@ sub copy
             utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
                 or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
         }
-
 
         # Move the file from tmp to final destination
         $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, $bPathCreate);
@@ -1112,72 +1193,6 @@ sub list
 
     # Return file list
     return @stryFileList;
-}
-
-####################################################################################################################################
-# EXISTS - Checks for the existence of a file, but does not imply that the file is readable/writeable.
-#
-# Return: true if file exists, false otherwise
-####################################################################################################################################
-sub exists
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strPath = shift;
-
-    # Set operation variables
-    my $strPathOp = $self->path_get($strPathType, $strPath);
-
-    # Set operation and debug strings
-    my $strOperation = OP_FILE_EXISTS;
-    my $strDebug = "${strPathType}:${strPathOp}";
-
-    # Run remotely
-    if ($self->is_remote($strPathType))
-    {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{path} = ${strPathOp};
-
-        # Build debug string
-        $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
-        &log(DEBUG, $strDebug);
-
-        # Execute the command
-        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq "Y";
-    }
-    # Run locally
-    else
-    {
-        # Build debug string
-        $strDebug = "${strOperation}: local: " . $strDebug;
-        &log(DEBUG, ${strDebug});
-
-        # Stat the file/path to determine if it exists
-        my $oStat = lstat($strPathOp);
-
-        # Evaluate error
-        if (!defined($oStat))
-        {
-            # If the error is not entry missing, then throw error
-            if (!$!{ENOENT})
-            {
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    confess &log(ERROR, $!, COMMAND_ERR_FILE_READ);
-                }
-                else
-                {
-                    confess &log(ERROR, "${strDebug}: " . $!, COMMAND_ERR_FILE_READ);
-                }
-            }
-
-            return false;
-        }
-    }
-
-    return true;
 }
 
 ####################################################################################################################################
