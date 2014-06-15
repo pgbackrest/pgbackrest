@@ -847,7 +847,7 @@ sub copy
         $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote);
 #        print "binary xfer stop\n";
 
-        if ($strRemote eq 'out')
+        if ($strSourcePathType ne PIPE_STDIN && $strDestinationPathType ne PIPE_STDOUT)
         {
             $self->{oRemote}->output_read(false, $strErrorPrefix);
         }

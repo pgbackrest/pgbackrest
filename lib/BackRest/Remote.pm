@@ -228,13 +228,15 @@ sub read_line
     my $strLine;
     my $strChar;
     my $iByteIn;
-    
+
     while (1)
     {
         $iByteIn = sysread($hIn, $strChar, 1);
         
         if (!defined($iByteIn) || $iByteIn != 1)
         {
+            $self->wait_pid();
+
             if (defined($bError) and !$bError)
             {
                 return undef;
@@ -252,6 +254,35 @@ sub read_line
     }
     
     return $strLine;
+}
+
+####################################################################################################################################
+# WAIT_PID
+####################################################################################################################################
+sub wait_pid
+{
+    my $self = shift;
+
+    if (defined($self->{pId}) && waitpid($self->{pId}, WNOHANG) != 0)
+    {
+        my $strError = "no error on stderr";
+        
+        if (!defined($self->{hErr}))
+        {
+            $strError = "no error captured because stderr is already closed";
+        }
+        else
+        {
+            $strError = $self->pipe_to_string($self->{hErr});
+        }
+
+        $self->{pId} = undef;
+        $self->{hIn} = undef;
+        $self->{hOut} = undef;
+        $self->{hErr} = undef;
+        
+        confess &log(ERROR, "remote process terminated: ${strError}");
+    }
 }
 
 ####################################################################################################################################
@@ -275,6 +306,11 @@ sub binary_xfer
     my $iBlockOut;
     my $strBlockHeader;
     my $strBlock;
+    
+    if (!defined($hIn) || !defined($hOut))
+    {
+        confess &log(ASSERT, "hIn or hOut is not defined");
+    }
 
     while (1)
     {
@@ -371,28 +407,6 @@ sub output_read
     my $iErrorCode;
     my $strError;
 
-    if (waitpid($self->{pId}, WNOHANG) != 0)
-    {
-        print "process exited\n";
-        
-        my $strError = $self->pipe_to_string($self->{hErr});
-        
-        if (defined($strError))
-        {
-            $bError = true;
-            $strOutput = $strError;
-        }
-    
-        # Capture any errors
-        if ($bError)
-        {
-#            print "error: " . $strOutput->message();
-            
-            confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
-                                (defined($strOutput) ? ": ${strOutput}" : ""));
-        }
-    }
-
     # print "error read wait\n";
     # 
     # if (!eof($self->{hErr}))
@@ -432,6 +446,8 @@ sub output_read
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
                             (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
     }
+    
+    $self->wait_pid();
     
     if ($bOutputRequired && !defined($strOutput))
     {

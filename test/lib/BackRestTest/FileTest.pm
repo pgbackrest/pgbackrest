@@ -804,24 +804,33 @@ sub BackRestFileTest
                 # Loop through destination compression
                 for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 0; $bDestinationCompressed++)
                 {
+                    my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
+        
+                    # $oRemote = BackRest::Remote->new
+                    # (
+                    #     strHost => $strHost,
+                    #     strUser => $strUser,
+                    #     strCommand => $strCommand,
+                    # );
+        
                     my $oFile = BackRest::File->new
                     (
                         strStanza => "db",
                         bCompress => $bDestinationCompressed,
                         strBackupClusterPath => undef,
                         strBackupPath => ${strTestPath},
-                        strRemote => $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef,
+                        strRemote => $strRemote,
                         oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
                     );
 
                     for (my $bSourceCompressed = 0; $bSourceCompressed <= 0; $bSourceCompressed++)
                     {
-                        for (my $bSourcePathType = 0; $bSourcePathType <= 0; $bSourcePathType++)
+                        for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
                         {
                             my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                             my $strSourcePath = $bSourcePathType ? "db" : "backup";
 
-                            for (my $bDestinationPathType = 1; $bDestinationPathType <= 1; $bDestinationPathType++)
+                            for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
                             {
                                 my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                                 my $strDestinationPath = $bDestinationPathType ? "db" : "backup";
@@ -829,8 +838,10 @@ sub BackRestFileTest
                                 $iRun++;
 
                                 &log(INFO, "run ${iRun} - " .
-                                           "srcpth ${strSourcePath}, bkprmt $bBackupRemote, srccmp $bSourceCompressed, " .
-                                           "dstpth ${strDestinationPath}, dbrmt $bDbRemote, dstcmp $bDestinationCompressed");
+                                           "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
+                                               ":${strSourcePath}, srccmp $bSourceCompressed, " .
+                                           "dstpth " . (defined($strRemote) && $strRemote eq $strDestinationPath ? "remote" : "local") .
+                                               ":${strDestinationPath}, dstcmp $bDestinationCompressed");
 
                                 # Drop the old test directory and create a new one
                                 system("rm -rf test");
