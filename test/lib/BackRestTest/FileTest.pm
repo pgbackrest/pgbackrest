@@ -802,7 +802,7 @@ sub BackRestFileTest
                 }
 
                 # Loop through destination compression
-                for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 0; $bDestinationCompressed++)
+                for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 1; $bDestinationCompressed++)
                 {
                     my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
 
@@ -823,7 +823,7 @@ sub BackRestFileTest
                         oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
                     );
 
-                    for (my $bSourceCompressed = 0; $bSourceCompressed <= 0; $bSourceCompressed++)
+                    for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
                     {
                         for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
                         {
@@ -852,15 +852,13 @@ sub BackRestFileTest
                                 my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source.txt";
                                 my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination.txt";
 
+                                system("echo 'TESTDATA' > ${strSourceFile}");
+
                                 # Create the compressed or uncompressed test file
                                 if ($bSourceCompressed)
                                 {
+                                    system("gzip ${strSourceFile}");
                                     $strSourceFile .= ".gz";
-                                    system("echo 'TESTDATA' | gzip > ${strSourceFile}");
-                                }
-                                else
-                                {
-                                    system("echo 'TESTDATA' > ${strSourceFile}");
                                 }
 
                                 my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
@@ -938,25 +936,32 @@ sub BackRestFileTest
                                 #     print "    true was returned\n";
                                 # }
 
-                                # Check for errors after copy
-                                if ($bDestinationCompressed)
-                                {
-                                    $strDestinationFile .= ".gz";
-                                }
-
                                 if ($bReturn)
                                 {
-                                    unless (-e $strDestinationFile)
+                                    my $strDestinationFileCheck = $strDestinationFile;
+                                    
+                                    # Check for errors after copy
+                                    if ($bDestinationCompressed)
                                     {
-                                        confess "could not find destination file ${strDestinationFile}";
+                                        $strDestinationFileCheck .= ".gz";
+                                    }
+                                    
+                                    unless (-e $strDestinationFileCheck)
+                                    {
+                                        confess "could not find destination file ${strDestinationFileCheck}";
                                     }
 
-                                    my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
-
-                                    if ($strSourceHash ne $strDestinationHash)
+                                    if ($bDestinationCompressed)
                                     {
-                                        confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                                        system("gzip -d ${strDestinationFileCheck}") or die "could not decompress";
                                     }
+                                    
+                                    # my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
+                                    # 
+                                    # if ($strSourceHash ne $strDestinationHash)
+                                    # {
+                                    #     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                                    # }
                                 }
                             }
                         }

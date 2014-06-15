@@ -791,7 +791,7 @@ sub copy
 
     # Set defaults
     my $bIsCompressed = false;
-    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : true;
+    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : undef;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
@@ -828,14 +828,14 @@ sub copy
     # Open the destination file
     my $hDestinationFile;
 
+    # Determine if the file needs compression extension
+    if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
+    {
+        $strDestinationOp .= "." . $self->{strCompressExtension};
+    }
+
     if (!$bDestinationRemote)
     {
-        # Determine if the file needs compression extension
-        if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
-        {
-            $strDestinationOp .= "." . $self->{strCompressExtension};
-        }
-
         open($hDestinationFile, ">", $strDestinationTmpOp)
             or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
     }

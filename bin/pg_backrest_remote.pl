@@ -64,7 +64,6 @@ my $oRemote = BackRest::Remote->new();
 # Create the file object
 my $oFile = BackRest::File->new
 (
-    bCompress => false,
     oRemote => $oRemote
 );
 
@@ -100,7 +99,7 @@ while ($strCommand ne OP_EXIT)
                 confess "destination_file must be defined";
             }
 
-            $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file});
+            $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file}, undef, $oParamHash{compress});
             $oRemote->output_write();
         }
         elsif ($strCommand eq OP_FILE_COPY_OUT)
