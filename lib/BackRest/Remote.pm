@@ -14,7 +14,7 @@ use File::Basename;
 use POSIX ":sys_wait_h";
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
- 
+
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
 use BackRest::Utility;
@@ -24,7 +24,7 @@ use BackRest::Utility;
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 4
+    DEFAULT_BLOCK_SIZE  => 8192
 };
 
 ####################################################################################################################################
@@ -42,10 +42,10 @@ has strUser => (is => 'bare');            # User user
 has oSSH => (is => 'bare');               # SSH object
 
 # Process variables
-has pId => (is => 'bare');               # SSH object
-has hIn => (is => 'bare');               # SSH object
-has hOut => (is => 'bare');               # SSH object
-has hErr => (is => 'bare');               # SSH object
+has pId => (is => 'bare');                # Process Id
+has hIn => (is => 'bare');                # Input stream
+has hOut => (is => 'bare');               # Output stream
+has hErr => (is => 'bare');               # Error stream
 
 # Block size
 has iBlockSize => (is => 'bare', default => DEFAULT_BLOCK_SIZE);  # Set block size to default
@@ -77,11 +77,6 @@ sub BUILD
         my $strOptionSSHRequestTTY = "RequestTTY=yes";
         my $strOptionSSHCompression = "Compression=no";
 
-        # if ($self->{bNoCompression})
-        # {
-        #     $strOptionSSHCompression = "Compression=yes";
-        # }
-
         &log(TRACE, "connecting to remote ssh host " . $self->{strHost});
 
         # Make SSH connection
@@ -112,12 +107,15 @@ sub clone
     (
         strCommand => $self->{strCommand},
         strHost => $self->{strUser},
-        strUser => $self->{strHost}
+        strUser => $self->{strHost},
+        iBlockSize => $self->{iBlockSize}
     );
 }
 
 ####################################################################################################################################
 # GREETING_READ
+#
+# Read the greeting and make sure it is as expected.
 ####################################################################################################################################
 sub greeting_read
 {
@@ -132,6 +130,8 @@ sub greeting_read
 
 ####################################################################################################################################
 # GREETING_WRITE
+#
+# Send a greeting to the master process.
 ####################################################################################################################################
 sub greeting_write
 {
@@ -145,6 +145,8 @@ sub greeting_write
 
 ####################################################################################################################################
 # STRING_WRITE
+#
+# Write a string.
 ####################################################################################################################################
 sub string_write
 {
@@ -179,6 +181,8 @@ sub pipe_to_string
 
 ####################################################################################################################################
 # ERROR_WRITE
+#
+# Write errors with error codes in protocol format, otherwise write to stderr and exit with error.
 ####################################################################################################################################
 sub error_write
 {
@@ -220,6 +224,8 @@ sub error_write
 
 ####################################################################################################################################
 # READ_LINE
+#
+# Read a line.
 ####################################################################################################################################
 sub read_line
 {
@@ -260,6 +266,8 @@ sub read_line
 
 ####################################################################################################################################
 # WAIT_PID
+# 
+# See if the remote process has terminated unexpectedly.
 ####################################################################################################################################
 sub wait_pid
 {
@@ -320,24 +328,25 @@ sub binary_xfer
     if ($strRemote eq "out")
     {
         pipe $hPipeOut, $hPipeIn;
-        
+
         # fork and exit the parent process
         $pId = fork();
-        
+
         if (!$pId)
         {
             close($hPipeOut);
 
             gzip($hIn => $hPipeIn)
-                or die confess &log(ERROR, "unable to compress: " . $GzipError);
-                
+                or exit 1;
+                #or die confess &log(ERROR, "unable to compress: " . $GzipError);
+
             close($hPipeIn);
-    
+
             exit 0;
         }
-        
+
         close($hPipeIn);
-    
+
         $hIn = $hPipeOut;
     }
     elsif ($strRemote eq "in" && defined($bCompress) && !$bCompress)
@@ -346,23 +355,22 @@ sub binary_xfer
 
         # fork and exit the parent process
         $pId = fork();
-        
+
         if (!$pId)
         {
             close($hPipeIn);
 
             gunzip($hPipeOut => $hOut)
-                or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
+                or exit 1;
+                #or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
 
             close($hPipeOut);
 
             exit 0;
         }
 
-#        exit 0;
-        
         close($hPipeOut);
-        
+
         $hOut = $hPipeIn;
     }
 
@@ -370,17 +378,15 @@ sub binary_xfer
     {
         if ($strRemote eq 'in')
         {
-        
+
             $strBlockHeader = $self->read_line($hIn);
 
             if ($strBlockHeader !~ /^block [0-9]+$/)
             {
                 confess "unable to read block header ${strBlockHeader}";
             }
-            
-            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, " ") + 1));
 
-#            confess "found $iBlockSize to write";
+            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, " ") + 1));
 
             if ($iBlockSize != 0)
             {
@@ -399,64 +405,16 @@ sub binary_xfer
         else
         {
             $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
-            
+
             if (!defined($iBlockIn))
             {
                 confess &log(ERROR, "unable to read");
             }
         }
 
-#         if (defined($bCompress))
-#         {
-#             if ($iBlockIn > 0)
-#             {
-#                 my $iBlockInTmp = $iBlockIn;
-#             
-# #                print "${iBlockIn} bytes to compress";
-#             
-#                 if ($bCompress)
-#                 {
-#                     $iBlockIn = $oGzip->syswrite($hIn, $iBlockInTmp);
-# 
-#                     if (!defined($iBlockIn))
-#                     {
-#                         confess &log(ERROR, "unable to compress stream: " . $GunzipError)
-#                     }
-#             
-#                     if ($iBlockIn != $iBlockInTmp)
-#                     {
-#                         confess &log(ERROR, "unable to read ${iBlockSize} bytes");
-#                     }
-#                 }
-#                 else
-#                 {
-#                     $iBlockIn = $oGzip->sysread($strBlock, 8192);
-#                     
-#                     if (!defined($iBlockIn))
-#                     {
-#                         confess &log(ERROR, "unable to read compressed stream: " . $GunzipError)
-#                     }
-#                     # $strBlock = $strBlockTmp;
-#                 }
-#             }
-#             else
-#             {
-#                 if ($bCompress)
-#                 {
-#                     $oGzip->flush()
-#                         or confess &log(ERROR, "unable to flush compressed stream");
-#                     $bDone = true;
-#                 }
-#             }
-# 
-#             $iBlockIn = length($strBlock);
-#         }
-
         if ($strRemote eq 'out')
         {
             $strBlockHeader = "block ${iBlockIn}\n";
-
-#            print "wrote block header: ${strBlockHeader}"; # REMOVE!
 
             $iBlockOut = syswrite($hOut, $strBlockHeader);
 
@@ -468,47 +426,16 @@ sub binary_xfer
 
         if ($iBlockIn > 0)
         {
-            # Write to the output handle
-#            print "writing: ${strBlock}\n"; # REMOVE!
-
             $iBlockOut = syswrite($hOut, $strBlock, $iBlockIn);
 
             if (!defined($iBlockOut) || $iBlockOut != $iBlockIn)
             {
                 confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ": " . $! : "");
             }
-            
-#            $strBlock = undef;
-
-#             if ($bDone && $strRemote eq 'out')
-#             {
-#                 $strBlockHeader = "block 0\n";
-# 
-# #                print "wrote block header: ${strBlockHeader}"; # REMOVE!
-# 
-#                 $iBlockOut = syswrite($hOut, $strBlockHeader);
-# 
-#                 if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
-#                 {
-#                     confess "unable to write block header";
-#                 }
-#             }
         }
         else
         {
             last;
-            
-            # if ($strRemote eq 'in')
-            # {
-            #     confess "got out\n";
-            # }
-            #     
-            # if (defined($hPipeIn))
-            # {
-            #     close($hPipeIn)
-            # };
-            # 
-            # $bDone = true;
         }
     }
 
@@ -520,24 +447,23 @@ sub binary_xfer
         }
         elsif ($strRemote eq "in" && defined($bCompress) && !$bCompress)
         {
-#            confess "waiting for child";
             close($hPipeIn);
         }
 
         waitpid($pId, 0);
         my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-                
+
         if ($iExitStatus != 0)
         {
             confess &log(ERROR, "compression/decompression child process returned " . $iExitStatus);
         }
     }
-    
-#    print "got out\n";
 }
 
 ####################################################################################################################################
 # OUTPUT_READ
+#
+# Read output from the remote process.
 ####################################################################################################################################
 sub output_read
 {
@@ -545,28 +471,13 @@ sub output_read
     my $bOutputRequired = shift;
     my $strErrorPrefix = shift;
 
-#    &log(TRACE, "Remote->output_read");
-
     my $strLine;
     my $strOutput;
     my $bError = false;
     my $iErrorCode;
     my $strError;
 
-    # print "error read wait\n";
-    #
-    # if (!eof($self->{hErr}))
-    # {
-    #     $strError = $self->pipe_to_string($self->{hErr});
-    #
-    #     if (defined($strError))
-    #     {
-    #         $bError = true;
-    #         $strOutput = $strError;
-    #         $iErrorCode = undef;
-    #     }
-    # }
-
+    # Read output lines
     while ($strLine = $self->read_line($self->{hOut}, false))
     {
         if ($strLine =~ /^ERROR.*/)
@@ -586,40 +497,30 @@ sub output_read
         $strOutput .= (defined($strOutput) ? "\n" : "") . substr($strLine, 1);
     }
 
-    # Capture any errors
+    # Check if the process has exited abnormally
+    $self->wait_pid();
+
+    # Raise any errors
     if ($bError)
     {
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
                             (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
     }
 
-    $self->wait_pid();
-
+    # If output is required and there is no output, raise exception
     if ($bOutputRequired && !defined($strOutput))
     {
-        my $strError = $self->pipe_to_string($self->{hErr});
-
-        if (defined($strError))
-        {
-            $bError = true;
-            $strOutput = $strError;
-        }
-
-        # Capture any errors
-        if ($bError)
-        {
-            confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
-                                (defined($strOutput) ? ": ${strOutput}" : ""));
-        }
-
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : "") . "output is not defined");
     }
 
+    # Return output
     return $strOutput;
 }
 
 ####################################################################################################################################
 # OUTPUT_WRITE
+#
+# Write output for the master process.
 ####################################################################################################################################
 sub output_write
 {
@@ -644,6 +545,8 @@ sub output_write
 
 ####################################################################################################################################
 # COMMAND_PARAM_STRING
+#
+# Output command parameters in the hash as a string (used for debugging).
 ####################################################################################################################################
 sub command_param_string
 {
@@ -663,32 +566,28 @@ sub command_param_string
 
 ####################################################################################################################################
 # COMMAND_READ
+#
+# Read command sent by the master process.
 ####################################################################################################################################
 sub command_read
 {
     my $self = shift;
     my $oParamHashRef = shift;
 
-#    &log(TRACE, "Remote->command_read");
-
     my $strLine;
     my $strCommand;
 
     while ($strLine = $self->read_line(*STDIN))
     {
-#        $strLine = trim($strLine);
-
         if (!defined($strCommand))
         {
             if ($strLine =~ /:$/)
             {
                 $strCommand = substr($strLine, 0, length($strLine) - 1);
-#                print "command ${strCommand} continues\n";
             }
             else
             {
                 $strCommand = $strLine;
-#                print "command ${strCommand}\n";
                 last;
             }
         }
@@ -710,8 +609,6 @@ sub command_read
             my $strValue = substr($strLine, $iPos + 1);
 
             ${$oParamHashRef}{"${strParam}"} = ${strValue};
-
-#            print "${strParam}=${strValue}\n";
         }
     }
 
@@ -720,6 +617,8 @@ sub command_read
 
 ####################################################################################################################################
 # COMMAND_WRITE
+#
+# Send command to remote process.
 ####################################################################################################################################
 sub command_write
 {
@@ -766,6 +665,8 @@ sub command_write
 
 ####################################################################################################################################
 # COMMAND_EXECUTE
+#
+# Send command to remote process and wait for output.
 ####################################################################################################################################
 sub command_execute
 {

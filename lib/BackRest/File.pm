@@ -862,7 +862,7 @@ sub copy
             {
                 $strRemote = 'in';
                 $hIn = *STDIN;
-                
+
             }
             else
             {
@@ -873,7 +873,7 @@ sub copy
                 {
                     $oParamHash{compress} = $bCompress;
                 }
-                
+
                 $hIn = $self->{oRemote}->{hOut};
             }
         }
@@ -902,7 +902,7 @@ sub copy
 
                 $hOut = $self->{oRemote}->{hIn};
             }
-            
+
             $bCompress = true;
         }
         # Else source and destination are remote
