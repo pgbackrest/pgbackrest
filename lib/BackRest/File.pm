@@ -119,16 +119,16 @@ use constant
 ####################################################################################################################################
 use constant
 {
-    OP_FILE_LIST        => "list",
+    OP_FILE_LIST        => "File->list",
     OP_FILE_EXISTS      => "File->exists",
-    OP_FILE_HASH        => "hash",
-    OP_FILE_REMOVE      => "remove",
-    OP_FILE_MANIFEST    => "manifest",
-    OP_FILE_COMPRESS    => "compress",
-    OP_FILE_MOVE        => "move",
-    OP_FILE_COPY_OUT    => "copy_out",
+    OP_FILE_HASH        => "File->hash",
+    OP_FILE_REMOVE      => "File->remove",
+    OP_FILE_MANIFEST    => "File->manifest",
+    OP_FILE_COMPRESS    => "File->compress",
+    OP_FILE_MOVE        => "File->move",
+    OP_FILE_COPY_OUT    => "File->copy_out",
     OP_FILE_COPY_IN     => "File->copy_in",
-    OP_FILE_PATH_CREATE => "path_create"
+    OP_FILE_PATH_CREATE => "File->path_create"
 };
 
 ####################################################################################################################################
@@ -599,105 +599,105 @@ sub move
 #
 # Copies data from a file handle into a string.
 ####################################################################################################################################
-sub pipe_to_string
-{
-    my $self = shift;
-    my $hOut = shift;
-
-    my $strBuffer;
-    my $hString = IO::String->new($strBuffer);
-    $self->pipe($hOut, $hString);
-
-    return $strBuffer;
-}
+# sub pipe_to_string
+# {
+#     my $self = shift;
+#     my $hOut = shift;
+# 
+#     my $strBuffer;
+#     my $hString = IO::String->new($strBuffer);
+#     $self->pipe($hOut, $hString);
+# 
+#     return $strBuffer;
+# }
 
 ####################################################################################################################################
 # PIPE Function
 #
 # Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
 ####################################################################################################################################
-sub pipe
-{
-    my $self = shift;
-    my $hIn = shift;
-    my $hOut = shift;
-    my $bCompress = shift;
-    my $bUncompress = shift;
-
-    # If compression is requested and the file is not already compressed
-    if (defined($bCompress) && $bCompress)
-    {
-        if (!gzip($hIn => $hOut))
-        {
-            confess $GzipError;
-        }
-    }
-    # If no compression is requested and the file is already compressed
-    elsif (defined($bUncompress) && $bUncompress)
-    {
-        if (!gunzip($hIn => $hOut))
-        {
-            confess $GunzipError;
-        }
-    }
-    # Else it's a straight copy
-    else
-    {
-        my $strBuffer;
-        my $iResultRead;
-        my $iResultWrite;
-
-        # Read from the input handle
-        while (($iResultRead = sysread($hIn, $strBuffer, BLOCK_SIZE)) != 0)
-        {
-            if (!defined($iResultRead))
-            {
-                confess $!;
-                last;
-            }
-            else
-            {
-                # Write to the output handle
-                $iResultWrite = syswrite($hOut, $strBuffer, $iResultRead);
-
-                if (!defined($iResultWrite) || $iResultWrite != $iResultRead)
-                {
-                    confess $!;
-                    last;
-                }
-            }
-        }
-    }
-}
+# sub pipe
+# {
+#     my $self = shift;
+#     my $hIn = shift;
+#     my $hOut = shift;
+#     my $bCompress = shift;
+#     my $bUncompress = shift;
+# 
+#     # If compression is requested and the file is not already compressed
+#     if (defined($bCompress) && $bCompress)
+#     {
+#         if (!gzip($hIn => $hOut))
+#         {
+#             confess $GzipError;
+#         }
+#     }
+#     # If no compression is requested and the file is already compressed
+#     elsif (defined($bUncompress) && $bUncompress)
+#     {
+#         if (!gunzip($hIn => $hOut))
+#         {
+#             confess $GunzipError;
+#         }
+#     }
+#     # Else it's a straight copy
+#     else
+#     {
+#         my $strBuffer;
+#         my $iResultRead;
+#         my $iResultWrite;
+# 
+#         # Read from the input handle
+#         while (($iResultRead = sysread($hIn, $strBuffer, BLOCK_SIZE)) != 0)
+#         {
+#             if (!defined($iResultRead))
+#             {
+#                 confess $!;
+#                 last;
+#             }
+#             else
+#             {
+#                 # Write to the output handle
+#                 $iResultWrite = syswrite($hOut, $strBuffer, $iResultRead);
+# 
+#                 if (!defined($iResultWrite) || $iResultWrite != $iResultRead)
+#                 {
+#                     confess $!;
+#                     last;
+#                 }
+#             }
+#         }
+#     }
+# }
 
 ####################################################################################################################################
 # WAIT_PID
 ####################################################################################################################################
-sub wait_pid
-{
-    my $self = shift;
-    my $pId = shift;
-    my $strCommand = shift;
-    my $hIn = shift;
-    my $hOut = shift;
-    my $hErr = shift;
-
-    # Close hIn
-    close($hIn);
-
-    # Read STDERR into a string
-    my $strError = defined($hErr) ? $self->pipe_to_string($hErr) : "[unknown]";
-
-    # Wait for the process to finish and report any errors
-    waitpid($pId, 0);
-    my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-
-    if ($iExitStatus != 0)
-    {
-        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
-                            (defined($strError) ? $strError : "[unknown]"));
-    }
-}
+# sub wait_pid
+# {
+#     my $self = shift;
+#     my $pId = shift;
+#     my $strCommand = shift;
+#     my $hIn = shift;
+#     my $hOut = shift;
+#     my $hErr = shift;
+# 
+#     # Close hIn
+#     close($hIn);
+# 
+#     # Read STDERR into a string
+#     my $strError = defined($hErr) ? $self->pipe_to_string($hErr) : "[unknown]";
+# 
+#     # Wait for the process to finish and report any errors
+#     waitpid($pId, 0);
+#     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+# 
+#     if ($iExitStatus != 0)
+#     {
+#         confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
+#                             (defined($strError) ? $strError : "[unknown]"));
+#     }
+# }
 
 ####################################################################################################################################
 # COPY
@@ -783,23 +783,38 @@ sub copy
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
         {
-            $strRemote = 'in';
             $hOut = $hDestinationFile;
             
             if ($strSourcePathType eq PIPE_STDIN)
             {
+                $strRemote = 'in';
                 $hIn = *STDIN;
+            }
+            else
+            {
+                $strRemote = 'in';
+                $strOperation = OP_FILE_COPY_OUT;
+                $oParamHash{source_file} = ${strSourceOp};
+                $hIn = $self->{oRemote}->{hOut};
             }
         }
         # Else if source is local and destination is remote
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
-            $strRemote = 'out';
             $hIn = $hSourceFile;
             
-            $strOperation = OP_FILE_COPY_IN;
-            $oParamHash{destination_file} = ${strDestinationOp};
-            $hOut = $self->{oRemote}->{hIn};
+            if ($strDestinationPathType eq PIPE_STDOUT)
+            {
+                $strRemote = 'out';
+                $hOut = *STDOUT;
+            }
+            else
+            {
+                $strRemote = 'out';
+                $strOperation = OP_FILE_COPY_IN;
+                $oParamHash{destination_file} = ${strDestinationOp};
+                $hOut = $self->{oRemote}->{hIn};
+            }
 
             # Build debug string
 #            $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;

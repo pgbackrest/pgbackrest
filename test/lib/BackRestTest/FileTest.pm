@@ -790,10 +790,10 @@ sub BackRestFileTest
     {
         $iRun = 0;
 
-        for (my $bBackupRemote = 0; $bBackupRemote <= 0; $bBackupRemote++)
+        for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
         {
             # Loop through source compression
-            for (my $bDbRemote = 1; $bDbRemote <= 1; $bDbRemote++)
+            for (my $bDbRemote = 0; $bDbRemote <= 1; $bDbRemote++)
             {
                 # Backup and db cannot both be remote
                 if ($bBackupRemote && $bDbRemote)
@@ -851,6 +851,8 @@ sub BackRestFileTest
                                 {
                                     system("echo 'TESTDATA' > ${strSourceFile}");
                                 }
+                                
+                                my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
 
                                 # Run file copy in an eval block because some errors are expected
                                 my $bReturn;
@@ -936,6 +938,13 @@ sub BackRestFileTest
                                     unless (-e $strDestinationFile)
                                     {
                                         confess "could not find destination file ${strDestinationFile}";
+                                    }
+
+                                    my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
+
+                                    if ($strSourceHash ne $strDestinationHash)
+                                    {
+                                        confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
                                     }
                                 }
                             }

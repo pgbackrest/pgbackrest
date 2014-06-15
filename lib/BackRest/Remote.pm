@@ -386,7 +386,7 @@ sub output_read
         # Capture any errors
         if ($bError)
         {
-            print "error: " . $strOutput->message();
+#            print "error: " . $strOutput->message();
             
             confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
                                 (defined($strOutput) ? ": ${strOutput}" : ""));
@@ -407,12 +407,8 @@ sub output_read
     #     }
     # }
 
-    print "output read wait\n";
-
     while ($strLine = $self->read_line($self->{hOut}, false))
     {
-        print "read a line ${strLine}\n";
-        
         if ($strLine =~ /^ERROR.*/)
         {
             $bError = true;
@@ -424,15 +420,12 @@ sub output_read
 
         if ($strLine =~ /^OK$/)
         {
-            print "found OK\n";
             last;
         }
 
         $strOutput .= (defined($strOutput) ? "\n" : "") . substr($strLine, 1);
     }
 
-    print "and here\n";
-    
     # Capture any errors
     if ($bError)
     {
@@ -453,8 +446,6 @@ sub output_read
         # Capture any errors
         if ($bError)
         {
-            print "error: " . $strOutput->message();
-            
             confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
                                 (defined($strOutput) ? ": ${strOutput}" : ""));
         }

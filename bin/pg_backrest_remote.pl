@@ -103,6 +103,16 @@ while ($strCommand ne OP_EXIT)
             $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file});
             $oRemote->output_write();
         }
+        elsif ($strCommand eq OP_FILE_COPY_OUT)
+        {
+            if (!defined($oParamHash{source_file}))
+            {
+                confess "source_file must be defined";
+            }
+
+            $oFile->copy(PATH_ABSOLUTE, $oParamHash{source_file}, PIPE_STDOUT, undef);
+            $oRemote->output_write();
+        }
         else
         {
             if ($strCommand ne OP_NOOP)
