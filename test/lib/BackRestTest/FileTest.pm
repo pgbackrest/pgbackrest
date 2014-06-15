@@ -859,6 +859,7 @@ sub BackRestFileTest
                                 {
                                     system("gzip ${strSourceFile}");
                                     $strSourceFile .= ".gz";
+                                    $strDestinationFile .= ".gz";
                                 }
 
                                 my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
@@ -953,15 +954,15 @@ sub BackRestFileTest
 
                                     if ($bDestinationCompressed)
                                     {
-                                        system("gzip -d ${strDestinationFileCheck}") or die "could not decompress";
+                                        system("gzip -d ${strDestinationFileCheck}") == 0 or die "could not decompress ${strDestinationFileCheck}";
                                     }
                                     
-                                    # my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
-                                    # 
-                                    # if ($strSourceHash ne $strDestinationHash)
-                                    # {
-                                    #     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
-                                    # }
+                                    my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
+                                    
+                                    if ($strSourceHash ne $strDestinationHash)
+                                    {
+                                        confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                                    }
                                 }
                             }
                         }

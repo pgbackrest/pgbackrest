@@ -790,8 +790,7 @@ sub copy
     my $strPermission = shift;
 
     # Set defaults
-    my $bIsCompressed = false;
-    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : undef;
+    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : false;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
@@ -819,7 +818,7 @@ sub copy
     if (!$bSourceRemote)
     {
         # Determine if the file is compressed
-        $bIsCompressed = $strSourceOp !~ "^.*\.$self->{strCompressExtension}\$";
+#        $bIsCompressed = $strSourceOp !~ "^.*\.$self->{strCompressExtension}\$";
 
         open($hSourceFile, "<", $strSourceOp)
             or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
@@ -829,13 +828,13 @@ sub copy
     my $hDestinationFile;
 
     # Determine if the file needs compression extension
-    if ($bCompress && $strDestinationOp !~ "^.*\.$self->{strCompressExtension}\$")
-    {
-        $strDestinationOp .= "." . $self->{strCompressExtension};
-    }
-
     if (!$bDestinationRemote)
     {
+        if ($bCompress)
+        {
+            $strDestinationOp .= "." . $self->{strCompressExtension};
+        }
+
         open($hDestinationFile, ">", $strDestinationTmpOp)
             or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
     }
@@ -856,23 +855,16 @@ sub copy
             $hOut = $hDestinationFile;
             $strOperation = OP_FILE_COPY_OUT;
 
-            $bCompress = $bCompress ? undef : $bCompress;
-
             if ($strSourcePathType eq PIPE_STDIN)
             {
                 $strRemote = 'in';
                 $hIn = *STDIN;
-
             }
             else
             {
                 $strRemote = 'in';
                 $oParamHash{source_file} = ${strSourceOp};
-
-                if (defined($bCompress))
-                {
-                    $oParamHash{compress} = $bCompress;
-                }
+                $oParamHash{compress} = $bCompress;
 
                 $hIn = $self->{oRemote}->{hOut};
             }
@@ -892,18 +884,10 @@ sub copy
             {
                 $strRemote = 'out';
                 $oParamHash{destination_file} = ${strDestinationOp};
-
-                $bCompress = $bCompress ? undef : $bCompress;
-
-                if (defined($bCompress))
-                {
-                    $oParamHash{compress} = $bCompress;
-                }
+                $oParamHash{compress} = $bCompress;
 
                 $hOut = $self->{oRemote}->{hIn};
             }
-
-            $bCompress = true;
         }
         # Else source and destination are remote
         else
