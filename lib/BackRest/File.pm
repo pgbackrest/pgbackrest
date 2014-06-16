@@ -790,7 +790,7 @@ sub copy
     my $strPermission = shift;
 
     # Set defaults
-    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : false;
+    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : undef;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
@@ -812,31 +812,29 @@ sub copy
                    (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
                    ", compress = " . ($bCompress ? "true" : "false");
 
-    # Open the source file
+    # Open the source and destination files (if needed)
     my $hSourceFile;
-
-    if (!$bSourceRemote)
-    {
-        # Determine if the file is compressed
-#        $bIsCompressed = $strSourceOp !~ "^.*\.$self->{strCompressExtension}\$";
-
-        open($hSourceFile, "<", $strSourceOp)
-            or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
-    }
-
-    # Open the destination file
     my $hDestinationFile;
 
-    # Determine if the file needs compression extension
-    if (!$bDestinationRemote)
+    if ($bSourceRemote || $bDestinationRemote || defined($bCompress))
     {
-        if ($bCompress)
+        if (!$bSourceRemote)
         {
-            $strDestinationOp .= "." . $self->{strCompressExtension};
+            open($hSourceFile, "<", $strSourceOp)
+                or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
         }
 
-        open($hDestinationFile, ">", $strDestinationTmpOp)
-            or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
+        if (!$bDestinationRemote)
+        {
+            # Determine of the file needs a compression extension
+            if ($bCompress)
+            {
+                $strDestinationOp .= "." . $self->{strCompressExtension};
+            }
+
+            open($hDestinationFile, ">", $strDestinationTmpOp)
+                or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
+        }
     }
 
     # If source or destination are remote
@@ -923,6 +921,10 @@ sub copy
     }
     else
     {
+        if (!defined($strCompress))
+        {
+            
+        }
         # !!! Implement this with pipes from above (refactor copy_in and and copy_out)
         # !!! LOCAL COPY NOT YET IMPLEMENTED
         return false;
