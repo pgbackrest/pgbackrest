@@ -12,6 +12,7 @@ use Moose;
 use Net::OpenSSH;
 use IPC::Open3;
 use File::Basename;
+use File::Copy qw(cp);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
@@ -34,7 +35,7 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
                  PIPE_STDIN PIPE_STDOUT PIPE_STDERR
 
                  OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
-                 OP_FILE_MOVE OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
+                 OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
 
 # Extension and permissions
@@ -125,6 +126,7 @@ use constant
     OP_FILE_MANIFEST    => "File->manifest",
     OP_FILE_COMPRESS    => "File->compress",
     OP_FILE_MOVE        => "File->move",
+    OP_FILE_COPY        => "File->copy",
     OP_FILE_COPY_OUT    => "File->copy_out",
     OP_FILE_COPY_IN     => "File->copy_in",
     OP_FILE_PATH_CREATE => "File->path_create"
@@ -779,7 +781,7 @@ sub copy
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
     # Set operation and debug string
-    my $strOperation = "File->copy[unknown]";
+#    my $strOperation = "File->copy[unknown]";
     my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceFile}" : "") .
                    " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
@@ -791,44 +793,35 @@ sub copy
     my $hSourceFile;
     my $hDestinationFile;
 
-    if ($bSourceRemote || $bDestinationRemote)
+    if (!$bSourceRemote)
     {
-        if (!$bSourceRemote)
+        if (!open($hSourceFile, "<", $strSourceOp))
         {
-            if (!open($hSourceFile, "<", $strSourceOp))
+            my $strError = $!;
+            my $iErrorCode = COMMAND_ERR_FILE_READ;
+
+            if ($!{ENOENT})
             {
-                my $strError = $!;
-                my $iErrorCode = COMMAND_ERR_FILE_READ;
-
-                if ($!{ENOENT})
-                {
-                    # $strError = 'file is missing';
-                    $iErrorCode = COMMAND_ERR_FILE_MISSING;
-                }
-
-                $strError = "cannot open source file ${strSourceOp}: " . $strError;
-
-                if ($strSourcePathType eq PATH_ABSOLUTE)
-                {
-                    $self->{oRemote}->write_line(*STDOUT, "block 0");
-                    confess &log(ERROR, $strError, $iErrorCode);
-                }
-
-                confess &log(ERROR, "${strDebug}: " . $strError, $iErrorCode);
+                # $strError = 'file is missing';
+                $iErrorCode = COMMAND_ERR_FILE_MISSING;
             }
-        }
 
-        if (!$bDestinationRemote)
-        {
-            # # Determine of the file needs a compression extension
-            # if ($bDestinationCompress)
-            # {
-            #     $strDestinationOp .= "." . $self->{strCompressExtension};
-            # }
+            $strError = "cannot open source file ${strSourceOp}: " . $strError;
 
-            open($hDestinationFile, ">", $strDestinationTmpOp)
-                or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
+            if ($strSourcePathType eq PATH_ABSOLUTE)
+            {
+                $self->{oRemote}->write_line(*STDOUT, "block 0");
+                confess &log(ERROR, $strError, $iErrorCode);
+            }
+
+            confess &log(ERROR, "${strDebug}: " . $strError, $iErrorCode);
         }
+    }
+
+    if (!$bDestinationRemote)
+    {
+        open($hDestinationFile, ">", $strDestinationTmpOp)
+            or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
     }
 
     # If source or destination are remote
@@ -840,6 +833,7 @@ sub copy
         my $hIn,
         my $hOut;
         my $strRemote;
+        my $strOperation;
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
@@ -854,7 +848,7 @@ sub copy
             }
             else
             {
-                $oParamHash{source_file} = ${strSourceOp};
+                $oParamHash{source_file} = $strSourceOp;
                 $oParamHash{source_compressed} = $bSourceCompressed;
 
                 $hIn = $self->{oRemote}->{hOut};
@@ -873,7 +867,7 @@ sub copy
             }
             else
             {
-                $oParamHash{destination_file} = ${strDestinationOp};
+                $oParamHash{destination_file} = $strDestinationOp;
                 $oParamHash{destination_compress} = $bDestinationCompress;
 
                 $hOut = $self->{oRemote}->{hIn};
@@ -882,13 +876,12 @@ sub copy
         # Else source and destination are remote
         else
         {
-            if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
-            {
-                confess &log(ASSERT, "remote source and destination not supported");
-            }
+            $strOperation = OP_FILE_COPY;
 
-            # !!! MULTIPLE REMOTE COPY NOT YET IMPLEMENTED
-            return false;
+            $oParamHash{source_file} = $strSourceOp;
+            $oParamHash{source_compressed} = $bSourceCompressed;
+            $oParamHash{destination_file} = $strDestinationOp;
+            $oParamHash{destination_compress} = $bDestinationCompress;
         }
 
         # Build debug string
@@ -902,8 +895,11 @@ sub copy
             $self->{oRemote}->command_write($strOperation, \%oParamHash);
         }
 
-        # Transfer the file
-        $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
+        # Transfer the file (skip this for copies where both sides are remote)
+        if ($strOperation ne OP_FILE_COPY)
+        {
+            $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
+        }
 
         # If this is the controlling process then wait for OK from remote
         if (%oParamHash)
@@ -911,29 +907,43 @@ sub copy
             $self->{oRemote}->output_read(false, $strDebug);
         }
     }
+    # Else this is a local operation
     else
     {
-        # if (!defined($strCompress))
-        # {
-        #     
-        # }
-        # !!! Implement this with pipes from above (refactor copy_in and and copy_out)
-        # !!! LOCAL COPY NOT YET IMPLEMENTED
-        return false;
+        $strDebug = OP_FILE_COPY . ": $strDebug";
+        &log(DEBUG, $strDebug);
+
+        # If the source is compressed and the destination is not then decompress
+        if ($bSourceCompressed && !$bDestinationCompress)
+        {
+            gunzip($hSourceFile => $hDestinationFile)
+                or die confess &log(ERROR, "${strDebug}: unable to uncompress: " . $GunzipError);
+        }
+        elsif (!$bSourceCompressed && $bDestinationCompress)
+        {
+            gzip($hSourceFile => $hDestinationFile)
+                or die confess &log(ERROR, "${strDebug}: unable to compress: " . $GzipError);
+        }
+        else
+        {
+           cp($hSourceFile, $hDestinationFile)
+               or die confess &log(ERROR, "${strDebug}: unable to copy: " . $!);
+        }
     }
 
-    # Close the source file
+    # Close the source file (if open)
     if (defined($hSourceFile))
     {
         close($hSourceFile) or confess &log(ERROR, "cannot close file ${strSourceOp}");
     }
 
-    # Close the destination file
+    # Close the destination file (if open)
     if (defined($hDestinationFile))
     {
         close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
     }
 
+    # Where the destination is local, set permissions, modification time, and perform move to final location
     if (!$bDestinationRemote)
     {
         # Set the file permission if required
@@ -943,7 +953,7 @@ sub copy
                 or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
         }
 
-        # Set the file modification time if required (this only works locally for now)
+        # Set the file modification time if required
         if (defined($lModificationTime))
         {
             utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)

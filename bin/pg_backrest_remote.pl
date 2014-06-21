@@ -53,6 +53,25 @@ use constant
 # }
 
 ####################################################################################################################################
+# PARAM_GET - helper function that returns the param or an error if required and it does not exist
+####################################################################################################################################
+sub param_get
+{
+    my $oParamHashRef = shift;
+    my $strParam = shift;
+    my $bRequired = shift;
+    
+    my $strValue = ${$oParamHashRef}{$strParam};
+    
+    if (!defined($strValue) && (!defined($bRequired) || $bRequired))
+    {
+        confess "${strParam} must be defined";
+    }
+    
+    return $strValue;
+}
+
+####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
 # Turn off logging
@@ -90,36 +109,31 @@ while ($strCommand ne OP_EXIT)
                 confess "path must be defined";
             }
 
-            $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, $oParamHash{path}) ? "Y" : "N");
+            $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, param_get(\%oParamHash, 'path')) ? 'Y' : 'N');
+        }
+        elsif ($strCommand eq OP_FILE_COPY)
+        {
+            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                         param_get(\%oParamHash, 'source_compressed'),
+                         param_get(\%oParamHash, 'destination_compress'));
+                         
+            $oRemote->output_write();
         }
         elsif ($strCommand eq OP_FILE_COPY_IN)
         {
-            if (!defined($oParamHash{destination_file}))
-            {
-                confess "destination_file must be defined";
-            }
-
-            if (!defined($oParamHash{destination_compress}))
-            {
-                confess "destination_compress must be defined";
-            }
-
-            $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file}, undef, $oParamHash{destination_compress});
+            $oFile->copy(PIPE_STDIN, undef,
+                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                         undef, param_get(\%oParamHash, 'destination_compress'));
+                         
             $oRemote->output_write();
         }
         elsif ($strCommand eq OP_FILE_COPY_OUT)
         {
-            if (!defined($oParamHash{source_file}))
-            {
-                confess "source_file must be defined";
-            }
-
-            if (!defined($oParamHash{source_compressed}))
-            {
-                confess "source_file must be defined";
-            }
-
-            $oFile->copy(PATH_ABSOLUTE, $oParamHash{source_file}, PIPE_STDOUT, undef, $oParamHash{source_compressed}, undef);
+            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                         PIPE_STDOUT, undef,
+                         param_get(\%oParamHash, 'source_compressed'), undef);
+                         
             $oRemote->output_write();
         }
         else
