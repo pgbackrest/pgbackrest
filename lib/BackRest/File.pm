@@ -487,47 +487,37 @@ sub move
     my $strDestinationFile = shift;
     my $bDestinationPathCreate = shift;
 
-    # Get the root path for the file list
-    my $strErrorPrefix = "File->move";
-    my $bRemote = $self->is_remote($strSourcePathType);
-    $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : true;
+    # Set defaults
+    $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : false;
 
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") .
-                " ${strSourcePathType}" . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
-                " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
-                ", dest_path_create = " . ($bDestinationPathCreate ? "true" : "false"));
-
-    # Get source and desination files
-    if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strSourcePathType))
-    {
-        confess &log(ASSERT, "source and destination path types must be equal");
-    }
-
+    # Set operation variables
     my $strPathOpSource = $self->path_get($strSourcePathType, $strSourceFile);
     my $strPathOpDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
 
-    # Run remotely
-    if ($bRemote)
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_MOVE;
+
+    my $strDebug = "${strSourcePathType}" . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
+                   " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
+                   ", destination_path_create = " . ($bDestinationPathCreate ? "true" : "false");
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Source and destination path types must be the same
+    if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strSourcePathType))
     {
-        my $strCommand = $self->{strCommand} .
-                         ($bDestinationPathCreate ? " --dest-path-create" : "") .
-                         " move ${strPathOpSource} ${strPathOpDestination}";
+        confess &log(ASSERT, "${strDebug}: source and destination path types must be equal");
+    }
 
-        # Run via SSH
-        my $oSSH = $self->remote_get($strSourcePathType);
-        my $strOutput = $oSSH->capture($strCommand);
-
-        # Handle any errors
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
+    # Run remotely
+    if ($self->is_remote($strSourcePathType))
+    {
+        confess "${strDebug}: remote operation not supported";
     }
     # Run locally
     else
     {
-        # If the destination path does not exist, create it
-        unless (-e dirname($strPathOpDestination))
+        # If the destination path does not exist, create it or error out
+        if (!$self->exists($strDestinationPathType, dirname($strDestinationFile)))
         {
             if ($bDestinationPathCreate)
             {
@@ -543,16 +533,16 @@ sub move
                     exit (COMMAND_ERR_PATH_MISSING);
                 }
 
-                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+                confess &log(ERROR, "${strDebug}: " . $strError);
             }
         }
 
         if (!rename($strPathOpSource, $strPathOpDestination))
         {
-            my $strError = "${strPathOpSource} could not be moved:" . $!;
+            my $strError = "${strPathOpSource} could not be moved: " . $!;
             my $iErrorCode = COMMAND_ERR_FILE_MOVE;
 
-            unless (-e $strPathOpSource)
+            if (!$self->exists($strSourcePathType, dirname($strSourceFile)))
             {
                 $strError = "${strPathOpSource} does not exist";
                 $iErrorCode = COMMAND_ERR_FILE_MISSING;
@@ -564,7 +554,7 @@ sub move
                 exit ($iErrorCode);
             }
 
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+            confess &log(ERROR, "${strDebug}: " . $strError);
         }
     }
 }
@@ -608,7 +598,7 @@ sub exists
         # Build debug string
         $strDebug = "${strOperation}: local: " . $strDebug;
         &log(DEBUG, ${strDebug});
-
+        
         # Stat the file/path to determine if it exists
         my $oStat = lstat($strPathOp);
 

@@ -25,6 +25,36 @@ use BackRest::Remote;
 use Exporter qw(import);
 our @EXPORT = qw(BackRestFileTest);
 
+my $strTestPath;
+my $strHost;
+my $strUserBackRest;
+
+####################################################################################################################################
+# BackRestFileTestSetup
+####################################################################################################################################
+sub BackRestFileTestSetup
+{
+    my $bDropOnly = shift;
+    
+    # Remove the backrest private directory
+    system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/private'") == 0 or die 'unable to remove test/private path';
+    
+    # Remove the test directory
+    system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
+    
+    if (defined($bDropOnly) || !$bDropOnly)
+    {
+        # Create the test directory
+        system("mkdir ${strTestPath}") == 0 or confess "Unable to create test directory";
+        
+        # Create the backrest private directory
+        system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die 'unable to create test/private path';
+    }
+}
+
+####################################################################################################################################
+# BackRestFileTest
+####################################################################################################################################
 sub BackRestFileTest
 {
     my $strTest = shift;
@@ -36,14 +66,15 @@ sub BackRestFileTest
     }
 
     # Setup test paths
-    my $strTestPath = dirname(abs_path($0)) . "/test";
+    $strTestPath = dirname(abs_path($0)) . "/test";
     my $iRun;
 
     my $strStanza = "db";
     my $strCommand = "/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl";
-    my $strHost = "127.0.0.1";
+    $strHost = "127.0.0.1";
     my $strUser = getpwuid($<);
     my $strGroup = getgrgid($();
+    $strUserBackRest = 'backrest';
 
     # Print test parameters
     &log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
@@ -177,82 +208,93 @@ sub BackRestFileTest
         &log(INFO, "--------------------------------------------------------------------------------");
         &log(INFO, "Test File->move()\n");
 
-        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
+            # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => $strStanza,
-                bNoCompression => true,
-                strCommand => $strCommand,
-                strBackupClusterPath => ${strTestPath},
+                strStanza => "db",
+                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
-                strBackupHost => $bRemote ? $strHost : undef,
-                strBackupUser => $bRemote ? $strUser : undef
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
             );
 
             # Loop through source exists
             for (my $bSourceExists = 0; $bSourceExists <= 1; $bSourceExists++)
             {
-                # Loop through destination exists
-                for (my $bDestinationExists = 0; $bDestinationExists <= 1; $bDestinationExists++)
+            # Loop through source errors
+            for (my $bSourceError = 0; $bSourceError <= 1; $bSourceError++)
+            {
+            # Loop through destination exists
+            for (my $bDestinationExists = 0; $bDestinationExists <= 1; $bDestinationExists++)
+            {
+            # Loop through source errors
+            for (my $bDestinationError = 0; $bDestinationError <= 1; $bDestinationError++)
+            {
+            # Loop through create
+            for (my $bCreate = 0; $bCreate <= $bDestinationExists; $bCreate++)
+            {
+                $iRun++;
+
+                &log(INFO, "run ${iRun} - " .
+                           "remote $bRemote" .
+                           ", src_exists $bSourceExists, src_error $bSourceError" .
+                           ", dst_exists $bDestinationExists, dst_error $bDestinationError, dst_create $bCreate");
+
+                # Setup test directory
+                BackRestFileTestSetup();
+
+                my $strSourceFile = "${strTestPath}/test.txt";
+                my $strDestinationFile = "${strTestPath}/test-dest.txt";
+
+                if ($bSourceError)
                 {
-                    # Loop through create
-                    for (my $bCreate = 0; $bCreate <= $bDestinationExists; $bCreate++)
-                    {
-                        $iRun++;
-
-                        &log(INFO, "run ${iRun} - " .
-                                   "remote $bRemote, src_exists $bSourceExists, dst_exists $bDestinationExists, create $bCreate");
-
-                        # Drop the old test directory and create a new one
-                        system("rm -rf test");
-                        system("mkdir test") == 0 or confess "Unable to create test directory";
-
-                        my $strSourceFile = "${strTestPath}/test.txt";
-                        my $strDestinationFile = "${strTestPath}/test-dest.txt";
-
-                        if ($bCreate)
-                        {
-                            $strDestinationFile = "${strTestPath}/sub/test-dest.txt"
-                        }
-
-                        if ($bSourceExists)
-                        {
-                            system("echo 'TESTDATA' > ${strSourceFile}");
-                        }
-
-                        if (!$bDestinationExists)
-                        {
-                            $strDestinationFile = "error" . $strDestinationFile;
-                        }
-
-                        # Execute in eval in case of error
-                        eval
-                        {
-                            $oFile->move(PATH_BACKUP_ABSOLUTE, $strSourceFile, PATH_BACKUP_ABSOLUTE, $strDestinationFile, $bCreate);
-                        };
-
-                        if ($@)
-                        {
-                            if (!$bSourceExists || !$bDestinationExists)
-                            {
-                                next;
-                            }
-
-                            confess "error raised: " . $@ . "\n";
-                        }
-
-                        if (!$bSourceExists || !$bDestinationExists)
-                        {
-                            confess "error should have been raised";
-                        }
-
-                        unless (-e $strDestinationFile)
-                        {
-                            confess "file was not moved";
-                        }
-                    }
+                    $strSourceFile = "${strTestPath}/private/test.txt";
                 }
+                elsif ($bSourceExists)
+                {
+                    system("echo 'TESTDATA' > ${strSourceFile}");
+                }
+
+                if ($bDestinationError)
+                {
+                    $strSourceFile = "${strTestPath}/private/test.txt";
+                }
+                elsif (!$bDestinationExists)
+                {
+                    $strDestinationFile = "${strTestPath}/sub/test-dest.txt";
+                }
+
+                # Execute in eval in case of error
+                eval
+                {
+                    $oFile->move(PATH_BACKUP_ABSOLUTE, $strSourceFile, PATH_BACKUP_ABSOLUTE, $strDestinationFile, $bCreate);
+                };
+
+                if ($@)
+                {
+                    if (!$bSourceExists || (!$bDestinationExists && !$bCreate) || $bSourceError || $bDestinationError)
+                    {
+                        next;
+                    }
+
+                    confess "error raised: " . $@ . "\n";
+                }
+
+                if (!$bSourceExists || (!$bDestinationExists && !$bCreate) || $bSourceError || $bDestinationError)
+                {
+                    confess "error should have been raised";
+                }
+
+                unless (-e $strDestinationFile)
+                {
+                    confess "file was not moved";
+                }
+            }
+            }
+            }
+            }
             }
         }
     }
@@ -962,3 +1004,5 @@ sub BackRestFileTest
         }
     }
 }
+
+1;
