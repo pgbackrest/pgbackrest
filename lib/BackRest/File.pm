@@ -581,6 +581,11 @@ sub path_create
 
         $oParamHash{path} = ${strPathOp};
 
+        if (defined($strPermission))
+        {
+            $oParamHash{permission} = ${strPermission};
+        }
+
         # Add remote info to debug string
         my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
@@ -592,7 +597,18 @@ sub path_create
     else
     {
         # Attempt the create the directory
-        if (!mkdir($strPathOp, oct(defined($strPermission) ? $strPermission : $self->{strDefaultPathPermission})))
+        my $bResult;
+        
+        if (defined($strPermission))
+        {
+            $bResult = mkdir($strPathOp, oct($strPermission));
+        }
+        else
+        {
+            $bResult = mkdir($strPathOp);
+        }
+        
+        if (!$bResult)
         {
             # Capture the error
             my $strError = "${strPath} could not be created: " . $!;
@@ -600,12 +616,11 @@ sub path_create
             # If running on command line the return directly
             if ($strPathType eq PATH_ABSOLUTE)
             {
-                print $strError;
-                exit COMMAND_ERR_PATH_CREATE;
+                confess &log(ERROR, $!, COMMAND_ERR_PATH_CREATE);
             }
 
             # Error the normal way
-            confess &log(ERROR, "${strDebug}: " . $strError);
+            confess &log(ERROR, "${strDebug}: " . $strError, COMMAND_ERR_PATH_CREATE);
         }
     }
 }

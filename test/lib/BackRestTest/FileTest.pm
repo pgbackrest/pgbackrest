@@ -37,7 +37,7 @@ sub BackRestFileTestSetup
     my $bDropOnly = shift;
     
     # Remove the backrest private directory
-    system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/private'") == 0 or die 'unable to remove test/private path';
+    system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/\*'");
     
     # Remove the test directory
     system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
@@ -105,15 +105,14 @@ sub BackRestFileTest
         # Loop through local/remote
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
+            # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => $strStanza,
-                bNoCompression => true,
-                strCommand => $strCommand,
-                strBackupClusterPath => ${strTestPath},
+                strStanza => "db",
+                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
-                strBackupHost => $bRemote ? $strHost : undef,
-                strBackupUser => $bRemote ? $strUser : undef
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
             );
 
             # Loop through exists (does the paren path exist?)
@@ -141,12 +140,12 @@ sub BackRestFileTest
                 {
                     $strPermission = "0700";
 
-                    # Make sure that we are not testing with the default permission
-                    if ($strPermission eq $oFile->{strDefaultPathPermission})
-                    {
-                        confess 'cannot set test permission ${strPermission} equal to default permission' .
-                                $oFile->{strDefaultPathPermission};
-                    }
+                    # # Make sure that we are not testing with the default permission
+                    # if ($strPermission eq $oFile->{strDefaultPathPermission})
+                    # {
+                    #     confess 'cannot set test permission ${strPermission} equal to default permission' .
+                    #             $oFile->{strDefaultPathPermission};
+                    # }
                 }
 
                 # If not exists then set the path to something bogus
@@ -198,11 +197,12 @@ sub BackRestFileTest
                     confess "unable to stat ${strPath}";
                 }
 
-                my $strPermissionCompare = defined($strPermission) ? $strPermission : $oFile->{strDefaultPathPermission};
-
-                if ($strPermissionCompare ne sprintf("%04o", S_IMODE($oStat->mode)))
+                if ($bPermission)
                 {
-                    confess "permissions were not set to {$strPermissionCompare}";
+                    if ($strPermission ne sprintf("%04o", S_IMODE($oStat->mode)))
+                    {
+                        confess "permissions were not set to {$strPermission}";
+                    }
                 }
             }
             }
@@ -926,11 +926,6 @@ sub BackRestFileTest
 
                 $iRun++;
                 
-                # if ($iRun != 80)
-                # {
-                #     next;
-                # }
-
                 &log(INFO, "run ${iRun} - " .
                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
@@ -938,11 +933,10 @@ sub BackRestFileTest
                            "dstpth " . (defined($strRemote) && $strRemote eq $strDestinationPath ? "remote" : "local") .
                                ":${strDestinationPath}, dstcmp $bDestinationCompress");
 
-                # Drop the old test directory and create a new one
-                system("rm -rf test");
-                system("mkdir -p test/lock") == 0 or confess "Unable to create test/lock directory";
-                system("mkdir -p test/backup") == 0 or confess "Unable to create test/backup directory";
-                system("mkdir -p test/db") == 0 or confess "Unable to create test/db directory";
+                # Setup test directory
+                BackRestFileTestSetup();
+                system("mkdir ${strTestPath}/backup") == 0 or confess "Unable to create test/backup directory";
+                system("mkdir ${strTestPath}/db") == 0 or confess "Unable to create test/db directory";
 
                 my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source.txt";
                 my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination.txt";

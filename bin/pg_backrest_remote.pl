@@ -101,14 +101,29 @@ while ($strCommand ne OP_EXIT)
 
     eval
     {
-        # File->exists
-        if ($strCommand eq OP_FILE_EXISTS)
+        if ($strCommand eq OP_FILE_COPY_OUT)
         {
-            if (!defined($oParamHash{path}))
-            {
-                confess "path must be defined";
-            }
-
+            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                         PIPE_STDOUT, undef,
+                         param_get(\%oParamHash, 'source_compressed'), undef);
+                         
+            $oRemote->output_write();
+        }
+        elsif ($strCommand eq OP_FILE_COPY_IN)
+        {
+            $oFile->copy(PIPE_STDIN, undef,
+                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                         undef, param_get(\%oParamHash, 'destination_compress'));
+                         
+            $oRemote->output_write();
+        }
+        elsif ($strCommand eq OP_FILE_PATH_CREATE)
+        {
+            $oFile->path_create(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), param_get(\%oParamHash, 'permission', false));
+            $oRemote->output_write();
+        }
+        elsif ($strCommand eq OP_FILE_EXISTS)
+        {
             $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, param_get(\%oParamHash, 'path')) ? 'Y' : 'N');
         }
         elsif ($strCommand eq OP_FILE_COPY)
@@ -119,22 +134,6 @@ while ($strCommand ne OP_EXIT)
                              param_get(\%oParamHash, 'source_compressed'),
                              param_get(\%oParamHash, 'destination_compress'),
                              param_get(\%oParamHash, 'ignore_missing_source', false)) ? 'Y' : 'N');
-        }
-        elsif ($strCommand eq OP_FILE_COPY_IN)
-        {
-            $oFile->copy(PIPE_STDIN, undef,
-                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                         undef, param_get(\%oParamHash, 'destination_compress'));
-                         
-            $oRemote->output_write();
-        }
-        elsif ($strCommand eq OP_FILE_COPY_OUT)
-        {
-            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
-                         PIPE_STDOUT, undef,
-                         param_get(\%oParamHash, 'source_compressed'), undef);
-                         
-            $oRemote->output_write();
         }
         else
         {
