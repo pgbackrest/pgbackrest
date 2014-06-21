@@ -688,6 +688,123 @@ sub exists
 }
 
 ####################################################################################################################################
+# REMOVE
+####################################################################################################################################
+sub remove
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $bTemp = shift;
+    my $bIgnoreMissing = shift;
+
+    # Set defaults
+    $bIgnoreMissing = defined($bIgnoreMissing) ? $bIgnoreMissing : true;
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strPath, $bTemp);
+    my $bRemoved = true;
+ 
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_EXISTS;
+    my $strDebug = "${strPathType}:${strPathOp}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+    }
+    # Run locally
+    else
+    {
+        if (unlink($strPathOp) != 1)
+        {
+            $bRemoved = false;
+
+            my $strError = "${strPathOp} could not be removed: " . $!;
+            my $iErrorCode = COMMAND_ERR_PATH_READ;
+
+            if (!$self->exists($strPathType, $strPath))
+            {
+                $strError = "${strPathOp} does not exist";
+                $iErrorCode = COMMAND_ERR_PATH_MISSING;
+            }
+
+            if (!($iErrorCode == COMMAND_ERR_PATH_MISSING && $bIgnoreMissing))
+            {
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    confess &log(ERROR, $strError, $iErrorCode);
+                }
+
+                confess &log(ERROR, "${strDebug}: " . $strError);
+            }
+        }
+    }
+
+    return $bRemoved;
+}
+
+####################################################################################################################################
+# HASH
+####################################################################################################################################
+sub hash
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+    my $strHashType = shift;
+
+    # Set operation variables
+    my $strFileOp = $self->path_get($strPathType, $strFile);
+    my $strHash;
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_HASH;
+    my $strDebug = "${strPathType}:${strFileOp}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+    }
+    else
+    {
+        my $hFile;
+
+        if (!open($hFile, "<", $strFileOp))
+        {
+            my $strError = "${strFileOp} could not be read" . $!;
+            my $iErrorCode = 2;
+
+            if (!$self->exists($strPathType, $strFile))
+            {
+                $strError = "${strFileOp} does not exist";
+                $iErrorCode = 1;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                confess &log(ERROR, $strError, $iErrorCode);
+            }
+
+            confess &log(ERROR, "${strDebug}: " . $strError);
+        }
+
+        my $oSHA = Digest::SHA->new(defined($strHashType) ? $strHashType : 'sha1');
+
+        $oSHA->addfile($hFile);
+
+        close($hFile);
+
+        $strHash = $oSHA->hexdigest();
+    }
+
+    return $strHash;
+}
+
+####################################################################################################################################
 # LIST
 ####################################################################################################################################
 sub list
@@ -1247,147 +1364,6 @@ sub copy
     }
 
     return true;
-}
-
-####################################################################################################################################
-# HASH
-####################################################################################################################################
-sub hash
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strFile = shift;
-    my $strHashType = shift;
-
-    # For now this operation is not supported remotely.  Not currently needed.
-    my $strHash;
-    my $strErrorPrefix = "File->hash";
-    my $bRemote = $self->is_remote($strPathType);
-    my $strPath = $self->path_get($strPathType, $strFile);
-
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPath}");
-
-    if ($bRemote)
-    {
-        # Run remotely
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($self->{strCommand} . " hash ${strPath}");
-
-        # Capture any errors
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote: " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
-
-        $strHash = $strOutput;
-    }
-    else
-    {
-        my $hFile;
-
-        if (!open($hFile, "<", $strPath))
-        {
-            my $strError = "${strPath} could not be read" . $!;
-            my $iErrorCode = 2;
-
-            unless (-e $strPath)
-            {
-                $strError = "${strPath} does not exist";
-                $iErrorCode = 1;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                print $strError;
-                exit ($iErrorCode);
-            }
-
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-        }
-
-        my $oSHA = Digest::SHA->new(defined($strHashType) ? $strHashType : 'sha1');
-
-        $oSHA->addfile($hFile);
-
-        close($hFile);
-
-        $strHash = $oSHA->hexdigest();
-    }
-
-    return $strHash;
-}
-
-####################################################################################################################################
-# REMOVE
-####################################################################################################################################
-sub remove
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strPath = shift;
-    my $bTemp = shift;
-    my $bIgnoreMissing = shift;
-
-    if (!defined($bIgnoreMissing))
-    {
-        $bIgnoreMissing = true;
-    }
-
-    # Get the root path for the manifest
-    my $bRemoved = true;
-    my $strErrorPrefix = "File->remove";
-    my $bRemote = $self->is_remote($strPathType);
-    my $strPathOp = $self->path_get($strPathType, $strPath, $bTemp);
-
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
-
-    # Run remotely
-    if ($bRemote)
-    {
-        # Build the command
-        my $strCommand = $self->{strCommand} . ($bIgnoreMissing ? " --ignore-missing" : "") . " remove ${strPathOp}";
-
-        # Run it remotely
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($strCommand);
-
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
-
-        $bRemoved = $strOutput eq "Y";
-    }
-    # Run locally
-    else
-    {
-        if (unlink($strPathOp) != 1)
-        {
-            $bRemoved = false;
-
-            if (-e $strPathOp || !$bIgnoreMissing)
-            {
-                my $strError = "${strPathOp} could not be removed: " . $!;
-                my $iErrorCode = 2;
-
-                unless (-e $strPathOp)
-                {
-                    $strError = "${strPathOp} does not exist";
-                    $iErrorCode = 1;
-                }
-
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    print $strError;
-                    exit ($iErrorCode);
-                }
-
-                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-            }
-        }
-    }
-
-    return $bRemoved;
 }
 
 no Moose;

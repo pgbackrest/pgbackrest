@@ -46,7 +46,7 @@ sub BackRestFileTestSetup
     # Remove the test directory
     system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
     
-    if (defined($bDropOnly) || !$bDropOnly)
+    if (!defined($bDropOnly) || !$bDropOnly)
     {
         # Create the test directory
         mkdir($strTestPath, oct("0770")) or confess "Unable to create test directory";
@@ -700,139 +700,191 @@ sub BackRestFileTest
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test remove()
     #-------------------------------------------------------------------------------------------------------------------------------
-    # if ($strTest eq 'all' || $strTest eq 'remove')
-    # {
-    #     $iRun = 0;
-    #
-    #     &log(INFO, "--------------------------------------------------------------------------------");
-    #     &log(INFO, "Test File->remove()\n");
-    #
-    #     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
-    #     {
-    #         my $strHost = $bRemote ? "127.0.0.1" : undef;
-    #         my $strUser = $bRemote ? "dsteele" : undef;
-    #
-    #         my $oFile = BackRest::File->new
-    #         (
-    #             strStanza => $strStanza,
-    #             bNoCompression => true,
-    #             strCommand => ${strCommand},
-    #             strBackupClusterPath => ${strTestPath},
-    #             strBackupPath => ${strTestPath},
-    #             strBackupHost => $bRemote ? $strHost : undef,
-    #             strBackupUser => $bRemote ? $strUser : undef
-    #         );
-    #
-    #         # Loop through exists
-    #         for (my $bExists = 0; $bExists <= 1; $bExists++)
-    #         {
-    #             # Loop through temp
-    #             for (my $bTemp = 0; $bTemp <= 1; $bTemp++)
-    #             {
-    #                 # Loop through ignore missing
-    #                 for (my $bIgnoreMissing = 0; $bIgnoreMissing <= 1; $bIgnoreMissing++)
-    #                 {
-    #                     $iRun++;
-    #
-    #                     &log(INFO, "run ${iRun} - " .
-    #                                "remote ${bRemote}, exists ${bExists}, temp ${bTemp}, ignore missing ${bIgnoreMissing}");
-    #
-    #                     # Drop the old test directory and create a new one
-    #                     system("rm -rf test");
-    #                     system("mkdir test") == 0 or confess "Unable to create test directory";
-    #
-    #                     my $strFile = "${strTestPath}/test.txt";
-    #
-    #                     if ($bExists)
-    #                     {
-    #                         system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? ".backrest.tmp" : ""));
-    #                     }
-    #
-    #                     # Execute in eval in case of error
-    #                     eval
-    #                     {
-    #                         if ($oFile->remove(PATH_BACKUP_ABSOLUTE, $strFile, $bTemp, $bIgnoreMissing) != $bExists)
-    #                         {
-    #                             confess "hash did not match expected";
-    #                         }
-    #                     };
-    #
-    #                     if ($@ && $bExists)
-    #                     {
-    #                         confess "error raised: " . $@ . "\n";
-    #                     }
-    #
-    #                     if (-e ($strFile . ($bTemp ? ".backrest.tmp" : "")))
-    #                     {
-    #                         confess "file still exists";
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
+    if ($strTest eq 'all' || $strTest eq 'remove')
+    {
+        $iRun = 0;
+
+        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, "Test File->remove()\n");
+
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            my $oFile = BackRest::File->new
+            (
+                strStanza => $strStanza,
+                strBackupClusterPath => ${strTestPath},
+                strBackupPath => ${strTestPath},
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
+            );
+
+            # Loop through exists
+            for (my $bError = 0; $bError <= 1; $bError++)
+            {
+            # Loop through exists
+            for (my $bExists = 0; $bExists <= 1; $bExists++)
+            {
+            # Loop through temp
+            for (my $bTemp = 0; $bTemp <= 1; $bTemp++)
+            {
+                # Loop through ignore missing
+                for (my $bIgnoreMissing = 0; $bIgnoreMissing <= 1; $bIgnoreMissing++)
+                {
+                    $iRun++;
+
+                    &log(INFO, "run ${iRun} - " .
+                               "remote ${bRemote}, error = $bError, exists ${bExists}, temp ${bTemp} " .
+                               ", ignore missing ${bIgnoreMissing}");
+
+                    # Setup test directory
+                    BackRestFileTestSetup($bError);
+
+                    my $strFile = "${strTestPath}/test.txt";
+
+                    if ($bError)
+                    {
+                        $strFile = "${strTestPath}/private/test.txt"
+                    }
+                    elsif (!$bExists)
+                    {
+                        $strFile = "${strTestPath}/private/error.txt"
+                    }
+                    else
+                    {
+                        system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? ".backrest.tmp" : ""));
+                    }
+
+                    # Execute in eval in case of error
+                    my $bRemoved;
+                    
+                    eval
+                    {
+                        $bRemoved = $oFile->remove(PATH_BACKUP_ABSOLUTE, $strFile, $bTemp, $bIgnoreMissing);
+                    };
+
+                    if ($@)
+                    {
+                        if ($bError || $bRemote)
+                        {
+                            next;
+                        }
+                        
+                        if (!$bExists && !$bIgnoreMissing)
+                        {
+                            next;
+                        }
+
+                        confess "unexpected error raised: " . $@;
+                    }
+                    
+                    if ($bError || $bRemote)
+                    {
+                        confess 'error should have been returned';
+                    }
+                    
+                    if (!$bRemoved)
+                    {
+                        if (!$bExists && $bIgnoreMissing)
+                        {
+                            next;
+                        }
+                        
+                        confess 'remove returned false, but something should have been removed';
+                    }
+
+                    if (-e ($strFile . ($bTemp ? ".backrest.tmp" : "")))
+                    {
+                        confess "file still exists";
+                    }
+                }
+            }
+            }
+            }
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test hash()
     #-------------------------------------------------------------------------------------------------------------------------------
-    # if ($strTest eq 'all' || $strTest eq 'hash')
-    # {
-    #     $iRun = 0;
-    #
-    #     &log(INFO, "--------------------------------------------------------------------------------");
-    #     &log(INFO, "test File->hash()\n");
-    #
-    #     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
-    #     {
-    #         my $oFile = BackRest::File->new
-    #         (
-    #             strStanza => $strStanza,
-    #             bNoCompression => true,
-    #             strCommand => $strCommand,
-    #             strBackupClusterPath => ${strTestPath},
-    #             strBackupPath => ${strTestPath},
-    #             strBackupHost => $bRemote ? $strHost : undef,
-    #             strBackupUser => $bRemote ? $strUser : undef
-    #         );
-    #
-    #         # Loop through exists
-    #         for (my $bExists = 0; $bExists <= 1; $bExists++)
-    #         {
-    #             $iRun++;
-    #
-    #             &log(INFO, "run ${iRun} - " .
-    #                        "remote $bRemote, exists $bExists");
-    #
-    #             # Drop the old test directory and create a new one
-    #             system("rm -rf test");
-    #             system("mkdir test") == 0 or confess "Unable to create test directory";
-    #
-    #             my $strFile = "${strTestPath}/test.txt";
-    #
-    #             if ($bExists)
-    #             {
-    #                 system("echo 'TESTDATA' > ${strFile}");
-    #             }
-    #
-    #             # Execute in eval in case of error
-    #             eval
-    #             {
-    #                 if ($oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile) ne '06364afe79d801433188262478a76d19777ef351')
-    #                 {
-    #                     confess "incorrect hash returned";
-    #                 }
-    #             };
-    #
-    #             if ($@)
-    #             {
-    #                 if ($bExists)
-    #                 {
-    #                     confess "error raised: " . $@ . "\n";
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
+    if ($strTest eq 'all' || $strTest eq 'hash')
+    {
+        $iRun = 0;
+
+        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, "test File->hash()\n");
+
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            my $oFile = BackRest::File->new
+            (
+                strStanza => $strStanza,
+                strBackupClusterPath => ${strTestPath},
+                strBackupPath => ${strTestPath},
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
+            );
+
+            # Loop through error
+            for (my $bError = 0; $bError <= 1; $bError++)
+            {
+            # Loop through exists
+            for (my $bExists = 0; $bExists <= 1; $bExists++)
+            {
+                $iRun++;
+
+                &log(INFO, "run ${iRun} - " .
+                           "remote $bRemote, error $bError, exists $bExists");
+
+                # Setup test directory
+                BackRestFileTestSetup($bError);
+
+                my $strFile = "${strTestPath}/test.txt";
+
+                if ($bError)
+                {
+                    $strFile = "${strTestPath}/private/test.txt";
+                }
+                elsif (!$bExists)
+                {
+                    $strFile = "${strTestPath}/error.txt";
+                }
+                else
+                {
+                    system("echo 'TESTDATA' > ${strFile}");
+                }
+
+                # Execute in eval in case of error
+                my $strHash;
+                my $bErrorExpected = !$bExists || $bError || $bRemote;
+                
+                eval
+                {
+                    $strHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile)
+                };
+
+                if ($@)
+                {
+                    if ($bErrorExpected)
+                    {
+                        next;
+                    }
+
+                    confess "unexpected error raised: " . $@;
+                }
+
+                if ($bErrorExpected)
+                {
+                    confess "error was expected";
+                }
+                
+                if ($strHash ne '06364afe79d801433188262478a76d19777ef351')
+                {
+                    confess 'hashes do not match';
+                }
+            }
+            }
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test exists()
@@ -1096,6 +1148,8 @@ sub BackRestFileTest
         }
         }
     }
+    
+    BackRestFileTestSetup(false, true);
 }
 
 1;
