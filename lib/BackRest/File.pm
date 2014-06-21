@@ -418,62 +418,6 @@ sub link_create
 }
 
 ####################################################################################################################################
-# PATH_CREATE
-#
-# Creates a path locally or remotely.  Currently does not error if the path already exists.  Also does not set permissions if the
-# path aleady exists.
-####################################################################################################################################
-sub path_create
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strPath = shift;
-    my $strPermission = shift;
-
-    # Setup standard variables
-    my $strErrorPrefix = "File->path_create";
-    my $bRemote = $self->is_remote($strPathType);
-    my $strPathOp = $self->path_get($strPathType, $strPath);
-
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPath}, " .
-                "permission " . (defined($strPermission) ? $strPermission : "[undef]"));
-
-    if ($bRemote)
-    {
-        # Run remotely
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($self->{strCommand} .
-                        (defined($strPermission) ? " --permission=${strPermission}" : "") .
-                        " path_create ${strPath}");
-
-        # Capture any errors
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote: " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
-    }
-    else
-    {
-        # Attempt the create the directory
-        if (!mkdir($strPathOp, oct(defined($strPermission) ? $strPermission : $self->{strDefaultPathPermission})))
-        {
-            # Capture the error
-            my $strError = "${strPath} could not be created: " . $!;
-
-            # If running on command line the return directly
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                print $strError;
-                exit COMMAND_ERR_PATH_CREATE;
-            }
-
-            # Error the normal way
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-        }
-    }
-}
-
-####################################################################################################################################
 # MOVE
 #
 # Moves a file locally or remotely.
@@ -560,6 +504,113 @@ sub move
 }
 
 ####################################################################################################################################
+# COMPRESS
+####################################################################################################################################
+sub compress
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strFile);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_COMPRESS;
+
+    my $strDebug = "${strPathType}:${strPathOp}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        confess "${strDebug}: remote operation not supported";
+    }
+    # Run locally
+    else
+    {
+        if (!gzip($strPathOp => "${strPathOp}.gz"))
+        {
+            my $strError = "${strPathOp} could not be compressed:" . $!;
+            my $iErrorCode = 2;
+
+            unless (-e $strPathOp)
+            {
+                $strError = "${strPathOp} does not exist";
+                $iErrorCode = 1;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit ($iErrorCode);
+            }
+
+            confess &log(ERROR, "${strDebug}: " . $strError);
+        }
+        
+        unlink($strPathOp)
+            or die &log(ERROR, "${strDebug}: unable to remove ${strPathOp}");
+    }
+}
+
+####################################################################################################################################
+# PATH_CREATE
+#
+# Creates a path locally or remotely.
+####################################################################################################################################
+sub path_create
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $strPermission = shift;
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strPath);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_PATH_CREATE;
+    my $strDebug = " ${strPathType}:${strPath}, permission " . (defined($strPermission) ? $strPermission : "[undef]");
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    if ($self->is_remote($strPathType))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{path} = ${strPathOp};
+
+        # Add remote info to debug string
+        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
+        &log(TRACE, "${strOperation}: ${strRemote}");
+
+        # Execute the command
+        $self->{oRemote}->command_execute($strOperation, \%oParamHash, false, $strDebug);
+    }
+    else
+    {
+        # Attempt the create the directory
+        if (!mkdir($strPathOp, oct(defined($strPermission) ? $strPermission : $self->{strDefaultPathPermission})))
+        {
+            # Capture the error
+            my $strError = "${strPath} could not be created: " . $!;
+
+            # If running on command line the return directly
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit COMMAND_ERR_PATH_CREATE;
+            }
+
+            # Error the normal way
+            confess &log(ERROR, "${strDebug}: " . $strError);
+        }
+    }
+}
+
+####################################################################################################################################
 # EXISTS - Checks for the existence of a file, but does not imply that the file is readable/writeable.
 #
 # Return: true if file exists, false otherwise
@@ -576,6 +627,7 @@ sub exists
     # Set operation and debug strings
     my $strOperation = OP_FILE_EXISTS;
     my $strDebug = "${strPathType}:${strPathOp}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
 
     # Run remotely
     if ($self->is_remote($strPathType))
@@ -585,20 +637,17 @@ sub exists
 
         $oParamHash{path} = ${strPathOp};
 
-        # Build debug string
-        $strDebug = "${strOperation}: remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . "): " . $strDebug;
-        &log(DEBUG, $strDebug);
+        # Add remote info to debug string
+        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
+        &log(TRACE, "${strOperation}: ${strRemote}");
 
         # Execute the command
-        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq "Y";
+        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq 'Y';
     }
     # Run locally
     else
     {
-        # Build debug string
-        $strDebug = "${strOperation}: local: " . $strDebug;
-        &log(DEBUG, ${strDebug});
-        
         # Stat the file/path to determine if it exists
         my $oStat = lstat($strPathOp);
 
@@ -967,63 +1016,6 @@ sub hash
     }
 
     return $strHash;
-}
-
-####################################################################################################################################
-# COMPRESS
-####################################################################################################################################
-sub compress
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strFile = shift;
-
-    # Get the root path for the file list
-    my $strErrorPrefix = "File->compress";
-    my $bRemote = $self->is_remote($strPathType);
-    my $strPathOp = $self->path_get($strPathType, $strFile);
-
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
-
-    # Run remotely
-    if ($bRemote)
-    {
-        my $strCommand = $self->{strCommand} .
-                         " compress ${strPathOp}";
-
-        # Run via SSH
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($strCommand);
-
-        # Handle any errors
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
-    }
-    # Run locally
-    else
-    {
-        if (!gzip($strPathOp => "${strPathOp}.gz"))
-        {
-            my $strError = "${strPathOp} could not be compressed:" . $!;
-            my $iErrorCode = 2;
-
-            unless (-e $strPathOp)
-            {
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = 1;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                print $strError;
-                exit ($iErrorCode);
-            }
-
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-        }
-    }
 }
 
 ####################################################################################################################################

@@ -83,4 +83,4 @@ if ($strModule eq 'all' || $strModule eq "file")
     BackRestFileTest($strModuleTest);
 }
 
-print "\nTEST COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)\n";
+&log(ASSERT, "TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)");
