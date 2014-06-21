@@ -53,7 +53,6 @@ has strBackupPath => (is => 'bare');            # Backup base path
 has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 
 # Process flags
-has bCompress => (is => 'bare');
 has strStanza => (is => 'bare');
 has iThreadIdx => (is => 'bare');
 
@@ -182,7 +181,6 @@ sub clone
         strBackupHost => $self->{strBackupHost},
         strBackupPath => $self->{strBackupPath},
         strBackupClusterPath => $self->{strBackupClusterPath},
-        bCompress => $self->{bCompress},
         strStanza => $self->{strStanza},
         iThreadIdx => $iThreadIdx
     );
@@ -330,31 +328,6 @@ sub is_remote
 
     return defined($self->{strRemote}) && $self->path_type_get($strPathType) eq $self->{strRemote};
 }
-
-####################################################################################################################################
-# REMOTE_GET
-#
-# Get remote SSH object depending on the path type.
-####################################################################################################################################
-# sub remote_get
-# {
-#     my $self = shift;
-#
-#     # Get the db SSH object
-#     if ($self->path_type_get($strPathType) eq PATH_DB && defined($self->{oDbSSH}))
-#     {
-#         return $self->{oDbSSH};
-#     }
-#
-#     # Get the backup SSH object
-#     if ($self->path_type_get($strPathType) eq PATH_BACKUP && defined($self->{oBackupSSH}))
-#     {
-#         return $self->{oBackupSSH}
-#     }
-#
-#     # Error when no ssh object is found
-#     confess &log(ASSERT, "path type ${strPathType} does not have a defined ssh object");
-# }
 
 ####################################################################################################################################
 # LINK_CREATE !!! NEEDS TO BE CONVERTED
@@ -783,16 +756,17 @@ sub copy
     my $strSourceFile = shift;
     my $strDestinationPathType = shift;
     my $strDestinationFile = shift;
+    my $bSourceCompressed = shift;
+    my $bDestinationCompress = shift;
     my $bIgnoreMissingSource = shift;
-    my $bCompress = shift;
-    my $bPathCreate = shift;
     my $lModificationTime = shift;
     my $strPermission = shift;
+    my $bPathCreate = shift;
 
     # Set defaults
-    $bCompress = defined($bCompress) ? $bCompress : defined($self->{bCompress}) ? $self->{bCompress} : undef;
+    $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
+    $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
-    $bPathCreate = defined($bPathCreate) ? $bPathCreate : false;
 
     # Set working variables
     my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
@@ -805,18 +779,19 @@ sub copy
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
     # Set operation and debug string
-    my $strOperation = "File->unknown";
+    my $strOperation = "File->copy[unknown]";
     my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceFile}" : "") .
                    " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
                    (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
-                   ", compress = " . ($bCompress ? "true" : "false");
+                   ", source_compressed = " . ($bSourceCompressed ? "true" : "false") .
+                   ", destination_compress = " . ($bDestinationCompress ? "true" : "false");
 
     # Open the source and destination files (if needed)
     my $hSourceFile;
     my $hDestinationFile;
 
-    if ($bSourceRemote || $bDestinationRemote || defined($bCompress))
+    if ($bSourceRemote || $bDestinationRemote)
     {
         if (!$bSourceRemote)
         {
@@ -826,11 +801,11 @@ sub copy
 
         if (!$bDestinationRemote)
         {
-            # Determine of the file needs a compression extension
-            if ($bCompress)
-            {
-                $strDestinationOp .= "." . $self->{strCompressExtension};
-            }
+            # # Determine of the file needs a compression extension
+            # if ($bDestinationCompress)
+            # {
+            #     $strDestinationOp .= "." . $self->{strCompressExtension};
+            # }
 
             open($hDestinationFile, ">", $strDestinationTmpOp)
                 or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
@@ -852,17 +827,16 @@ sub copy
         {
             $hOut = $hDestinationFile;
             $strOperation = OP_FILE_COPY_OUT;
+            $strRemote = 'in';
 
             if ($strSourcePathType eq PIPE_STDIN)
             {
-                $strRemote = 'in';
                 $hIn = *STDIN;
             }
             else
             {
-                $strRemote = 'in';
                 $oParamHash{source_file} = ${strSourceOp};
-                $oParamHash{compress} = $bCompress;
+                $oParamHash{source_compressed} = $bSourceCompressed;
 
                 $hIn = $self->{oRemote}->{hOut};
             }
@@ -872,17 +846,16 @@ sub copy
         {
             $hIn = $hSourceFile;
             $strOperation = OP_FILE_COPY_IN;
+            $strRemote = 'out';
 
             if ($strDestinationPathType eq PIPE_STDOUT)
             {
-                $strRemote = 'out';
                 $hOut = *STDOUT;
             }
             else
             {
-                $strRemote = 'out';
                 $oParamHash{destination_file} = ${strDestinationOp};
-                $oParamHash{compress} = $bCompress;
+                $oParamHash{destination_compress} = $bDestinationCompress;
 
                 $hOut = $self->{oRemote}->{hIn};
             }
@@ -911,7 +884,7 @@ sub copy
         }
 
         # Transfer the file
-        $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bCompress);
+        $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
 
         # If this is the controlling process then wait for OK from remote
         if (%oParamHash)
@@ -921,10 +894,10 @@ sub copy
     }
     else
     {
-        if (!defined($strCompress))
-        {
-            
-        }
+        # if (!defined($strCompress))
+        # {
+        #     
+        # }
         # !!! Implement this with pipes from above (refactor copy_in and and copy_out)
         # !!! LOCAL COPY NOT YET IMPLEMENTED
         return false;

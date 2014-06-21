@@ -99,7 +99,12 @@ while ($strCommand ne OP_EXIT)
                 confess "destination_file must be defined";
             }
 
-            $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file}, undef, $oParamHash{compress});
+            if (!defined($oParamHash{destination_compress}))
+            {
+                confess "destination_compress must be defined";
+            }
+
+            $oFile->copy(PIPE_STDIN, undef, PATH_ABSOLUTE, $oParamHash{destination_file}, undef, $oParamHash{destination_compress});
             $oRemote->output_write();
         }
         elsif ($strCommand eq OP_FILE_COPY_OUT)
@@ -109,7 +114,12 @@ while ($strCommand ne OP_EXIT)
                 confess "source_file must be defined";
             }
 
-            $oFile->copy(PATH_ABSOLUTE, $oParamHash{source_file}, PIPE_STDOUT, undef);
+            if (!defined($oParamHash{source_compressed}))
+            {
+                confess "source_file must be defined";
+            }
+
+            $oFile->copy(PATH_ABSOLUTE, $oParamHash{source_file}, PIPE_STDOUT, undef, $oParamHash{source_compressed}, undef);
             $oRemote->output_write();
         }
         else

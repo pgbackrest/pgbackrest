@@ -306,9 +306,18 @@ sub binary_xfer
     my $hIn = shift;
     my $hOut = shift;
     my $strRemote = shift;
-    my $bCompress = shift;
+    my $bSourceCompressed = shift;
+    my $bDestinationCompress = shift;
 
-    $strRemote = defined($strRemote) ? $strRemote : 'none';
+    if (!defined($strRemote))
+    {
+        $strRemote = 'none';
+    }
+    else
+    {
+        $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
+        $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
+    }
 
     my $iBlockSize = $self->{iBlockSize};
     my $iBlockIn;
@@ -320,12 +329,15 @@ sub binary_xfer
     my $hPipeOut;
     my $pId;
 
+    # Both the in and out streams must be defined
     if (!defined($hIn) || !defined($hOut))
     {
         confess &log(ASSERT, "hIn or hOut is not defined");
     }
 
-    if ($strRemote eq "out")
+    # !!! Convert this to a thread when there is time
+    # Spawn a child process to do compression
+    if ($strRemote eq "out" && !$bSourceCompressed)
     {
         pipe $hPipeOut, $hPipeIn;
 
@@ -349,7 +361,8 @@ sub binary_xfer
 
         $hIn = $hPipeOut;
     }
-    elsif ($strRemote eq "in" && defined($bCompress) && !$bCompress)
+    # Spawn a child process to do decompression
+    elsif ($strRemote eq "in" && !$bDestinationCompress)
     {
         pipe $hPipeOut, $hPipeIn;
 
@@ -439,13 +452,14 @@ sub binary_xfer
         }
     }
 
+    # Make sure the child process doing compress/decompress exited successfully
     if (defined($pId))
     {
         if ($strRemote eq "out")
         {
             close($hPipeOut);
         }
-        elsif ($strRemote eq "in" && defined($bCompress) && !$bCompress)
+        elsif ($strRemote eq "in" && !$bDestinationCompress)
         {
             close($hPipeIn);
         }

@@ -801,29 +801,21 @@ sub BackRestFileTest
                     next;
                 }
 
-                # Loop through destination compression
-                for (my $bDestinationCompressed = 0; $bDestinationCompressed <= 1; $bDestinationCompressed++)
+                my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
+
+                my $oFile = BackRest::File->new
+                (
+                    strStanza => "db",
+                    strBackupClusterPath => undef,
+                    strBackupPath => ${strTestPath},
+                    strRemote => $strRemote,
+                    oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
+                );
+
+                for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
                 {
-                    my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
-
-                    # $oRemote = BackRest::Remote->new
-                    # (
-                    #     strHost => $strHost,
-                    #     strUser => $strUser,
-                    #     strCommand => $strCommand,
-                    # );
-
-                    my $oFile = BackRest::File->new
-                    (
-                        strStanza => "db",
-                        bCompress => $bDestinationCompressed,
-                        strBackupClusterPath => undef,
-                        strBackupPath => ${strTestPath},
-                        strRemote => $strRemote,
-                        oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
-                    );
-
-                    for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
+                    # Loop through destination compression
+                    for (my $bDestinationCompress = 0; $bDestinationCompress <= 1; $bDestinationCompress++)
                     {
                         for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
                         {
@@ -837,11 +829,16 @@ sub BackRestFileTest
 
                                 $iRun++;
 
+                                # if ($iRun != 27)
+                                # {
+                                #     next;
+                                # }
+
                                 &log(INFO, "run ${iRun} - " .
                                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
                                                ":${strSourcePath}, srccmp $bSourceCompressed, " .
                                            "dstpth " . (defined($strRemote) && $strRemote eq $strDestinationPath ? "remote" : "local") .
-                                               ":${strDestinationPath}, dstcmp $bDestinationCompressed");
+                                               ":${strDestinationPath}, dstcmp $bDestinationCompress");
 
                                 # Drop the old test directory and create a new one
                                 system("rm -rf test");
@@ -853,16 +850,19 @@ sub BackRestFileTest
                                 my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination.txt";
 
                                 system("echo 'TESTDATA' > ${strSourceFile}");
+                                my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
 
                                 # Create the compressed or uncompressed test file
                                 if ($bSourceCompressed)
                                 {
-                                    system("gzip ${strSourceFile}");
+                                    system("gzip -n ${strSourceFile}");
                                     $strSourceFile .= ".gz";
-                                    $strDestinationFile .= ".gz";
                                 }
 
-                                my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
+                                if ($bDestinationCompress)
+                                {
+                                    $strDestinationFile .= ".gz";
+                                }
 
                                 # Run file copy in an eval block because some errors are expected
                                 my $bReturn;
@@ -870,7 +870,8 @@ sub BackRestFileTest
                                 eval
                                 {
                                     $bReturn = $oFile->copy($strSourcePathType, $strSourceFile,
-                                                            $strDestinationPathType, $strDestinationFile);
+                                                            $strDestinationPathType, $strDestinationFile,
+                                                            $bSourceCompressed, $bDestinationCompress);
                                 };
 
                                 # Check for errors after copy
@@ -939,22 +940,23 @@ sub BackRestFileTest
 
                                 if ($bReturn)
                                 {
-                                    my $strDestinationFileCheck = $strDestinationFile;
+                                    # my $strDestinationFileCheck = $strDestinationFile;
+                                    #
+                                    # # Check for errors after copy
+                                    # if ($bDestinationCompress)
+                                    # {
+                                    #     $strDestinationFileCheck .= ".gz";
+                                    # }
                                     
-                                    # Check for errors after copy
-                                    if ($bDestinationCompressed)
+                                    unless (-e $strDestinationFile)
                                     {
-                                        $strDestinationFileCheck .= ".gz";
-                                    }
-                                    
-                                    unless (-e $strDestinationFileCheck)
-                                    {
-                                        confess "could not find destination file ${strDestinationFileCheck}";
+                                        confess "could not find destination file ${strDestinationFile}";
                                     }
 
-                                    if ($bDestinationCompressed)
+                                    if ($bDestinationCompress)
                                     {
-                                        system("gzip -d ${strDestinationFileCheck}") == 0 or die "could not decompress ${strDestinationFileCheck}";
+                                        system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
+                                        $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
                                     }
                                     
                                     my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
