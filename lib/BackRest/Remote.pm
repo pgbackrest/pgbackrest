@@ -265,6 +265,27 @@ sub read_line
 }
 
 ####################################################################################################################################
+# WRITE_LINE
+# 
+# Write a line data
+####################################################################################################################################
+sub write_line
+{
+    my $self = shift;
+    my $hOut = shift;
+    my $strBuffer = shift;
+
+    $strBuffer = $strBuffer . "\n";
+
+    my $iLineOut = syswrite($hOut, $strBuffer, length($strBuffer));
+
+    if (!defined($iLineOut) || $iLineOut != length($strBuffer))
+    {
+        confess "unable to write " . length($strBuffer) . " byte(s)";
+    }
+}
+
+####################################################################################################################################
 # WAIT_PID
 # 
 # See if the remote process has terminated unexpectedly.

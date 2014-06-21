@@ -824,146 +824,121 @@ sub BackRestFileTest
 
                             for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
                             {
-                                my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
-                                my $strDestinationPath = $bDestinationPathType ? "db" : "backup";
-
-                                $iRun++;
-
-                                # if ($iRun != 27)
-                                # {
-                                #     next;
-                                # }
-
-                                &log(INFO, "run ${iRun} - " .
-                                           "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
-                                               ":${strSourcePath}, srccmp $bSourceCompressed, " .
-                                           "dstpth " . (defined($strRemote) && $strRemote eq $strDestinationPath ? "remote" : "local") .
-                                               ":${strDestinationPath}, dstcmp $bDestinationCompress");
-
-                                # Drop the old test directory and create a new one
-                                system("rm -rf test");
-                                system("mkdir -p test/lock") == 0 or confess "Unable to create test/lock directory";
-                                system("mkdir -p test/backup") == 0 or confess "Unable to create test/backup directory";
-                                system("mkdir -p test/db") == 0 or confess "Unable to create test/db directory";
-
-                                my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source.txt";
-                                my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination.txt";
-
-                                system("echo 'TESTDATA' > ${strSourceFile}");
-                                my $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
-
-                                # Create the compressed or uncompressed test file
-                                if ($bSourceCompressed)
+                                for (my $bSourceMissing = 0; $bSourceMissing <= 1; $bSourceMissing++)
                                 {
-                                    system("gzip -n ${strSourceFile}");
-                                    $strSourceFile .= ".gz";
-                                }
+                                    my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
+                                    my $strDestinationPath = $bDestinationPathType ? "db" : "backup";
 
-                                if ($bDestinationCompress)
-                                {
-                                    $strDestinationFile .= ".gz";
-                                }
+                                    $iRun++;
 
-                                # Run file copy in an eval block because some errors are expected
-                                my $bReturn;
-
-                                eval
-                                {
-                                    $bReturn = $oFile->copy($strSourcePathType, $strSourceFile,
-                                                            $strDestinationPathType, $strDestinationFile,
-                                                            $bSourceCompressed, $bDestinationCompress);
-                                };
-
-                                # Check for errors after copy
-                                if ($@)
-                                {
-                                    # Different remote and destination with different path types should error
-                                    # if (($bBackupRemote || $bDbRemote) && ($strSourcePathType ne $strDestinationPathType))
+                                    # if ($iRun != 27)
                                     # {
-                                    #     print "    different source and remote for same path not supported\n";
                                     #     next;
                                     # }
-                                    # If the error was intentional, then also continue
-                                    # elsif ($bError)
-                                    # {
-                                    #     my $strError = $oFile->error_get();
-                                    #
-                                    #     if (!defined($strError) || ($strError eq ''))
-                                    #     {
-                                    #         confess 'no error message returned';
-                                    #     }
-                                    #
-                                    #     print "    error raised: ${strError}\n";
-                                    #     next;
-                                    # }
-                                    # Else this is an unexpected error
-                                    # else
-                                    # {
-                                        confess $@;
-                                    # }
-                                }
-                                # elsif ($bError)
-                                # {
-                                #     if ($bConfessError)
-                                #     {
-                                #         confess "Value was returned instead of exception thrown when confess error is true";
-                                #     }
-                                #     else
-                                #     {
-                                #         if ($bReturn)
-                                #         {
-                                #             confess "true was returned when an error was generated";
-                                #         }
-                                #         else
-                                #         {
-                                #             my $strError = $oFile->error_get();
-                                #
-                                #             if (!defined($strError) || ($strError eq ''))
-                                #             {
-                                #                 confess 'no error message returned';
-                                #             }
-                                #
-                                #             print "    error returned: ${strError}\n";
-                                #             next;
-                                #         }
-                                #     }
-                                # }
-                                # else
-                                # {
-                                #     if (!$bReturn)
-                                #     {
-                                #         confess "error was returned when no error generated";
-                                #     }
-                                #
-                                #     print "    true was returned\n";
-                                # }
 
-                                if ($bReturn)
-                                {
-                                    # my $strDestinationFileCheck = $strDestinationFile;
-                                    #
-                                    # # Check for errors after copy
-                                    # if ($bDestinationCompress)
-                                    # {
-                                    #     $strDestinationFileCheck .= ".gz";
-                                    # }
+                                    &log(INFO, "run ${iRun} - " .
+                                               "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
+                                                   ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
+                                               "dstpth " . (defined($strRemote) && $strRemote eq $strDestinationPath ? "remote" : "local") .
+                                                   ":${strDestinationPath}, dstcmp $bDestinationCompress");
+
+                                    # Drop the old test directory and create a new one
+                                    system("rm -rf test");
+                                    system("mkdir -p test/lock") == 0 or confess "Unable to create test/lock directory";
+                                    system("mkdir -p test/backup") == 0 or confess "Unable to create test/backup directory";
+                                    system("mkdir -p test/db") == 0 or confess "Unable to create test/db directory";
+
+                                    my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source.txt";
+                                    my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination.txt";
+
+                                    # Create the compressed or uncompressed test file
+                                    my $strSourceHash;
                                     
-                                    unless (-e $strDestinationFile)
+                                    if (!$bSourceMissing)
                                     {
-                                        confess "could not find destination file ${strDestinationFile}";
+                                        system("echo 'TESTDATA' > ${strSourceFile}");
+                                        $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
+
+                                        if ($bSourceCompressed)
+                                        {
+                                            system("gzip ${strSourceFile}");
+                                            $strSourceFile .= ".gz";
+                                        }
                                     }
 
                                     if ($bDestinationCompress)
                                     {
-                                        system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
-                                        $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+                                        $strDestinationFile .= ".gz";
                                     }
-                                    
-                                    my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
-                                    
-                                    if ($strSourceHash ne $strDestinationHash)
+
+                                    # Run file copy in an eval block because some errors are expected
+                                    my $bReturn;
+
+                                    eval
                                     {
-                                        confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                                        $bReturn = $oFile->copy($strSourcePathType, $strSourceFile,
+                                                                $strDestinationPathType, $strDestinationFile,
+                                                                $bSourceCompressed, $bDestinationCompress);
+                                    };
+
+                                    # Check for errors after copy
+                                    if ($@)
+                                    {
+                                        my $oMessage = $@;
+                                        
+                                        if (blessed($oMessage))
+                                        {
+                                            if ($oMessage->isa("BackRest::Exception"))
+                                            {
+                                                if ($bSourceMissing)
+                                                {
+                                                    next;
+                                                }
+                                        
+                                                confess $oMessage->message();
+                                            }
+                                            else
+                                            {
+                                                confess 'unknown error object: ' . $oMessage;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            confess $oMessage;
+                                        }
+                                    }
+
+                                    if ($bReturn)
+                                    {
+                                        if ($bSourceMissing)
+                                        {
+                                            confess "expected source file missing error";
+                                        }
+                                        # my $strDestinationFileCheck = $strDestinationFile;
+                                        #
+                                        # # Check for errors after copy
+                                        # if ($bDestinationCompress)
+                                        # {
+                                        #     $strDestinationFileCheck .= ".gz";
+                                        # }
+                                    
+                                        unless (-e $strDestinationFile)
+                                        {
+                                            confess "could not find destination file ${strDestinationFile}";
+                                        }
+
+                                        if ($bDestinationCompress)
+                                        {
+                                            system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
+                                            $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+                                        }
+                                    
+                                        my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
+                                    
+                                        if ($strSourceHash ne $strDestinationHash)
+                                        {
+                                            confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                                        }
                                     }
                                 }
                             }

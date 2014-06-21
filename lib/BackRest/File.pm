@@ -795,8 +795,27 @@ sub copy
     {
         if (!$bSourceRemote)
         {
-            open($hSourceFile, "<", $strSourceOp)
-                or confess &log(ERROR, "cannot open ${strSourceOp}: " . $!);
+            if (!open($hSourceFile, "<", $strSourceOp))
+            {
+                my $strError = $!;
+                my $iErrorCode = COMMAND_ERR_FILE_READ;
+
+                if ($!{ENOENT})
+                {
+                    # $strError = 'file is missing';
+                    $iErrorCode = COMMAND_ERR_FILE_MISSING;
+                }
+
+                $strError = "cannot open source file ${strSourceOp}: " . $strError;
+
+                if ($strSourcePathType eq PATH_ABSOLUTE)
+                {
+                    $self->{oRemote}->write_line(*STDOUT, "block 0");
+                    confess &log(ERROR, $strError, $iErrorCode);
+                }
+
+                confess &log(ERROR, "${strDebug}: " . $strError, $iErrorCode);
+            }
         }
 
         if (!$bDestinationRemote)
