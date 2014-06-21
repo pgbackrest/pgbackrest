@@ -34,10 +34,14 @@ my $strUserBackRest;
 ####################################################################################################################################
 sub BackRestFileTestSetup
 {
+    my $bPrivate = shift;
     my $bDropOnly = shift;
     
     # Remove the backrest private directory
-    system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/\*'");
+    if (-e "${strTestPath}/private")
+    {
+        system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/private'");
+    }
     
     # Remove the test directory
     system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
@@ -45,10 +49,13 @@ sub BackRestFileTestSetup
     if (defined($bDropOnly) || !$bDropOnly)
     {
         # Create the test directory
-        system("mkdir ${strTestPath}") == 0 or confess "Unable to create test directory";
+        mkdir($strTestPath, oct("0770")) or confess "Unable to create test directory";
         
         # Create the backrest private directory
-        system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die 'unable to create test/private path';
+        if (defined($bPrivate) && $bPrivate)
+        {
+            system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die 'unable to create test/private path';
+        }
     }
 }
 
@@ -130,7 +137,7 @@ sub BackRestFileTest
                            "remote ${bRemote}, exists ${bExists}, error ${bError}, permission ${bPermission}");
 
                 # Setup test directory
-                BackRestFileTestSetup();
+                BackRestFileTestSetup($bError);
 
                 my $strPath = "${strTestPath}/path";
                 my $strPermission;
@@ -255,7 +262,7 @@ sub BackRestFileTest
                            ", dst_exists $bDestinationExists, dst_error $bDestinationError, dst_create $bCreate");
 
                 # Setup test directory
-                BackRestFileTestSetup();
+                BackRestFileTestSetup($bSourceError || $bDestinationError);
 
                 my $strSourceFile = "${strTestPath}/test.txt";
                 my $strDestinationFile = "${strTestPath}/test-dest.txt";
@@ -344,7 +351,7 @@ sub BackRestFileTest
                            "remote $bRemote, exists $bExists, error $bError");
 
                 # Setup test directory
-                BackRestFileTestSetup();
+                BackRestFileTestSetup($bError);
 
                 my $strFile = "${strTestPath}/test.txt";
                 my $strSourceHash;
@@ -408,238 +415,287 @@ sub BackRestFileTest
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test manifest()
     #-------------------------------------------------------------------------------------------------------------------------------
-    # if ($strTest eq 'all' || $strTest eq 'manifest')
-    # {
-    #     $iRun = 0;
-    #
-    #     &log(INFO, "--------------------------------------------------------------------------------");
-    #     &log(INFO, "Test File->manifest()\n");
-    #
-    #     # Create the test data
-    #     system("rm -rf test");
-    #
-    #     system("mkdir -m 750 ${strTestPath}") == 0 or confess "Unable to create test directory";
-    #     system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess "Unable to create test directory";
-    #     system("mkdir -m 750 ${strTestPath}/sub1/sub2") == 0 or confess "Unable to create test directory";
-    #
-    #     system("echo 'TESTDATA' > ${strTestPath}/test.txt");
-    #     utime(1111111111, 1111111111, "${strTestPath}/test.txt");
-    #     system("chmod 1640 ${strTestPath}/test.txt");
-    #
-    #     system("echo 'TESTDATA_' > ${strTestPath}/sub1/test-sub1.txt");
-    #     utime(1111111112, 1111111112, "${strTestPath}/sub1/test-sub1.txt");
-    #     system("chmod 0640 ${strTestPath}/sub1/test-sub1.txt");
-    #
-    #     system("echo 'TESTDATA__' > ${strTestPath}/sub1/sub2/test-sub2.txt");
-    #     utime(1111111113, 1111111113, "${strTestPath}/sub1/sub2/test-sub2.txt");
-    #     system("chmod 0646 ${strTestPath}/sub1/test-sub1.txt");
-    #
-    #     system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/test-hardlink.txt");
-    #     system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/sub2/test-hardlink.txt");
-    #
-    #     system("ln -s .. ${strTestPath}/sub1/test");
-    #     system("chmod 0700 ${strTestPath}/sub1/test");
-    #     system("ln -s ../.. ${strTestPath}/sub1/sub2/test");
-    #     system("chmod 0750 ${strTestPath}/sub1/sub2/test");
-    #
-    #     my $strManifestCompare =
-    #         ".,d,${strUser},${strGroup},0750,,,,\n" .
-    #         "sub1,d,${strUser},${strGroup},0750,,,,\n" .
-    #         "sub1/sub2,d,${strUser},${strGroup},0750,,,,\n" .
-    #         "sub1/sub2/test,l,${strUser},${strGroup},,,,,../..\n" .
-    #         "sub1/sub2/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
-    #         "sub1/sub2/test-sub2.txt,f,${strUser},${strGroup},0666,1111111113,0,11,\n" .
-    #         "sub1/test,l,${strUser},${strGroup},,,,,..\n" .
-    #         "sub1/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
-    #         "sub1/test-sub1.txt,f,${strUser},${strGroup},0646,1111111112,0,10,\n" .
-    #         "test.txt,f,${strUser},${strGroup},1640,1111111111,0,9,";
-    #
-    #     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
-    #     {
-    #         my $oFile = BackRest::File->new
-    #         (
-    #             strStanza => $strStanza,
-    #             bNoCompression => true,
-    #             strCommand => $strCommand,
-    #             strBackupClusterPath => ${strTestPath},
-    #             strBackupPath => ${strTestPath},
-    #             strBackupHost => $bRemote ? $strHost : undef,
-    #             strBackupUser => $bRemote ? $strUser : undef
-    #         );
-    #
-    #         for (my $bError = 0; $bError <= 1; $bError++)
-    #         {
-    #             $iRun++;
-    #
-    #             &log(INFO, "run ${iRun} - " .
-    #                        "remote $bRemote, error $bError");
-    #
-    #             my $strPath = $strTestPath;
-    #
-    #             if ($bError)
-    #             {
-    #                 $strPath .= "-error";
-    #             }
-    #
-    #             # Execute in eval in case of error
-    #             eval
-    #             {
-    #                 my %oManifestHash;
-    #                 $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash);
-    #
-    #                 my $strManifest;
-    #
-    #                 foreach my $strName (sort(keys $oManifestHash{name}))
-    #                 {
-    #                     if (!defined($strManifest))
-    #                     {
-    #                         $strManifest = "";
-    #                     }
-    #                     else
-    #                     {
-    #                         $strManifest .= "\n";
-    #                     }
-    #
-    #                     if (defined($oManifestHash{name}{"${strName}"}{inode}))
-    #                     {
-    #                         $oManifestHash{name}{"${strName}"}{inode} = 0;
-    #                     }
-    #
-    #                     $strManifest .=
-    #                         "${strName}," .
-    #                         $oManifestHash{name}{"${strName}"}{type} . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{user}) ?
-    #                             $oManifestHash{name}{"${strName}"}{user} : "") . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{group}) ?
-    #                             $oManifestHash{name}{"${strName}"}{group} : "") . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{permission}) ?
-    #                             $oManifestHash{name}{"${strName}"}{permission} : "") . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
-    #                             $oManifestHash{name}{"${strName}"}{modification_time} : "") . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{inode}) ?
-    #                             $oManifestHash{name}{"${strName}"}{inode} : "") . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{size}) ?
-    #                             $oManifestHash{name}{"${strName}"}{size} : "") . "," .
-    #                         (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-    #                             $oManifestHash{name}{"${strName}"}{link_destination} : "");
-    #                 }
-    #
-    #                 if ($strManifest ne $strManifestCompare)
-    #                 {
-    #                     confess "manifest is not equal:\n\n${strManifest}\n\ncompare:\n\n${strManifestCompare}\n\n";
-    #                 }
-    #             };
-    #
-    #             if ($@ && !$bError)
-    #             {
-    #                 confess "error raised: " . $@ . "\n";
-    #             }
-    #         }
-    #     }
-    # }
+    if ($strTest eq 'all' || $strTest eq 'manifest')
+    {
+        $iRun = 0;
+
+        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, "Test File->manifest()\n");
+
+        my $strManifestCompare =
+            ".,d,${strUser},${strGroup},0770,,,,\n" .
+            "sub1,d,${strUser},${strGroup},0750,,,,\n" .
+            "sub1/sub2,d,${strUser},${strGroup},0750,,,,\n" .
+            "sub1/sub2/test,l,${strUser},${strGroup},,,,,../..\n" .
+            "sub1/sub2/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
+            "sub1/sub2/test-sub2.txt,f,${strUser},${strGroup},0666,1111111113,0,11,\n" .
+            "sub1/test,l,${strUser},${strGroup},,,,,..\n" .
+            "sub1/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
+            "sub1/test-sub1.txt,f,${strUser},${strGroup},0646,1111111112,0,10,\n" .
+            "test.txt,f,${strUser},${strGroup},1640,1111111111,0,9,";
+
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            # Create the file object
+            my $oFile = BackRest::File->new
+            (
+                strStanza => "db",
+                strBackupClusterPath => undef,
+                strBackupPath => ${strTestPath},
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
+            );
+
+            for (my $bError = 0; $bError <= 1; $bError++)
+            {
+            for (my $bExists = 0; $bExists <= 1; $bExists++)
+            {
+                $iRun++;
+
+                &log(INFO, "run ${iRun} - " .
+                           "remote $bRemote, error $bError, exists $bExists");
+
+                # Setup test directory
+                BackRestFileTestSetup($bError);
+
+                # Setup test data
+                system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess "Unable to create test directory";
+                system("mkdir -m 750 ${strTestPath}/sub1/sub2") == 0 or confess "Unable to create test directory";
+
+                system("echo 'TESTDATA' > ${strTestPath}/test.txt");
+                utime(1111111111, 1111111111, "${strTestPath}/test.txt");
+                system("chmod 1640 ${strTestPath}/test.txt");
+
+                system("echo 'TESTDATA_' > ${strTestPath}/sub1/test-sub1.txt");
+                utime(1111111112, 1111111112, "${strTestPath}/sub1/test-sub1.txt");
+                system("chmod 0640 ${strTestPath}/sub1/test-sub1.txt");
+
+                system("echo 'TESTDATA__' > ${strTestPath}/sub1/sub2/test-sub2.txt");
+                utime(1111111113, 1111111113, "${strTestPath}/sub1/sub2/test-sub2.txt");
+                system("chmod 0646 ${strTestPath}/sub1/test-sub1.txt");
+
+                system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/test-hardlink.txt");
+                system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/sub2/test-hardlink.txt");
+
+                system("ln -s .. ${strTestPath}/sub1/test");
+                system("chmod 0700 ${strTestPath}/sub1/test");
+                system("ln -s ../.. ${strTestPath}/sub1/sub2/test");
+                system("chmod 0750 ${strTestPath}/sub1/sub2/test");
+
+                system("chmod 0770 ${strTestPath}");
+
+                # Create path
+                my $strPath = $strTestPath;
+
+                if ($bError)
+                {
+                    $strPath = $strTestPath . "/private";
+                }
+                elsif (!$bExists)
+                {
+                    $strPath = $strTestPath . "/error";
+                }
+
+                # Execute in eval in case of error
+                my %oManifestHash;
+                my $bErrorExpected = !$bExists || $bError || $bRemote;
+
+                eval
+                {
+                    $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash);
+                };
+
+                # Check for an error
+                if ($@)
+                {
+                    if ($bErrorExpected)
+                    {
+                        next;
+                    }
+                    
+                    confess "error raised: " . $@ . "\n";
+                }
+                
+                # Check for an expected error
+                if ($bErrorExpected)
+                {
+                    confess 'error was expected';
+                }
+
+                my $strManifest;
+
+                # Validate the manifest
+                foreach my $strName (sort(keys $oManifestHash{name}))
+                {
+                    if (!defined($strManifest))
+                    {
+                        $strManifest = "";
+                    }
+                    else
+                    {
+                        $strManifest .= "\n";
+                    }
+
+                    if (defined($oManifestHash{name}{"${strName}"}{inode}))
+                    {
+                        $oManifestHash{name}{"${strName}"}{inode} = 0;
+                    }
+
+                    $strManifest .=
+                        "${strName}," .
+                        $oManifestHash{name}{"${strName}"}{type} . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{user}) ?
+                            $oManifestHash{name}{"${strName}"}{user} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{group}) ?
+                            $oManifestHash{name}{"${strName}"}{group} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{permission}) ?
+                            $oManifestHash{name}{"${strName}"}{permission} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
+                            $oManifestHash{name}{"${strName}"}{modification_time} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{inode}) ?
+                            $oManifestHash{name}{"${strName}"}{inode} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{size}) ?
+                            $oManifestHash{name}{"${strName}"}{size} : "") . "," .
+                        (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
+                            $oManifestHash{name}{"${strName}"}{link_destination} : "");
+                }
+
+                if ($strManifest ne $strManifestCompare)
+                {
+                    confess "manifest is not equal:\n\n${strManifest}\n\ncompare:\n\n${strManifestCompare}\n\n";
+                }
+            }
+            }
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test list()
     #-------------------------------------------------------------------------------------------------------------------------------
-    # if ($strTest eq 'all' || $strTest eq 'list')
-    # {
-    #     $iRun = 0;
-    #
-    #     &log(INFO, "--------------------------------------------------------------------------------");
-    #     &log(INFO, "Test File->list()\n");
-    #
-    #     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
-    #     {
-    #         my $oFile = BackRest::File->new
-    #         (
-    #             strStanza => $strStanza,
-    #             bNoCompression => true,
-    #             strCommand => $strCommand,
-    #             strBackupClusterPath => ${strTestPath},
-    #             strBackupPath => ${strTestPath},
-    #             strBackupHost => $bRemote ? $strHost : undef,
-    #             strBackupUser => $bRemote ? $strUser : undef
-    #         );
-    #
-    #         # Loop through exists
-    #         for (my $bSort = 0; $bSort <= 1; $bSort++)
-    #         {
-    #             my $strSort = $bSort ? undef : "reverse";
-    #
-    #             # Loop through expression
-    #             for (my $iExpression = 0; $iExpression <= 2; $iExpression++)
-    #             {
-    #                 my $strExpression;
-    #
-    #                 # Expression tha returns results
-    #                 if ($iExpression == 1)
-    #                 {
-    #                     $strExpression = "^test2\\..*\$";
-    #                 }
-    #                 # Expression that does not return results
-    #                 elsif ($iExpression == 2)
-    #                 {
-    #                     $strExpression = "^du\$";
-    #                 }
-    #
-    #                 # Loop through exists
-    #                 for (my $bExists = 0; $bExists <= 1; $bExists++)
-    #                 {
-    #                     $iRun++;
-    #
-    #                     &log(INFO, "run ${iRun} - " .
-    #                                "remote $bRemote, exists $bExists, " .
-    #                                "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
-    #                                "sort " . (defined($strSort) ? $strSort : "[undef]"));
-    #
-    #                     my $strPath = "${strTestPath}";
-    #
-    #                     # Drop the old test directory and create a new one
-    #                     system("rm -rf test");
-    #
-    #                     if ($bExists)
-    #                     {
-    #                         system("mkdir test") == 0 or confess "Unable to create test directory";
-    #                         system("echo 'TESTDATA' > ${strPath}/test.txt");
-    #                         system("echo 'TESTDATA2' > ${strPath}/test2.txt");
-    #                     }
-    #
-    #                     my @stryFileCompare = split(/\n/, "test.txt\ntest2.txt");
-    #
-    #                     # Execute in eval in case of error
-    #                     eval
-    #                     {
-    #                         my @stryFileList = $oFile->list(PATH_BACKUP_ABSOLUTE, $strPath, $strExpression, $strSort);
-    #
-    #                         if (defined($strExpression))
-    #                         {
-    #                             @stryFileCompare = grep(/$strExpression/i, @stryFileCompare);
-    #                         }
-    #
-    #                         if (defined($strSort))
-    #                         {
-    #                             @stryFileCompare = sort {$b cmp $a} @stryFileCompare;
-    #                         }
-    #
-    #                         my $strFileList = sprintf("@stryFileList");
-    #                         my $strFileCompare = sprintf("@stryFileCompare");
-    #
-    #                         if ($strFileList ne $strFileCompare)
-    #                         {
-    #                             confess "list (${strFileList})[" . @stryFileList .
-    #                                     "] does not match compare (${strFileCompare})[" . @stryFileCompare . "]";
-    #                         }
-    #                     };
-    #
-    #                     if ($@ && $bExists)
-    #                     {
-    #                         confess "error raised: " . $@ . "\n";
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #     }
-    # }
+    if ($strTest eq 'all' || $strTest eq 'list')
+    {
+        $iRun = 0;
+
+        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, "Test File->list()\n");
+
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            # Create the file object
+            my $oFile = BackRest::File->new
+            (
+                strStanza => "db",
+                strBackupClusterPath => undef,
+                strBackupPath => ${strTestPath},
+                strRemote => $bRemote ? 'backup' : undef,
+                oRemote => $bRemote ? $oRemote : undef
+            );
+
+            # Loop through exists
+            for (my $bSort = 0; $bSort <= 1; $bSort++)
+            {
+                my $strSort = $bSort ? undef : "reverse";
+
+                # Loop through expression
+                for (my $iExpression = 0; $iExpression <= 2; $iExpression++)
+                {
+                    my $strExpression;
+
+                    # Expression tha returns results
+                    if ($iExpression == 1)
+                    {
+                        $strExpression = "^test2\\..*\$";
+                    }
+                    # Expression that does not return results
+                    elsif ($iExpression == 2)
+                    {
+                        $strExpression = "^du\$";
+                    }
+
+                    # Loop through exists
+                    for (my $bExists = 0; $bExists <= 1; $bExists++)
+                    {
+                    
+                    # Loop through error
+                    for (my $bError = 0; $bError <= 1; $bError++)
+                    {
+                        $iRun++;
+
+                        &log(INFO, "run ${iRun} - " .
+                                   "remote $bRemote, error $bError, exists $bExists, " .
+                                   "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
+                                   "sort " . (defined($strSort) ? $strSort : "[undef]"));
+
+                        # Setup test directory
+                        BackRestFileTestSetup($bError);
+
+                        my $strPath = "${strTestPath}";
+
+                        if ($bError)
+                        {
+                            $strPath = "${strTestPath}/private";
+                        }
+                        elsif (!$bExists)
+                        {
+                            $strPath = "${strTestPath}/error";
+                        }
+                        else
+                        {
+                            system("echo 'TESTDATA' > ${strPath}/test.txt");
+                            system("echo 'TESTDATA2' > ${strPath}/test2.txt");
+                        }
+
+                        my @stryFileCompare = split(/\n/, "test.txt\ntest2.txt");
+
+                        # Execute in eval in case of error
+                        my @stryFileList;
+                        my $bErrorExpected = !$bExists || $bError;
+
+                        eval
+                        {
+                            @stryFileList = $oFile->list(PATH_BACKUP_ABSOLUTE, $strPath, $strExpression, $strSort);
+                        };
+
+                        if ($@)
+                        {
+                            if ($bErrorExpected)
+                            {
+                                next;
+                            }
+
+                            confess "error raised: " . $@ . "\n";
+                        }
+                        
+                        if ($bErrorExpected)
+                        {
+                            confess 'error was expected';
+                        }
+
+                        # Validate the list
+                        if (defined($strExpression))
+                        {
+                            @stryFileCompare = grep(/$strExpression/i, @stryFileCompare);
+                        }
+
+                        if (defined($strSort))
+                        {
+                            @stryFileCompare = sort {$b cmp $a} @stryFileCompare;
+                        }
+
+                        my $strFileList = sprintf("@stryFileList");
+                        my $strFileCompare = sprintf("@stryFileCompare");
+
+                        if ($strFileList ne $strFileCompare)
+                        {
+                            confess "list (${strFileList})[" . @stryFileList .
+                                    "] does not match compare (${strFileCompare})[" . @stryFileCompare . "]";
+                        }
+                    }
+                    }
+                }
+            }
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test remove()
@@ -811,7 +867,7 @@ sub BackRestFileTest
                                "remote $bRemote, exists $bExists, error ${bError}");
 
                     # Setup test directory
-                    BackRestFileTestSetup();
+                    BackRestFileTestSetup($bError);
 
                     my $strFile = "${strTestPath}/test.txt";
 
@@ -934,7 +990,7 @@ sub BackRestFileTest
                                ":${strDestinationPath}, dstcmp $bDestinationCompress");
 
                 # Setup test directory
-                BackRestFileTestSetup();
+                BackRestFileTestSetup(false);
                 system("mkdir ${strTestPath}/backup") == 0 or confess "Unable to create test/backup directory";
                 system("mkdir ${strTestPath}/db") == 0 or confess "Unable to create test/db directory";
 

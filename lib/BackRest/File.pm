@@ -69,7 +69,7 @@ use constant
     COMMAND_ERR_LINK_READ              => 5,
     COMMAND_ERR_PATH_MISSING           => 6,
     COMMAND_ERR_PATH_CREATE            => 7,
-    COMMAND_ERR_PARAM                  => 8
+    COMMAND_ERR_PATH_READ              => 8
 };
 
 ####################################################################################################################################
@@ -455,7 +455,7 @@ sub move
     # Run remotely
     if ($self->is_remote($strSourcePathType))
     {
-        confess "${strDebug}: remote operation not supported";
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
     }
     # Run locally
     else
@@ -494,8 +494,7 @@ sub move
 
             if ($strSourcePathType eq PATH_ABSOLUTE)
             {
-                print $strError;
-                exit ($iErrorCode);
+                confess &log(ERROR, $strError, $iErrorCode);
             }
 
             confess &log(ERROR, "${strDebug}: " . $strError);
@@ -524,7 +523,7 @@ sub compress
     # Run remotely
     if ($self->is_remote($strPathType))
     {
-        confess "${strDebug}: remote operation not supported";
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
     }
     # Run locally
     else
@@ -532,18 +531,17 @@ sub compress
         if (!gzip($strPathOp => "${strPathOp}.gz"))
         {
             my $strError = "${strPathOp} could not be compressed:" . $!;
-            my $iErrorCode = 2;
+            my $iErrorCode = COMMAND_ERR_FILE_READ;
 
-            unless (-e $strPathOp)
+            if (!$self->exists($strPathType, $strFile))
             {
                 $strError = "${strPathOp} does not exist";
-                $iErrorCode = 1;
+                $iErrorCode = COMMAND_ERR_FILE_MISSING;
             }
 
             if ($strPathType eq PATH_ABSOLUTE)
             {
-                print $strError;
-                exit ($iErrorCode);
+                confess &log(ERROR, $strError, $iErrorCode);
             }
 
             confess &log(ERROR, "${strDebug}: " . $strError);
@@ -616,7 +614,7 @@ sub path_create
             # If running on command line the return directly
             if ($strPathType eq PATH_ABSOLUTE)
             {
-                confess &log(ERROR, $!, COMMAND_ERR_PATH_CREATE);
+                confess &log(ERROR, $strError, COMMAND_ERR_PATH_CREATE);
             }
 
             # Error the normal way
@@ -650,7 +648,7 @@ sub exists
         # Build param hash
         my %oParamHash;
 
-        $oParamHash{path} = ${strPathOp};
+        $oParamHash{path} = $strPathOp;
 
         # Add remote info to debug string
         my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
@@ -687,6 +685,292 @@ sub exists
     }
 
     return true;
+}
+
+####################################################################################################################################
+# LIST
+####################################################################################################################################
+sub list
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $strExpression = shift;
+    my $strSortOrder = shift;
+
+    # Set defaults
+    $strSortOrder = defined($strSortOrder) ? $strSortOrder : 'forward';
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strPath);
+    my @stryFileList;
+
+    # Get the root path for the file list
+    my $strOperation = OP_FILE_LIST;
+    my $strDebug = "${strPathType}:${strPathOp}" .
+                   ", expression " . (defined($strExpression) ? $strExpression : "[UNDEF]") .
+                   ", sort ${strSortOrder}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{path} = $strPathOp;
+        $oParamHash{sort_order} = $strSortOrder;
+
+        if (defined($strExpression))
+        {
+            $oParamHash{expression} = $strExpression;
+        }
+
+        # Add remote info to debug string
+        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
+        &log(TRACE, "${strOperation}: ${strRemote}");
+
+        # Execute the command
+        my $strOutput = $self->{oRemote}->command_execute($strOperation, \%oParamHash, false, $strDebug);
+        
+        if (defined($strOutput))
+        {
+            @stryFileList = split(/\n/, $strOutput);
+        }
+    }
+    # Run locally
+    else
+    {
+        my $hPath;
+
+        if (!opendir($hPath, $strPathOp))
+        {
+            my $strError = "${strPathOp} could not be read: " . $!;
+            my $iErrorCode = COMMAND_ERR_PATH_READ;
+
+            if (!$self->exists($strPathType, $strPath))
+            {
+                $strError = "${strPathOp} does not exist";
+                $iErrorCode = COMMAND_ERR_PATH_MISSING;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                confess &log(ERROR, $strError, $iErrorCode);
+            }
+
+            confess &log(ERROR, "${strDebug}: " . $strError);
+        }
+
+        @stryFileList = grep(!/^(\.)|(\.\.)$/i, readdir($hPath));
+
+        close($hPath);
+
+        if (defined($strExpression))
+        {
+            @stryFileList = grep(/$strExpression/i, @stryFileList);
+        }
+
+        # Reverse sort
+        if (defined($strSortOrder) && $strSortOrder eq "reverse")
+        {
+            @stryFileList = sort {$b cmp $a} @stryFileList;
+        }
+        # Normal sort
+        else
+        {
+            @stryFileList = sort @stryFileList;
+        }
+    }
+
+    # Return file list
+    return @stryFileList;
+}
+
+####################################################################################################################################
+# MANIFEST
+#
+# Builds a path/file manifest starting with the base path and including all subpaths.  The manifest contains all the information
+# needed to perform a backup or a delta with a previous backup.
+####################################################################################################################################
+sub manifest
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $oManifestHashRef = shift;
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strPath);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_EXISTS;
+    my $strDebug = "${strPathType}:${strPathOp}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+    }
+    # Run locally
+    else
+    {
+        manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
+    }
+}
+
+sub manifest_recurse
+{
+    my $strPathType = shift;
+    my $strPathOp = shift;
+    my $strPathFileOp = shift;
+    my $iDepth = shift;
+    my $oManifestHashRef = shift;
+
+    my $strErrorPrefix = "File->manifest";
+    my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : "");
+    my $hPath;
+
+    if (!opendir($hPath, $strPathRead))
+    {
+        my $strError = "${strPathRead} could not be read: " . $!;
+        my $iErrorCode = 2;
+
+        unless (-e $strPathRead)
+        {
+            $strError = "${strPathRead} does not exist";
+            $iErrorCode = 1;
+        }
+
+        if ($strPathType eq PATH_ABSOLUTE)
+        {
+            print $strError;
+            exit ($iErrorCode);
+        }
+
+        confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+    }
+
+    my @stryFileList = grep(!/^\..$/i, readdir($hPath));
+
+    close($hPath);
+
+    foreach my $strFile (@stryFileList)
+    {
+        my $strPathFile = "${strPathRead}/$strFile";
+        my $bCurrentDir = $strFile eq ".";
+
+        if ($iDepth != 0)
+        {
+            if ($bCurrentDir)
+            {
+                $strFile = $strPathFileOp;
+                $strPathFile = $strPathRead;
+            }
+            else
+            {
+                $strFile = "${strPathFileOp}/${strFile}";
+            }
+        }
+
+        my $oStat = lstat($strPathFile);
+
+        if (!defined($oStat))
+        {
+            if (-e $strPathFile)
+            {
+                my $strError = "${strPathFile} could not be read: " . $!;
+
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    print $strError;
+                    exit COMMAND_ERR_FILE_READ;
+                }
+
+                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+            }
+
+            next;
+        }
+
+        # Check for regular file
+        if (S_ISREG($oStat->mode))
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "f";
+
+            # Get inode
+            ${$oManifestHashRef}{name}{"${strFile}"}{inode} = $oStat->ino;
+
+            # Get size
+            ${$oManifestHashRef}{name}{"${strFile}"}{size} = $oStat->size;
+
+            # Get modification time
+            ${$oManifestHashRef}{name}{"${strFile}"}{modification_time} = $oStat->mtime;
+        }
+        # Check for directory
+        elsif (S_ISDIR($oStat->mode))
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "d";
+        }
+        # Check for link
+        elsif (S_ISLNK($oStat->mode))
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "l";
+
+            # Get link destination
+            ${$oManifestHashRef}{name}{"${strFile}"}{link_destination} = readlink($strPathFile);
+
+            if (!defined(${$oManifestHashRef}{name}{"${strFile}"}{link_destination}))
+            {
+                if (-e $strPathFile)
+                {
+                    my $strError = "${strPathFile} error reading link: " . $!;
+
+                    if ($strPathType eq PATH_ABSOLUTE)
+                    {
+                        print $strError;
+                        exit COMMAND_ERR_LINK_READ;
+                    }
+
+                    confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+                }
+            }
+        }
+        else
+        {
+            my $strError = "${strPathFile} is not of type directory, file, or link";
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                print $strError;
+                exit COMMAND_ERR_FILE_TYPE;
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        }
+
+        # Get user name
+        ${$oManifestHashRef}{name}{"${strFile}"}{user} = getpwuid($oStat->uid);
+
+        # Get group name
+        ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
+
+        # Get permissions
+        if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne "l")
+        {
+            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf("%04o", S_IMODE($oStat->mode));
+        }
+
+        # Recurse into directories
+        if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
+        {
+            manifest_recurse($strPathType, $strPathOp,
+                             $strFile,
+                             $iDepth + 1, $oManifestHashRef);
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -1034,97 +1318,6 @@ sub hash
 }
 
 ####################################################################################################################################
-# LIST
-####################################################################################################################################
-sub list
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strPath = shift;
-    my $strExpression = shift;
-    my $strSortOrder = shift;
-
-    # Get the root path for the file list
-    my @stryFileList;
-    my $strErrorPrefix = "File->list";
-    my $bRemote = $self->is_remote($strPathType);
-    my $strPathOp = $self->path_get($strPathType, $strPath);
-
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}" .
-                                        ", expression " . (defined($strExpression) ? $strExpression : "[UNDEF]") .
-                                        ", sort " . (defined($strSortOrder) ? $strSortOrder : "[UNDEF]"));
-
-    # Run remotely
-    if ($self->is_remote($strPathType))
-    {
-        my $strCommand = $self->{strCommand} .
-                         (defined($strSortOrder) && $strSortOrder eq "reverse" ? " --sort=reverse" : "") .
-                         (defined($strExpression) ? " --expression=\"" . $strExpression . "\"" : "") .
-                         " list ${strPathOp}";
-
-        # Run via SSH
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($strCommand);
-
-        # Handle any errors
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
-
-        @stryFileList = split(/\n/, $strOutput);
-    }
-    # Run locally
-    else
-    {
-        my $hPath;
-
-        if (!opendir($hPath, $strPathOp))
-        {
-            my $strError = "${strPathOp} could not be read:" . $!;
-            my $iErrorCode = 2;
-
-            unless (-e $strPath)
-            {
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = 1;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                print $strError;
-                exit ($iErrorCode);
-            }
-
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-        }
-
-        @stryFileList = grep(!/^(\.)|(\.\.)$/i, readdir($hPath));
-
-        close($hPath);
-
-        if (defined($strExpression))
-        {
-            @stryFileList = grep(/$strExpression/i, @stryFileList);
-        }
-
-        # Reverse sort
-        if (defined($strSortOrder) && $strSortOrder eq "reverse")
-        {
-            @stryFileList = sort {$b cmp $a} @stryFileList;
-        }
-        # Normal sort
-        else
-        {
-            @stryFileList = sort @stryFileList;
-        }
-    }
-
-    # Return file list
-    return @stryFileList;
-}
-
-####################################################################################################################################
 # REMOVE
 ####################################################################################################################################
 sub remove
@@ -1195,202 +1388,6 @@ sub remove
     }
 
     return $bRemoved;
-}
-
-####################################################################################################################################
-# MANIFEST
-#
-# Builds a path/file manifest starting with the base path and including all subpaths.  The manifest contains all the information
-# needed to perform a backup or a delta with a previous backup.
-####################################################################################################################################
-sub manifest
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strPath = shift;
-    my $oManifestHashRef = shift;
-
-    # Get the root path for the manifest
-    my $strErrorPrefix = "File->manifest";
-    my $bRemote = $self->is_remote($strPathType);
-    my $strPathOp = $self->path_get($strPathType, $strPath);
-
-    &log(TRACE, "${strErrorPrefix}: " . ($bRemote ? "remote" : "local") . " ${strPathType}:${strPathOp}");
-
-    # Run remotely
-    if ($bRemote)
-    {
-        # Build the command
-        my $strCommand = $self->{strCommand} . " manifest ${strPathOp}";
-
-        # Run it remotely
-        my $oSSH = $self->remote_get($strPathType);
-        my $strOutput = $oSSH->capture($strCommand);
-
-        if ($oSSH->error)
-        {
-            confess &log(ERROR, "${strErrorPrefix} remote (${strCommand}): " . (defined($strOutput) ? $strOutput : $oSSH->error));
-        }
-
-        return data_hash_build($oManifestHashRef, $strOutput, "\t", ".");
-    }
-    # Run locally
-    else
-    {
-        manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
-    }
-}
-
-sub manifest_recurse
-{
-    my $strPathType = shift;
-    my $strPathOp = shift;
-    my $strPathFileOp = shift;
-    my $iDepth = shift;
-    my $oManifestHashRef = shift;
-
-    my $strErrorPrefix = "File->manifest";
-    my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : "");
-    my $hPath;
-
-    if (!opendir($hPath, $strPathRead))
-    {
-        my $strError = "${strPathRead} could not be read:" . $!;
-        my $iErrorCode = 2;
-
-        unless (-e $strPathRead)
-        {
-            $strError = "${strPathRead} does not exist";
-            $iErrorCode = 1;
-        }
-
-        if ($strPathType eq PATH_ABSOLUTE)
-        {
-            print $strError;
-            exit ($iErrorCode);
-        }
-
-        confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-    }
-
-    my @stryFileList = grep(!/^\..$/i, readdir($hPath));
-
-    close($hPath);
-
-    foreach my $strFile (@stryFileList)
-    {
-        my $strPathFile = "${strPathRead}/$strFile";
-        my $bCurrentDir = $strFile eq ".";
-
-        if ($iDepth != 0)
-        {
-            if ($bCurrentDir)
-            {
-                $strFile = $strPathFileOp;
-                $strPathFile = $strPathRead;
-            }
-            else
-            {
-                $strFile = "${strPathFileOp}/${strFile}";
-            }
-        }
-
-        my $oStat = lstat($strPathFile);
-
-        if (!defined($oStat))
-        {
-            if (-e $strPathFile)
-            {
-                my $strError = "${strPathFile} could not be read: " . $!;
-
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    print $strError;
-                    exit COMMAND_ERR_FILE_READ;
-                }
-
-                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-            }
-
-            next;
-        }
-
-        # Check for regular file
-        if (S_ISREG($oStat->mode))
-        {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "f";
-
-            # Get inode
-            ${$oManifestHashRef}{name}{"${strFile}"}{inode} = $oStat->ino;
-
-            # Get size
-            ${$oManifestHashRef}{name}{"${strFile}"}{size} = $oStat->size;
-
-            # Get modification time
-            ${$oManifestHashRef}{name}{"${strFile}"}{modification_time} = $oStat->mtime;
-        }
-        # Check for directory
-        elsif (S_ISDIR($oStat->mode))
-        {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "d";
-        }
-        # Check for link
-        elsif (S_ISLNK($oStat->mode))
-        {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "l";
-
-            # Get link destination
-            ${$oManifestHashRef}{name}{"${strFile}"}{link_destination} = readlink($strPathFile);
-
-            if (!defined(${$oManifestHashRef}{name}{"${strFile}"}{link_destination}))
-            {
-                if (-e $strPathFile)
-                {
-                    my $strError = "${strPathFile} error reading link: " . $!;
-
-                    if ($strPathType eq PATH_ABSOLUTE)
-                    {
-                        print $strError;
-                        exit COMMAND_ERR_LINK_READ;
-                    }
-
-                    confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-                }
-            }
-        }
-        else
-        {
-            my $strError = "${strPathFile} is not of type directory, file, or link";
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                print $strError;
-                exit COMMAND_ERR_FILE_TYPE;
-            }
-
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
-        }
-
-        # Get user name
-        ${$oManifestHashRef}{name}{"${strFile}"}{user} = getpwuid($oStat->uid);
-
-        # Get group name
-        ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
-
-        # Get permissions
-        if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne "l")
-        {
-            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf("%04o", S_IMODE($oStat->mode));
-        }
-
-        # Recurse into directories
-        if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
-        {
-            manifest_recurse($strPathType, $strPathOp,
-                             $strFile,
-                             $iDepth + 1, $oManifestHashRef);
-        }
-    }
 }
 
 no Moose;

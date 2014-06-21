@@ -117,6 +117,24 @@ while ($strCommand ne OP_EXIT)
                          
             $oRemote->output_write();
         }
+        elsif ($strCommand eq OP_FILE_LIST)
+        {
+            my $strOutput;
+            
+            foreach my $strFile ($oFile->list(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'),
+                                              param_get(\%oParamHash, 'expression', false),
+                                              param_get(\%oParamHash, 'sort_order')))
+            {
+                if (defined($strOutput))
+                {
+                    $strOutput .= "\n";
+                }
+
+                $strOutput .= $strFile;
+            }
+                                            
+            $oRemote->output_write($strOutput);
+        }
         elsif ($strCommand eq OP_FILE_PATH_CREATE)
         {
             $oFile->path_create(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), param_get(\%oParamHash, 'permission', false));
