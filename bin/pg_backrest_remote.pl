@@ -113,12 +113,12 @@ while ($strCommand ne OP_EXIT)
         }
         elsif ($strCommand eq OP_FILE_COPY)
         {
-            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
-                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                         param_get(\%oParamHash, 'source_compressed'),
-                         param_get(\%oParamHash, 'destination_compress'));
-                         
-            $oRemote->output_write();
+            $oRemote->output_write(
+                $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                             PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                             param_get(\%oParamHash, 'source_compressed'),
+                             param_get(\%oParamHash, 'destination_compress'),
+                             param_get(\%oParamHash, 'ignore_missing_source', false)) ? 'Y' : 'N');
         }
         elsif ($strCommand eq OP_FILE_COPY_IN)
         {

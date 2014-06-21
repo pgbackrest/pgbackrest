@@ -570,111 +570,6 @@ sub move
 }
 
 ####################################################################################################################################
-# PIPE_TO_STRING Function
-#
-# Copies data from a file handle into a string.
-####################################################################################################################################
-# sub pipe_to_string
-# {
-#     my $self = shift;
-#     my $hOut = shift;
-#
-#     my $strBuffer;
-#     my $hString = IO::String->new($strBuffer);
-#     $self->pipe($hOut, $hString);
-#
-#     return $strBuffer;
-# }
-
-####################################################################################################################################
-# PIPE Function
-#
-# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
-####################################################################################################################################
-# sub pipe
-# {
-#     my $self = shift;
-#     my $hIn = shift;
-#     my $hOut = shift;
-#     my $bCompress = shift;
-#     my $bUncompress = shift;
-#
-#     # If compression is requested and the file is not already compressed
-#     if (defined($bCompress) && $bCompress)
-#     {
-#         if (!gzip($hIn => $hOut))
-#         {
-#             confess $GzipError;
-#         }
-#     }
-#     # If no compression is requested and the file is already compressed
-#     elsif (defined($bUncompress) && $bUncompress)
-#     {
-#         if (!gunzip($hIn => $hOut))
-#         {
-#             confess $GunzipError;
-#         }
-#     }
-#     # Else it's a straight copy
-#     else
-#     {
-#         my $strBuffer;
-#         my $iResultRead;
-#         my $iResultWrite;
-#
-#         # Read from the input handle
-#         while (($iResultRead = sysread($hIn, $strBuffer, BLOCK_SIZE)) != 0)
-#         {
-#             if (!defined($iResultRead))
-#             {
-#                 confess $!;
-#                 last;
-#             }
-#             else
-#             {
-#                 # Write to the output handle
-#                 $iResultWrite = syswrite($hOut, $strBuffer, $iResultRead);
-#
-#                 if (!defined($iResultWrite) || $iResultWrite != $iResultRead)
-#                 {
-#                     confess $!;
-#                     last;
-#                 }
-#             }
-#         }
-#     }
-# }
-
-####################################################################################################################################
-# WAIT_PID
-####################################################################################################################################
-# sub wait_pid
-# {
-#     my $self = shift;
-#     my $pId = shift;
-#     my $strCommand = shift;
-#     my $hIn = shift;
-#     my $hOut = shift;
-#     my $hErr = shift;
-#
-#     # Close hIn
-#     close($hIn);
-#
-#     # Read STDERR into a string
-#     my $strError = defined($hErr) ? $self->pipe_to_string($hErr) : "[unknown]";
-#
-#     # Wait for the process to finish and report any errors
-#     waitpid($pId, 0);
-#     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-#
-#     if ($iExitStatus != 0)
-#     {
-#         confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
-#                             (defined($strError) ? $strError : "[unknown]"));
-#     }
-# }
-
-####################################################################################################################################
 # EXISTS - Checks for the existence of a file, but does not imply that the file is readable/writeable.
 #
 # Return: true if file exists, false otherwise
@@ -780,14 +675,15 @@ sub copy
     my $strDestinationTmpOp = $strDestinationPathType eq PIPE_STDOUT ?
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
-    # Set operation and debug string
-#    my $strOperation = "File->copy[unknown]";
+    # Set debug string and log
     my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceFile}" : "") .
                    " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
                    (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
                    ", source_compressed = " . ($bSourceCompressed ? "true" : "false") .
-                   ", destination_compress = " . ($bDestinationCompress ? "true" : "false");
+                   ", destination_compress = " . ($bDestinationCompress ? "true" : "false") .
+                   ", ignore_missing_source = " . ($bIgnoreMissingSource ? "true" : "false");
+    &log(DEBUG, OP_FILE_COPY . ": ${strDebug}");
 
     # Open the source and destination files (if needed)
     my $hSourceFile;
@@ -804,13 +700,22 @@ sub copy
             {
                 # $strError = 'file is missing';
                 $iErrorCode = COMMAND_ERR_FILE_MISSING;
+
+                if ($bIgnoreMissingSource && $strDestinationPathType ne PIPE_STDOUT)
+                {
+                    return false;
+                }
             }
 
             $strError = "cannot open source file ${strSourceOp}: " . $strError;
 
             if ($strSourcePathType eq PATH_ABSOLUTE)
             {
-                $self->{oRemote}->write_line(*STDOUT, "block 0");
+                if ($strDestinationPathType eq PIPE_STDOUT)
+                {
+                    $self->{oRemote}->write_line(*STDOUT, "block 0");
+                }
+                
                 confess &log(ERROR, $strError, $iErrorCode);
             }
 
@@ -882,12 +787,21 @@ sub copy
             $oParamHash{source_compressed} = $bSourceCompressed;
             $oParamHash{destination_file} = $strDestinationOp;
             $oParamHash{destination_compress} = $bDestinationCompress;
+
+            if ($bIgnoreMissingSource)
+            {
+                $oParamHash{ignore_missing_source} = $bIgnoreMissingSource;
+            }
         }
 
         # Build debug string
-        $strDebug = "${strOperation}: " . (%oParamHash ? "remote (" .
-                    $self->{oRemote}->command_param_string(\%oParamHash) . ") :" : "") . $strDebug;
-        &log(DEBUG, $strDebug);
+        if (%oParamHash)
+        {
+            my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+            $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
+
+            &log(TRACE, "${strOperation}: ${strRemote}");
+        }
 
         # If an operation is defined then write it
         if (%oParamHash)
@@ -904,15 +818,45 @@ sub copy
         # If this is the controlling process then wait for OK from remote
         if (%oParamHash)
         {
-            $self->{oRemote}->output_read(false, $strDebug);
+            # Test for an error when reading output
+            my $strOutput;
+            
+            eval
+            {
+                $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug);
+
+            };
+            
+            # If there is an error then evaluate
+            if ($@)
+            {
+                my $oMessage = $@;
+                
+                # We'll ignore this error if the source file was missing and missing file exception was returned
+                # and bIgnoreMissingSource is set
+                if ($bIgnoreMissingSource && $strRemote eq "in" && $oMessage->isa("BackRest::Exception") &&
+                    $oMessage->code() == COMMAND_ERR_FILE_MISSING)
+                {
+                    close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
+                    unlink($strDestinationTmpOp) or confess &log(ERROR, "cannot remove file ${strDestinationTmpOp}");
+
+                    return false;
+                }
+
+                # Otherwise report the error
+                confess $oMessage;
+            }
+
+            # If this was a remote copy, then return the result
+            if ($strOperation eq OP_FILE_COPY)
+            {
+                return false; #$strOutput eq 'N' ? true : false;
+            }
         }
     }
     # Else this is a local operation
     else
     {
-        $strDebug = OP_FILE_COPY . ": $strDebug";
-        &log(DEBUG, $strDebug);
-
         # If the source is compressed and the destination is not then decompress
         if ($bSourceCompressed && !$bDestinationCompress)
         {
