@@ -235,7 +235,7 @@ my $oRemote;
 
 if ($strRemote ne REMOTE_NONE)
 {
-    my $oRemote = BackRest::Remote->new
+    $oRemote = BackRest::Remote->new
     (
         strHost => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
         strUser => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
@@ -261,7 +261,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     }
 
     # Init the file object
-    my $oFile = pg_backrest_file->new
+    my $oFile = BackRest::File->new
     (
         strStanza => $strStanza,
         strRemote => $strRemote,
@@ -337,7 +337,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
 
         # Run file_init_archive - this is the minimal config needed to run archiving
-        my $oFile = pg_backrest_file->new
+        my $oFile = BackRest::File->new
         (
             # strStanza => $strStanza,
             # bNoCompression => !$bCompress,
@@ -408,7 +408,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         eval
         {
             # Run file_init_archive - this is the minimal config needed to run archive pulling
-            my $oFile = pg_backrest_file->new
+            my $oFile = BackRest::File->new
             (
                 # strStanza => $strStanza,
                 # bNoCompression => !$bCompress,
@@ -449,7 +449,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 &log(WARN, "errors during transfer, starting compression");
 
                 # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
-                my $oFile = pg_backrest_file->new
+                my $oFile = BackRest::File->new
                 (
                     # strStanza => $strStanza,
                     # bNoCompression => false,
@@ -499,7 +499,7 @@ log_file_set(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/$
 # GET MORE CONFIG INFO
 ####################################################################################################################################
 # Make sure backup and expire operations happen on the db side
-if ($strRemote eq backup)
+if ($strRemote eq REMOTE_BACKUP)
 {
     confess &log(ERROR, 'backup and expire operations must run on the backup host');
 }
@@ -536,7 +536,7 @@ if (!lock_file_create($strLockPath))
 }
 
 # Run file_init_archive - the rest of the file config required for backup and restore
-my $oFile = pg_backrest_file->new
+my $oFile = BackRest::File->new
 (
     strStanza => $strStanza,
     strRemote => $strRemote,
@@ -544,7 +544,7 @@ my $oFile = pg_backrest_file->new
     strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
 );
 
-my $oDb = pg_backrest_db->new
+my $oDb = BackRest::Db->new
 (
     strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
     strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),

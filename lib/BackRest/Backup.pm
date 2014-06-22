@@ -224,7 +224,7 @@ sub archive_get
     my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSourceArchive));
 
     # Get the name of the requested archive file (may have hash info and compression extension)
-    my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath,
+    my @stryArchiveFile = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
         "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
 
     # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
@@ -372,7 +372,7 @@ sub archive_pull
 
     &log(DEBUG, "local archive path max = ${strPathMax}");
 
-    foreach my $strPath ($oFile->file_list_get(PATH_DB_ABSOLUTE, $strArchivePath, "^[0-F]{16}\$"))
+    foreach my $strPath ($oFile->list(PATH_DB_ABSOLUTE, $strArchivePath, "^[0-F]{16}\$"))
     {
         if ($strPath lt $strPathMax)
         {
@@ -572,12 +572,12 @@ sub backup_type_find
 
     if ($strType eq 'incremental')
     {
-        $strDirectory = ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse"))[0];
+        $strDirectory = ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse"))[0];
     }
 
     if (!defined($strDirectory) && $strType ne "full")
     {
-        $strDirectory = ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse"))[0];
+        $strDirectory = ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse"))[0];
     }
 
     return $strDirectory;
@@ -755,10 +755,11 @@ sub backup_manifest_build
         $strLevel = "base";
     }
 
-    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strDbClusterPath);
-    my $strName;
+    my %oManifestHash;
 
-    foreach $strName (sort(keys $oManifestHash{name}))
+    $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash);
+
+    foreach my $strName (sort(keys $oManifestHash{name}))
     {
         # Skip certain files during backup
         if ($strName =~ /^pg\_xlog\/.*/ ||    # pg_xlog/ - this will be reconstructed
@@ -1258,7 +1259,8 @@ sub backup
     &log(DEBUG, "cluster path is $strDbClusterPath");
 
     # Create the cluster backup path
-    $oFile->path_create(PATH_BACKUP_CLUSTER);
+    $oFile->path_create(PATH_BACKUP, "backup", undef, true);
+    $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
 
     # Find the previous backup based on the type
     my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
@@ -1317,7 +1319,8 @@ sub backup
     &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{"archive-start"});
 
     # Build the backup manifest
-    my %oTablespaceMap = $oDb->tablespace_map_get();
+    my %oTablespaceMap;
+    $oDb->tablespace_map_get(\%oTablespaceMap);
 
     backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
 
@@ -1369,7 +1372,7 @@ sub backup
 
             wait_for_file($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 600);
 
-            my @stryArchiveFile = $oFile->file_list_get(PATH_BACKUP_ABSOLUTE, $strArchivePath,
+            my @stryArchiveFile = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
                 "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
 
             if (scalar @stryArchiveFile != 1)
@@ -1487,13 +1490,13 @@ sub backup_expire
         }
 
         my $iIndex = $iFullRetention;
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
+        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
 
         while (defined($stryPath[$iIndex]))
         {
             # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
             # be consistent if the process dies
-            foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
+            foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, "^" . $stryPath[$iIndex] . ".*", "reverse"))
             {
                 system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
             }
@@ -1513,12 +1516,12 @@ sub backup_expire
             confess &log(ERROR, "differential_rentention must be a number >= 1");
         }
 
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
+        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
 
         if (defined($stryPath[$iDifferentialRetention]))
         {
             # Get a list of all differential and incremental backups
-            foreach $strPath ($oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
+            foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
             {
                 # Remove all differential and incremental backups before the oldest valid differential
                 if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
@@ -1540,15 +1543,15 @@ sub backup_expire
     # Determine which backup type to use for archive retention (full, differential, incremental)
     if ($strArchiveRetentionType eq "full")
     {
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
+        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "differential" || $strArchiveRetentionType eq "diff")
     {
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
+        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "incremental" || $strArchiveRetentionType eq "incr")
     {
-        @stryPath = $oFile->file_list_get(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse");
+        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), "reverse");
     }
     else
     {
@@ -1607,7 +1610,7 @@ sub backup_expire
     &log(INFO, "archive retention starts at " . $strArchiveLast);
 
     # Remove any archive directories or files that are out of date
-    foreach $strPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
+    foreach $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, undef, "^[0-F]{16}\$"))
     {
         &log(DEBUG, "found major archive path " . $strPath);
 
@@ -1626,7 +1629,7 @@ sub backup_expire
             my $strSubPath;
 
             # Look for archive files in the archive directory
-            foreach $strSubPath ($oFile->file_list_get(PATH_BACKUP_ARCHIVE, $strPath, "^[0-F]{24}.*\$"))
+            foreach $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strPath, "^[0-F]{24}.*\$"))
             {
                 # Delete if the first 24 characters less than the current archive file
                 if ($strSubPath lt substr($strArchiveLast, 0, 24))

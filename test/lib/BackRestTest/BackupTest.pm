@@ -55,7 +55,7 @@ sub BackRestTestBackup_ClusterCreate
     my $iPort = shift;
 
     BackRestTestCommon_Execute("initdb -D $strPath -A trust");
-    BackRestTestCommon_Execute("pg_ctl start -o \"-c port=$iPort\" -D $strPath -l $strPath/postgresql.log -w -s");
+    BackRestTestCommon_Execute("pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command=true\" -D $strPath -l $strPath/postgresql.log -w -s");
 }
 
 ####################################################################################################################################
@@ -63,6 +63,7 @@ sub BackRestTestBackup_ClusterCreate
 ####################################################################################################################################
 sub BackRestTestBackup_Setup
 {
+    my $strRemote;
     my $bDropOnly = shift;
 
     BackRestTestBackup_ClusterDrop($strTestPath . "/db/common");
@@ -91,7 +92,7 @@ sub BackRestTestBackup_Setup
         BackRestTestBackup_ClusterCreate($strTestPath . "/db/common", BackRestTestCommon_DbPortGet);
 
         # Create the backrest directory
-        BackRestTestCommon_ExecuteBackRest("mkdir -m 700 ${strTestPath}/backrest")
+        BackRestTestCommon_ExecuteBackRest("mkdir -m 770 ${strTestPath}/backrest")
     }
 }
 
@@ -123,15 +124,11 @@ sub BackRestTestBackup_Test
 
     BackRestTestBackup_Setup();
 
-    #-------------------------------------------------------------------------------------------------------------------------------
-    # Create remote
-    #-------------------------------------------------------------------------------------------------------------------------------
-    # my $oRemote = BackRest::Remote->new
-    # (
-    #     strHost => $strHost,
-    #     strUser => $strUser,
-    #     strCommand => BackRestTestCommon_CommandRemoteGet(),
-    # );
+    BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', REMOTE_BACKUP);
+    BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', REMOTE_DB);
+    
+    BackRestTestCommon_ExecuteBackRest(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
+                                       "/pg_backrest.conf --type=incr --stanza=${strStanza} backup");
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test path_create()
@@ -255,7 +252,7 @@ sub BackRestTestBackup_Test
     #     }
     # }
 
-    BackRestTestBackup_Setup(true);
+#    BackRestTestBackup_Setup(true);
 }
 
 1;

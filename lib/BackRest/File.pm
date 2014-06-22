@@ -134,7 +134,7 @@ sub BUILD
     my $self = shift;
 
     # If remote is defined check parameters and open session
-    if (defined($self->{strRemote}))
+    if (defined($self->{strRemote}) && $self->{strRemote} ne REMOTE_NONE)
     {
         # Make sure remote is valid
         if ($self->{strRemote} ne REMOTE_DB && $self->{strRemote} ne REMOTE_BACKUP)
@@ -544,6 +544,7 @@ sub path_create
     my $strPathType = shift;
     my $strPath = shift;
     my $strPermission = shift;
+    my $bIgnoreExists = shift;
 
     # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath);
@@ -575,31 +576,34 @@ sub path_create
     }
     else
     {
-        # Attempt the create the directory
-        my $bResult;
-
-        if (defined($strPermission))
+        if (!($bIgnoreExists && $self->exists($strPathType, $strPath)))
         {
-            $bResult = mkdir($strPathOp, oct($strPermission));
-        }
-        else
-        {
-            $bResult = mkdir($strPathOp);
-        }
+            # Attempt the create the directory
+            my $bResult;
 
-        if (!$bResult)
-        {
-            # Capture the error
-            my $strError = "${strPathOp} could not be created: " . $!;
-
-            # If running on command line the return directly
-            if ($strPathType eq PATH_ABSOLUTE)
+            if (defined($strPermission))
             {
-                confess &log(ERROR, $strError, COMMAND_ERR_PATH_CREATE);
+                $bResult = mkdir($strPathOp, oct($strPermission));
+            }
+            else
+            {
+                $bResult = mkdir($strPathOp);
             }
 
-            # Error the normal way
-            confess &log(ERROR, "${strDebug}: " . $strError, COMMAND_ERR_PATH_CREATE);
+            if (!$bResult)
+            {
+                # Capture the error
+                my $strError = "${strPathOp} could not be created: " . $!;
+
+                # If running on command line the return directly
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    confess &log(ERROR, $strError, COMMAND_ERR_PATH_CREATE);
+                }
+
+                # Error the normal way
+                confess &log(ERROR, "${strDebug}: " . $strError, COMMAND_ERR_PATH_CREATE);
+            }
         }
     }
 }
