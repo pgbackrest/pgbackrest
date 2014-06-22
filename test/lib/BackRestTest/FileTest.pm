@@ -85,7 +85,7 @@ sub BackRestTestFile_Test
     $strHost = BackRestTestCommon_HostGet();
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
 
-    # Print test parameters
+    # Print test banner
     &log(INFO, "FILE MODULE ********************************************************************");
 
     #-------------------------------------------------------------------------------------------------------------------------------

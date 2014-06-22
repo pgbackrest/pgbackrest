@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# BackupTest.pl - Unit Tests for BackRest::Backup
+# BackupTest.pl - Unit Tests for BackRest::File
 ####################################################################################################################################
-use BackRestTest::BackupTest;
+package BackRestTest::BackupTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -13,68 +13,95 @@ use english;
 use Carp;
 
 use File::Basename;
-use Cwd 'abs_path';
-use File::stat;
-use Fcntl ':mode';
-use Scalar::Util 'blessed';
+# use Cwd 'abs_path';
+# use File::stat;
+# use Fcntl ':mode';
+# use Scalar::Util 'blessed';
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
 
+use BackRestTest::CommonTest;
+
 use Exporter qw(import);
-our @EXPORT = qw(BackRestFileTest);
+our @EXPORT = qw(BackRestTestBackup_Test);
 
-# my $strTestPath;
-# my $strHost;
-# my $strUserBackRest;
+my $strTestPath;
+my $strHost;
+my $strUserBackRest;
 
 ####################################################################################################################################
-# BackRestFileBackupSetup
+# BackRestTestBackup_ClusterDrop
 ####################################################################################################################################
-sub BackRestFileBackupSetup
+sub BackRestTestBackup_ClusterDrop
 {
-    my $bPrivate = shift;
-    my $bDropOnly = shift;
-
-    my $strTestPath = BackRestCommonTestPathGet();
-
-    # Remove the backrest private directory
-    if (-e "${strTestPath}/private")
+    my $strPath = shift;
+    
+    # If the db directory already exists, stop the cluster and remove the directory
+    if (-e $strPath . "/postmaster.pid")
     {
-        system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/private'");
-    }
-
-    # Remove the test directory
-    system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
-
-    if (!defined($bDropOnly) || !$bDropOnly)
-    {
-        # Create the test directory
-        mkdir($strTestPath, oct("0770")) or confess "Unable to create test directory";
-
-        # Create the backrest private directory
-        if (defined($bPrivate) && $bPrivate)
-        {
-            system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die 'unable to create test/private path';
-        }
+        BackRestTestCommon_Execute("pg_ctl stop -D $strPath -w -s -m fast");
     }
 }
 
 ####################################################################################################################################
-# BackRestBackupTest
+# BackRestTestBackup_ClusterCreate
 ####################################################################################################################################
-sub BackRestBackupTest
+sub BackRestTestBackup_ClusterCreate
 {
-    my $strStanza = shift;
-    my $strCommand = shift;
-    my $strHost = shift;
-    my $strUser = shift;
-    my $strGroup = shift;
-    my $strUserBackRest = shift;
-    my $strTestPath = shift;
+    my $strPath = shift;
+    my $iPort = shift;
+
+    BackRestTestCommon_Execute("initdb -D $strPath -A trust");
+    BackRestTestCommon_Execute("pg_ctl start -o \"-c port=$iPort\" -D $strPath -l $strPath/postgresql.log -w -s");
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Setup
+####################################################################################################################################
+sub BackRestTestBackup_Setup
+{
+    my $bDropOnly = shift;
+
+    BackRestTestBackup_ClusterDrop($strTestPath . "/db/common");
+
+    # Remove the backrest private directory
+    if (-e "${strTestPath}/backrest")
+    {
+        BackRestTestCommon_ExecuteBackRest("rm -rf ${strTestPath}/backrest", true);
+    }
+
+    # Remove the test directory
+    system("rm -rf ${strTestPath}") == 0 or die 'unable to remove ${strTestPath} path';
+
+    if (!defined($bDropOnly) || !$bDropOnly)
+    {
+        # Create the test directory
+        mkdir($strTestPath, oct("0770")) or confess "Unable to create ${strTestPath} path";
+
+        # Create the db directory
+        mkdir($strTestPath . "/db", oct("0700")) or confess "Unable to create ${strTestPath}/db path";
+
+        # Create the db/common directory
+        mkdir($strTestPath . "/db/common") or confess "Unable to create ${strTestPath}/db/common path";
+        
+        # Create the cluster
+        BackRestTestBackup_ClusterCreate($strTestPath . "/db/common", BackRestTestCommon_DbPortGet);
+
+        # Create the backrest directory
+        BackRestTestCommon_ExecuteBackRest("mkdir -m 700 ${strTestPath}/backrest")
+    }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Test
+####################################################################################################################################
+sub BackRestTestBackup_Test
+{
     my $strTest = shift;
+    my $iTestRun = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -84,33 +111,31 @@ sub BackRestBackupTest
 
     # Setup test variables
     my $iRun;
-    my $strTestPath = BackRestCommonTestPathGet();
-    my $strStanza = BackRestCommonStanzaGet();
-    # my $strHost = "127.0.0.1";
-    # my $strUser = getpwuid($<);
-    # my $strGroup = getgrgid($();
-    # $strUserBackRest = 'backrest';
+    $strTestPath = BackRestTestCommon_TestPathGet();
+    my $strStanza = BackRestTestCommon_StanzaGet();
+    my $strUser = BackRestTestCommon_UserGet();
+    my $strGroup = BackRestTestCommon_GroupGet();
+    $strHost = BackRestTestCommon_HostGet();
+    $strUserBackRest = BackRestTestCommon_UserBackRestGet();
 
-    # Print test parameters
-    &log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
+    # Print test banner
+    &log(INFO, "BACKUP MODULE ******************************************************************");
 
-    &log(INFO, "FILE MODULE ********************************************************************");
-
-    system("ssh backrest\@${strHost} 'rm -rf ${strTestPath}/private'");
+    BackRestTestBackup_Setup();
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = BackRest::Remote->new
-    (
-        strHost => BackRestCommonHostGet(),
-        strUser => BackRestCommonUserGet(),
-        strCommand => $strCommand,
-    );
+    # my $oRemote = BackRest::Remote->new
+    # (
+    #     strHost => $strHost,
+    #     strUser => $strUser,
+    #     strCommand => BackRestTestCommon_CommandRemoteGet(),
+    # );
 
-    # #-------------------------------------------------------------------------------------------------------------------------------
-    # # Test path_create()
-    # #-------------------------------------------------------------------------------------------------------------------------------
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test path_create()
+    #-------------------------------------------------------------------------------------------------------------------------------
     # if ($strTest eq 'all' || $strTest eq 'path_create')
     # {
     #     $iRun = 0;
@@ -123,8 +148,8 @@ sub BackRestBackupTest
     #         # Create the file object
     #         my $oFile = (BackRest::File->new
     #         (
-    #             strStanza => "db",
-    #             strBackupPath => ${strTestPath},
+    #             strStanza => $strStanza,
+    #             strBackupPath => $strTestPath,
     #             strRemote => $bRemote ? 'backup' : undef,
     #             oRemote => $bRemote ? $oRemote : undef
     #         ))->clone();
@@ -142,11 +167,16 @@ sub BackRestBackupTest
     #
     #             $iRun++;
     #
+    #             if (defined($iTestRun) && $iTestRun != $iRun)
+    #             {
+    #                 next;
+    #             }
+    #
     #             &log(INFO, "run ${iRun} - " .
     #                        "remote ${bRemote}, exists ${bExists}, error ${bError}, permission ${bPermission}");
     #
     #             # Setup test directory
-    #             BackRestFileTestSetup($bError);
+    #             BackRestTestFile_Setup($bError);
     #
     #             mkdir("$strTestPath/backup") or confess "Unable to create test/backup directory";
     #             mkdir("$strTestPath/backup/db") or confess "Unable to create test/backup/db directory";
@@ -158,13 +188,6 @@ sub BackRestBackupTest
     #             if ($bPermission)
     #             {
     #                 $strPermission = "0700";
-    #
-    #                 # # Make sure that we are not testing with the default permission
-    #                 # if ($strPermission eq $oFile->{strDefaultPathPermission})
-    #                 # {
-    #                 #     confess 'cannot set test permission ${strPermission} equal to default permission' .
-    #                 #             $oFile->{strDefaultPathPermission};
-    #                 # }
     #             }
     #
     #             # If not exists then set the path to something bogus
@@ -231,8 +254,8 @@ sub BackRestBackupTest
     #         }
     #     }
     # }
-    #
-    # BackRestFileTestSetup(false, true);
+
+    BackRestTestBackup_Setup(true);
 }
 
 1;

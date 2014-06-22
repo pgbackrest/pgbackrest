@@ -20,6 +20,7 @@ use BackRest::Utility;
 use lib dirname($0) . "/lib";
 use BackRestTest::CommonTest;
 use BackRestTest::FileTest;
+use BackRestTest::BackupTest;
 
 ####################################################################################################################################
 # Command line parameters
@@ -97,6 +98,11 @@ if (!$bMatch)
 if ($strModule eq 'all' || $strModule eq "file")
 {
     BackRestTestFile_Test($strModuleTest, $iModuleTestRun);
+}
+
+if ($strModule eq 'all' || $strModule eq "backup")
+{
+    BackRestTestBackup_Test($strModuleTest, $iModuleTestRun);
 }
 
 &log(ASSERT, "TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)");
