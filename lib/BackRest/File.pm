@@ -25,9 +25,10 @@ use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Remote;
 
+# Exports
 use Exporter qw(import);
 our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
-                 PATH_BACKUP_CLUSTERPATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
+                 PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
 
                  COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
                  COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
@@ -36,7 +37,6 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
 
                  OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
                  OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
-
 
 # Extension and permissions
 has strCompressExtension => (is => 'ro', default => 'gz');
@@ -51,7 +51,6 @@ has strRemote => (is => 'bare');                # Remote type (db or backup)
 has oRemote   => (is => 'bare');                # Remote object
 
 has strBackupPath => (is => 'bare');            # Backup base path
-has strBackupClusterPath => (is => 'bare');     # Backup cluster path
 
 # Process flags
 has strStanza => (is => 'bare');
@@ -139,13 +138,6 @@ sub BUILD
 {
     my $self = shift;
 
-    # Make sure the backup path is defined
-    if (defined($self->{strBackupPath}))
-    {
-        # Create the backup cluster path
-        $self->{strBackupClusterPath} = $self->{strBackupPath} . "/" . $self->{strStanza};
-    }
-
     # If remote is defined check parameters and open session
     if (defined($self->{strRemote}))
     {
@@ -171,18 +163,12 @@ sub clone
     my $self = shift;
     my $iThreadIdx = shift;
 
-    return pg_backrest_file->new
+    return BackRest::File->new
     (
-        strCompressExtension => $self->{strCompressExtension},
-        strDefaultPathPermission => $self->{strDefaultPathPermission},
-        strDefaultFilePermission => $self->{strDefaultFilePermission},
         strCommand => $self->{strCommand},
-        strDbUser => $self->{strDbUser},
-        strDbHost => $self->{strDbHost},
-        strBackupUser => $self->{strBackupUser},
-        strBackupHost => $self->{strBackupHost},
+        strRemote => $self->{strRemote},
+        oRemote => defined($self->{oRemote}) ? $self->{oRemote}->clone() : undef,
         strBackupPath => $self->{strBackupPath},
-        strBackupClusterPath => $self->{strBackupClusterPath},
         strStanza => $self->{strStanza},
         iThreadIdx => $iThreadIdx
     );
@@ -546,7 +532,7 @@ sub compress
 
             confess &log(ERROR, "${strDebug}: " . $strError);
         }
-        
+
         unlink($strPathOp)
             or die &log(ERROR, "${strDebug}: unable to remove ${strPathOp}");
     }
@@ -569,7 +555,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPath}, permission " . (defined($strPermission) ? $strPermission : "[undef]");
+    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strPermission) ? $strPermission : "[undef]");
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -596,7 +582,7 @@ sub path_create
     {
         # Attempt the create the directory
         my $bResult;
-        
+
         if (defined($strPermission))
         {
             $bResult = mkdir($strPathOp, oct($strPermission));
@@ -605,11 +591,11 @@ sub path_create
         {
             $bResult = mkdir($strPathOp);
         }
-        
+
         if (!$bResult)
         {
             # Capture the error
-            my $strError = "${strPath} could not be created: " . $!;
+            my $strError = "${strPathOp} could not be created: " . $!;
 
             # If running on command line the return directly
             if ($strPathType eq PATH_ABSOLUTE)
@@ -704,7 +690,7 @@ sub remove
     # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath, $bTemp);
     my $bRemoved = true;
- 
+
     # Set operation and debug strings
     my $strOperation = OP_FILE_EXISTS;
     my $strDebug = "${strPathType}:${strPathOp}";
@@ -850,7 +836,7 @@ sub list
 
         # Execute the command
         my $strOutput = $self->{oRemote}->command_execute($strOperation, \%oParamHash, false, $strDebug);
-        
+
         if (defined($strOutput))
         {
             @stryFileList = split(/\n/, $strOutput);
@@ -934,12 +920,13 @@ sub manifest
     # Run locally
     else
     {
-        manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
+        $self->manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
     }
 }
 
 sub manifest_recurse
 {
+    my $self = shift;
     my $strPathType = shift;
     my $strPathOp = shift;
     my $strPathFileOp = shift;
@@ -953,18 +940,17 @@ sub manifest_recurse
     if (!opendir($hPath, $strPathRead))
     {
         my $strError = "${strPathRead} could not be read: " . $!;
-        my $iErrorCode = 2;
+        my $iErrorCode = COMMAND_ERR_PATH_READ;
 
-        unless (-e $strPathRead)
+        if (!$self->exists($strPathType, $strPathOp))
         {
             $strError = "${strPathRead} does not exist";
-            $iErrorCode = 1;
+            $iErrorCode = COMMAND_ERR_PATH_MISSING;
         }
 
         if ($strPathType eq PATH_ABSOLUTE)
         {
-            print $strError;
-            exit ($iErrorCode);
+            confess &log(ERROR, $strError, $iErrorCode);
         }
 
         confess &log(ERROR, "${strErrorPrefix}: " . $strError);
@@ -996,20 +982,21 @@ sub manifest_recurse
 
         if (!defined($oStat))
         {
-            if (-e $strPathFile)
+            my $strError = "${strPathFile} could not be read: " . $!;
+            my $iErrorCode = COMMAND_ERR_FILE_READ;
+
+            if (!$self->exists($strPathType, $strPathOp))
             {
-                my $strError = "${strPathFile} could not be read: " . $!;
-
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    print $strError;
-                    exit COMMAND_ERR_FILE_READ;
-                }
-
-                confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+                $strError = "${strPathRead} does not exist";
+                $iErrorCode = COMMAND_ERR_FILE_MISSING;
             }
 
-            next;
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                confess &log(ERROR, $strError, COMMAND_ERR_FILE_READ);
+            }
+
+            confess &log(ERROR, "${strErrorPrefix}: " . $strError, COMMAND_ERR_FILE_READ);
         }
 
         # Check for regular file
@@ -1083,9 +1070,7 @@ sub manifest_recurse
         # Recurse into directories
         if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
         {
-            manifest_recurse($strPathType, $strPathOp,
-                             $strFile,
-                             $iDepth + 1, $oManifestHashRef);
+            $self->manifest_recurse($strPathType, $strPathOp, $strFile, $iDepth + 1, $oManifestHashRef);
         }
     }
 }
@@ -1132,9 +1117,9 @@ sub copy
 
     # Set debug string and log
     my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
-                   (defined($strSourceFile) ? ":${strSourceFile}" : "") .
+                   (defined($strSourceOp) ? ":${strSourceFile}" : "") .
                    " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
-                   (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
+                   (defined($strDestinationOp) ? ":${strDestinationFile}" : "") .
                    ", source_compressed = " . ($bSourceCompressed ? "true" : "false") .
                    ", destination_compress = " . ($bDestinationCompress ? "true" : "false") .
                    ", ignore_missing_source = " . ($bIgnoreMissingSource ? "true" : "false");
@@ -1170,7 +1155,7 @@ sub copy
                 {
                     $self->{oRemote}->write_line(*STDOUT, "block 0");
                 }
-                
+
                 confess &log(ERROR, $strError, $iErrorCode);
             }
 
@@ -1275,18 +1260,18 @@ sub copy
         {
             # Test for an error when reading output
             my $strOutput;
-            
+
             eval
             {
                 $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug);
 
             };
-            
+
             # If there is an error then evaluate
             if ($@)
             {
                 my $oMessage = $@;
-                
+
                 # We'll ignore this error if the source file was missing and missing file exception was returned
                 # and bIgnoreMissingSource is set
                 if ($bIgnoreMissingSource && $strRemote eq "in" && $oMessage->isa("BackRest::Exception") &&

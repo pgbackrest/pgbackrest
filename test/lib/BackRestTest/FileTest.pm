@@ -36,21 +36,21 @@ sub BackRestFileTestSetup
 {
     my $bPrivate = shift;
     my $bDropOnly = shift;
-    
+
     # Remove the backrest private directory
     if (-e "${strTestPath}/private")
     {
         system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/private'");
     }
-    
+
     # Remove the test directory
     system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
-    
+
     if (!defined($bDropOnly) || !$bDropOnly)
     {
         # Create the test directory
         mkdir($strTestPath, oct("0770")) or confess "Unable to create test directory";
-        
+
         # Create the backrest private directory
         if (defined($bPrivate) && $bPrivate)
         {
@@ -113,14 +113,13 @@ sub BackRestFileTest
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = (BackRest::File->new
             (
                 strStanza => "db",
-                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
-            );
+            ))->clone();
 
             # Loop through exists (does the paren path exist?)
             for (my $bExists = 0; $bExists <= 1; $bExists++)
@@ -131,6 +130,8 @@ sub BackRestFileTest
             # Loop through permission (permission will be set on true)
             for (my $bPermission = 0; $bPermission <= $bExists; $bPermission++)
             {
+                my $strPathType = PATH_BACKUP_CLUSTER;
+
                 $iRun++;
 
                 &log(INFO, "run ${iRun} - " .
@@ -139,7 +140,10 @@ sub BackRestFileTest
                 # Setup test directory
                 BackRestFileTestSetup($bError);
 
-                my $strPath = "${strTestPath}/path";
+                mkdir("$strTestPath/backup") or confess "Unable to create test/backup directory";
+                mkdir("$strTestPath/backup/db") or confess "Unable to create test/backup/db directory";
+
+                my $strPath = "path";
                 my $strPermission;
 
                 # If permission then set one (other than the default)
@@ -159,10 +163,11 @@ sub BackRestFileTest
                 if ($bError)
                 {
                     $strPath = "${strTestPath}/private/path";
+                    $strPathType = PATH_BACKUP_ABSOLUTE;
                 }
                 elsif (!$bExists)
                 {
-                    $strPath = "${strTestPath}/error/path";
+                    $strPath = "error/path";
                 }
 
                 # Execute in eval to catch errors
@@ -170,7 +175,7 @@ sub BackRestFileTest
 
                 eval
                 {
-                    $oFile->path_create(PATH_BACKUP_ABSOLUTE, $strPath, $strPermission);
+                    $oFile->path_create($strPathType, $strPath, $strPermission);
                 };
 
                 # Check for errors
@@ -191,17 +196,19 @@ sub BackRestFileTest
                 }
 
                 # Make sure the path was actually created
-                unless (-e $strPath)
+                my $strPathCheck = $oFile->path_get($strPathType, $strPath);
+
+                unless (-e $strPathCheck)
                 {
                     confess "path was not created";
                 }
 
                 # Check that the permissions were set correctly
-                my $oStat = lstat($strPath);
+                my $oStat = lstat($strPathCheck);
 
                 if (!defined($oStat))
                 {
-                    confess "unable to stat ${strPath}";
+                    confess "unable to stat ${strPathCheck}";
                 }
 
                 if ($bPermission)
@@ -233,7 +240,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => "db",
-                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -334,7 +340,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => "db",
-                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -378,10 +383,10 @@ sub BackRestFileTest
                     {
                         next;
                     }
-                    
+
                     confess "error raised: " . $@ . "\n";
                 }
-                
+
                 if (!$bExists || $bError)
                 {
                     confess "expected error";
@@ -398,11 +403,11 @@ sub BackRestFileTest
                 {
                     confess "file was not compressed";
                 }
-                
+
                 system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
-        
+
                 my $strDestinationHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile);
-                
+
                 if ($strSourceHash ne $strDestinationHash)
                 {
                     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
@@ -440,7 +445,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => "db",
-                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -512,10 +516,10 @@ sub BackRestFileTest
                     {
                         next;
                     }
-                    
+
                     confess "error raised: " . $@ . "\n";
                 }
-                
+
                 # Check for an expected error
                 if ($bErrorExpected)
                 {
@@ -585,7 +589,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => "db",
-                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -615,7 +618,7 @@ sub BackRestFileTest
                     # Loop through exists
                     for (my $bExists = 0; $bExists <= 1; $bExists++)
                     {
-                    
+
                     # Loop through error
                     for (my $bError = 0; $bError <= 1; $bError++)
                     {
@@ -665,7 +668,7 @@ sub BackRestFileTest
 
                             confess "error raised: " . $@ . "\n";
                         }
-                        
+
                         if ($bErrorExpected)
                         {
                             confess 'error was expected';
@@ -712,7 +715,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
-                strBackupClusterPath => ${strTestPath},
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -756,7 +758,7 @@ sub BackRestFileTest
 
                     # Execute in eval in case of error
                     my $bRemoved;
-                    
+
                     eval
                     {
                         $bRemoved = $oFile->remove(PATH_BACKUP_ABSOLUTE, $strFile, $bTemp, $bIgnoreMissing);
@@ -768,7 +770,7 @@ sub BackRestFileTest
                         {
                             next;
                         }
-                        
+
                         if (!$bExists && !$bIgnoreMissing)
                         {
                             next;
@@ -776,19 +778,19 @@ sub BackRestFileTest
 
                         confess "unexpected error raised: " . $@;
                     }
-                    
+
                     if ($bError || $bRemote)
                     {
                         confess 'error should have been returned';
                     }
-                    
+
                     if (!$bRemoved)
                     {
                         if (!$bExists && $bIgnoreMissing)
                         {
                             next;
                         }
-                        
+
                         confess 'remove returned false, but something should have been removed';
                     }
 
@@ -818,7 +820,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
-                strBackupClusterPath => ${strTestPath},
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -856,7 +857,7 @@ sub BackRestFileTest
                 # Execute in eval in case of error
                 my $strHash;
                 my $bErrorExpected = !$bExists || $bError || $bRemote;
-                
+
                 eval
                 {
                     $strHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile)
@@ -876,7 +877,7 @@ sub BackRestFileTest
                 {
                     confess "error was expected";
                 }
-                
+
                 if ($strHash ne '06364afe79d801433188262478a76d19777ef351')
                 {
                     confess 'hashes do not match';
@@ -901,7 +902,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
-                strBackupClusterPath => ${strTestPath},
                 strBackupPath => ${strTestPath},
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
@@ -1002,7 +1002,6 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => "db",
-                strBackupClusterPath => undef,
                 strBackupPath => ${strTestPath},
                 strRemote => $strRemote,
                 oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
@@ -1033,7 +1032,7 @@ sub BackRestFileTest
                 my $strDestinationPath = $bDestinationPathType ? "db" : "backup";
 
                 $iRun++;
-                
+
                 &log(INFO, "run ${iRun} - " .
                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
@@ -1051,7 +1050,7 @@ sub BackRestFileTest
 
                 # Create the compressed or uncompressed test file
                 my $strSourceHash;
-                
+
                 if (!$bSourceMissing)
                 {
                     system("echo 'TESTDATA' > ${strSourceFile}");
@@ -1084,7 +1083,7 @@ sub BackRestFileTest
                 if ($@)
                 {
                     my $oMessage = $@;
-                    
+
                     if (blessed($oMessage))
                     {
                         if ($oMessage->isa("BackRest::Exception"))
@@ -1093,7 +1092,7 @@ sub BackRestFileTest
                             {
                                 next;
                             }
-                    
+
                             confess $oMessage->message();
                         }
                         else
@@ -1115,13 +1114,13 @@ sub BackRestFileTest
                          {
                              confess 'copy() returned ' . $bReturn .  ' when ignore missing set';
                          }
-                         
+
                          next;
                     }
-                    
+
                     confess "expected source file missing error";
                 }
-            
+
                 unless (-e $strDestinationFile)
                 {
                     confess "could not find destination file ${strDestinationFile}";
@@ -1132,9 +1131,9 @@ sub BackRestFileTest
                     system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
                     $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
                 }
-            
+
                 my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
-            
+
                 if ($strSourceHash ne $strDestinationHash)
                 {
                     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
@@ -1148,7 +1147,7 @@ sub BackRestFileTest
         }
         }
     }
-    
+
     BackRestFileTestSetup(false, true);
 }
 

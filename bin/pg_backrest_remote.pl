@@ -60,14 +60,14 @@ sub param_get
     my $oParamHashRef = shift;
     my $strParam = shift;
     my $bRequired = shift;
-    
+
     my $strValue = ${$oParamHashRef}{$strParam};
-    
+
     if (!defined($strValue) && (!defined($bRequired) || $bRequired))
     {
         confess "${strParam} must be defined";
     }
-    
+
     return $strValue;
 }
 
@@ -106,7 +106,7 @@ while ($strCommand ne OP_EXIT)
             $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
                          PIPE_STDOUT, undef,
                          param_get(\%oParamHash, 'source_compressed'), undef);
-                         
+
             $oRemote->output_write();
         }
         elsif ($strCommand eq OP_FILE_COPY_IN)
@@ -114,13 +114,13 @@ while ($strCommand ne OP_EXIT)
             $oFile->copy(PIPE_STDIN, undef,
                          PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
                          undef, param_get(\%oParamHash, 'destination_compress'));
-                         
+
             $oRemote->output_write();
         }
         elsif ($strCommand eq OP_FILE_LIST)
         {
             my $strOutput;
-            
+
             foreach my $strFile ($oFile->list(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'),
                                               param_get(\%oParamHash, 'expression', false),
                                               param_get(\%oParamHash, 'sort_order')))
@@ -132,7 +132,7 @@ while ($strCommand ne OP_EXIT)
 
                 $strOutput .= $strFile;
             }
-                                            
+
             $oRemote->output_write($strOutput);
         }
         elsif ($strCommand eq OP_FILE_PATH_CREATE)
