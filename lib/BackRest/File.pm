@@ -34,6 +34,8 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
                  COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
 
                  PIPE_STDIN PIPE_STDOUT PIPE_STDERR
+                 
+                 REMOTE_DB REMOTE_BACKUP REMOTE_NONE
 
                  OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
                  OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
@@ -87,21 +89,13 @@ use constant
 };
 
 ####################################################################################################################################
-# File copy block size constant
-####################################################################################################################################
-use constant
-{
-    BLOCK_SIZE  => 8192
-};
-
-####################################################################################################################################
 # STD Pipe Constants
 ####################################################################################################################################
 use constant
 {
-    PIPE_STDIN   => "<STDIN>",
-    PIPE_STDOUT  => "<STDOUT>",
-    PIPE_STDERR  => "<STDERR>"
+    PIPE_STDIN   => '<STDIN>',
+    PIPE_STDOUT  => '<STDOUT>',
+    PIPE_STDERR  => '<STDERR>'
 };
 
 ####################################################################################################################################
@@ -110,7 +104,8 @@ use constant
 use constant
 {
     REMOTE_DB     => PATH_DB,
-    REMOTE_BACKUP => PATH_BACKUP
+    REMOTE_BACKUP => PATH_BACKUP,
+    REMOTE_NONE   => 'none'
 };
 
 ####################################################################################################################################
@@ -118,17 +113,17 @@ use constant
 ####################################################################################################################################
 use constant
 {
-    OP_FILE_LIST        => "File->list",
-    OP_FILE_EXISTS      => "File->exists",
-    OP_FILE_HASH        => "File->hash",
-    OP_FILE_REMOVE      => "File->remove",
-    OP_FILE_MANIFEST    => "File->manifest",
-    OP_FILE_COMPRESS    => "File->compress",
-    OP_FILE_MOVE        => "File->move",
-    OP_FILE_COPY        => "File->copy",
-    OP_FILE_COPY_OUT    => "File->copy_out",
-    OP_FILE_COPY_IN     => "File->copy_in",
-    OP_FILE_PATH_CREATE => "File->path_create"
+    OP_FILE_LIST        => 'File->list',
+    OP_FILE_EXISTS      => 'File->exists',
+    OP_FILE_HASH        => 'File->hash',
+    OP_FILE_REMOVE      => 'File->remove',
+    OP_FILE_MANIFEST    => 'File->manifest',
+    OP_FILE_COMPRESS    => 'File->compress',
+    OP_FILE_MOVE        => 'File->move',
+    OP_FILE_COPY        => 'File->copy',
+    OP_FILE_COPY_OUT    => 'File->copy_out',
+    OP_FILE_COPY_IN     => 'File->copy_in',
+    OP_FILE_PATH_CREATE => 'File->path_create'
 };
 
 ####################################################################################################################################
@@ -225,7 +220,7 @@ sub path_get
 
     if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $bAbsolute))
     {
-        confess &log(ASSERT, "temp file not supported on path " . $strType);
+        confess &log(ASSERT, 'temp file not supported on path ' . $strType);
     }
 
     # Get absolute path
@@ -233,7 +228,7 @@ sub path_get
     {
         if (defined($bTemp) && $bTemp)
         {
-            return $strFile . ".backrest.tmp";
+            return $strFile . '.backrest.tmp';
         }
 
         return $strFile;
@@ -242,7 +237,7 @@ sub path_get
     # Make sure the base backup path is defined (since all other path types are backup)
     if (!defined($self->{strBackupPath}))
     {
-        confess &log(ASSERT, "\$strBackupPath not yet defined");
+        confess &log(ASSERT, 'strBackupPath not defined');
     }
 
     # Get base backup path
@@ -254,7 +249,7 @@ sub path_get
     # Make sure the cluster is defined
     if (!defined($self->{strStanza}))
     {
-        confess &log(ASSERT, "\$strStanza not yet defined");
+        confess &log(ASSERT, 'strStanza not defined');
     }
 
     # Get the backup tmp path

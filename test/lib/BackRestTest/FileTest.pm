@@ -2,6 +2,7 @@
 ####################################################################################################################################
 # FileTest.pl - Unit Tests for BackRest::File
 ####################################################################################################################################
+package BackRestTest::FileTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -17,6 +18,9 @@ use File::stat;
 use Fcntl ':mode';
 use Scalar::Util 'blessed';
 
+#use lib dirname($0) . "/../lib";
+use BackRestTest::CommonTest;
+
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
@@ -25,9 +29,9 @@ use BackRest::Remote;
 use Exporter qw(import);
 our @EXPORT = qw(BackRestFileTest);
 
-my $strTestPath;
-my $strHost;
-my $strUserBackRest;
+# my $strTestPath;
+# my $strHost;
+# my $strUserBackRest;
 
 ####################################################################################################################################
 # BackRestFileTestSetup
@@ -36,6 +40,10 @@ sub BackRestFileTestSetup
 {
     my $bPrivate = shift;
     my $bDropOnly = shift;
+
+    my $strTestPath = BackRestCommonTestPathGet();
+    my $strUserBackRest = BackRestCommonUserBackRestGet();
+    my $strHost = BackRestCommonHostGet();
 
     # Remove the backrest private directory
     if (-e "${strTestPath}/private")
@@ -72,32 +80,27 @@ sub BackRestFileTest
         $strTest = 'all';
     }
 
-    # Setup test paths
-    $strTestPath = dirname(abs_path($0)) . "/test";
+    # Setup test variables
     my $iRun;
+    my $strTestPath = BackRestCommonTestPathGet();
+    my $strStanza = BackRestCommonStanzaGet();
+    my $strUser = BackRestCommonUserGet();
+    my $strGroup = BackRestCommonGroupGet();
 
-    my $strStanza = "db";
-    my $strCommand = "/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl";
-    $strHost = "127.0.0.1";
-    my $strUser = getpwuid($<);
-    my $strGroup = getgrgid($();
-    $strUserBackRest = 'backrest';
+    # $strHost = "127.0.0.1";
+    # $strUserBackRest = 'backrest';
 
     # Print test parameters
-    &log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
-
     &log(INFO, "FILE MODULE ********************************************************************");
-
-    system("ssh backrest\@${strHost} 'rm -rf ${strTestPath}/private'");
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = BackRest::Remote->new
     (
-        strHost => $strHost,
+        strHost => BackRestCommonHostGet(),
         strUser => $strUser,
-        strCommand => $strCommand,
+        strCommand => BackRestCommonCommandRemoteGet(),
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -115,8 +118,8 @@ sub BackRestFileTest
             # Create the file object
             my $oFile = (BackRest::File->new
             (
-                strStanza => "db",
-                strBackupPath => ${strTestPath},
+                strStanza => $strStanza,
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             ))->clone();
@@ -239,8 +242,8 @@ sub BackRestFileTest
             # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => "db",
-                strBackupPath => ${strTestPath},
+                strStanza => $strStanza,
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -339,8 +342,8 @@ sub BackRestFileTest
             # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => "db",
-                strBackupPath => ${strTestPath},
+                strStanza => $strStanza,
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -444,8 +447,8 @@ sub BackRestFileTest
             # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => "db",
-                strBackupPath => ${strTestPath},
+                strStanza => $strStanza,
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -588,8 +591,8 @@ sub BackRestFileTest
             # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => "db",
-                strBackupPath => ${strTestPath},
+                strStanza => $strStanza,
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -715,7 +718,7 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
-                strBackupPath => ${strTestPath},
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -820,7 +823,7 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
-                strBackupPath => ${strTestPath},
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -902,7 +905,7 @@ sub BackRestFileTest
             my $oFile = BackRest::File->new
             (
                 strStanza => $strStanza,
-                strBackupPath => ${strTestPath},
+                strBackupPath => $strTestPath,
                 strRemote => $bRemote ? 'backup' : undef,
                 oRemote => $bRemote ? $oRemote : undef
             );
@@ -1001,8 +1004,8 @@ sub BackRestFileTest
             # Create the file object
             my $oFile = BackRest::File->new
             (
-                strStanza => "db",
-                strBackupPath => ${strTestPath},
+                strStanza => $strStanza,
+                strBackupPath => $strTestPath,
                 strRemote => $strRemote,
                 oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
             );

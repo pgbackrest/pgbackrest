@@ -16,9 +16,9 @@ use Storable;
 use Thread::Queue;
 
 use lib dirname($0);
-use pg_backrest_utility;
-use pg_backrest_file;
-use pg_backrest_db;
+use BackRest::Utility;
+use BackRest::File;
+use BackRest::Db;
 
 use Exporter qw(import);
 

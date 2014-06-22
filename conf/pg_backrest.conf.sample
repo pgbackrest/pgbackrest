@@ -1,9 +1,5 @@
 [global:command]
-backrest_command=
-#compress=pigz --rsyncable --best --stdout %file% # Ubuntu Linux
-compress=/usr/bin/gzip --stdout %file%
-decompress=/usr/bin/gzip -dc %file%
-#checksum=sha1sum %file% | awk '{print $1}' # Ubuntu Linux
+remote=/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl
 psql=/Library/PostgreSQL/9.3/bin/psql -X %option%
 
 [global:log]

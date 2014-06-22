@@ -14,7 +14,7 @@ use File::Basename;
 use IPC::System::Simple qw(capture);
 
 use lib dirname($0);
-use pg_backrest_utility;
+use BackRest::Utility;
 
 # Command strings
 has strCommandPsql => (is => 'bare');   # PSQL command
@@ -105,7 +105,7 @@ sub tablespace_map_get
 ####################################################################################################################################
 # VERSION_GET
 ####################################################################################################################################
-sub version_get
+sub db_version_get
 {
     my $self = shift;
 

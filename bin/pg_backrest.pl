@@ -15,11 +15,11 @@ use Getopt::Long;
 use Config::IniFiles;
 use Carp;
 
-use lib dirname($0);
-use pg_backrest_utility;
-use pg_backrest_file;
-use pg_backrest_backup;
-use pg_backrest_db;
+use lib dirname($0) . "/../lib";
+use BackRest::Utility;
+use BackRest::File;
+use BackRest::Backup;
+use BackRest::Db;
 
 ####################################################################################################################################
 # Operation constants - basic operations that are allowed in backrest
@@ -56,14 +56,15 @@ use constant
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
     CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
     CONFIG_KEY_START_FAST         => "start_fast",
+    CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
 
     CONFIG_KEY_LEVEL_FILE         => "level-file",
     CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
 
     CONFIG_KEY_COMPRESS           => "compress",
-    CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
-    CONFIG_KEY_DECOMPRESS         => "decompress",
-    CONFIG_KEY_PSQL               => "psql"
+    CONFIG_KEY_CHECKSUM           => "checksum",
+    CONFIG_KEY_PSQL               => "psql",
+    CONFIG_KEY_REMOTE             => "remote"
 };
 
 ####################################################################################################################################
@@ -204,6 +205,45 @@ log_level_set(uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, "I
               uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, "ERROR")));
 
 ####################################################################################################################################
+# DETERMINE IF THERE IS A REMOTE
+####################################################################################################################################
+my $strRemote;
+
+# First check if backup is remote
+if (defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
+{
+    $strRemote = REMOTE_BACKUP;
+}
+# Else check if db is remote
+elsif (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
+{
+    # Don't allow both sides to be remote
+    if (defined($strRemote))
+    {
+        confess &log(ERROR, 'db and backup cannot both be configured as remote');
+    }
+    
+    $strRemote = REMOTE_DB;
+}
+else
+{
+    $strRemote = REMOTE_NONE;
+}
+
+# Create the remote object
+my $oRemote;
+
+if ($strRemote ne REMOTE_NONE)
+{
+    my $oRemote = BackRest::Remote->new
+    (
+        strHost => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
+        strUser => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
+        strCommand => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
+    );
+}
+
+####################################################################################################################################
 # ARCHIVE-GET Command
 ####################################################################################################################################
 if ($strOperation eq OP_ARCHIVE_GET)
@@ -224,12 +264,9 @@ if ($strOperation eq OP_ARCHIVE_GET)
     my $oFile = pg_backrest_file->new
     (
         strStanza => $strStanza,
-        bNoCompression => true,
-        strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
-        strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
-        strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-        strCommand => $0,
-        strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, true)
+        strRemote => $strRemote,
+        oRemote => $oRemote,
+        strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
     );
 
     # Init the backup object
@@ -302,15 +339,15 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Run file_init_archive - this is the minimal config needed to run archiving
         my $oFile = pg_backrest_file->new
         (
-            strStanza => $strStanza,
-            bNoCompression => !$bCompress,
-            strBackupUser => config_load($strSection, CONFIG_KEY_USER),
-            strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
-            strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
-            strCommand => $0,
-            strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
-            strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-            strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
+            # strStanza => $strStanza,
+            # bNoCompression => !$bCompress,
+            # strBackupUser => config_load($strSection, CONFIG_KEY_USER),
+            # strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
+            # strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
+            # strCommand => $0,
+            # strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
+            # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+            # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
         );
 
         backup_init
@@ -373,15 +410,15 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             # Run file_init_archive - this is the minimal config needed to run archive pulling
             my $oFile = pg_backrest_file->new
             (
-                strStanza => $strStanza,
-                bNoCompression => !$bCompress,
-                strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
-                strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
-                strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-                strCommand => $0,
-                strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-                strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-                strLockPath => $strLockPath
+                # strStanza => $strStanza,
+                # bNoCompression => !$bCompress,
+                # strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
+                # strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
+                # strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+                # strCommand => $0,
+                # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+                # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
+                # strLockPath => $strLockPath
             );
 
             backup_init
@@ -414,12 +451,12 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
                 my $oFile = pg_backrest_file->new
                 (
-                    strStanza => $strStanza,
-                    bNoCompression => false,
-                    strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-                    strCommand => $0,
-                    strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-                    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
+                    # strStanza => $strStanza,
+                    # bNoCompression => false,
+                    # strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+                    # strCommand => $0,
+                    # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+                    # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
                 );
 
                 backup_init
@@ -461,6 +498,12 @@ log_file_set(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/$
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
+# Make sure backup and expire operations happen on the db side
+if ($strRemote eq backup)
+{
+    confess &log(ERROR, 'backup and expire operations must run on the backup host');
+}
+
 # Set the backup type
 if (!defined($strType))
 {
@@ -496,17 +539,9 @@ if (!lock_file_create($strLockPath))
 my $oFile = pg_backrest_file->new
 (
     strStanza => $strStanza,
-    bNoCompression => !$bCompress,
-    strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
-    strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
-    strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-    strDbUser => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
-    strDbHost => config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
-    strCommand => $0,
-    strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-    strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-    strCommandPsql => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
-    strLockPath => $strLockPath
+    strRemote => $strRemote,
+    oRemote => $oRemote,
+    strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
 );
 
 my $oDb = pg_backrest_db->new

@@ -14,7 +14,11 @@ use File::Basename;
 use Getopt::Long;
 use Carp;
 
+use lib dirname($0) . "/../lib";
+use BackRest::Utility;
+
 use lib dirname($0) . "/lib";
+use BackRestTest::CommonTest;
 use BackRestTest::FileTest;
 
 ####################################################################################################################################
@@ -42,6 +46,8 @@ if ($strModuleTest ne 'all' && $strModule eq 'all')
 {
     confess "--module must be provided for test \"${strModuleTest}\"";
 }
+
+BackRestCommonTestSetup();
 
 ####################################################################################################################################
 # Clean whitespace
@@ -78,6 +84,8 @@ if (!$bMatch)
 ####################################################################################################################################
 # Runs tests
 ####################################################################################################################################
+#&log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
+
 if ($strModule eq 'all' || $strModule eq "file")
 {
     BackRestFileTest($strModuleTest);
