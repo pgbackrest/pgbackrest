@@ -16,8 +16,9 @@ use File::Basename;
 use Cwd 'abs_path';
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestCommonTestSetup BackRestCommonStanzaGet BackRestCommonCommandRemoteGet BackRestCommonHostGet
-                 BackRestCommonUserGet BackRestCommonGroupGet BackRestCommonUserBackRestGet BackRestCommonTestPathGet);
+our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_StanzaGet BackRestTestCommon_CommandRemoteGet
+                 BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
+                 BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet);
 
 my $strCommonStanza;
 my $strCommonCommandRemote;
@@ -28,9 +29,9 @@ my $strCommonUserBackRest;
 my $strCommonTestPath;
 
 ####################################################################################################################################
-# BackRestCommonTestSetup
+# BackRestTestCommon_Setup
 ####################################################################################################################################
-sub BackRestCommonTestSetup
+sub BackRestTestCommon_Setup
 {
     $strCommonStanza = "db";
     $strCommonCommandRemote = "/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl";
@@ -44,37 +45,37 @@ sub BackRestCommonTestSetup
 ####################################################################################################################################
 # Get Methods
 ####################################################################################################################################
-sub BackRestCommonStanzaGet
+sub BackRestTestCommon_StanzaGet
 {
     return $strCommonStanza;
 }
 
-sub BackRestCommonCommandRemoteGet
+sub BackRestTestCommon_CommandRemoteGet
 {
     return $strCommonCommandRemote;
 }
 
-sub BackRestCommonHostGet
+sub BackRestTestCommon_HostGet
 {
     return $strCommonHost;
 }
 
-sub BackRestCommonUserGet
+sub BackRestTestCommon_UserGet
 {
     return $strCommonUser;
 }
 
-sub BackRestCommonGroupGet
+sub BackRestTestCommon_GroupGet
 {
     return $strCommonGroup;
 }
 
-sub BackRestCommonUserBackRestGet
+sub BackRestTestCommon_UserBackRestGet
 {
     return $strCommonUserBackRest;
 }
 
-sub BackRestCommonTestPathGet
+sub BackRestTestCommon_TestPathGet
 {
     return $strCommonTestPath;
 }

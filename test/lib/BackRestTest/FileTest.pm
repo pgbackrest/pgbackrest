@@ -18,32 +18,27 @@ use File::stat;
 use Fcntl ':mode';
 use Scalar::Util 'blessed';
 
-#use lib dirname($0) . "/../lib";
-use BackRestTest::CommonTest;
-
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
 
+use BackRestTest::CommonTest;
+
 use Exporter qw(import);
-our @EXPORT = qw(BackRestFileTest);
+our @EXPORT = qw(BackRestTestFile_Test);
 
-# my $strTestPath;
-# my $strHost;
-# my $strUserBackRest;
+my $strTestPath;
+my $strHost;
+my $strUserBackRest;
 
 ####################################################################################################################################
-# BackRestFileTestSetup
+# BackRestTestFile_Setup
 ####################################################################################################################################
-sub BackRestFileTestSetup
+sub BackRestTestFile_Setup
 {
     my $bPrivate = shift;
     my $bDropOnly = shift;
-
-    my $strTestPath = BackRestCommonTestPathGet();
-    my $strUserBackRest = BackRestCommonUserBackRestGet();
-    my $strHost = BackRestCommonHostGet();
 
     # Remove the backrest private directory
     if (-e "${strTestPath}/private")
@@ -68,11 +63,12 @@ sub BackRestFileTestSetup
 }
 
 ####################################################################################################################################
-# BackRestFileTest
+# BackRestTestFile_Test
 ####################################################################################################################################
-sub BackRestFileTest
+sub BackRestTestFile_Test
 {
     my $strTest = shift;
+    my $iTestRun = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -82,13 +78,12 @@ sub BackRestFileTest
 
     # Setup test variables
     my $iRun;
-    my $strTestPath = BackRestCommonTestPathGet();
-    my $strStanza = BackRestCommonStanzaGet();
-    my $strUser = BackRestCommonUserGet();
-    my $strGroup = BackRestCommonGroupGet();
-
-    # $strHost = "127.0.0.1";
-    # $strUserBackRest = 'backrest';
+    $strTestPath = BackRestTestCommon_TestPathGet();
+    my $strStanza = BackRestTestCommon_StanzaGet();
+    my $strUser = BackRestTestCommon_UserGet();
+    my $strGroup = BackRestTestCommon_GroupGet();
+    $strHost = BackRestTestCommon_HostGet();
+    $strUserBackRest = BackRestTestCommon_UserBackRestGet();
 
     # Print test parameters
     &log(INFO, "FILE MODULE ********************************************************************");
@@ -98,9 +93,9 @@ sub BackRestFileTest
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = BackRest::Remote->new
     (
-        strHost => BackRestCommonHostGet(),
+        strHost => $strHost,
         strUser => $strUser,
-        strCommand => BackRestCommonCommandRemoteGet(),
+        strCommand => BackRestTestCommon_CommandRemoteGet(),
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -137,11 +132,16 @@ sub BackRestFileTest
 
                 $iRun++;
 
+                if (defined($iTestRun) && $iTestRun != $iRun)
+                {
+                    next;
+                }
+
                 &log(INFO, "run ${iRun} - " .
                            "remote ${bRemote}, exists ${bExists}, error ${bError}, permission ${bPermission}");
 
                 # Setup test directory
-                BackRestFileTestSetup($bError);
+                BackRestTestFile_Setup($bError);
 
                 mkdir("$strTestPath/backup") or confess "Unable to create test/backup directory";
                 mkdir("$strTestPath/backup/db") or confess "Unable to create test/backup/db directory";
@@ -153,13 +153,6 @@ sub BackRestFileTest
                 if ($bPermission)
                 {
                     $strPermission = "0700";
-
-                    # # Make sure that we are not testing with the default permission
-                    # if ($strPermission eq $oFile->{strDefaultPathPermission})
-                    # {
-                    #     confess 'cannot set test permission ${strPermission} equal to default permission' .
-                    #             $oFile->{strDefaultPathPermission};
-                    # }
                 }
 
                 # If not exists then set the path to something bogus
@@ -271,7 +264,7 @@ sub BackRestFileTest
                            ", dst_exists $bDestinationExists, dst_error $bDestinationError, dst_create $bCreate");
 
                 # Setup test directory
-                BackRestFileTestSetup($bSourceError || $bDestinationError);
+                BackRestTestFile_Setup($bSourceError || $bDestinationError);
 
                 my $strSourceFile = "${strTestPath}/test.txt";
                 my $strDestinationFile = "${strTestPath}/test-dest.txt";
@@ -359,7 +352,7 @@ sub BackRestFileTest
                            "remote $bRemote, exists $bExists, error $bError");
 
                 # Setup test directory
-                BackRestFileTestSetup($bError);
+                BackRestTestFile_Setup($bError);
 
                 my $strFile = "${strTestPath}/test.txt";
                 my $strSourceHash;
@@ -463,7 +456,7 @@ sub BackRestFileTest
                            "remote $bRemote, error $bError, exists $bExists");
 
                 # Setup test directory
-                BackRestFileTestSetup($bError);
+                BackRestTestFile_Setup($bError);
 
                 # Setup test data
                 system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess "Unable to create test directory";
@@ -633,7 +626,7 @@ sub BackRestFileTest
                                    "sort " . (defined($strSort) ? $strSort : "[undef]"));
 
                         # Setup test directory
-                        BackRestFileTestSetup($bError);
+                        BackRestTestFile_Setup($bError);
 
                         my $strPath = "${strTestPath}";
 
@@ -742,7 +735,7 @@ sub BackRestFileTest
                                ", ignore missing ${bIgnoreMissing}");
 
                     # Setup test directory
-                    BackRestFileTestSetup($bError);
+                    BackRestTestFile_Setup($bError);
 
                     my $strFile = "${strTestPath}/test.txt";
 
@@ -840,7 +833,7 @@ sub BackRestFileTest
                            "remote $bRemote, error $bError, exists $bExists");
 
                 # Setup test directory
-                BackRestFileTestSetup($bError);
+                BackRestTestFile_Setup($bError);
 
                 my $strFile = "${strTestPath}/test.txt";
 
@@ -922,7 +915,7 @@ sub BackRestFileTest
                                "remote $bRemote, exists $bExists, error ${bError}");
 
                     # Setup test directory
-                    BackRestFileTestSetup($bError);
+                    BackRestTestFile_Setup($bError);
 
                     my $strFile = "${strTestPath}/test.txt";
 
@@ -1044,7 +1037,7 @@ sub BackRestFileTest
                                ":${strDestinationPath}, dstcmp $bDestinationCompress");
 
                 # Setup test directory
-                BackRestFileTestSetup(false);
+                BackRestTestFile_Setup(false);
                 system("mkdir ${strTestPath}/backup") == 0 or confess "Unable to create test/backup directory";
                 system("mkdir ${strTestPath}/db") == 0 or confess "Unable to create test/db directory";
 
@@ -1151,7 +1144,7 @@ sub BackRestFileTest
         }
     }
 
-    BackRestFileTestSetup(false, true);
+    BackRestTestFile_Setup(false, true);
 }
 
 1;

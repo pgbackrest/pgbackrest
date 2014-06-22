@@ -222,7 +222,7 @@ elsif (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
     {
         confess &log(ERROR, 'db and backup cannot both be configured as remote');
     }
-    
+
     $strRemote = REMOTE_DB;
 }
 else

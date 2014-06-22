@@ -27,10 +27,12 @@ use BackRestTest::FileTest;
 my $strLogLevel = 'off';   # Log level for tests
 my $strModule = 'all';
 my $strModuleTest = 'all';
+my $iModuleTestRun = undef;
 
 GetOptions ("log-level=s" => \$strLogLevel,
             "module=s" => \$strModule,
-            "module-test=s" => \$strModuleTest)
+            "module-test=s" => \$strModuleTest,
+            "module-test-run=s" => \$iModuleTestRun)
     or die("Error in command line arguments\n");
 
 ####################################################################################################################################
@@ -47,7 +49,13 @@ if ($strModuleTest ne 'all' && $strModule eq 'all')
     confess "--module must be provided for test \"${strModuleTest}\"";
 }
 
-BackRestCommonTestSetup();
+if (defined($iModuleTestRun) && $strModuleTest eq 'all')
+{
+    confess "--module-test must be provided for run \"${iModuleTestRun}\"";
+}
+
+
+BackRestTestCommon_Setup();
 
 ####################################################################################################################################
 # Clean whitespace
@@ -88,7 +96,7 @@ if (!$bMatch)
 
 if ($strModule eq 'all' || $strModule eq "file")
 {
-    BackRestFileTest($strModuleTest);
+    BackRestTestFile_Test($strModuleTest, $iModuleTestRun);
 }
 
 &log(ASSERT, "TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)");
