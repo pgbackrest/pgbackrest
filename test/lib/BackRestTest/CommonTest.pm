@@ -98,6 +98,7 @@ sub BackRestTestCommon_Setup
 sub BackRestTestCommon_ConfigCreate
 {
     my $strFile = shift;
+    my $strLocal = shift;
     my $strRemote = shift;
     my $oParamHashRef = shift;
     
@@ -116,12 +117,25 @@ sub BackRestTestCommon_ConfigCreate
     {
         $oParamHash{$strCommonStanza}{'host'} = $strCommonHost;
         $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
+    }
+    
+    if ($strLocal eq REMOTE_BACKUP)
+    {
         $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
-
         $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
+    }
+    elsif ($strLocal eq REMOTE_DB)
+    {
+    }
+    else
+    {
+        confess "invalid local type ${strLocal}";
     }
 
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
+    
+    $oParamHash{'global:log'}{'level-console'} = 'debug';
+    $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     tied(%oParamHash)->WriteConfig($strFile) or die "could not write config file ${strFile}";
     

@@ -153,6 +153,31 @@ while ($strCommand ne OP_EXIT)
                              param_get(\%oParamHash, 'destination_compress'),
                              param_get(\%oParamHash, 'ignore_missing_source', false)) ? 'Y' : 'N');
         }
+        elsif ($strCommand eq OP_FILE_MANIFEST)
+        {
+            my %oManifestHash;
+
+            $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash);
+
+            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination";
+
+            foreach my $strName (sort(keys $oManifestHash{name}))
+            {
+                $strOutput .= "\n${strName}\t" .
+                    $oManifestHash{name}{"${strName}"}{type} . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{permission}) ? $oManifestHash{name}{"${strName}"}{permission} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
+                        $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
+                        $oManifestHash{name}{"${strName}"}{link_destination} : "");
+            }
+
+            $oRemote->output_write($strOutput);
+        }
         else
         {
             if ($strCommand ne OP_NOOP)

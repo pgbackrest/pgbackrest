@@ -498,7 +498,7 @@ sub BackRestTestFile_Test
 
                 # Execute in eval in case of error
                 my %oManifestHash;
-                my $bErrorExpected = !$bExists || $bError || $bRemote;
+                my $bErrorExpected = !$bExists || $bError;
 
                 eval
                 {

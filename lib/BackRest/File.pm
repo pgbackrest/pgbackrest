@@ -13,6 +13,7 @@ use Net::OpenSSH;
 use IPC::Open3;
 use File::Basename;
 use File::Copy qw(cp);
+use File::Path qw(make_path remove_tree);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
@@ -579,18 +580,18 @@ sub path_create
         if (!($bIgnoreExists && $self->exists($strPathType, $strPath)))
         {
             # Attempt the create the directory
-            my $bResult;
+            my $stryError;
 
             if (defined($strPermission))
             {
-                $bResult = mkdir($strPathOp, oct($strPermission));
+                make_path($strPathOp, {mode => oct($strPermission), error => \$stryError});
             }
             else
             {
-                $bResult = mkdir($strPathOp);
+                make_path($strPathOp, {error => \$stryError});
             }
 
-            if (!$bResult)
+            if (@$stryError)
             {
                 # Capture the error
                 my $strError = "${strPathOp} could not be created: " . $!;
@@ -602,7 +603,7 @@ sub path_create
                 }
 
                 # Error the normal way
-                confess &log(ERROR, "${strDebug}: " . $strError, COMMAND_ERR_PATH_CREATE);
+                confess &log(ERROR, "${strDebug}: " . $strError); #, COMMAND_ERR_PATH_CREATE);
             }
         }
     }
@@ -661,7 +662,7 @@ sub exists
                 }
                 else
                 {
-                    confess &log(ERROR, "${strDebug}: " . $!, COMMAND_ERR_FILE_READ);
+                    confess &log(ERROR, "${strDebug}: " . $!); #, COMMAND_ERR_FILE_READ);
                 }
             }
 
@@ -907,19 +908,30 @@ sub manifest
     my $strPathOp = $self->path_get($strPathType, $strPath);
 
     # Set operation and debug strings
-    my $strOperation = OP_FILE_EXISTS;
+    my $strOperation = OP_FILE_MANIFEST;
     my $strDebug = "${strPathType}:${strPathOp}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     # Run remotely
     if ($self->is_remote($strPathType))
     {
-        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{path} = $strPathOp;
+
+        # Add remote info to debug string
+        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
+        &log(TRACE, "${strOperation}: ${strRemote}");
+
+        # Execute the command
+        data_hash_build($oManifestHashRef, $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug), "\t");
     }
     # Run locally
     else
     {
-        $self->manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
+        $self->manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef, $strDebug);
     }
 }
 
@@ -931,8 +943,9 @@ sub manifest_recurse
     my $strPathFileOp = shift;
     my $iDepth = shift;
     my $oManifestHashRef = shift;
+    my $strDebug = shift;
 
-    my $strErrorPrefix = "File->manifest";
+    $strDebug = $strDebug . (defined($strPathFileOp) ? " => ${strPathFileOp}" : "");
     my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : "");
     my $hPath;
 
@@ -952,7 +965,7 @@ sub manifest_recurse
             confess &log(ERROR, $strError, $iErrorCode);
         }
 
-        confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+        confess &log(ERROR, "${strDebug}: " . $strError);
     }
 
     my @stryFileList = grep(!/^\..$/i, readdir($hPath));
@@ -995,7 +1008,7 @@ sub manifest_recurse
                 confess &log(ERROR, $strError, COMMAND_ERR_FILE_READ);
             }
 
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError, COMMAND_ERR_FILE_READ);
+            confess &log(ERROR, "${strDebug}: " . $strError); #, COMMAND_ERR_FILE_READ);
         }
 
         # Check for regular file
@@ -1037,7 +1050,7 @@ sub manifest_recurse
                         exit COMMAND_ERR_LINK_READ;
                     }
 
-                    confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+                    confess &log(ERROR, "${strDebug}: " . $strError);
                 }
             }
         }
@@ -1051,7 +1064,7 @@ sub manifest_recurse
                 exit COMMAND_ERR_FILE_TYPE;
             }
 
-            confess &log(ERROR, "${strErrorPrefix}: " . $strError);
+            confess &log(ERROR, "${strDebug}: " . $strError);
         }
 
         # Get user name
@@ -1069,7 +1082,7 @@ sub manifest_recurse
         # Recurse into directories
         if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
         {
-            $self->manifest_recurse($strPathType, $strPathOp, $strFile, $iDepth + 1, $oManifestHashRef);
+            $self->manifest_recurse($strPathType, $strPathOp, $strFile, $iDepth + 1, $oManifestHashRef, $strDebug);
         }
     }
 }

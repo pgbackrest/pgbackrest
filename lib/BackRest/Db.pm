@@ -99,8 +99,8 @@ sub tablespace_map_get
     my $self = shift;
     my $oHashRef = shift;
 
-    return data_hash_build($oHashRef, "oid\tname\n" . $self->psql_execute(
-                           "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
+    data_hash_build($oHashRef, "oid\tname\n" . $self->psql_execute(
+                    "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
 }
 
 ####################################################################################################################################

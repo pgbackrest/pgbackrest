@@ -29,6 +29,7 @@ my $oDb;
 my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
 my $bHardLink;
+my $bCompress = true;
 my $bNoChecksum;
 my $iThreadMax;
 my $iThreadLocalMax;
@@ -788,8 +789,7 @@ sub backup_manifest_build
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} =
-            (split("\\.", $oManifestHash{name}{"${strName}"}{modification_time}))[0];
+        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
 
         if ($cType eq "f")
         {
@@ -1184,23 +1184,13 @@ sub backup_file_thread
                   file_size_format($oFileCopyMap{$strFile}{size}) .
                   ($lSizeTotal > 0 ? ", " . int($lSize * 100 / $lSizeTotal) . "%" : "") . ")";
 
-        # Copy the file from the database to the backup
-        unless($oFileThread->file_copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                              PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
-                                              undef, $oFileCopyMap{$strFile}{modification_time},
-                                              undef, $bPathCreate, false))
+        # Copy the file from the database to the backup (will return false if the source file is missing)
+        unless($oFileThread->copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
+                                  PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
+                                  false,      # Source is not compressed since it is the db directory
+                                  $bCompress, # Destination should be compressed based on backup settings
+                                  true))      # Ignore missing files
         {
-            &log(DEBUG, "thread ${iThreadIdx} unable to copy file: " . $oFileCopyMap{$strFile}{db_file});
-
-            # If the copy fails then then check if the file exists.  The database frequently removes files so it is normal for
-            # files to be missing after the manifest is built.  However, if the file exists then it means there was some other
-            # sort of fatal copy error and an abort is required to prevent a corrupted backup
-            if ($oFileThread->file_exists(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file}))
-            {
-                # !!! Improve this error when able to retrieve error text from the File object
-                confess &log(ERROR, "unable to copy file $oFileCopyMap{$strFile}{db_file}");
-            }
-
             # If file is missing assume the database removed it (else corruption and nothing we can do!)
             &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
 
@@ -1216,20 +1206,20 @@ sub backup_file_thread
         }
 
         # Generate checksum for file if configured
-        if ($bChecksum && $lSize != 0)
-        {
-            # Generate the checksum
-            my $strChecksum = $oFileThread->file_hash_get(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
-
-            # Write the checksum message into the master queue
-            $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
-
-            &log(INFO, $strLog . " checksum ${strChecksum}");
-        }
-        else
-        {
+        # if ($bChecksum && $lSize != 0)
+        # {
+        #     # Generate the checksum
+        #     my $strChecksum = $oFileThread->file_hash_get(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
+        #
+        #     # Write the checksum message into the master queue
+        #     $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
+        #
+        #     &log(INFO, $strLog . " checksum ${strChecksum}");
+        # }
+        # else
+        # {
             &log(INFO, $strLog);
-        }
+        # }
     }
 
     &log(DEBUG, "thread ${iThreadIdx} exiting");
@@ -1259,7 +1249,8 @@ sub backup
     &log(DEBUG, "cluster path is $strDbClusterPath");
 
     # Create the cluster backup path
-    $oFile->path_create(PATH_BACKUP, "backup", undef, true);
+    # $oFile->path_create(PATH_BACKUP, "backup", undef, true);
+    # $oFile->path_create(PATH_BACKUP, "temp", undef, true);
     $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
 
     # Find the previous backup based on the type
