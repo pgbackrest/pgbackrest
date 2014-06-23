@@ -28,8 +28,8 @@ our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_pull archiv
 my $oDb;
 my $oFile;
 my $strType = "incremental";        # Type of backup: full, differential (diff), incremental (incr)
+my $bCompress;
 my $bHardLink;
-my $bCompress = true;
 my $bNoChecksum;
 my $iThreadMax;
 my $iThreadLocalMax;
@@ -52,6 +52,7 @@ sub backup_init
     my $oDbParam = shift;
     my $oFileParam = shift;
     my $strTypeParam = shift;
+    my $bCompressParam = shift;
     my $bHardLinkParam = shift;
     my $bNoChecksumParam = shift;
     my $iThreadMaxParam = shift;
@@ -61,6 +62,7 @@ sub backup_init
     $oDb = $oDbParam;
     $oFile = $oFileParam;
     $strType = $strTypeParam;
+    $bCompress = $bCompressParam;
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
     $iThreadMax = $iThreadMaxParam;
@@ -288,7 +290,7 @@ sub archive_push
     $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,             # Source file
                  PATH_BACKUP_ARCHIVE, $strDestinationFile,     # Destination file
                  false,                                        # Source is not compressed
-                 false,                                        # !!! For now, compress destination
+                 $bCompress,                                   # Destination compress is configurable
                  undef, undef, undef,                          # Unused params
                  true);                                        # Create path if it does not exist
 }
@@ -1392,7 +1394,7 @@ sub backup
             $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
                          PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}",
                          $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
-                         false); # !!! THIS NEEDS TO BE FIXED
+                         $bCompress);
         }
     }
 

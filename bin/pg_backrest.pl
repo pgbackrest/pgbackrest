@@ -350,6 +350,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             undef,
             $oFile,
             undef,
+            $bCompress,
             undef,
             !$bChecksum
         );
@@ -421,6 +422,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                 undef,
                 $oFile,
                 undef,
+                $bCompress,
                 undef,
                 !$bChecksum,
                 config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
@@ -459,6 +461,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
                     undef,
                     $oFile,
                     undef,
+                    $bCompress,
                     undef,
                     !$bChecksum,
                     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
@@ -553,6 +556,7 @@ backup_init
     $oDb,
     $oFile,
     $strType,
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false,
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, "n") eq "y" ? true : false,
     !$bChecksum,
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
