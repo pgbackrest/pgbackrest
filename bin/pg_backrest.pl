@@ -339,15 +339,10 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Run file_init_archive - this is the minimal config needed to run archiving
         my $oFile = BackRest::File->new
         (
-            # strStanza => $strStanza,
-            # bNoCompression => !$bCompress,
-            # strBackupUser => config_load($strSection, CONFIG_KEY_USER),
-            # strBackupHost => config_load($strSection, CONFIG_KEY_HOST),
-            # strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true),
-            # strCommand => $0,
-            # strCommandChecksum => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_CHECKSUM, $bChecksum),
-            # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-            # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
+            strStanza => $strStanza,
+            strRemote => $strRemote,
+            oRemote => $oRemote,
+            strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
         );
 
         backup_init

@@ -259,7 +259,7 @@ sub archive_get
 sub archive_push
 {
     my $strSourceFile = shift;
-
+    
     # Get the destination file
     my $strDestinationFile = basename($strSourceFile);
 
@@ -269,12 +269,16 @@ sub archive_push
     # Append the checksum (if requested)
     if ($bArchiveFile && !$bNoChecksum)
     {
-        $strDestinationFile .= "-" . $oFile->file_hash_get(PATH_DB_ABSOLUTE, $strSourceFile);
+        $strDestinationFile .= "-" . $oFile->hash(PATH_DB_ABSOLUTE, $strSourceFile);
     }
 
     # Copy the archive file
-    $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile, PATH_BACKUP_ARCHIVE, $strDestinationFile,
-                      $bArchiveFile ? undef : true);
+    $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile,             # Source file
+                      PATH_BACKUP_ARCHIVE, $strDestinationFile,     # Destination file
+                      false,                                        # Source is not compressed
+                      false,                                        # !!! For now, compress destination
+                      undef, undef, undef,                          # Unused params
+                      true);                                        # Create path if it does not exist
 }
 
 ####################################################################################################################################

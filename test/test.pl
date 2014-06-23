@@ -93,7 +93,7 @@ if (!$bMatch)
 ####################################################################################################################################
 # Runs tests
 ####################################################################################################################################
-#&log(INFO, "Testing with test_path = ${strTestPath}, host = ${strHost}, user = ${strUser}, group = ${strGroup}");
+&log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, group = {strGroup}");
 
 if ($strModule eq 'all' || $strModule eq "file")
 {

@@ -53,9 +53,14 @@ sub BackRestTestBackup_ClusterCreate
 {
     my $strPath = shift;
     my $iPort = shift;
+    
+    my $strArchive = BackRestTestCommon_CommandMainGet() . " --stanza=" . BackRestTestCommon_StanzaGet() . 
+                     " --config=" . BackRestTestCommon_DbPathGet() . "/pg_backrest.conf archive-push %p";
 
     BackRestTestCommon_Execute("initdb -D $strPath -A trust");
-    BackRestTestCommon_Execute("pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command=true\" -D $strPath -l $strPath/postgresql.log -w -s");
+    BackRestTestCommon_Execute("/Library/PostgreSQL/9.3/bin/pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive " . 
+                               "-c archive_mode=on -c archive_command='$strArchive'\" " . 
+                               "-D $strPath -l $strPath/postgresql.log -w -s");
 }
 
 ####################################################################################################################################
