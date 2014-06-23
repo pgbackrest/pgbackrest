@@ -356,7 +356,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
 
         &log(INFO, "pushing archive log " . $ARGV[1] . ($bCompressAsync ? " asynchronously" : ""));
 
-        archive_push($ARGV[1]);
+        archive_push(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1]);
 
         # Only continue if we are archiving local and a backup server is defined
         if (!($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))

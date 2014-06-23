@@ -119,14 +119,11 @@ sub BackRestTestFile_Test
                 oRemote => $bRemote ? $oRemote : undef
             ))->clone();
 
-            # Loop through exists (does the paren path exist?)
-            for (my $bExists = 0; $bExists <= 1; $bExists++)
-            {
-            # Loop through exists (does the paren path exist?)
+            # Loop through error
             for (my $bError = 0; $bError <= 1; $bError++)
             {
             # Loop through permission (permission will be set on true)
-            for (my $bPermission = 0; $bPermission <= $bExists; $bPermission++)
+            for (my $bPermission = 0; $bPermission <= 1; $bPermission++)
             {
                 my $strPathType = PATH_BACKUP_CLUSTER;
 
@@ -138,7 +135,7 @@ sub BackRestTestFile_Test
                 }
 
                 &log(INFO, "run ${iRun} - " .
-                           "remote ${bRemote}, exists ${bExists}, error ${bError}, permission ${bPermission}");
+                           "remote ${bRemote}, error ${bError}, permission ${bPermission}");
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -161,13 +158,9 @@ sub BackRestTestFile_Test
                     $strPath = "${strTestPath}/private/path";
                     $strPathType = PATH_BACKUP_ABSOLUTE;
                 }
-                elsif (!$bExists)
-                {
-                    $strPath = "error/path";
-                }
 
                 # Execute in eval to catch errors
-                my $bErrorExpected = !$bExists || $bError;
+                my $bErrorExpected = $bError;
 
                 eval
                 {
@@ -214,7 +207,6 @@ sub BackRestTestFile_Test
                         confess "permissions were not set to {$strPermission}";
                     }
                 }
-            }
             }
             }
         }
@@ -960,7 +952,7 @@ sub BackRestTestFile_Test
                             $strMessage = $oMessage;
                         }
 
-                        if ($bError && defined($iCode) && $iCode == COMMAND_ERR_FILE_READ)
+                        if ($bError)
                         {
                             next;
                         }

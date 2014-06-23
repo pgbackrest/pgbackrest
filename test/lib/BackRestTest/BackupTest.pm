@@ -38,7 +38,7 @@ my $strUserBackRest;
 sub BackRestTestBackup_ClusterDrop
 {
     my $strPath = shift;
-    
+
     # If the db directory already exists, stop the cluster and remove the directory
     if (-e $strPath . "/postmaster.pid")
     {
@@ -53,13 +53,13 @@ sub BackRestTestBackup_ClusterCreate
 {
     my $strPath = shift;
     my $iPort = shift;
-    
-    my $strArchive = BackRestTestCommon_CommandMainGet() . " --stanza=" . BackRestTestCommon_StanzaGet() . 
+
+    my $strArchive = BackRestTestCommon_CommandMainGet() . " --stanza=" . BackRestTestCommon_StanzaGet() .
                      " --config=" . BackRestTestCommon_DbPathGet() . "/pg_backrest.conf archive-push %p";
 
     BackRestTestCommon_Execute("initdb -D $strPath -A trust");
-    BackRestTestCommon_Execute("/Library/PostgreSQL/9.3/bin/pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive " . 
-                               "-c archive_mode=on -c archive_command='$strArchive'\" " . 
+    BackRestTestCommon_Execute("/Library/PostgreSQL/9.3/bin/pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive " .
+                               "-c archive_mode=on -c archive_command='$strArchive'\" " .
                                "-D $strPath -l $strPath/postgresql.log -w -s");
 }
 
@@ -92,7 +92,7 @@ sub BackRestTestBackup_Setup
 
         # Create the db/common directory
         mkdir($strTestPath . "/db/common") or confess "Unable to create ${strTestPath}/db/common path";
-        
+
         # Create the cluster
         BackRestTestBackup_ClusterCreate($strTestPath . "/db/common", BackRestTestCommon_DbPortGet);
 
@@ -131,7 +131,7 @@ sub BackRestTestBackup_Test
 
     BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', REMOTE_DB);#, REMOTE_BACKUP);
     BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', REMOTE_BACKUP);#, REMOTE_DB);
-    
+
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
                                        "/pg_backrest.conf --type=incr --stanza=${strStanza} backup");
 

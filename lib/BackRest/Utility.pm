@@ -293,7 +293,7 @@ sub date_string_get
 sub log_file_set
 {
     my $strFile = shift;
-    
+
     unless (-e dirname($strFile))
     {
         mkdir(dirname($strFile)) or die "unable to create directory for log file ${strFile}";

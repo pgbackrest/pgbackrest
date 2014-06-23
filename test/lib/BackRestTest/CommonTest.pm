@@ -49,7 +49,7 @@ sub BackRestTestCommon_Execute
 {
     my $strCommand = shift;
     my $bSuppressError = shift;
-    
+
     if (system($strCommand) != 0)
     {
         if (!defined($bSuppressError) || !$bSuppressError)
@@ -66,9 +66,9 @@ sub BackRestTestCommon_ExecuteBackRest
 {
     my $strCommand = shift;
     my $bSuppressError = shift;
-    
+
     $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
-    
+
     BackRestTestCommon_Execute($strCommand, $bSuppressError);
 }
 
@@ -101,7 +101,7 @@ sub BackRestTestCommon_ConfigCreate
     my $strLocal = shift;
     my $strRemote = shift;
     my $oParamHashRef = shift;
-    
+
     my %oParamHash;
     tie %oParamHash, 'Config::IniFiles';
 
@@ -118,10 +118,9 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{$strCommonStanza}{'host'} = $strCommonHost;
         $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
     }
-    
+
     if ($strLocal eq REMOTE_BACKUP)
     {
-        $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
         $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
     }
     elsif ($strLocal eq REMOTE_DB)
@@ -132,13 +131,14 @@ sub BackRestTestCommon_ConfigCreate
         confess "invalid local type ${strLocal}";
     }
 
+    $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
-    
+
     $oParamHash{'global:log'}{'level-console'} = 'debug';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     tied(%oParamHash)->WriteConfig($strFile) or die "could not write config file ${strFile}";
-    
+
     chmod(0770, $strFile) or die "unable to set permissions for ${strFile}";
 }
 

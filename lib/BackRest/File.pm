@@ -442,44 +442,33 @@ sub move
     # Run locally
     else
     {
-        # If the destination path does not exist, create it or error out
-        if (!$self->exists($strDestinationPathType, dirname($strDestinationFile)))
+        if (!rename($strPathOpSource, $strPathOpDestination))
         {
-            if ($bDestinationPathCreate)
-            {
-                $self->path_create($strDestinationPathType, dirname($strDestinationFile));
-            }
-            else
-            {
-                my $strError = "destination " . dirname($strPathOpDestination) . " does not exist";
+            my $strError = "${strPathOpDestination} could not be moved: " . $!;
+            my $iErrorCode = COMMAND_ERR_FILE_READ;
 
+            if (!$self->exists(PATH_ABSOLUTE, dirname($strPathOpDestination)))
+            {
+                $strError = "${strPathOpDestination} does not exist";
+                $iErrorCode = COMMAND_ERR_FILE_MISSING;
+            }
+
+            if (!($bDestinationPathCreate && $iErrorCode == COMMAND_ERR_FILE_MISSING))
+            {
                 if ($strSourcePathType eq PATH_ABSOLUTE)
                 {
-                    print $strError;
-                    exit (COMMAND_ERR_PATH_MISSING);
+                    confess &log(ERROR, $strError, $iErrorCode);
                 }
 
                 confess &log(ERROR, "${strDebug}: " . $strError);
             }
-        }
 
-        if (!rename($strPathOpSource, $strPathOpDestination))
-        {
-            my $strError = "${strPathOpSource} could not be moved: " . $!;
-            my $iErrorCode = COMMAND_ERR_FILE_MOVE;
+            $self->path_create(PATH_ABSOLUTE, dirname($strPathOpDestination));
 
-            if (!$self->exists($strSourcePathType, dirname($strSourceFile)))
+            if (!rename($strPathOpSource, $strPathOpDestination))
             {
-                $strError = "${strPathOpSource} does not exist";
-                $iErrorCode = COMMAND_ERR_FILE_MISSING;
+                confess &log(ERROR, "unable to open move file ${strPathOpSource}: " . $!);
             }
-
-            if ($strSourcePathType eq PATH_ABSOLUTE)
-            {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
-
-            confess &log(ERROR, "${strDebug}: " . $strError);
         }
     }
 }
@@ -1110,12 +1099,13 @@ sub copy
     my $bIgnoreMissingSource = shift;
     my $lModificationTime = shift;
     my $strPermission = shift;
-    my $bPathCreate = shift;
+    my $bDestinationPathCreate = shift;
 
     # Set defaults
     $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
     $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
+    $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : false;
 
     # Set working variables
     my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
@@ -1134,7 +1124,8 @@ sub copy
                    (defined($strDestinationOp) ? ":${strDestinationFile}" : "") .
                    ", source_compressed = " . ($bSourceCompressed ? "true" : "false") .
                    ", destination_compress = " . ($bDestinationCompress ? "true" : "false") .
-                   ", ignore_missing_source = " . ($bIgnoreMissingSource ? "true" : "false");
+                   ", ignore_missing_source = " . ($bIgnoreMissingSource ? "true" : "false") .
+                   ", destination_path_create = " . ($bDestinationPathCreate ? "true" : "false");
     &log(DEBUG, OP_FILE_COPY . ": ${strDebug}");
 
     # Open the source and destination files (if needed)
@@ -1177,8 +1168,35 @@ sub copy
 
     if (!$bDestinationRemote)
     {
-        open($hDestinationFile, ">", $strDestinationTmpOp)
-            or confess &log(ERROR, "cannot open ${strDestinationTmpOp}: " . $!);
+        # Open the destination temp file
+        if (!open($hDestinationFile, ">", $strDestinationTmpOp))
+        {
+            my $strError = "${strDestinationTmpOp} could not be opened: " . $!;
+            my $iErrorCode = COMMAND_ERR_FILE_READ;
+
+            if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationOp)))
+            {
+                $strError = "${strDestinationOp} does not exist";
+                $iErrorCode = COMMAND_ERR_FILE_MISSING;
+            }
+
+            if (!($bDestinationPathCreate && $iErrorCode == COMMAND_ERR_FILE_MISSING))
+            {
+                if ($strSourcePathType eq PATH_ABSOLUTE)
+                {
+                    confess &log(ERROR, $strError, $iErrorCode);
+                }
+
+                confess &log(ERROR, "${strDebug}: " . $strError);
+            }
+
+            $self->path_create(PATH_ABSOLUTE, dirname($strDestinationOp));
+
+            if (!open($hDestinationFile, ">", $strDestinationTmpOp))
+            {
+                confess &log(ERROR, "unable to open destination file ${strDestinationOp}: " . $!);
+            }
+        }
     }
 
     # If source or destination are remote
@@ -1357,7 +1375,7 @@ sub copy
         }
 
         # Move the file from tmp to final destination
-        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, $bPathCreate);
+        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, false);
     }
 
     return true;

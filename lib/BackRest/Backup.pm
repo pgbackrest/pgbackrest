@@ -258,8 +258,20 @@ sub archive_get
 ####################################################################################################################################
 sub archive_push
 {
+    my $strDbClusterPath = shift;
     my $strSourceFile = shift;
-    
+
+    # If the source file path is not absolute then it is relative to the data path
+    if (index($strSourceFile, '/',) != 0)
+    {
+        if (!defined($strDbClusterPath))
+        {
+            confess &log(ERROR, "database path must be set if relative xlog paths are used");
+        }
+
+        $strSourceFile = "${strDbClusterPath}/${strSourceFile}";
+    }
+
     # Get the destination file
     my $strDestinationFile = basename($strSourceFile);
 
@@ -273,12 +285,12 @@ sub archive_push
     }
 
     # Copy the archive file
-    $oFile->file_copy(PATH_DB_ABSOLUTE, $strSourceFile,             # Source file
-                      PATH_BACKUP_ARCHIVE, $strDestinationFile,     # Destination file
-                      false,                                        # Source is not compressed
-                      false,                                        # !!! For now, compress destination
-                      undef, undef, undef,                          # Unused params
-                      true);                                        # Create path if it does not exist
+    $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,             # Source file
+                 PATH_BACKUP_ARCHIVE, $strDestinationFile,     # Destination file
+                 false,                                        # Source is not compressed
+                 false,                                        # !!! For now, compress destination
+                 undef, undef, undef,                          # Unused params
+                 true);                                        # Create path if it does not exist
 }
 
 ####################################################################################################################################
@@ -1377,7 +1389,10 @@ sub backup
 
             &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
-            $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}");
+            $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
+                         PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}",
+                         $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
+                         false); # !!! THIS NEEDS TO BE FIXED
         }
     }
 
@@ -1389,7 +1404,7 @@ sub backup
 
     # Rename the backup tmp path to complete the backup
     &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
-    $oFile->file_move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+    $oFile->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
 }
 
 ####################################################################################################################################
