@@ -47,6 +47,20 @@ sub BackRestTestBackup_ClusterDrop
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_ClusterRestart
+####################################################################################################################################
+sub BackRestTestBackup_ClusterRestart
+{
+    my $strPath = BackRestTestCommon_DbCommonPathGet();
+
+    # If the db directory already exists, stop the cluster and remove the directory
+    if (-e $strPath . "/postmaster.pid")
+    {
+        BackRestTestCommon_Execute("pg_ctl restart -D $strPath -w -s");
+    }
+}
+
+####################################################################################################################################
 # BackRestTestBackup_ClusterCreate
 ####################################################################################################################################
 sub BackRestTestBackup_ClusterCreate
@@ -127,13 +141,58 @@ sub BackRestTestBackup_Test
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
 
-    BackRestTestBackup_Setup();
+    if ($strTest eq 'all' || $strTest eq 'full')
+    {
+        $iRun = 0;
 
-    BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', REMOTE_DB, REMOTE_BACKUP);
-    BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', REMOTE_BACKUP, REMOTE_DB);
+        &log(INFO, "Test Full Backup\n");
 
-    BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
-                                       "/pg_backrest.conf --type=incr --stanza=${strStanza} backup");
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            BackRestTestBackup_Setup();
+
+            for (my $bHardlink = 0; $bHardlink <= 1; $bHardlink++)
+            {
+    #            BackRestTestBackup_ClusterRestart();
+
+                my %oDbConfigHash;
+                my %oBackupConfigHash;
+
+                # Confgure hard-linking
+                if ($bHardlink)
+                {
+                    $oBackupConfigHash{'global:backup'}{hardlink} = 'y';
+                }
+
+                BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', 'db',
+                                                ($bRemote ? REMOTE_BACKUP : undef), \%oDbConfigHash);
+                BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', 'backup',
+                                                ($bRemote ? REMOTE_DB : undef), \%oBackupConfigHash);
+
+                for (my $iFull = 1; $iFull <= 1; $iFull++)
+                {
+                    $iRun++;
+
+                    &log(INFO, "run ${iRun} - " .
+                               "remote ${bRemote}, full ${iFull}");
+
+                    BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
+                                               "/pg_backrest.conf --type=full --stanza=${strStanza} backup");
+
+                for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
+                    {
+                        $iRun++;
+
+                        &log(INFO, "run ${iRun} - " .
+                                   "remote ${bRemote}, full ${iFull}, hardlink ${bHardlink}, incr ${iIncr}");
+
+                        BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
+                                                   "/pg_backrest.conf --type=incr --stanza=${strStanza} backup");
+                    }
+                }
+            }
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test path_create()

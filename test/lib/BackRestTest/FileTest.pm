@@ -250,6 +250,11 @@ sub BackRestTestFile_Test
             {
                 $iRun++;
 
+                if (defined($iTestRun) && $iTestRun != $iRun)
+                {
+                    next;
+                }
+
                 &log(INFO, "run ${iRun} - " .
                            "remote $bRemote" .
                            ", src_exists $bSourceExists, src_error $bSourceError" .
@@ -339,6 +344,11 @@ sub BackRestTestFile_Test
             for (my $bError = 0; $bError <= 1; $bError++)
             {
                 $iRun++;
+
+                if (defined($iTestRun) && $iTestRun != $iRun)
+                {
+                    next;
+                }
 
                 &log(INFO, "run ${iRun} - " .
                            "remote $bRemote, exists $bExists, error $bError");
@@ -443,6 +453,11 @@ sub BackRestTestFile_Test
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
                 $iRun++;
+
+                if (defined($iTestRun) && $iTestRun != $iRun)
+                {
+                    next;
+                }
 
                 &log(INFO, "run ${iRun} - " .
                            "remote $bRemote, error $bError, exists $bExists");
@@ -612,6 +627,11 @@ sub BackRestTestFile_Test
                     {
                         $iRun++;
 
+                        if (defined($iTestRun) && $iTestRun != $iRun)
+                        {
+                            next;
+                        }
+
                         &log(INFO, "run ${iRun} - " .
                                    "remote $bRemote, error $bError, exists $bExists, " .
                                    "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
@@ -722,6 +742,11 @@ sub BackRestTestFile_Test
                 {
                     $iRun++;
 
+                    if (defined($iTestRun) && $iTestRun != $iRun)
+                    {
+                        next;
+                    }
+
                     &log(INFO, "run ${iRun} - " .
                                "remote ${bRemote}, error = $bError, exists ${bExists}, temp ${bTemp} " .
                                ", ignore missing ${bIgnoreMissing}");
@@ -821,6 +846,11 @@ sub BackRestTestFile_Test
             {
                 $iRun++;
 
+                if (defined($iTestRun) && $iTestRun != $iRun)
+                {
+                    next;
+                }
+
                 &log(INFO, "run ${iRun} - " .
                            "remote $bRemote, error $bError, exists $bExists");
 
@@ -902,6 +932,11 @@ sub BackRestTestFile_Test
                 for (my $bError = 0; $bError <= $bExists; $bError++)
                 {
                     $iRun++;
+
+                    if (defined($iTestRun) && $iTestRun != $iRun)
+                    {
+                        next;
+                    }
 
                     &log(INFO, "run ${iRun} - " .
                                "remote $bRemote, exists $bExists, error ${bError}");
@@ -1021,6 +1056,11 @@ sub BackRestTestFile_Test
 
                 $iRun++;
 
+                if (defined($iTestRun) && $iTestRun != $iRun)
+                {
+                    next;
+                }
+
                 &log(INFO, "run ${iRun} - " .
                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
@@ -1064,7 +1104,8 @@ sub BackRestTestFile_Test
                     $bReturn = $oFile->copy($strSourcePathType, $strSourceFile,
                                             $strDestinationPathType, $strDestinationFile,
                                             $bSourceCompressed, $bDestinationCompress,
-                                            $bSourceIgnoreMissing);
+                                            $bSourceIgnoreMissing, undef,
+                                            '0700');
                 };
 
                 # Check for errors after copy
@@ -1088,10 +1129,8 @@ sub BackRestTestFile_Test
                             confess 'unknown error object: ' . $oMessage;
                         }
                     }
-                    else
-                    {
-                        confess $oMessage;
-                    }
+
+                    confess $oMessage;
                 }
 
                 if ($bSourceMissing)

@@ -420,7 +420,7 @@ sub binary_xfer
                     $self->wait_pid();
                     confess "unable to read block header ${strBlockHeader}";
                 }
-                
+
                 $iBlockInTotal = 0;
                 $iBlockTotal += 1;
             }
@@ -432,7 +432,7 @@ sub binary_xfer
 #                print "looking for a block of size"
 
                 $iBlockIn = sysread($hIn, $strBlock, $iBlockSize - $iBlockInTotal);
-                
+
                 # while (defined($iBlockIn) && $iBlockIn != $iBlockSize)
                 # {
                 #     $iBlockInMore = sysread($hIn, $strBlockMore, $iBlockSize - $iBlockIn);

@@ -135,8 +135,16 @@ sub BackRestTestCommon_ConfigCreate
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
     $oParamHash{'global:backup'}{'thread-max'} = '8';
 
-    $oParamHash{'global:log'}{'level-console'} = 'debug';
+    $oParamHash{'global:log'}{'level-console'} = 'error';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
+
+    foreach my $strSection (keys $oParamHashRef)
+    {
+        foreach my $strKey (keys ${$oParamHashRef}{$strSection})
+        {
+            $oParamHash{$strSection}{$strKey} = ${$oParamHashRef}{$strSection}{$strKey};
+        }
+    }
 
     tied(%oParamHash)->WriteConfig($strFile) or die "could not write config file ${strFile}";
 

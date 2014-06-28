@@ -750,7 +750,7 @@ sub hash
 
         if (!open($hFile, "<", $strFileOp))
         {
-            my $strError = "${strFileOp} could not be read" . $!;
+            my $strError = "${strFileOp} could not be read: " . $!;
             my $iErrorCode = 2;
 
             if (!$self->exists($strPathType, $strFile))
@@ -1174,9 +1174,9 @@ sub copy
             my $strError = "${strDestinationTmpOp} could not be opened: " . $!;
             my $iErrorCode = COMMAND_ERR_FILE_READ;
 
-            if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationOp)))
+            if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationTmpOp)))
             {
-                $strError = "${strDestinationOp} does not exist";
+                $strError = dirname($strDestinationTmpOp) . " does not exist";
                 $iErrorCode = COMMAND_ERR_FILE_MISSING;
             }
 
@@ -1190,7 +1190,7 @@ sub copy
                 confess &log(ERROR, "${strDebug}: " . $strError);
             }
 
-            $self->path_create(PATH_ABSOLUTE, dirname($strDestinationOp));
+            $self->path_create(PATH_ABSOLUTE, dirname($strDestinationTmpOp));
 
             if (!open($hDestinationFile, ">", $strDestinationTmpOp))
             {
@@ -1246,6 +1246,11 @@ sub copy
                 $oParamHash{destination_compress} = $bDestinationCompress;
                 $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
+                if (defined($strPermission))
+                {
+                    $oParamHash{permission} = $strPermission;
+                }
+
                 $hOut = $self->{oRemote}->{hIn};
             }
         }
@@ -1259,6 +1264,11 @@ sub copy
             $oParamHash{destination_file} = $strDestinationOp;
             $oParamHash{destination_compress} = $bDestinationCompress;
             $oParamHash{destination_path_create} = $bDestinationPathCreate;
+
+            if (defined($strPermission))
+            {
+                $oParamHash{permission} = $strPermission;
+            }
 
             if ($bIgnoreMissingSource)
             {
@@ -1363,21 +1373,21 @@ sub copy
     if (!$bDestinationRemote)
     {
         # Set the file permission if required
-        if (defined($strPermission))
-        {
-            system("chmod ${strPermission} ${strDestinationTmpOp}") == 0
-                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
-        }
+        # if (defined($strPermission))
+        # {
+        #     system("chmod ${strPermission} ${strDestinationTmpOp}") == 0
+        #         or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
+        # }
 
         # Set the file modification time if required
-        if (defined($lModificationTime))
-        {
-            utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
-                or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
-        }
+        # if (defined($lModificationTime))
+        # {
+        #     utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
+        #         or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
+        # }
 
         # Move the file from tmp to final destination
-        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, false);
+        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
     }
 
     return true;

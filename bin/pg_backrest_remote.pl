@@ -114,7 +114,8 @@ while ($strCommand ne OP_EXIT)
             $oFile->copy(PIPE_STDIN, undef,
                          PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
                          undef, param_get(\%oParamHash, 'destination_compress'),
-                         undef, undef, undef,
+                         undef, undef,
+                         param_get(\%oParamHash, 'permission', false),
                          param_get(\%oParamHash, 'destination_path_create'));
 
             $oRemote->output_write();
@@ -154,7 +155,8 @@ while ($strCommand ne OP_EXIT)
                              param_get(\%oParamHash, 'source_compressed'),
                              param_get(\%oParamHash, 'destination_compress'),
                              param_get(\%oParamHash, 'ignore_missing_source', false).
-                             undef, undef,
+                             undef,
+                             param_get(\%oParamHash, 'permission', false),
                              param_get(\%oParamHash, 'destination_path_create')) ? 'Y' : 'N');
         }
         elsif ($strCommand eq OP_FILE_MANIFEST)

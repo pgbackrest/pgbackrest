@@ -190,7 +190,7 @@ sub backup_thread_complete
 
                     if ($bConfessOnError)
                     {
-                        confess &log(ERROR, "error in thread ${iThreadIdx}: check log for details");
+                        confess &log(ERROR, 'error in thread ' . (${iThreadIdx} + 1) . ': check log for details');
                     }
                     else
                     {
@@ -1205,9 +1205,11 @@ sub backup_file_thread
         # Copy the file from the database to the backup (will return false if the source file is missing)
         unless($oFileThread->copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
                                   PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
-                                  false,      # Source is not compressed since it is the db directory
-                                  $bCompress, # Destination should be compressed based on backup settings
-                                  true))      # Ignore missing files
+                                  false,        # Source is not compressed since it is the db directory
+                                  $bCompress,   # Destination should be compressed based on backup settings
+                                  true,         # Ignore missing files
+                                  undef, undef, # Do not set permissions or modification time
+                                  true))        # Create the destiation directory if it does not exist
         {
             # If file is missing assume the database removed it (else corruption and nothing we can do!)
             &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
