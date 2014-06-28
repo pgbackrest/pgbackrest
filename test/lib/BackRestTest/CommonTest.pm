@@ -133,6 +133,7 @@ sub BackRestTestCommon_ConfigCreate
 
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
+    $oParamHash{'global:backup'}{'thread-max'} = '8';
 
     $oParamHash{'global:log'}{'level-console'} = 'debug';
     $oParamHash{'global:log'}{'level-file'} = 'trace';

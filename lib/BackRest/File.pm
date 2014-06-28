@@ -1119,9 +1119,9 @@ sub copy
 
     # Set debug string and log
     my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
-                   (defined($strSourceOp) ? ":${strSourceFile}" : "") .
+                   (defined($strSourceFile) ? ":${strSourceOp}" : "") .
                    " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
-                   (defined($strDestinationOp) ? ":${strDestinationFile}" : "") .
+                   (defined($strDestinationFile) ? ":${strDestinationOp}" : "") .
                    ", source_compressed = " . ($bSourceCompressed ? "true" : "false") .
                    ", destination_compress = " . ($bDestinationCompress ? "true" : "false") .
                    ", ignore_missing_source = " . ($bIgnoreMissingSource ? "true" : "false") .
@@ -1244,6 +1244,7 @@ sub copy
             {
                 $oParamHash{destination_file} = $strDestinationOp;
                 $oParamHash{destination_compress} = $bDestinationCompress;
+                $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
                 $hOut = $self->{oRemote}->{hIn};
             }
@@ -1257,6 +1258,7 @@ sub copy
             $oParamHash{source_compressed} = $bSourceCompressed;
             $oParamHash{destination_file} = $strDestinationOp;
             $oParamHash{destination_compress} = $bDestinationCompress;
+            $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
             if ($bIgnoreMissingSource)
             {

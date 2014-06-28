@@ -153,10 +153,10 @@ sub backup_thread_complete
         $bConfessOnError = true;
     }
 
-    if (!defined($iTimeout))
-    {
-        &log(WARN, "no thread timeout was set");
-    }
+#    if (!defined($iTimeout))
+#    {
+#        &log(WARN, "no thread timeout was set");
+#    }
 
     # Wait for all threads to complete and handle errors
     my $iThreadComplete = 0;

@@ -129,8 +129,8 @@ sub BackRestTestBackup_Test
 
     BackRestTestBackup_Setup();
 
-    BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', REMOTE_DB);#, REMOTE_BACKUP);
-    BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', REMOTE_BACKUP);#, REMOTE_DB);
+    BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', REMOTE_DB, REMOTE_BACKUP);
+    BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', REMOTE_BACKUP, REMOTE_DB);
 
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
                                        "/pg_backrest.conf --type=incr --stanza=${strStanza} backup");

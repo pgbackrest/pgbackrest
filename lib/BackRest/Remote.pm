@@ -24,7 +24,7 @@ use BackRest::Utility;
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 1048576
+    DEFAULT_BLOCK_SIZE  => 8192 #1048576
 };
 
 ####################################################################################################################################
@@ -338,9 +338,12 @@ sub binary_xfer
 
     my $iBlockSize = $self->{iBlockSize};
     my $iBlockIn;
+    my $iBlockInTotal = $iBlockSize;
     my $iBlockOut;
+    my $iBlockTotal = 0;
     my $strBlockHeader;
     my $strBlock;
+#    my $strBlockMore;
     my $oGzip;
     my $hPipeIn;
     my $hPipeOut;
@@ -408,24 +411,52 @@ sub binary_xfer
     {
         if ($strRemote eq 'in')
         {
-
-            $strBlockHeader = $self->read_line($hIn);
-
-            if ($strBlockHeader !~ /^block [0-9]+$/)
+            if ($iBlockInTotal == $iBlockSize)
             {
-                confess "unable to read block header ${strBlockHeader}";
+                $strBlockHeader = $self->read_line($hIn);
+
+                if ($strBlockHeader !~ /^block [0-9]+$/)
+                {
+                    $self->wait_pid();
+                    confess "unable to read block header ${strBlockHeader}";
+                }
+                
+                $iBlockInTotal = 0;
+                $iBlockTotal += 1;
             }
 
             $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, " ") + 1));
 
             if ($iBlockSize != 0)
             {
-                $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+#                print "looking for a block of size"
 
-                if (!defined($iBlockIn) || $iBlockIn != $iBlockSize)
+                $iBlockIn = sysread($hIn, $strBlock, $iBlockSize - $iBlockInTotal);
+                
+                # while (defined($iBlockIn) && $iBlockIn != $iBlockSize)
+                # {
+                #     $iBlockInMore = sysread($hIn, $strBlockMore, $iBlockSize - $iBlockIn);
+                #
+                #     confess "able to read $iBlockInMore bytes after reading $iBlockIn bytes";
+                #
+                #     if (!defined($iBlockInMore))
+                #     {
+                #         $iBlockIn = undef;
+                #     }
+                #
+                #     $iBlockIn += $iBlockInMore;
+                #     $strBlock += $strBlockMore;
+                # }
+
+                if (!defined($iBlockIn))
                 {
-                    confess "unable to read ${iBlockSize} bytes from remote" . (defined($!) ? ": " . $! : "");
+                    $self->wait_pid();
+                    confess "unable to read block #${iBlockTotal}/${iBlockSize} bytes from remote" .
+                            (defined($iBlockIn) ? " (only ${iBlockIn} bytes read)" : " (nothing read)") .
+                            (defined($!) ? ": " . $! : "");
                 }
+
+                $iBlockInTotal += $iBlockIn;
             }
             else
             {
@@ -438,6 +469,7 @@ sub binary_xfer
 
             if (!defined($iBlockIn))
             {
+                $self->wait_pid();
                 confess &log(ERROR, "unable to read");
             }
         }
@@ -450,6 +482,7 @@ sub binary_xfer
 
             if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
             {
+                $self->wait_pid();
                 confess "unable to write block header";
             }
         }
@@ -460,6 +493,7 @@ sub binary_xfer
 
             if (!defined($iBlockOut) || $iBlockOut != $iBlockIn)
             {
+                $self->wait_pid();
                 confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ": " . $! : "");
             }
         }
