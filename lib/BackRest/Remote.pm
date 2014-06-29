@@ -9,8 +9,10 @@ use warnings;
 use Carp;
 
 use Moose;
+use Thread::Queue;
 use Net::OpenSSH;
 use File::Basename;
+use IO::Handle;
 use POSIX ":sys_wait_h";
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
@@ -46,6 +48,12 @@ has pId => (is => 'bare');                # Process Id
 has hIn => (is => 'bare');                # Input stream
 has hOut => (is => 'bare');               # Output stream
 has hErr => (is => 'bare');               # Error stream
+
+# Thread variables
+has iThreadIdx => (is => 'bare');         # Thread index
+has oThread => (is => 'bare');            # Thread object
+has oThreadQueue => (is => 'bare');       # Thread queue object
+has oThreadResult => (is => 'bare');      # Thread result object
 
 # Block size
 has iBlockSize => (is => 'bare', default => DEFAULT_BLOCK_SIZE);  # Set block size to default
@@ -89,7 +97,43 @@ sub BUILD
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
 
         $self->greeting_read();
+
+        # print "BUILT THREAD " . (defined($self->{iThreadIdx}) ? $self->{iThreadIdx} : 'undef') . "\n";
     }
+
+    $self->{oThreadQueue} = Thread::Queue->new();
+    $self->{oThreadResult} = Thread::Queue->new();
+    $self->{oThread} = threads->create(\&binary_xfer_thread, $self);
+}
+
+####################################################################################################################################
+# thread_kill
+####################################################################################################################################
+sub thread_kill
+{
+    my $self = shift;
+
+    if (defined($self->{oThread}))
+    {
+        # if (defined($self->{strHost}))
+        # {
+        #     print "DEM THREAD " . (defined($self->{iThreadIdx}) ? $self->{iThreadIdx} : 'undef') . "\n";
+        # }
+
+        $self->{oThreadQueue}->enqueue(undef);
+        $self->{oThread}->join();
+        $self->{oThread} = undef;
+    }
+}
+
+####################################################################################################################################
+# DESTRUCTOR
+####################################################################################################################################
+sub DEMOLISH
+{
+    my $self = shift;
+
+    $self->thread_kill();
 }
 
 ####################################################################################################################################
@@ -98,13 +142,15 @@ sub BUILD
 sub clone
 {
     my $self = shift;
+    my $iThreadIdx = shift;
 
     return BackRest::Remote->new
     (
         strCommand => $self->{strCommand},
         strHost => $self->{strHost},
         strUser => $self->{strUser},
-        iBlockSize => $self->{iBlockSize}
+        iBlockSize => $self->{iBlockSize},
+        iThreadIdx => $iThreadIdx
     );
 }
 
@@ -313,6 +359,40 @@ sub wait_pid
 }
 
 ####################################################################################################################################
+# BINARY_XFER_THREAD
+#
+# De/Compresses data on a thread.
+####################################################################################################################################
+sub binary_xfer_thread
+{
+    my $self = shift;
+
+    while (my $strMessage = $self->{oThreadQueue}->dequeue())
+    {
+        my @stryMessage = split(':', $strMessage);
+        my @strHandle = split(',', $stryMessage[1]);
+
+        my $hIn = IO::Handle->new_from_fd($strHandle[0], '<');
+        my $hOut = IO::Handle->new_from_fd($strHandle[1], '>');
+
+        $self->{oThreadResult}->enqueue('running');
+
+        if ($stryMessage[0] eq 'compress')
+        {
+            gzip($hIn => $hOut)
+                or confess &log(ERROR, "unable to compress: " . $GzipError);
+        }
+        else
+        {
+            gunzip($hIn => $hOut)
+                or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
+        }
+
+        close($hOut);
+    }
+}
+
+####################################################################################################################################
 # BINARY_XFER
 #
 # Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
@@ -343,7 +423,6 @@ sub binary_xfer
     my $iBlockTotal = 0;
     my $strBlockHeader;
     my $strBlock;
-#    my $strBlockMore;
     my $oGzip;
     my $hPipeIn;
     my $hPipeOut;
@@ -361,50 +440,60 @@ sub binary_xfer
     {
         pipe $hPipeOut, $hPipeIn;
 
-        # fork and exit the parent process
-        $pId = fork();
+        $self->{oThreadQueue}->enqueue("compress:" . fileno($hIn) . ',' . fileno($hPipeIn));
 
-        if (!$pId)
+        my $strMessage = $self->{oThreadResult}->dequeue();
+
+        if ($strMessage eq 'running')
         {
-            close($hPipeOut);
-
-            gzip($hIn => $hPipeIn)
-                or exit 1;
-                #or die confess &log(ERROR, "unable to compress: " . $GzipError);
-
             close($hPipeIn);
-
-            exit 0;
+            $hIn = $hPipeOut;
         }
-
-        close($hPipeIn);
-
-        $hIn = $hPipeOut;
+        else
+        {
+            confess "unknown thread message $strMessage";
+        }
     }
     # Spawn a child process to do decompression
     elsif ($strRemote eq "in" && !$bDestinationCompress)
     {
+        # pipe $hPipeOut, $hPipeIn;
+        #
+        # # fork and exit the parent process
+        # $pId = fork();
+        #
+        # if (!$pId)
+        # {
+        #     close($hPipeIn);
+        #
+        #     gunzip($hPipeOut => $hOut)
+        #         or exit 1;
+        #         #or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
+        #
+        #     close($hPipeOut);
+        #
+        #     exit 0;
+        # }
+        #
+        # close($hPipeOut);
+        #
+        # $hOut = $hPipeIn;
+
         pipe $hPipeOut, $hPipeIn;
 
-        # fork and exit the parent process
-        $pId = fork();
+        $self->{oThreadQueue}->enqueue("decompress:" . fileno($hPipeOut) . ',' . fileno($hOut));
 
-        if (!$pId)
+        my $strMessage = $self->{oThreadResult}->dequeue();
+
+        if ($strMessage eq 'running')
         {
-            close($hPipeIn);
-
-            gunzip($hPipeOut => $hOut)
-                or exit 1;
-                #or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
-
             close($hPipeOut);
-
-            exit 0;
+            $hOut = $hPipeIn;
         }
-
-        close($hPipeOut);
-
-        $hOut = $hPipeIn;
+        else
+        {
+            confess "unknown thread message $strMessage";
+        }
     }
 
     while (1)
@@ -429,31 +518,15 @@ sub binary_xfer
 
             if ($iBlockSize != 0)
             {
-#                print "looking for a block of size"
-
                 $iBlockIn = sysread($hIn, $strBlock, $iBlockSize - $iBlockInTotal);
-
-                # while (defined($iBlockIn) && $iBlockIn != $iBlockSize)
-                # {
-                #     $iBlockInMore = sysread($hIn, $strBlockMore, $iBlockSize - $iBlockIn);
-                #
-                #     confess "able to read $iBlockInMore bytes after reading $iBlockIn bytes";
-                #
-                #     if (!defined($iBlockInMore))
-                #     {
-                #         $iBlockIn = undef;
-                #     }
-                #
-                #     $iBlockIn += $iBlockInMore;
-                #     $strBlock += $strBlockMore;
-                # }
 
                 if (!defined($iBlockIn))
                 {
+                    my $strError = $!;
+
                     $self->wait_pid();
                     confess "unable to read block #${iBlockTotal}/${iBlockSize} bytes from remote" .
-                            (defined($iBlockIn) ? " (only ${iBlockIn} bytes read)" : " (nothing read)") .
-                            (defined($!) ? ": " . $! : "");
+                            (defined($strError) ? ": ${strError}" : "");
                 }
 
                 $iBlockInTotal += $iBlockIn;
@@ -503,25 +576,14 @@ sub binary_xfer
         }
     }
 
-    # Make sure the child process doing compress/decompress exited successfully
-    if (defined($pId))
+    # Make sure the de/compress pipes are closed
+    if ($strRemote eq "out" && !$bSourceCompressed)
     {
-        if ($strRemote eq "out")
-        {
-            close($hPipeOut);
-        }
-        elsif ($strRemote eq "in" && !$bDestinationCompress)
-        {
-            close($hPipeIn);
-        }
-
-        waitpid($pId, 0);
-        my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-
-        if ($iExitStatus != 0)
-        {
-            confess &log(ERROR, "compression/decompression child process returned " . $iExitStatus);
-        }
+        close($hPipeOut);
+    }
+    elsif ($strRemote eq "in" && !$bDestinationCompress)
+    {
+        close($hPipeIn);
     }
 }
 

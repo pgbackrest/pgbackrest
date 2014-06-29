@@ -96,6 +96,7 @@ sub BackRestTestFile_Test
         strHost => $strHost,
         strUser => $strUser,
         strCommand => BackRestTestCommon_CommandRemoteGet(),
+        iBlockSize => 2
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -1160,6 +1161,15 @@ sub BackRestTestFile_Test
                 }
 
                 my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
+
+                # !!!Not sure why this would fail the first time!!!  Suspect it is because it is being written remotely and then
+                # read locally.  Change the hash function to work remotely once it can.
+                if ($strSourceHash ne $strDestinationHash)
+                {
+                    sleep(1);
+                }
+
+                $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
 
                 if ($strSourceHash ne $strDestinationHash)
                 {

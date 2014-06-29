@@ -152,6 +152,19 @@ sub BUILD
 }
 
 ####################################################################################################################################
+# DESTRUCTOR
+####################################################################################################################################
+sub DEMOLISH
+{
+    my $self = shift;
+
+    if (defined($self->{oRemote}))
+    {
+        $self->{oRemote} = undef;
+    }
+}
+
+####################################################################################################################################
 # CLONE
 ####################################################################################################################################
 sub clone
@@ -163,7 +176,7 @@ sub clone
     (
         strCommand => $self->{strCommand},
         strRemote => $self->{strRemote},
-        oRemote => defined($self->{oRemote}) ? $self->{oRemote}->clone() : undef,
+        oRemote => defined($self->{oRemote}) ? $self->{oRemote}->clone($iThreadIdx) : undef,
         strBackupPath => $self->{strBackupPath},
         strStanza => $self->{strStanza},
         iThreadIdx => $iThreadIdx

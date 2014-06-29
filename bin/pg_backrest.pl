@@ -83,6 +83,7 @@ GetOptions ("config=s" => \$strConfigFile,
 # Global variables
 ####################################################################################################################################
 my %oConfig;            # Configuration hash
+my $oRemote;            # Remote object
 
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
@@ -144,10 +145,30 @@ sub config_load
 }
 
 ####################################################################################################################################
+# REMOTE_EXIT - Close the remote object if it exists
+####################################################################################################################################
+sub remote_exit
+{
+    my $iExitCode = shift;
+
+    if (defined($oRemote))
+    {
+        $oRemote->thread_kill()
+    }
+
+    if (defined($iExitCode))
+    {
+        exit $iExitCode;
+    }
+}
+
+####################################################################################################################################
 # SAFE_EXIT - terminate all SSH sessions when the script is terminated
 ####################################################################################################################################
 sub safe_exit
 {
+    remote_exit();
+
     my $iTotal = backup_thread_kill();
 
     confess &log(ERROR, "process was terminated on signal, ${iTotal} threads stopped");
@@ -231,8 +252,6 @@ else
 }
 
 # Create the remote object
-my $oRemote;
-
 if ($strRemote ne REMOTE_NONE)
 {
     $oRemote = BackRest::Remote->new
@@ -280,7 +299,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     &log(INFO, "getting archive log " . $ARGV[1]);
 
     # Get the archive file
-    exit archive_get($ARGV[1], $ARGV[2]);
+    remote_exit(archive_get($ARGV[1], $ARGV[2]));
 }
 
 ####################################################################################################################################
@@ -320,7 +339,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
             if (-e $strStopFile)
             {
                 &log(ERROR, "archive stop file exists ($strStopFile), discarding " . basename($ARGV[1]));
-                exit 0;
+                remote_exit(0);
             }
         }
 
@@ -362,7 +381,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # Only continue if we are archiving local and a backup server is defined
         if (!($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))
         {
-            exit 0;
+            remote_exit(0);
         }
 
         # Set the operation so that archive-pull will be called next
@@ -371,7 +390,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         # fork and exit the parent process
         if (fork())
         {
-            exit 0;
+            remote_exit(0);
         }
     }
 
@@ -390,7 +409,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         if (!lock_file_create($strLockPath))
         {
             &log(DEBUG, "archive-pull process is already running - exiting");
-            exit 0
+            remote_exit(0);
         }
 
         # Build the basic command string that will be used to modify the command during processing
@@ -480,7 +499,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
         lock_file_remove();
     }
 
-    exit 0;
+    remote_exit(0);
 }
 
 ####################################################################################################################################
@@ -530,7 +549,7 @@ my $strLockPath = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) .  "
 if (!lock_file_create($strLockPath))
 {
     &log(ERROR, "backup process is already running for stanza ${strStanza} - exiting");
-    exit 0
+    remote_exit(0);
 }
 
 # Run file_init_archive - the rest of the file config required for backup and restore
@@ -590,8 +609,7 @@ if ($strOperation eq OP_EXPIRE)
     );
 
     lock_file_remove();
-
-    exit 0;
 }
 
+remote_exit(0);
 confess &log(ASSERT, "invalid operation ${strOperation} - missing handler block");
