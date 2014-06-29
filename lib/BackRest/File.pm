@@ -499,6 +499,7 @@ sub compress
     # Run locally
     else
     {
+        # Compress the file
         if (!gzip($strPathOp => "${strPathOp}.gz"))
         {
             my $strError = "${strPathOp} could not be compressed:" . $!;
@@ -518,6 +519,7 @@ sub compress
             confess &log(ERROR, "${strDebug}: " . $strError);
         }
 
+        # Remove the old file
         unlink($strPathOp)
             or die &log(ERROR, "${strDebug}: unable to remove ${strPathOp}");
     }
@@ -1373,18 +1375,18 @@ sub copy
     if (!$bDestinationRemote)
     {
         # Set the file permission if required
-        # if (defined($strPermission))
-        # {
-        #     system("chmod ${strPermission} ${strDestinationTmpOp}") == 0
-        #         or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
-        # }
+        if (defined($strPermission))
+        {
+            chmod(oct($strPermission), $strDestinationTmpOp)
+                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
+        }
 
         # Set the file modification time if required
-        # if (defined($lModificationTime))
-        # {
-        #     utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
-        #         or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
-        # }
+        if (defined($lModificationTime))
+        {
+            utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
+                or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
+        }
 
         # Move the file from tmp to final destination
         $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);

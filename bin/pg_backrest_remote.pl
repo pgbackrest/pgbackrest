@@ -154,7 +154,7 @@ while ($strCommand ne OP_EXIT)
                              PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
                              param_get(\%oParamHash, 'source_compressed'),
                              param_get(\%oParamHash, 'destination_compress'),
-                             param_get(\%oParamHash, 'ignore_missing_source', false).
+                             param_get(\%oParamHash, 'ignore_missing_source', false),
                              undef,
                              param_get(\%oParamHash, 'permission', false),
                              param_get(\%oParamHash, 'destination_path_create')) ? 'Y' : 'N');

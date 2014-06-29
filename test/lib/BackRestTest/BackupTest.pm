@@ -33,9 +33,9 @@ my $strHost;
 my $strUserBackRest;
 
 ####################################################################################################################################
-# BackRestTestBackup_ClusterDrop
+# BackRestTestBackup_ClusterStop
 ####################################################################################################################################
-sub BackRestTestBackup_ClusterDrop
+sub BackRestTestBackup_ClusterStop
 {
     my $strPath = shift;
 
@@ -78,41 +78,66 @@ sub BackRestTestBackup_ClusterCreate
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_Setup
+# BackRestTestBackup_Drop
 ####################################################################################################################################
-sub BackRestTestBackup_Setup
+sub BackRestTestBackup_Drop
 {
-    my $strRemote;
-    my $bDropOnly = shift;
-
-    BackRestTestBackup_ClusterDrop($strTestPath . "/db/common");
+    # Stop the cluster if one is running
+    BackRestTestBackup_ClusterStop(BackRestTestCommon_DbCommonPathGet());
 
     # Remove the backrest private directory
-    if (-e "${strTestPath}/backrest")
+    if (-e BackRestTestCommon_BackupPathGet())
     {
-        BackRestTestCommon_ExecuteBackRest("rm -rf ${strTestPath}/backrest", true);
+        BackRestTestCommon_Execute('rm -rf ' . BackRestTestCommon_BackupPathGet(), true, true);
     }
 
     # Remove the test directory
-    system("rm -rf ${strTestPath}") == 0 or die 'unable to remove ${strTestPath} path';
+    system('rm -rf ' . BackRestTestCommon_TestPathGet()) == 0
+        or die 'unable to remove ' . BackRestTestCommon_TestPathGet() .  'path';
+}
 
-    if (!defined($bDropOnly) || !$bDropOnly)
+####################################################################################################################################
+# BackRestTestBackup_Create
+####################################################################################################################################
+sub BackRestTestBackup_Create
+{
+    my $bRemote = shift;
+
+    # Set defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    # Drop the old test directory
+    BackRestTestBackup_Drop();
+
+    # Create the test directory
+    mkdir(BackRestTestCommon_TestPathGet(), oct('0770'))
+        or confess 'Unable to create ' . BackRestTestCommon_TestPathGet() . ' path';
+
+    # Create the db directory
+    mkdir(BackRestTestCommon_DbPathGet(), oct('0700'))
+        or confess 'Unable to create ' . BackRestTestCommon_DbPathGet() . ' path';
+
+    # Create the db/common directory
+    mkdir(BackRestTestCommon_DbCommonPathGet())
+        or confess 'Unable to create ' . BackRestTestCommon_DbCommonPathGet() . ' path';
+
+    # Create the archive directory
+    mkdir(BackRestTestCommon_ArchivePathGet(), oct('0700'))
+        or confess 'Unable to create ' . BackRestTestCommon_ArchivePathGet() . ' path';
+
+    # Create the backup directory
+    if ($bRemote)
     {
-        # Create the test directory
-        mkdir($strTestPath, oct("0770")) or confess "Unable to create ${strTestPath} path";
-
-        # Create the db directory
-        mkdir($strTestPath . "/db", oct("0700")) or confess "Unable to create ${strTestPath}/db path";
-
-        # Create the db/common directory
-        mkdir($strTestPath . "/db/common") or confess "Unable to create ${strTestPath}/db/common path";
-
-        # Create the cluster
-        BackRestTestBackup_ClusterCreate($strTestPath . "/db/common", BackRestTestCommon_DbPortGet);
-
-        # Create the backrest directory
-        BackRestTestCommon_ExecuteBackRest("mkdir -m 770 ${strTestPath}/backrest")
+        BackRestTestCommon_Execute("mkdir -m 700 " . BackRestTestCommon_BackupPathGet(), true);
     }
+    else
+    {
+        mkdir(BackRestTestCommon_BackupPathGet(), oct('0700'))
+            or confess 'Unable to create ' . BackRestTestCommon_BackupPathGet() . ' path';
+    }
+
+    # Create the cluster
+    BackRestTestBackup_ClusterCreate(BackRestTestCommon_DbCommonPathGet(), BackRestTestCommon_DbPortGet());
 }
 
 ####################################################################################################################################
@@ -147,14 +172,12 @@ sub BackRestTestBackup_Test
 
         &log(INFO, "Test Full Backup\n");
 
-        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
-            BackRestTestBackup_Setup();
+            BackRestTestBackup_Create($bRemote);
 
-            for (my $bHardlink = 0; $bHardlink <= 1; $bHardlink++)
+            for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
             {
-    #            BackRestTestBackup_ClusterRestart();
-
                 my %oDbConfigHash;
                 my %oBackupConfigHash;
 
@@ -164,33 +187,39 @@ sub BackRestTestBackup_Test
                     $oBackupConfigHash{'global:backup'}{hardlink} = 'y';
                 }
 
-                BackRestTestCommon_ConfigCreate(BackRestTestCommon_DbPathGet() . '/pg_backrest.conf', 'db',
-                                                ($bRemote ? REMOTE_BACKUP : undef), \%oDbConfigHash);
-                BackRestTestCommon_ConfigCreate(BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', 'backup',
-                                                ($bRemote ? REMOTE_DB : undef), \%oBackupConfigHash);
+                # for (my $bArchiveLocal = false; $bArchiveLocal <= true; $bArchiveLocal++)
+                # {
+                    BackRestTestCommon_ConfigCreate('db',
+                                                    ($bRemote ? REMOTE_BACKUP : undef), \%oDbConfigHash);
+                    BackRestTestCommon_ConfigCreate('backup',
+                                                    ($bRemote ? REMOTE_DB : undef), \%oBackupConfigHash);
 
-                for (my $iFull = 1; $iFull <= 1; $iFull++)
-                {
-                    $iRun++;
-
-                    &log(INFO, "run ${iRun} - " .
-                               "remote ${bRemote}, full ${iFull}");
-
-                    BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
-                                               "/pg_backrest.conf --type=full --stanza=${strStanza} backup");
-
-                for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
+                    for (my $iFull = 1; $iFull <= 1; $iFull++)
                     {
                         $iRun++;
 
                         &log(INFO, "run ${iRun} - " .
-                                   "remote ${bRemote}, full ${iFull}, hardlink ${bHardlink}, incr ${iIncr}");
+                                   "remote ${bRemote}, full ${iFull}");
 
-                        BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
-                                                   "/pg_backrest.conf --type=incr --stanza=${strStanza} backup");
+                        my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
+                                                   "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
+
+                        BackRestTestCommon_Execute($strCommand, $bRemote);
+
+                        for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
+                        {
+                            $iRun++;
+
+                            &log(INFO, "run ${iRun} - " .
+                                       "remote ${bRemote}, full ${iFull}, hardlink ${bHardlink}, incr ${iIncr}");
+
+                            BackRestTestCommon_Execute($strCommand, $bRemote);
+                        }
                     }
-                }
+                # }
             }
+
+            BackRestTestBackup_Drop();
         }
     }
 

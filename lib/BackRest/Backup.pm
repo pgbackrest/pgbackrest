@@ -1204,7 +1204,8 @@ sub backup_file_thread
 
         # Copy the file from the database to the backup (will return false if the source file is missing)
         unless($oFileThread->copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                  PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file},
+                                  PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file} .
+                                      ($bCompress ? '.' . $oFile->{strCompressExtension} : ''),
                                   false,        # Source is not compressed since it is the db directory
                                   $bCompress,   # Destination should be compressed based on backup settings
                                   true,         # Ignore missing files

@@ -26,7 +26,8 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTes
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
                  BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_BackupPathGet
-                 BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet
+                 BackRestTestCommon_DbPortGet);
 
 my $strCommonStanza;
 my $strCommonCommandMain;
@@ -38,6 +39,7 @@ my $strCommonGroup;
 my $strCommonUserBackRest;
 my $strCommonTestPath;
 my $strCommonBackupPath;
+my $strCommonArchivePath;
 my $strCommonDbPath;
 my $strCommonDbCommonPath;
 my $iCommonDbPort;
@@ -48,28 +50,25 @@ my $iCommonDbPort;
 sub BackRestTestCommon_Execute
 {
     my $strCommand = shift;
+    my $bRemote = shift;
     my $bSuppressError = shift;
+
+    # Set defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+    $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
+
+    if ($bRemote)
+    {
+        $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
+    }
 
     if (system($strCommand) != 0)
     {
-        if (!defined($bSuppressError) || !$bSuppressError)
+        if (!$bSuppressError)
         {
             confess &log(ERROR, "unable to execute command: ${strCommand}");
         }
     }
-}
-
-####################################################################################################################################
-# BackRestTestBackup_ExecuteBackRest
-####################################################################################################################################
-sub BackRestTestCommon_ExecuteBackRest
-{
-    my $strCommand = shift;
-    my $bSuppressError = shift;
-
-    $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
-
-    BackRestTestCommon_Execute($strCommand, $bSuppressError);
 }
 
 ####################################################################################################################################
@@ -87,6 +86,7 @@ sub BackRestTestCommon_Setup
     $strCommonUserBackRest = 'backrest';
     $strCommonTestPath = dirname(abs_path($0)) . '/test';
     $strCommonBackupPath = "${strCommonTestPath}/backrest";
+    $strCommonArchivePath = "${strCommonTestPath}/archive";
     $strCommonDbPath = "${strCommonTestPath}/db";
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $iCommonDbPort = 6543;
@@ -97,7 +97,6 @@ sub BackRestTestCommon_Setup
 ####################################################################################################################################
 sub BackRestTestCommon_ConfigCreate
 {
-    my $strFile = shift;
     my $strLocal = shift;
     my $strRemote = shift;
     my $oParamHashRef = shift;
@@ -146,9 +145,27 @@ sub BackRestTestCommon_ConfigCreate
         }
     }
 
-    tied(%oParamHash)->WriteConfig($strFile) or die "could not write config file ${strFile}";
+    # Write out the configuration file
+    my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';
 
-    chmod(0770, $strFile) or die "unable to set permissions for ${strFile}";
+    tied(%oParamHash)->WriteConfig($strFile) or die "could not write config file ${strFile}";
+    chmod(0660, $strFile) or die "unable to set permissions for ${strFile}";
+
+    # Move the configuration file based on local
+    if ($strLocal eq 'db')
+    {
+        rename($strFile, BackRestTestCommon_DbPathGet() . '/pg_backrest.conf')
+            or die "unable to move ${strFile} to " . BackRestTestCommon_DbPathGet() . '/pg_backrest.conf path';
+    }
+    elsif ($strLocal eq 'backup' && !defined($strRemote))
+    {
+        rename($strFile, BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf')
+            or die "unable to move ${strFile} to " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf path';
+    }
+    else
+    {
+        BackRestTestCommon_Execute("mv $strFile " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+    }
 }
 
 ####################################################################################################################################
@@ -197,6 +214,11 @@ sub BackRestTestCommon_TestPathGet
 sub BackRestTestCommon_BackupPathGet
 {
     return $strCommonBackupPath;
+}
+
+sub BackRestTestCommon_ArchivePathGet
+{
+    return $strCommonArchivePath;
 }
 
 sub BackRestTestCommon_DbPathGet
