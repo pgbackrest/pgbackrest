@@ -10,6 +10,8 @@ Simple Postgres Backup and Restore
 
 ## feature backlog
 
+* Fix backup.manifest to not be a binary dump.
+
 * Move backups to be removed to temp before deleting.
 
 * Async archive-get.
@@ -30,15 +32,16 @@ Simple Postgres Backup and Restore
 
 ## required perl modules
 
-* Config::IniFiles
-* Moose
-* IPC::System::Simple
+* IPC::Run
 * Net::OpenSSH
-* JSON
-* IPC::Open3
 * Digest::SHA
 * IO::Compress::Gzip
 * IO::Uncompress::Gunzip
+
+* JSON (Only useful with custom IniFile functions, currently not used)
+* Config::IniFiles (Not very useful since it does not handle large hashes - should replace with custom functions)
+* Moose (Not using many features here, just use standard Perl object syntax?)
+* IPC::System::Simple (only used in DB object - should convert to IPC::Run)
 
 ## release notes
 

@@ -26,7 +26,7 @@ use BackRest::Utility;
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 8192 #1048576
+    DEFAULT_BLOCK_SIZE  => 1048576
 };
 
 ####################################################################################################################################
@@ -406,16 +406,19 @@ sub binary_xfer
     my $bSourceCompressed = shift;
     my $bDestinationCompress = shift;
 
+    # If no remote is defined then set to none
     if (!defined($strRemote))
     {
         $strRemote = 'none';
     }
+    # Only set compression defaults when remote is defined
     else
     {
         $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
         $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
     }
 
+    # Working variables
     my $iBlockSize = $self->{iBlockSize};
     my $iBlockIn;
     my $iBlockInTotal = $iBlockSize;
@@ -434,21 +437,28 @@ sub binary_xfer
         confess &log(ASSERT, "hIn or hOut is not defined");
     }
 
-    # !!! Convert this to a thread when there is time
-    # Spawn a child process to do compression
+    # If this is output and the source is not already compressed
     if ($strRemote eq "out" && !$bSourceCompressed)
     {
+        # Increase the blocksize since we are compressing
+        $iBlockSize *= 4;
+
+        # Open the in/out pipes
         pipe $hPipeOut, $hPipeIn;
 
+        # Queue the compression job with the thread
         $self->{oThreadQueue}->enqueue("compress:" . fileno($hIn) . ',' . fileno($hPipeIn));
 
+        # Wait for the thread to acknowledge that it has duplicated the file handles
         my $strMessage = $self->{oThreadResult}->dequeue();
 
+        # Close input pipe so that thread has the only copy, reset hIn to hPipeOut
         if ($strMessage eq 'running')
         {
             close($hPipeIn);
             $hIn = $hPipeOut;
         }
+        # If any other message is returned then error
         else
         {
             confess "unknown thread message $strMessage";
@@ -457,39 +467,22 @@ sub binary_xfer
     # Spawn a child process to do decompression
     elsif ($strRemote eq "in" && !$bDestinationCompress)
     {
-        # pipe $hPipeOut, $hPipeIn;
-        #
-        # # fork and exit the parent process
-        # $pId = fork();
-        #
-        # if (!$pId)
-        # {
-        #     close($hPipeIn);
-        #
-        #     gunzip($hPipeOut => $hOut)
-        #         or exit 1;
-        #         #or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
-        #
-        #     close($hPipeOut);
-        #
-        #     exit 0;
-        # }
-        #
-        # close($hPipeOut);
-        #
-        # $hOut = $hPipeIn;
-
+        # Open the in/out pipes
         pipe $hPipeOut, $hPipeIn;
 
+        # Queue the decompression job with the thread
         $self->{oThreadQueue}->enqueue("decompress:" . fileno($hPipeOut) . ',' . fileno($hOut));
 
+        # Wait for the thread to acknowledge that it has duplicated the file handles
         my $strMessage = $self->{oThreadResult}->dequeue();
 
+        # Close output pipe so that thread has the only copy, reset hOut to hPipeIn
         if ($strMessage eq 'running')
         {
             close($hPipeOut);
             $hOut = $hPipeIn;
         }
+        # If any other message is returned then error
         else
         {
             confess "unknown thread message $strMessage";

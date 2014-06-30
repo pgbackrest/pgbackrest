@@ -15,11 +15,15 @@ use Carp;
 use File::Basename;
 use Cwd 'abs_path';
 use Config::IniFiles;
+use IPC::Run qw(run);
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
 
+####################################################################################################################################
+# Exports
+####################################################################################################################################
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_ConfigCreate
@@ -29,6 +33,9 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTes
                  BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet
                  BackRestTestCommon_DbPortGet);
 
+####################################################################################################################################
+# Module variables
+####################################################################################################################################
 my $strCommonStanza;
 my $strCommonCommandMain;
 my $strCommonCommandRemote;
@@ -49,26 +56,40 @@ my $iCommonDbPort;
 ####################################################################################################################################
 sub BackRestTestCommon_Execute
 {
-    my $strCommand = shift;
-    my $bRemote = shift;
-    my $bSuppressError = shift;
+    my $strCommand = shift;         # Command to execute
+    my $bRemote = shift;            # Execute on remote?  This will use the defined BackRest user
+    my $bSuppressError = shift;     # Ignore any errors
 
     # Set defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
     $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
 
+    # If remote then run the command through ssh
     if ($bRemote)
     {
         $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
     }
 
-    if (system($strCommand) != 0)
+    # Run the command
+    if (!run($strCommand))
     {
-        if (!$bSuppressError)
+        if ($bSuppressError)
         {
-            confess &log(ERROR, "unable to execute command: ${strCommand}");
+            return;
         }
+        
+        confess &log(ERROR, "command \"${strCommand}\" returned: " . $?);
     }
+
+#     # Wait for the process to finish and report any errors
+#     waitpid($pId, 0);
+#     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+#
+#     if ($iExitStatus != 0)
+#     {
+#         confess &log(ERROR, "command \"${strCommand}\" returned " . $iExitStatus); # . ": " .
+# #                            (defined($strError) ? $strError : "[unknown]"));
+#     }
 }
 
 ####################################################################################################################################

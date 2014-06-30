@@ -10,7 +10,6 @@ use Carp;
 
 use Moose;
 use Net::OpenSSH;
-use IPC::Open3;
 use File::Basename;
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
