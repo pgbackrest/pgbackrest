@@ -44,7 +44,9 @@ Simple Postgres Backup and Restore
 
 ### v0.30: ???
 
-* Complete rewrite of file module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  MORE???
+* Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
+
+* Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.
 
 ### v0.19: Improved error reporting/handling
 
