@@ -15,14 +15,14 @@ use Carp;
 use File::Basename;
 use Cwd 'abs_path';
 use Config::IniFiles;
-use IPC::Run qw(run);
+use IPC::Open3;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteOld BackRestTestCommon_ExecuteBackRest
+our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_ConfigCreate
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
@@ -50,43 +50,6 @@ my $iCommonDbPort;
 ####################################################################################################################################
 sub BackRestTestCommon_Execute
 {
-    my @stryCommand = shift;        # Command to execute
-    my $bRemote = shift;            # Execute on remote?  This will use the defined BackRest user
-    my $bSuppressError = shift;     # Ignore any errors
-
-    # Set defaults
-    $bRemote = defined($bRemote) ? $bRemote : false;
-    $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
-
-    # If remote then run the command through ssh
-    if ($bRemote)
-    {
-        confess 'remote not supported';
-        #$strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
-    }
-
-    # Run the command
-    my $strOutput;
-    my $strError;
-
-    eval
-    {
-        run(@stryCommand, '>', \$strOutput, '2>', \$strError);
-    };
-
-    if ($@)
-    {
-        if ($bSuppressError)
-        {
-            return;
-        }
-
-        confess &log(ERROR, "command \"@{stryCommand}\" returned: " . $@);
-    }
-}
-
-sub BackRestTestCommon_ExecuteOld
-{
     my $strCommand = shift;
     my $bRemote = shift;
     my $bSuppressError = shift;
@@ -100,12 +63,17 @@ sub BackRestTestCommon_ExecuteOld
         $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
     }
 
-    if (system($strCommand) != 0)
+    my $strError;
+    my $pId = open3(undef, undef, undef, $strCommand);
+
+    # Wait for the process to finish and report any errors
+    waitpid($pId, 0);
+    my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+
+    if ($iExitStatus != 0 && !$bSuppressError)
     {
-        if (!$bSuppressError)
-        {
-            confess &log(ERROR, "unable to execute command: ${strCommand}");
-        }
+        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
+                            (defined($strError) ? $strError : "[unknown]"));
     }
 }
 
@@ -202,7 +170,7 @@ sub BackRestTestCommon_ConfigCreate
     }
     else
     {
-        BackRestTestCommon_ExecuteOld("mv $strFile " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+        BackRestTestCommon_Execute("mv $strFile " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
     }
 }
 

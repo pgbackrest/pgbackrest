@@ -38,7 +38,7 @@ sub BackRestTestBackup_ClusterStop
     # If the db directory already exists, stop the cluster and remove the directory
     if (-e $strPath . "/postmaster.pid")
     {
-        BackRestTestCommon_Execute(['pg_ctl', 'stop', "-D $strPath", '-w', '-s', '-m fast']);
+        BackRestTestCommon_Execute("pg_ctl stop -D $strPath -w -s -m fast");
     }
 }
 
@@ -52,7 +52,7 @@ sub BackRestTestBackup_ClusterRestart
     # If the db directory already exists, stop the cluster and remove the directory
     if (-e $strPath . "/postmaster.pid")
     {
-        BackRestTestCommon_Execute(['pg_ctl', 'restart', "-D $strPath", '-w', '-s']);
+        BackRestTestCommon_Execute("pg_ctl restart -D $strPath -w -s");
     }
 }
 
@@ -67,10 +67,10 @@ sub BackRestTestBackup_ClusterCreate
     my $strArchive = BackRestTestCommon_CommandMainGet() . " --stanza=" . BackRestTestCommon_StanzaGet() .
                      " --config=" . BackRestTestCommon_DbPathGet() . "/pg_backrest.conf archive-push %p";
 
-    BackRestTestCommon_Execute(['initdb', '-D', $strPath, '-A',  'trust']);
-    BackRestTestCommon_Execute(['pg_ctl', 'start', '-o', '"-c', "port=$iPort", '-c', 'checkpoint_segments=1', '-c',
-                                'wal_level=archive', '-c', 'archive_mode=on', '-c', "archive_command='$strArchive'\"",
-                                '-D', $strPath, '-l', "$strPath/postgresql.log", '-w', '-s']);
+    BackRestTestCommon_Execute("initdb -D $strPath -A trust");
+    BackRestTestCommon_Execute("/Library/PostgreSQL/9.3/bin/pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive " .
+                               "-c archive_mode=on -c archive_command='$strArchive'\" " .
+                               "-D $strPath -l $strPath/postgresql.log -w -s");
 }
 
 ####################################################################################################################################
@@ -84,7 +84,7 @@ sub BackRestTestBackup_Drop
     # Remove the backrest private directory
     if (-e BackRestTestCommon_BackupPathGet())
     {
-        BackRestTestCommon_ExecuteOld('rm -rf ' . BackRestTestCommon_BackupPathGet(), true, true);
+        BackRestTestCommon_Execute('rm -rf ' . BackRestTestCommon_BackupPathGet(), true, true);
     }
 
     # Remove the test directory
@@ -124,7 +124,7 @@ sub BackRestTestBackup_Create
     # Create the backup directory
     if ($bRemote)
     {
-        BackRestTestCommon_ExecuteOld("mkdir -m 700 " . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute("mkdir -m 700 " . BackRestTestCommon_BackupPathGet(), true);
     }
     else
     {
@@ -200,7 +200,7 @@ sub BackRestTestBackup_Test
                         my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
                                                    "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
 
-                        BackRestTestCommon_ExecuteOld($strCommand, $bRemote);
+                        BackRestTestCommon_Execute($strCommand, $bRemote);
 
                         for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
                         {
@@ -209,7 +209,7 @@ sub BackRestTestBackup_Test
                             &log(INFO, "run ${iRun} - " .
                                        "remote ${bRemote}, full ${iFull}, hardlink ${bHardlink}, incr ${iIncr}");
 
-                            BackRestTestCommon_ExecuteOld($strCommand, $bRemote);
+                            BackRestTestCommon_Execute($strCommand, $bRemote);
                         }
                     }
                 # }
