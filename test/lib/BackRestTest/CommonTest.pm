@@ -21,11 +21,8 @@ use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
 
-####################################################################################################################################
-# Exports
-####################################################################################################################################
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
+our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteOld BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_ConfigCreate
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
@@ -33,9 +30,6 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTes
                  BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet
                  BackRestTestCommon_DbPortGet);
 
-####################################################################################################################################
-# Module variables
-####################################################################################################################################
 my $strCommonStanza;
 my $strCommonCommandMain;
 my $strCommonCommandRemote;
@@ -56,7 +50,7 @@ my $iCommonDbPort;
 ####################################################################################################################################
 sub BackRestTestCommon_Execute
 {
-    my $strCommand = shift;         # Command to execute
+    my @stryCommand = shift;        # Command to execute
     my $bRemote = shift;            # Execute on remote?  This will use the defined BackRest user
     my $bSuppressError = shift;     # Ignore any errors
 
@@ -67,29 +61,52 @@ sub BackRestTestCommon_Execute
     # If remote then run the command through ssh
     if ($bRemote)
     {
-        $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
+        confess 'remote not supported';
+        #$strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
     }
 
     # Run the command
-    if (!run($strCommand))
+    my $strOutput;
+    my $strError;
+
+    eval
+    {
+        run(@stryCommand, '>', \$strOutput, '2>', \$strError);
+    };
+
+    if ($@)
     {
         if ($bSuppressError)
         {
             return;
         }
-        
-        confess &log(ERROR, "command \"${strCommand}\" returned: " . $?);
+
+        confess &log(ERROR, "command \"@{stryCommand}\" returned: " . $@);
+    }
+}
+
+sub BackRestTestCommon_ExecuteOld
+{
+    my $strCommand = shift;
+    my $bRemote = shift;
+    my $bSuppressError = shift;
+
+    # Set defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+    $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
+
+    if ($bRemote)
+    {
+        $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
     }
 
-#     # Wait for the process to finish and report any errors
-#     waitpid($pId, 0);
-#     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-#
-#     if ($iExitStatus != 0)
-#     {
-#         confess &log(ERROR, "command \"${strCommand}\" returned " . $iExitStatus); # . ": " .
-# #                            (defined($strError) ? $strError : "[unknown]"));
-#     }
+    if (system($strCommand) != 0)
+    {
+        if (!$bSuppressError)
+        {
+            confess &log(ERROR, "unable to execute command: ${strCommand}");
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -185,7 +202,7 @@ sub BackRestTestCommon_ConfigCreate
     }
     else
     {
-        BackRestTestCommon_Execute("mv $strFile " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+        BackRestTestCommon_ExecuteOld("mv $strFile " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
     }
 }
 
