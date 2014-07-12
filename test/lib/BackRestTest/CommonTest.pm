@@ -64,7 +64,14 @@ sub BackRestTestCommon_Execute
     }
 
     my $strError;
-    my $pId = open3(undef, undef, undef, $strCommand);
+    my $hError;
+    open($hError, '>', \$strError) or confess "unable to open handle to stderr string: $!\n";
+    # #
+    my $strOut;
+    my $hOut;
+    open($hOut, '>', \$strOut) or confess "unable to open handle to stdout string: $!\n";
+
+    my $pId = open3(undef, $hOut, $hError, $strCommand);
 
     # Wait for the process to finish and report any errors
     waitpid($pId, 0);
@@ -72,9 +79,21 @@ sub BackRestTestCommon_Execute
 
     if ($iExitStatus != 0 && !$bSuppressError)
     {
-        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . ": " .
-                            (defined($strError) ? $strError : "[unknown]"));
+        while (my $strLine = readline($hError))
+        {
+            print $strLine;
+        }
+
+        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus);
     }
+
+    close($hError);
+    close($hOut);
+    
+    # while (my $strLine = readline($hOut))
+    # {
+    #     print $strLine;
+    # }
 }
 
 ####################################################################################################################################

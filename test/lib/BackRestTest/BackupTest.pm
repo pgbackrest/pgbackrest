@@ -68,8 +68,8 @@ sub BackRestTestBackup_ClusterCreate
                      " --config=" . BackRestTestCommon_DbPathGet() . "/pg_backrest.conf archive-push %p";
 
     BackRestTestCommon_Execute("initdb -D $strPath -A trust");
-    BackRestTestCommon_Execute("/Library/PostgreSQL/9.3/bin/pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 -c wal_level=archive " .
-                               "-c archive_mode=on -c archive_command='$strArchive'\" " .
+    BackRestTestCommon_Execute("/Library/PostgreSQL/9.3/bin/pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 " .
+                               "-c wal_level=archive -c archive_mode=on -c archive_command='$strArchive'\" " .
                                "-D $strPath -l $strPath/postgresql.log -w -s");
 }
 
