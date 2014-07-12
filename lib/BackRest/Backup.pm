@@ -286,11 +286,17 @@ sub archive_push
         $strDestinationFile .= "-" . $oFile->hash(PATH_DB_ABSOLUTE, $strSourceFile);
     }
 
+    # Append compression extension
+    if ($bArchiveFile && $bCompress)
+    {
+        $strDestinationFile .= ".$oFile->{strCompressExtension}";
+    }
+
     # Copy the archive file
     $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,             # Source file
                  PATH_BACKUP_ARCHIVE, $strDestinationFile,     # Destination file
                  false,                                        # Source is not compressed
-                 $bCompress,                                   # Destination compress is configurable
+                 $bArchiveFile && $bCompress,                  # Destination compress is configurable
                  undef, undef, undef,                          # Unused params
                  true);                                        # Create path if it does not exist
 }
@@ -306,7 +312,8 @@ sub archive_pull
     my $iArchiveMaxMB = shift;
 
     # Load the archive manifest - all the files that need to be pushed
-    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
+    my %oManifestHash;
+    $oFile->manifest(PATH_DB_ABSOLUTE, $strArchivePath, \%oManifestHash);
 
     # Get all the files to be transferred and calculate the total size
     my @stryFile;
@@ -374,13 +381,37 @@ sub archive_pull
     # Transfer each file
     foreach my $strFile (sort @stryFile)
     {
-        &log(INFO, "backing up archive file ${strFile}");
-
+        # Construct the archive filename to backup
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
-        # Copy the file
-        $oFile->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
-                          PATH_BACKUP_ARCHIVE, basename($strFile));
+        &log(INFO, "backing up archive file ${strFile}");
+
+        # Determine if the source file is already compressed
+        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$";
+
+        # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
+        my $bArchiveFile = basename($strArchiveFile) =~ /^[0-F]{24}$/ ? true : false;
+
+        # Figure out whether the compression extension needs to be added or removed
+        my $bDestinationCompress = $bArchiveFile && $bCompress;
+        my $strDestinationFile = basename($strFile);
+
+        if (!$bSourceCompressed && $bDestinationCompress)
+        {
+            $strDestinationFile .= ".$oFile->{strCompressExtension}";
+        }
+        elsif ($bSourceCompressed && !$bDestinationCompress)
+        {
+            $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+        }
+
+        # Copy the archive file
+        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
+                     PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
+                     $bSourceCompressed,                        # Source is not compressed
+                     $bDestinationCompress,                     # Destination compress is configurable
+                     undef, undef, undef,                       # Unused params
+                     true);                                     # Create path if it does not exist
 
         #  Remove the source archive file
         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");

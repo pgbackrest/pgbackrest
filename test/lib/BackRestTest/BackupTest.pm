@@ -170,8 +170,12 @@ sub BackRestTestBackup_Test
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
+        for (my $bLarge = false; $bLarge <= false; $bLarge++)
+        {
             BackRestTestBackup_Create($bRemote);
 
+            for (my $bArchiveLocal = false; $bArchiveLocal <= $bRemote; $bArchiveLocal++)
+            {
             for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
             {
                 my %oDbConfigHash;
@@ -183,39 +187,39 @@ sub BackRestTestBackup_Test
                     $oBackupConfigHash{'global:backup'}{hardlink} = 'y';
                 }
 
-                # for (my $bArchiveLocal = false; $bArchiveLocal <= true; $bArchiveLocal++)
-                # {
-                    BackRestTestCommon_ConfigCreate('db',
-                                                    ($bRemote ? REMOTE_BACKUP : undef), \%oDbConfigHash);
-                    BackRestTestCommon_ConfigCreate('backup',
-                                                    ($bRemote ? REMOTE_DB : undef), \%oBackupConfigHash);
+                BackRestTestCommon_ConfigCreate('db',
+                                                ($bRemote ? REMOTE_BACKUP : undef), $bArchiveLocal, \%oDbConfigHash);
+                BackRestTestCommon_ConfigCreate('backup',
+                                                ($bRemote ? REMOTE_DB : undef), $bArchiveLocal, \%oBackupConfigHash);
 
-                    for (my $iFull = 1; $iFull <= 1; $iFull++)
+                for (my $iFull = 1; $iFull <= 1; $iFull++)
+                {
+                    $iRun++;
+
+                    &log(INFO, "run ${iRun} - " .
+                               "remote ${bRemote}, large ${bLarge}, archive_local ${bArchiveLocal}, full ${iFull}");
+
+                    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
+                                               "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
+
+                    BackRestTestCommon_Execute($strCommand, $bRemote);
+
+                    for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
                     {
                         $iRun++;
 
                         &log(INFO, "run ${iRun} - " .
-                                   "remote ${bRemote}, full ${iFull}");
-
-                        my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
-                                                   "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
+                                   "remote ${bRemote}, large ${bLarge}, archive_local ${bArchiveLocal}, hardlink ${bHardlink}, " .
+                                   "full ${iFull}, incr ${iIncr}");
 
                         BackRestTestCommon_Execute($strCommand, $bRemote);
-
-                        for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
-                        {
-                            $iRun++;
-
-                            &log(INFO, "run ${iRun} - " .
-                                       "remote ${bRemote}, full ${iFull}, hardlink ${bHardlink}, incr ${iIncr}");
-
-                            BackRestTestCommon_Execute($strCommand, $bRemote);
-                        }
                     }
-                # }
+                }
+            }
             }
 
             BackRestTestBackup_Drop();
+        }
         }
     }
 

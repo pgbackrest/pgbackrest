@@ -63,6 +63,7 @@ sub BackRestTestCommon_Execute
         $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
     }
 
+#    system($strCommand);
     my $strError;
     my $hError;
     open($hError, '>', \$strError) or confess "unable to open handle to stderr string: $!\n";
@@ -89,7 +90,7 @@ sub BackRestTestCommon_Execute
 
     close($hError);
     close($hOut);
-    
+
     # while (my $strLine = readline($hOut))
     # {
     #     print $strLine;
@@ -124,6 +125,7 @@ sub BackRestTestCommon_ConfigCreate
 {
     my $strLocal = shift;
     my $strRemote = shift;
+    my $bArchiveLocal = shift;
     my $oParamHashRef = shift;
 
     my %oParamHash;
@@ -136,6 +138,12 @@ sub BackRestTestCommon_ConfigCreate
     {
         $oParamHash{'global:backup'}{'host'} = $strCommonHost;
         $oParamHash{'global:backup'}{'user'} = $strCommonUserBackRest;
+
+        # if ($bArchiveLocal)
+        # {
+        #     $oParamHash{'global:archive'}{'host'} = $strCommonHost;
+        #     $oParamHash{'global:archive'}{'user'} = $strCommonUserBackRest;
+        # }
     }
     elsif (defined($strRemote) && $strRemote eq REMOTE_DB)
     {
@@ -146,20 +154,26 @@ sub BackRestTestCommon_ConfigCreate
     if ($strLocal eq REMOTE_BACKUP)
     {
         $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
+        $oParamHash{'global:log'}{'level-console'} = 'error';
     }
     elsif ($strLocal eq REMOTE_DB)
     {
+        $oParamHash{'global:log'}{'level-console'} = 'trace';
     }
     else
     {
         confess "invalid local type ${strLocal}";
     }
 
+    if ($bArchiveLocal)
+    {
+        $oParamHash{'global:archive'}{path} = BackRestTestCommon_ArchivePathGet();
+    }
+
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
     $oParamHash{'global:backup'}{'thread-max'} = '8';
 
-    $oParamHash{'global:log'}{'level-console'} = 'error';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     foreach my $strSection (keys $oParamHashRef)

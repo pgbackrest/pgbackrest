@@ -206,7 +206,9 @@ sub wait_for_file
 
     while ($lTime > time() - $iSeconds)
     {
-        opendir $hDir, $strDir or die "Could not open dir: $!\n";
+        opendir $hDir, $strDir
+            or confess &log(ERROR, "Could not open path ${strDir}: $!\n");
+
         my @stryFile = grep(/$strRegEx/i, readdir $hDir);
         close $hDir;
 

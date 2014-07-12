@@ -28,7 +28,6 @@ use constant
 {
     OP_ARCHIVE_GET  => "archive-get",
     OP_ARCHIVE_PUSH => "archive-push",
-    OP_ARCHIVE_PULL => "archive-pull",
     OP_BACKUP       => "backup",
     OP_EXPIRE       => "expire"
 };
@@ -84,6 +83,7 @@ GetOptions ("config=s" => \$strConfigFile,
 ####################################################################################################################################
 my %oConfig;            # Configuration hash
 my $oRemote;            # Remote object
+my $strRemote;          # Defines which side is remote, DB or BACKUP
 
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
@@ -162,6 +162,25 @@ sub remote_exit
     }
 }
 
+
+####################################################################################################################################
+# REMOTE_GET - Get the remote object or create it if not exists
+####################################################################################################################################
+sub remote_get()
+{
+    if (!defined($oRemote) && $strRemote ne REMOTE_NONE)
+    {
+        $oRemote = BackRest::Remote->new
+        (
+            strHost => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
+            strUser => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
+            strCommand => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
+        );
+    }
+
+    return $oRemote;
+}
+
 ####################################################################################################################################
 # SAFE_EXIT - terminate all SSH sessions when the script is terminated
 ####################################################################################################################################
@@ -192,7 +211,6 @@ if (!defined($strOperation))
 
 if ($strOperation ne OP_ARCHIVE_GET &&
     $strOperation ne OP_ARCHIVE_PUSH &&
-    $strOperation ne OP_ARCHIVE_PULL &&
     $strOperation ne OP_BACKUP &&
     $strOperation ne OP_EXPIRE)
 {
@@ -228,8 +246,6 @@ log_level_set(uc(config_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, "I
 ####################################################################################################################################
 # DETERMINE IF THERE IS A REMOTE
 ####################################################################################################################################
-my $strRemote;
-
 # First check if backup is remote
 if (defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
 {
@@ -251,15 +267,204 @@ else
     $strRemote = REMOTE_NONE;
 }
 
-# Create the remote object
-if ($strRemote ne REMOTE_NONE)
+####################################################################################################################################
+# ARCHIVE-PUSH Command
+####################################################################################################################################
+if ($strOperation eq OP_ARCHIVE_PUSH)
 {
-    $oRemote = BackRest::Remote->new
-    (
-        strHost => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
-        strUser => config_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
-        strCommand => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
-    );
+    # Make sure the archive push operation happens on the db side
+    if ($strRemote eq REMOTE_DB)
+    {
+        confess &log(ERROR, 'archive-push operation must run on the db host');
+    }
+
+    # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
+    my $bArchiveLocal = defined(config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH));
+    my $strSection =  $bArchiveLocal ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
+    my $strArchivePath = config_load($strSection, CONFIG_KEY_PATH);
+
+    # Get the async compress flag.  If compress_async=y then compression is off for the initial push when archiving locally
+    my $bCompressAsync = false;
+
+    if ($bArchiveLocal)
+    {
+        config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
+    }
+
+    # If logging locally then create the stop archiving file name
+    my $strStopFile;
+
+    if ($bArchiveLocal)
+    {
+        $strStopFile = "${strArchivePath}/lock/${strStanza}-archive.stop";
+    }
+
+    # If an archive file is defined, then push it
+    if (defined($ARGV[1]))
+    {
+        # If the stop file exists then discard the archive log
+        if (defined($strStopFile))
+        {
+            if (-e $strStopFile)
+            {
+                &log(ERROR, "archive stop file (${strStopFile}) exists , discarding " . basename($ARGV[1]));
+                remote_exit(0);
+            }
+        }
+
+        # Get the compress flag
+        my $bCompress = $bCompressAsync ? false : config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+
+        # Get the checksum flag
+        my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+
+        # Create the file object
+        my $oFile = BackRest::File->new
+        (
+            strStanza => $strStanza,
+            strRemote => $bArchiveLocal ? REMOTE_NONE : $strRemote,
+            oRemote => $bArchiveLocal ? undef : remote_get(),
+            strBackupPath => config_load($strSection, CONFIG_KEY_PATH, true)
+        );
+
+        # Init backup
+        backup_init
+        (
+            undef,
+            $oFile,
+            undef,
+            $bCompress,
+            undef,
+            !$bChecksum
+        );
+
+        &log(INFO, "pushing archive log " . $ARGV[1] . ($bArchiveLocal ? " asynchronously" : ""));
+
+        archive_push(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1]);
+
+        # Exit if we are archiving local but no backup host has been defined
+        if (!($bArchiveLocal && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))
+        {
+            remote_exit(0);
+        }
+
+        # Fork and exit the parent process so the async process can continue
+        if (fork())
+        {
+            remote_exit(0);
+        }
+    }
+
+    # If no backup host is defined it makes no sense to run archive-push without a specified archive file so throw an error
+    if (!defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
+    {
+        &log(ERROR, "archive-push called without an archive file or backup host");
+    }
+
+    &log(INFO, "starting async archive-push");
+
+    # Create a lock file to make sure async archive-push does not run more than once
+    my $strLockPath = "${strArchivePath}/lock/${strStanza}-archive.lock";
+
+    if (!lock_file_create($strLockPath))
+    {
+        &log(DEBUG, "archive-push process is already running - exiting");
+        remote_exit(0);
+    }
+    # Build the basic command string that will be used to modify the command during processing
+    my $strCommand = $^X . " " . $0 . " --stanza=${strStanza}";
+
+    # Get the new operational flags
+    my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+    my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+    my $iArchiveMaxMB = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_ARCHIVE_MAX_MB);
+
+    # eval
+    # {
+        # Create the file object
+        my $oFile = BackRest::File->new
+        (
+            strStanza => $strStanza,
+            strRemote => $strRemote,
+            oRemote => remote_get(),
+            strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
+        );
+
+        # Init backup
+        backup_init
+        (
+            undef,
+            $oFile,
+            undef,
+            $bCompress,
+            undef,
+            !$bChecksum,
+            config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
+            undef,
+            config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
+        );
+
+        # Call the archive_pull function  Continue to loop as long as there are files to process.
+        my $iLogTotal;
+
+        while (!defined($iLogTotal) || $iLogTotal > 0)
+        {
+            $iLogTotal = archive_pull($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB);
+
+            if ($iLogTotal > 0)
+            {
+                &log(DEBUG, "${iLogTotal} archive logs were transferred, calling archive_pull() again");
+            }
+            else
+            {
+                &log(DEBUG, "no more logs to transfer - exiting");
+            }
+        }
+    #
+    # };
+
+    # # If there were errors above then start compressing
+    # if ($@)
+    # {
+    #     if ($bCompressAsync)
+    #     {
+    #         &log(ERROR, "error during transfer: $@");
+    #         &log(WARN, "errors during transfer, starting compression");
+    #
+    #         # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
+    #         my $oFile = BackRest::File->new
+    #         (
+    #             # strStanza => $strStanza,
+    #             # bNoCompression => false,
+    #             # strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+    #             # strCommand => $0,
+    #             # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
+    #             # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
+    #         );
+    #
+    #         backup_init
+    #         (
+    #             undef,
+    #             $oFile,
+    #             undef,
+    #             $bCompress,
+    #             undef,
+    #             !$bChecksum,
+    #             config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
+    #             undef,
+    #             config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
+    #         );
+    #
+    #         archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand, 256);
+    #     }
+    #     else
+    #     {
+    #         confess $@;
+    #     }
+    # }
+
+    lock_file_remove();
+    remote_exit(0);
 }
 
 ####################################################################################################################################
@@ -284,7 +489,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     (
         strStanza => $strStanza,
         strRemote => $strRemote,
-        oRemote => $oRemote,
+        oRemote => remote_get(),
         strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
     );
 
@@ -303,206 +508,6 @@ if ($strOperation eq OP_ARCHIVE_GET)
 }
 
 ####################################################################################################################################
-# ARCHIVE-PUSH and ARCHIVE-PULL Commands
-####################################################################################################################################
-if ($strOperation eq OP_ARCHIVE_PUSH || $strOperation eq OP_ARCHIVE_PULL)
-{
-    # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
-    my $strSection = defined(config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH)) ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
-
-    # Get the async compress flag.  If compress_async=y then compression is off for the initial push
-    my $bCompressAsync = config_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
-
-    # Get the async compress flag.  If compress_async=y then compression is off for the initial push
-    my $strStopFile;
-    my $strArchivePath;
-
-    # If logging locally then create the stop archiving file name
-    if ($strSection eq CONFIG_SECTION_ARCHIVE)
-    {
-        $strArchivePath = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_PATH);
-        $strStopFile = "${strArchivePath}/lock/${strStanza}-archive.stop";
-    }
-
-    # Perform the archive-push
-    if ($strOperation eq OP_ARCHIVE_PUSH)
-    {
-        # Call the archive_push function
-        if (!defined($ARGV[1]))
-        {
-            confess &log(ERROR, "source archive file not provided - show usage");
-        }
-
-        # If the stop file exists then discard the archive log
-        if (defined($strStopFile))
-        {
-            if (-e $strStopFile)
-            {
-                &log(ERROR, "archive stop file exists ($strStopFile), discarding " . basename($ARGV[1]));
-                remote_exit(0);
-            }
-        }
-
-        # Make sure that archive-push is running locally
-        if (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
-        {
-            confess &log(ERROR, "stanza host cannot be set on archive-push - must be run locally on db server");
-        }
-
-        # Get the compress flag
-        my $bCompress = $bCompressAsync ? false : config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-
-        # Get the checksum flag
-        my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
-
-        # Run file_init_archive - this is the minimal config needed to run archiving
-        my $oFile = BackRest::File->new
-        (
-            strStanza => $strStanza,
-            strRemote => $strRemote,
-            oRemote => $oRemote,
-            strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
-        );
-
-        backup_init
-        (
-            undef,
-            $oFile,
-            undef,
-            $bCompress,
-            undef,
-            !$bChecksum
-        );
-
-        &log(INFO, "pushing archive log " . $ARGV[1] . ($bCompressAsync ? " asynchronously" : ""));
-
-        archive_push(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1]);
-
-        # Only continue if we are archiving local and a backup server is defined
-        if (!($strSection eq CONFIG_SECTION_ARCHIVE && defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))
-        {
-            remote_exit(0);
-        }
-
-        # Set the operation so that archive-pull will be called next
-        $strOperation = OP_ARCHIVE_PULL;
-
-        # fork and exit the parent process
-        if (fork())
-        {
-            remote_exit(0);
-        }
-    }
-
-    # Perform the archive-pull
-    if ($strOperation eq OP_ARCHIVE_PULL)
-    {
-        # Make sure that archive-pull is running on the db server
-        if (defined(config_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
-        {
-            confess &log(ERROR, "stanza host cannot be set on archive-pull - must be run locally on db server");
-        }
-
-        # Create a lock file to make sure archive-pull does not run more than once
-        my $strLockPath = "${strArchivePath}/lock/${strStanza}-archive.lock";
-
-        if (!lock_file_create($strLockPath))
-        {
-            &log(DEBUG, "archive-pull process is already running - exiting");
-            remote_exit(0);
-        }
-
-        # Build the basic command string that will be used to modify the command during processing
-        my $strCommand = $^X . " " . $0 . " --stanza=${strStanza}";
-
-        # Get the new operational flags
-        my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-        my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
-        my $iArchiveMaxMB = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_ARCHIVE_MAX_MB);
-
-        eval
-        {
-            # Run file_init_archive - this is the minimal config needed to run archive pulling
-            my $oFile = BackRest::File->new
-            (
-                # strStanza => $strStanza,
-                # bNoCompression => !$bCompress,
-                # strBackupUser => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_USER),
-                # strBackupHost => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST),
-                # strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-                # strCommand => $0,
-                # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-                # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress),
-                # strLockPath => $strLockPath
-            );
-
-            backup_init
-            (
-                undef,
-                $oFile,
-                undef,
-                $bCompress,
-                undef,
-                !$bChecksum,
-                config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
-                undef,
-                config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
-            );
-
-            # Call the archive_pull function  Continue to loop as long as there are files to process.
-            while (archive_pull($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB))
-            {
-                &log(DEBUG, "archive logs were transferred, calling archive_pull() again");
-            }
-        };
-
-        # If there were errors above then start compressing
-        if ($@)
-        {
-            if ($bCompressAsync)
-            {
-                &log(ERROR, "error during transfer: $@");
-                &log(WARN, "errors during transfer, starting compression");
-
-                # Run file_init_archive - this is the minimal config needed to run archive pulling !!! need to close the old file
-                my $oFile = BackRest::File->new
-                (
-                    # strStanza => $strStanza,
-                    # bNoCompression => false,
-                    # strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-                    # strCommand => $0,
-                    # strCommandCompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_COMPRESS, $bCompress),
-                    # strCommandDecompress => config_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_DECOMPRESS, $bCompress)
-                );
-
-                backup_init
-                (
-                    undef,
-                    $oFile,
-                    undef,
-                    $bCompress,
-                    undef,
-                    !$bChecksum,
-                    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
-                    undef,
-                    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
-                );
-
-                archive_compress($strArchivePath . "/archive/${strStanza}", $strCommand, 256);
-            }
-            else
-            {
-                confess $@;
-            }
-        }
-
-        lock_file_remove();
-    }
-
-    remote_exit(0);
-}
-
-####################################################################################################################################
 # OPEN THE LOG FILE
 ####################################################################################################################################
 if (defined(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
@@ -515,7 +520,7 @@ log_file_set(config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/$
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
-# Make sure backup and expire operations happen on the db side
+# Make sure backup and expire operations happen on the backup side
 if ($strRemote eq REMOTE_BACKUP)
 {
     confess &log(ERROR, 'backup and expire operations must run on the backup host');
@@ -557,7 +562,7 @@ my $oFile = BackRest::File->new
 (
     strStanza => $strStanza,
     strRemote => $strRemote,
-    oRemote => $oRemote,
+    oRemote => remote_get(),
     strBackupPath => config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
 );
 
@@ -612,4 +617,3 @@ if ($strOperation eq OP_EXPIRE)
 }
 
 remote_exit(0);
-confess &log(ASSERT, "invalid operation ${strOperation} - missing handler block");
