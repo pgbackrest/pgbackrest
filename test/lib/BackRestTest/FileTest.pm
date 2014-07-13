@@ -95,8 +95,7 @@ sub BackRestTestFile_Test
     (
         strHost => $strHost,
         strUser => $strUser,
-        strCommand => BackRestTestCommon_CommandRemoteGet(),
-        iBlockSize => 2
+        strCommand => BackRestTestCommon_CommandRemoteGet()
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -1028,7 +1027,7 @@ sub BackRestTestFile_Test
                 strStanza => $strStanza,
                 strBackupPath => $strTestPath,
                 strRemote => $strRemote,
-                oRemote => $bBackupRemote || $bDbRemote ? $oRemote : undef
+                oRemote => defined($strRemote) ? $oRemote : undef
             );
 
             # Loop through source compression
@@ -1043,11 +1042,14 @@ sub BackRestTestFile_Test
             # Loop through destination path types
             for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
             {
+            # Loop through source ignore/require
+            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= 1; $bSourceIgnoreMissing++)
+            {
             # Loop through source missing/present
             for (my $bSourceMissing = 0; $bSourceMissing <= 1; $bSourceMissing++)
             {
-            # Loop through source ignore/require
-            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= 1; $bSourceIgnoreMissing++)
+            # Loop through small/large
+            for (my $bLarge = false; $bLarge <= defined($strRemote) && !$bSourceMissing; $bLarge++)
             {
                 my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                 my $strSourcePath = $bSourcePathType ? "db" : "backup";
@@ -1062,7 +1064,9 @@ sub BackRestTestFile_Test
                     next;
                 }
 
-                &log(INFO, "run ${iRun} - " .
+                &log(INFO, "run ${iRun} - rmt " .
+                           (defined($strRemote) && ($strRemote eq $strSourcePath || $strRemote eq $strDestinationPath) ? 1 : 0) .
+                           ", lrg ${bLarge}, " .
                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
                                "srcignmiss ${bSourceIgnoreMissing}, " .
@@ -1074,15 +1078,29 @@ sub BackRestTestFile_Test
                 system("mkdir ${strTestPath}/backup") == 0 or confess "Unable to create test/backup directory";
                 system("mkdir ${strTestPath}/db") == 0 or confess "Unable to create test/db directory";
 
-                my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source.txt";
-                my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination.txt";
+                my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source";
+                my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination";
 
                 # Create the compressed or uncompressed test file
                 my $strSourceHash;
 
                 if (!$bSourceMissing)
                 {
-                    system("echo 'TESTDATA' > ${strSourceFile}");
+                    if ($bLarge)
+                    {
+                        $strSourceFile .= ".bin";
+                        $strDestinationFile .= ".bin";
+
+                        BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive.bin ${strSourceFile}");
+                    }
+                    else
+                    {
+                        $strSourceFile .= ".txt";
+                        $strDestinationFile .= ".txt";
+
+                        system("echo 'TESTDATA' > ${strSourceFile}");
+                    }
+
                     $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
 
                     if ($bSourceCompressed)
@@ -1154,22 +1172,17 @@ sub BackRestTestFile_Test
                     confess "could not find destination file ${strDestinationFile}";
                 }
 
+                my $strDestinationTest = $strDestinationFile;
+
                 if ($bDestinationCompress)
                 {
-                    system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
-                    $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+                    $strDestinationTest = substr($strDestinationFile, 0, length($strDestinationFile) - 3) . '.test';
+
+                    system("gzip -dc ${strDestinationFile} > ${strDestinationTest}") == 0
+                        or die "could not decompress ${strDestinationFile}";
                 }
 
-                my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
-
-                # !!!Not sure why this would fail the first time!!!  Suspect it is because it is being written remotely and then
-                # read locally.  Change the hash function to work remotely once it can.
-                if ($strSourceHash ne $strDestinationHash)
-                {
-                    sleep(1);
-                }
-
-                $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationFile);
+                my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationTest);
 
                 if ($strSourceHash ne $strDestinationHash)
                 {
@@ -1181,11 +1194,10 @@ sub BackRestTestFile_Test
             }
             }
             }
+            }
         }
         }
     }
-
-    BackRestTestFile_Setup(false, true);
 }
 
 1;

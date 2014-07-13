@@ -61,9 +61,10 @@ BackRestTestCommon_Setup();
 ####################################################################################################################################
 # Clean whitespace
 ####################################################################################################################################
-BackRestTestCommon_Execute("find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" " .
+BackRestTestCommon_Execute("find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
+                           "-not -path \"../test/data/*\" " .
                            "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
-                           "> \"\$i\";done' arg0 {} + > /dev/null");
+                           "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
 
 ####################################################################################################################################
 # Make sure version number matches in README.md and VERSION

@@ -26,9 +26,9 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTes
                  BackRestTestCommon_ConfigCreate
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
-                 BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_BackupPathGet
-                 BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet
-                 BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
+                 BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet
+                 BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbPortGet);
 
 my $strCommonStanza;
 my $strCommonCommandMain;
@@ -39,6 +39,7 @@ my $strCommonUser;
 my $strCommonGroup;
 my $strCommonUserBackRest;
 my $strCommonTestPath;
+my $strCommonDataPath;
 my $strCommonBackupPath;
 my $strCommonArchivePath;
 my $strCommonDbPath;
@@ -111,6 +112,7 @@ sub BackRestTestCommon_Setup
     $strCommonGroup = getgrgid($();
     $strCommonUserBackRest = 'backrest';
     $strCommonTestPath = dirname(abs_path($0)) . '/test';
+    $strCommonDataPath = dirname(abs_path($0)) . '/data';
     $strCommonBackupPath = "${strCommonTestPath}/backrest";
     $strCommonArchivePath = "${strCommonTestPath}/archive";
     $strCommonDbPath = "${strCommonTestPath}/db";
@@ -159,6 +161,7 @@ sub BackRestTestCommon_ConfigCreate
     elsif ($strLocal eq REMOTE_DB)
     {
         $oParamHash{'global:log'}{'level-console'} = 'trace';
+        $oParamHash{'global:backup'}{compress} = 'n';
     }
     else
     {
@@ -168,6 +171,7 @@ sub BackRestTestCommon_ConfigCreate
     if ($bArchiveLocal)
     {
         $oParamHash{'global:archive'}{path} = BackRestTestCommon_ArchivePathGet();
+        $oParamHash{'global:archive'}{compress} = 'n';
     }
 
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
@@ -248,6 +252,11 @@ sub BackRestTestCommon_UserBackRestGet
 sub BackRestTestCommon_TestPathGet
 {
     return $strCommonTestPath;
+}
+
+sub BackRestTestCommon_DataPathGet
+{
+    return $strCommonDataPath;
 }
 
 sub BackRestTestCommon_BackupPathGet

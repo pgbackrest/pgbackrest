@@ -389,6 +389,8 @@ sub binary_xfer_thread
         }
 
         close($hOut);
+
+        $self->{oThreadResult}->enqueue('complete');
     }
 }
 
@@ -430,6 +432,7 @@ sub binary_xfer
     my $hPipeIn;
     my $hPipeOut;
     my $pId;
+    my $bThreadRunning = false;
 
     # Both the in and out streams must be defined
     if (!defined($hIn) || !defined($hOut))
@@ -461,8 +464,10 @@ sub binary_xfer
         # If any other message is returned then error
         else
         {
-            confess "unknown thread message $strMessage";
+            confess "unknown thread message while waiting for running: $strMessage";
         }
+
+        $bThreadRunning = true;
     }
     # Spawn a child process to do decompression
     elsif ($strRemote eq "in" && !$bDestinationCompress)
@@ -485,8 +490,10 @@ sub binary_xfer
         # If any other message is returned then error
         else
         {
-            confess "unknown thread message $strMessage";
+            confess "unknown thread message while waiting for running: $strMessage";
         }
+
+        $bThreadRunning = true;
     }
 
     while (1)
@@ -569,14 +576,29 @@ sub binary_xfer
         }
     }
 
-    # Make sure the de/compress pipes are closed
-    if ($strRemote eq "out" && !$bSourceCompressed)
+    if ($bThreadRunning)
     {
-        close($hPipeOut);
-    }
-    elsif ($strRemote eq "in" && !$bDestinationCompress)
-    {
-        close($hPipeIn);
+        # Make sure the de/compress pipes are closed
+        if ($strRemote eq "out" && !$bSourceCompressed)
+        {
+            close($hPipeOut);
+        }
+        elsif ($strRemote eq "in" && !$bDestinationCompress)
+        {
+            close($hPipeIn);
+        }
+
+        # Wait for the thread to acknowledge that it has completed
+        my $strMessage = $self->{oThreadResult}->dequeue();
+
+        if ($strMessage eq 'complete')
+        {
+        }
+        # If any other message is returned then error
+        else
+        {
+            confess "unknown thread message while waiting for complete: $strMessage";
+        }
     }
 }
 
