@@ -140,12 +140,6 @@ sub BackRestTestCommon_ConfigCreate
     {
         $oParamHash{'global:backup'}{'host'} = $strCommonHost;
         $oParamHash{'global:backup'}{'user'} = $strCommonUserBackRest;
-
-        # if ($bArchiveLocal)
-        # {
-        #     $oParamHash{'global:archive'}{'host'} = $strCommonHost;
-        #     $oParamHash{'global:archive'}{'user'} = $strCommonUserBackRest;
-        # }
     }
     elsif (defined($strRemote) && $strRemote eq REMOTE_DB)
     {
@@ -161,7 +155,7 @@ sub BackRestTestCommon_ConfigCreate
     elsif ($strLocal eq REMOTE_DB)
     {
         $oParamHash{'global:log'}{'level-console'} = 'trace';
-        $oParamHash{'global:backup'}{compress} = 'n';
+#        $oParamHash{'global:backup'}{compress} = 'n';
     }
     else
     {
@@ -171,7 +165,7 @@ sub BackRestTestCommon_ConfigCreate
     if ($bArchiveLocal)
     {
         $oParamHash{'global:archive'}{path} = BackRestTestCommon_ArchivePathGet();
-        $oParamHash{'global:archive'}{compress} = 'n';
+#        $oParamHash{'global:archive'}{compress} = 'n';
     }
 
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;

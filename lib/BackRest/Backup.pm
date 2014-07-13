@@ -22,7 +22,7 @@ use BackRest::Db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_pull archive_get archive_compress
+our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_xfer archive_get archive_compress
                  backup backup_expire archive_list_get);
 
 my $oDb;
@@ -302,9 +302,9 @@ sub archive_push
 }
 
 ####################################################################################################################################
-# ARCHIVE_PULL
+# ARCHIVE_xfer
 ####################################################################################################################################
-sub archive_pull
+sub archive_xfer
 {
     my $strArchivePath = shift;
     my $strStopFile = shift;
@@ -384,13 +384,12 @@ sub archive_pull
         # Construct the archive filename to backup
         my $strArchiveFile = "${strArchivePath}/${strFile}";
 
-        &log(INFO, "backing up archive file ${strFile}");
-
         # Determine if the source file is already compressed
-        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$";
+        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
 
         # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-        my $bArchiveFile = basename($strArchiveFile) =~ /^[0-F]{24}$/ ? true : false;
+        my $bArchiveFile = basename($strFile) =~
+            "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
 
         # Figure out whether the compression extension needs to be added or removed
         my $bDestinationCompress = $bArchiveFile && $bCompress;
@@ -404,6 +403,9 @@ sub archive_pull
         {
             $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
         }
+
+        &log(DEBUG, "backup archive file ${strFile}, archive ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
+                    "destination_compress ${bDestinationCompress}, default_compress = ${bCompress}");
 
         # Copy the archive file
         $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file

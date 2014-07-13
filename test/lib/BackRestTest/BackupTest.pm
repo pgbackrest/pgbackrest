@@ -98,9 +98,11 @@ sub BackRestTestBackup_Drop
 sub BackRestTestBackup_Create
 {
     my $bRemote = shift;
+    my $bCluster = shift;
 
     # Set defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
+    $bCluster = defined($bCluster) ? $bCluster : true;
 
     # Drop the old test directory
     BackRestTestBackup_Drop();
@@ -133,7 +135,10 @@ sub BackRestTestBackup_Create
     }
 
     # Create the cluster
-    BackRestTestBackup_ClusterCreate(BackRestTestCommon_DbCommonPathGet(), BackRestTestCommon_DbPortGet());
+    if ($bCluster)
+    {
+        BackRestTestBackup_ClusterCreate(BackRestTestCommon_DbCommonPathGet(), BackRestTestCommon_DbPortGet());
+    }
 }
 
 ####################################################################################################################################
@@ -162,6 +167,28 @@ sub BackRestTestBackup_Test
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
 
+    if ($strTest eq 'all' || $strTest eq 'archive')
+    {
+        $iRun = 0;
+
+        &log(INFO, "Test Full Backup\n");
+
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        {
+            BackRestTestBackup_Create($bRemote, false);
+
+            for (my $bArchiveLocal = false; $bArchiveLocal <= $bRemote; $bArchiveLocal++)
+            {
+                $iRun++;
+
+                # &log(INFO, "run ${iRun} - " .
+                #            "remote ${bRemote}, archive_local ${bArchiveLocal}, full ${iFull}");
+            }
+
+#            BackRestTestBackup_Drop();
+        }
+    }
+
     if ($strTest eq 'all' || $strTest eq 'full')
     {
         $iRun = 0;
@@ -187,6 +214,11 @@ sub BackRestTestBackup_Test
                     $oBackupConfigHash{'global:backup'}{hardlink} = 'y';
                 }
 
+                # if (!$bArchiveLocal)
+                # {
+                #     next;
+                # }
+
                 BackRestTestCommon_ConfigCreate('db',
                                                 ($bRemote ? REMOTE_BACKUP : undef), $bArchiveLocal, \%oDbConfigHash);
                 BackRestTestCommon_ConfigCreate('backup',
@@ -203,6 +235,7 @@ sub BackRestTestBackup_Test
                                                "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
 
                     BackRestTestCommon_Execute($strCommand, $bRemote);
+                    # exit 0;
 
                     for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
                     {

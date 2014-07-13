@@ -73,10 +73,16 @@ my $strConfigFile;      # Configuration file
 my $strStanza;          # Stanza in the configuration file to load
 my $strType;            # Type of backup: full, differential (diff), incremental (incr)
 
+# Test parameters - not for general use
+my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
+
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
-            "type=s" => \$strType)
-    or die("Error in command line arguments\n");
+            "type=s" => \$strType,
+
+            # Test parameters - not for general use
+            "no-fork" => \$bNoFork)
+    or confess("Error in command line arguments\n");
 
 ####################################################################################################################################
 # Global variables
@@ -349,9 +355,17 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         }
 
         # Fork and exit the parent process so the async process can continue
-        if (fork())
+        if (!$bNoFork)
         {
-            remote_exit(0);
+            if (fork())
+            {
+                remote_exit(0);
+            }
+        }
+        # Else the no-fork flag has been specified for testing
+        else
+        {
+            &log(INFO, "No fork on archive local for TESTING");
         }
     }
 
@@ -371,6 +385,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         &log(DEBUG, "archive-push process is already running - exiting");
         remote_exit(0);
     }
+
     # Build the basic command string that will be used to modify the command during processing
     my $strCommand = $^X . " " . $0 . " --stanza=${strStanza}";
 
@@ -404,16 +419,16 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
             config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
         );
 
-        # Call the archive_pull function  Continue to loop as long as there are files to process.
+        # Call the archive_xfer function and continue to loop as long as there are files to process
         my $iLogTotal;
 
         while (!defined($iLogTotal) || $iLogTotal > 0)
         {
-            $iLogTotal = archive_pull($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB);
+            $iLogTotal = archive_xfer($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB);
 
             if ($iLogTotal > 0)
             {
-                &log(DEBUG, "${iLogTotal} archive logs were transferred, calling archive_pull() again");
+                &log(DEBUG, "${iLogTotal} archive logs were transferred, calling archive_xfer() again");
             }
             else
             {
