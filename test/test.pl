@@ -29,11 +29,15 @@ my $strLogLevel = 'off';   # Log level for tests
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
+my $bDryRun = false;
+my $bNoCleanup = false;
 
 GetOptions ("log-level=s" => \$strLogLevel,
             "module=s" => \$strModule,
             "module-test=s" => \$strModuleTest,
-            "module-test-run=s" => \$iModuleTestRun)
+            "module-test-run=s" => \$iModuleTestRun,
+            "dry-run" => \$bDryRun,
+            "no-cleanup" => \$bNoCleanup)
     or die("Error in command line arguments\n");
 
 ####################################################################################################################################
@@ -54,9 +58,6 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 {
     confess "--module-test must be provided for run \"${iModuleTestRun}\"";
 }
-
-
-BackRestTestCommon_Setup();
 
 ####################################################################################################################################
 # Clean whitespace
@@ -96,16 +97,22 @@ if (!$bMatch)
 ####################################################################################################################################
 # Runs tests
 ####################################################################################################################################
-&log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, group = {strGroup}");
+BackRestTestCommon_Setup($iModuleTestRun, $bDryRun, $bNoCleanup);
+
+# &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
+#            "group = {strGroup}");
 
 if ($strModule eq 'all' || $strModule eq "file")
 {
-    BackRestTestFile_Test($strModuleTest, $iModuleTestRun);
+    BackRestTestFile_Test($strModuleTest);
 }
 
 if ($strModule eq 'all' || $strModule eq "backup")
 {
-    BackRestTestBackup_Test($strModuleTest, $iModuleTestRun);
+    BackRestTestBackup_Test($strModuleTest);
 }
 
-&log(ASSERT, "TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)");
+if (!$bDryRun)
+{
+    &log(ASSERT, "TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)");
+}

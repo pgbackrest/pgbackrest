@@ -23,7 +23,7 @@ use BackRest::File;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
-                 BackRestTestCommon_ConfigCreate
+                 BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
                  BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
@@ -45,6 +45,40 @@ my $strCommonArchivePath;
 my $strCommonDbPath;
 my $strCommonDbCommonPath;
 my $iCommonDbPort;
+my $iModuleTestRun;
+my $bDryRun;
+my $bNoCleanup;
+
+####################################################################################################################################
+# BackRestTestBackup_Run
+####################################################################################################################################
+sub BackRestTestCommon_Run
+{
+    my $iRun = shift;
+    my $strLog = shift;
+
+    if (defined($iModuleTestRun) && $iModuleTestRun != $iRun)
+    {
+        return false;
+    }
+
+    &log(INFO, "run " . sprintf("%03d", $iRun) . " - " . $strLog);
+
+    if ($bDryRun)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Cleanup
+####################################################################################################################################
+sub BackRestTestCommon_Cleanup
+{
+    return !$bNoCleanup && !$bDryRun;
+}
 
 ####################################################################################################################################
 # BackRestTestBackup_Execute
@@ -68,7 +102,7 @@ sub BackRestTestCommon_Execute
     my $strError;
     my $hError;
     open($hError, '>', \$strError) or confess "unable to open handle to stderr string: $!\n";
-    # #
+
     my $strOut;
     my $hOut;
     open($hOut, '>', \$strOut) or confess "unable to open handle to stdout string: $!\n";
@@ -103,6 +137,10 @@ sub BackRestTestCommon_Execute
 ####################################################################################################################################
 sub BackRestTestCommon_Setup
 {
+    my $iModuleTestRunParam = shift;
+    my $bDryRunParam = shift;
+    my $bNoCleanupParam = shift;
+
     $strCommonStanza = "db";
     $strCommonCommandMain = '/Users/dsteele/pg_backrest/bin/pg_backrest.pl';
     $strCommonCommandRemote = '/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl';
@@ -118,6 +156,9 @@ sub BackRestTestCommon_Setup
     $strCommonDbPath = "${strCommonTestPath}/db";
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $iCommonDbPort = 6543;
+    $iModuleTestRun = $iModuleTestRunParam;
+    $bDryRun = $bDryRunParam;
+    $bNoCleanup = $bNoCleanupParam;
 }
 
 ####################################################################################################################################
@@ -127,8 +168,13 @@ sub BackRestTestCommon_ConfigCreate
 {
     my $strLocal = shift;
     my $strRemote = shift;
+    my $bCompress = shift;
+    my $bChecksum = shift;
+    my $bHardlink = shift;
+    my $iThreadMax = shift;
     my $bArchiveLocal = shift;
-    my $oParamHashRef = shift;
+    my $bCompressAsync = shift;
+#    my $oParamHashRef = shift;
 
     my %oParamHash;
     tie %oParamHash, 'Config::IniFiles';
@@ -151,36 +197,58 @@ sub BackRestTestCommon_ConfigCreate
     {
         $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
         $oParamHash{'global:log'}{'level-console'} = 'error';
+
+        if (defined($bHardlink) && $bHardlink)
+        {
+            $oParamHash{'global:backup'}{'hardlink'} = 'y';
+        }
     }
     elsif ($strLocal eq REMOTE_DB)
     {
         $oParamHash{'global:log'}{'level-console'} = 'trace';
-#        $oParamHash{'global:backup'}{compress} = 'n';
+
+        if ($bArchiveLocal)
+        {
+            $oParamHash{'global:archive'}{path} = BackRestTestCommon_ArchivePathGet();
+
+            if (!$bCompressAsync)
+            {
+                $oParamHash{'global:archive'}{'compress_async'} = 'n';
+            }
+        }
     }
     else
     {
         confess "invalid local type ${strLocal}";
     }
 
-    if ($bArchiveLocal)
+    if (defined($bCompress) && !$bCompress)
     {
-        $oParamHash{'global:archive'}{path} = BackRestTestCommon_ArchivePathGet();
-#        $oParamHash{'global:archive'}{compress} = 'n';
+        $oParamHash{'global:backup'}{'compress'} = 'n';
+    }
+
+    if (defined($bChecksum) && !$bChecksum)
+    {
+        $oParamHash{'global:backup'}{'checksum'} = 'n';
     }
 
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
-    $oParamHash{'global:backup'}{'thread-max'} = '8';
+
+    if (defined($iThreadMax))
+    {
+        $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
+    }
 
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
-    foreach my $strSection (keys $oParamHashRef)
-    {
-        foreach my $strKey (keys ${$oParamHashRef}{$strSection})
-        {
-            $oParamHash{$strSection}{$strKey} = ${$oParamHashRef}{$strSection}{$strKey};
-        }
-    }
+    # foreach my $strSection (keys $oParamHashRef)
+    # {
+    #     foreach my $strKey (keys ${$oParamHashRef}{$strSection})
+    #     {
+    #         $oParamHash{$strSection}{$strKey} = ${$oParamHashRef}{$strSection}{$strKey};
+    #     }
+    # }
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';

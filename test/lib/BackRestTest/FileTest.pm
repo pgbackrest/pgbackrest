@@ -68,7 +68,6 @@ sub BackRestTestFile_Setup
 sub BackRestTestFile_Test
 {
     my $strTest = shift;
-    my $iTestRun = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -127,15 +126,9 @@ sub BackRestTestFile_Test
             {
                 my $strPathType = PATH_BACKUP_CLUSTER;
 
-                $iRun++;
-
-                if (defined($iTestRun) && $iTestRun != $iRun)
-                {
-                    next;
-                }
-
-                &log(INFO, "run ${iRun} - " .
-                           "remote ${bRemote}, error ${bError}, permission ${bPermission}");
+                # Increment the run, log, and decide whether this unit test should be run
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt ${bRemote}, err ${bError}, prm ${bPermission}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -248,17 +241,11 @@ sub BackRestTestFile_Test
             # Loop through create
             for (my $bCreate = 0; $bCreate <= $bDestinationExists; $bCreate++)
             {
-                $iRun++;
-
-                if (defined($iTestRun) && $iTestRun != $iRun)
-                {
-                    next;
-                }
-
-                &log(INFO, "run ${iRun} - " .
-                           "remote $bRemote" .
-                           ", src_exists $bSourceExists, src_error $bSourceError" .
-                           ", dst_exists $bDestinationExists, dst_error $bDestinationError, dst_create $bCreate");
+                # Increment the run, log, and decide whether this unit test should be run
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "src_exists $bSourceExists, src_error $bSourceError, " .
+                                            ", dst_exists $bDestinationExists, dst_error $bDestinationError, " .
+                                            "dst_create $bCreate")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bSourceError || $bDestinationError);
@@ -343,15 +330,8 @@ sub BackRestTestFile_Test
             {
             for (my $bError = 0; $bError <= 1; $bError++)
             {
-                $iRun++;
-
-                if (defined($iTestRun) && $iTestRun != $iRun)
-                {
-                    next;
-                }
-
-                &log(INFO, "run ${iRun} - " .
-                           "remote $bRemote, exists $bExists, error $bError");
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt $bRemote, exists $bExists, err $bError")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -452,15 +432,8 @@ sub BackRestTestFile_Test
             {
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
-                $iRun++;
-
-                if (defined($iTestRun) && $iTestRun != $iRun)
-                {
-                    next;
-                }
-
-                &log(INFO, "run ${iRun} - " .
-                           "remote $bRemote, error $bError, exists $bExists");
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt $bRemote, exists $bExists, err $bError")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -625,17 +598,10 @@ sub BackRestTestFile_Test
                     # Loop through error
                     for (my $bError = 0; $bError <= 1; $bError++)
                     {
-                        $iRun++;
-
-                        if (defined($iTestRun) && $iTestRun != $iRun)
-                        {
-                            next;
-                        }
-
-                        &log(INFO, "run ${iRun} - " .
-                                   "remote $bRemote, error $bError, exists $bExists, " .
-                                   "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
-                                   "sort " . (defined($strSort) ? $strSort : "[undef]"));
+                        if (!BackRestTestCommon_Run(++$iRun,
+                                                    "rmt $bRemote, err $bError, exists $bExists, " .
+                                                    "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
+                                                    "sort " . (defined($strSort) ? $strSort : "[undef]"))) {next}
 
                         # Setup test directory
                         BackRestTestFile_Setup($bError);
@@ -740,16 +706,9 @@ sub BackRestTestFile_Test
                 # Loop through ignore missing
                 for (my $bIgnoreMissing = 0; $bIgnoreMissing <= 1; $bIgnoreMissing++)
                 {
-                    $iRun++;
-
-                    if (defined($iTestRun) && $iTestRun != $iRun)
-                    {
-                        next;
-                    }
-
-                    &log(INFO, "run ${iRun} - " .
-                               "remote ${bRemote}, error = $bError, exists ${bExists}, temp ${bTemp} " .
-                               ", ignore missing ${bIgnoreMissing}");
+                    if (!BackRestTestCommon_Run(++$iRun,
+                                                "rmt ${bRemote}, err = $bError, exists ${bExists}, tmp ${bTemp}, " .
+                                                "ignore missing ${bIgnoreMissing}")) {next}
 
                     # Setup test directory
                     BackRestTestFile_Setup($bError);
@@ -844,15 +803,8 @@ sub BackRestTestFile_Test
             # Loop through exists
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
-                $iRun++;
-
-                if (defined($iTestRun) && $iTestRun != $iRun)
-                {
-                    next;
-                }
-
-                &log(INFO, "run ${iRun} - " .
-                           "remote $bRemote, error $bError, exists $bExists");
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt $bRemote, err $bError, exists $bExists")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -931,15 +883,8 @@ sub BackRestTestFile_Test
                 # Loop through exists
                 for (my $bError = 0; $bError <= $bExists; $bError++)
                 {
-                    $iRun++;
-
-                    if (defined($iTestRun) && $iTestRun != $iRun)
-                    {
-                        next;
-                    }
-
-                    &log(INFO, "run ${iRun} - " .
-                               "remote $bRemote, exists $bExists, error ${bError}");
+                    if (!BackRestTestCommon_Run(++$iRun,
+                                                "rmt $bRemote, err $bError, exists $bExists")) {next}
 
                     # Setup test directory
                     BackRestTestFile_Setup($bError);
@@ -1057,21 +1002,17 @@ sub BackRestTestFile_Test
                 my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                 my $strDestinationPath = $bDestinationPathType ? "db" : "backup";
 
-                $iRun++;
-
-                if (defined($iTestRun) && $iTestRun != $iRun)
-                {
-                    next;
-                }
-
-                &log(INFO, "run ${iRun} - rmt " .
-                           (defined($strRemote) && ($strRemote eq $strSourcePath || $strRemote eq $strDestinationPath) ? 1 : 0) .
-                           ", lrg ${bLarge}, " .
-                           "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "remote" : "local") .
-                               ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
-                               "srcignmiss ${bSourceIgnoreMissing}, " .
-                           "dstpth " . (defined($strRemote) && $strRemote eq $strDestinationPath ? "remote" : "local") .
-                               ":${strDestinationPath}, dstcmp $bDestinationCompress");
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt " .
+                                                (defined($strRemote) && ($strRemote eq $strSourcePath ||
+                                                 $strRemote eq $strDestinationPath) ? 1 : 0) .
+                                            ", lrg ${bLarge}, " .
+                                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "rmt" : "lcl") .
+                                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
+                                                "srcignmiss ${bSourceIgnoreMissing}, " .
+                                            "dstpth " .
+                                                (defined($strRemote) && $strRemote eq $strDestinationPath ? "rmt" : "lcl") .
+                                                ":${strDestinationPath}, dstcmp $bDestinationCompress")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup(false);
@@ -1197,6 +1138,11 @@ sub BackRestTestFile_Test
             }
         }
         }
+    }
+
+    if (BackRestTestCommon_Cleanup())
+    {
+        BackRestTestFile_Setup(undef, true);
     }
 }
 

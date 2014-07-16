@@ -18,7 +18,7 @@ Simple Postgres Backup and Restore
 
 * Database restore.
 
-* --version param (with VERSION file written to directory).
+* --version param (with with version written into backup.manifest).
 
 * Threading for archive-get and archive-put.
 
@@ -29,6 +29,8 @@ Simple Postgres Backup and Restore
 * Default restore.conf is written to each backup.
 
 * Able to set timeout on ssh connection in config file.
+
+* File->wait() function.  Waits for a file or directory to exist with configurable retry and timeout.
 
 ## required perl modules
 

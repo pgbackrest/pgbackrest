@@ -13,6 +13,7 @@ use english;
 use Carp;
 
 use File::Basename;
+use File::Copy "cp";
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
@@ -147,7 +148,6 @@ sub BackRestTestBackup_Create
 sub BackRestTestBackup_Test
 {
     my $strTest = shift;
-    my $iTestRun = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -157,9 +157,10 @@ sub BackRestTestBackup_Test
 
     # Setup test variables
     my $iRun;
+    my $bCreate;
     $strTestPath = BackRestTestCommon_TestPathGet();
     my $strStanza = BackRestTestCommon_StanzaGet();
-    my $strUser = BackRestTestCommon_UserGet();
+    my $strUserBackRest = BackRestTestCommon_UserBackRestGet();
     my $strGroup = BackRestTestCommon_GroupGet();
     $strHost = BackRestTestCommon_HostGet();
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
@@ -167,31 +168,153 @@ sub BackRestTestBackup_Test
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
 
-    if ($strTest eq 'all' || $strTest eq 'archive')
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Create remote
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $oRemote = BackRest::Remote->new
+    (
+        strHost => $strHost,
+        strUser => $strUserBackRest,
+        strCommand => BackRestTestCommon_CommandRemoteGet()
+    );
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test archive
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'all' || $strTest eq 'archive-push')
     {
         $iRun = 0;
+        $bCreate = true;
+        my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
+        my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+        my $iArchiveMax = 3;
+        my $oFile;
 
-        &log(INFO, "Test Full Backup\n");
+        &log(INFO, "Test Archiving\n");
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
-            BackRestTestBackup_Create($bRemote, false);
-
-            for (my $bArchiveLocal = false; $bArchiveLocal <= $bRemote; $bArchiveLocal++)
+            for (my $bCompress = false; $bCompress <= true; $bCompress++)
             {
-                $iRun++;
+            for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
+            {
+            for (my $bArchiveAsync = false; $bArchiveAsync <= $bRemote; $bArchiveAsync++)
+            {
+            for (my $bCompressAsync = false; $bCompressAsync <= true; $bCompressAsync++)
+            {
+                # Increment the run, log, and decide whether this unit test should be run
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, " .
+                                            "arc_async ${bArchiveAsync}, cmp_async ${bCompressAsync}")) {next}
 
-                # &log(INFO, "run ${iRun} - " .
-                #            "remote ${bRemote}, archive_local ${bArchiveLocal}, full ${iFull}");
+                # Create the test directory
+                if ($bCreate)
+                {
+                    # Create the file object
+                    $oFile = (BackRest::File->new
+                    (
+                        strStanza => $strStanza,
+                        strBackupPath => BackRestTestCommon_BackupPathGet(),
+                        strRemote => $bRemote ? 'backup' : undef,
+                        oRemote => $bRemote ? $oRemote : undef
+                    ))->clone();
+
+                    BackRestTestBackup_Create($bRemote, false);
+
+                    # Create the db/common/pg_xlog directory
+                    mkdir($strXlogPath)
+                        or confess 'Unable to create ${strXlogPath} path';
+
+                    $bCreate = false;
+                }
+
+                BackRestTestCommon_ConfigCreate('db',
+                                                ($bRemote ? REMOTE_BACKUP : undef),
+                                                $bCompress,
+                                                $bChecksum,  # checksum
+                                                undef,       # hardlink
+                                                undef,       # thread-max
+                                                $bArchiveAsync,
+                                                $bCompressAsync);
+
+                my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                                 "/pg_backrest.conf --stanza=db archive-push";
+
+
+                # Loop through backups
+                for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
+                {
+                    my $strArchiveFile;
+
+                    # Loop through archive files
+                    for (my $iArchive = 1; $iArchive <= $iArchiveMax; $iArchive++)
+                    {
+                        # Construct the archive filename
+                        my $iArchiveNo = (($iBackup - 1) * $iArchiveMax + ($iArchive - 1)) + 1;
+
+                        if ($iArchiveNo > 255)
+                        {
+                            confess "backup total * archive total cannot be greater than 255";
+                        }
+
+                        $strArchiveFile = uc(sprintf("0000000100000001%08x", $iArchiveNo));
+
+                        &log(INFO, "    backup " . sprintf("%02d", $iBackup) .
+                                   ", archive " .sprintf("%02x", $iArchive) .
+                                   " - ${strArchiveFile}");
+
+                        cp(BackRestTestCommon_DataPathGet() . '/test.archive.bin', "${strXlogPath}/${strArchiveFile}");
+
+                        BackRestTestCommon_Execute($strCommand . " ${strXlogPath}/${strArchiveFile}");
+
+                        # Build the archive name to check for at the destination
+                        my $strArchiveCheck = $strArchiveFile;
+
+                        if ($bChecksum)
+                        {
+                            $strArchiveCheck .= "-${strArchiveChecksum}";
+                        }
+
+                        if ($bCompress)
+                        {
+                            $strArchiveCheck .= ".gz";
+                        }
+
+                        if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
+                        {
+                            sleep(1);
+
+                            if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
+                            {
+                                confess "unable to find " . $oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+                            }
+                        }
+                    }
+
+                    # !!! Need to put in tests for .backup files here
+                }
+            }
+            }
+            }
             }
 
-#            BackRestTestBackup_Drop();
+            $bCreate = true;
+        }
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop();
         }
     }
 
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test full
+    #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'full')
     {
         $iRun = 0;
+        $bCreate = true;
 
         &log(INFO, "Test Full Backup\n");
 
@@ -199,37 +322,47 @@ sub BackRestTestBackup_Test
         {
         for (my $bLarge = false; $bLarge <= false; $bLarge++)
         {
-            BackRestTestBackup_Create($bRemote);
-
-            for (my $bArchiveLocal = false; $bArchiveLocal <= $bRemote; $bArchiveLocal++)
+            for (my $bArchiveAsync = false; $bArchiveAsync <= $bRemote; $bArchiveAsync++)
             {
             for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
             {
-                my %oDbConfigHash;
-                my %oBackupConfigHash;
+                # Increment the run, log, and decide whether this unit test should be run
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt ${bRemote}, lrg ${bLarge}, arc_async ${bArchiveAsync}, " .
+                                            "hardlink ${bHardlink}")) {next}
 
-                # Confgure hard-linking
-                if ($bHardlink)
+                # Create the test directory
+                if ($bCreate)
                 {
-                    $oBackupConfigHash{'global:backup'}{hardlink} = 'y';
+                    BackRestTestBackup_Create($bRemote);
+                    $bCreate = false;
                 }
 
-                # if (!$bArchiveLocal)
-                # {
-                #     next;
-                # }
-
+                # Create db config
                 BackRestTestCommon_ConfigCreate('db',
-                                                ($bRemote ? REMOTE_BACKUP : undef), $bArchiveLocal, \%oDbConfigHash);
+                                                ($bRemote ? REMOTE_BACKUP : undef),
+                                                undef,          # compress
+                                                undef,          # checksum
+                                                undef,          # hardlink
+                                                undef,          # thread-max
+                                                $bArchiveAsync, # archive-async
+                                                undef           # compressasync
+                                               );
+
+                # Create backup config
                 BackRestTestCommon_ConfigCreate('backup',
-                                                ($bRemote ? REMOTE_DB : undef), $bArchiveLocal, \%oBackupConfigHash);
+                                                ($bRemote ? REMOTE_DB : undef),
+                                                undef,           # compress
+                                                undef,           # checksum
+                                                $bHardlink,      # hardlink
+                                                8,               # thread-max
+                                                undef,           # archive-async
+                                                undef,           # compress-async
+                                               );
 
                 for (my $iFull = 1; $iFull <= 1; $iFull++)
                 {
-                    $iRun++;
-
-                    &log(INFO, "run ${iRun} - " .
-                               "remote ${bRemote}, large ${bLarge}, archive_local ${bArchiveLocal}, full ${iFull}");
+                    &log(INFO, "    full " . sprintf("%02d", $iFull));
 
                     my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
                                                "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
@@ -241,9 +374,7 @@ sub BackRestTestBackup_Test
                     {
                         $iRun++;
 
-                        &log(INFO, "run ${iRun} - " .
-                                   "remote ${bRemote}, large ${bLarge}, archive_local ${bArchiveLocal}, hardlink ${bHardlink}, " .
-                                   "full ${iFull}, incr ${iIncr}");
+                        &log(INFO, "        incr " . sprintf("%02d", $iIncr));
 
                         BackRestTestCommon_Execute($strCommand, $bRemote);
                     }
@@ -251,134 +382,16 @@ sub BackRestTestBackup_Test
             }
             }
 
+            $bCreate = true;
+        }
+        }
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
             BackRestTestBackup_Drop();
         }
-        }
     }
-
-    #-------------------------------------------------------------------------------------------------------------------------------
-    # Test path_create()
-    #-------------------------------------------------------------------------------------------------------------------------------
-    # if ($strTest eq 'all' || $strTest eq 'path_create')
-    # {
-    #     $iRun = 0;
-    #
-    #     &log(INFO, "Test File->path_create()\n");
-    #
-    #     # Loop through local/remote
-    #     for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
-    #     {
-    #         # Create the file object
-    #         my $oFile = (BackRest::File->new
-    #         (
-    #             strStanza => $strStanza,
-    #             strBackupPath => $strTestPath,
-    #             strRemote => $bRemote ? 'backup' : undef,
-    #             oRemote => $bRemote ? $oRemote : undef
-    #         ))->clone();
-    #
-    #         # Loop through exists (does the paren path exist?)
-    #         for (my $bExists = 0; $bExists <= 1; $bExists++)
-    #         {
-    #         # Loop through exists (does the paren path exist?)
-    #         for (my $bError = 0; $bError <= 1; $bError++)
-    #         {
-    #         # Loop through permission (permission will be set on true)
-    #         for (my $bPermission = 0; $bPermission <= $bExists; $bPermission++)
-    #         {
-    #             my $strPathType = PATH_BACKUP_CLUSTER;
-    #
-    #             $iRun++;
-    #
-    #             if (defined($iTestRun) && $iTestRun != $iRun)
-    #             {
-    #                 next;
-    #             }
-    #
-    #             &log(INFO, "run ${iRun} - " .
-    #                        "remote ${bRemote}, exists ${bExists}, error ${bError}, permission ${bPermission}");
-    #
-    #             # Setup test directory
-    #             BackRestTestFile_Setup($bError);
-    #
-    #             mkdir("$strTestPath/backup") or confess "Unable to create test/backup directory";
-    #             mkdir("$strTestPath/backup/db") or confess "Unable to create test/backup/db directory";
-    #
-    #             my $strPath = "path";
-    #             my $strPermission;
-    #
-    #             # If permission then set one (other than the default)
-    #             if ($bPermission)
-    #             {
-    #                 $strPermission = "0700";
-    #             }
-    #
-    #             # If not exists then set the path to something bogus
-    #             if ($bError)
-    #             {
-    #                 $strPath = "${strTestPath}/private/path";
-    #                 $strPathType = PATH_BACKUP_ABSOLUTE;
-    #             }
-    #             elsif (!$bExists)
-    #             {
-    #                 $strPath = "error/path";
-    #             }
-    #
-    #             # Execute in eval to catch errors
-    #             my $bErrorExpected = !$bExists || $bError;
-    #
-    #             eval
-    #             {
-    #                 $oFile->path_create($strPathType, $strPath, $strPermission);
-    #             };
-    #
-    #             # Check for errors
-    #             if ($@)
-    #             {
-    #                 # Ignore errors if the path did not exist
-    #                 if ($bErrorExpected)
-    #                 {
-    #                     next;
-    #                 }
-    #
-    #                 confess "error raised: " . $@ . "\n";
-    #             }
-    #
-    #             if ($bErrorExpected)
-    #             {
-    #                 confess 'error was expected';
-    #             }
-    #
-    #             # Make sure the path was actually created
-    #             my $strPathCheck = $oFile->path_get($strPathType, $strPath);
-    #
-    #             unless (-e $strPathCheck)
-    #             {
-    #                 confess "path was not created";
-    #             }
-    #
-    #             # Check that the permissions were set correctly
-    #             my $oStat = lstat($strPathCheck);
-    #
-    #             if (!defined($oStat))
-    #             {
-    #                 confess "unable to stat ${strPathCheck}";
-    #             }
-    #
-    #             if ($bPermission)
-    #             {
-    #                 if ($strPermission ne sprintf("%04o", S_IMODE($oStat->mode)))
-    #                 {
-    #                     confess "permissions were not set to {$strPermission}";
-    #                 }
-    #             }
-    #         }
-    #         }
-    #         }
-    #     }
-    # }
-
-#    BackRestTestBackup_Setup(true);
 }
 
 1;

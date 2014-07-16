@@ -289,6 +289,9 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     my $strSection =  $bArchiveLocal ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
     my $strArchivePath = config_load($strSection, CONFIG_KEY_PATH);
 
+    # Get checksum flag
+    my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push when archiving locally
     my $bCompressAsync = false;
 
@@ -320,9 +323,6 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
 
         # Get the compress flag
         my $bCompress = $bCompressAsync ? false : config_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-
-        # Get the checksum flag
-        my $bChecksum = config_load($strSection, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
 
         # Create the file object
         my $oFile = BackRest::File->new
@@ -391,7 +391,6 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
 
     # Get the new operational flags
     my $bCompress = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-    my $bChecksum = config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
     my $iArchiveMaxMB = config_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_ARCHIVE_MAX_MB);
 
     # eval
