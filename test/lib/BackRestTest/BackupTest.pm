@@ -164,6 +164,10 @@ sub BackRestTestBackup_Test
     my $strGroup = BackRestTestCommon_GroupGet();
     $strHost = BackRestTestCommon_HostGet();
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
+    my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+    my $iArchiveMax = 3;
+    my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
+    my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive.bin';
 
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
@@ -179,18 +183,15 @@ sub BackRestTestBackup_Test
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Test archive
+    # Test archive-push
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'archive-push')
     {
         $iRun = 0;
         $bCreate = true;
-        my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
-        my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
-        my $iArchiveMax = 3;
         my $oFile;
 
-        &log(INFO, "Test Archiving\n");
+        &log(INFO, "Test archive-push\n");
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -220,10 +221,10 @@ sub BackRestTestBackup_Test
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);
-
-                    # Create the db/common/pg_xlog directory
-                    mkdir($strXlogPath)
-                        or confess 'Unable to create ${strXlogPath} path';
+                    #
+                    # # Create the db/common/pg_xlog directory
+                    # mkdir($strXlogPath)
+                    #     or confess 'Unable to create ${strXlogPath} path';
 
                     $bCreate = false;
                 }
@@ -239,7 +240,6 @@ sub BackRestTestBackup_Test
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  "/pg_backrest.conf --stanza=db archive-push";
-
 
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
@@ -263,9 +263,16 @@ sub BackRestTestBackup_Test
                                    ", archive " .sprintf("%02x", $iArchive) .
                                    " - ${strArchiveFile}");
 
-                        cp(BackRestTestCommon_DataPathGet() . '/test.archive.bin', "${strXlogPath}/${strArchiveFile}");
+                        my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
 
-                        BackRestTestCommon_Execute($strCommand . " ${strXlogPath}/${strArchiveFile}");
+                        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                                     PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                                     false,                                 # Source is not compressed
+                                     false,                                 # Destination is not compressed
+                                     undef, undef, undef,                   # Unused params
+                                     true);                                 # Create path if it does not exist
+
+                        BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
 
                         # Build the archive name to check for at the destination
                         my $strArchiveCheck = $strArchiveFile;
@@ -299,6 +306,126 @@ sub BackRestTestBackup_Test
             }
 
             $bCreate = true;
+        }
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop();
+        }
+    }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test archive-get
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'all' || $strTest eq 'archive-get')
+    {
+        $iRun = 0;
+        $bCreate = true;
+        my $oFile;
+
+        &log(INFO, "Test archive-get\n");
+
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        {
+            for (my $bCompress = false; $bCompress <= true; $bCompress++)
+            {
+            for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
+            {
+                # Increment the run, log, and decide whether this unit test should be run
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}")) {next}
+
+                # Create the test directory
+                if ($bCreate)
+                {
+                    # Create the file object
+                    $oFile = (BackRest::File->new
+                    (
+                        strStanza => $strStanza,
+                        strBackupPath => BackRestTestCommon_BackupPathGet(),
+                        strRemote => $bRemote ? 'backup' : undef,
+                        oRemote => $bRemote ? $oRemote : undef
+                    ))->clone();
+
+                    BackRestTestBackup_Create($bRemote, false);
+
+                    # Create the db/common/pg_xlog directory
+                    mkdir($strXlogPath)
+                        or confess 'Unable to create ${strXlogPath} path';
+
+                    $bCreate = false;
+                }
+
+                BackRestTestCommon_ConfigCreate('db',                               # local
+                                                ($bRemote ? REMOTE_BACKUP : undef), # remote
+                                                $bCompress,                         # compress
+                                                $bChecksum,                         # checksum
+                                                undef,                              # hardlink
+                                                undef,                              # thread-max
+                                                undef,                              # archive-async
+                                                undef);                             # compress-async
+
+                my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                                 "/pg_backrest.conf --stanza=db archive-get";
+
+                # Loop through backups
+                my $strArchiveFile;
+
+                # Loop through archive files
+                for (my $iArchiveNo = 1; $iArchiveNo <= $iArchiveMax; $iArchiveNo++)
+                {
+                    # Construct the archive filename
+                    if ($iArchiveNo > 255)
+                    {
+                        confess "backup total * archive total cannot be greater than 255";
+                    }
+
+                    $strArchiveFile = uc(sprintf("0000000100000001%08x", $iArchiveNo));
+
+                    &log(INFO, "    archive " .sprintf("%02x", $iArchiveNo) .
+                               " - ${strArchiveFile}");
+
+                    my $strSourceFile = $strArchiveFile;
+
+                    if ($bChecksum)
+                    {
+                        $strSourceFile .= "-${strArchiveChecksum}";
+                    }
+
+                    if ($bCompress)
+                    {
+                        $strSourceFile .= ".gz";
+                    }
+
+                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
+                                 PATH_BACKUP_ARCHIVE, $strSourceFile,    # Destination file
+                                 false,                                  # Source is not compressed
+                                 $bCompress,                             # Destination compress based on test
+                                 undef, undef, undef,                    # Unused params
+                                 true);                                  # Create path if it does not exist
+
+                    my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
+
+                    BackRestTestCommon_Execute($strCommand . " ${strArchiveFile} ${strDestinationFile}");
+
+                    # Check that the destination file exists
+                    if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
+                    {
+                        if ($oFile->hash(PATH_DB_ABSOLUTE, $strDestinationFile) ne $strArchiveChecksum)
+                        {
+                            confess "archive file hash does not match ${strArchiveChecksum}";
+                        }
+                    }
+                    else
+                    {
+                        confess 'archive file is not in destination';
+                    }
+                }
+
+                $bCreate = true;
+            }
+            }
         }
 
         if (BackRestTestCommon_Cleanup())

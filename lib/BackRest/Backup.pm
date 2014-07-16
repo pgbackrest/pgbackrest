@@ -249,8 +249,14 @@ sub archive_get
 
     &log(DEBUG, "archive_get: cp ${stryArchiveFile[0]} ${strDestinationFile}");
 
+    # Determine if the source file is already compressed
+    my $bSourceCompressed = $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
+
     # Copy the archive file to the requested location
-    $oFile->file_copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], PATH_DB_ABSOLUTE, $strDestinationFile);
+    $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], # Source file
+                 PATH_DB_ABSOLUTE, $strDestinationFile,    # Destination file
+                 $bSourceCompressed,                       # Source compression based on detection
+                 false);                                   # Destination is not compressed
 
     return 0;
 }
@@ -302,7 +308,7 @@ sub archive_push
 }
 
 ####################################################################################################################################
-# ARCHIVE_xfer
+# ARCHIVE_XFER
 ####################################################################################################################################
 sub archive_xfer
 {
