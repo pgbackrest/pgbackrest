@@ -19,6 +19,7 @@ use BackRest::Utility;
 
 use lib dirname($0) . "/lib";
 use BackRestTest::CommonTest;
+use BackRestTest::UtilityTest;
 use BackRestTest::FileTest;
 use BackRestTest::BackupTest;
 
@@ -101,6 +102,11 @@ BackRestTestCommon_Setup($iModuleTestRun, $bDryRun, $bNoCleanup);
 
 # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
 #            "group = {strGroup}");
+
+if ($strModule eq 'all' || $strModule eq "utility")
+{
+    BackRestTestUtility_Test($strModuleTest);
+}
 
 if ($strModule eq 'all' || $strModule eq "file")
 {

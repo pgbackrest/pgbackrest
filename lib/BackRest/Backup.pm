@@ -657,9 +657,48 @@ sub backup_manifest_load
 sub backup_manifest_save
 {
     my $strBackupManifestFile = shift;
-    my $oBackupManifestRef = shift;
+    my $oConfig = shift;
 
-    store($oBackupManifestRef, $strBackupManifestFile) or confess &log(ERROR, "unable to open ${strBackupManifestFile}");
+    my $hFile;
+    my $bFirst = true;
+
+    open($hFile, '>', $strBackupManifestFile)
+        or confess "unable to open ${$strBackupManifestFile}";
+
+    foreach my $strSection (sort(keys $oConfig))
+    {
+        if (!$bFirst)
+        {
+            syswrite($hFile, "\n")
+                or confess "unable to write lf: $!";
+        }
+
+        syswrite($hFile, "[${strSection}]\n")
+            or confess "unable to write section ${strSection}: $!";
+
+        foreach my $strKey (sort(keys ${$oConfig}{"${strSection}"}))
+        {
+            my $strValue = ${$oConfig}{"${strSection}"}{"${strKey}"};
+
+            if (defined($strValue))
+            {
+                if (ref($strValue) eq "HASH")
+                {
+                    syswrite($hFile, "${strKey}=" . encode_json($strValue) . "\n")
+                        or confess "unable to write key ${strKey}: $!";
+                }
+                else
+                {
+                    syswrite($hFile, "${strKey}=${strValue}\n")
+                        or confess "unable to write key ${strKey}: $!";
+                }
+            }
+        }
+
+        $bFirst = false;
+    }
+
+#    store($oBackupManifestRef, $strBackupManifestFile) or confess &log(ERROR, "unable to open ${strBackupManifestFile}");
 }
 
 ####################################################################################################################################
