@@ -466,32 +466,37 @@ sub BackRestTestBackup_Test
                 }
 
                 # Create db config
-                BackRestTestCommon_ConfigCreate('db',
-                                                ($bRemote ? REMOTE_BACKUP : undef),
-                                                undef,          # compress
-                                                undef,          # checksum
-                                                undef,          # hardlink
-                                                undef,          # thread-max
-                                                $bArchiveAsync, # archive-async
-                                                undef           # compressasync
+                BackRestTestCommon_ConfigCreate('db',                               # local
+                                                ($bRemote ? REMOTE_BACKUP : undef), # remote
+                                                undef,                              # compress
+                                                undef,                              # checksum
+                                                undef,                              # hardlink
+                                                undef,                              # thread-max
+                                                $bArchiveAsync,                     # archive-async
+                                                undef                               # compressasync
                                                );
 
-                # Create backup config
-                BackRestTestCommon_ConfigCreate('backup',
-                                                ($bRemote ? REMOTE_DB : undef),
-                                                undef,           # compress
-                                                undef,           # checksum
-                                                $bHardlink,      # hardlink
-                                                8,               # thread-max
-                                                undef,           # archive-async
-                                                undef,           # compress-async
-                                               );
+
+                if ($bRemote)
+                {
+                    # Create backup config
+                    BackRestTestCommon_ConfigCreate('backup',                       # local
+                                                    ($bRemote ? REMOTE_DB : undef), # remote
+                                                    undef,                          # compress
+                                                    undef,                          # checksum
+                                                    $bHardlink,                     # hardlink
+                                                    8,                              # thread-max
+                                                    undef,                          # archive-async
+                                                    undef,                          # compress-async
+                                                   );
+                }
 
                 for (my $iFull = 1; $iFull <= 1; $iFull++)
                 {
                     &log(INFO, "    full " . sprintf("%02d", $iFull));
 
-                    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_BackupPathGet() .
+                    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
+                                               ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
                                                "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
 
                     BackRestTestCommon_Execute($strCommand, $bRemote);
@@ -499,8 +504,6 @@ sub BackRestTestBackup_Test
 
                     for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
                     {
-                        $iRun++;
-
                         &log(INFO, "        incr " . sprintf("%02d", $iIncr));
 
                         BackRestTestCommon_Execute($strCommand, $bRemote);

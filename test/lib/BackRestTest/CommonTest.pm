@@ -179,7 +179,11 @@ sub BackRestTestCommon_ConfigCreate
     my %oParamHash;
     tie %oParamHash, 'Config::IniFiles';
 
-    $oParamHash{'global:command'}{'remote'} = $strCommonCommandRemote;
+    if (defined($strRemote))
+    {
+        $oParamHash{'global:command'}{'remote'} = $strCommonCommandRemote;
+    }
+
     $oParamHash{'global:command'}{'psql'} = $strCommonCommandPsql;
 
     if (defined($strRemote) && $strRemote eq REMOTE_BACKUP)
@@ -193,11 +197,11 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
     }
 
+    $oParamHash{'global:log'}{'level-console'} = 'error';
+    $oParamHash{'global:log'}{'level-file'} = 'trace';
+
     if ($strLocal eq REMOTE_BACKUP)
     {
-        $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
-        $oParamHash{'global:log'}{'level-console'} = 'error';
-
         if (defined($bHardlink) && $bHardlink)
         {
             $oParamHash{'global:backup'}{'hardlink'} = 'y';
@@ -205,7 +209,10 @@ sub BackRestTestCommon_ConfigCreate
     }
     elsif ($strLocal eq REMOTE_DB)
     {
-        $oParamHash{'global:log'}{'level-console'} = 'trace';
+        if (defined($strRemote))
+        {
+            $oParamHash{'global:log'}{'level-console'} = 'trace';
+        }
 
         if ($bArchiveLocal)
         {
@@ -220,6 +227,11 @@ sub BackRestTestCommon_ConfigCreate
     else
     {
         confess "invalid local type ${strLocal}";
+    }
+
+    if (($strLocal eq REMOTE_BACKUP) || ($strLocal eq REMOTE_DB && !defined($strRemote)))
+    {
+        $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
     }
 
     if (defined($bCompress) && !$bCompress)
@@ -239,8 +251,6 @@ sub BackRestTestCommon_ConfigCreate
     {
         $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
     }
-
-    $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     # foreach my $strSection (keys $oParamHashRef)
     # {
