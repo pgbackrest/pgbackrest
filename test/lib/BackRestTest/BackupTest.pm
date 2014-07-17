@@ -168,6 +168,7 @@ sub BackRestTestBackup_Test
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
     my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive.bin';
+    my $iThreadMax = 8;
 
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
@@ -449,14 +450,18 @@ sub BackRestTestBackup_Test
         {
         for (my $bLarge = false; $bLarge <= false; $bLarge++)
         {
-            for (my $bArchiveAsync = false; $bArchiveAsync <= $bRemote; $bArchiveAsync++)
+            for (my $bCompress = false; $bCompress <= false; $bCompress++)
+            {
+            for (my $bChecksum = false; $bChecksum <= false; $bChecksum++)
             {
             for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
             {
+            for (my $bArchiveAsync = false; $bArchiveAsync <= $bRemote; $bArchiveAsync++)
+            {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, lrg ${bLarge}, arc_async ${bArchiveAsync}, " .
-                                            "hardlink ${bHardlink}")) {next}
+                                            "rmt ${bRemote}, lrg ${bLarge}, cmp ${bCompress}, chk ${bChecksum}, " .
+                                            "hardlink ${bHardlink}, arc_async ${bArchiveAsync}")) {next}
 
                 # Create the test directory
                 if ($bCreate)
@@ -466,29 +471,26 @@ sub BackRestTestBackup_Test
                 }
 
                 # Create db config
-                BackRestTestCommon_ConfigCreate('db',                               # local
-                                                ($bRemote ? REMOTE_BACKUP : undef), # remote
-                                                undef,                              # compress
-                                                undef,                              # checksum
-                                                undef,                              # hardlink
-                                                undef,                              # thread-max
-                                                $bArchiveAsync,                     # archive-async
-                                                undef                               # compressasync
-                                               );
+                BackRestTestCommon_ConfigCreate('db',                                    # local
+                                                $bRemote ? REMOTE_BACKUP : undef,        # remote
+                                                $bCompress,                              # compress
+                                                $bChecksum,                              # checksum
+                                                defined($bRemote) ? undef : $bHardlink,  # hardlink
+                                                defined($bRemote) ? undef : $iThreadMax, # thread-max
+                                                $bArchiveAsync,                          # archive-async
+                                                undef);                                  # compress-async
 
-
+                # Create backup config
                 if ($bRemote)
                 {
-                    # Create backup config
-                    BackRestTestCommon_ConfigCreate('backup',                       # local
-                                                    ($bRemote ? REMOTE_DB : undef), # remote
-                                                    undef,                          # compress
-                                                    undef,                          # checksum
-                                                    $bHardlink,                     # hardlink
-                                                    8,                              # thread-max
-                                                    undef,                          # archive-async
-                                                    undef,                          # compress-async
-                                                   );
+                    BackRestTestCommon_ConfigCreate('backup',                      # local
+                                                    $bRemote ? REMOTE_DB : undef,  # remote
+                                                    $bCompress,                    # compress
+                                                    $bChecksum,                    # checksum
+                                                    $bHardlink,                    # hardlink
+                                                    $iThreadMax,                   # thread-max
+                                                    undef,                         # archive-async
+                                                    undef);                        # compress-async
                 }
 
                 for (my $iFull = 1; $iFull <= 1; $iFull++)
@@ -509,6 +511,8 @@ sub BackRestTestBackup_Test
                         BackRestTestCommon_Execute($strCommand, $bRemote);
                     }
                 }
+            }
+            }
             }
             }
 
