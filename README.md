@@ -10,6 +10,10 @@ Simple Postgres Backup and Restore
 
 ## feature backlog
 
+* Set backup dir name to date/time when backup completes (right after stop backup).  This indicates the time from which recovery is possible.  Right now the timestamp is from the beginning of the backup which can be misleading.
+
+* Store actual backup begin and end times in backup.manifest
+
 * Fix backup.manifest to not be a binary dump.
 
 * Move backups to be removed to temp before deleting.
