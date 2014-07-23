@@ -10,6 +10,8 @@ Simple Postgres Backup and Restore
 
 ## feature backlog
 
+* When resuming backups, do not resume from a backup of a different type.
+
 * Set backup dir name to date/time when backup completes (right after stop backup).  This indicates the time from which recovery is possible.  Right now the timestamp is from the beginning of the backup which can be misleading.
 
 * Store actual backup begin and end times in backup.manifest
