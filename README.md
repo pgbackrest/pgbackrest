@@ -4,7 +4,7 @@ Simple Postgres Backup and Restore
 
 ## recognition
 
-Put something here!
+Put something here, there are people to recognize!
 
 ## planned for next release
 
