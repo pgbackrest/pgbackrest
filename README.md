@@ -60,6 +60,8 @@ Put something here, there are people to recognize!
 
 * Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.
 
+* Removed dependency on Storable and replaced with a custom ini file implementation.
+
 ### v0.19: Improved error reporting/handling
 
 * Working on improving error handling in the file object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).
