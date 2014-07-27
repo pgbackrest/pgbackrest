@@ -11,6 +11,7 @@ use Carp;
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
 use File::Basename;
+use JSON;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Exception;
@@ -21,6 +22,7 @@ our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
                  log log_file_set log_level_set
                  lock_file_create lock_file_remove
+                 config_save config_load
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false);
 
 # Global constants
@@ -410,6 +412,117 @@ sub log
     }
 
     return $strMessage;
+}
+
+####################################################################################################################################
+# CONFIG_LOAD - Load config file
+####################################################################################################################################
+sub config_load
+{
+    my $strFile = shift;
+    my $oConfig = shift;
+
+    # Open the config file
+    my $hFile;
+    my $strSection;
+
+    open($hFile, '<', $strFile)
+        or confess &log(ERROR, "unable to open ${strFile}");
+
+    while (my $strLine = readline($hFile))
+    {
+        $strLine = trim($strLine);
+#        print "line:${strLine}\n";
+
+        if ($strLine ne '')
+        {
+            # Get the section
+            if (index($strLine, '[') == 0)
+            {
+                $strSection = substr($strLine, 1, length($strLine) - 2);
+#                print "found section ${strSection}\n";
+            }
+            else
+            {
+                # Get key and value
+                my $iIndex = index($strLine, '=');
+
+                if ($iIndex == -1)
+                {
+                    confess &log(ERROR, "unable to read from ${strFile}: ${strLine}");
+                }
+
+                my $strKey = substr($strLine, 0, $iIndex);
+                my $strValue = substr($strLine, $iIndex + 1);
+
+#                print "found key ${strKey}:${strValue}\n";
+
+                # Try to store value as JSON
+                eval
+                {
+                    ${$oConfig}{"${strSection}"}{"${strKey}"} = decode_json($strValue);
+                };
+
+                # On error store value as a scalar
+                if ($@)
+                {
+                    ${$oConfig}{"${strSection}"}{"${strKey}"} = $strValue;
+                }
+            }
+        }
+    }
+
+    close($hFile);
+}
+
+####################################################################################################################################
+# CONFIG_SAVE - Save config file
+####################################################################################################################################
+sub config_save
+{
+    my $strBackupManifestFile = shift;
+    my $oConfig = shift;
+
+    my $hFile;
+    my $bFirst = true;
+
+    open($hFile, '>', $strBackupManifestFile)
+        or confess &log(ERROR, "unable to open ${strBackupManifestFile}");
+
+    foreach my $strSection (sort(keys $oConfig))
+    {
+        if (!$bFirst)
+        {
+            syswrite($hFile, "\n")
+                or confess "unable to write lf: $!";
+        }
+
+        syswrite($hFile, "[${strSection}]\n")
+            or confess "unable to write section ${strSection}: $!";
+
+        foreach my $strKey (sort(keys ${$oConfig}{"${strSection}"}))
+        {
+            my $strValue = ${$oConfig}{"${strSection}"}{"${strKey}"};
+
+            if (defined($strValue))
+            {
+                if (ref($strValue) eq "HASH")
+                {
+                    syswrite($hFile, "${strKey}=" . encode_json($strValue) . "\n")
+                        or confess "unable to write key ${strKey}: $!";
+                }
+                else
+                {
+                    syswrite($hFile, "${strKey}=${strValue}\n")
+                        or confess "unable to write key ${strKey}: $!";
+                }
+            }
+        }
+
+        $bFirst = false;
+    }
+
+    close($hFile);
 }
 
 1;

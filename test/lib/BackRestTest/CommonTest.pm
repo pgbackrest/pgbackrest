@@ -16,6 +16,8 @@ use File::Basename;
 use Cwd 'abs_path';
 use Config::IniFiles;
 use IPC::Open3;
+use POSIX ":sys_wait_h";
+use IO::Select;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
@@ -99,32 +101,74 @@ sub BackRestTestCommon_Execute
     }
 
 #    system($strCommand);
-    my $strError;
+#    my $strError = '';
+    my $strErrorLog = '';
     my $hError;
-    open($hError, '>', \$strError) or confess "unable to open handle to stderr string: $!\n";
+#    open($hError, '>', BackRestTestCommon_TestPathGet() . '/stderr.log');# or confess "unable to open handle to stderr string: $!\n";
+#    open($hError, '>', \$strError) or confess "unable to open handle to stderr string: $!\n";
 
-    my $strOut;
+#    my $strOut = '';
+    my $strOutLog = '';
     my $hOut;
-    open($hOut, '>', \$strOut) or confess "unable to open handle to stdout string: $!\n";
+#    open($hOut, '>', BackRestTestCommon_TestPathGet() . '/stdout.log');# or confess "unable to open handle to stderr string: $!\n";
+#    open($hOut, '>', \$strOut) or confess "unable to open handle to stdout string: $!\n";
 
     my $pId = open3(undef, $hOut, $hError, $strCommand);
+    my $oErrorSelect = IO::Select->new();
+    $oErrorSelect->add($hError);
+    my $oOutSelect = IO::Select->new();
+    $oOutSelect->add($hOut);
 
     # Wait for the process to finish and report any errors
-    waitpid($pId, 0);
+#    my $iExitStatus;
+
+#    waitpid($pId, 0);
+
+    while(waitpid($pId, WNOHANG) == 0)
+    {
+#        print "stuck here\n";
+
+        if ($oErrorSelect->can_read(.1))
+        {
+#            print "read err\n";
+
+            while (my $strLine = readline($hError))
+            {
+#                print "out: ${strLine}";
+                $strErrorLog .= $strLine;
+            }
+        }
+
+        if ($oOutSelect->can_read(.1))
+        {
+#            print "read out begin\n";
+
+            while (my $strLine = readline($hOut))
+            {
+#                print "out: ${strLine}";
+                $strOutLog .= $strLine;
+            }
+
+#            print "read out end\n";
+        }
+    }
+
+#    print "got out\n";
+
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
+#    $iExitStatus = $iExitStatus >> 8;
 
     if ($iExitStatus != 0 && !$bSuppressError)
     {
-        while (my $strLine = readline($hError))
-        {
-            print $strLine;
-        }
+        print "${strErrorLog}";
 
         confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus);
     }
 
-    close($hError);
-    close($hOut);
+#    print "${strOutLog}\n";
+
+#    close($hError);
+#    close($hOut);
 
     # while (my $strLine = readline($hOut))
     # {
@@ -141,16 +185,19 @@ sub BackRestTestCommon_Setup
     my $bDryRunParam = shift;
     my $bNoCleanupParam = shift;
 
+    my $strBasePath = dirname(dirname(abs_path($0)));
+
     $strCommonStanza = "db";
-    $strCommonCommandMain = '/Users/dsteele/pg_backrest/bin/pg_backrest.pl';
-    $strCommonCommandRemote = '/Users/dsteele/pg_backrest/bin/pg_backrest_remote.pl';
+    $strCommonCommandMain = "${strBasePath}/bin/pg_backrest.pl";
+    $strCommonCommandRemote = "${strBasePath}/bin/pg_backrest_remote.pl";
     $strCommonCommandPsql = '/Library/PostgreSQL/9.3/bin/psql -X %option%';
+#    $strCommonCommandPsql = 'psql -X %option%';
     $strCommonHost = '127.0.0.1';
     $strCommonUser = getpwuid($<);
     $strCommonGroup = getgrgid($();
     $strCommonUserBackRest = 'backrest';
-    $strCommonTestPath = dirname(abs_path($0)) . '/test';
-    $strCommonDataPath = dirname(abs_path($0)) . '/data';
+    $strCommonTestPath = "${strBasePath}/test/test";
+    $strCommonDataPath = "${strBasePath}/test/data";
     $strCommonBackupPath = "${strCommonTestPath}/backrest";
     $strCommonArchivePath = "${strCommonTestPath}/archive";
     $strCommonDbPath = "${strCommonTestPath}/db";
@@ -197,7 +244,7 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
     }
 
-    $oParamHash{'global:log'}{'level-console'} = 'error';
+    $oParamHash{'global:log'}{'level-console'} = 'trace';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     if ($strLocal eq REMOTE_BACKUP)

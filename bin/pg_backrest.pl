@@ -75,14 +75,24 @@ my $strType;            # Type of backup: full, differential (diff), incremental
 
 # Test parameters - not for general use
 my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
+my $bTest = false;      # Enters test mode - not harmful in anyway, but adds special logging and pauses for unit testing
+my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
 
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
-            "type=s" => \$strType,
+            "type=s"   => \$strType,
 
             # Test parameters - not for general use
-            "no-fork" => \$bNoFork)
+            "no-fork"      => \$bNoFork,
+            "test"         => \$bTest,
+            "test-delay=s" => \$iTestDelay)
     or confess("Error in command line arguments\n");
+
+# Test delay should be between 1 and 600 seconds
+if (!($iTestDelay >= 1 && $iTestDelay <= 600))
+{
+    confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
+}
 
 ####################################################################################################################################
 # Global variables
@@ -599,7 +609,9 @@ backup_init
     !$bChecksum,
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
     config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, "y") eq "y" ? true : false,
-    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
+    config_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT),
+    $bTest,
+    $iTestDelay
 );
 
 ####################################################################################################################################

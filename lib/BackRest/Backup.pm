@@ -10,9 +10,7 @@ use warnings;
 use Carp;
 use File::Basename;
 use File::Path qw(remove_tree);
-use JSON;
 use Scalar::Util qw(looks_like_number);
-use Storable;
 use Thread::Queue;
 
 use lib dirname($0);
@@ -37,6 +35,8 @@ my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
 my $iThreadTimeout;
+my $bTest;
+my $iTestDelay;
 
 # Thread variables
 my @oThread;
@@ -58,6 +58,8 @@ sub backup_init
     my $iThreadMaxParam = shift;
     my $bArchiveRequiredParam = shift;
     my $iThreadTimeoutParam = shift;
+    my $bTestParam = shift;
+    my $iTestDelayParam = shift;
 
     $oDb = $oDbParam;
     $oFile = $oFileParam;
@@ -68,6 +70,14 @@ sub backup_init
     $iThreadMax = $iThreadMaxParam;
     $bArchiveRequired = $bArchiveRequiredParam;
     $iThreadTimeout = $iThreadTimeoutParam;
+    $bTest = defined($bTestParam) ? $bTestParam : false;
+    $iTestDelay = defined($bTestParam) ? $iTestDelayParam : undef;
+
+    # Make sure that a delay is specified in test mode
+    if ($bTest && !defined($iTestDelay))
+    {
+        confess &log(ASSERT, "iTestDelay must be provided when bTest is true");
+    }
 
     if (!defined($iThreadMax))
     {
@@ -639,66 +649,6 @@ sub backup_type_find
     }
 
     return $strDirectory;
-}
-
-####################################################################################################################################
-# BACKUP_MANIFEST_LOAD - Load the backup manifest
-####################################################################################################################################
-sub backup_manifest_load
-{
-    my $strBackupManifestFile = shift;
-
-    return %{retrieve($strBackupManifestFile) or confess &log(ERROR, "unable to read ${strBackupManifestFile}")};
-}
-
-####################################################################################################################################
-# BACKUP_MANIFEST_SAVE - Save the backup manifest
-####################################################################################################################################
-sub backup_manifest_save
-{
-    my $strBackupManifestFile = shift;
-    my $oConfig = shift;
-
-    my $hFile;
-    my $bFirst = true;
-
-    open($hFile, '>', $strBackupManifestFile)
-        or confess "unable to open ${$strBackupManifestFile}";
-
-    foreach my $strSection (sort(keys $oConfig))
-    {
-        if (!$bFirst)
-        {
-            syswrite($hFile, "\n")
-                or confess "unable to write lf: $!";
-        }
-
-        syswrite($hFile, "[${strSection}]\n")
-            or confess "unable to write section ${strSection}: $!";
-
-        foreach my $strKey (sort(keys ${$oConfig}{"${strSection}"}))
-        {
-            my $strValue = ${$oConfig}{"${strSection}"}{"${strKey}"};
-
-            if (defined($strValue))
-            {
-                if (ref($strValue) eq "HASH")
-                {
-                    syswrite($hFile, "${strKey}=" . encode_json($strValue) . "\n")
-                        or confess "unable to write key ${strKey}: $!";
-                }
-                else
-                {
-                    syswrite($hFile, "${strKey}=${strValue}\n")
-                        or confess "unable to write key ${strKey}: $!";
-                }
-            }
-        }
-
-        $bFirst = false;
-    }
-
-#    store($oBackupManifestRef, $strBackupManifestFile) or confess &log(ERROR, "unable to open ${strBackupManifestFile}");
 }
 
 ####################################################################################################################################
@@ -1359,7 +1309,8 @@ sub backup
 
     if (defined($strBackupLastPath))
     {
-        %oLastManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest");
+        my %oLastManifest;
+        config_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest", \%oLastManifest);
 
         if (!defined($oLastManifest{backup}{label}))
         {
@@ -1430,7 +1381,7 @@ sub backup
     }
 
     # Save the backup conf file first time - so we can see what is happening in the backup
-    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+    config_save($strBackupConfFile, \%oBackupManifest);
 
     # Perform the backup
     backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
@@ -1450,7 +1401,7 @@ sub backup
     if ($bArchiveRequired)
     {
         # Save the backup conf file second time - before getting archive logs in case that fails
-        backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+        config_save($strBackupConfFile, \%oBackupManifest);
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
@@ -1479,11 +1430,11 @@ sub backup
         }
     }
 
-    # Need some sort of backup validate - create a manifest and compare the backup manifest
+    # Need some sort of backup validate - create a manifest and compare the backup to manifest
     # !!! DO IT
 
     # Save the backup conf file final time
-    backup_manifest_save($strBackupConfFile, \%oBackupManifest);
+    config_save($strBackupConfFile, \%oBackupManifest);
 
     # Rename the backup tmp path to complete the backup
     &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
@@ -1514,15 +1465,17 @@ sub archive_list_get
         &log(TRACE, "archive_list_get: post-9.3 database, including log FF");
     }
 
+    # Get the timelines and make sure they match
     my $strTimeline = substr($strArchiveStart, 0, 8);
     my @stryArchive;
     my $iArchiveIdx = 0;
 
     if ($strTimeline ne substr($strArchiveStop, 0, 8))
     {
-        confess "Timelines between ${strArchiveStart} and ${strArchiveStop} differ";
+        confess &log(ERROR, "Timelines between ${strArchiveStart} and ${strArchiveStop} differ");
     }
 
+    # Iterate through all archive logs between start and stop
     my $iStartMajor = hex substr($strArchiveStart, 8, 8);
     my $iStartMinor = hex substr($strArchiveStart, 16, 8);
 
@@ -1692,7 +1645,8 @@ sub backup_expire
     # even though they are also in the pg_xlog directory (since they have been copied more than once).
     &log(INFO, "archive retention based on backup " . $strArchiveRetentionBackup);
 
-    my %oManifest = backup_manifest_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest");
+    my %oManifest;
+    config_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strArchiveRetentionBackup/backup.manifest", \%oManifest);
     my $strArchiveLast = ${oManifest}{backup}{"archive-start"};
 
     if (!defined($strArchiveLast))

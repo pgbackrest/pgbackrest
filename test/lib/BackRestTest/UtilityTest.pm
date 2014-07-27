@@ -13,10 +13,10 @@ use english;
 use Carp;
 
 use File::Basename;
-use JSON; # remove when config functions go to utility
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
+use BackRest::File;
 
 use BackRestTest::CommonTest;
 
@@ -68,7 +68,7 @@ sub BackRestTestUtility_Test
     {
         $iRun = 0;
         $bCreate = true;
-        my $oFile;
+        my $oFile = BackRest::File->new();
 
         &log(INFO, "Test config\n");
 
@@ -78,6 +78,8 @@ sub BackRestTestUtility_Test
             # Create the test directory
             if ($bCreate)
             {
+#                $oFile = BackRest::File->new();
+
                 # # Create the file object
                 # $oFile = (BackRest::File->new
                 # (
@@ -92,6 +94,7 @@ sub BackRestTestUtility_Test
                 $bCreate = false;
             }
 
+            # Generate a test config
             my %oConfig;
 
             $oConfig{test1}{key1} = 'value';
@@ -103,47 +106,27 @@ sub BackRestTestUtility_Test
             $oConfig{test3}{key2}{sub1} = 'value';
             $oConfig{test3}{key2}{sub2} = 'value';
 
-            my $strFile = "$strTestPath/test.cfg";
-            my $hFile;
-            my $bFirst = true;
+            # Save the test config
+            my $strFile = "${strTestPath}/config.cfg";
+            config_save($strFile, \%oConfig);
 
-            open($hFile, '>', $strFile)
-                or confess "unable to open ${strFile}";
+            my $strConfigHash = $oFile->hash(PATH_ABSOLUTE, $strFile);
 
-            foreach my $strSection (sort(keys %oConfig))
+            # Reload the test config
+            my %oConfigTest;
+
+            config_load($strFile, \%oConfigTest);
+
+            # Resave the test config and compare hashes
+            my $strFileTest = "${strTestPath}/config-test.cfg";
+            config_save($strFileTest, \%oConfigTest);
+
+            my $strConfigTestHash = $oFile->hash(PATH_ABSOLUTE, $strFileTest);
+
+            if ($strConfigHash ne $strConfigTestHash)
             {
-                if (!$bFirst)
-                {
-                    syswrite($hFile, "\n")
-                        or confess "unable to write lf: $!";
-                }
-
-                syswrite($hFile, "[${strSection}]\n")
-                    or confess "unable to write section ${strSection}: $!";
-
-                foreach my $strKey (sort(keys $oConfig{$strSection}))
-                {
-                    my $strValue = $oConfig{"${strSection}"}{"${strKey}"};
-
-                    if (defined($strValue))
-                    {
-                        if (ref($strValue) eq "HASH")
-                        {
-                            syswrite($hFile, "${strKey}=" . encode_json($strValue) . "\n")
-                                or confess "unable to write key ${strKey}: $!";
-                        }
-                        else
-                        {
-                            syswrite($hFile, "${strKey}=${strValue}\n")
-                                or confess "unable to write key ${strKey}: $!";
-                        }
-                    }
-                }
-
-                $bFirst = false;
+                confess "config hash ${strConfigHash} != ${strConfigTestHash}";
             }
-
-            close($hFile);
 
             if (BackRestTestCommon_Cleanup())
             {
