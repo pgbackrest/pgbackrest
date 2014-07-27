@@ -14,7 +14,6 @@ use Carp;
 
 use File::Basename;
 use Cwd 'abs_path';
-use Config::IniFiles;
 use IPC::Open3;
 use POSIX ":sys_wait_h";
 use IO::Select;
@@ -224,7 +223,7 @@ sub BackRestTestCommon_ConfigCreate
 #    my $oParamHashRef = shift;
 
     my %oParamHash;
-    tie %oParamHash, 'Config::IniFiles';
+#    tie %oParamHash, 'Config::IniFiles';
 
     if (defined($strRemote))
     {
@@ -309,9 +308,7 @@ sub BackRestTestCommon_ConfigCreate
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';
-
-    tied(%oParamHash)->WriteConfig($strFile) or die "could not write config file ${strFile}";
-    chmod(0660, $strFile) or die "unable to set permissions for ${strFile}";
+    config_save($strFile, \%oParamHash);
 
     # Move the configuration file based on local
     if ($strLocal eq 'db')
