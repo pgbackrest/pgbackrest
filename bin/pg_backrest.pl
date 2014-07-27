@@ -6,13 +6,13 @@
 ####################################################################################################################################
 # Perl includes
 ####################################################################################################################################
+use threads;
 use strict;
 use warnings;
-use threads;
+use Carp;
 
 use File::Basename;
 use Getopt::Long;
-use Carp;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
@@ -75,7 +75,7 @@ my $strType;            # Type of backup: full, differential (diff), incremental
 # Test parameters - not for general use
 my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
 my $bTest = false;      # Enters test mode - not harmful in anyway, but adds special logging and pauses for unit testing
-my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
+my $iTestDelay = 2;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
 
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
@@ -87,11 +87,8 @@ GetOptions ("config=s" => \$strConfigFile,
             "test-delay=s" => \$iTestDelay)
     or confess("Error in command line arguments\n");
 
-# Test delay should be between 1 and 600 seconds
-if (!($iTestDelay >= 1 && $iTestDelay <= 600))
-{
-    confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
-}
+# Set test parameters
+test_set($bTest, $iTestDelay);
 
 ####################################################################################################################################
 # Global variables
@@ -99,7 +96,6 @@ if (!($iTestDelay >= 1 && $iTestDelay <= 600))
 my %oConfig;            # Configuration hash
 my $oRemote;            # Remote object
 my $strRemote;          # Defines which side is remote, DB or BACKUP
-my %oConfig;            # Config file loaded into a hash
 
 ####################################################################################################################################
 # CONFIG_LOAD - Get a value from the config and be sure that it is defined (unless bRequired is false)
@@ -212,6 +208,11 @@ sub safe_exit
 $SIG{TERM} = \&safe_exit;
 $SIG{HUP} = \&safe_exit;
 $SIG{INT} = \&safe_exit;
+
+####################################################################################################################################
+# START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
+####################################################################################################################################
+eval {
 
 ####################################################################################################################################
 # START MAIN
@@ -643,3 +644,14 @@ if ($strOperation eq OP_EXPIRE)
 }
 
 remote_exit(0);
+
+####################################################################################################################################
+# START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
+####################################################################################################################################
+};
+
+if ($@)
+{
+    remote_exit();
+    confess $@;
+}

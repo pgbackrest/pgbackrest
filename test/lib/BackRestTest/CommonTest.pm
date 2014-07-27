@@ -99,80 +99,53 @@ sub BackRestTestCommon_Execute
         $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
     }
 
-#    system($strCommand);
-#    my $strError = '';
+    # Create error and out file handles and buffers
     my $strErrorLog = '';
     my $hError;
-#    open($hError, '>', BackRestTestCommon_TestPathGet() . '/stderr.log');# or confess "unable to open handle to stderr string: $!\n";
-#    open($hError, '>', \$strError) or confess "unable to open handle to stderr string: $!\n";
 
-#    my $strOut = '';
     my $strOutLog = '';
     my $hOut;
-#    open($hOut, '>', BackRestTestCommon_TestPathGet() . '/stdout.log');# or confess "unable to open handle to stderr string: $!\n";
-#    open($hOut, '>', \$strOut) or confess "unable to open handle to stdout string: $!\n";
 
+    # Execute the command
     my $pId = open3(undef, $hOut, $hError, $strCommand);
+
+    # Create select objects
     my $oErrorSelect = IO::Select->new();
     $oErrorSelect->add($hError);
     my $oOutSelect = IO::Select->new();
     $oOutSelect->add($hOut);
 
-    # Wait for the process to finish and report any errors
-#    my $iExitStatus;
-
-#    waitpid($pId, 0);
-
+    # While the process is running drain the stdout and stderr streams
     while(waitpid($pId, WNOHANG) == 0)
     {
-#        print "stuck here\n";
-
+        # Drain the stderr stream
         if ($oErrorSelect->can_read(.1))
         {
-#            print "read err\n";
-
             while (my $strLine = readline($hError))
             {
-#                print "out: ${strLine}";
                 $strErrorLog .= $strLine;
             }
         }
 
+        # Drain the stdout stream
         if ($oOutSelect->can_read(.1))
         {
-#            print "read out begin\n";
-
             while (my $strLine = readline($hOut))
             {
-#                print "out: ${strLine}";
                 $strOutLog .= $strLine;
             }
-
-#            print "read out end\n";
         }
     }
 
-#    print "got out\n";
-
+    # Check the exit status and output an error if needed
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
-#    $iExitStatus = $iExitStatus >> 8;
 
     if ($iExitStatus != 0 && !$bSuppressError)
     {
-        print "${strErrorLog}";
-
-        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus);
+        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus .
+                     ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
+                     ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
     }
-
-#    print "${strOutLog}\n";
-
-#    close($hError);
-#    close($hOut);
-
-    # while (my $strLine = readline($hOut))
-    # {
-    #     print $strLine;
-    # }
 }
 
 ####################################################################################################################################
@@ -220,10 +193,8 @@ sub BackRestTestCommon_ConfigCreate
     my $iThreadMax = shift;
     my $bArchiveLocal = shift;
     my $bCompressAsync = shift;
-#    my $oParamHashRef = shift;
 
     my %oParamHash;
-#    tie %oParamHash, 'Config::IniFiles';
 
     if (defined($strRemote))
     {
@@ -243,7 +214,7 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
     }
 
-    $oParamHash{'global:log'}{'level-console'} = 'trace';
+    $oParamHash{'global:log'}{'level-console'} = 'error';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     if ($strLocal eq REMOTE_BACKUP)
@@ -297,14 +268,6 @@ sub BackRestTestCommon_ConfigCreate
     {
         $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
     }
-
-    # foreach my $strSection (keys $oParamHashRef)
-    # {
-    #     foreach my $strKey (keys ${$oParamHashRef}{$strSection})
-    #     {
-    #         $oParamHash{$strSection}{$strKey} = ${$oParamHashRef}{$strSection}{$strKey};
-    #     }
-    # }
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';

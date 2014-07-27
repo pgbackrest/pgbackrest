@@ -4,11 +4,11 @@
 package BackRest::Db;
 
 use threads;
-
-use Moose;
 use strict;
 use warnings;
 use Carp;
+
+use Moose;
 use Net::OpenSSH;
 use File::Basename;
 use IPC::System::Simple qw(capture);

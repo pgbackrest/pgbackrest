@@ -4,10 +4,10 @@
 package BackRest::Utility;
 
 use threads;
-
 use strict;
 use warnings;
 use Carp;
+
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
 use File::Basename;
@@ -20,10 +20,11 @@ use Exporter qw(import);
 
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
-                 log log_file_set log_level_set
+                 log log_file_set log_level_set test_set
                  lock_file_create lock_file_remove
                  config_save config_load
-                 TRACE DEBUG ERROR ASSERT WARN INFO OFF true false);
+                 TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
+                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD);
 
 # Global constants
 use constant
@@ -58,6 +59,20 @@ $oLogLevelRank{WARN}{rank} = 3;
 $oLogLevelRank{ERROR}{rank} = 2;
 $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
+
+####################################################################################################################################
+# TEST Constants and Variables
+####################################################################################################################################
+use constant
+{
+    TEST                => 'TEST',
+    TEST_ENCLOSE        => 'PgBaCkReStTeSt',
+    TEST_MANIFEST_BUILD => 'MANIFEST_BUILD'
+};
+
+# Test global variables
+my $bTest = false;
+my $iTestDelay = 2;
 
 ####################################################################################################################################
 # VERSION_GET
@@ -322,6 +337,30 @@ sub log_file_set
 }
 
 ####################################################################################################################################
+# TEST_SET - set test parameters
+####################################################################################################################################
+sub test_set
+{
+    my $bTestParam = shift;
+    my $iTestDelayParam = shift;
+
+    $bTest = defined($bTestParam) ? $bTestParam : false;
+    $iTestDelay = defined($bTestParam) ? $iTestDelayParam : $iTestDelay;
+
+    # Test delay should be between 1 and 600 seconds
+    if (!($iTestDelay >= 1 && $iTestDelay <= 600))
+    {
+        confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
+    }
+
+    # Make sure that a delay is specified in test mode
+    if ($bTest && !defined($iTestDelay))
+    {
+        confess &log(ASSERT, "iTestDelay must be provided when bTest is true");
+    }
+}
+
+####################################################################################################################################
 # LOG_LEVEL_SET - set the log level for file and console
 ####################################################################################################################################
 sub log_level_set
@@ -361,7 +400,11 @@ sub log
 
     my $strMessageFormat = $strMessage;
 
-    if (!defined($oLogLevelRank{"${strLevel}"}{rank}))
+    if ($bTest && $strLevel eq TEST)
+    {
+        $strMessageFormat = TEST_ENCLOSE . '-' . $strMessageFormat . '-' . TEST_ENCLOSE;
+    }
+    elsif (!defined($oLogLevelRank{"${strLevel}"}{rank}))
     {
         confess &log(ASSERT, "log level ${strLevel} does not exist");
     }
@@ -393,7 +436,8 @@ sub log
                         (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
                         (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 
-    if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank})
+    if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
+        $bTest && $strLevel eq TEST)
     {
         print $strMessageFormat;
     }
@@ -409,6 +453,11 @@ sub log
     if (defined($iCode))
     {
         return BackRest::Exception->new(iCode => $iCode, strMessage => $strMessage);
+    }
+
+    if ($bTest && $strLevel eq TEST)
+    {
+        sleep($iTestDelay);
     }
 
     return $strMessage;

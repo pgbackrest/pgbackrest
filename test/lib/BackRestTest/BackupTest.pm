@@ -499,7 +499,7 @@ sub BackRestTestBackup_Test
 
                     my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
                                                ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
-                                               "/pg_backrest.conf --type=incr --stanza=${strStanza} backup";
+                                               "/pg_backrest.conf --test --type=incr --stanza=${strStanza} backup";
 
                     BackRestTestCommon_Execute($strCommand, $bRemote);
                     # exit 0;

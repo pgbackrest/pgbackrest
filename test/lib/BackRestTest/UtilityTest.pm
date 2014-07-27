@@ -78,17 +78,6 @@ sub BackRestTestUtility_Test
             # Create the test directory
             if ($bCreate)
             {
-#                $oFile = BackRest::File->new();
-
-                # # Create the file object
-                # $oFile = (BackRest::File->new
-                # (
-                #     # strStanza => $strStanza,
-                #     # strBackupPath => BackRestTestCommon_BackupPathGet(),
-                #     # strRemote => $bRemote ? 'backup' : undef,
-                #     # oRemote => $bRemote ? $oRemote : undef
-                # ))->clone();
-
                 BackRestTestUtility_Create();
 
                 $bCreate = false;

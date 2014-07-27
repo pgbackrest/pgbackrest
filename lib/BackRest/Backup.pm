@@ -4,10 +4,10 @@
 package BackRest::Backup;
 
 use threads;
-
 use strict;
 use warnings;
 use Carp;
+
 use File::Basename;
 use File::Path qw(remove_tree);
 use Scalar::Util qw(looks_like_number);
@@ -35,8 +35,6 @@ my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
 my $iThreadTimeout;
-my $bTest;
-my $iTestDelay;
 
 # Thread variables
 my @oThread;
@@ -58,8 +56,6 @@ sub backup_init
     my $iThreadMaxParam = shift;
     my $bArchiveRequiredParam = shift;
     my $iThreadTimeoutParam = shift;
-    my $bTestParam = shift;
-    my $iTestDelayParam = shift;
 
     $oDb = $oDbParam;
     $oFile = $oFileParam;
@@ -70,14 +66,6 @@ sub backup_init
     $iThreadMax = $iThreadMaxParam;
     $bArchiveRequired = $bArchiveRequiredParam;
     $iThreadTimeout = $iThreadTimeoutParam;
-    $bTest = defined($bTestParam) ? $bTestParam : false;
-    $iTestDelay = defined($bTestParam) ? $iTestDelayParam : undef;
-
-    # Make sure that a delay is specified in test mode
-    if ($bTest && !defined($iTestDelay))
-    {
-        confess &log(ASSERT, "iTestDelay must be provided when bTest is true");
-    }
 
     if (!defined($iThreadMax))
     {
@@ -1364,6 +1352,7 @@ sub backup
     $oDb->tablespace_map_get(\%oTablespaceMap);
 
     backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
+    &log(TEST, TEST_MANIFEST_BUILD);
 
     # If the backup tmp path already exists, remove invalid files
     if (-e $strBackupTmpPath)
