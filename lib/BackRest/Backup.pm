@@ -1286,8 +1286,6 @@ sub backup
     &log(DEBUG, "cluster path is $strDbClusterPath");
 
     # Create the cluster backup path
-    # $oFile->path_create(PATH_BACKUP, "backup", undef, true);
-    # $oFile->path_create(PATH_BACKUP, "temp", undef, true);
     $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
 
     # Find the previous backup based on the type
@@ -1394,7 +1392,7 @@ sub backup
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
-        my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->version_get() < 9.3);
+        my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
 
         foreach my $strArchive (@stryArchive)
         {

@@ -142,7 +142,7 @@ sub BackRestTestCommon_Execute
 
     if ($iExitStatus != 0 && !$bSuppressError)
     {
-        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus .
+        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . "\n" .
                      ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
                      ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
     }

@@ -75,7 +75,7 @@ my $strType;            # Type of backup: full, differential (diff), incremental
 # Test parameters - not for general use
 my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
 my $bTest = false;      # Enters test mode - not harmful in anyway, but adds special logging and pauses for unit testing
-my $iTestDelay = 2;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
+my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
 
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,

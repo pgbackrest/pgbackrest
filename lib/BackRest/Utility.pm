@@ -72,7 +72,7 @@ use constant
 
 # Test global variables
 my $bTest = false;
-my $iTestDelay = 2;
+my $iTestDelay;
 
 ####################################################################################################################################
 # VERSION_GET
@@ -399,29 +399,31 @@ sub log
     my $iCode = shift;
 
     my $strMessageFormat = $strMessage;
+    my $iLogLevelRank = $oLogLevelRank{"${strLevel}"}{rank};
 
-    if ($bTest && $strLevel eq TEST)
+    if ($strLevel eq TEST)
     {
+        $iLogLevelRank = $oLogLevelRank{TRACE}{rank} + 1;
         $strMessageFormat = TEST_ENCLOSE . '-' . $strMessageFormat . '-' . TEST_ENCLOSE;
     }
-    elsif (!defined($oLogLevelRank{"${strLevel}"}{rank}))
+    elsif (!defined($iLogLevelRank))
     {
         confess &log(ASSERT, "log level ${strLevel} does not exist");
     }
 
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
     if (!defined($strMessageFormat))
     {
         $strMessageFormat = "(undefined)";
     }
 
-    if ($strLevel eq "TRACE")
+    if ($strLevel eq TRACE || $strLevel eq TEST)
     {
         $strMessageFormat =~ s/\n/\n                                           /g;
         $strMessageFormat = "        " . $strMessageFormat;
     }
-    elsif ($strLevel eq "DEBUG")
+    elsif ($strLevel eq DEBUG)
     {
         $strMessageFormat =~ s/\n/\n                                       /g;
         $strMessageFormat = "    " . $strMessageFormat;
@@ -436,13 +438,19 @@ sub log
                         (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
                         (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 
-    if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
+    # if ($strLevel eq TEST)
+    # {
+    # confess "log level rank $iLogLevelRank";
+    # }
+
+    if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
         $bTest && $strLevel eq TEST)
     {
         print $strMessageFormat;
     }
 
-    if ($oLogLevelRank{"${strLevel}"}{rank} <= $oLogLevelRank{"${strLogLevelFile}"}{rank})
+    if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelFile}"}{rank} ||
+        $bTest && $strLevel eq TEST)
     {
         if (defined($hLogFile))
         {
@@ -481,7 +489,6 @@ sub config_load
     while (my $strLine = readline($hFile))
     {
         $strLine = trim($strLine);
-#        print "line:${strLine}\n";
 
         if ($strLine ne '')
         {
@@ -489,7 +496,6 @@ sub config_load
             if (index($strLine, '[') == 0)
             {
                 $strSection = substr($strLine, 1, length($strLine) - 2);
-#                print "found section ${strSection}\n";
             }
             else
             {
@@ -503,8 +509,6 @@ sub config_load
 
                 my $strKey = substr($strLine, 0, $iIndex);
                 my $strValue = substr($strLine, $iIndex + 1);
-
-#                print "found key ${strKey}:${strValue}\n";
 
                 # Try to store value as JSON
                 eval
