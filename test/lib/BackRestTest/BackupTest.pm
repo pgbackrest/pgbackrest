@@ -14,6 +14,7 @@ use Carp;
 
 use File::Basename;
 use File::Copy "cp";
+use DBI;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
@@ -28,6 +29,56 @@ our @EXPORT = qw(BackRestTestBackup_Test);
 my $strTestPath;
 my $strHost;
 my $strUserBackRest;
+my $hDb;
+
+####################################################################################################################################
+# BackRestTestBackup_PgConnect
+####################################################################################################################################
+sub BackRestTestBackup_PgConnect
+{
+    # Disconnect user session
+    BackRestTestBackup_PgDisconnect();
+
+    # Connect to the db (whether it is local or remote)
+    $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+                        ';host=' . BackRestTestCommon_DbPathGet(),
+                        BackRestTestCommon_UserGet(),
+                        undef,
+                        {AutoCommit => 1, RaiseError => 1});
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Disconnect
+####################################################################################################################################
+sub BackRestTestBackup_PgDisconnect
+{
+    # Connect to the db (whether it is local or remote)
+    if (defined($hDb))
+    {
+        $hDb->disconnect;
+        undef($hDb);
+    }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_PgExecute
+####################################################################################################################################
+sub BackRestTestBackup_PgExecute
+{
+    my $strSql = shift;
+    my $bSwitchXlog = shift;
+
+    &log(DEBUG, "SQL: ${strSql}");
+    my $hStatement = $hDb->prepare($strSql);
+    $hStatement->execute() or
+        confess &log(ERROR, "Unable to execute: ${strSql}");
+    $hStatement->finish();
+
+    if (defined($bSwitchXlog) && $bSwitchXlog)
+    {
+        BackRestTestBackup_PgExecute('select pg_switch_xlog()');
+    }
+}
 
 ####################################################################################################################################
 # BackRestTestBackup_ClusterStop
@@ -36,7 +87,10 @@ sub BackRestTestBackup_ClusterStop
 {
     my $strPath = shift;
 
-    # If the db directory already exists, stop the cluster and remove the directory
+    # Disconnect user session
+    BackRestTestBackup_PgDisconnect();
+
+    # If postmaster process is running them stop the cluster
     if (-e $strPath . "/postmaster.pid")
     {
         BackRestTestCommon_Execute("pg_ctl stop -D $strPath -w -s -m fast");
@@ -50,11 +104,17 @@ sub BackRestTestBackup_ClusterRestart
 {
     my $strPath = BackRestTestCommon_DbCommonPathGet();
 
-    # If the db directory already exists, stop the cluster and remove the directory
+    # Disconnect user session
+    BackRestTestBackup_PgDisconnect();
+
+    # If postmaster process is running them stop the cluster
     if (-e $strPath . "/postmaster.pid")
     {
         BackRestTestCommon_Execute("pg_ctl restart -D $strPath -w -s");
     }
+
+    # Connect user session
+    BackRestTestBackup_PgConnect();
 }
 
 ####################################################################################################################################
@@ -70,9 +130,12 @@ sub BackRestTestBackup_ClusterCreate
 
     BackRestTestCommon_Execute("initdb -D $strPath -A trust");
     BackRestTestCommon_Execute("pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 " .
-                               "-c wal_level=archive -c archive_mode=on -c archive_command='$strArchive'\" " .
-#                               "-c unix_socket_directories='" . BackRestTestCommon_DbCommonPathGet() . "'\" " .
+                               "-c wal_level=archive -c archive_mode=on -c archive_command='$strArchive' " .
+                               "-c unix_socket_directories='" . BackRestTestCommon_DbPathGet() . "'\" " .
                                "-D $strPath -l $strPath/postgresql.log -w -s");
+
+    # Connect user session
+    BackRestTestBackup_PgConnect();
 }
 
 ####################################################################################################################################
@@ -156,15 +219,17 @@ sub BackRestTestBackup_Test
         $strTest = 'all';
     }
 
+    # Setup global variables
+    $strTestPath = BackRestTestCommon_TestPathGet();
+    $strHost = BackRestTestCommon_HostGet();
+    $strUserBackRest = BackRestTestCommon_UserBackRestGet();
+
     # Setup test variables
     my $iRun;
     my $bCreate;
-    $strTestPath = BackRestTestCommon_TestPathGet();
     my $strStanza = BackRestTestCommon_StanzaGet();
-    my $strUserBackRest = BackRestTestCommon_UserBackRestGet();
     my $strGroup = BackRestTestCommon_GroupGet();
-    $strHost = BackRestTestCommon_HostGet();
-    $strUserBackRest = BackRestTestCommon_UserBackRestGet();
+
     my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
@@ -494,20 +559,35 @@ sub BackRestTestBackup_Test
                                                     undef);                        # compress-async
                 }
 
+                # Create the backup command
+                my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
+                                           ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
+                                           "/pg_backrest.conf --test --type=incr --stanza=${strStanza} backup";
+
+
+                # Run the full/incremental tests
                 for (my $iFull = 1; $iFull <= 1; $iFull++)
                 {
-                    &log(INFO, "    full " . sprintf("%02d", $iFull));
 
-                    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
-                                               ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
-                                               "/pg_backrest.conf --test --type=incr --stanza=${strStanza} backup";
-
-                    BackRestTestCommon_Execute($strCommand, $bRemote);
-                    # exit 0;
-
-                    for (my $iIncr = 1; $iIncr <= 1; $iIncr++)
+                    for (my $iIncr = 0; $iIncr <= 1; $iIncr++)
                     {
-                        &log(INFO, "        incr " . sprintf("%02d", $iIncr));
+                        &log(INFO, "    " . ($iIncr == 0 ? "full " : "    incr ") . sprintf("%02d", $iFull));
+
+                        BackRestTestBackup_PgExecute('create table test (id int)');
+
+                        BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
+
+                        if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
+                        {
+                            BackRestTestBackup_PgExecute('drop table test', true);
+
+                            BackRestTestCommon_ExecuteEnd();
+                        }
+                        else
+                        {
+                            confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
+                        }
+
 
                         BackRestTestCommon_Execute($strCommand, $bRemote);
                     }

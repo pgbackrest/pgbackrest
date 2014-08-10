@@ -23,7 +23,8 @@ use BackRest::Utility;
 use BackRest::File;
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
+our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
+                 BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
@@ -49,6 +50,14 @@ my $iCommonDbPort;
 my $iModuleTestRun;
 my $bDryRun;
 my $bNoCleanup;
+
+# Execution globals
+my $strErrorLog;
+my $hError;
+my $strOutLog;
+my $hOut;
+my $pId;
+my $strCommand;
 
 ####################################################################################################################################
 # BackRestTestBackup_Run
@@ -82,32 +91,44 @@ sub BackRestTestCommon_Cleanup
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_Execute
+# BackRestTestBackup_ExecuteBegin
 ####################################################################################################################################
-sub BackRestTestCommon_Execute
+sub BackRestTestCommon_ExecuteBegin
 {
-    my $strCommand = shift;
+    my $strCommandParam = shift;
     my $bRemote = shift;
-    my $bSuppressError = shift;
 
     # Set defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
-    $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
 
     if ($bRemote)
     {
-        $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommand}'";
+        $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommandParam}'";
+    }
+    else
+    {
+        $strCommand = $strCommandParam;
     }
 
-    # Create error and out file handles and buffers
-    my $strErrorLog = '';
-    my $hError;
-
-    my $strOutLog = '';
-    my $hOut;
+    $strErrorLog = '';
+    $hError = undef;
+    $strOutLog = '';
+    $hOut = undef;
 
     # Execute the command
-    my $pId = open3(undef, $hOut, $hError, $strCommand);
+    $pId = open3(undef, $hOut, $hError, $strCommand);
+}
+
+####################################################################################################################################
+# BackRestTestBackup_ExecuteEnd
+####################################################################################################################################
+sub BackRestTestCommon_ExecuteEnd
+{
+    my $strTest = shift;
+    my $bSuppressError = shift;
+
+    # Set defaults
+    $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
 
     # Create select objects
     my $oErrorSelect = IO::Select->new();
@@ -133,6 +154,12 @@ sub BackRestTestCommon_Execute
             while (my $strLine = readline($hOut))
             {
                 $strOutLog .= $strLine;
+
+                if (defined($strTest) && test_check($strLine, $strTest))
+                {
+                    &log(DEBUG, "Found test ${strTest}");
+                    return true;
+                }
             }
         }
     }
@@ -146,6 +173,24 @@ sub BackRestTestCommon_Execute
                      ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
                      ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
     }
+
+    $hError = undef;
+    $hOut = undef;
+
+    return false;
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Execute
+####################################################################################################################################
+sub BackRestTestCommon_Execute
+{
+    my $strCommand = shift;
+    my $bRemote = shift;
+    my $bSuppressError = shift;
+
+    BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
+    BackRestTestCommon_ExecuteEnd(undef, $bSuppressError);
 }
 
 ####################################################################################################################################
@@ -160,20 +205,23 @@ sub BackRestTestCommon_Setup
     my $strBasePath = dirname(dirname(abs_path($0)));
 
     $strCommonStanza = "db";
-    $strCommonCommandMain = "${strBasePath}/bin/pg_backrest.pl";
-    $strCommonCommandRemote = "${strBasePath}/bin/pg_backrest_remote.pl";
-    $strCommonCommandPsql = '/Library/PostgreSQL/9.3/bin/psql -X %option%';
-#    $strCommonCommandPsql = 'psql -X %option%';
     $strCommonHost = '127.0.0.1';
     $strCommonUser = getpwuid($<);
     $strCommonGroup = getgrgid($();
     $strCommonUserBackRest = 'backrest';
+
     $strCommonTestPath = "${strBasePath}/test/test";
     $strCommonDataPath = "${strBasePath}/test/data";
     $strCommonBackupPath = "${strCommonTestPath}/backrest";
     $strCommonArchivePath = "${strCommonTestPath}/archive";
     $strCommonDbPath = "${strCommonTestPath}/db";
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
+
+    $strCommonCommandMain = "${strBasePath}/bin/pg_backrest.pl";
+    $strCommonCommandRemote = "${strBasePath}/bin/pg_backrest_remote.pl";
+    $strCommonCommandPsql = "/Library/PostgreSQL/9.3/bin/psql -X %option% -h ${strCommonDbPath}";
+    #    $strCommonCommandPsql = 'psql -X %option%';
+
     $iCommonDbPort = 6543;
     $iModuleTestRun = $iModuleTestRunParam;
     $bDryRun = $bDryRunParam;

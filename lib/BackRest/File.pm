@@ -1320,7 +1320,6 @@ sub copy
             eval
             {
                 $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug);
-
             };
 
             # If there is an error then evaluate

@@ -20,7 +20,7 @@ use Exporter qw(import);
 
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
-                 log log_file_set log_level_set test_set
+                 log log_file_set log_level_set test_set test_check
                  lock_file_create lock_file_remove
                  config_save config_load
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
@@ -390,6 +390,17 @@ sub log_level_set
 }
 
 ####################################################################################################################################
+# TEST_CHECK - Check for a test message
+####################################################################################################################################
+sub test_check
+{
+    my $strLog = shift;
+    my $strTest = shift;
+
+    return index($strLog, TEST_ENCLOSE . '-' . $strTest . '-' . TEST_ENCLOSE) != -1;
+}
+
+####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
 sub log
@@ -401,23 +412,25 @@ sub log
     my $strMessageFormat = $strMessage;
     my $iLogLevelRank = $oLogLevelRank{"${strLevel}"}{rank};
 
+    # If test message
     if ($strLevel eq TEST)
     {
         $iLogLevelRank = $oLogLevelRank{TRACE}{rank} + 1;
         $strMessageFormat = TEST_ENCLOSE . '-' . $strMessageFormat . '-' . TEST_ENCLOSE;
     }
+    # Else level rank must be valid
     elsif (!defined($iLogLevelRank))
     {
         confess &log(ASSERT, "log level ${strLevel} does not exist");
     }
 
-    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
-
+    # If message was undefined then set default message
     if (!defined($strMessageFormat))
     {
         $strMessageFormat = "(undefined)";
     }
 
+    # Indent subsequent lines of the message if it has more than one line - makes the log more readable
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
         $strMessageFormat =~ s/\n/\n                                           /g;
@@ -433,24 +446,29 @@ sub log
         $strMessageFormat =~ s/\n/\n                                   /g;
     }
 
+    # Format the message text
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
+
     $strMessageFormat = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
                         sprintf(" T%02d", threads->tid()) .
                         (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
                         (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 
-    # if ($strLevel eq TEST)
-    # {
-    # confess "log level rank $iLogLevelRank";
-    # }
-
+    # Output to console depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
         $bTest && $strLevel eq TEST)
     {
         print $strMessageFormat;
+
+        if ($bTest && $strLevel eq TEST)
+        {
+            *STDOUT->flush();
+            sleep($iTestDelay);
+        }
     }
 
-    if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelFile}"}{rank} ||
-        $bTest && $strLevel eq TEST)
+    # Output to file depending on log level and test flag
+    if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelFile}"}{rank})
     {
         if (defined($hLogFile))
         {
@@ -458,16 +476,13 @@ sub log
         }
     }
 
+    # Throw a typed exception if code is defined
     if (defined($iCode))
     {
         return BackRest::Exception->new(iCode => $iCode, strMessage => $strMessage);
     }
 
-    if ($bTest && $strLevel eq TEST)
-    {
-        sleep($iTestDelay);
-    }
-
+    # Return the message test so it can be used in a confess
     return $strMessage;
 }
 

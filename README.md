@@ -18,8 +18,6 @@ Put something here, there are people to recognize!
 
 * Store actual backup begin and end times in backup.manifest
 
-* Fix backup.manifest to not be a binary dump.
-
 * Move backups to be removed to temp before deleting.
 
 * Async archive-get.
@@ -40,9 +38,10 @@ Put something here, there are people to recognize!
 
 * File->wait() function.  Waits for a file or directory to exist with configurable retry and timeout.
 
+* Missing files during backup generate an ERROR in the log - the backup works but this message should probably be suppressed.
+
 ## required perl modules
 
-* IPC::Run
 * Net::OpenSSH
 * Digest::SHA
 * IO::Compress::Gzip
@@ -50,7 +49,7 @@ Put something here, there are people to recognize!
 * JSON
 
 * Moose (Not using many features here, just use standard Perl object syntax?)
-* IPC::System::Simple (only used in DB object - should convert to IPC::Run)
+* IPC::System::Simple (only used in DB object - should convert this to DBD::Pg)
 
 ## release notes
 

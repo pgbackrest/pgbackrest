@@ -1231,10 +1231,6 @@ sub backup_file_thread
             # If file is missing assume the database removed it (else corruption and nothing we can do!)
             &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
 
-            # Remove the destination file and the temp file just in case they had already been written
-            $oFileThread->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file}, true);
-            $oFileThread->file_remove(PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file});
-
             # Write a message into the master queue to have the file removed from the manifest
             $oMasterQueue[$iThreadIdx]->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}");
 
