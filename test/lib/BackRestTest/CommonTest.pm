@@ -9,7 +9,6 @@ package BackRestTest::CommonTest;
 ####################################################################################################################################
 use strict;
 use warnings;
-use english;
 use Carp;
 
 use File::Basename;
@@ -26,12 +25,13 @@ use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
-                 BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
-                 BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
-                 BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
-                 BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet
-                 BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
+                 BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
+                 BackRestTestCommon_GroupGet BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet
+                 BackRestTestCommon_DataPathGet BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet
+                 BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbPortGet);
 
+my $strPgSqlBin;
 my $strCommonStanza;
 my $strCommonCommandMain;
 my $strCommonCommandRemote;
@@ -198,11 +198,15 @@ sub BackRestTestCommon_Execute
 ####################################################################################################################################
 sub BackRestTestCommon_Setup
 {
+    my $strTestPathParam = shift;
+    my $strPgSqlBinParam = shift;
     my $iModuleTestRunParam = shift;
     my $bDryRunParam = shift;
     my $bNoCleanupParam = shift;
 
     my $strBasePath = dirname(dirname(abs_path($0)));
+
+    $strPgSqlBin = $strPgSqlBinParam;
 
     $strCommonStanza = "db";
     $strCommonHost = '127.0.0.1';
@@ -210,7 +214,15 @@ sub BackRestTestCommon_Setup
     $strCommonGroup = getgrgid($();
     $strCommonUserBackRest = 'backrest';
 
-    $strCommonTestPath = "${strBasePath}/test/test";
+    if (defined($strTestPathParam))
+    {
+        $strCommonTestPath = $strTestPathParam;
+    }
+    else
+    {
+        $strCommonTestPath = "${strBasePath}/test/test";
+    }
+
     $strCommonDataPath = "${strBasePath}/test/data";
     $strCommonBackupPath = "${strCommonTestPath}/backrest";
     $strCommonArchivePath = "${strCommonTestPath}/archive";
@@ -219,8 +231,7 @@ sub BackRestTestCommon_Setup
 
     $strCommonCommandMain = "${strBasePath}/bin/pg_backrest.pl";
     $strCommonCommandRemote = "${strBasePath}/bin/pg_backrest_remote.pl";
-    $strCommonCommandPsql = "/Library/PostgreSQL/9.3/bin/psql -X %option% -h ${strCommonDbPath}";
-    #    $strCommonCommandPsql = 'psql -X %option%';
+    $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;
     $iModuleTestRun = $iModuleTestRunParam;
@@ -341,6 +352,11 @@ sub BackRestTestCommon_ConfigCreate
 ####################################################################################################################################
 # Get Methods
 ####################################################################################################################################
+sub BackRestTestCommon_PgSqlBinPathGet
+{
+    return $strPgSqlBin;
+}
+
 sub BackRestTestCommon_StanzaGet
 {
     return $strCommonStanza;

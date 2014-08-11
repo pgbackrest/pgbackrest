@@ -9,7 +9,6 @@ package BackRestTest::BackupTest;
 ####################################################################################################################################
 use strict;
 use warnings;
-use english;
 use Carp;
 
 use File::Basename;
@@ -93,7 +92,7 @@ sub BackRestTestBackup_ClusterStop
     # If postmaster process is running them stop the cluster
     if (-e $strPath . "/postmaster.pid")
     {
-        BackRestTestCommon_Execute("pg_ctl stop -D $strPath -w -s -m fast");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D $strPath -w -s -m fast");
     }
 }
 
@@ -110,7 +109,7 @@ sub BackRestTestBackup_ClusterRestart
     # If postmaster process is running them stop the cluster
     if (-e $strPath . "/postmaster.pid")
     {
-        BackRestTestCommon_Execute("pg_ctl restart -D $strPath -w -s");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl restart -D $strPath -w -s");
     }
 
     # Connect user session
@@ -128,9 +127,9 @@ sub BackRestTestBackup_ClusterCreate
     my $strArchive = BackRestTestCommon_CommandMainGet() . " --stanza=" . BackRestTestCommon_StanzaGet() .
                      " --config=" . BackRestTestCommon_DbPathGet() . "/pg_backrest.conf archive-push %p";
 
-    BackRestTestCommon_Execute("initdb -D $strPath -A trust");
-    BackRestTestCommon_Execute("pg_ctl start -o \"-c port=$iPort -c checkpoint_segments=1 " .
-                               "-c wal_level=archive -c archive_mode=on -c archive_command='$strArchive' " .
+    BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/initdb -D ${strPath} -A trust");
+    BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=$iPort -c " .
+                               "checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command='$strArchive' " .
                                "-c unix_socket_directories='" . BackRestTestCommon_DbPathGet() . "'\" " .
                                "-D $strPath -l $strPath/postgresql.log -w -s");
 
@@ -234,7 +233,7 @@ sub BackRestTestBackup_Test
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
     my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive.bin';
-    my $iThreadMax = 8;
+    my $iThreadMax = 4; #8;
 
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
@@ -571,7 +570,8 @@ sub BackRestTestBackup_Test
 
                     for (my $iIncr = 0; $iIncr <= 1; $iIncr++)
                     {
-                        &log(INFO, "    " . ($iIncr == 0 ? "full " : "    incr ") . sprintf("%02d", $iFull));
+                        &log(INFO, "    " . ($iIncr == 0 ? ("full " . sprintf("%02d", $iFull)) :
+                                                           ("    incr " . sprintf("%02d", $iIncr))));
 
                         BackRestTestBackup_PgExecute('create table test (id int)');
 
@@ -589,7 +589,7 @@ sub BackRestTestBackup_Test
                         }
 
 
-                        BackRestTestCommon_Execute($strCommand, $bRemote);
+#                        BackRestTestCommon_Execute($strCommand, $bRemote);
                     }
                 }
             }

@@ -9,7 +9,6 @@ package BackRestTest::UtilityTest;
 ####################################################################################################################################
 use strict;
 use warnings;
-use english;
 use Carp;
 
 use File::Basename;

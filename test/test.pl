@@ -8,11 +8,12 @@
 ####################################################################################################################################
 use strict;
 use warnings;
-use english;
+use Carp;
 
 use File::Basename;
 use Getopt::Long;
-use Carp;
+use Cwd 'abs_path';
+use Cwd;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
@@ -32,8 +33,12 @@ my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
 my $bDryRun = false;
 my $bNoCleanup = false;
+my $strPgSqlBin;
+my $strTestPath;
 
-GetOptions ("log-level=s" => \$strLogLevel,
+GetOptions ("pgsql-bin=s" => \$strPgSqlBin,
+            "test-path=s" => \$strTestPath,
+            "log-level=s" => \$strLogLevel,
             "module=s" => \$strModule,
             "module-test=s" => \$strModuleTest,
             "module-test-run=s" => \$iModuleTestRun,
@@ -60,13 +65,11 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
     confess "--module-test must be provided for run \"${iModuleTestRun}\"";
 }
 
-####################################################################################################################################
-# Clean whitespace
-####################################################################################################################################
-BackRestTestCommon_Execute("find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
-                           "-not -path \"../test/data/*\" " .
-                           "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
-                           "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
+# Make sure PG bin has been defined
+if (!defined($strPgSqlBin))
+{
+    confess "pgsql-bin was not defined";
+}
 
 ####################################################################################################################################
 # Make sure version number matches in README.md and VERSION
@@ -96,9 +99,30 @@ if (!$bMatch)
 }
 
 ####################################################################################################################################
+# Clean whitespace only if test.pl is being run from the test directory in the backrest repo
+####################################################################################################################################
+my $hVersion;
+
+if (-e "./test.pl" && -e "../bin/pg_backrest.pl" && open($hVersion, "<", "../VERSION"))
+{
+    my $strTestVersion = readline($hVersion);
+
+    if (defined($strTestVersion) && $strVersion eq trim($strTestVersion))
+    {
+        BackRestTestCommon_Execute(
+            "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
+            "-not -path \"../test/data/*\" " .
+            "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
+            "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
+    }
+
+    close($hVersion);
+}
+
+####################################################################################################################################
 # Runs tests
 ####################################################################################################################################
-BackRestTestCommon_Setup($iModuleTestRun, $bDryRun, $bNoCleanup);
+BackRestTestCommon_Setup($strTestPath, $strPgSqlBin, $iModuleTestRun, $bDryRun, $bNoCleanup);
 
 # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
 #            "group = {strGroup}");

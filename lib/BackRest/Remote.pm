@@ -97,8 +97,6 @@ sub BUILD
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
 
         $self->greeting_read();
-
-        # print "BUILT THREAD " . (defined($self->{iThreadIdx}) ? $self->{iThreadIdx} : 'undef') . "\n";
     }
 
     $self->{oThreadQueue} = Thread::Queue->new();
@@ -115,11 +113,6 @@ sub thread_kill
 
     if (defined($self->{oThread}))
     {
-        # if (defined($self->{strHost}))
-        # {
-        #     print "DEM THREAD " . (defined($self->{iThreadIdx}) ? $self->{iThreadIdx} : 'undef') . "\n";
-        # }
-
         $self->{oThreadQueue}->enqueue(undef);
         $self->{oThread}->join();
         $self->{oThread} = undef;
