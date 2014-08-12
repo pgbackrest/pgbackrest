@@ -65,17 +65,21 @@ sub BackRestTestBackup_PgDisconnect
 sub BackRestTestBackup_PgExecute
 {
     my $strSql = shift;
-    my $bSwitchXlog = shift;
+    my $bCheckpoint = shift;
 
+    # Log and execute the statement
     &log(DEBUG, "SQL: ${strSql}");
     my $hStatement = $hDb->prepare($strSql);
+
     $hStatement->execute() or
         confess &log(ERROR, "Unable to execute: ${strSql}");
+
     $hStatement->finish();
 
-    if (defined($bSwitchXlog) && $bSwitchXlog)
+    # Perform a checkpoint if requested
+    if (defined($bCheckpoint) && $bCheckpoint)
     {
-        BackRestTestBackup_PgExecute('select pg_switch_xlog()');
+        BackRestTestBackup_PgExecute('checkpoint');
     }
 }
 
@@ -233,7 +237,7 @@ sub BackRestTestBackup_Test
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
     my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive.bin';
-    my $iThreadMax = 4; #8;
+    my $iThreadMax = 4;
 
     # Print test banner
     &log(INFO, "BACKUP MODULE ******************************************************************");
@@ -587,9 +591,6 @@ sub BackRestTestBackup_Test
                         {
                             confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
                         }
-
-
-#                        BackRestTestCommon_Execute($strCommand, $bRemote);
                     }
                 }
             }
