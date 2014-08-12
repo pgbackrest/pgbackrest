@@ -823,11 +823,11 @@ sub backup_manifest_build
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{user} = $oManifestHash{name}{"${strName}"}{user};
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{group} = $oManifestHash{name}{"${strName}"}{group};
         ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
-        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
 
         if ($cType eq "f")
         {
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
         }
 
         if ($cType eq "f" || $cType eq "l")
@@ -1268,6 +1268,9 @@ sub backup
     my $strDbClusterPath = shift;
     my $bStartFast = shift;
 
+    # Record timestamp start
+    my $strTimestampStart = timestamp_get();
+
     # Not supporting remote backup hosts yet
     if ($oFile->is_remote(PATH_BACKUP))
     {
@@ -1335,6 +1338,7 @@ sub backup
     # Start backup
     my %oBackupManifest;
     ${oBackupManifest}{backup}{label} = $strBackupPath;
+    ${oBackupManifest}{backup}{timestamp_start} = $strTimestampStart;
 
     my $strArchiveStart = $oDb->backup_start($strBackupPath, $bStartFast);
     ${oBackupManifest}{backup}{"archive-start"} = $strArchiveStart;
@@ -1415,6 +1419,9 @@ sub backup
 
     # Need some sort of backup validate - create a manifest and compare the backup to manifest
     # !!! DO IT
+
+    # Record timestamp stop in the config
+    ${oBackupManifest}{backup}{timestamp_stop} = timestamp_get();
 
     # Save the backup conf file final time
     config_save($strBackupConfFile, \%oBackupManifest);

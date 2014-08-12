@@ -22,7 +22,7 @@ our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
                  log log_file_set log_level_set test_set test_check
                  lock_file_create lock_file_remove
-                 config_save config_load
+                 config_save config_load timestamp_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
                  TEST TEST_ENCLOSE TEST_MANIFEST_BUILD);
 
@@ -401,6 +401,16 @@ sub test_check
 }
 
 ####################################################################################################################################
+# TIMESTAMP_GET - Get backrest standard timestamp
+####################################################################################################################################
+sub timestamp_get
+{
+    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime(time);
+
+    return sprintf("%4d-%02d-%02d %02d:%02d:%02d", $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
+}
+
+####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
 sub log
@@ -449,8 +459,7 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
-    $strMessageFormat = sprintf("%4d-%02d-%02d %02d:%02d:%02d", $year+1900, $mon+1, $mday, $hour, $min, $sec) .
-                        sprintf(" T%02d", threads->tid()) .
+    $strMessageFormat = timestamp_get() . sprintf(" T%02d", threads->tid()) .
                         (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
                         (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 
