@@ -906,7 +906,6 @@ sub backup_manifest_build
 ####################################################################################################################################
 sub backup_file
 {
-    my $strBackupPath = shift;         # Path where the final backup will go (e.g. 20120101F)
     my $strDbClusterPath = shift;      # Database base data path
     my $oBackupManifestRef = shift;    # Manifest for the current backup
 
@@ -1305,42 +1304,15 @@ sub backup
         &log(INFO, "last backup label: $oLastManifest{backup}{label}");
     }
 
-    # Create the path for the new backup
-    my $strBackupPath;
-
-    if ($strType eq "full" || !defined($strBackupLastPath))
-    {
-        $strBackupPath = date_string_get() . "F";
-        $strType = "full";
-    }
-    else
-    {
-        $strBackupPath = substr($strBackupLastPath, 0, 16);
-
-        $strBackupPath .= "_" . date_string_get();
-
-        if ($strType eq "differential")
-        {
-            $strBackupPath .= "D";
-        }
-        else
-        {
-            $strBackupPath .= "I";
-        }
-    }
-
-    &log(INFO, "new backup label: ${strBackupPath}");
-
     # Build backup tmp and config
     my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, "backup.manifest");
 
     # Start backup
     my %oBackupManifest;
-    ${oBackupManifest}{backup}{label} = $strBackupPath;
     ${oBackupManifest}{backup}{timestamp_start} = $strTimestampStart;
 
-    my $strArchiveStart = $oDb->backup_start($strBackupPath, $bStartFast);
+    my $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
     ${oBackupManifest}{backup}{"archive-start"} = $strArchiveStart;
 
     &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{"archive-start"});
@@ -1371,7 +1343,7 @@ sub backup
     config_save($strBackupConfFile, \%oBackupManifest);
 
     # Perform the backup
-    backup_file($strBackupPath, $strDbClusterPath, \%oBackupManifest);
+    backup_file($strDbClusterPath, \%oBackupManifest);
 
     # Stop backup
     my $strArchiveStop = $oDb->backup_stop();
@@ -1420,11 +1392,38 @@ sub backup
     # Need some sort of backup validate - create a manifest and compare the backup to manifest
     # !!! DO IT
 
+    # Create the path for the new backup
+    my $strBackupPath;
+
+    if ($strType eq "full" || !defined($strBackupLastPath))
+    {
+        $strBackupPath = date_string_get() . "F";
+        $strType = "full";
+    }
+    else
+    {
+        $strBackupPath = substr($strBackupLastPath, 0, 16);
+
+        $strBackupPath .= "_" . date_string_get();
+
+        if ($strType eq "differential")
+        {
+            $strBackupPath .= "D";
+        }
+        else
+        {
+            $strBackupPath .= "I";
+        }
+    }
+
     # Record timestamp stop in the config
     ${oBackupManifest}{backup}{timestamp_stop} = timestamp_get();
+    ${oBackupManifest}{backup}{label} = $strBackupPath;
 
     # Save the backup conf file final time
     config_save($strBackupConfFile, \%oBackupManifest);
+
+    &log(INFO, "new backup label: ${strBackupPath}");
 
     # Rename the backup tmp path to complete the backup
     &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
