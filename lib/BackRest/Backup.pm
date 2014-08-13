@@ -1268,7 +1268,7 @@ sub backup
     my $bStartFast = shift;
 
     # Record timestamp start
-    my $strTimestampStart = timestamp_get();
+    my $strTimestampStart = timestamp_string_get();
 
     # Not supporting remote backup hosts yet
     if ($oFile->is_remote(PATH_BACKUP))
@@ -1339,6 +1339,12 @@ sub backup
         $oFile->path_create(PATH_BACKUP_TMP);
     }
 
+    # Write the VERSION file
+    my $hVersionFile;
+    open($hVersionFile, '>', "${strBackupTmpPath}/version") or confess "unable to open version file";
+    print $hVersionFile version_get();
+    close($hVersionFile);
+
     # Save the backup conf file first time - so we can see what is happening in the backup
     config_save($strBackupConfFile, \%oBackupManifest);
 
@@ -1397,14 +1403,14 @@ sub backup
 
     if ($strType eq "full" || !defined($strBackupLastPath))
     {
-        $strBackupPath = date_string_get() . "F";
+        $strBackupPath = timestamp_file_string_get() . "F";
         $strType = "full";
     }
     else
     {
         $strBackupPath = substr($strBackupLastPath, 0, 16);
 
-        $strBackupPath .= "_" . date_string_get();
+        $strBackupPath .= "_" . timestamp_file_string_get();
 
         if ($strType eq "differential")
         {
@@ -1417,7 +1423,7 @@ sub backup
     }
 
     # Record timestamp stop in the config
-    ${oBackupManifest}{backup}{timestamp_stop} = timestamp_get();
+    ${oBackupManifest}{backup}{timestamp_stop} = timestamp_string_get();
     ${oBackupManifest}{backup}{label} = $strBackupPath;
 
     # Save the backup conf file final time

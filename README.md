@@ -16,23 +16,15 @@ Put something here, there are people to recognize!
 
 * Async archive-get.
 
-* Database restore.
-
-* --version param (with with version written into backup.manifest).
-
 * Threading for archive-get and archive-put.
 
 * Add configurable sleep to archiver process to reduce ssh connections.
 
 * Fix bug where .backup files written into old directories can cause the archive process to error.
 
-* Default restore.conf is written to each backup.
+* Default restore.conf is written to each backup (with everything commented out).
 
 * Able to set timeout on ssh connection in config file.
-
-* File->wait() function.  Waits for a file or directory to exist with configurable retry and timeout.
-
-* Missing files during backup generate an ERROR in the log - the backup works but this message should probably be suppressed.
 
 ## required perl modules
 

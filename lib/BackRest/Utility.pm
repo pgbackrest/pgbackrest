@@ -19,10 +19,10 @@ use BackRest::Exception;
 use Exporter qw(import);
 
 our @EXPORT = qw(version_get
-                 data_hash_build trim common_prefix wait_for_file date_string_get file_size_format execute
+                 data_hash_build trim common_prefix wait_for_file file_size_format execute
                  log log_file_set log_level_set test_set test_check
                  lock_file_create lock_file_remove
-                 config_save config_load timestamp_get
+                 config_save config_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
                  TEST TEST_ENCLOSE TEST_MANIFEST_BUILD);
 
@@ -258,7 +258,7 @@ sub common_prefix
             last;
         }
 
-        $iCommonLen ++;
+        $iCommonLen++;
     }
 
     return $iCommonLen;
@@ -290,20 +290,28 @@ sub file_size_format
 }
 
 ####################################################################################################################################
-# DATE_STRING_GET - Get the date and time string
+# TIMESTAMP_STRING_GET - Get backrest standard timestamp (or formatted as specified
 ####################################################################################################################################
-sub date_string_get
+sub timestamp_string_get
 {
     my $strFormat = shift;
 
     if (!defined($strFormat))
     {
-        $strFormat = "%4d%02d%02d-%02d%02d%02d";
+        $strFormat = "%4d-%02d-%02d %02d:%02d:%02d";
     }
 
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime(time);
 
-    return(sprintf($strFormat, $year+1900, $mon+1, $mday, $hour, $min, $sec));
+    return sprintf($strFormat, $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
+}
+
+####################################################################################################################################
+# TIMESTAMP_FILE_STRING_GET - Get the date and time string formatted for filenames
+####################################################################################################################################
+sub timestamp_file_string_get
+{
+    return timestamp_string_get("%4d%02d%02d-%02d%02d%02d");
 }
 
 ####################################################################################################################################
@@ -318,7 +326,7 @@ sub log_file_set
         mkdir(dirname($strFile)) or die "unable to create directory for log file ${strFile}";
     }
 
-    $strFile .= "-" . date_string_get("%4d%02d%02d") . ".log";
+    $strFile .= "-" . timestamp_string_get("%4d%02d%02d") . ".log";
     my $bExists = false;
 
     if (-e $strFile)
@@ -401,16 +409,6 @@ sub test_check
 }
 
 ####################################################################################################################################
-# TIMESTAMP_GET - Get backrest standard timestamp
-####################################################################################################################################
-sub timestamp_get
-{
-    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime(time);
-
-    return sprintf("%4d-%02d-%02d %02d:%02d:%02d", $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
-}
-
-####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
 sub log
@@ -459,7 +457,7 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
-    $strMessageFormat = timestamp_get() . sprintf(" T%02d", threads->tid()) .
+    $strMessageFormat = timestamp_string_get() . sprintf(" T%02d", threads->tid()) .
                         (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
                         (defined($iCode) ? " (code ${iCode})" : "") . "\n";
 

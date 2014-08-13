@@ -71,6 +71,7 @@ use constant
 my $strConfigFile;      # Configuration file
 my $strStanza;          # Stanza in the configuration file to load
 my $strType;            # Type of backup: full, differential (diff), incremental (incr)
+my $bVersion = false;   # Display the version and exit
 
 # Test parameters - not for general use
 my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
@@ -80,12 +81,20 @@ my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (th
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
             "type=s"   => \$strType,
+            "version"   => \$bVersion,
 
-            # Test parameters - not for general use
+            # Test parameters - not for general use (and subject to change without notice)
             "no-fork"      => \$bNoFork,
             "test"         => \$bTest,
             "test-delay=s" => \$iTestDelay)
     or confess("Error in command line arguments\n");
+
+# Display the version and exit if requested
+if ($bVersion)
+{
+    print 'pg_backrest ' . version_get() . "\n";
+    exit 0;
+}
 
 # Set test parameters
 test_set($bTest, $iTestDelay);
