@@ -1314,6 +1314,7 @@ sub backup
 
     my $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
     ${oBackupManifest}{backup}{"archive-start"} = $strArchiveStart;
+    ${oBackupManifest}{backup}{version} = version_get();
 
     &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{"archive-start"});
 
