@@ -778,7 +778,6 @@ sub backup_tmp_clean
 ####################################################################################################################################
 sub backup_manifest_build
 {
-    my $strCommandManifest = shift;
     my $strDbClusterPath = shift;
     my $oBackupManifestRef = shift;
     my $oLastManifestRef = shift;
@@ -830,49 +829,41 @@ sub backup_manifest_build
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
         }
 
-        if ($cType eq "f" || $cType eq "l")
+        if ($cType eq "f")
         {
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
+            ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
 
-            if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}))
+            if (defined($oLastManifestRef) &&
+                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
+                    ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
+               ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} ==
+                   ${$oLastManifestRef}{"${strSection}"}{"$strName"}{inode} &&
+                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
+                    ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
             {
-                my $bSizeMatch = true;
-
-                if ($cType eq "f")
+                if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
                 {
-                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
-
-                    $bSizeMatch = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
-                                  ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size};
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
+                }
+                else
+                {
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                        ${$oLastManifestRef}{backup}{label};
                 }
 
-                if ($bSizeMatch &&
-                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
-                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
+                my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
+
+                if (!defined(${$oBackupManifestRef}{backup}{reference}))
                 {
-                    if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
+                    ${$oBackupManifestRef}{backup}{reference} = $strReference;
+                }
+                else
+                {
+                    if (${$oBackupManifestRef}{backup}{reference} !~ /$strReference/)
                     {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                            ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
-                    }
-                    else
-                    {
-                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                            ${$oLastManifestRef}{backup}{label};
-                    }
-
-                    my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
-
-                    if (!defined(${$oBackupManifestRef}{backup}{reference}))
-                    {
-                        ${$oBackupManifestRef}{backup}{reference} = $strReference;
-                    }
-                    else
-                    {
-                        if (${$oBackupManifestRef}{backup}{reference} !~ /$strReference/)
-                        {
-                            ${$oBackupManifestRef}{backup}{reference} .= ",$strReference";
-                        }
+                        ${$oBackupManifestRef}{backup}{reference} .= ",$strReference";
                     }
                 }
             }
@@ -891,7 +882,7 @@ sub backup_manifest_build
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
 
-                backup_manifest_build($strCommandManifest, $strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
+                backup_manifest_build($strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
                                       $oTablespaceMapRef, "tablespace:${strTablespaceName}");
             }
         }
@@ -1293,7 +1284,6 @@ sub backup
 
     if (defined($strBackupLastPath))
     {
-        my %oLastManifest;
         config_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/$strBackupLastPath/backup.manifest", \%oLastManifest);
 
         if (!defined($oLastManifest{backup}{label}))
@@ -1301,7 +1291,7 @@ sub backup
             confess &log(ERROR, "unable to find label in backup $strBackupLastPath");
         }
 
-        &log(INFO, "last backup label: $oLastManifest{backup}{label}");
+        &log(INFO, "last backup label: $oLastManifest{backup}{label}, version $oLastManifest{backup}{version}");
     }
 
     # Build backup tmp and config
@@ -1322,7 +1312,7 @@ sub backup
     my %oTablespaceMap;
     $oDb->tablespace_map_get(\%oTablespaceMap);
 
-    backup_manifest_build($oFile->{strCommandManifest}, $strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
+    backup_manifest_build($strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # If the backup tmp path already exists, remove invalid files

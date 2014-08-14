@@ -572,18 +572,22 @@ sub BackRestTestBackup_Test
                 for (my $iFull = 1; $iFull <= 1; $iFull++)
                 {
 
-                    for (my $iIncr = 0; $iIncr <= 1; $iIncr++)
+                    for (my $iIncr = 0; $iIncr <= 2; $iIncr++)
                     {
                         &log(INFO, "    " . ($iIncr == 0 ? ("full " . sprintf("%02d", $iFull)) :
                                                            ("    incr " . sprintf("%02d", $iIncr))));
 
-                        BackRestTestBackup_PgExecute('create table test (id int)');
+                        # Create a table in each backup to check references
+                        BackRestTestBackup_PgExecute("create table test_backup_${iIncr} (id int)", true);
+
+                        # Create a table to be dropped to test missing file code
+                        BackRestTestBackup_PgExecute('create table test_drop (id int)');
 
                         BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
 
                         if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
                         {
-                            BackRestTestBackup_PgExecute('drop table test', true);
+                            BackRestTestBackup_PgExecute('drop table test_drop', true);
 
                             BackRestTestCommon_ExecuteEnd();
                         }
