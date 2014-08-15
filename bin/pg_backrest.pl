@@ -13,12 +13,41 @@ use Carp;
 
 use File::Basename;
 use Getopt::Long;
+use Pod::Usage;
 
 use lib dirname($0) . "/../lib";
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Backup;
 use BackRest::Db;
+
+####################################################################################################################################
+# Usage
+####################################################################################################################################
+
+=head1 NAME
+
+pg_backrest.pl - Simple Postgres Backup and Restore
+
+=head1 SYNOPSIS
+
+pg_backrest.pl [options] [operation]
+
+ Operation:
+   archive-get      retrieve an archive file from backup
+   archive-push     push an archive file to backup
+   backup           backup a cluster
+   expire           expire old backups (automatically run after backup)
+
+ General Options:
+   --stanza         stanza (cluster) to operate on (currently required for all operations)
+   --config         alternate path for pg_backrest.conf (defaults to /etc/pg_backrest.conf)
+   --version        display version and exit
+   --help           display usage and exit
+
+ Backup Options:
+    --type           type of backup to perform (full, diff, incr)
+=cut
 
 ####################################################################################################################################
 # Operation constants - basic operations that are allowed in backrest
@@ -71,7 +100,8 @@ use constant
 my $strConfigFile;      # Configuration file
 my $strStanza;          # Stanza in the configuration file to load
 my $strType;            # Type of backup: full, differential (diff), incremental (incr)
-my $bVersion = false;   # Display the version and exit
+my $bVersion = false;   # Display version and exit
+my $bHelp = false;      # Display help and exit
 
 # Test parameters - not for general use
 my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
@@ -81,19 +111,31 @@ my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (th
 GetOptions ("config=s" => \$strConfigFile,
             "stanza=s" => \$strStanza,
             "type=s"   => \$strType,
-            "version"   => \$bVersion,
+            "version"  => \$bVersion,
+            "help"     => \$bHelp,
 
             # Test parameters - not for general use (and subject to change without notice)
             "no-fork"      => \$bNoFork,
             "test"         => \$bTest,
             "test-delay=s" => \$iTestDelay)
-    or confess("Error in command line arguments\n");
+    or pod2usage(2);
 
-# Display the version and exit if requested
-if ($bVersion)
+# Display version and exit if requested
+if ($bVersion || $bHelp)
 {
     print 'pg_backrest ' . version_get() . "\n";
-    exit 0;
+
+    if (!$bHelp)
+    {
+        exit 0;
+    }
+}
+
+# Display help and exit if requested
+if ($bHelp)
+{
+    print "\n";
+    pod2usage();
 }
 
 # Set test parameters
