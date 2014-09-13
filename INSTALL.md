@@ -14,26 +14,128 @@ Each section defines important aspects of the backup.
 
 The command section defines external commands that are used by BackRest.
 
--------------------------------
-Key    | Required | Description
--------|:--------:| -----------
-psql   |N         | This is going to be a mult-line description.
-                    Not sure exactly how that _works_.
+##### psql key)
 
-remote |N         |
--------------------------------
+__Required__: N
 
-##### psql key (optional)
+Defines the full path to psql.  psql is used to call pg_start_backup() and pg_stop_backup().
 
-Defines the full path to psql.  psql is used to call pg\_start\_backup() and pg\_stop\_backup().
+Required on whichever server is doing the backup, but can be omitted if the --no-start-stop backup parameter is used.  
 
 Example:
 psql=/usr/bin/psql
 
 ##### remote key
 
-Defines the file path to pg\_backrest\_remote.pl. If this parameter is omitted 
+__Required__: N
 
+Defines the file path to pg_backrest_remote.pl.
+
+Required only if the path to pg_backrest_remote.pl is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
+
+Example:
+/home/postgres/backrest/bin/pg_backrest_remote.pl
+
+#### command-option section
+
+The command-option section allows abitrary options to be passed to any command in the command section.
+
+##### psql key
+
+__Required__: N
+
+Allows command line parameters to be passed to psql.
+
+Example:
+psql=--port=5433
+
+#### log section
+
+The log section defines logging-related settings.  The following log levels are supported:
+
+__off__   - No logging at all (not recommended)
+__error__ - Log only errors
+__warn__  - Log warnings and errors
+__info__  - Log info, warnings, and errors
+__debug__ - Log debug, info, warnings, and errors
+__trace__ - Log trace (very verbose debugging), debug, info, warnings, and errors
+
+##### level-file key
+
+__DEFAULT__: info
+
+Sets file log level.
+
+Example:
+level-file=warn
+
+##### level-console key
+
+__DEFAULT__: error
+
+Sets console log level.
+
+Example:
+level-file=info
+
+#### backup section
+
+The backup section defines settings related to backup and archiving.
+
+##### host key
+
+__Required__: N (but must be set if user is defined)
+
+Sets the backup host.
+
+Example:
+host=backup.mydomain.com
+
+##### user key
+
+__Required__: N (but must be set if host is defined)
+
+Sets user account on the backup host.
+
+Example:
+user=backrest
+
+##### path key
+
+__Required__: Y
+
+Path where backups are stored on the local or remote host.
+
+Example:
+path=/backup/backrest
+
+##### compress key
+
+__Default__: Y
+
+Enable gzip compression.  Files stored in the backup are compatible with command-line gzip tools.
+
+_Example_:
+compress=n
+
+##### checksum key
+
+__Default__: Y
+
+Enable SHA-1 checksums.  Backup checksums are stored in backup.manifest while archive checksums are stored in the filename.
+
+_Example_:
+checksum=n
+
+##### hardlink key
+
+__Default__: N
+
+Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each
+backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.
+
+_Example_:
+hardlink=y
 
     CONFIG_SECTION_COMMAND        => "command",
     CONFIG_SECTION_COMMAND_OPTION => "command:option",
@@ -49,19 +151,13 @@ Defines the file path to pg\_backrest\_remote.pl. If this parameter is omitted
 
     CONFIG_KEY_THREAD_MAX         => "thread-max",
     CONFIG_KEY_THREAD_TIMEOUT     => "thread-timeout",
-    CONFIG_KEY_HARDLINK           => "hardlink",
     CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
     CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
     CONFIG_KEY_START_FAST         => "start_fast",
     CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
 
-    CONFIG_KEY_LEVEL_FILE         => "level-file",
-    CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
-
     CONFIG_KEY_COMPRESS           => "compress",
     CONFIG_KEY_CHECKSUM           => "checksum",
-    CONFIG_KEY_PSQL               => "psql",
-    CONFIG_KEY_REMOTE             => "remote"
 
 ### configuration examples
 
