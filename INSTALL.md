@@ -22,8 +22,7 @@ Defines the full path to psql.  psql is used to call pg_start_backup() and pg_st
 
 Required on whichever server is doing the backup, but can be omitted if the --no-start-stop backup parameter is used.  
 
-Example:
-psql=/usr/bin/psql
+_Example_: psql=/usr/bin/psql
 
 ##### remote key
 
@@ -33,8 +32,7 @@ Defines the file path to pg_backrest_remote.pl.
 
 Required only if the path to pg_backrest_remote.pl is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
 
-Example:
-/home/postgres/backrest/bin/pg_backrest_remote.pl
+_Example_: remote=/home/postgres/backrest/bin/pg_backrest_remote.pl
 
 #### command-option section
 
@@ -53,12 +51,12 @@ psql=--port=5433
 
 The log section defines logging-related settings.  The following log levels are supported:
 
-__off__   - No logging at all (not recommended)
-__error__ - Log only errors
-__warn__  - Log warnings and errors
-__info__  - Log info, warnings, and errors
-__debug__ - Log debug, info, warnings, and errors
-__trace__ - Log trace (very verbose debugging), debug, info, warnings, and errors
+- `off   `- No logging at all (not recommended)
+- `error `- Log only errors
+- `warn  `- Log warnings and errors
+- `info  `- Log info, warnings, and errors
+- `debug `- Log debug, info, warnings, and errors
+- `trace `- Log trace (very verbose debugging), debug, info, warnings, and errors
 
 ##### level-file key
 
@@ -66,8 +64,7 @@ __DEFAULT__: info
 
 Sets file log level.
 
-Example:
-level-file=warn
+_Example_: level-file=warn
 
 ##### level-console key
 
@@ -75,8 +72,7 @@ __DEFAULT__: error
 
 Sets console log level.
 
-Example:
-level-file=info
+_Example_: level-file=info
 
 #### backup section
 
@@ -88,8 +84,7 @@ __Required__: N (but must be set if user is defined)
 
 Sets the backup host.
 
-Example:
-host=backup.mydomain.com
+_Example_: host=backup.mydomain.com
 
 ##### user key
 
@@ -97,8 +92,7 @@ __Required__: N (but must be set if host is defined)
 
 Sets user account on the backup host.
 
-Example:
-user=backrest
+_Example_: user=backrest
 
 ##### path key
 
@@ -106,8 +100,7 @@ __Required__: Y
 
 Path where backups are stored on the local or remote host.
 
-Example:
-path=/backup/backrest
+_Example_: path=/backup/backrest
 
 ##### compress key
 
@@ -115,8 +108,7 @@ __Default__: Y
 
 Enable gzip compression.  Files stored in the backup are compatible with command-line gzip tools.
 
-_Example_:
-compress=n
+_Example_: compress=n
 
 ##### checksum key
 
@@ -124,8 +116,7 @@ __Default__: Y
 
 Enable SHA-1 checksums.  Backup checksums are stored in backup.manifest while archive checksums are stored in the filename.
 
-_Example_:
-checksum=n
+_Example_: checksum=n
 
 ##### hardlink key
 
@@ -134,9 +125,9 @@ __Default__: N
 Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each
 backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.
 
-_Example_:
-hardlink=y
+_Example_: hardlink=y
 
+```
     CONFIG_SECTION_COMMAND        => "command",
     CONFIG_SECTION_COMMAND_OPTION => "command:option",
     CONFIG_SECTION_LOG            => "log",
@@ -158,6 +149,7 @@ hardlink=y
 
     CONFIG_KEY_COMPRESS           => "compress",
     CONFIG_KEY_CHECKSUM           => "checksum",
+```
 
 ### configuration examples
 
