@@ -14,11 +14,14 @@ Each section defines important aspects of the backup.
 
 The command section defines external commands that are used by BackRest.
 
+-------------------------------
 Key    | Required | Description
 -------|:--------:| -----------
 psql   |N         | This is going to be a mult-line description.
-                    Not sure exactly how that _works_. |
+                    Not sure exactly how that _works_.
+
 remote |N         |
+-------------------------------
 
 ##### psql key (optional)
 
