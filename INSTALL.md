@@ -14,15 +14,22 @@ Each section defines important aspects of the backup.
 
 The command section defines external commands that are used by BackRest.
 
-##### psql key
+Key    | Required | Description
+-------|:--------:| -----------
+psql   |N         | This is going to be a mult-line description.
+                    Not sure exactly how that _works_. |
+remote |N         |
 
-Defines the full path to psql.  psql is used to call pg_start_backup() and pg_stop_backup().  Example:
+##### psql key (optional)
 
+Defines the full path to psql.  psql is used to call pg\_start\_backup() and pg\_stop\_backup().
+
+Example:
 psql=/usr/bin/psql
 
 ##### remote key
 
-Defines the file path to pg\_backrest\_remote.pl.  
+Defines the file path to pg\_backrest\_remote.pl. If this parameter is omitted 
 
 
     CONFIG_SECTION_COMMAND        => "command",
