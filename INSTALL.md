@@ -14,25 +14,23 @@ Each section defines important aspects of the backup.
 
 The command section defines external commands that are used by BackRest.
 
-##### psql key)
-
-__Required__: N
+##### psql key
 
 Defines the full path to psql.  psql is used to call pg_start_backup() and pg_stop_backup().
 
 Required on whichever server is doing the backup, but can be omitted if the --no-start-stop backup parameter is used.  
 
-_Example_: psql=/usr/bin/psql
+_required_: N
+_example_: psql=/usr/bin/psql
 
 ##### remote key
-
-__Required__: N
 
 Defines the file path to pg_backrest_remote.pl.
 
 Required only if the path to pg_backrest_remote.pl is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
 
-_Example_: remote=/home/postgres/backrest/bin/pg_backrest_remote.pl
+_required_: N
+_example_: remote=/home/postgres/backrest/bin/pg_backrest_remote.pl
 
 #### command-option section
 
@@ -40,12 +38,10 @@ The command-option section allows abitrary options to be passed to any command i
 
 ##### psql key
 
-__Required__: N
-
 Allows command line parameters to be passed to psql.
 
-Example:
-psql=--port=5433
+_required_: no
+_example_: psql=--port=5433
 
 #### log section
 
@@ -60,7 +56,7 @@ The log section defines logging-related settings.  The following log levels are 
 
 ##### level-file key
 
-__DEFAULT__: info
+__default__: info
 
 Sets file log level.
 
@@ -68,11 +64,10 @@ _Example_: level-file=warn
 
 ##### level-console key
 
-__DEFAULT__: error
-
 Sets console log level.
 
-_Example_: level-file=info
+_default_: error
+_example_: level-file=info
 
 #### backup section
 
@@ -127,6 +122,17 @@ backup is a full backup.  Be care though, because modifying files that are hard-
 
 _Example_: hardlink=y
 
+##### thread_max key
+
+__default__: 1
+
+Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each
+backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.
+
+_Example_: hardlink=y
+
+
+
 ```
     CONFIG_SECTION_COMMAND        => "command",
     CONFIG_SECTION_COMMAND_OPTION => "command:option",
@@ -146,9 +152,6 @@ _Example_: hardlink=y
     CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
     CONFIG_KEY_START_FAST         => "start_fast",
     CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
-
-    CONFIG_KEY_COMPRESS           => "compress",
-    CONFIG_KEY_CHECKSUM           => "checksum",
 ```
 
 ### configuration examples
