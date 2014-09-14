@@ -588,6 +588,10 @@ sub backup_regexp_get
         {
             $strRegExp .= "(\\_";
         }
+        else
+        {
+            $strRegExp .= "\\_";
+        }
 
         $strRegExp .= $strDateTimeRegExp;
 
@@ -612,7 +616,7 @@ sub backup_regexp_get
 
     $strRegExp .= "\$";
 
-#    &log(DEBUG, "backup_regexp_get($bFull, $bDifferential, $bIncremental): $strRegExp");
+    &log(DEBUG, "backup_regexp_get($bFull, $bDifferential, $bIncremental): $strRegExp");
 
     return $strRegExp;
 }
