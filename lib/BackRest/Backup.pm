@@ -647,7 +647,9 @@ sub backup_file_not_in_manifest
     my $strPathType = shift;
     my $oManifestRef = shift;
 
-    my %oFileHash = $oFile->manifest_get($strPathType);
+    my %oFileHash;
+    $oFile->manifest($strPathType, undef, \%oFileHash);
+
     my @stryFile;
     my $iFileTotal = 0;
 
@@ -834,36 +836,40 @@ sub backup_manifest_build
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
             ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} = $oManifestHash{name}{"${strName}"}{size};
 
-            if (defined($oLastManifestRef) &&
-                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
-                    ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
-               ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} ==
-                   ${$oLastManifestRef}{"${strSection}"}{"$strName"}{inode} &&
-                ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
-                    ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
+            if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{size}) &&
+                defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{inode}) &&
+                defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time}))
             {
-                if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
+                if (${$oBackupManifestRef}{"${strSection}"}{"$strName"}{size} ==
+                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{size} &&
+                   ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{inode} ==
+                       ${$oLastManifestRef}{"${strSection}"}{"$strName"}{inode} &&
+                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{modification_time} ==
+                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{modification_time})
                 {
-                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                        ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
-                }
-                else
-                {
-                    ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
-                        ${$oLastManifestRef}{backup}{label};
-                }
-
-                my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
-
-                if (!defined(${$oBackupManifestRef}{backup}{reference}))
-                {
-                    ${$oBackupManifestRef}{backup}{reference} = $strReference;
-                }
-                else
-                {
-                    if (${$oBackupManifestRef}{backup}{reference} !~ /$strReference/)
+                    if (defined(${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference}))
                     {
-                        ${$oBackupManifestRef}{backup}{reference} .= ",$strReference";
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                            ${$oLastManifestRef}{"${strSection}"}{"$strName"}{reference};
+                    }
+                    else
+                    {
+                        ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference} =
+                            ${$oLastManifestRef}{backup}{label};
+                    }
+
+                    my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"$strName"}{reference};
+
+                    if (!defined(${$oBackupManifestRef}{backup}{reference}))
+                    {
+                        ${$oBackupManifestRef}{backup}{reference} = $strReference;
+                    }
+                    else
+                    {
+                        if (${$oBackupManifestRef}{backup}{reference} !~ /$strReference/)
+                        {
+                            ${$oBackupManifestRef}{backup}{reference} .= ",$strReference";
+                        }
                     }
                 }
             }

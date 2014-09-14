@@ -13,14 +13,20 @@ This configuration is appropriate for a small installation where backups are bei
 `/etc/pg_backrest.conf`:
 ```
 [global:command]
-psql=/usr/bin/psql
+psql=/Library/PostgreSQL/9.3/bin/psql
 
-[retention]
+[global:log]
+level-console=trace
+
+[global:backup]
+path=/Library/PostgreSQL/9.3/backup
+
+[global:retention]
 full-retention=2
 archive-retention-type=full
 
 [db]
-path=/var/postgresql/data
+path=/Library/PostgreSQL/9.3/data
 ```
 
 ### configuration sections
@@ -44,7 +50,7 @@ Defines the file path to pg_backrest_remote.pl.
 
 Required only if the path to pg_backrest_remote.pl is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
 
-_required_: N
+_required_: n
 _example_: remote=/home/postgres/backrest/bin/pg_backrest_remote.pl
 
 #### command-option section
@@ -71,11 +77,10 @@ The log section defines logging-related settings.  The following log levels are 
 
 ##### level-file
 
-__default__: info
-
 Sets file log level.
 
-_Example_: level-file=warn
+_default_: info
+_example_: level-file=warn
 
 ##### level-console
 
@@ -90,43 +95,38 @@ The backup section defines settings related to backup and archiving.
 
 ##### host
 
-__Required__: N (but must be set if user is defined)
-
 Sets the backup host.
 
-_Example_: host=backup.mydomain.com
+_required_: n (but must be set if user is defined)
+_example_: host=backup.mydomain.com
 
 ##### user
 
-__Required__: N (but must be set if host is defined)
-
 Sets user account on the backup host.
 
-_Example_: user=backrest
+_required_: n (but must be set if host is defined)
+_example_: user=backrest
 
 ##### path
 
-__Required__: Y
-
 Path where backups are stored on the local or remote host.
 
-_Example_: path=/backup/backrest
+_required_: y
+_example_: path=/backup/backrest
 
 ##### compress
 
-__Default__: Y
-
 Enable gzip compression.  Files stored in the backup are compatible with command-line gzip tools.
 
-_Example_: compress=n
+_default_: y
+_example_: compress=n
 
 ##### checksum
 
-__Default__: Y
-
 Enable SHA-1 checksums.  Backup checksums are stored in backup.manifest while archive checksums are stored in the filename.
 
-_Example_: checksum=n
+_default_: y
+_example_: checksum=n
 
 ##### start_fast
 
@@ -137,20 +137,18 @@ _example_: hardlink=y
 
 ##### hardlink
 
-__Default__: N
-
 Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each
 backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.
 
-_Example_: hardlink=y
+_default_: n
+_example_: hardlink=y
 
 ##### thread-max
 
-__default__: 1
-
 Defines the number of threads to use for backup.  Each thread will perform compression and transfer to make the backup run faster, but don't set `thread-max` so high that it impacts database performance.
 
-_Example_: thread-max=4
+_default_: 1
+_example_: thread-max=4
 
 ##### thread-timeout
 
@@ -267,6 +265,7 @@ apt-get update
 apt-get upgrade (reboot if required)
 
 apt-get install ssh
+apt-get install git
 apt-get install cpanminus
 apt-get install postgresql-9.3
 apt-get install postgresql-server-dev-9.3
