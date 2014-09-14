@@ -597,12 +597,12 @@ sub BackRestTestBackup_Test
                         }
                     }
                 }
-            }
-            }
-            }
-            }
 
-            $bCreate = true;
+                $bCreate = true;
+            }
+            }
+            }
+            }
         }
         }
 
