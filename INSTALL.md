@@ -20,7 +20,7 @@ full-retention=2
 archive-retention-type=full
 
 [db]
-path=/var/postgresql
+path=/var/postgresql/data
 ```
 
 ### configuration sections
