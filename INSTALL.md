@@ -231,22 +231,22 @@ A stanza defines a backup for a specific database.  The stanza section must defi
 
 Sets the database host.
 
-_required_: n (but must be set if user is defined)
-_example_: host=db.mydomain.com
+* _required_: n (but must be set if user is defined)
+* _example_: host=db.mydomain.com
 
 ##### user
 
 Sets user account on the db host.
 
-_required_: n (but must be set if host is defined)
-_example_: user=postgres
+* _required_: n (but must be set if host is defined)
+* _example_: user=postgres
 
 ##### path
 
 Path to the db data directory (data_directory setting in postgresql.conf).
 
-_required_: y
-_example_: path=/var/postgresql/data
+* _required_: y
+* _example_: path=/var/postgresql/data
 
 ## sample ubuntu 12.04 install
 
