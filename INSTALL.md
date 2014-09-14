@@ -35,9 +35,7 @@ The command section defines external commands that are used by BackRest.
 
 Defines the full path to psql.  psql is used to call pg_start_backup() and pg_stop_backup().
 
-Required on whichever server is doing the backup, but can be omitted if the --no-start-stop backup parameter is used.  
-
-_required_: N
+_required_: y
 _example_: psql=/usr/bin/psql
 
 ##### remote key
@@ -193,7 +191,7 @@ Limits the amount of archive log that will be written locally.  After the limit 
 
 1. BackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
 2. An error will be logged to the console and also to the Postgres log.
-3. A stop file will be written in the lock directory and no more archive files will be backed up until it is removed. 
+3. A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.
 
 If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.
 
@@ -285,7 +283,6 @@ deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main
 
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 sudo apt-get update
-
 
 For unit tests:
 
