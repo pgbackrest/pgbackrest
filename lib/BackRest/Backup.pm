@@ -1560,13 +1560,17 @@ sub backup_expire
 
         @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 0), "reverse");
 
-        if (defined($stryPath[$iDifferentialRetention]))
+        if (defined($stryPath[$iDifferentialRetention - 1]))
         {
+            &log(DEBUG, 'differential expiration based on ' . $stryPath[$iDifferentialRetention - 1]);
+            
             # Get a list of all differential and incremental backups
             foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
             {
+                &log(DEBUG, "checking ${strPath} for differential expiration");
+
                 # Remove all differential and incremental backups before the oldest valid differential
-                if (substr($strPath, 0, length($strPath) - 1) lt $stryPath[$iDifferentialRetention])
+                if ($strPath lt $stryPath[$iDifferentialRetention - 1])
                 {
                     system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
                     &log(INFO, "removed expired diff/incr backup ${strPath}");
