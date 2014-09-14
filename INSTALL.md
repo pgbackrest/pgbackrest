@@ -6,7 +6,22 @@ BackRest takes some command-line parameters, but depends on a configuration file
 
 ### configuration examples
 
+#### Simple single host install
 
+This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.
+
+`/etc/pg_backrest.conf`:
+```
+[global:command]
+psql=/usr/bin/psql
+
+[retention]
+full-retention=2
+archive-retention-type=full
+
+[db]
+path=/var/postgresql
+```
 
 ### configuration sections
 
