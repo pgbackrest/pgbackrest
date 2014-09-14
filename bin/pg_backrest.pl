@@ -15,7 +15,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Backup;
@@ -54,10 +54,10 @@ pg_backrest.pl [options] [operation]
 ####################################################################################################################################
 use constant
 {
-    OP_ARCHIVE_GET  => "archive-get",
-    OP_ARCHIVE_PUSH => "archive-push",
-    OP_BACKUP       => "backup",
-    OP_EXPIRE       => "expire"
+    OP_ARCHIVE_GET  => 'archive-get',
+    OP_ARCHIVE_PUSH => 'archive-push',
+    OP_BACKUP       => 'backup',
+    OP_EXPIRE       => 'expire'
 };
 
 ####################################################################################################################################
@@ -65,33 +65,38 @@ use constant
 ####################################################################################################################################
 use constant
 {
-    CONFIG_SECTION_COMMAND        => "command",
-    CONFIG_SECTION_COMMAND_OPTION => "command:option",
-    CONFIG_SECTION_LOG            => "log",
-    CONFIG_SECTION_BACKUP         => "backup",
-    CONFIG_SECTION_ARCHIVE        => "archive",
-    CONFIG_SECTION_RETENTION      => "retention",
-    CONFIG_SECTION_STANZA         => "stanza",
+    CONFIG_SECTION_COMMAND             => 'command',
+    CONFIG_SECTION_COMMAND_OPTION      => 'command:option',
+    CONFIG_SECTION_LOG                 => 'log',
+    CONFIG_SECTION_BACKUP              => 'backup',
+    CONFIG_SECTION_ARCHIVE             => 'archive',
+    CONFIG_SECTION_RETENTION           => 'retention',
+    CONFIG_SECTION_STANZA              => 'stanza',
 
-    CONFIG_KEY_USER               => "user",
-    CONFIG_KEY_HOST               => "host",
-    CONFIG_KEY_PATH               => "path",
+    CONFIG_KEY_USER                    => 'user',
+    CONFIG_KEY_HOST                    => 'host',
+    CONFIG_KEY_PATH                    => 'path',
 
-    CONFIG_KEY_THREAD_MAX         => "thread-max",
-    CONFIG_KEY_THREAD_TIMEOUT     => "thread-timeout",
-    CONFIG_KEY_HARDLINK           => "hardlink",
-    CONFIG_KEY_ARCHIVE_REQUIRED   => "archive-required",
-    CONFIG_KEY_ARCHIVE_MAX_MB     => "archive-max-mb",
-    CONFIG_KEY_START_FAST         => "start_fast",
-    CONFIG_KEY_COMPRESS_ASYNC     => "compress-async",
+    CONFIG_KEY_THREAD_MAX              => 'thread-max',
+    CONFIG_KEY_THREAD_TIMEOUT          => 'thread-timeout',
+    CONFIG_KEY_HARDLINK                => 'hardlink',
+    CONFIG_KEY_ARCHIVE_REQUIRED        => 'archive-required',
+    CONFIG_KEY_ARCHIVE_MAX_MB          => 'archive-max-mb',
+    CONFIG_KEY_START_FAST              => 'start_fast',
+    CONFIG_KEY_COMPRESS_ASYNC          => 'compress-async',
 
-    CONFIG_KEY_LEVEL_FILE         => "level-file",
-    CONFIG_KEY_LEVEL_CONSOLE      => "level-console",
+    CONFIG_KEY_LEVEL_FILE              => 'level-file',
+    CONFIG_KEY_LEVEL_CONSOLE           => 'level-console',
 
-    CONFIG_KEY_COMPRESS           => "compress",
-    CONFIG_KEY_CHECKSUM           => "checksum",
-    CONFIG_KEY_PSQL               => "psql",
-    CONFIG_KEY_REMOTE             => "remote"
+    CONFIG_KEY_COMPRESS                => 'compress',
+    CONFIG_KEY_CHECKSUM                => 'checksum',
+    CONFIG_KEY_PSQL                    => 'psql',
+    CONFIG_KEY_REMOTE                  => 'remote',
+    
+    CONFIG_KEY_FULL_RETENTION          => 'full-retention',
+    CONFIG_KEY_DIFFERENTIAL_RETENTION  => 'differential-retention',
+    CONFIG_KEY_ARCHIVE_RETENTION_TYPE  => 'archive-retention-type',
+    CONFIG_KEY_ARCHIVE_RETENTION       => 'archive-retention'
 };
 
 ####################################################################################################################################
@@ -108,16 +113,16 @@ my $bNoFork = false;    # Prevents the archive process from forking when local a
 my $bTest = false;      # Enters test mode - not harmful in anyway, but adds special logging and pauses for unit testing
 my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
 
-GetOptions ("config=s" => \$strConfigFile,
-            "stanza=s" => \$strStanza,
-            "type=s"   => \$strType,
-            "version"  => \$bVersion,
-            "help"     => \$bHelp,
+GetOptions ('config=s' => \$strConfigFile,
+            'stanza=s' => \$strStanza,
+            'type=s'   => \$strType,
+            'version'  => \$bVersion,
+            'help'     => \$bHelp,
 
             # Test parameters - not for general use (and subject to change without notice)
-            "no-fork"      => \$bNoFork,
-            "test"         => \$bTest,
-            "test-delay=s" => \$iTestDelay)
+            'no-fork'      => \$bNoFork,
+            'test'         => \$bTest,
+            'test-delay=s' => \$iTestDelay)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -191,7 +196,7 @@ sub config_key_load
             return $strDefault;
         }
 
-        confess &log(ERROR, "config value " . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
+        confess &log(ERROR, 'config value ' . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
     }
 
     if ($strSection eq CONFIG_SECTION_COMMAND)
@@ -224,7 +229,6 @@ sub remote_exit
         exit $iExitCode;
     }
 }
-
 
 ####################################################################################################################################
 # REMOTE_GET - Get the remote object or create it if not exists
@@ -352,14 +356,14 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     my $strArchivePath = config_key_load($strSection, CONFIG_KEY_PATH);
 
     # Get checksum flag
-    my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+    my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, 'y') eq 'y' ? true : false;
 
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push when archiving locally
     my $bCompressAsync = false;
 
     if ($bArchiveLocal)
     {
-        config_key_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, "n") eq "n" ? false : true;
+        config_key_load($strSection, CONFIG_KEY_COMPRESS_ASYNC, true, 'n') eq 'n' ? false : true;
     }
 
     # If logging locally then create the stop archiving file name
@@ -384,7 +388,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         }
 
         # Get the compress flag
-        my $bCompress = $bCompressAsync ? false : config_key_load($strSection, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+        my $bCompress = $bCompressAsync ? false : config_key_load($strSection, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
 
         # Create the file object
         my $oFile = BackRest::File->new
@@ -406,7 +410,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
             !$bChecksum
         );
 
-        &log(INFO, "pushing archive log " . $ARGV[1] . ($bArchiveLocal ? " asynchronously" : ""));
+        &log(INFO, 'pushing archive log ' . $ARGV[1] . ($bArchiveLocal ? ' asynchronously' : ''));
 
         archive_push(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1]);
 
@@ -427,24 +431,24 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         # Else the no-fork flag has been specified for testing
         else
         {
-            &log(INFO, "No fork on archive local for TESTING");
+            &log(INFO, 'No fork on archive local for TESTING');
         }
     }
 
     # If no backup host is defined it makes no sense to run archive-push without a specified archive file so throw an error
     if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
     {
-        &log(ERROR, "archive-push called without an archive file or backup host");
+        &log(ERROR, 'archive-push called without an archive file or backup host');
     }
 
-    &log(INFO, "starting async archive-push");
+    &log(INFO, 'starting async archive-push');
 
     # Create a lock file to make sure async archive-push does not run more than once
     my $strLockPath = "${strArchivePath}/lock/${strStanza}-archive.lock";
 
     if (!lock_file_create($strLockPath))
     {
-        &log(DEBUG, "archive-push process is already running - exiting");
+        &log(DEBUG, 'archive-push process is already running - exiting');
         remote_exit(0);
     }
 
@@ -452,7 +456,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     my $strCommand = $^X . " " . $0 . " --stanza=${strStanza}";
 
     # Get the new operational flags
-    my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
+    my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
     my $iArchiveMaxMB = config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_ARCHIVE_MAX_MB);
 
     # eval
@@ -493,7 +497,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
             }
             else
             {
-                &log(DEBUG, "no more logs to transfer - exiting");
+                &log(DEBUG, 'no more logs to transfer - exiting');
             }
         }
     #
@@ -551,13 +555,13 @@ if ($strOperation eq OP_ARCHIVE_GET)
     # Make sure the archive file is defined
     if (!defined($ARGV[1]))
     {
-        confess &log(ERROR, "archive file not provided - show usage");
+        confess &log(ERROR, 'archive file not provided');
     }
 
     # Make sure the destination file is defined
     if (!defined($ARGV[2]))
     {
-        confess &log(ERROR, "destination file not provided - show usage");
+        confess &log(ERROR, 'destination file not provided');
     }
 
     # Init the file object
@@ -577,7 +581,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     );
 
     # Info for the Postgres log
-    &log(INFO, "getting archive log " . $ARGV[1]);
+    &log(INFO, 'getting archive log ' . $ARGV[1]);
 
     # Get the archive file
     remote_exit(archive_get($ARGV[1], $ARGV[2]));
@@ -588,7 +592,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
 ####################################################################################################################################
 if (defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
 {
-    confess &log(ASSERT, "backup/expire operations must be performed locally on the backup server");
+    confess &log(ASSERT, 'backup/expire operations must be performed locally on the backup server');
 }
 
 log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/${strStanza}");
@@ -605,24 +609,24 @@ if ($strRemote eq REMOTE_BACKUP)
 # Set the backup type
 if (!defined($strType))
 {
-    $strType = "incremental";
+    $strType = 'incremental';
 }
-elsif ($strType eq "diff")
+elsif ($strType eq 'diff')
 {
-    $strType = "differential";
+    $strType = 'differential';
 }
-elsif ($strType eq "incr")
+elsif ($strType eq 'incr')
 {
-    $strType = "incremental";
+    $strType = 'incremental';
 }
-elsif ($strType ne "full" && $strType ne "differential" && $strType ne "incremental")
+elsif ($strType ne 'full' && $strType ne 'differential' && $strType ne 'incremental')
 {
-    confess &log(ERROR, "backup type must be full, differential (diff), incremental (incr)");
+    confess &log(ERROR, 'backup type must be full, differential (diff), incremental (incr)');
 }
 
 # Get the operational flags
-my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false;
-my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, "y") eq "y" ? true : false;
+my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
+my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, 'y') eq 'y' ? true : false;
 
 # Set the lock path
 my $strLockPath = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) .  "/lock/${strStanza}-${strOperation}.lock";
@@ -656,11 +660,11 @@ backup_init
     $oDb,
     $oFile,
     $strType,
-    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, "y") eq "y" ? true : false,
-    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, "n") eq "y" ? true : false,
+    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false,
+    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, 'n') eq 'y' ? true : false,
     !$bChecksum,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
-    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, "y") eq "y" ? true : false,
+    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, 'y') eq 'y' ? true : false,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT),
     $bTest,
     $iTestDelay
@@ -672,7 +676,7 @@ backup_init
 if ($strOperation eq OP_BACKUP)
 {
     backup(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
-           config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, "n") eq "y" ? true : false);
+           config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, 'n') eq 'y' ? true : false);
 
     $strOperation = OP_EXPIRE;
 }
@@ -685,10 +689,10 @@ if ($strOperation eq OP_EXPIRE)
     backup_expire
     (
         $oFile->path_get(PATH_BACKUP_CLUSTER),
-        config_key_load(CONFIG_SECTION_RETENTION, "full_retention"),
-        config_key_load(CONFIG_SECTION_RETENTION, "differential_retention"),
-        config_key_load(CONFIG_SECTION_RETENTION, "archive_retention_type"),
-        config_key_load(CONFIG_SECTION_RETENTION, "archive_retention")
+        config_key_load(CONFIG_SECTION_RETENTION, CONFIG_KEY_FULL_RETENTION),
+        config_key_load(CONFIG_SECTION_RETENTION, CONFIG_KEY_DIFFERENTIAL_RETENTION),
+        config_key_load(CONFIG_SECTION_RETENTION, CONFIG_KEY_ARCHIVE_RETENTION_TYPE),
+        config_key_load(CONFIG_SECTION_RETENTION, CONFIG_KEY_ARCHIVE_RETENTION)
     );
 
     lock_file_remove();

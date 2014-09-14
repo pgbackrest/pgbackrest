@@ -1581,10 +1581,20 @@ sub backup_expire
     # Determine which backup type to use for archive retention (full, differential, incremental)
     if ($strArchiveRetentionType eq "full")
     {
+        if (!defined($iArchiveRetention))
+        {
+            $iArchiveRetention = $iFullRetention;
+        }
+
         @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "differential" || $strArchiveRetentionType eq "diff")
     {
+        if (!defined($iArchiveRetention))
+        {
+            $iArchiveRetention = $iDifferentialRetention;
+        }
+
         @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), "reverse");
     }
     elsif ($strArchiveRetentionType eq "incremental" || $strArchiveRetentionType eq "incr")
