@@ -1358,9 +1358,6 @@ sub backup
     ${oBackupManifest}{backup}{"archive-stop"} = $strArchiveStop;
     &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{"archive-stop"});
 
-    # Need to remove empty directories that were caused by skipped files
-    # !!! DO IT
-
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
     # consistent - at least not in this routine.
@@ -1390,14 +1387,11 @@ sub backup
             &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
             $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
-                         PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}",
+                         PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : ''),
                          $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
                          $bCompress);
         }
     }
-
-    # Need some sort of backup validate - create a manifest and compare the backup to manifest
-    # !!! DO IT
 
     # Create the path for the new backup
     my $strBackupPath;
