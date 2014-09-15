@@ -661,7 +661,7 @@ backup_init
     $oFile,
     $strType,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false,
-    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, 'n') eq 'y' ? true : false,
+    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, 'y') eq 'y' ? true : false,
     !$bChecksum,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, 'y') eq 'y' ? true : false,

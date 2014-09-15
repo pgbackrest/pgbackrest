@@ -69,7 +69,7 @@ archive_mode = on
 archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
 ```
 
-Replace the path with the actual location where BackRest was installed.  The stanza option should be changed to the actual stanza name you used for your database in pg_backrest.conf.
+Replace the path with the actual location where BackRest was installed.  The stanza parameter should be changed to the actual stanza name you used for your database in pg_backrest.conf.
 
 #### simple single host install
 
@@ -82,7 +82,6 @@ psql=/usr/bin/psql
 
 [global:backup]
 path=/var/lib/postgresql/backup
-hardlink=y
 
 [global:retention]
 full-retention=2
@@ -118,7 +117,6 @@ psql=/usr/bin/psql
 
 [global:backup]
 path=/var/lib/postgresql/backup
-hardlink=y
 
 [global:retention]
 full-retention=2
@@ -131,7 +129,61 @@ path=/var/lib/postgresql/9.3/main
 
 ## running
 
-BackRest is intended to be run from a scheduler like cron as there is no built-in scheduler.
+BackRest is intended to be run from a scheduler like cron as there is no built-in scheduler.  Postgres does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured in rentention, BackRest will keep two full backup no matter whether they occur 2 hours apart or two weeks apart.
+
+There are four basic operations:
+
+1. Backup
+```
+/path/to/pg_backrest.pl --stanza=db --type=full backup
+```
+Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if now `full` backup exists then a `full` backup will be forced even if `incr`  
+
+2. Archive Push
+```
+/path/to/pg_backrest.pl --stanza=db archive-push %p
+```
+Accepts an archive file from Postgres and pushes it to the backup.  `%p` is how Postgres specifies the location of the file to be archived.  This command has no other purpose.
+
+3.  Archive Get
+```
+/path/to/pg_backrest.pl --stanza=db archive-get %f %p
+```
+Retrieves an archive log from the backup.  This is used in `restore.conf` to restore a backup to that last archive log, do PITR, or as an alternative to streaming for keep a replica up to date.  `%f` is how Postgres specifies the archive log it needs, and `%p` is the location where it should be copied.
+
+3. Backup Expire
+```
+/path/to/pg_backrest.pl --stanza=db expire
+```
+Expire (rotate) any backups that exceed the defined retention.  Expiration is run after every backup, so there's no need to run this command on its own unless you have reduced rentention, usually to free up some space.
+
+## structure
+
+BackRest stores files in a way that is easy for users to work with directly.  Each backup directory has two files and two subdirectories:
+
+1. backup.manifest file
+
+Stores information about all the directories, links, and files in the backup.  The file is plaintext and should be very clear, but documentation of the format is planned in a future release.
+
+2. version file
+
+Contains the BackRest version that was used to create the backup.
+
+3. base directory
+
+Contains the Postgres data directory as defined by the data_directory setting in postgresql.conf
+
+4. tablespace directory
+
+Contains each tablespace in a separate subdirectory.  The links in `base/pg_tblspc` are rewritten to this directory.
+
+## restoring
+
+BackRest does not currently have a restore command - this is planned for the near future.  However, BackRest stores backups in a way that makes restoring very easy.  If `compress=n` it is even possible to start Postgres directly on the backup directory.
+
+In order to restore a backup, simple rsync the files from the base backup directory to your data directory.  If you have used compression, then recursively ungzip the files.  If you have tablespaces, repeat the process for each tablespace in the backup tablespace directory.
+
+It's good to practice restoring backups in advance of needing to do so.
 
 ## configuration options
 
@@ -244,8 +296,8 @@ _example_: hardlink=y
 Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each
 backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.
 
-_default_: n
-_example_: hardlink=y
+_default_: y
+_example_: hardlink=n
 
 ##### thread-max
 
