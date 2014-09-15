@@ -109,7 +109,7 @@ path=/var/lib/postgresql/backup
 
 [db]
 path=/var/lib/postgresql/9.3/main
-
+```
 `/etc/pg_backrest.conf on the backup host`:
 ```
 [global:command]
@@ -126,6 +126,7 @@ archive-retention-type=full
 host=db-host@mydomain.com
 user=postgres
 path=/var/lib/postgresql/9.3/main
+```
 
 ## running
 
@@ -161,19 +162,19 @@ Expire (rotate) any backups that exceed the defined retention.  Expiration is ru
 
 BackRest stores files in a way that is easy for users to work with directly.  Each backup directory has two files and two subdirectories:
 
-1. backup.manifest file
+1. `backup.manifest` file
 
 Stores information about all the directories, links, and files in the backup.  The file is plaintext and should be very clear, but documentation of the format is planned in a future release.
 
-2. version file
+2. `version` file
 
 Contains the BackRest version that was used to create the backup.
 
-3. base directory
+3. `base` directory
 
 Contains the Postgres data directory as defined by the data_directory setting in postgresql.conf
 
-4. tablespace directory
+4. `tablespace` directory
 
 Contains each tablespace in a separate subdirectory.  The links in `base/pg_tblspc` are rewritten to this directory.
 
@@ -187,7 +188,7 @@ It's good to practice restoring backups in advance of needing to do so.
 
 ## configuration options
 
-Each section defines important aspects of the backup.  All configuration sections below should be prefixed with "global:" as demonstrated in the configuration samples.
+Each section defines important aspects of the backup.  All configuration sections below should be prefixed with `global:` as demonstrated in the configuration samples.
 
 #### command section
 
@@ -196,10 +197,10 @@ The command section defines external commands that are used by BackRest.
 ##### psql key
 
 Defines the full path to psql.  psql is used to call pg_start_backup() and pg_stop_backup().
-
-_required_: y
-_example_: psql=/usr/bin/psql
-
+```
+required: y
+example: psql=/usr/bin/psql
+```
 ##### remote key
 
 Defines the file path to pg_backrest_remote.pl.
