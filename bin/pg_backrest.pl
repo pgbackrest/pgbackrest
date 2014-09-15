@@ -92,7 +92,7 @@ use constant
     CONFIG_KEY_CHECKSUM                => 'checksum',
     CONFIG_KEY_PSQL                    => 'psql',
     CONFIG_KEY_REMOTE                  => 'remote',
-    
+
     CONFIG_KEY_FULL_RETENTION          => 'full-retention',
     CONFIG_KEY_DIFFERENTIAL_RETENTION  => 'differential-retention',
     CONFIG_KEY_ARCHIVE_RETENTION_TYPE  => 'archive-retention-type',

@@ -1557,7 +1557,7 @@ sub backup_expire
         if (defined($stryPath[$iDifferentialRetention - 1]))
         {
             &log(DEBUG, 'differential expiration based on ' . $stryPath[$iDifferentialRetention - 1]);
-            
+
             # Get a list of all differential and incremental backups
             foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(0, 1, 1), "reverse"))
             {

@@ -1,35 +1,139 @@
 # pg_backrest installation
 
-## configuration
+## sample ubuntu 12.04 install
+
+1. Starting from a clean install, update the OS:
+
+```
+apt-get update
+apt-get upgrade (reboot if required)
+```
+
+2. Install ssh, git and cpanminus
+
+```
+apt-get install ssh
+apt-get install git
+apt-get install cpanminus
+```
+
+3. Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
+
+Create the file /etc/apt/sources.list.d/pgdg.list, and add a line for the repository:
+```
+deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main
+```
+Then run the following:
+```
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+
+apt-get install postgresql-9.3
+apt-get install postgresql-server-dev-9.3
+```
+
+4. Install required Perl modules:
+```
+cpanm JSON
+cpanm Moose
+cpanm Net::OpenSSH
+cpanm DBI
+cpanm DBD::Pg
+cpanm IPC::System::Simple
+cpanm Digest::SHA
+cpanm IO::Compress::Gzip
+cpanm IO::Uncompress::Gunzip
+```
+5. Install BackRest
+
+Backrest can be installed by downloading the most recent release:
+
+https://github.com/dwsteele/pg_backrest/releases
+
+6. To run unit tests:
+
+* Create backrest_dev user
+* Setup trusted ssh between test user account and backrest_dev
+* Backrest user and test user must be in the same group
+
+## configuration examples
 
 BackRest takes some command-line parameters, but depends on a configuration file for most of the settings.  The default location for the configuration file is /etc/pg_backrest.conf.
 
-### configuration examples
+#### confguring postgres for archiving with backrest
 
-#### Simple single host install
+Modify the following settings in postgresql.conf:
+```
+wal_level = archive
+archive_mode = on
+archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
+```
+
+Replace the path with the actual location where BackRest was installed.  The stanza option should be changed to the actual stanza name you used for your database in pg_backrest.conf.
+
+#### simple single host install
 
 This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.
 
 `/etc/pg_backrest.conf`:
 ```
 [global:command]
-psql=/Library/PostgreSQL/9.3/bin/psql
-
-[global:log]
-level-console=trace
+psql=/usr/bin/psql
 
 [global:backup]
-path=/Library/PostgreSQL/9.3/backup
+path=/var/lib/postgresql/backup
+hardlink=y
+
+[global:retention]
+full-retention=2
+differential-retention=2
+archive-retention-type=diff
+archive-retention=2
+
+[db]
+path=/var/lib/postgresql/9.3/main
+```
+
+#### simple multiple host install
+
+This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.
+
+`/etc/pg_backrest.conf on the db host`:
+```
+[global:command]
+psql=/usr/bin/psql
+
+[global:backup]
+host=backup-host@mydomain.com
+user=postgres
+path=/var/lib/postgresql/backup
+
+[db]
+path=/var/lib/postgresql/9.3/main
+
+`/etc/pg_backrest.conf on the backup host`:
+```
+[global:command]
+psql=/usr/bin/psql
+
+[global:backup]
+path=/var/lib/postgresql/backup
+hardlink=y
 
 [global:retention]
 full-retention=2
 archive-retention-type=full
 
 [db]
-path=/Library/PostgreSQL/9.3/data
-```
+host=db-host@mydomain.com
+user=postgres
+path=/var/lib/postgresql/9.3/main
 
-### configuration sections
+## running
+
+BackRest is intended to be run from a scheduler like cron as there is no built-in scheduler.
+
+## configuration options
 
 Each section defines important aspects of the backup.  All configuration sections below should be prefixed with "global:" as demonstrated in the configuration samples.
 
@@ -258,33 +362,3 @@ Path to the db data directory (data_directory setting in postgresql.conf).
 
 * _required_: y
 * _example_: path=/var/postgresql/data
-
-## sample ubuntu 12.04 install
-
-apt-get update
-apt-get upgrade (reboot if required)
-
-apt-get install ssh
-apt-get install git
-apt-get install cpanminus
-apt-get install postgresql-9.3
-apt-get install postgresql-server-dev-9.3
-
-cpanm JSON
-cpanm Moose
-cpanm Net::OpenSSH
-cpanm DBI
-cpanm DBD::Pg
-cpanm IPC::System::Simple
-
-Create the file /etc/apt/sources.list.d/pgdg.list, and add a line for the repository
-deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main
-
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt-get update
-
-For unit tests:
-
-create backrest_dev user
-setup trusted ssh between test user account and backrest_dev
-backrest user and test user must be in the same group
