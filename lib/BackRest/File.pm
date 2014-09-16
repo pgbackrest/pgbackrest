@@ -20,7 +20,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::String;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Remote;
@@ -139,13 +139,13 @@ sub BUILD
         # Make sure remote is valid
         if ($self->{strRemote} ne REMOTE_DB && $self->{strRemote} ne REMOTE_BACKUP)
         {
-            confess &log(ASSERT, "strRemote must be \"" . REMOTE_DB . "\" or \"" . REMOTE_BACKUP . "\"");
+            confess &log(ASSERT, 'strRemote must be "' . REMOTE_DB . '" or "' . REMOTE_BACKUP . '"');
         }
 
         # Remote object must be set
         if (!defined($self->{oRemote}))
         {
-            confess &log(ASSERT, "oRemote must be defined");
+            confess &log(ASSERT, 'oRemote must be defined');
         }
     }
 }
@@ -256,7 +256,7 @@ sub path_get
     # Get base backup path
     if ($strType eq PATH_BACKUP)
     {
-        return $self->{strBackupPath} . (defined($strFile) ? "/${strFile}" : "");
+        return $self->{strBackupPath} . (defined($strFile) ? "/${strFile}" : '');
     }
 
     # Make sure the cluster is defined
@@ -272,10 +272,10 @@ sub path_get
 
         if ($bTemp)
         {
-            return "${strTempPath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "");
+            return "${strTempPath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '');
         }
 
-        return "${strTempPath}" . (defined($strFile) ? "/${strFile}" : "");
+        return "${strTempPath}" . (defined($strFile) ? "/${strFile}" : '');
     }
 
     # Get the backup archive path
@@ -286,7 +286,7 @@ sub path_get
 
         if ($bTemp)
         {
-            return "${strArchivePath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : "");
+            return "${strArchivePath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '');
         }
 
         if (defined($strFile))
@@ -299,13 +299,13 @@ sub path_get
             }
         }
 
-        return $strArchivePath . (defined($strArchive) ? "/" . substr($strArchive, 0, 16) : "") .
-               (defined($strFile) ? "/" . $strFile : "");
+        return $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
+               (defined($strFile) ? '/' . $strFile : '');
     }
 
     if ($strType eq PATH_BACKUP_CLUSTER)
     {
-        return $self->{strBackupPath} . "/backup/$self->{strStanza}" . (defined($strFile) ? "/${strFile}" : "");
+        return $self->{strBackupPath} . "/backup/$self->{strStanza}" . (defined($strFile) ? "/${strFile}" : '');
     }
 
     # Error when path type not recognized
@@ -351,7 +351,7 @@ sub link_create
     # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
-        confess &log(ASSERT, "path types must be equal in link create");
+        confess &log(ASSERT, 'path types must be equal in link create');
     }
 
     # Generate source and destination files
@@ -388,12 +388,12 @@ sub link_create
 
         if ($iCommonLen != 0)
         {
-            $strSource = ("../" x substr($strDestination, $iCommonLen) =~ tr/\///) . substr($strSource, $iCommonLen);
+            $strSource = ('../' x substr($strDestination, $iCommonLen) =~ tr/\///) . substr($strSource, $iCommonLen);
         }
     }
 
     # Create the command
-    my $strCommand = "ln" . (!$bHard ? " -s" : "") . " ${strSource} ${strDestination}";
+    my $strCommand = 'ln' . (!$bHard ? ' -s' : '') . " ${strSource} ${strDestination}";
 
     # Run remotely
     if ($self->is_remote($strSourcePathType))
@@ -435,9 +435,9 @@ sub move
     # Set operation and debug strings
     my $strOperation = OP_FILE_MOVE;
 
-    my $strDebug = "${strSourcePathType}" . (defined($strSourceFile) ? ":${strSourceFile}" : "") .
-                   " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : "") .
-                   ", destination_path_create = " . ($bDestinationPathCreate ? "true" : "false");
+    my $strDebug = "${strSourcePathType}" . (defined($strSourceFile) ? ":${strSourceFile}" : '') .
+                   " to ${strDestinationPathType}" . (defined($strDestinationFile) ? ":${strDestinationFile}" : '') .
+                   ', destination_path_create = ' . ($bDestinationPathCreate ? 'true' : 'false');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     # Source and destination path types must be the same
@@ -555,7 +555,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strPermission) ? $strPermission : "[undef]");
+    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strPermission) ? $strPermission : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -571,7 +571,7 @@ sub path_create
         }
 
         # Add remote info to debug string
-        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
@@ -640,7 +640,7 @@ sub exists
         $oParamHash{path} = $strPathOp;
 
         # Add remote info to debug string
-        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
@@ -762,7 +762,7 @@ sub hash
     {
         my $hFile;
 
-        if (!open($hFile, "<", $strFileOp))
+        if (!open($hFile, '<', $strFileOp))
         {
             my $strError = "${strFileOp} could not be read: " . $!;
             my $iErrorCode = 2;
@@ -814,7 +814,7 @@ sub list
     # Get the root path for the file list
     my $strOperation = OP_FILE_LIST;
     my $strDebug = "${strPathType}:${strPathOp}" .
-                   ", expression " . (defined($strExpression) ? $strExpression : "[UNDEF]") .
+                   ', expression ' . (defined($strExpression) ? $strExpression : '[UNDEF]') .
                    ", sort ${strSortOrder}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
@@ -833,7 +833,7 @@ sub list
         }
 
         # Add remote info to debug string
-        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
@@ -879,7 +879,7 @@ sub list
         }
 
         # Reverse sort
-        if (defined($strSortOrder) && $strSortOrder eq "reverse")
+        if (defined($strSortOrder) && $strSortOrder eq 'reverse')
         {
             @stryFileList = sort {$b cmp $a} @stryFileList;
         }
@@ -924,7 +924,7 @@ sub manifest
         $oParamHash{path} = $strPathOp;
 
         # Add remote info to debug string
-        my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
@@ -948,8 +948,8 @@ sub manifest_recurse
     my $oManifestHashRef = shift;
     my $strDebug = shift;
 
-    $strDebug = $strDebug . (defined($strPathFileOp) ? " => ${strPathFileOp}" : "");
-    my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : "");
+    $strDebug = $strDebug . (defined($strPathFileOp) ? " => ${strPathFileOp}" : '');
+    my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : '');
     my $hPath;
 
     if (!opendir($hPath, $strPathRead))
@@ -978,7 +978,7 @@ sub manifest_recurse
     foreach my $strFile (@stryFileList)
     {
         my $strPathFile = "${strPathRead}/$strFile";
-        my $bCurrentDir = $strFile eq ".";
+        my $bCurrentDir = $strFile eq '.';
 
         if ($iDepth != 0)
         {
@@ -1017,7 +1017,7 @@ sub manifest_recurse
         # Check for regular file
         if (S_ISREG($oStat->mode))
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "f";
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = 'f';
 
             # Get inode
             ${$oManifestHashRef}{name}{"${strFile}"}{inode} = $oStat->ino;
@@ -1031,12 +1031,12 @@ sub manifest_recurse
         # Check for directory
         elsif (S_ISDIR($oStat->mode))
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "d";
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = 'd';
         }
         # Check for link
         elsif (S_ISLNK($oStat->mode))
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = "l";
+            ${$oManifestHashRef}{name}{"${strFile}"}{type} = 'l';
 
             # Get link destination
             ${$oManifestHashRef}{name}{"${strFile}"}{link_destination} = readlink($strPathFile);
@@ -1077,13 +1077,13 @@ sub manifest_recurse
         ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
 
         # Get permissions
-        if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne "l")
+        if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne 'l')
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf("%04o", S_IMODE($oStat->mode));
+            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
         }
 
         # Recurse into directories
-        if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq "d" && !$bCurrentDir)
+        if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq 'd' && !$bCurrentDir)
         {
             $self->manifest_recurse($strPathType, $strPathOp, $strFile, $iDepth + 1, $oManifestHashRef, $strDebug);
         }
@@ -1132,14 +1132,14 @@ sub copy
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
     # Set debug string and log
-    my $strDebug = ($bSourceRemote ? " remote" : " local") . " ${strSourcePathType}" .
-                   (defined($strSourceFile) ? ":${strSourceOp}" : "") .
-                   " to" . ($bDestinationRemote ? " remote" : " local") . " ${strDestinationPathType}" .
-                   (defined($strDestinationFile) ? ":${strDestinationOp}" : "") .
-                   ", source_compressed = " . ($bSourceCompressed ? "true" : "false") .
-                   ", destination_compress = " . ($bDestinationCompress ? "true" : "false") .
-                   ", ignore_missing_source = " . ($bIgnoreMissingSource ? "true" : "false") .
-                   ", destination_path_create = " . ($bDestinationPathCreate ? "true" : "false");
+    my $strDebug = ($bSourceRemote ? ' remote' : ' local') . " ${strSourcePathType}" .
+                   (defined($strSourceFile) ? ":${strSourceOp}" : '') .
+                   ' to' . ($bDestinationRemote ? ' remote' : ' local') . " ${strDestinationPathType}" .
+                   (defined($strDestinationFile) ? ":${strDestinationOp}" : '') .
+                   ', source_compressed = ' . ($bSourceCompressed ? 'true' : 'false') .
+                   ', destination_compress = ' . ($bDestinationCompress ? 'true' : 'false') .
+                   ', ignore_missing_source = ' . ($bIgnoreMissingSource ? 'true' : 'false') .
+                   ', destination_path_create = ' . ($bDestinationPathCreate ? 'true' : 'false');
     &log(DEBUG, OP_FILE_COPY . ": ${strDebug}");
 
     # Open the source and destination files (if needed)
@@ -1148,7 +1148,7 @@ sub copy
 
     if (!$bSourceRemote)
     {
-        if (!open($hSourceFile, "<", $strSourceOp))
+        if (!open($hSourceFile, '<', $strSourceOp))
         {
             my $strError = $!;
             my $iErrorCode = COMMAND_ERR_FILE_READ;
@@ -1170,7 +1170,7 @@ sub copy
             {
                 if ($strDestinationPathType eq PIPE_STDOUT)
                 {
-                    $self->{oRemote}->write_line(*STDOUT, "block 0");
+                    $self->{oRemote}->write_line(*STDOUT, 'block 0');
                 }
 
                 confess &log(ERROR, $strError, $iErrorCode);
@@ -1183,14 +1183,14 @@ sub copy
     if (!$bDestinationRemote)
     {
         # Open the destination temp file
-        if (!open($hDestinationFile, ">", $strDestinationTmpOp))
+        if (!open($hDestinationFile, '>', $strDestinationTmpOp))
         {
             my $strError = "${strDestinationTmpOp} could not be opened: " . $!;
             my $iErrorCode = COMMAND_ERR_FILE_READ;
 
             if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationTmpOp)))
             {
-                $strError = dirname($strDestinationTmpOp) . " does not exist";
+                $strError = dirname($strDestinationTmpOp) . ' does not exist';
                 $iErrorCode = COMMAND_ERR_FILE_MISSING;
             }
 
@@ -1206,7 +1206,7 @@ sub copy
 
             $self->path_create(PATH_ABSOLUTE, dirname($strDestinationTmpOp));
 
-            if (!open($hDestinationFile, ">", $strDestinationTmpOp))
+            if (!open($hDestinationFile, '>', $strDestinationTmpOp))
             {
                 confess &log(ERROR, "unable to open destination file ${strDestinationOp}: " . $!);
             }
@@ -1293,7 +1293,7 @@ sub copy
         # Build debug string
         if (%oParamHash)
         {
-            my $strRemote = "remote (" . $self->{oRemote}->command_param_string(\%oParamHash) . ")";
+            my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
             $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
 
             &log(TRACE, "${strOperation}: ${strRemote}");
@@ -1329,7 +1329,7 @@ sub copy
 
                 # We'll ignore this error if the source file was missing and missing file exception was returned
                 # and bIgnoreMissingSource is set
-                if ($bIgnoreMissingSource && $strRemote eq "in" && $oMessage->isa("BackRest::Exception") &&
+                if ($bIgnoreMissingSource && $strRemote eq 'in' && $oMessage->isa('BackRest::Exception') &&
                     $oMessage->code() == COMMAND_ERR_FILE_MISSING)
                 {
                     close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");

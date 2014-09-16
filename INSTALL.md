@@ -138,7 +138,7 @@ There are four basic operations:
 ```
 /path/to/pg_backrest.pl --stanza=db --type=full backup
 ```
-Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if now `full` backup exists then a `full` backup will be forced even if `incr`  
+Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if now `full` backup exists then a `full` backup will be forced even if `incr`
 
 2. Archive Push
 ```
