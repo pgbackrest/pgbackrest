@@ -35,7 +35,7 @@ sub BUILD
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
     {
-        my $strOptionSSHRequestTTY = "RequestTTY=yes";
+        my $strOptionSSHRequestTTY = 'RequestTTY=yes';
 
         &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
 
@@ -100,7 +100,7 @@ sub tablespace_map_get
     my $oHashRef = shift;
 
     data_hash_build($oHashRef, "oid\tname\n" . $self->psql_execute(
-                    "copy (select oid, spcname from pg_tablespace) to stdout"), "\t");
+                    'copy (select oid, spcname from pg_tablespace) to stdout'), "\t");
 }
 
 ####################################################################################################################################
@@ -134,7 +134,7 @@ sub backup_start
 
     return trim($self->psql_execute("set client_min_messages = 'warning';" .
                                     "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
-                                    ($bStartFast ? ", true" : "") . ") as xlog) to stdout"));
+                                    ($bStartFast ? ', true' : '') . ') as xlog) to stdout'));
 }
 
 ####################################################################################################################################

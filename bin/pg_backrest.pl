@@ -196,7 +196,7 @@ sub config_key_load
             return $strDefault;
         }
 
-        confess &log(ERROR, 'config value ' . (defined($strSection) ? $strSection : "[stanza]") .  "->${strKey} is undefined");
+        confess &log(ERROR, 'config value ' . (defined($strSection) ? $strSection : '[stanza]') .  "->${strKey} is undefined");
     }
 
     if ($strSection eq CONFIG_SECTION_COMMAND)
@@ -278,7 +278,7 @@ my $strOperation = $ARGV[0];
 # Validate the operation
 if (!defined($strOperation))
 {
-    confess &log(ERROR, "operation is not defined");
+    confess &log(ERROR, 'operation is not defined');
 }
 
 if ($strOperation ne OP_ARCHIVE_GET &&
@@ -292,7 +292,7 @@ if ($strOperation ne OP_ARCHIVE_GET &&
 # Type should only be specified for backups
 if (defined($strType) && $strOperation ne OP_BACKUP)
 {
-    confess &log(ERROR, "type can only be specified for the backup operation")
+    confess &log(ERROR, 'type can only be specified for the backup operation')
 }
 
 ####################################################################################################################################
@@ -300,7 +300,7 @@ if (defined($strType) && $strOperation ne OP_BACKUP)
 ####################################################################################################################################
 if (!defined($strConfigFile))
 {
-    $strConfigFile = "/etc/pg_backrest.conf";
+    $strConfigFile = '/etc/pg_backrest.conf';
 }
 
 config_load($strConfigFile, \%oConfig);
@@ -308,12 +308,12 @@ config_load($strConfigFile, \%oConfig);
 # Load and check the cluster
 if (!defined($strStanza))
 {
-    confess "a backup stanza must be specified - show usage";
+    confess 'a backup stanza must be specified';
 }
 
 # Set the log levels
-log_level_set(uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, "INFO")),
-              uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, "ERROR")));
+log_level_set(uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, INFO)),
+              uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, ERROR)));
 
 ####################################################################################################################################
 # DETERMINE IF THERE IS A REMOTE
@@ -453,7 +453,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     }
 
     # Build the basic command string that will be used to modify the command during processing
-    my $strCommand = $^X . " " . $0 . " --stanza=${strStanza}";
+    my $strCommand = $^X . ' ' . $0 . " --stanza=${strStanza}";
 
     # Get the new operational flags
     my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
