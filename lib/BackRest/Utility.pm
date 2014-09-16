@@ -13,7 +13,7 @@ use File::Path qw(remove_tree);
 use File::Basename;
 use JSON;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 
 use Exporter qw(import);
@@ -84,14 +84,14 @@ sub version_get
     my $hVersion;
     my $strVersion;
 
-    if (!open($hVersion, "<", dirname($0) . "/../VERSION"))
+    if (!open($hVersion, '<', dirname($0) . '/../VERSION'))
     {
-        confess &log(ASSERT, "unable to open VERSION file");
+        confess &log(ASSERT, 'unable to open VERSION file');
     }
 
     if (!($strVersion = readline($hVersion)))
     {
-        confess &log(ASSERT, "unable to read VERSION file");
+        confess &log(ASSERT, 'unable to read VERSION file');
     }
 
     close($hVersion);
@@ -106,7 +106,7 @@ sub lock_file_create
 {
     my $strLockPathParam = shift;
 
-    my $strLockFile = $strLockPathParam . "/process.lock";
+    my $strLockFile = $strLockPathParam . '/process.lock';
 
     if (defined($hLockFile))
     {
@@ -151,7 +151,7 @@ sub lock_file_remove
     }
     else
     {
-        confess &log(ASSERT, "there is no lock to free");
+        confess &log(ASSERT, 'there is no lock to free');
     }
 }
 
@@ -172,7 +172,7 @@ sub data_hash_build
     {
         my @stryLine = split($strDelimiter, $stryFile[$iLineIdx]);
 
-        if (!defined($stryLine[0]) || $stryLine[0] eq "")
+        if (!defined($stryLine[0]) || $stryLine[0] eq '')
         {
             $stryLine[0] = $strUndefinedKey;
         }
@@ -181,10 +181,10 @@ sub data_hash_build
         {
             if (defined(${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
             {
-                confess "the first column must be unique to build the hash";
+                confess 'the first column must be unique to build the hash';
             }
 
-            if (defined($stryLine[$iColumnIdx]) && $stryLine[$iColumnIdx] ne "")
+            if (defined($stryLine[$iColumnIdx]) && $stryLine[$iColumnIdx] ne '')
             {
                 ${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
             }
@@ -237,7 +237,7 @@ sub wait_for_file
         sleep(1);
     }
 
-    confess &log(ERROR, "could not find $strDir/$strRegEx after $iSeconds second(s)");
+    confess &log(ERROR, "could not find $strDir/$strRegEx after ${iSeconds} second(s)");
 }
 
 ####################################################################################################################################
@@ -273,20 +273,20 @@ sub file_size_format
 
     if ($lFileSize < 1024)
     {
-        return $lFileSize . "B";
+        return $lFileSize . 'B';
     }
 
     if ($lFileSize < (1024 * 1024))
     {
-        return int($lFileSize / 1024) . "KB";
+        return int($lFileSize / 1024) . 'KB';
     }
 
     if ($lFileSize < (1024 * 1024 * 1024))
     {
-        return int($lFileSize / 1024 / 1024) . "MB";
+        return int($lFileSize / 1024 / 1024) . 'MB';
     }
 
-    return int($lFileSize / 1024 / 1024 / 1024) . "GB";
+    return int($lFileSize / 1024 / 1024 / 1024) . 'GB';
 }
 
 ####################################################################################################################################
@@ -298,7 +298,7 @@ sub timestamp_string_get
 
     if (!defined($strFormat))
     {
-        $strFormat = "%4d-%02d-%02d %02d:%02d:%02d";
+        $strFormat = '%4d-%02d-%02d %02d:%02d:%02d';
     }
 
     my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime(time);
@@ -311,7 +311,7 @@ sub timestamp_string_get
 ####################################################################################################################################
 sub timestamp_file_string_get
 {
-    return timestamp_string_get("%4d%02d%02d-%02d%02d%02d");
+    return timestamp_string_get('%4d%02d%02d-%02d%02d%02d');
 }
 
 ####################################################################################################################################
@@ -326,7 +326,7 @@ sub log_file_set
         mkdir(dirname($strFile)) or die "unable to create directory for log file ${strFile}";
     }
 
-    $strFile .= "-" . timestamp_string_get("%4d%02d%02d") . ".log";
+    $strFile .= '-' . timestamp_string_get('%4d%02d%02d') . '.log';
     my $bExists = false;
 
     if (-e $strFile)
@@ -341,7 +341,7 @@ sub log_file_set
         print $hLogFile "\n";
     }
 
-    print $hLogFile "-------------------PROCESS START-------------------\n";
+    print $hLogFile '-------------------PROCESS START-------------------\n';
 }
 
 ####################################################################################################################################
@@ -364,7 +364,7 @@ sub test_set
     # Make sure that a delay is specified in test mode
     if ($bTest && !defined($iTestDelay))
     {
-        confess &log(ASSERT, "iTestDelay must be provided when bTest is true");
+        confess &log(ASSERT, 'iTestDelay must be provided when bTest is true');
     }
 }
 
@@ -435,19 +435,19 @@ sub log
     # If message was undefined then set default message
     if (!defined($strMessageFormat))
     {
-        $strMessageFormat = "(undefined)";
+        $strMessageFormat = '(undefined)';
     }
 
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
         $strMessageFormat =~ s/\n/\n                                           /g;
-        $strMessageFormat = "        " . $strMessageFormat;
+        $strMessageFormat = '        ' . $strMessageFormat;
     }
     elsif ($strLevel eq DEBUG)
     {
         $strMessageFormat =~ s/\n/\n                                       /g;
-        $strMessageFormat = "    " . $strMessageFormat;
+        $strMessageFormat = '    ' . $strMessageFormat;
     }
     else
     {
@@ -457,9 +457,9 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
-    $strMessageFormat = timestamp_string_get() . sprintf(" T%02d", threads->tid()) .
-                        (" " x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
-                        (defined($iCode) ? " (code ${iCode})" : "") . "\n";
+    $strMessageFormat = timestamp_string_get() . sprintf(' T%02d', threads->tid()) .
+                        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
+                        (defined($iCode) ? " (code ${iCode})" : '') . "\n";
 
     # Output to console depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
