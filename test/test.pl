@@ -15,10 +15,10 @@ use Getopt::Long;
 use Cwd 'abs_path';
 use Cwd;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 
-use lib dirname($0) . "/lib";
+use lib dirname($0) . '/lib';
 use BackRestTest::CommonTest;
 use BackRestTest::UtilityTest;
 use BackRestTest::FileTest;
@@ -36,15 +36,15 @@ my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
 
-GetOptions ("pgsql-bin=s" => \$strPgSqlBin,
-            "test-path=s" => \$strTestPath,
-            "log-level=s" => \$strLogLevel,
-            "module=s" => \$strModule,
-            "module-test=s" => \$strModuleTest,
-            "module-test-run=s" => \$iModuleTestRun,
-            "dry-run" => \$bDryRun,
-            "no-cleanup" => \$bNoCleanup)
-    or die("Error in command line arguments\n");
+GetOptions ('pgsql-bin=s' => \$strPgSqlBin,
+            'test-path=s' => \$strTestPath,
+            'log-level=s' => \$strLogLevel,
+            'module=s' => \$strModule,
+            'module-test=s' => \$strModuleTest,
+            'module-test-run=s' => \$iModuleTestRun,
+            'dry-run' => \$bDryRun,
+            'no-cleanup' => \$bNoCleanup)
+    or die 'error in command line arguments';
 
 ####################################################################################################################################
 # Setup
@@ -68,7 +68,7 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 # Make sure PG bin has been defined
 if (!defined($strPgSqlBin))
 {
-    confess "pgsql-bin was not defined";
+    confess 'pgsql-bin was not defined';
 }
 
 ####################################################################################################################################
@@ -79,9 +79,9 @@ my $strLine;
 my $bMatch = false;
 my $strVersion = version_get();
 
-if (!open($hReadMe, '<', dirname($0) . "/../README.md"))
+if (!open($hReadMe, '<', dirname($0) . '/../README.md'))
 {
-    confess "unable to open README.md";
+    confess 'unable to open README.md';
 }
 
 while ($strLine = readline($hReadMe))
@@ -103,7 +103,7 @@ if (!$bMatch)
 ####################################################################################################################################
 my $hVersion;
 
-if (-e "./test.pl" && -e "../bin/pg_backrest.pl" && open($hVersion, "<", "../VERSION"))
+if (-e './test.pl' && -e '../bin/pg_backrest.pl' && open($hVersion, '<', '../VERSION'))
 {
     my $strTestVersion = readline($hVersion);
 
@@ -127,22 +127,22 @@ BackRestTestCommon_Setup($strTestPath, $strPgSqlBin, $iModuleTestRun, $bDryRun, 
 # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
 #            "group = {strGroup}");
 
-if ($strModule eq 'all' || $strModule eq "utility")
+if ($strModule eq 'all' || $strModule eq 'utility')
 {
     BackRestTestUtility_Test($strModuleTest);
 }
 
-if ($strModule eq 'all' || $strModule eq "file")
+if ($strModule eq 'all' || $strModule eq 'file')
 {
     BackRestTestFile_Test($strModuleTest);
 }
 
-if ($strModule eq 'all' || $strModule eq "backup")
+if ($strModule eq 'all' || $strModule eq 'backup')
 {
     BackRestTestBackup_Test($strModuleTest);
 }
 
 if (!$bDryRun)
 {
-    &log(ASSERT, "TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)");
+    &log(ASSERT, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
 }

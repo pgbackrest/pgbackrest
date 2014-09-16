@@ -13,11 +13,11 @@ use Thread::Queue;
 use Net::OpenSSH;
 use File::Basename;
 use IO::Handle;
-use POSIX ":sys_wait_h";
+use POSIX ':sys_wait_h';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 
@@ -65,27 +65,27 @@ sub BUILD
 {
     my $self = shift;
 
-    $self->{strGreeting} .= " " . version_get();
+    $self->{strGreeting} .= ' ' . version_get();
 
     if (defined($self->{strHost}))
     {
         # User must be defined
         if (!defined($self->{strUser}))
         {
-            confess &log(ASSERT, "strUser must be defined");
+            confess &log(ASSERT, 'strUser must be defined');
         }
 
         # User must be defined
         if (!defined($self->{strCommand}))
         {
-            confess &log(ASSERT, "strCommand must be defined");
+            confess &log(ASSERT, 'strCommand must be defined');
         }
 
         # Set SSH Options
-        my $strOptionSSHRequestTTY = "RequestTTY=yes";
-        my $strOptionSSHCompression = "Compression=no";
+        my $strOptionSSHRequestTTY = 'RequestTTY=yes';
+        my $strOptionSSHCompression = 'Compression=no';
 
-        &log(TRACE, "connecting to remote ssh host " . $self->{strHost});
+        &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
         # Make SSH connection
         $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 300, user => $self->{strUser},
@@ -159,7 +159,7 @@ sub greeting_read
     # Make sure that the remote is running the right version
     if ($self->read_line($self->{hOut}) ne $self->{strGreeting})
     {
-        confess &log(ERROR, "remote version mismatch");
+        confess &log(ERROR, 'remote version mismatch');
     }
 }
 
@@ -174,7 +174,7 @@ sub greeting_write
 
     if (!syswrite(*STDOUT, "$self->{strGreeting}\n"))
     {
-        confess "unable to write greeting";
+        confess 'unable to write greeting';
     }
 }
 
@@ -191,9 +191,9 @@ sub string_write
 
     $strBuffer =~ s/\n/\n\./g;
 
-    if (!syswrite($hOut, "." . $strBuffer))
+    if (!syswrite($hOut, '.' . $strBuffer))
     {
-        confess "unable to write string";
+        confess 'unable to write string';
     }
 }
 
@@ -229,7 +229,7 @@ sub error_write
 
     if (blessed($oMessage))
     {
-        if ($oMessage->isa("BackRest::Exception"))
+        if ($oMessage->isa('BackRest::Exception'))
         {
             $iCode = $oMessage->code();
             $strMessage = $oMessage->message();
@@ -251,9 +251,9 @@ sub error_write
         $self->string_write(*STDOUT, trim($strMessage));
     }
 
-    if (!syswrite(*STDOUT, "\nERROR" . (defined($iCode) ? " $iCode" : "") . "\n"))
+    if (!syswrite(*STDOUT, "\nERROR" . (defined($iCode) ? " $iCode" : '') . "\n"))
     {
-        confess "unable to write error";
+        confess 'unable to write error';
     }
 }
 
@@ -285,7 +285,7 @@ sub read_line
                 return undef;
             }
 
-            confess &log(ERROR, "unable to read 1 byte" . (defined($!) ? ": " . $! : ""));
+            confess &log(ERROR, 'unable to read 1 byte' . (defined($!) ? ': ' . $! : ''));
         }
 
         if ($strChar eq "\n")
@@ -316,7 +316,7 @@ sub write_line
 
     if (!defined($iLineOut) || $iLineOut != length($strBuffer))
     {
-        confess "unable to write " . length($strBuffer) . " byte(s)";
+        confess 'unable to write ' . length($strBuffer) . ' byte(s)';
     }
 }
 
@@ -331,11 +331,11 @@ sub wait_pid
 
     if (defined($self->{pId}) && waitpid($self->{pId}, WNOHANG) != 0)
     {
-        my $strError = "no error on stderr";
+        my $strError = 'no error on stderr';
 
         if (!defined($self->{hErr}))
         {
-            $strError = "no error captured because stderr is already closed";
+            $strError = 'no error captured because stderr is already closed';
         }
         else
         {
@@ -373,12 +373,12 @@ sub binary_xfer_thread
         if ($stryMessage[0] eq 'compress')
         {
             gzip($hIn => $hOut)
-                or confess &log(ERROR, "unable to compress: " . $GzipError);
+                or confess &log(ERROR, 'unable to compress: ' . $GzipError);
         }
         else
         {
             gunzip($hIn => $hOut)
-                or die confess &log(ERROR, "unable to uncompress: " . $GunzipError);
+                or die confess &log(ERROR, 'unable to uncompress: ' . $GunzipError);
         }
 
         close($hOut);
@@ -430,11 +430,11 @@ sub binary_xfer
     # Both the in and out streams must be defined
     if (!defined($hIn) || !defined($hOut))
     {
-        confess &log(ASSERT, "hIn or hOut is not defined");
+        confess &log(ASSERT, 'hIn or hOut is not defined');
     }
 
     # If this is output and the source is not already compressed
-    if ($strRemote eq "out" && !$bSourceCompressed)
+    if ($strRemote eq 'out' && !$bSourceCompressed)
     {
         # Increase the blocksize since we are compressing
         $iBlockSize *= 4;
@@ -443,7 +443,7 @@ sub binary_xfer
         pipe $hPipeOut, $hPipeIn;
 
         # Queue the compression job with the thread
-        $self->{oThreadQueue}->enqueue("compress:" . fileno($hIn) . ',' . fileno($hPipeIn));
+        $self->{oThreadQueue}->enqueue('compress:' . fileno($hIn) . ',' . fileno($hPipeIn));
 
         # Wait for the thread to acknowledge that it has duplicated the file handles
         my $strMessage = $self->{oThreadResult}->dequeue();
@@ -457,19 +457,19 @@ sub binary_xfer
         # If any other message is returned then error
         else
         {
-            confess "unknown thread message while waiting for running: $strMessage";
+            confess "unknown thread message while waiting for running: ${strMessage}";
         }
 
         $bThreadRunning = true;
     }
     # Spawn a child process to do decompression
-    elsif ($strRemote eq "in" && !$bDestinationCompress)
+    elsif ($strRemote eq 'in' && !$bDestinationCompress)
     {
         # Open the in/out pipes
         pipe $hPipeOut, $hPipeIn;
 
         # Queue the decompression job with the thread
-        $self->{oThreadQueue}->enqueue("decompress:" . fileno($hPipeOut) . ',' . fileno($hOut));
+        $self->{oThreadQueue}->enqueue('decompress:' . fileno($hPipeOut) . ',' . fileno($hOut));
 
         # Wait for the thread to acknowledge that it has duplicated the file handles
         my $strMessage = $self->{oThreadResult}->dequeue();
@@ -483,7 +483,7 @@ sub binary_xfer
         # If any other message is returned then error
         else
         {
-            confess "unknown thread message while waiting for running: $strMessage";
+            confess "unknown thread message while waiting for running: ${strMessage}";
         }
 
         $bThreadRunning = true;
@@ -507,7 +507,7 @@ sub binary_xfer
                 $iBlockTotal += 1;
             }
 
-            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, " ") + 1));
+            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, ' ') + 1));
 
             if ($iBlockSize != 0)
             {
@@ -519,7 +519,7 @@ sub binary_xfer
 
                     $self->wait_pid();
                     confess "unable to read block #${iBlockTotal}/${iBlockSize} bytes from remote" .
-                            (defined($strError) ? ": ${strError}" : "");
+                            (defined($strError) ? ": ${strError}" : '');
                 }
 
                 $iBlockInTotal += $iBlockIn;
@@ -536,7 +536,7 @@ sub binary_xfer
             if (!defined($iBlockIn))
             {
                 $self->wait_pid();
-                confess &log(ERROR, "unable to read");
+                confess &log(ERROR, 'unable to read');
             }
         }
 
@@ -549,7 +549,7 @@ sub binary_xfer
             if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
             {
                 $self->wait_pid();
-                confess "unable to write block header";
+                confess 'unable to write block header';
             }
         }
 
@@ -560,7 +560,7 @@ sub binary_xfer
             if (!defined($iBlockOut) || $iBlockOut != $iBlockIn)
             {
                 $self->wait_pid();
-                confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ": " . $! : "");
+                confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ': ' . $! : '');
             }
         }
         else
@@ -572,11 +572,11 @@ sub binary_xfer
     if ($bThreadRunning)
     {
         # Make sure the de/compress pipes are closed
-        if ($strRemote eq "out" && !$bSourceCompressed)
+        if ($strRemote eq 'out' && !$bSourceCompressed)
         {
             close($hPipeOut);
         }
-        elsif ($strRemote eq "in" && !$bDestinationCompress)
+        elsif ($strRemote eq 'in' && !$bDestinationCompress)
         {
             close($hPipeIn);
         }
@@ -590,7 +590,7 @@ sub binary_xfer
         # If any other message is returned then error
         else
         {
-            confess "unknown thread message while waiting for complete: $strMessage";
+            confess "unknown thread message while waiting for complete: ${strMessage}";
         }
     }
 }
@@ -629,7 +629,7 @@ sub output_read
             last;
         }
 
-        $strOutput .= (defined($strOutput) ? "\n" : "") . substr($strLine, 1);
+        $strOutput .= (defined($strOutput) ? "\n" : '') . substr($strLine, 1);
     }
 
     # Check if the process has exited abnormally
@@ -638,14 +638,14 @@ sub output_read
     # Raise any errors
     if ($bError)
     {
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : "") .
-                            (defined($strOutput) ? ": ${strOutput}" : ""), $iErrorCode);
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : '') .
+                            (defined($strOutput) ? ": ${strOutput}" : ''), $iErrorCode);
     }
 
     # If output is required and there is no output, raise exception
     if ($bOutputRequired && !defined($strOutput))
     {
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : "") . "output is not defined");
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') . 'output is not defined');
     }
 
     # Return output
@@ -668,13 +668,13 @@ sub output_write
 
         if (!syswrite(*STDOUT, "\n"))
         {
-            confess "unable to write output";
+            confess 'unable to write output';
         }
     }
 
     if (!syswrite(*STDOUT, "OK\n"))
     {
-        confess "unable to write output";
+        confess 'unable to write output';
     }
 }
 
@@ -692,8 +692,8 @@ sub command_param_string
 
     foreach my $strParam (sort(keys $oParamHashRef))
     {
-        $strParamList .= (defined($strParamList) ? "," : "") . "${strParam}=" .
-                         (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : "[undef]");
+        $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
+                         (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
     }
 
     return $strParamList;
@@ -733,7 +733,7 @@ sub command_read
                 last;
             }
 
-            my $iPos = index($strLine, "=");
+            my $iPos = index($strLine, '=');
 
             if ($iPos == -1)
             {
@@ -787,14 +787,14 @@ sub command_write
             }
         }
 
-        $strOutput .= "end";
+        $strOutput .= 'end';
     }
 
     &log(TRACE, "Remote->command_write:\n" . $strOutput);
 
     if (!syswrite($self->{hIn}, "${strOutput}\n"))
     {
-        confess "unable to write command";
+        confess 'unable to write command';
     }
 }
 

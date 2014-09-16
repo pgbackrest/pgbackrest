@@ -12,10 +12,10 @@ use warnings;
 use Carp;
 
 use File::Basename;
-use File::Copy "cp";
+use File::Copy 'cp';
 use DBI;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
@@ -94,9 +94,9 @@ sub BackRestTestBackup_ClusterStop
     BackRestTestBackup_PgDisconnect();
 
     # If postmaster process is running them stop the cluster
-    if (-e $strPath . "/postmaster.pid")
+    if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D $strPath -w -s -m fast");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m fast");
     }
 }
 
@@ -111,9 +111,9 @@ sub BackRestTestBackup_ClusterRestart
     BackRestTestBackup_PgDisconnect();
 
     # If postmaster process is running them stop the cluster
-    if (-e $strPath . "/postmaster.pid")
+    if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl restart -D $strPath -w -s");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl restart -D ${strPath} -w -s");
     }
 
     # Connect user session
@@ -128,14 +128,14 @@ sub BackRestTestBackup_ClusterCreate
     my $strPath = shift;
     my $iPort = shift;
 
-    my $strArchive = BackRestTestCommon_CommandMainGet() . " --stanza=" . BackRestTestCommon_StanzaGet() .
-                     " --config=" . BackRestTestCommon_DbPathGet() . "/pg_backrest.conf archive-push %p";
+    my $strArchive = BackRestTestCommon_CommandMainGet() . ' --stanza=' . BackRestTestCommon_StanzaGet() .
+                     ' --config=' . BackRestTestCommon_DbPathGet() . '/pg_backrest.conf archive-push %p';
 
     BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/initdb -D ${strPath} -A trust");
-    BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=$iPort -c " .
-                               "checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command='$strArchive' " .
+    BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort} -c " .
+                               "checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command='${strArchive}' " .
                                "-c unix_socket_directories='" . BackRestTestCommon_DbPathGet() . "'\" " .
-                               "-D $strPath -l $strPath/postgresql.log -w -s");
+                               "-D ${strPath} -l ${strPath}/postgresql.log -w -s");
 
     # Connect user session
     BackRestTestBackup_PgConnect();
@@ -194,7 +194,7 @@ sub BackRestTestBackup_Create
     # Create the backup directory
     if ($bRemote)
     {
-        BackRestTestCommon_Execute("mkdir -m 700 " . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_BackupPathGet(), true);
     }
     else
     {
@@ -240,7 +240,7 @@ sub BackRestTestBackup_Test
     my $iThreadMax = 4;
 
     # Print test banner
-    &log(INFO, "BACKUP MODULE ******************************************************************");
+    &log(INFO, 'BACKUP MODULE ******************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
@@ -309,7 +309,7 @@ sub BackRestTestBackup_Test
                                                 $bCompressAsync);
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                                 "/pg_backrest.conf --stanza=db archive-push";
+                                 '/pg_backrest.conf --stanza=db archive-push';
 
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
@@ -324,13 +324,13 @@ sub BackRestTestBackup_Test
 
                         if ($iArchiveNo > 255)
                         {
-                            confess "backup total * archive total cannot be greater than 255";
+                            confess 'backup total * archive total cannot be greater than 255';
                         }
 
-                        $strArchiveFile = uc(sprintf("0000000100000001%08x", $iArchiveNo));
+                        $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
-                        &log(INFO, "    backup " . sprintf("%02d", $iBackup) .
-                                   ", archive " .sprintf("%02x", $iArchive) .
+                        &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
+                                   ', archive ' .sprintf('%02x', $iArchive) .
                                    " - ${strArchiveFile}");
 
                         my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
@@ -354,7 +354,7 @@ sub BackRestTestBackup_Test
 
                         if ($bCompress)
                         {
-                            $strArchiveCheck .= ".gz";
+                            $strArchiveCheck .= '.gz';
                         }
 
                         if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
@@ -363,7 +363,7 @@ sub BackRestTestBackup_Test
 
                             if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
                             {
-                                confess "unable to find " . $oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+                                confess 'unable to find ' . $oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
                             }
                         }
                     }
@@ -437,7 +437,7 @@ sub BackRestTestBackup_Test
                                                 undef);                             # compress-async
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                                 "/pg_backrest.conf --stanza=db archive-get";
+                                 '/pg_backrest.conf --stanza=db archive-get';
 
                 # Loop through backups
                 my $strArchiveFile;
@@ -448,12 +448,12 @@ sub BackRestTestBackup_Test
                     # Construct the archive filename
                     if ($iArchiveNo > 255)
                     {
-                        confess "backup total * archive total cannot be greater than 255";
+                        confess 'backup total * archive total cannot be greater than 255';
                     }
 
-                    $strArchiveFile = uc(sprintf("0000000100000001%08x", $iArchiveNo));
+                    $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
-                    &log(INFO, "    archive " .sprintf("%02x", $iArchiveNo) .
+                    &log(INFO, '    archive ' .sprintf('%02x', $iArchiveNo) .
                                " - ${strArchiveFile}");
 
                     my $strSourceFile = $strArchiveFile;
@@ -465,7 +465,7 @@ sub BackRestTestBackup_Test
 
                     if ($bCompress)
                     {
-                        $strSourceFile .= ".gz";
+                        $strSourceFile .= '.gz';
                     }
 
                     $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
@@ -574,8 +574,8 @@ sub BackRestTestBackup_Test
 
                     for (my $iIncr = 0; $iIncr <= 2; $iIncr++)
                     {
-                        &log(INFO, "    " . ($iIncr == 0 ? ("full " . sprintf("%02d", $iFull)) :
-                                                           ("    incr " . sprintf("%02d", $iIncr))));
+                        &log(INFO, '    ' . ($iIncr == 0 ? ('full ' . sprintf('%02d', $iFull)) :
+                                                           ('    incr ' . sprintf('%02d', $iIncr))));
 
                         # Create a table in each backup to check references
                         BackRestTestBackup_PgExecute("create table test_backup_${iIncr} (id int)", true);
