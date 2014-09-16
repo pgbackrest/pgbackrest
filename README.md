@@ -2,12 +2,6 @@
 
 Simple Postgres Backup and Restore
 
-## recognition
-
-Primary recognition goes to Stephen Frost for all his valuable advice a criticism during the development of BackRest.  It's a far better piece of software than it would have been without him.  Any mistakes should be blamed on me alone.
-
-Resonate (http://www.resonateinsights.com) also contributed to the development of BackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.  Works so far!
-
 ## release notes
 
 ### v0.30: core restructuring and unit testing
@@ -69,3 +63,9 @@ This version has been put into production at Resonate, so it does work, but ther
 * Absolutely no documentation (outside the code).  Well, excepting these release notes.
 
 * Lots of other little things and not so little things.  Much refactoring to follow.
+
+## recognition
+
+Primary recognition goes to Stephen Frost for all his valuable advice a criticism during the development of BackRest.  It's a far better piece of software than it would have been without him.  Any mistakes should be blamed on me alone.
+
+Resonate (http://www.resonateinsights.com) also contributed to the development of BackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.  Works so far!
