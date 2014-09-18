@@ -1,4 +1,4 @@
-# pg_backrest installation
+# PgBackRest Installation
 
 ## sample ubuntu 12.04 install
 
@@ -44,7 +44,7 @@ cpanm Digest::SHA
 cpanm IO::Compress::Gzip
 cpanm IO::Uncompress::Gunzip
 ```
-5. Install BackRest
+5. Install PgBackRest
 
 Backrest can be installed by downloading the most recent release:
 
@@ -58,7 +58,7 @@ https://github.com/dwsteele/pg_backrest/releases
 
 ## configuration examples
 
-BackRest takes some command-line parameters, but depends on a configuration file for most of the settings.  The default location for the configuration file is /etc/pg_backrest.conf.
+PgBackRest takes some command-line parameters, but depends on a configuration file for most of the settings.  The default location for the configuration file is /etc/pg_backrest.conf.
 
 #### confguring postgres for archiving with backrest
 
@@ -69,7 +69,7 @@ archive_mode = on
 archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
 ```
 
-Replace the path with the actual location where BackRest was installed.  The stanza parameter should be changed to the actual stanza name you used for your database in pg_backrest.conf.
+Replace the path with the actual location where PgBackRest was installed.  The stanza parameter should be changed to the actual stanza name you used for your database in pg_backrest.conf.
 
 #### simple single host install
 
@@ -130,7 +130,7 @@ path=/var/lib/postgresql/9.3/main
 
 ## running
 
-BackRest is intended to be run from a scheduler like cron as there is no built-in scheduler.  Postgres does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured in rentention, BackRest will keep two full backup no matter whether they occur 2 hours apart or two weeks apart.
+PgBackRest is intended to be run from a scheduler like cron as there is no built-in scheduler.  Postgres does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured in rentention, PgBackRest will keep two full backup no matter whether they occur 2 hours apart or two weeks apart.
 
 There are four basic operations:
 
@@ -160,7 +160,7 @@ Expire (rotate) any backups that exceed the defined retention.  Expiration is ru
 
 ## structure
 
-BackRest stores files in a way that is easy for users to work with directly.  Each backup directory has two files and two subdirectories:
+PgBackRest stores files in a way that is easy for users to work with directly.  Each backup directory has two files and two subdirectories:
 
 1. `backup.manifest` file
 
@@ -168,7 +168,7 @@ Stores information about all the directories, links, and files in the backup.  T
 
 2. `version` file
 
-Contains the BackRest version that was used to create the backup.
+Contains the PgBackRest version that was used to create the backup.
 
 3. `base` directory
 
@@ -180,7 +180,7 @@ Contains each tablespace in a separate subdirectory.  The links in `base/pg_tbls
 
 ## restoring
 
-BackRest does not currently have a restore command - this is planned for the near future.  However, BackRest stores backups in a way that makes restoring very easy.  If `compress=n` it is even possible to start Postgres directly on the backup directory.
+PgBackRest does not currently have a restore command - this is planned for the near future.  However, PgBackRest stores backups in a way that makes restoring very easy.  If `compress=n` it is even possible to start Postgres directly on the backup directory.
 
 In order to restore a backup, simple rsync the files from the base backup directory to your data directory.  If you have used compression, then recursively ungzip the files.  If you have tablespaces, repeat the process for each tablespace in the backup tablespace directory.
 
@@ -192,7 +192,7 @@ Each section defines important aspects of the backup.  All configuration section
 
 #### command section
 
-The command section defines external commands that are used by BackRest.
+The command section defines external commands that are used by PgBackRest.
 
 ##### psql key
 
@@ -344,7 +344,7 @@ example: compress-async=y
 
 Limits the amount of archive log that will be written locally.  After the limit is reached, the following will happen:
 
-1. BackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
+1. PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
 2. An error will be logged to the console and also to the Postgres log.
 3. A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.
 
@@ -377,7 +377,7 @@ example: differential-retention=3
 ```
 ##### archive-retention-type
 
-Type of backup to use for archive retention (full or differential).  If set to full, then BackRest will keep archive logs for the number of full backups defined by `archive-retention`.  If set to differential, then BackRest will keep archive logs for the number of differential backups defined by `archive-retention`.
+Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by `archive-retention`.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by `archive-retention`.
 
 If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.
 ```
