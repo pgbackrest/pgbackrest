@@ -341,7 +341,7 @@ sub log_file_set
         print $hLogFile "\n";
     }
 
-    print $hLogFile '-------------------PROCESS START-------------------\n';
+    print $hLogFile "-------------------PROCESS START-------------------\n";
 }
 
 ####################################################################################################################################
@@ -352,19 +352,20 @@ sub test_set
     my $bTestParam = shift;
     my $iTestDelayParam = shift;
 
+    # Set defaults
     $bTest = defined($bTestParam) ? $bTestParam : false;
     $iTestDelay = defined($bTestParam) ? $iTestDelayParam : $iTestDelay;
-
-    # Test delay should be between 1 and 600 seconds
-    if (!($iTestDelay >= 1 && $iTestDelay <= 600))
-    {
-        confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
-    }
 
     # Make sure that a delay is specified in test mode
     if ($bTest && !defined($iTestDelay))
     {
         confess &log(ASSERT, 'iTestDelay must be provided when bTest is true');
+    }
+
+    # Test delay should be between 1 and 600 seconds
+    if (!($iTestDelay >= 1 && $iTestDelay <= 600))
+    {
+        confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
     }
 }
 
