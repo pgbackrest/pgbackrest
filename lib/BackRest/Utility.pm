@@ -495,14 +495,16 @@ sub log
 }
 
 ####################################################################################################################################
-# CONFIG_LOAD - Load config file
+# CONFIG_LOAD
+#
+# Load configuration file from standard INI format to a hash.
 ####################################################################################################################################
 sub config_load
 {
-    my $strFile = shift;
-    my $oConfig = shift;
+    my $strFile = shift;    # Full path to config file to load from
+    my $oConfig = shift;    # Reference to the hash where config data will be stored
 
-    # Open the config file
+    # Open the config file for reading
     my $hFile;
     my $strSection;
 
@@ -552,18 +554,21 @@ sub config_load
 }
 
 ####################################################################################################################################
-# CONFIG_SAVE - Save config file
+# CONFIG_SAVE
+#
+# Save configuration file from a hash to standard INI format.
 ####################################################################################################################################
 sub config_save
 {
-    my $strBackupManifestFile = shift;
-    my $oConfig = shift;
+    my $strFile = shift;    # Full path to config file to save to
+    my $oConfig = shift;    # Reference to the hash where config data is stored
 
+    # Open the config file for writing
     my $hFile;
     my $bFirst = true;
 
-    open($hFile, '>', $strBackupManifestFile)
-        or confess &log(ERROR, "unable to open ${strBackupManifestFile}");
+    open($hFile, '>', $strFile)
+        or confess &log(ERROR, "unable to open ${strFile}");
 
     foreach my $strSection (sort(keys $oConfig))
     {
