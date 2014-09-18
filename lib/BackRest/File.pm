@@ -479,7 +479,7 @@ sub move
 
             if (!rename($strPathOpSource, $strPathOpDestination))
             {
-                confess &log(ERROR, "unable to open move file ${strPathOpSource}: " . $!);
+                confess &log(ERROR, "unable to move file ${strPathOpSource}: " . $!);
             }
         }
     }
