@@ -17,7 +17,7 @@ use File::stat;
 use Fcntl ':mode';
 use Scalar::Util 'blessed';
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
@@ -51,7 +51,7 @@ sub BackRestTestFile_Setup
     if (!defined($bDropOnly) || !$bDropOnly)
     {
         # Create the test directory
-        mkdir($strTestPath, oct("0770")) or confess "Unable to create test directory";
+        mkdir($strTestPath, oct('0770')) or confess 'Unable to create test directory';
 
         # Create the backrest private directory
         if (defined($bPrivate) && $bPrivate)
@@ -84,7 +84,7 @@ sub BackRestTestFile_Test
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
 
     # Print test banner
-    &log(INFO, "FILE MODULE ********************************************************************");
+    &log(INFO, 'FILE MODULE ********************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
@@ -132,16 +132,16 @@ sub BackRestTestFile_Test
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
 
-                mkdir("$strTestPath/backup") or confess "Unable to create test/backup directory";
-                mkdir("$strTestPath/backup/db") or confess "Unable to create test/backup/db directory";
+                mkdir("${strTestPath}/backup") or confess 'Unable to create test/backup directory';
+                mkdir("${strTestPath}/backup/db") or confess 'Unable to create test/backup/db directory';
 
-                my $strPath = "path";
+                my $strPath = 'path';
                 my $strPermission;
 
                 # If permission then set one (other than the default)
                 if ($bPermission)
                 {
-                    $strPermission = "0700";
+                    $strPermission = '0700';
                 }
 
                 # If not exists then set the path to something bogus
@@ -181,7 +181,7 @@ sub BackRestTestFile_Test
 
                 unless (-e $strPathCheck)
                 {
-                    confess "path was not created";
+                    confess 'path was not created';
                 }
 
                 # Check that the permissions were set correctly
@@ -194,7 +194,7 @@ sub BackRestTestFile_Test
 
                 if ($bPermission)
                 {
-                    if ($strPermission ne sprintf("%04o", S_IMODE($oStat->mode)))
+                    if ($strPermission ne sprintf('%04o', S_IMODE($oStat->mode)))
                     {
                         confess "permissions were not set to {$strPermission}";
                     }
@@ -211,7 +211,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "Test File->move()\n");
 
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
@@ -242,9 +242,9 @@ sub BackRestTestFile_Test
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "src_exists $bSourceExists, src_error $bSourceError, " .
-                                            ", dst_exists $bDestinationExists, dst_error $bDestinationError, " .
-                                            "dst_create $bCreate")) {next}
+                                            "src_exists ${bSourceExists}, src_error ${bSourceError}, " .
+                                            ", dst_exists ${bDestinationExists}, dst_error ${bDestinationError}, " .
+                                            "dst_create ${bCreate}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bSourceError || $bDestinationError);
@@ -283,17 +283,17 @@ sub BackRestTestFile_Test
                         next;
                     }
 
-                    confess "error raised: " . $@ . "\n";
+                    confess 'error raised: ' . $@ . "\n";
                 }
 
                 if (!$bSourceExists || (!$bDestinationExists && !$bCreate) || $bSourceError || $bDestinationError)
                 {
-                    confess "error should have been raised";
+                    confess 'error should have been raised';
                 }
 
                 unless (-e $strDestinationFile)
                 {
-                    confess "file was not moved";
+                    confess 'file was not moved';
                 }
             }
             }
@@ -310,7 +310,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "Test File->compress()\n");
 
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
@@ -330,7 +330,7 @@ sub BackRestTestFile_Test
             for (my $bError = 0; $bError <= 1; $bError++)
             {
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt $bRemote, exists $bExists, err $bError")) {next}
+                                            "rmt ${bRemote}, exists ${bExists}, err ${bError}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -361,24 +361,24 @@ sub BackRestTestFile_Test
                         next;
                     }
 
-                    confess "error raised: " . $@ . "\n";
+                    confess 'error raised: ' . $@ . "\n";
                 }
 
                 if (!$bExists || $bError)
                 {
-                    confess "expected error";
+                    confess 'expected error';
                 }
 
-                my $strDestinationFile = $strFile . ".gz";
+                my $strDestinationFile = $strFile . '.gz';
 
                 if (-e $strFile)
                 {
-                    confess "source file still exists";
+                    confess 'source file still exists';
                 }
 
                 unless (-e $strDestinationFile)
                 {
-                    confess "file was not compressed";
+                    confess 'file was not compressed';
                 }
 
                 system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
@@ -401,7 +401,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "Test File->manifest()\n");
 
         my $strManifestCompare =
@@ -432,14 +432,14 @@ sub BackRestTestFile_Test
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt $bRemote, exists $bExists, err $bError")) {next}
+                                            "rmt ${bRemote}, exists ${bExists}, err ${bError}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
 
                 # Setup test data
-                system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess "Unable to create test directory";
-                system("mkdir -m 750 ${strTestPath}/sub1/sub2") == 0 or confess "Unable to create test directory";
+                system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess 'Unable to create test directory';
+                system("mkdir -m 750 ${strTestPath}/sub1/sub2") == 0 or confess 'Unable to create test directory';
 
                 system("echo 'TESTDATA' > ${strTestPath}/test.txt");
                 utime(1111111111, 1111111111, "${strTestPath}/test.txt");
@@ -468,11 +468,11 @@ sub BackRestTestFile_Test
 
                 if ($bError)
                 {
-                    $strPath = $strTestPath . "/private";
+                    $strPath = $strTestPath . '/private';
                 }
                 elsif (!$bExists)
                 {
-                    $strPath = $strTestPath . "/error";
+                    $strPath = $strTestPath . '/error';
                 }
 
                 # Execute in eval in case of error
@@ -492,7 +492,7 @@ sub BackRestTestFile_Test
                         next;
                     }
 
-                    confess "error raised: " . $@ . "\n";
+                    confess 'error raised: ' . $@ . "\n";
                 }
 
                 # Check for an expected error
@@ -508,7 +508,7 @@ sub BackRestTestFile_Test
                 {
                     if (!defined($strManifest))
                     {
-                        $strManifest = "";
+                        $strManifest = '';
                     }
                     else
                     {
@@ -522,21 +522,21 @@ sub BackRestTestFile_Test
 
                     $strManifest .=
                         "${strName}," .
-                        $oManifestHash{name}{"${strName}"}{type} . "," .
+                        $oManifestHash{name}{"${strName}"}{type} . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{user}) ?
-                            $oManifestHash{name}{"${strName}"}{user} : "") . "," .
+                            $oManifestHash{name}{"${strName}"}{user} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{group}) ?
-                            $oManifestHash{name}{"${strName}"}{group} : "") . "," .
+                            $oManifestHash{name}{"${strName}"}{group} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{permission}) ?
-                            $oManifestHash{name}{"${strName}"}{permission} : "") . "," .
+                            $oManifestHash{name}{"${strName}"}{permission} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
-                            $oManifestHash{name}{"${strName}"}{modification_time} : "") . "," .
+                            $oManifestHash{name}{"${strName}"}{modification_time} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{inode}) ?
-                            $oManifestHash{name}{"${strName}"}{inode} : "") . "," .
+                            $oManifestHash{name}{"${strName}"}{inode} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{size}) ?
-                            $oManifestHash{name}{"${strName}"}{size} : "") . "," .
+                            $oManifestHash{name}{"${strName}"}{size} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                            $oManifestHash{name}{"${strName}"}{link_destination} : "");
+                            $oManifestHash{name}{"${strName}"}{link_destination} : '');
                 }
 
                 if ($strManifest ne $strManifestCompare)
@@ -555,7 +555,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "Test File->list()\n");
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
@@ -572,7 +572,7 @@ sub BackRestTestFile_Test
             # Loop through exists
             for (my $bSort = 0; $bSort <= 1; $bSort++)
             {
-                my $strSort = $bSort ? undef : "reverse";
+                my $strSort = $bSort ? undef : 'reverse';
 
                 # Loop through expression
                 for (my $iExpression = 0; $iExpression <= 2; $iExpression++)
@@ -598,14 +598,14 @@ sub BackRestTestFile_Test
                     for (my $bError = 0; $bError <= 1; $bError++)
                     {
                         if (!BackRestTestCommon_Run(++$iRun,
-                                                    "rmt $bRemote, err $bError, exists $bExists, " .
-                                                    "expression " . (defined($strExpression) ? $strExpression : "[undef]") . ", " .
-                                                    "sort " . (defined($strSort) ? $strSort : "[undef]"))) {next}
+                                                    "rmt ${bRemote}, err ${bError}, exists ${bExists}, " .
+                                                    'expression ' . (defined($strExpression) ? $strExpression : '[undef]') . ', ' .
+                                                    'sort ' . (defined($strSort) ? $strSort : '[undef]'))) {next}
 
                         # Setup test directory
                         BackRestTestFile_Setup($bError);
 
-                        my $strPath = "${strTestPath}";
+                        my $strPath = $strTestPath;
 
                         if ($bError)
                         {
@@ -639,7 +639,7 @@ sub BackRestTestFile_Test
                                 next;
                             }
 
-                            confess "error raised: " . $@ . "\n";
+                            confess 'error raised: ' . $@ . "\n";
                         }
 
                         if ($bErrorExpected)
@@ -664,7 +664,7 @@ sub BackRestTestFile_Test
                         if ($strFileList ne $strFileCompare)
                         {
                             confess "list (${strFileList})[" . @stryFileList .
-                                    "] does not match compare (${strFileCompare})[" . @stryFileCompare . "]";
+                                    "] does not match compare (${strFileCompare})[" . @stryFileCompare . ']';
                         }
                     }
                     }
@@ -680,7 +680,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "Test File->remove()\n");
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
@@ -706,7 +706,7 @@ sub BackRestTestFile_Test
                 for (my $bIgnoreMissing = 0; $bIgnoreMissing <= 1; $bIgnoreMissing++)
                 {
                     if (!BackRestTestCommon_Run(++$iRun,
-                                                "rmt ${bRemote}, err = $bError, exists ${bExists}, tmp ${bTemp}, " .
+                                                "rmt ${bRemote}, err = ${bError}, exists ${bExists}, tmp ${bTemp}, " .
                                                 "ignore missing ${bIgnoreMissing}")) {next}
 
                     # Setup test directory
@@ -724,7 +724,7 @@ sub BackRestTestFile_Test
                     }
                     else
                     {
-                        system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? ".backrest.tmp" : ""));
+                        system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? '.backrest.tmp' : ''));
                     }
 
                     # Execute in eval in case of error
@@ -747,7 +747,7 @@ sub BackRestTestFile_Test
                             next;
                         }
 
-                        confess "unexpected error raised: " . $@;
+                        confess 'unexpected error raised: ' . $@;
                     }
 
                     if ($bError || $bRemote)
@@ -765,9 +765,9 @@ sub BackRestTestFile_Test
                         confess 'remove returned false, but something should have been removed';
                     }
 
-                    if (-e ($strFile . ($bTemp ? ".backrest.tmp" : "")))
+                    if (-e ($strFile . ($bTemp ? '.backrest.tmp' : '')))
                     {
-                        confess "file still exists";
+                        confess 'file still exists';
                     }
                 }
             }
@@ -783,7 +783,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "test File->hash()\n");
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
@@ -803,7 +803,7 @@ sub BackRestTestFile_Test
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt $bRemote, err $bError, exists $bExists")) {next}
+                                            "rmt ${bRemote}, err ${bError}, exists ${bExists}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -839,12 +839,12 @@ sub BackRestTestFile_Test
                         next;
                     }
 
-                    confess "unexpected error raised: " . $@;
+                    confess 'unexpected error raised: ' . $@;
                 }
 
                 if ($bErrorExpected)
                 {
-                    confess "error was expected";
+                    confess 'error was expected';
                 }
 
                 if ($strHash ne '06364afe79d801433188262478a76d19777ef351')
@@ -863,7 +863,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "--------------------------------------------------------------------------------");
+        &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "test File->exists()\n");
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
@@ -883,7 +883,7 @@ sub BackRestTestFile_Test
                 for (my $bError = 0; $bError <= $bExists; $bError++)
                 {
                     if (!BackRestTestCommon_Run(++$iRun,
-                                                "rmt $bRemote, err $bError, exists $bExists")) {next}
+                                                "rmt ${bRemote}, err ${bError}, exists ${bExists}")) {next}
 
                     # Setup test directory
                     BackRestTestFile_Setup($bError);
@@ -916,7 +916,7 @@ sub BackRestTestFile_Test
 
                         if (blessed($oMessage))
                         {
-                            if ($oMessage->isa("BackRest::Exception"))
+                            if ($oMessage->isa('BackRest::Exception'))
                             {
                                 $iCode = $oMessage->code();
                                 $strMessage = $oMessage->message();
@@ -936,7 +936,7 @@ sub BackRestTestFile_Test
                             next;
                         }
 
-                        confess "error raised: " . $strMessage . "\n";
+                        confess 'error raised: ' . $strMessage . "\n";
                     }
                 }
             }
@@ -996,27 +996,27 @@ sub BackRestTestFile_Test
             for (my $bLarge = false; $bLarge <= defined($strRemote) && !$bSourceMissing; $bLarge++)
             {
                 my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
-                my $strSourcePath = $bSourcePathType ? "db" : "backup";
+                my $strSourcePath = $bSourcePathType ? 'db' : 'backup';
 
                 my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
-                my $strDestinationPath = $bDestinationPathType ? "db" : "backup";
+                my $strDestinationPath = $bDestinationPathType ? 'db' : 'backup';
 
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt " .
+                                            'rmt ' .
                                                 (defined($strRemote) && ($strRemote eq $strSourcePath ||
                                                  $strRemote eq $strDestinationPath) ? 1 : 0) .
                                             ", lrg ${bLarge}, " .
-                                            "srcpth " . (defined($strRemote) && $strRemote eq $strSourcePath ? "rmt" : "lcl") .
+                                            'srcpth ' . (defined($strRemote) && $strRemote eq $strSourcePath ? 'rmt' : 'lcl') .
                                                 ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
                                                 "srcignmiss ${bSourceIgnoreMissing}, " .
-                                            "dstpth " .
-                                                (defined($strRemote) && $strRemote eq $strDestinationPath ? "rmt" : "lcl") .
+                                            'dstpth ' .
+                                                (defined($strRemote) && $strRemote eq $strDestinationPath ? 'rmt' : 'lcl') .
                                                 ":${strDestinationPath}, dstcmp $bDestinationCompress")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup(false);
-                system("mkdir ${strTestPath}/backup") == 0 or confess "Unable to create test/backup directory";
-                system("mkdir ${strTestPath}/db") == 0 or confess "Unable to create test/db directory";
+                system("mkdir ${strTestPath}/backup") == 0 or confess 'Unable to create test/backup directory';
+                system("mkdir ${strTestPath}/db") == 0 or confess 'Unable to create test/db directory';
 
                 my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source";
                 my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination";
@@ -1028,15 +1028,15 @@ sub BackRestTestFile_Test
                 {
                     if ($bLarge)
                     {
-                        $strSourceFile .= ".bin";
-                        $strDestinationFile .= ".bin";
+                        $strSourceFile .= '.bin';
+                        $strDestinationFile .= '.bin';
 
                         BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive.bin ${strSourceFile}");
                     }
                     else
                     {
-                        $strSourceFile .= ".txt";
-                        $strDestinationFile .= ".txt";
+                        $strSourceFile .= '.txt';
+                        $strDestinationFile .= '.txt';
 
                         system("echo 'TESTDATA' > ${strSourceFile}");
                     }
@@ -1046,13 +1046,13 @@ sub BackRestTestFile_Test
                     if ($bSourceCompressed)
                     {
                         system("gzip ${strSourceFile}");
-                        $strSourceFile .= ".gz";
+                        $strSourceFile .= '.gz';
                     }
                 }
 
                 if ($bDestinationCompress)
                 {
-                    $strDestinationFile .= ".gz";
+                    $strDestinationFile .= '.gz';
                 }
 
                 # Run file copy in an eval block because some errors are expected
@@ -1074,7 +1074,7 @@ sub BackRestTestFile_Test
 
                     if (blessed($oMessage))
                     {
-                        if ($oMessage->isa("BackRest::Exception"))
+                        if ($oMessage->isa('BackRest::Exception'))
                         {
                             if ($bSourceMissing && !$bSourceIgnoreMissing)
                             {
@@ -1104,7 +1104,7 @@ sub BackRestTestFile_Test
                          next;
                     }
 
-                    confess "expected source file missing error";
+                    confess 'expected source file missing error';
                 }
 
                 unless (-e $strDestinationFile)
