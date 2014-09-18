@@ -14,10 +14,10 @@ use Carp;
 use File::Basename;
 use Cwd 'abs_path';
 use IPC::Open3;
-use POSIX ":sys_wait_h";
+use POSIX ':sys_wait_h';
 use IO::Select;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::File;
 
@@ -72,7 +72,7 @@ sub BackRestTestCommon_Run
         return false;
     }
 
-    &log(INFO, "run " . sprintf("%03d", $iRun) . " - " . $strLog);
+    &log(INFO, 'run ' . sprintf('%03d', $iRun) . ' - ' . $strLog);
 
     if ($bDryRun)
     {
@@ -208,7 +208,7 @@ sub BackRestTestCommon_Setup
 
     $strPgSqlBin = $strPgSqlBinParam;
 
-    $strCommonStanza = "db";
+    $strCommonStanza = 'db';
     $strCommonHost = '127.0.0.1';
     $strCommonUser = getpwuid($<);
     $strCommonGroup = getgrgid($();
@@ -345,7 +345,7 @@ sub BackRestTestCommon_ConfigCreate
     }
     else
     {
-        BackRestTestCommon_Execute("mv $strFile " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+        BackRestTestCommon_Execute("mv ${strFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
     }
 }
 
