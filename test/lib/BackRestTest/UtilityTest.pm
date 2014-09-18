@@ -13,7 +13,7 @@ use Carp;
 
 use File::Basename;
 
-use lib dirname($0) . "/../lib";
+use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::File;
 
@@ -58,7 +58,7 @@ sub BackRestTestUtility_Test
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
     # Print test banner
-    &log(INFO, "UTILITY MODULE ******************************************************************");
+    &log(INFO, 'UTILITY MODULE ******************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test config
@@ -72,7 +72,7 @@ sub BackRestTestUtility_Test
         &log(INFO, "Test config\n");
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (BackRestTestCommon_Run(++$iRun, "base"))
+        if (BackRestTestCommon_Run(++$iRun, 'base'))
         {
             # Create the test directory
             if ($bCreate)
