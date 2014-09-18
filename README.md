@@ -1,6 +1,6 @@
-# pg_backrest
+# PgBackRest - Simple Postgres Backup & Restore
 
-Simple Postgres Backup and Restore
+PgBackRest aims to be a simple backup and restore system that can seamlessly scale up to the largest databases and workloads.
 
 ## release notes
 
