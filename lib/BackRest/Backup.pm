@@ -1287,6 +1287,9 @@ sub backup
     # Create the cluster backup path
     $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
 
+    # Declare the backup manifest
+    my %oBackupManifest;
+
     # Find the previous backup based on the type
     my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
 
@@ -1302,6 +1305,7 @@ sub backup
         }
 
         &log(INFO, "last backup label: $oLastManifest{backup}{label}, version $oLastManifest{backup}{version}");
+        ${oBackupManifest}{backup}{prior} = $oLastManifest{backup}{label};
     }
 
     # Build backup tmp and config
@@ -1309,7 +1313,6 @@ sub backup
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
 
     # Start backup
-    my %oBackupManifest;
     ${oBackupManifest}{backup}{timestamp_start} = $strTimestampStart;
 
     my $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
