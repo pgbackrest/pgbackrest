@@ -1313,7 +1313,7 @@ sub backup
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
 
     # Start backup
-    ${oBackupManifest}{backup}{timestamp_start} = $strTimestampStart;
+    ${oBackupManifest}{backup}{'timestamp-start'} = $strTimestampStart;
 
     my $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
     ${oBackupManifest}{backup}{'archive-start'} = $strArchiveStart;
@@ -1421,7 +1421,7 @@ sub backup
     }
 
     # Record timestamp stop in the config
-    ${oBackupManifest}{backup}{timestamp_stop} = timestamp_string_get();
+    ${oBackupManifest}{backup}{'timestamp-stop'} = timestamp_string_get();
     ${oBackupManifest}{backup}{label} = $strBackupPath;
 
     # Save the backup conf file final time
