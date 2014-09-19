@@ -34,6 +34,8 @@ my $iThreadLocalMax;
 my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
+my $bNoStartStop;
+my $bForce;
 my $iThreadTimeout;
 
 # Thread variables
@@ -56,6 +58,8 @@ sub backup_init
     my $iThreadMaxParam = shift;
     my $bArchiveRequiredParam = shift;
     my $iThreadTimeoutParam = shift;
+    my $bNoStartStopParam = shift;
+    my $bForceParam = shift;
 
     $oDb = $oDbParam;
     $oFile = $oFileParam;
@@ -64,8 +68,15 @@ sub backup_init
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
     $iThreadMax = $iThreadMaxParam;
-    $bArchiveRequired = $bArchiveRequiredParam;
     $iThreadTimeout = $iThreadTimeoutParam;
+    $bNoStartStop = $bNoStartStopParam;
+    $bForce = $bForceParam;
+
+    # If no-start-stop is specified then archive-required must be false
+    if ($bNoStartStop)
+    {
+        $bArchiveRequired = false;
+    }
 
     if (!defined($iThreadMax))
     {
@@ -802,7 +813,7 @@ sub backup_manifest_build
     foreach my $strName (sort(keys $oManifestHash{name}))
     {
         # Skip certain files during backup
-        if ($strName =~ /^pg\_xlog\/.*/ ||    # pg_xlog/ - this will be reconstructed
+        if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) ||    # pg_xlog/ - this will be reconstructed
             $strName =~ /^postmaster\.pid$/)  # postmaster.pid - to avoid confusing postgres when restoring
         {
             next;
@@ -1312,18 +1323,65 @@ sub backup
     my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
 
-    # Start backup
+    # Start backup (unless no-start-stop is set)
     ${oBackupManifest}{backup}{'timestamp-start'} = $strTimestampStart;
+    my $strArchiveStart;
 
-    my $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
-    ${oBackupManifest}{backup}{'archive-start'} = $strArchiveStart;
+    if ($bNoStartStop)
+    {
+        if ($oFile->exists(PATH_DB_ABSOLUTE, $strDbClusterPath . '/postmaster.pid'))
+        {
+            if ($bForce)
+            {
+                &log(WARN, '--no-start-stop passed and postmaster.pid exists but --force was passed so backup will continue, ' .
+                           'though it looks like the postmaster is running and the backup will probably not be consistent');
+            }
+            else
+            {
+                &log(ERROR, '--no-start-stop passed but postmaster.pid exists - looks like the postmaster is running. ' .
+                            'Shutdown the postmaster and try again, or use --force.');
+                exit 1;
+            }
+        }
+    }
+    else
+    {
+        $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
+        ${oBackupManifest}{backup}{'archive-start'} = $strArchiveStart;
+        &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{'archive-start'});
+    }
+
     ${oBackupManifest}{backup}{version} = version_get();
-
-    &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{'archive-start'});
 
     # Build the backup manifest
     my %oTablespaceMap;
-    $oDb->tablespace_map_get(\%oTablespaceMap);
+
+    if ($bNoStartStop)
+    {
+        my %oTablespaceManifestHash;
+        $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/pg_tblspc', \%oTablespaceManifestHash);
+
+        foreach my $strName (sort(keys $oTablespaceManifestHash{name}))
+        {
+            if ($strName eq '.' or $strName eq '..')
+            {
+                next;
+            }
+
+            if ($oTablespaceManifestHash{name}{"${strName}"}{type} ne 'l')
+            {
+                confess &log(ERROR, "pg_tblspc/${strName} is not a link");
+            }
+
+            &log(DEBUG, "Found tablespace ${strName}");
+
+            $oTablespaceMap{oid}{"${strName}"}{name} = $strName;
+        }
+    }
+    else
+    {
+        $oDb->tablespace_map_get(\%oTablespaceMap);
+    }
 
     backup_manifest_build($strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
@@ -1355,11 +1413,15 @@ sub backup
     # Perform the backup
     backup_file($strDbClusterPath, \%oBackupManifest);
 
-    # Stop backup
-    my $strArchiveStop = $oDb->backup_stop();
+    # Stop backup (unless no-start-stop is set)
+    my $strArchiveStop;
 
-    ${oBackupManifest}{backup}{'archive-stop'} = $strArchiveStop;
-    &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{'archive-stop'});
+    if (!$bNoStartStop)
+    {
+        $strArchiveStop = $oDb->backup_stop();
+        ${oBackupManifest}{backup}{'archive-stop'} = $strArchiveStop;
+        &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{'archive-stop'});
+    }
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be

@@ -29,7 +29,8 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRe
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
                  BackRestTestCommon_GroupGet BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet
                  BackRestTestCommon_DataPathGet BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet
-                 BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbTablespacePathGet
+                 BackRestTestCommon_DbPortGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -46,6 +47,7 @@ my $strCommonBackupPath;
 my $strCommonArchivePath;
 my $strCommonDbPath;
 my $strCommonDbCommonPath;
+my $strCommonDbTablespacePath;
 my $iCommonDbPort;
 my $iModuleTestRun;
 my $bDryRun;
@@ -228,6 +230,7 @@ sub BackRestTestCommon_Setup
     $strCommonArchivePath = "${strCommonTestPath}/archive";
     $strCommonDbPath = "${strCommonTestPath}/db";
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
+    $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
     $strCommonCommandMain = "${strBasePath}/bin/pg_backrest.pl";
     $strCommonCommandRemote = "${strBasePath}/bin/pg_backrest_remote.pl";
@@ -420,6 +423,11 @@ sub BackRestTestCommon_DbPathGet
 sub BackRestTestCommon_DbCommonPathGet
 {
     return $strCommonDbCommonPath;
+}
+
+sub BackRestTestCommon_DbTablespacePathGet
+{
+    return $strCommonDbTablespacePath;
 }
 
 sub BackRestTestCommon_DbPortGet

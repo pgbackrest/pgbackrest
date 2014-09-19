@@ -187,6 +187,18 @@ sub BackRestTestBackup_Create
     mkdir(BackRestTestCommon_DbCommonPathGet())
         or confess 'Unable to create ' . BackRestTestCommon_DbCommonPathGet() . ' path';
 
+    # Create the db/tablespace directory
+    mkdir(BackRestTestCommon_DbTablespacePathGet())
+        or confess 'Unable to create ' . BackRestTestCommon_DbTablespacePathGet() . ' path';
+
+    # Create the db/tablespace/ts1 directory
+    mkdir(BackRestTestCommon_DbTablespacePathGet() . '/ts1')
+        or confess 'Unable to create ' . BackRestTestCommon_DbTablespacePathGet() . '/ts1 path';
+
+    # Create the db/tablespace/ts2 directory
+    mkdir(BackRestTestCommon_DbTablespacePathGet() . '/ts2')
+        or confess 'Unable to create ' . BackRestTestCommon_DbTablespacePathGet() . '/ts2 path';
+
     # Create the archive directory
     mkdir(BackRestTestCommon_ArchivePathGet(), oct('0700'))
         or confess 'Unable to create ' . BackRestTestCommon_ArchivePathGet() . ' path';
@@ -576,6 +588,13 @@ sub BackRestTestBackup_Test
                     {
                         &log(INFO, '    ' . ($iIncr == 0 ? ('full ' . sprintf('%02d', $iFull)) :
                                                            ('    incr ' . sprintf('%02d', $iIncr))));
+
+                        # Create tablespace
+                        if ($iIncr == 0)
+                        {
+                            BackRestTestBackup_PgExecute("create tablespace ts1 location '" .
+                                                         BackRestTestCommon_DbTablespacePathGet() . "/ts1'", true);
+                        }
 
                         # Create a table in each backup to check references
                         BackRestTestBackup_PgExecute("create table test_backup_${iIncr} (id int)", true);

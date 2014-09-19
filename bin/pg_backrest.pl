@@ -47,6 +47,9 @@ pg_backrest.pl [options] [operation]
 
  Backup Options:
     --type           type of backup to perform (full, diff, incr)
+    --no-start-stop  do not call pg_start/stop_backup().  Postmaster should not be running.
+    --force          force backup when --no-start-stop passed and postmaster.pid exists.
+                     Use with extreme caution as this will produce an inconsistent backup!
 =cut
 
 ####################################################################################################################################
@@ -102,27 +105,31 @@ use constant
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
-my $strConfigFile;      # Configuration file
-my $strStanza;          # Stanza in the configuration file to load
-my $strType;            # Type of backup: full, differential (diff), incremental (incr)
-my $bVersion = false;   # Display version and exit
-my $bHelp = false;      # Display help and exit
+my $strConfigFile;           # Configuration file
+my $strStanza;               # Stanza in the configuration file to load
+my $strType;                 # Type of backup: full, differential (diff), incremental (incr)
+my $bNoStartStop = false;    # Do not perform start/stop backup (and archive-required gets set to false)
+my $bForce = false;          # Force an action that would not normally be allowed (varies by action)
+my $bVersion = false;        # Display version and exit
+my $bHelp = false;           # Display help and exit
 
 # Test parameters - not for general use
 my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
 my $bTest = false;      # Enters test mode - not harmful in anyway, but adds special logging and pauses for unit testing
 my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
 
-GetOptions ('config=s' => \$strConfigFile,
-            'stanza=s' => \$strStanza,
-            'type=s'   => \$strType,
-            'version'  => \$bVersion,
-            'help'     => \$bHelp,
+GetOptions ('config=s'      => \$strConfigFile,
+            'stanza=s'      => \$strStanza,
+            'type=s'        => \$strType,
+            'no-start-stop' => \$bNoStartStop,
+            'force'         => \$bForce,
+            'version'       => \$bVersion,
+            'help'          => \$bHelp,
 
             # Test parameters - not for general use (and subject to change without notice)
-            'no-fork'      => \$bNoFork,
-            'test'         => \$bTest,
-            'test-delay=s' => \$iTestDelay)
+            'no-fork'       => \$bNoFork,
+            'test'          => \$bTest,
+            'test-delay=s'  => \$iTestDelay)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -637,7 +644,7 @@ if (!lock_file_create($strLockPath))
     remote_exit(0);
 }
 
-# Run file_init_archive - the rest of the file config required for backup and restore
+# Initialize the default file object
 my $oFile = BackRest::File->new
 (
     strStanza => $strStanza,
@@ -646,13 +653,19 @@ my $oFile = BackRest::File->new
     strBackupPath => config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
 );
 
-my $oDb = BackRest::Db->new
-(
-    strDbUser => config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
-    strDbHost => config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
-    strCommandPsql => config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
-    oDbSSH => $oFile->{oDbSSH}
-);
+# Initialize the db object
+my $oDb;
+
+if (!$bNoStartStop)
+{
+    $oDb = BackRest::Db->new
+    (
+        strDbUser => config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
+        strDbHost => config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
+        strCommandPsql => config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
+        oDbSSH => $oFile->{oDbSSH}
+    );
+}
 
 # Run backup_init - parameters required for backup and restore operations
 backup_init
@@ -666,8 +679,8 @@ backup_init
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, 'y') eq 'y' ? true : false,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT),
-    $bTest,
-    $iTestDelay
+    $bNoStartStop,
+    $bForce
 );
 
 ####################################################################################################################################

@@ -12,6 +12,8 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 * Removed dependency on Storable and replaced with a custom ini file implementation.
 
+* Added much needed documentation (see INSTALL.md).
+
 * Numerous other changes that can only be identified with a diff.
 
 ### v0.19: improved error reporting/handling
