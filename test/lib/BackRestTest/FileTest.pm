@@ -802,8 +802,11 @@ sub BackRestTestFile_Test
             # Loop through exists
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
+            # Loop through exists
+            for (my $bCompressed = 0; $bCompressed <= 1; $bCompressed++)
+            {
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, err ${bError}, exists ${bExists}")) {next}
+                                            "rmt ${bRemote}, err ${bError}, exists ${bExists}, cmp ${bCompressed}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -829,7 +832,7 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $strHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile)
+                    $strHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
                 };
 
                 if ($@)
@@ -851,6 +854,7 @@ sub BackRestTestFile_Test
                 {
                     confess 'hashes do not match';
                 }
+            }
             }
             }
         }

@@ -743,7 +743,11 @@ sub hash
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
+    my $bDecompress = shift;
     my $strHashType = shift;
+
+    # Set defaults
+    $bDecompress = defined($bDecompress) ? $bDecompress : false;
 
     # Set operation variables
     my $strFileOp = $self->path_get($strPathType, $strFile);
@@ -783,7 +787,48 @@ sub hash
 
         my $oSHA = Digest::SHA->new(defined($strHashType) ? $strHashType : 'sha1');
 
-        $oSHA->addfile($hFile);
+        if ($bDecompress)
+        {
+            my $hPipeOut;
+            my $hPipeIn;
+
+            # Open the in/out pipes
+            pipe $hPipeOut, $hPipeIn;
+
+            # Queue the compression job with the thread
+            $self->{oRemote}->{oThreadQueue}->enqueue('compress:' . fileno($hFile) . ',' . fileno($hPipeIn));
+
+            # Wait for the thread to acknowledge that it has duplicated the file handles
+            my $strMessage = $self->{oThreadResult}->dequeue();
+
+            # Close input pipe so that thread has the only copy
+            if ($strMessage eq 'running')
+            {
+                close($hPipeIn);
+            }
+            # If any other message is returned then error
+            else
+            {
+                confess "unknown thread message while waiting for running: ${strMessage}";
+            }
+
+            $oSHA->addfile($hPipeOut);
+
+            # Make sure the de/compress pipes are closed
+            close($hPipeOut);
+
+            # Wait for the thread to acknowledge that it has completed
+            $strMessage = $self->{oThreadResult}->dequeue();
+
+            if ($strMessage ne 'complete')
+            {
+                confess "unknown thread message while waiting for complete: ${strMessage}";
+            }
+        }
+        else
+        {
+            $oSHA->addfile($hFile);
+        }
 
         close($hFile);
 
@@ -879,7 +924,7 @@ sub list
         }
 
         # Reverse sort
-        if (defined($strSortOrder) && $strSortOrder eq 'reverse')
+        if ($strSortOrder eq 'reverse')
         {
             @stryFileList = sort {$b cmp $a} @stryFileList;
         }
