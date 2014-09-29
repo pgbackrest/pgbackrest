@@ -82,7 +82,7 @@ use constant
     CONFIG_KEY_HARDLINK                => 'hardlink',
     CONFIG_KEY_ARCHIVE_REQUIRED        => 'archive-required',
     CONFIG_KEY_ARCHIVE_MAX_MB          => 'archive-max-mb',
-    CONFIG_KEY_START_FAST              => 'start_fast',
+    CONFIG_KEY_START_FAST              => 'start-fast',
     CONFIG_KEY_COMPRESS_ASYNC          => 'compress-async',
 
     CONFIG_KEY_LEVEL_FILE              => 'level-file',
