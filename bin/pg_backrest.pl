@@ -584,7 +584,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     &log(INFO, 'getting archive log ' . $ARGV[1]);
 
     # Get the archive file
-    remote_exit(archive_get($ARGV[1], $ARGV[2]));
+    remote_exit(archive_get(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1], $ARGV[2]));
 }
 
 ####################################################################################################################################
