@@ -229,8 +229,20 @@ sub backup_thread_complete
 ####################################################################################################################################
 sub archive_get
 {
+    my $strDbClusterPath = shift;
     my $strSourceArchive = shift;
     my $strDestinationFile = shift;
+
+    # If the destination file path is not absolute then it is relative to the data path
+    if (index($strDestinationFile, '/',) != 0)
+    {
+        if (!defined($strDbClusterPath))
+        {
+            confess &log(ERROR, 'database path must be set if relative xlog paths are used');
+        }
+
+        $strDestinationFile = "${strDbClusterPath}/${strDestinationFile}";
+    }
 
     # Determine the path where the requested archive file is located
     my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSourceArchive));

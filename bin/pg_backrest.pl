@@ -85,7 +85,7 @@ use constant
     CONFIG_KEY_HARDLINK                => 'hardlink',
     CONFIG_KEY_ARCHIVE_REQUIRED        => 'archive-required',
     CONFIG_KEY_ARCHIVE_MAX_MB          => 'archive-max-mb',
-    CONFIG_KEY_START_FAST              => 'start_fast',
+    CONFIG_KEY_START_FAST              => 'start-fast',
     CONFIG_KEY_COMPRESS_ASYNC          => 'compress-async',
 
     CONFIG_KEY_LEVEL_FILE              => 'level-file',
@@ -591,7 +591,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     &log(INFO, 'getting archive log ' . $ARGV[1]);
 
     # Get the archive file
-    remote_exit(archive_get($ARGV[1], $ARGV[2]));
+    remote_exit(archive_get(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1], $ARGV[2]));
 }
 
 ####################################################################################################################################
