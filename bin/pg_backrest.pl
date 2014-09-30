@@ -246,9 +246,12 @@ sub remote_get()
     {
         $oRemote = BackRest::Remote->new
         (
-            strHost => config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
-            strUser => config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
-            strCommand => config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
+            strHost =>
+                config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
+            strUser =>
+                config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
+            strCommand =>
+                config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
         );
     }
 
