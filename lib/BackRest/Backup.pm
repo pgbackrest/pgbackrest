@@ -1192,7 +1192,7 @@ sub backup_file
             {
                 delete ${$oBackupManifestRef}{"${strFileSection}"}{"${strFile}"};
 
-                &log (INFO, "marked skipped ${strFileSection}:${strFile} from the manifest");
+                &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
             }
             # If command is 'checksum' then record the checksum in the manifest
             elsif ($strCommand eq 'checksum')

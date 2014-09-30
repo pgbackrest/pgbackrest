@@ -417,7 +417,12 @@ sub log
     my $strLevel = shift;
     my $strMessage = shift;
     my $iCode = shift;
+    my $bSuppressLog = shift;
 
+    # Set defaults
+    $bSuppressLog = defined($bSuppressLog) ? $bSuppressLog : false;
+
+    # Set operational variables
     my $strMessageFormat = $strMessage;
     my $iLogLevelRank = $oLogLevelRank{"${strLevel}"}{rank};
 
@@ -466,7 +471,10 @@ sub log
     if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
         $bTest && $strLevel eq TEST)
     {
-        print $strMessageFormat;
+        if (!$bSuppressLog)
+        {
+            print $strMessageFormat;
+        }
 
         if ($bTest && $strLevel eq TEST)
         {
@@ -480,7 +488,10 @@ sub log
     {
         if (defined($hLogFile))
         {
-            print $hLogFile $strMessageFormat;
+            if (!$bSuppressLog)
+            {
+                print $hLogFile $strMessageFormat;
+            }
         }
     }
 

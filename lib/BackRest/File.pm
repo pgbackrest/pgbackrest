@@ -993,17 +993,26 @@ sub manifest_recurse
     my $oManifestHashRef = shift;
     my $strDebug = shift;
 
+    # Set operation and debug strings
     $strDebug = $strDebug . (defined($strPathFileOp) ? " => ${strPathFileOp}" : '');
     my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : '');
     my $hPath;
 
+    # Open the path
     if (!opendir($hPath, $strPathRead))
     {
         my $strError = "${strPathRead} could not be read: " . $!;
         my $iErrorCode = COMMAND_ERR_PATH_READ;
 
-        if (!$self->exists($strPathType, $strPathOp))
+        # If the path does not exist and is not the root path requested then return, else error
+        # It's OK for paths to go away during execution (databases are a dynamic thing!)
+        if (!$self->exists(PATH_ABSOLUTE, $strPathRead))
         {
+            if ($iDepth != 0)
+            {
+                return;
+            }
+
             $strError = "${strPathRead} does not exist";
             $iErrorCode = COMMAND_ERR_PATH_MISSING;
         }
@@ -1016,15 +1025,18 @@ sub manifest_recurse
         confess &log(ERROR, "${strDebug}: " . $strError);
     }
 
+    # Get a list of all files in the path (except ..)
     my @stryFileList = grep(!/^\..$/i, readdir($hPath));
 
     close($hPath);
 
+    # Loop through all subpaths/files in the path
     foreach my $strFile (@stryFileList)
     {
         my $strPathFile = "${strPathRead}/$strFile";
         my $bCurrentDir = $strFile eq '.';
 
+        # Create the file and path names
         if ($iDepth != 0)
         {
             if ($bCurrentDir)
@@ -1038,25 +1050,28 @@ sub manifest_recurse
             }
         }
 
+        # Stat the path/file
         my $oStat = lstat($strPathFile);
 
+        # Check for errors in stat
         if (!defined($oStat))
         {
             my $strError = "${strPathFile} could not be read: " . $!;
             my $iErrorCode = COMMAND_ERR_FILE_READ;
 
-            if (!$self->exists($strPathType, $strPathOp))
+            # If the file does not exist then go to the next file, else error
+            # It's OK for files to go away during execution (databases are a dynamic thing!)
+            if (!$self->exists(PATH_ABSOLUTE, $strPathFile))
             {
-                $strError = "${strPathRead} does not exist";
-                $iErrorCode = COMMAND_ERR_FILE_MISSING;
+                next;
             }
 
             if ($strPathType eq PATH_ABSOLUTE)
             {
-                confess &log(ERROR, $strError, COMMAND_ERR_FILE_READ);
+                confess &log(ERROR, $strError, $iErrorCode);
             }
 
-            confess &log(ERROR, "${strDebug}: " . $strError); #, COMMAND_ERR_FILE_READ);
+            confess &log(ERROR, "${strDebug}: " . $strError);
         }
 
         # Check for regular file
@@ -1102,6 +1117,7 @@ sub manifest_recurse
                 }
             }
         }
+        # Not a recognized type
         else
         {
             my $strError = "${strPathFile} is not of type directory, file, or link";
@@ -1364,7 +1380,7 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug);
+                $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug, true);
             };
 
             # If there is an error then evaluate

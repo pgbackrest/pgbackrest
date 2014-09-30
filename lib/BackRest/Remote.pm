@@ -605,6 +605,7 @@ sub output_read
     my $self = shift;
     my $bOutputRequired = shift;
     my $strErrorPrefix = shift;
+    my $bSuppressLog = shift;
 
     my $strLine;
     my $strOutput;
@@ -639,7 +640,7 @@ sub output_read
     if ($bError)
     {
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : '') .
-                            (defined($strOutput) ? ": ${strOutput}" : ''), $iErrorCode);
+                            (defined($strOutput) ? ": ${strOutput}" : ''), $iErrorCode, $bSuppressLog);
     }
 
     # If output is required and there is no output, raise exception
