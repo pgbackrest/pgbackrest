@@ -105,7 +105,8 @@ while ($strCommand ne OP_EXIT)
 
             foreach my $strFile ($oFile->list(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'),
                                               param_get(\%oParamHash, 'expression', false),
-                                              param_get(\%oParamHash, 'sort_order')))
+                                              param_get(\%oParamHash, 'sort_order'),
+                                              param_get(\%oParamHash, 'ignore_missing')))
             {
                 if (defined($strOutput))
                 {

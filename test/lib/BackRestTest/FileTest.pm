@@ -558,7 +558,7 @@ sub BackRestTestFile_Test
         &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "Test File->list()\n");
 
-        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
             # Create the file object
             my $oFile = BackRest::File->new
@@ -569,8 +569,7 @@ sub BackRestTestFile_Test
                 oRemote => $bRemote ? $oRemote : undef
             );
 
-            # Loop through exists
-            for (my $bSort = 0; $bSort <= 1; $bSort++)
+            for (my $bSort = false; $bSort <= true; $bSort++)
             {
                 my $strSort = $bSort ? undef : 'reverse';
 
@@ -591,14 +590,16 @@ sub BackRestTestFile_Test
                     }
 
                     # Loop through exists
-                    for (my $bExists = 0; $bExists <= 1; $bExists++)
+                    for (my $bExists = false; $bExists <= true; $bExists++)
                     {
-
+                    # Loop through ignore missing
+                    for (my $bIgnoreMissing = false; $bIgnoreMissing <= $bExists; $bIgnoreMissing++)
+                    {
                     # Loop through error
-                    for (my $bError = 0; $bError <= 1; $bError++)
+                    for (my $bError = false; $bError <= true; $bError++)
                     {
                         if (!BackRestTestCommon_Run(++$iRun,
-                                                    "rmt ${bRemote}, err ${bError}, exists ${bExists}, " .
+                                                    "rmt ${bRemote}, err ${bError}, exists ${bExists}, ignmis ${bIgnoreMissing}, " .
                                                     'expression ' . (defined($strExpression) ? $strExpression : '[undef]') . ', ' .
                                                     'sort ' . (defined($strSort) ? $strSort : '[undef]'))) {next}
 
@@ -625,11 +626,11 @@ sub BackRestTestFile_Test
 
                         # Execute in eval in case of error
                         my @stryFileList;
-                        my $bErrorExpected = !$bExists || $bError;
+                        my $bErrorExpected = (!$bExists && !$bIgnoreMissing) || $bError;
 
                         eval
                         {
-                            @stryFileList = $oFile->list(PATH_BACKUP_ABSOLUTE, $strPath, $strExpression, $strSort);
+                            @stryFileList = $oFile->list(PATH_BACKUP_ABSOLUTE, $strPath, $strExpression, $strSort, $bIgnoreMissing);
                         };
 
                         if ($@)
@@ -666,6 +667,7 @@ sub BackRestTestFile_Test
                             confess "list (${strFileList})[" . @stryFileList .
                                     "] does not match compare (${strFileCompare})[" . @stryFileCompare . ']';
                         }
+                    }
                     }
                     }
                 }

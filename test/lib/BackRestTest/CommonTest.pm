@@ -117,6 +117,8 @@ sub BackRestTestCommon_ExecuteBegin
     $strOutLog = '';
     $hOut = undef;
 
+    &log(DEBUG, "executing command: ${strCommand}");
+
     # Execute the command
     $pId = open3(undef, $hOut, $hError, $strCommand);
 }
@@ -175,11 +177,15 @@ sub BackRestTestCommon_ExecuteEnd
                      ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
                      ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
     }
+    else
+    {
+        &log(DEBUG, "suppressed error was ${iExitStatus}");
+    }
 
     $hError = undef;
     $hOut = undef;
 
-    return false;
+    return $iExitStatus;
 }
 
 ####################################################################################################################################
@@ -192,7 +198,7 @@ sub BackRestTestCommon_Execute
     my $bSuppressError = shift;
 
     BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
-    BackRestTestCommon_ExecuteEnd(undef, $bSuppressError);
+    return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError);
 }
 
 ####################################################################################################################################

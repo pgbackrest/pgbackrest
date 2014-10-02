@@ -414,9 +414,11 @@ sub BackRestTestBackup_Test
             {
             for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
             {
+            for (my $bExists = false; $bExists <= true; $bExists++)
+            {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}")) {next}
+                                            "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, exists ${bExists}")) {next}
 
                 # Create the test directory
                 if ($bCreate)
@@ -451,61 +453,72 @@ sub BackRestTestBackup_Test
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --stanza=db archive-get';
 
-                # Loop through backups
-                my $strArchiveFile;
-
-                # Loop through archive files
-                for (my $iArchiveNo = 1; $iArchiveNo <= $iArchiveMax; $iArchiveNo++)
+                if ($bExists)
                 {
-                    # Construct the archive filename
-                    if ($iArchiveNo > 255)
+                    # Loop through archive files
+                    my $strArchiveFile;
+
+                    for (my $iArchiveNo = 1; $iArchiveNo <= $iArchiveMax; $iArchiveNo++)
                     {
-                        confess 'backup total * archive total cannot be greater than 255';
-                    }
-
-                    $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
-
-                    &log(INFO, '    archive ' .sprintf('%02x', $iArchiveNo) .
-                               " - ${strArchiveFile}");
-
-                    my $strSourceFile = $strArchiveFile;
-
-                    if ($bChecksum)
-                    {
-                        $strSourceFile .= "-${strArchiveChecksum}";
-                    }
-
-                    if ($bCompress)
-                    {
-                        $strSourceFile .= '.gz';
-                    }
-
-                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
-                                 PATH_BACKUP_ARCHIVE, $strSourceFile,    # Destination file
-                                 false,                                  # Source is not compressed
-                                 $bCompress,                             # Destination compress based on test
-                                 undef, undef, undef,                    # Unused params
-                                 true);                                  # Create path if it does not exist
-
-                    my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
-
-                    BackRestTestCommon_Execute($strCommand . " ${strArchiveFile} ${strDestinationFile}");
-
-                    # Check that the destination file exists
-                    if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
-                    {
-                        if ($oFile->hash(PATH_DB_ABSOLUTE, $strDestinationFile) ne $strArchiveChecksum)
+                        # Construct the archive filename
+                        if ($iArchiveNo > 255)
                         {
-                            confess "archive file hash does not match ${strArchiveChecksum}";
+                            confess 'backup total * archive total cannot be greater than 255';
+                        }
+
+                        $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
+
+                        &log(INFO, '    archive ' .sprintf('%02x', $iArchiveNo) .
+                                   " - ${strArchiveFile}");
+
+                        my $strSourceFile = $strArchiveFile;
+
+                        if ($bChecksum)
+                        {
+                            $strSourceFile .= "-${strArchiveChecksum}";
+                        }
+
+                        if ($bCompress)
+                        {
+                            $strSourceFile .= '.gz';
+                        }
+
+                        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
+                                     PATH_BACKUP_ARCHIVE, $strSourceFile,    # Destination file
+                                     false,                                  # Source is not compressed
+                                     $bCompress,                             # Destination compress based on test
+                                     undef, undef, undef,                    # Unused params
+                                     true);                                  # Create path if it does not exist
+
+                        my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
+
+                        BackRestTestCommon_Execute($strCommand . " ${strArchiveFile} ${strDestinationFile}");
+
+                        # Check that the destination file exists
+                        if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
+                        {
+                            if ($oFile->hash(PATH_DB_ABSOLUTE, $strDestinationFile) ne $strArchiveChecksum)
+                            {
+                                confess "archive file hash does not match ${strArchiveChecksum}";
+                            }
+                        }
+                        else
+                        {
+                            confess 'archive file is not in destination';
                         }
                     }
-                    else
+                }
+                else
+                {
+                    if (BackRestTestCommon_Execute($strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
+                                                   false, true) != 1)
                     {
-                        confess 'archive file is not in destination';
+                        confess 'archive-get should return 1 when archive log is not present';
                     }
                 }
 
                 $bCreate = true;
+            }
             }
             }
         }

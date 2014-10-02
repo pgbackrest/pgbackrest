@@ -848,9 +848,11 @@ sub list
     my $strPath = shift;
     my $strExpression = shift;
     my $strSortOrder = shift;
+    my $bIgnoreMissing = shift;
 
     # Set defaults
     $strSortOrder = defined($strSortOrder) ? $strSortOrder : 'forward';
+    $bIgnoreMissing = defined($bIgnoreMissing) ? $bIgnoreMissing : false;
 
     # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath);
@@ -871,6 +873,7 @@ sub list
 
         $oParamHash{path} = $strPathOp;
         $oParamHash{sort_order} = $strSortOrder;
+        $oParamHash{ignore_missing} = ${bIgnoreMissing};
 
         if (defined($strExpression))
         {
@@ -902,6 +905,12 @@ sub list
 
             if (!$self->exists($strPathType, $strPath))
             {
+                # If ignore missing is set then return an empty array
+                if ($bIgnoreMissing)
+                {
+                    return @stryFileList;
+                }
+
                 $strError = "${strPathOp} does not exist";
                 $iErrorCode = COMMAND_ERR_PATH_MISSING;
             }

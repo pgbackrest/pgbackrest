@@ -249,7 +249,7 @@ sub archive_get
 
     # Get the name of the requested archive file (may have hash info and compression extension)
     my @stryArchiveFile = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
-        "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
+        "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", undef, true);
 
     # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
     if (scalar @stryArchiveFile > 1)
