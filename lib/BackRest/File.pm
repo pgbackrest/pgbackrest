@@ -24,6 +24,7 @@ use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Remote;
+use BackRest::ProcessAsync;
 
 # Exports
 use Exporter qw(import);
@@ -161,6 +162,11 @@ sub DEMOLISH
     {
         $self->{oRemote} = undef;
     }
+
+    if (defined($self->{oProcessAsync}))
+    {
+        $self->{oProcessAsync} = undef;
+    }
 }
 
 ####################################################################################################################################
@@ -180,6 +186,21 @@ sub clone
         strStanza => $self->{strStanza},
         iThreadIdx => $iThreadIdx
     );
+}
+
+####################################################################################################################################
+# PROCESS_ASYNC_GET
+####################################################################################################################################
+sub process_async_get
+{
+    my $self = shift;
+
+    if (!defined($self->{oProcessAsync}))
+    {
+        $self->{oProcessAsync} = new BackRest::ProcessAsync;
+    }
+
+    return $self->{oProcessAsync};
 }
 
 ####################################################################################################################################
@@ -743,11 +764,12 @@ sub hash
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
-    my $bDecompress = shift;
+    my $bCompressed = shift;
     my $strHashType = shift;
 
     # Set defaults
-    $bDecompress = defined($bDecompress) ? $bDecompress : false;
+    $bCompressed = defined($bCompressed) ? $bCompressed : false;
+    $strHashType = defined($strHashType) ? $strHashType : 'sha1';
 
     # Set operation variables
     my $strFileOp = $self->path_get($strPathType, $strFile);
@@ -755,7 +777,9 @@ sub hash
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_HASH;
-    my $strDebug = "${strPathType}:${strFileOp}";
+    my $strDebug = "${strPathType}:${strFileOp}, " .
+                   'compressed = ' . ($bCompressed ? 'true' : 'false') . ', ' .
+                   "hash_type = ${strHashType}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -785,45 +809,12 @@ sub hash
             confess &log(ERROR, "${strDebug}: " . $strError);
         }
 
-        my $oSHA = Digest::SHA->new(defined($strHashType) ? $strHashType : 'sha1');
+        my $oSHA = Digest::SHA->new($strHashType);
 
-        if ($bDecompress)
+        if ($bCompressed)
         {
-            my $hPipeOut;
-            my $hPipeIn;
-
-            # Open the in/out pipes
-            pipe $hPipeOut, $hPipeIn;
-
-            # Queue the compression job with the thread
-            $self->{oRemote}->{oThreadQueue}->enqueue('compress:' . fileno($hFile) . ',' . fileno($hPipeIn));
-
-            # Wait for the thread to acknowledge that it has duplicated the file handles
-            my $strMessage = $self->{oThreadResult}->dequeue();
-
-            # Close input pipe so that thread has the only copy
-            if ($strMessage eq 'running')
-            {
-                close($hPipeIn);
-            }
-            # If any other message is returned then error
-            else
-            {
-                confess "unknown thread message while waiting for running: ${strMessage}";
-            }
-
-            $oSHA->addfile($hPipeOut);
-
-            # Make sure the de/compress pipes are closed
-            close($hPipeOut);
-
-            # Wait for the thread to acknowledge that it has completed
-            $strMessage = $self->{oThreadResult}->dequeue();
-
-            if ($strMessage ne 'complete')
-            {
-                confess "unknown thread message while waiting for complete: ${strMessage}";
-            }
+            $oSHA->addfile($self->process_async_get()->process_begin('decompress', $hFile));
+            $self->process_async_get()->process_end();
         }
         else
         {

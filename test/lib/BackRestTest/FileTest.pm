@@ -788,7 +788,7 @@ sub BackRestTestFile_Test
         &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "test File->hash()\n");
 
-        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
             my $oFile = BackRest::File->new
             (
@@ -799,13 +799,13 @@ sub BackRestTestFile_Test
             );
 
             # Loop through error
-            for (my $bError = 0; $bError <= 1; $bError++)
+            for (my $bError = false; $bError <= true; $bError++)
             {
             # Loop through exists
-            for (my $bExists = 0; $bExists <= 1; $bExists++)
+            for (my $bExists = false; $bExists <= true; $bExists++)
             {
             # Loop through exists
-            for (my $bCompressed = 0; $bCompressed <= 1; $bCompressed++)
+            for (my $bCompressed = false; $bCompressed <= true; $bCompressed++)
             {
                 if (!BackRestTestCommon_Run(++$iRun,
                                             "rmt ${bRemote}, err ${bError}, exists ${bExists}, cmp ${bCompressed}")) {next}
@@ -826,6 +826,12 @@ sub BackRestTestFile_Test
                 else
                 {
                     system("echo 'TESTDATA' > ${strFile}");
+
+                    if ($bCompressed && !$bRemote)
+                    {
+                        $oFile->compress(PATH_BACKUP_ABSOLUTE, $strFile);
+                        $strFile = $strFile . '.gz';
+                    }
                 }
 
                 # Execute in eval in case of error
