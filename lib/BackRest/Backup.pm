@@ -1313,6 +1313,9 @@ sub backup
     # Declare the backup manifest
     my %oBackupManifest;
 
+    ${oBackupManifest}{'backup:option'}{'compress'} = $bCompress ? 'y' : 'n';
+    ${oBackupManifest}{'backup:option'}{'checksum'} = !$bNoChecksum ? 'y' : 'n';
+
     # Find the previous backup based on the type
     my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
 

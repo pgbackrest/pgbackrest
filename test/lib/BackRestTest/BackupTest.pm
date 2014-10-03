@@ -544,9 +544,9 @@ sub BackRestTestBackup_Test
         {
         for (my $bLarge = false; $bLarge <= false; $bLarge++)
         {
-            for (my $bCompress = false; $bCompress <= false; $bCompress++)
+            for (my $bCompress = false; $bCompress <= true; $bCompress++)
             {
-            for (my $bChecksum = false; $bChecksum <= false; $bChecksum++)
+            for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
             {
             for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
             {
