@@ -127,6 +127,11 @@ sub DEMOLISH
     my $self = shift;
 
     $self->thread_kill();
+
+    if (defined($self->{oCompressAsync}))
+    {
+        $self->{oCompressAsync} = undef;
+    }
 }
 
 ####################################################################################################################################
@@ -145,6 +150,21 @@ sub clone
         iBlockSize => $self->{iBlockSize},
         iThreadIdx => $iThreadIdx
     );
+}
+
+####################################################################################################################################
+# COMPRESS_ASYNC_GET
+####################################################################################################################################
+sub compress_async_get
+{
+    my $self = shift;
+
+    if (!defined($self->{oCompressAsync}))
+    {
+        $self->{oCompressAsync} = new BackRest::ProcessAsync;
+    }
+
+    return $self->{oCompressAsync};
 }
 
 ####################################################################################################################################
@@ -356,36 +376,36 @@ sub wait_pid
 #
 # De/Compresses data on a thread.
 ####################################################################################################################################
-sub binary_xfer_thread
-{
-    my $self = shift;
-
-    while (my $strMessage = $self->{oThreadQueue}->dequeue())
-    {
-        my @stryMessage = split(':', $strMessage);
-        my @strHandle = split(',', $stryMessage[1]);
-
-        my $hIn = IO::Handle->new_from_fd($strHandle[0], '<');
-        my $hOut = IO::Handle->new_from_fd($strHandle[1], '>');
-
-        $self->{oThreadResult}->enqueue('running');
-
-        if ($stryMessage[0] eq 'compress')
-        {
-            gzip($hIn => $hOut)
-                or confess &log(ERROR, 'unable to compress: ' . $GzipError);
-        }
-        else
-        {
-            gunzip($hIn => $hOut)
-                or die confess &log(ERROR, 'unable to uncompress: ' . $GunzipError);
-        }
-
-        close($hOut);
-
-        $self->{oThreadResult}->enqueue('complete');
-    }
-}
+# sub binary_xfer_thread
+# {
+#     my $self = shift;
+#
+#     while (my $strMessage = $self->{oThreadQueue}->dequeue())
+#     {
+#         my @stryMessage = split(':', $strMessage);
+#         my @strHandle = split(',', $stryMessage[1]);
+#
+#         my $hIn = IO::Handle->new_from_fd($strHandle[0], '<');
+#         my $hOut = IO::Handle->new_from_fd($strHandle[1], '>');
+#
+#         $self->{oThreadResult}->enqueue('running');
+#
+#         if ($stryMessage[0] eq 'compress')
+#         {
+#             gzip($hIn => $hOut)
+#                 or confess &log(ERROR, 'unable to compress: ' . $GzipError);
+#         }
+#         else
+#         {
+#             gunzip($hIn => $hOut)
+#                 or die confess &log(ERROR, 'unable to uncompress: ' . $GunzipError);
+#         }
+#
+#         close($hOut);
+#
+#         $self->{oThreadResult}->enqueue('complete');
+#     }
+# }
 
 ####################################################################################################################################
 # BINARY_XFER
