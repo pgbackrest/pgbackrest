@@ -1,244 +1,148 @@
 #!/usr/bin/perl
+####################################################################################################################################
+# test.pl - BackRest Unit Tests
+####################################################################################################################################
 
-# /Library/PostgreSQL/9.3/bin/pg_ctl start -o "-c port=7000" -D /Users/backrest/test/backup/db/20140205-103801F/base -l /Users/backrest/test/backup/db/20140205-103801F/base/postgresql.log -w -s
+####################################################################################################################################
+# Perl includes
+####################################################################################################################################
+use strict;
+use warnings;
+use Carp;
 
-#use strict;
-use DBI;
-use IPC::System::Simple qw(capture);
-use Config::IniFiles;
-use File::Find;
+use File::Basename;
+use Getopt::Long;
+use Cwd 'abs_path';
+use Cwd;
 
-sub trim
+use lib dirname($0) . '/../lib';
+use BackRest::Utility;
+
+use lib dirname($0) . '/lib';
+use BackRestTest::CommonTest;
+use BackRestTest::UtilityTest;
+use BackRestTest::FileTest;
+use BackRestTest::BackupTest;
+
+####################################################################################################################################
+# Command line parameters
+####################################################################################################################################
+my $strLogLevel = 'off';   # Log level for tests
+my $strModule = 'all';
+my $strModuleTest = 'all';
+my $iModuleTestRun = undef;
+my $bDryRun = false;
+my $bNoCleanup = false;
+my $strPgSqlBin;
+my $strTestPath;
+
+GetOptions ('pgsql-bin=s' => \$strPgSqlBin,
+            'test-path=s' => \$strTestPath,
+            'log-level=s' => \$strLogLevel,
+            'module=s' => \$strModule,
+            'module-test=s' => \$strModuleTest,
+            'module-test-run=s' => \$iModuleTestRun,
+            'dry-run' => \$bDryRun,
+            'no-cleanup' => \$bNoCleanup)
+    or die 'error in command line arguments';
+
+####################################################################################################################################
+# Setup
+####################################################################################################################################
+# Set a neutral umask so tests work as expected
+umask(0);
+
+# Set console log level to trace for testing
+log_level_set(undef, uc($strLogLevel));
+
+if ($strModuleTest ne 'all' && $strModule eq 'all')
 {
-    local($strBuffer) = @_;
-
-	$strBuffer =~ s/^\s+|\s+$//g;
-
-	return $strBuffer;
+    confess "--module must be provided for test \"${strModuleTest}\"";
 }
 
-sub execute
+if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 {
-    local($strCommand) = @_;
-    my $strOutput;
+    confess "--module-test must be provided for run \"${iModuleTestRun}\"";
+}
 
-    print("$strCommand");
-    $strOutput = trim(capture($strCommand));
+# Make sure PG bin has been defined
+if (!defined($strPgSqlBin))
+{
+    confess 'pgsql-bin was not defined';
+}
 
-    if ($strOutput eq "")
-    {  
-        print(" ... complete\n\n");
-    }
-    else
+####################################################################################################################################
+# Make sure version number matches in README.md and VERSION
+####################################################################################################################################
+my $hReadMe;
+my $strLine;
+my $bMatch = false;
+my $strVersion = version_get();
+
+if (!open($hReadMe, '<', dirname($0) . '/../README.md'))
+{
+    confess 'unable to open README.md';
+}
+
+while ($strLine = readline($hReadMe))
+{
+    if ($strLine =~ /^\#\#\# v/)
     {
-        print(" ... complete\n$strOutput\n\n");
+        $bMatch = substr($strLine, 5, length($strVersion)) eq $strVersion;
+        last;
     }
-    
-    return $strOutput;
 }
 
-sub pg_create
+if (!$bMatch)
 {
-    local($strPgBinPath, $strTestPath, $strTestDir, $strArchiveDir, $strBackupDir) = @_;
-    
-    execute("mkdir $strTestPath");
-    execute("mkdir $strTestPath/$strTestDir");
-    execute("mkdir $strTestPath/$strTestDir/ts1");
-    execute("mkdir $strTestPath/$strTestDir/ts2");
-    execute($strPgBinPath . "/initdb -D $strTestPath/$strTestDir/common -A trust -k");
-    execute("mkdir $strTestPath/$strBackupDir");
-#    execute("mkdir -p $strTestPath/$strArchiveDir");
+    confess "unable to find version ${strVersion} as last revision in README.md";
 }
 
-sub pg_start
+####################################################################################################################################
+# Clean whitespace only if test.pl is being run from the test directory in the backrest repo
+####################################################################################################################################
+my $hVersion;
+
+if (-e './test.pl' && -e '../bin/pg_backrest.pl' && open($hVersion, '<', '../VERSION'))
 {
-    local($strPgBinPath, $strDbPath, $strPort, $strAchiveCommand) = @_;
-    my $strCommand = "$strPgBinPath/pg_ctl start -o \"-c port=$strPort -c checkpoint_segments=1 -c wal_level=archive -c archive_mode=on -c archive_command=\'$strAchiveCommand\'\" -D $strDbPath -l $strDbPath/postgresql.log -w -s";
-    
-    execute($strCommand);
-}
+    my $strTestVersion = readline($hVersion);
 
-sub pg_password_set
-{
-    local($strPgBinPath, $strPath, $strUser, $strPort) = @_;
-    my $strCommand = "$strPgBinPath/psql --port=$strPort -c \"alter user $strUser with password 'password'\" postgres";
-    
-    execute($strCommand);
-}
-
-sub pg_stop
-{
-    local($strPgBinPath, $strPath) = @_;
-    my $strCommand = "$strPgBinPath/pg_ctl stop -D $strPath -w -s -m fast";
-    
-    execute($strCommand);
-}
-
-sub pg_drop
-{
-    local($strTestPath) = @_;
-    my $strCommand = "rm -rf $strTestPath";
-    
-    execute($strCommand);
-}
-
-sub pg_execute
-{
-    local($dbh, $strSql) = @_;
-
-    print($strSql);
-    $sth = $dbh->prepare($strSql);
-    $sth->execute() or die;
-    $sth->finish();
-
-    print(" ... complete\n\n");
-}
-
-sub archive_command_build
-{
-    my $strBackRestBinPath = shift;
-    my $strDestinationPath = shift;
-    my $bCompression = shift;
-    my $bChecksum = shift;
-    
-    my $strCommand = "$strBackRestBinPath/pg_backrest.pl --stanza=db --config=$strBackRestBinPath/pg_backrest.conf";
-    
-#    if (!$bCompression)
-#    {
-#        $strCommand .= " --no-compression"
-#    }
-#
-#    if (!$bChecksum)
-#    {
-#        $strCommand .= " --no-checksum"
-#    }
-    
-    return $strCommand . " archive-push %p";
-}
-
-sub wait_for_file
-{
-    my $strDir = shift;
-    my $strRegEx = shift;
-    my $iSeconds = shift;
-    
-    my $lTime = time();
-    my $hDir;
-
-    while ($lTime > time() - $iSeconds)
+    if (defined($strTestVersion) && $strVersion eq trim($strTestVersion))
     {
-        opendir $hDir, $strDir or die "Could not open dir: $!\n";
-        my @stryFile = grep(/$strRegEx/i, readdir $hDir);
-        close $hDir;
-
-        if (scalar @stryFile == 1)
-        {
-            return;
-        }
-
-        sleep(1);
+        BackRestTestCommon_Execute(
+            "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
+            "-not -path \"../test/data/*\" " .
+            "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
+            "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
     }
 
-    die "could not find $strDir/$strRegEx after $iSeconds second(s)";
+    close($hVersion);
 }
 
-sub pgbr_backup
+####################################################################################################################################
+# Runs tests
+####################################################################################################################################
+BackRestTestCommon_Setup($strTestPath, $strPgSqlBin, $iModuleTestRun, $bDryRun, $bNoCleanup);
+
+# &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
+#            "group = {strGroup}");
+
+if ($strModule eq 'all' || $strModule eq 'utility')
 {
-    my $strBackRestBinPath = shift;
-    my $strCluster = shift;
-    
-    my $strCommand = "$strBackRestBinPath/pg_backrest.pl --config=$strBackRestBinPath/pg_backrest.conf backup $strCluster";
-
-    execute($strCommand);
+    BackRestTestUtility_Test($strModuleTest);
 }
 
-my $strUser = execute('whoami');
-
-my $strTestPath = "/Users/dsteele/test";
-my $strDbDir = "db";
-my $strArchiveDir = "backup/db/archive";
-my $strBackupDir = "backup";
-
-my $strPgBinPath = "/Library/PostgreSQL/9.3/bin";
-my $strPort = "6001";
-
-my $strBackRestBinPath = "/Users/dsteele/pg_backrest";
-my $strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 0, 0);
-
-################################################################################
-# Stop the current test cluster if it is running and create a new one
-################################################################################
-eval {pg_stop($strPgBinPath, "$strTestPath/$strDbDir")};
-
-if ($@)
+if ($strModule eq 'all' || $strModule eq 'file')
 {
-    print(" ... unable to stop pg server (ignoring): " . trim($@) . "\n\n")
+    BackRestTestFile_Test($strModuleTest);
 }
 
-pg_drop($strTestPath);
-pg_create($strPgBinPath, $strTestPath, $strDbDir, $strArchiveDir, $strBackupDir);
-pg_start($strPgBinPath, "$strTestPath/$strDbDir/common", $strPort, $strArchiveCommand);
-pg_password_set($strPgBinPath, "$strTestPath/$strDbDir/common", $strUser, $strPort);
+if ($strModule eq 'all' || $strModule eq 'backup')
+{
+    BackRestTestBackup_Test($strModuleTest);
+}
 
-################################################################################
-# Connect and start tests
-################################################################################
-$dbh = DBI->connect("dbi:Pg:dbname=postgres;port=$strPort;host=127.0.0.1", $strUser,
-                    'password', {AutoCommit => 1});
-
-pg_execute($dbh, "create tablespace ts1 location '$strTestPath/$strDbDir/ts1'");
-pg_execute($dbh, "create tablespace ts2 location '$strTestPath/$strDbDir/ts2'");
-
-pg_execute($dbh, "create table test (id int)");
-pg_execute($dbh, "create table test_ts1 (id int) tablespace ts1");
-pg_execute($dbh, "create table test_ts2 (id int) tablespace ts1");
-
-pg_execute($dbh, "insert into test values (1)");
-pg_execute($dbh, "select pg_switch_xlog()");
-
-execute("mkdir -p $strTestPath/$strArchiveDir/0000000100000000");
-
-# Test for archive log file 000000010000000000000001
-wait_for_file("$strTestPath/$strArchiveDir/0000000100000000", "^000000010000000000000001\$", 5);
-
-# Turn on log checksum for the next test
-$dbh->disconnect();
-pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
-$strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 0, 1);
-pg_start($strPgBinPath, "$strTestPath/$strDbDir/common", $strPort, $strArchiveCommand);
-$dbh = DBI->connect("dbi:Pg:dbname=postgres;port=$strPort;host=127.0.0.1", $strUser,
-                    'password', {AutoCommit => 1});
-
-# Write another value into the test table
-pg_execute($dbh, "insert into test values (2)");
-pg_execute($dbh, "select pg_switch_xlog()");
-
-# Test for archive log file 000000010000000000000002
-wait_for_file("$strTestPath/$strArchiveDir/0000000100000000", "^000000010000000000000002-([a-f]|[0-9]){40}\$", 5);
-
-# Turn on log compression and checksum for the next test
-$dbh->disconnect();
-pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
-$strArchiveCommand = archive_command_build($strBackRestBinPath, "$strTestPath/$strArchiveDir", 1, 1);
-pg_start($strPgBinPath, "$strTestPath/$strDbDir/common", $strPort, $strArchiveCommand);
-$dbh = DBI->connect("dbi:Pg:dbname=postgres;port=$strPort;host=127.0.0.1", $strUser,
-                    'password', {AutoCommit => 1});
-
-# Write another value into the test table
-pg_execute($dbh, "insert into test values (3)");
-pg_execute($dbh, "select pg_switch_xlog()");
-
-# Test for archive log file 000000010000000000000003
-wait_for_file("$strTestPath/$strArchiveDir/0000000100000000", "^000000010000000000000003-([a-f]|[0-9]){40}\\.gz\$", 5);
-
-$dbh->disconnect();
-
-################################################################################
-# Stop the server
-################################################################################
-#pg_stop($strPgBinPath, "$strTestPath/$strDbDir/common");
-
-################################################################################
-# Start an offline backup
-################################################################################
-#pgbr_backup($strBackRestBinPath, "db");
+if (!$bDryRun)
+{
+    &log(ASSERT, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
+}
