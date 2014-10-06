@@ -4,6 +4,10 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 ## release notes
 
+### v0.31: ???
+
+* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though is Postgres is running an inconsistent backup will likely be created).
+
 ### v0.30: core restructuring and unit tests
 
 * Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
