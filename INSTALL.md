@@ -285,12 +285,12 @@ Enable SHA-1 checksums.  Backup checksums are stored in backup.manifest while ar
 default: y
 example: checksum=n
 ```
-##### start_fast
+##### start-fast
 
 Forces an immediate checkpoint (by passing true to the fast parameter of pg_start_backup()) so the backup begins immediately.
 ```
 default: n
-example: hardlink=y
+example: start-fast=y
 ```
 ##### hardlink
 
@@ -309,10 +309,10 @@ example: thread-max=4
 ```
 ##### thread-timeout
 
-Maximum amount of time that a backup thread should run.  This limits the amount of time that a thread might be stuck due to unforeseen issues during the backup.
+Maximum amount of time (in seconds) that a backup thread should run.  This limits the amount of time that a thread might be stuck due to unforeseen issues during the backup.
 ```
 default: <none>
-example: thread-max=4
+example: thread-timeout=86400
 ```
 ##### archive-required
 
