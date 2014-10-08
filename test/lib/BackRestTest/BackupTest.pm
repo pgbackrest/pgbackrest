@@ -259,9 +259,9 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = BackRest::Remote->new
     (
-        strHost => $strHost,
-        strUser => $strUserBackRest,
-        strCommand => BackRestTestCommon_CommandRemoteGet()
+        $strHost,
+        $strUserBackRest,
+        BackRestTestCommon_CommandRemoteGet()
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------

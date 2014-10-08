@@ -8,18 +8,16 @@ use strict;
 use warnings;
 use Carp;
 
-use Moose;
-use Thread::Queue;
+use Scalar::Util;
 use Net::OpenSSH;
 use File::Basename;
-use IO::Handle;
 use POSIX ':sys_wait_h';
-use IO::Compress::Gzip qw(gzip $GzipError);
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use Scalar::Util 'blessed';
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
+use BackRest::ProcessAsync;
 
 ####################################################################################################################################
 # Remote xfer default block size constant
@@ -30,56 +28,51 @@ use constant
 };
 
 ####################################################################################################################################
-# Module variables
-####################################################################################################################################
-# Protocol strings
-has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE');
-
-# Command strings
-has strCommand => (is => 'bare');
-
-# Module variables
-has strHost => (is => 'bare');            # Host host
-has strUser => (is => 'bare');            # User user
-has oSSH => (is => 'bare');               # SSH object
-
-# Process variables
-has pId => (is => 'bare');                # Process Id
-has hIn => (is => 'bare');                # Input stream
-has hOut => (is => 'bare');               # Output stream
-has hErr => (is => 'bare');               # Error stream
-
-# Thread variables
-has iThreadIdx => (is => 'bare');         # Thread index
-has oThread => (is => 'bare');            # Thread object
-has oThreadQueue => (is => 'bare');       # Thread queue object
-has oThreadResult => (is => 'bare');      # Thread result object
-
-# Block size
-has iBlockSize => (is => 'bare', default => DEFAULT_BLOCK_SIZE);  # Set block size to default
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-sub BUILD
+sub new
 {
-    my $self = shift;
+    my $class = shift;       # Class name
+    my $strHost = shift;     # Host to connect to for remote (optional as this can also be used on the remote)
+    my $strUser = shift;     # User to connect to for remote (must be set if strHost is set)
+    my $strCommand = shift;  # Command to execute on remote
+    my $iBlockSize = shift;  # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
 
-    $self->{strGreeting} .= ' ' . version_get();
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
 
-    if (defined($self->{strHost}))
+    # Create the greeting that will be used to check versions with the remote
+    $self->{strGreeting} = 'PG_BACKREST_REMOTE ' . version_get();
+
+    # Set default block size
+    if (!defined($iBlockSize))
+    {
+        $self->{iBlockSize} = DEFAULT_BLOCK_SIZE;
+    }
+    else
+    {
+        $self->{iBlockSize} = $iBlockSize;
+    }
+
+    # If host is defined then make a connnection
+    if (defined($strHost))
     {
         # User must be defined
-        if (!defined($self->{strUser}))
+        if (!defined($strUser))
         {
             confess &log(ASSERT, 'strUser must be defined');
         }
 
-        # User must be defined
-        if (!defined($self->{strCommand}))
+        # Command must be defined
+        if (!defined($strCommand))
         {
             confess &log(ASSERT, 'strCommand must be defined');
         }
+
+        $self->{strHost} = $strHost;
+        $self->{strUser} = $strUser;
+        $self->{strCommand} = $strCommand;
 
         # Set SSH Options
         my $strOptionSSHRequestTTY = 'RequestTTY=yes';
@@ -88,8 +81,8 @@ sub BUILD
         &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
         # Make SSH connection
-        $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 300, user => $self->{strUser},
-                                  master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
+        $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
+                                          master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
 
         $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error);
 
@@ -99,9 +92,7 @@ sub BUILD
         $self->greeting_read();
     }
 
-    $self->{oThreadQueue} = Thread::Queue->new();
-    $self->{oThreadResult} = Thread::Queue->new();
-    $self->{oThread} = threads->create(\&binary_xfer_thread, $self);
+    return $self;
 }
 
 ####################################################################################################################################
@@ -111,11 +102,9 @@ sub thread_kill
 {
     my $self = shift;
 
-    if (defined($self->{oThread}))
+    if (defined($self->{oCompressAsync}))
     {
-        $self->{oThreadQueue}->enqueue(undef);
-        $self->{oThread}->join();
-        $self->{oThread} = undef;
+        $self->{oCompressAsync} = undef;
     }
 }
 
@@ -127,11 +116,6 @@ sub DEMOLISH
     my $self = shift;
 
     $self->thread_kill();
-
-    if (defined($self->{oCompressAsync}))
-    {
-        $self->{oCompressAsync} = undef;
-    }
 }
 
 ####################################################################################################################################
@@ -140,15 +124,13 @@ sub DEMOLISH
 sub clone
 {
     my $self = shift;
-    my $iThreadIdx = shift;
 
     return BackRest::Remote->new
     (
-        strCommand => $self->{strCommand},
-        strHost => $self->{strHost},
-        strUser => $self->{strUser},
-        iBlockSize => $self->{iBlockSize},
-        iThreadIdx => $iThreadIdx
+        $self->{strHost},
+        $self->{strUser},
+        $self->{strCommand},
+        $self->{iBlockSize}
     );
 }
 
@@ -372,42 +354,6 @@ sub wait_pid
 }
 
 ####################################################################################################################################
-# BINARY_XFER_THREAD
-#
-# De/Compresses data on a thread.
-####################################################################################################################################
-# sub binary_xfer_thread
-# {
-#     my $self = shift;
-#
-#     while (my $strMessage = $self->{oThreadQueue}->dequeue())
-#     {
-#         my @stryMessage = split(':', $strMessage);
-#         my @strHandle = split(',', $stryMessage[1]);
-#
-#         my $hIn = IO::Handle->new_from_fd($strHandle[0], '<');
-#         my $hOut = IO::Handle->new_from_fd($strHandle[1], '>');
-#
-#         $self->{oThreadResult}->enqueue('running');
-#
-#         if ($stryMessage[0] eq 'compress')
-#         {
-#             gzip($hIn => $hOut)
-#                 or confess &log(ERROR, 'unable to compress: ' . $GzipError);
-#         }
-#         else
-#         {
-#             gunzip($hIn => $hOut)
-#                 or die confess &log(ERROR, 'unable to uncompress: ' . $GunzipError);
-#         }
-#
-#         close($hOut);
-#
-#         $self->{oThreadResult}->enqueue('complete');
-#     }
-# }
-
-####################################################################################################################################
 # BINARY_XFER
 #
 # Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
@@ -441,10 +387,6 @@ sub binary_xfer
     my $iBlockTotal = 0;
     my $strBlockHeader;
     my $strBlock;
-    my $oGzip;
-    my $hPipeIn;
-    my $hPipeOut;
-    my $pId;
     my $bThreadRunning = false;
 
     # Both the in and out streams must be defined
@@ -456,55 +398,14 @@ sub binary_xfer
     # If this is output and the source is not already compressed
     if ($strRemote eq 'out' && !$bSourceCompressed)
     {
-        # Increase the blocksize since we are compressing
-        $iBlockSize *= 4;
-
-        # Open the in/out pipes
-        pipe $hPipeOut, $hPipeIn;
-
-        # Queue the compression job with the thread
-        $self->{oThreadQueue}->enqueue('compress:' . fileno($hIn) . ',' . fileno($hPipeIn));
-
-        # Wait for the thread to acknowledge that it has duplicated the file handles
-        my $strMessage = $self->{oThreadResult}->dequeue();
-
-        # Close input pipe so that thread has the only copy, reset hIn to hPipeOut
-        if ($strMessage eq 'running')
-        {
-            close($hPipeIn);
-            $hIn = $hPipeOut;
-        }
-        # If any other message is returned then error
-        else
-        {
-            confess "unknown thread message while waiting for running: ${strMessage}";
-        }
+        $hIn = $self->compress_async_get()->process_begin('compress', $hIn);
 
         $bThreadRunning = true;
     }
     # Spawn a child process to do decompression
     elsif ($strRemote eq 'in' && !$bDestinationCompress)
     {
-        # Open the in/out pipes
-        pipe $hPipeOut, $hPipeIn;
-
-        # Queue the decompression job with the thread
-        $self->{oThreadQueue}->enqueue('decompress:' . fileno($hPipeOut) . ',' . fileno($hOut));
-
-        # Wait for the thread to acknowledge that it has duplicated the file handles
-        my $strMessage = $self->{oThreadResult}->dequeue();
-
-        # Close output pipe so that thread has the only copy, reset hOut to hPipeIn
-        if ($strMessage eq 'running')
-        {
-            close($hPipeOut);
-            $hOut = $hPipeIn;
-        }
-        # If any other message is returned then error
-        else
-        {
-            confess "unknown thread message while waiting for running: ${strMessage}";
-        }
+        $hOut = $self->compress_async_get()->process_begin('decompress', $hOut, 'out');
 
         $bThreadRunning = true;
     }
@@ -591,27 +492,7 @@ sub binary_xfer
 
     if ($bThreadRunning)
     {
-        # Make sure the de/compress pipes are closed
-        if ($strRemote eq 'out' && !$bSourceCompressed)
-        {
-            close($hPipeOut);
-        }
-        elsif ($strRemote eq 'in' && !$bDestinationCompress)
-        {
-            close($hPipeIn);
-        }
-
-        # Wait for the thread to acknowledge that it has completed
-        my $strMessage = $self->{oThreadResult}->dequeue();
-
-        if ($strMessage eq 'complete')
-        {
-        }
-        # If any other message is returned then error
-        else
-        {
-            confess "unknown thread message while waiting for complete: ${strMessage}";
-        }
+        $self->compress_async_get()->process_end();
     }
 }
 
@@ -837,5 +718,4 @@ sub command_execute
     return $self->output_read($bOutputRequired, $strErrorPrefix);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+return true;

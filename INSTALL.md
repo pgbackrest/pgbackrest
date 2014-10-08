@@ -95,7 +95,7 @@ path=/var/lib/postgresql/9.3/main
 
 #### simple multiple host install
 
-This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.
+This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest_remote.pl and pg_backrest.pl in the same path on both servers.
 
 `/etc/pg_backrest.conf on the db host`:
 ```

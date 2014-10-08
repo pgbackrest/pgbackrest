@@ -89,11 +89,11 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = BackRest::Remote->new
+    my $oRemote = new BackRest::Remote
     (
-        strHost => $strHost,
-        strUser => $strUser,
-        strCommand => BackRestTestCommon_CommandRemoteGet()
+        $strHost,
+        $strUser,
+        BackRestTestCommon_CommandRemoteGet()
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------

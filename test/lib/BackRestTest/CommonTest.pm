@@ -171,15 +171,18 @@ sub BackRestTestCommon_ExecuteEnd
     # Check the exit status and output an error if needed
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
-    if ($iExitStatus != 0 && !$bSuppressError)
+    if ($iExitStatus != 0)
     {
-        confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . "\n" .
-                     ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
-                     ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
-    }
-    else
-    {
-        &log(DEBUG, "suppressed error was ${iExitStatus}");
+        if ($bSuppressError)
+        {
+            &log(DEBUG, "suppressed error was ${iExitStatus}");
+        }
+        else
+        {
+            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . "\n" .
+                         ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
+                         ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
+        }
     }
 
     $hError = undef;

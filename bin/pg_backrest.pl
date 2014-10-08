@@ -244,14 +244,11 @@ sub remote_get()
 {
     if (!defined($oRemote) && $strRemote ne REMOTE_NONE)
     {
-        $oRemote = BackRest::Remote->new
+        $oRemote = new BackRest::Remote
         (
-            strHost =>
-                config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
-            strUser =>
-                config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
-            strCommand =>
-                config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
+            config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
+            config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
+            config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
         );
     }
 
