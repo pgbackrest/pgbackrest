@@ -8,11 +8,25 @@ use strict;
 use warnings;
 use Carp;
 
-use Moose;
+####################################################################################################################################
+# CONSTRUCTOR
+####################################################################################################################################
+sub new
+{
+    my $class = shift;       # Class name
+    my $iCode = shift;       # Error code
+    my $strMessage = shift;  # ErrorMessage
 
-# Module variables
-has iCode => (is => 'bare');       # Exception code
-has strMessage => (is => 'bare');  # Exception message
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
+    # Initialize exception
+    $self->{iCode} = $iCode;
+    $self->{strMessage} = $strMessage;
+
+    return $self;
+}
 
 ####################################################################################################################################
 # CODE
@@ -34,5 +48,4 @@ sub message
     return $self->{strMessage};
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+return 1;

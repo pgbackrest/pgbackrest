@@ -28,6 +28,7 @@ sub new
     my $self = {};
     bless $self, $class;
 
+    # Initialize thread and queues
     $self->{oThreadQueue} = Thread::Queue->new();
     $self->{oThreadResult} = Thread::Queue->new();
     $self->{oThread} = threads->create(\&process_thread, $self);

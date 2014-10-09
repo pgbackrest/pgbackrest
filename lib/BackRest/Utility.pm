@@ -498,7 +498,7 @@ sub log
     # Throw a typed exception if code is defined
     if (defined($iCode))
     {
-        return BackRest::Exception->new(iCode => $iCode, strMessage => $strMessage);
+        return new BackRest::Exception($iCode, $strMessage);
     }
 
     # Return the message test so it can be used in a confess
