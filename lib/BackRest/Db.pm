@@ -8,7 +8,6 @@ use strict;
 use warnings;
 use Carp;
 
-use Moose;
 use Net::OpenSSH;
 use File::Basename;
 use IPC::System::Simple qw(capture);
@@ -16,21 +15,24 @@ use IPC::System::Simple qw(capture);
 use lib dirname($0);
 use BackRest::Utility;
 
-# Command strings
-has strCommandPsql => (is => 'bare');   # PSQL command
-
-# Module variables
-has strDbUser => (is => 'ro');          # Database user
-has strDbHost => (is => 'ro');          # Database host
-has oDbSSH => (is => 'bare');           # Database SSH object
-has fVersion => (is => 'ro');           # Database version
-
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-sub BUILD
+sub new
 {
-    my $self = shift;
+    my $class = shift;       # Class name
+    my $strCommandPsql = shift; # PSQL command
+    my $strDbHost = shift;      # Database host name
+    my $strDbUser = shift;      # Database user name (generally postgres)
+
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
+    # Initialize variables
+    $self->{strCommandPsql} = $strCommandPsql;
+    $self->{strDbHost} = $strDbHost;
+    $self->{strDbUser} = $strDbUser;
 
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
@@ -44,6 +46,8 @@ sub BUILD
                               master_opts => [-o => $strOptionSSHRequestTTY]);
         $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
     }
+
+    return $self;
 }
 
 ####################################################################################################################################
@@ -148,5 +152,4 @@ sub backup_stop
                                     "copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout"))
 }
 
-no Moose;
-  __PACKAGE__->meta->make_immutable;
+1;

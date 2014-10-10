@@ -35,7 +35,6 @@ apt-get install postgresql-server-dev-9.3
 4. Install required Perl modules:
 ```
 cpanm JSON
-cpanm Moose
 cpanm Net::OpenSSH
 cpanm DBI
 cpanm DBD::Pg

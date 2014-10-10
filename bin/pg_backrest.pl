@@ -658,12 +658,11 @@ my $oDb;
 
 if (!$bNoStartStop)
 {
-    $oDb = BackRest::Db->new
+    $oDb = new BackRest::Db
     (
-        strDbUser => config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER),
-        strDbHost => config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
-        strCommandPsql => config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
-        oDbSSH => $oFile->{oDbSSH}
+        config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_PSQL),
+        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST),
+        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_USER)
     );
 }
 

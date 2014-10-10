@@ -6,7 +6,9 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 ### v0.31: ???
 
-* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though is Postgres is running an inconsistent backup will likely be created).
+* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though is Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
+
+* Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
 
 ### v0.30: core restructuring and unit tests
 
