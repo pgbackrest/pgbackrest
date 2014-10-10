@@ -216,4 +216,4 @@ sub process_end
     }
 }
 
-true;
+1;

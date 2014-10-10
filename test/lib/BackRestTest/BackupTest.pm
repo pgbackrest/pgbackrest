@@ -294,12 +294,12 @@ sub BackRestTestBackup_Test
                 if ($bCreate)
                 {
                     # Create the file object
-                    $oFile = (BackRest::File->new
+                    $oFile = (new BackRest::File
                     (
-                        strStanza => $strStanza,
-                        strBackupPath => BackRestTestCommon_BackupPathGet(),
-                        strRemote => $bRemote ? 'backup' : undef,
-                        oRemote => $bRemote ? $oRemote : undef
+                        $strStanza,
+                        BackRestTestCommon_BackupPathGet(),
+                        $bRemote ? 'backup' : undef,
+                        $bRemote ? $oRemote : undef
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);
@@ -426,10 +426,10 @@ sub BackRestTestBackup_Test
                     # Create the file object
                     $oFile = (BackRest::File->new
                     (
-                        strStanza => $strStanza,
-                        strBackupPath => BackRestTestCommon_BackupPathGet(),
-                        strRemote => $bRemote ? 'backup' : undef,
-                        oRemote => $bRemote ? $oRemote : undef
+                        $strStanza,
+                        BackRestTestCommon_BackupPathGet(),
+                        $bRemote ? 'backup' : undef,
+                        $bRemote ? $oRemote : undef
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);

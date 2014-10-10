@@ -54,12 +54,15 @@ sub param_get
 log_level_set(OFF, OFF);
 
 # Create the remote object
-my $oRemote = BackRest::Remote->new();
+my $oRemote = new BackRest::Remote();
 
 # Create the file object
-my $oFile = BackRest::File->new
+my $oFile = new BackRest::File
 (
-    oRemote => $oRemote
+    undef,
+    undef,
+    undef,
+    $oRemote
 );
 
 # Write the greeting so remote process knows who we are

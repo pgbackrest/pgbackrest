@@ -48,4 +48,4 @@ sub message
     return $self->{strMessage};
 }
 
-return 1;
+1;

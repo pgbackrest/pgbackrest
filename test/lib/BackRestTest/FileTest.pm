@@ -109,13 +109,13 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
             # Create the file object
-            my $oFile = (BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
-            ))->clone();
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
+            );
 
             # Loop through error
             for (my $bError = 0; $bError <= 1; $bError++)
@@ -217,13 +217,13 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = (new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
-            );
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
+            ))->clone(1);
 
             # Loop through source exists
             for (my $bSourceExists = 0; $bSourceExists <= 1; $bSourceExists++)
@@ -316,12 +316,12 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
             );
 
             # Loop through exists
@@ -419,12 +419,12 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
             );
 
             for (my $bError = 0; $bError <= 1; $bError++)
@@ -561,12 +561,12 @@ sub BackRestTestFile_Test
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
             );
 
             for (my $bSort = false; $bSort <= true; $bSort++)
@@ -687,12 +687,12 @@ sub BackRestTestFile_Test
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
             );
 
             # Loop through exists
@@ -790,12 +790,12 @@ sub BackRestTestFile_Test
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
             );
 
             # Loop through error
@@ -880,12 +880,12 @@ sub BackRestTestFile_Test
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
             );
 
             # Loop through exists
@@ -978,12 +978,12 @@ sub BackRestTestFile_Test
             my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
 
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $strRemote,
-                oRemote => defined($strRemote) ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $strRemote,
+                defined($strRemote) ? $oRemote : undef
             );
 
             # Loop through source compression

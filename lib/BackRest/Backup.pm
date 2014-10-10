@@ -1143,7 +1143,7 @@ sub backup_file
         }
     }
 
-    # End each thread queue and start the backu_file threads
+    # End each thread queue and start the backup_file threads
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
         # Output info about how much work each thread is going to do

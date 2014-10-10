@@ -398,12 +398,12 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         my $bCompress = $bCompressAsync ? false : config_key_load($strSection, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
 
         # Create the file object
-        my $oFile = BackRest::File->new
+        my $oFile = new BackRest::File
         (
-            strStanza => $strStanza,
-            strRemote => $bArchiveLocal ? REMOTE_NONE : $strRemote,
-            oRemote => $bArchiveLocal ? undef : remote_get(),
-            strBackupPath => config_key_load($strSection, CONFIG_KEY_PATH, true)
+            $strStanza,
+            config_key_load($strSection, CONFIG_KEY_PATH, true),
+            $bArchiveLocal ? REMOTE_NONE : $strRemote,
+            $bArchiveLocal ? undef : remote_get()
         );
 
         # Init backup
@@ -469,12 +469,12 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     # eval
     # {
         # Create the file object
-        my $oFile = BackRest::File->new
+        my $oFile = new BackRest::File
         (
-            strStanza => $strStanza,
-            strRemote => $strRemote,
-            oRemote => remote_get(),
-            strBackupPath => config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
+            $strStanza,
+            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+            $strRemote,
+            remote_get()
         );
 
         # Init backup
@@ -572,12 +572,12 @@ if ($strOperation eq OP_ARCHIVE_GET)
     }
 
     # Init the file object
-    my $oFile = BackRest::File->new
+    my $oFile = new BackRest::File
     (
-        strStanza => $strStanza,
-        strRemote => $strRemote,
-        oRemote => remote_get(),
-        strBackupPath => config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
+        $strStanza,
+        config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+        $strRemote,
+        remote_get()
     );
 
     # Init the backup object
@@ -645,12 +645,12 @@ if (!lock_file_create($strLockPath))
 }
 
 # Initialize the default file object
-my $oFile = BackRest::File->new
+my $oFile = new BackRest::File
 (
-    strStanza => $strStanza,
-    strRemote => $strRemote,
-    oRemote => remote_get(),
-    strBackupPath => config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true)
+    $strStanza,
+    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+    $strRemote,
+    remote_get()
 );
 
 # Initialize the db object

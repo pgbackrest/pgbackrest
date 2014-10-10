@@ -8,7 +8,6 @@ use strict;
 use warnings;
 use Carp;
 
-use Moose;
 use Net::OpenSSH;
 use File::Basename;
 use File::Copy qw(cp);
@@ -40,24 +39,6 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
 
                  OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
                  OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
-
-# Extension and permissions
-has strCompressExtension => (is => 'ro', default => 'gz');
-has strDefaultPathPermission => (is => 'bare', default => '0750');
-has strDefaultFilePermission => (is => 'ro', default => '0640');
-
-# Command strings
-has strCommand => (is => 'bare');
-
-# Module variables
-has strRemote => (is => 'bare');                # Remote type (db or backup)
-has oRemote   => (is => 'bare');                # Remote object
-
-has strBackupPath => (is => 'bare');            # Backup base path
-
-# Process flags
-has strStanza => (is => 'bare');
-has iThreadIdx => (is => 'bare');
 
 ####################################################################################################################################
 # COMMAND Error Constants
@@ -130,9 +111,34 @@ use constant
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-sub BUILD
+sub new
 {
-    my $self = shift;
+    my $class = shift;
+    my $strStanza = shift;
+    my $strBackupPath = shift;
+    my $strRemote = shift;
+    my $oRemote = shift;
+    my $strDefaultPathPermission = shift;
+    my $strDefaultFilePermission = shift;
+    my $iThreadIdx = shift;
+
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
+    # Default compression extension to gz
+    $self->{strCompressExtension} = 'gz';
+
+    # Default file and path permissions
+    $self->{strDefaultPathPermission} = defined($strDefaultPathPermission) ? $strDefaultPathPermission : '0750';
+    $self->{strDefaultFilePermission} = defined($strDefaultFilePermission) ? $strDefaultFilePermission : '0640';
+
+    # Initialize other variables
+    $self->{strStanza} = $strStanza;
+    $self->{strBackupPath} = $strBackupPath;
+    $self->{strRemote} = $strRemote;
+    $self->{oRemote} = $oRemote;
+    $self->{iThreadIdx} = $iThreadIdx;
 
     # If remote is defined check parameters and open session
     if (defined($self->{strRemote}) && $self->{strRemote} ne REMOTE_NONE)
@@ -140,7 +146,8 @@ sub BUILD
         # Make sure remote is valid
         if ($self->{strRemote} ne REMOTE_DB && $self->{strRemote} ne REMOTE_BACKUP)
         {
-            confess &log(ASSERT, 'strRemote must be "' . REMOTE_DB . '" or "' . REMOTE_BACKUP . '"');
+            confess &log(ASSERT, 'strRemote must be "' . REMOTE_DB . '" or "' . REMOTE_BACKUP .
+                                 "\", $self->{strRemote} was passed");
         }
 
         # Remote object must be set
@@ -149,6 +156,8 @@ sub BUILD
             confess &log(ASSERT, 'oRemote must be defined');
         }
     }
+
+    return $self;
 }
 
 ####################################################################################################################################
@@ -179,12 +188,13 @@ sub clone
 
     return BackRest::File->new
     (
-        strCommand => $self->{strCommand},
-        strRemote => $self->{strRemote},
-        oRemote => defined($self->{oRemote}) ? $self->{oRemote}->clone($iThreadIdx) : undef,
-        strBackupPath => $self->{strBackupPath},
-        strStanza => $self->{strStanza},
-        iThreadIdx => $iThreadIdx
+        $self->{strStanza},
+        $self->{strBackupPath},
+        $self->{strRemote},
+        defined($self->{oRemote}) ? $self->{oRemote}->clone() : undef,
+        $self->{strDefaultPathPermission},
+        $self->{strDefaultFilePermission},
+        $iThreadIdx
     );
 }
 
@@ -1467,5 +1477,4 @@ sub copy
     return true;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+1;

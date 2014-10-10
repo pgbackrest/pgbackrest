@@ -718,4 +718,4 @@ sub command_execute
     return $self->output_read($bOutputRequired, $strErrorPrefix);
 }
 
-return true;
+1;
