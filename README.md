@@ -6,7 +6,7 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 ### v0.31: ???
 
-* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though is Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
+* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
 
 * Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
 
@@ -74,6 +74,6 @@ This version has been put into production at Resonate, so it does work, but ther
 
 ## recognition
 
-Primary recognition goes to Stephen Frost for all his valuable advice a criticism during the development of PgBackRest.  It's a far better piece of software than it would have been without him.  Any mistakes should be blamed on me alone.
+Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of PgBackRest.  It's a far better piece of software than it would have been without him.
 
-Resonate (http://www.resonateinsights.com) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.  Works so far!
+Resonate (http://www.resonateinsights.com) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.

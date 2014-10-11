@@ -1422,7 +1422,7 @@ sub backup
     print $hVersionFile version_get();
     close($hVersionFile);
 
-    # Save the backup conf file first time - so we can see what is happening in the backup
+    # Save the backup conf file with the manifest
     config_save($strBackupConfFile, \%oBackupManifest);
 
     # Perform the backup
