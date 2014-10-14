@@ -47,7 +47,7 @@ cpanm IO::Uncompress::Gunzip
 
 Backrest can be installed by downloading the most recent release:
 
-https://github.com/dwsteele/pg_backrest/releases
+https://github.com/pgmasters/backrest/releases
 
 6. To run unit tests:
 

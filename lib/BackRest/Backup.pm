@@ -1437,16 +1437,28 @@ sub backup
         # will not be attempted.
         eval
         {
+            # Load the aborted manifest
             my %oAbortedManifest;
             config_load("${strBackupTmpPath}/backup.manifest", \%oAbortedManifest);
 
-            if (defined($oAbortedManifest{backup}{type}) && defined($oBackupManifest{backup}{type}) &&
-                defined($oAbortedManifest{backup}{prior}) && defined($oBackupManifest{backup}{prior}) &&
-                defined($oAbortedManifest{backup}{version}) && defined($oBackupManifest{backup}{version}))
+            # Default values if they are not set
+            my $strAbortedType = defined($oAbortedManifest{backup}{type}) ?
+                defined($oAbortedManifest{backup}{type}) : '<invalid>';
+            my $strAbortedPrior = defined($oAbortedManifest{backup}{prior}) ?
+                defined($oAbortedManifest{backup}{prior}) : '<invalid>';
+            my $strAbortedVersion = defined($oAbortedManifest{backup}{version}) ?
+                defined($oAbortedManifest{backup}{version}) : '<invalid>';
+
+            # The backup is usable if between the current backup and the aborted backup:
+            # 1) The version matches
+            # 2) The type of both is full or the types match and prior matches
+            if ($strAbortedVersion eq $oBackupManifest{backup}{version})
             {
-                if ($oAbortedManifest{backup}{type} eq $oBackupManifest{backup}{type} &&
-                    $oAbortedManifest{backup}{prior} eq $oBackupManifest{backup}{prior} &&
-                    $oAbortedManifest{backup}{version} eq $oBackupManifest{backup}{version})
+                if ($strAbortedType eq BACKUP_TYPE_FULL && $oBackupManifest{backup}{type} eq BACKUP_TYPE_FULL)
+                {
+                    $bUsable = true;
+                }
+                elsif ($strAbortedType eq $oBackupManifest{backup}{type} && $strAbortedPrior eq $oBackupManifest{backup}{prior})
                 {
                     $bUsable = true;
                 }
