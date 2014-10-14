@@ -181,9 +181,9 @@ Contains each tablespace in a separate subdirectory.  The links in `base/pg_tbls
 
 PgBackRest does not currently have a restore command - this is planned for the near future.  However, PgBackRest stores backups in a way that makes restoring very easy.  If `compress=n` it is even possible to start Postgres directly on the backup directory.
 
-In order to restore a backup, simple rsync the files from the base backup directory to your data directory.  If you have used compression, then recursively ungzip the files.  If you have tablespaces, repeat the process for each tablespace in the backup tablespace directory.
+In order to restore a backup, simply rsync the files from the base backup directory to your data directory.  If you have used compression, then recursively ungzip the files.  If you have tablespaces, repeat the process for each tablespace in the backup tablespace directory.
 
-It's good to practice restoring backups in advance of needing to do so.
+It's best to practice restoring backups in advance of needing to do so.
 
 ## configuration options
 
