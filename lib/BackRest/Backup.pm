@@ -21,11 +21,12 @@ use BackRest::Db;
 use Exporter qw(import);
 
 our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_xfer archive_get archive_compress
-                 backup backup_expire archive_list_get);
+                 backup backup_expire archive_list_get
+                 BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR);
 
 my $oDb;
 my $oFile;
-my $strType = 'incremental';        # Type of backup: full, differential (diff), incremental (incr)
+my $strType;        # Type of backup: full, differential (diff), incremental (incr)
 my $bCompress;
 my $bHardLink;
 my $bNoChecksum;
@@ -43,6 +44,16 @@ my @oThread;
 my @oThreadQueue;
 my @oMasterQueue;
 my %oFileCopyMap;
+
+####################################################################################################################################
+# BACKUP Type Constants
+####################################################################################################################################
+use constant
+{
+    BACKUP_TYPE_FULL          => 'full',
+    BACKUP_TYPE_DIFF          => 'diff',
+    BACKUP_TYPE_INCR          => 'incr'
+};
 
 ####################################################################################################################################
 # BACKUP_INIT
@@ -653,12 +664,12 @@ sub backup_type_find
     my $strBackupClusterPath = shift;
     my $strDirectory;
 
-    if ($strType eq 'incremental')
+    if ($strType eq BACKUP_TYPE_INCR)
     {
         $strDirectory = ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), 'reverse'))[0];
     }
 
-    if (!defined($strDirectory) && $strType ne 'full')
+    if (!defined($strDirectory) && $strType ne BACKUP_TYPE_FULL)
     {
         $strDirectory = ($oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), 'reverse'))[0];
     }
@@ -942,7 +953,7 @@ sub backup_file
     my $lFileSmallTotal = 0;
 
     # Decide if all the paths will be created in advance
-    my $bPathCreate = $bHardLink || $strType eq 'full';
+    my $bPathCreate = $bHardLink || $strType eq BACKUP_TYPE_FULL;
 
     # Iterate through the path sections of the manifest to backup
     my $strSectionPath;
@@ -1317,9 +1328,9 @@ sub backup
     ${oBackupManifest}{'backup:option'}{'checksum'} = !$bNoChecksum ? 'y' : 'n';
 
     # Find the previous backup based on the type
-    my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
-
     my %oLastManifest;
+
+    my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
 
     if (defined($strBackupLastPath))
     {
@@ -1333,6 +1344,21 @@ sub backup
         &log(INFO, "last backup label: $oLastManifest{backup}{label}, version $oLastManifest{backup}{version}");
         ${oBackupManifest}{backup}{prior} = $oLastManifest{backup}{label};
     }
+    else
+    {
+        if ($strType eq BACKUP_TYPE_DIFF)
+        {
+            &log(WARN, 'No full backup exists, differential backup has been changed to full');
+        }
+        elsif ($strType eq BACKUP_TYPE_INCR)
+        {
+            &log(WARN, 'No prior backup exists, incremental backup has been changed to full');
+        }
+
+        $strType = BACKUP_TYPE_FULL;
+    }
+
+    ${oBackupManifest}{backup}{type} = $strType;
 
     # Build backup tmp and config
     my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
@@ -1401,13 +1427,49 @@ sub backup
     backup_manifest_build($strDbClusterPath, \%oBackupManifest, \%oLastManifest, \%oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
-    # If the backup tmp path already exists, remove invalid files
+    # Check if an aborted backup exists for this stanza
     if (-e $strBackupTmpPath)
     {
-        &log(WARN, 'aborted backup already exists, will be cleaned to remove invalid files and resumed');
+        my $bUsable = false;
 
-        # Clean the old backup tmp path
-        backup_tmp_clean(\%oBackupManifest);
+        # Attempt to read the manifest file in the aborted backup to see if the backup type and prior backup are the same as the
+        # new backup that is being started.  If any error at all occurs then the backup will be considered unusable and a resume
+        # will not be attempted.
+        eval
+        {
+            my %oAbortedManifest;
+            config_load("${strBackupTmpPath}/backup.manifest", \%oAbortedManifest);
+
+            if (defined($oAbortedManifest{backup}{type}) && defined($oBackupManifest{backup}{type}) &&
+                defined($oAbortedManifest{backup}{prior}) && defined($oBackupManifest{backup}{prior}) &&
+                defined($oAbortedManifest{backup}{version}) && defined($oBackupManifest{backup}{version}))
+            {
+                if ($oAbortedManifest{backup}{type} eq $oBackupManifest{backup}{type} &&
+                    $oAbortedManifest{backup}{prior} eq $oBackupManifest{backup}{prior} &&
+                    $oAbortedManifest{backup}{version} eq $oBackupManifest{backup}{version})
+                {
+                    $bUsable = true;
+                }
+            }
+        };
+
+        # If the aborted backup is usable then clean it
+        if ($bUsable)
+        {
+            &log(WARN, 'aborted backup of same type exists, will be cleaned to remove invalid files and resumed');
+
+            # Clean the old backup tmp path
+            backup_tmp_clean(\%oBackupManifest);
+        }
+        # Else remove it
+        else
+        {
+            &log(WARN, 'aborted backup exists, but cannot be resumed - will be dropped and recreated');
+
+            remove_tree($oFile->path_get(PATH_BACKUP_TMP))
+                or confess &log(ERROR, "unable to delete tmp path: ${strBackupTmpPath}");
+            $oFile->path_create(PATH_BACKUP_TMP);
+        }
     }
     # Else create the backup tmp path
     else
@@ -1476,10 +1538,10 @@ sub backup
     # Create the path for the new backup
     my $strBackupPath;
 
-    if ($strType eq 'full' || !defined($strBackupLastPath))
+    if ($strType eq BACKUP_TYPE_FULL || !defined($strBackupLastPath))
     {
         $strBackupPath = timestamp_file_string_get() . 'F';
-        $strType = 'full';
+        $strType = BACKUP_TYPE_FULL;
     }
     else
     {
@@ -1487,7 +1549,7 @@ sub backup
 
         $strBackupPath .= '_' . timestamp_file_string_get();
 
-        if ($strType eq 'differential')
+        if ($strType eq BACKUP_TYPE_DIFF)
         {
             $strBackupPath .= 'D';
         }
@@ -1661,7 +1723,7 @@ sub backup_expire
     }
 
     # Determine which backup type to use for archive retention (full, differential, incremental)
-    if ($strArchiveRetentionType eq 'full')
+    if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
     {
         if (!defined($iArchiveRetention))
         {
@@ -1670,7 +1732,7 @@ sub backup_expire
 
         @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 0, 0), 'reverse');
     }
-    elsif ($strArchiveRetentionType eq 'differential' || $strArchiveRetentionType eq 'diff')
+    elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
     {
         if (!defined($iArchiveRetention))
         {
@@ -1679,7 +1741,7 @@ sub backup_expire
 
         @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 0), 'reverse');
     }
-    elsif ($strArchiveRetentionType eq 'incremental' || $strArchiveRetentionType eq 'incr')
+    elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
     {
         @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backup_regexp_get(1, 1, 1), 'reverse');
     }
@@ -1713,7 +1775,7 @@ sub backup_expire
 
     if (!defined($strArchiveRetentionBackup))
     {
-        if ($strArchiveRetentionType eq 'full' && scalar @stryPath > 0)
+        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryPath > 0)
         {
             &log(INFO, 'fewer than required backups for retention, but since archive_retention_type = full using oldest full backup');
             $strArchiveRetentionBackup = $stryPath[scalar @stryPath - 1];

@@ -96,7 +96,7 @@ sub BackRestTestBackup_ClusterStop
     # If postmaster process is running them stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m fast");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m immediate");
     }
 }
 

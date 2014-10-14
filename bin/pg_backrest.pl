@@ -107,7 +107,7 @@ use constant
 ####################################################################################################################################
 my $strConfigFile;           # Configuration file
 my $strStanza;               # Stanza in the configuration file to load
-my $strType;                 # Type of backup: full, differential (diff), incremental (incr)
+my $strType;                 # Type of backup: full, diff (differential), incr (incremental)
 my $bNoStartStop = false;    # Do not perform start/stop backup (and archive-required gets set to false)
 my $bForce = false;          # Force an action that would not normally be allowed (varies by action)
 my $bVersion = false;        # Display version and exit
@@ -240,7 +240,7 @@ sub remote_exit
 ####################################################################################################################################
 # REMOTE_GET - Get the remote object or create it if not exists
 ####################################################################################################################################
-sub remote_get()
+sub remote_get
 {
     if (!defined($oRemote) && $strRemote ne REMOTE_NONE)
     {
@@ -616,19 +616,11 @@ if ($strRemote eq REMOTE_BACKUP)
 # Set the backup type
 if (!defined($strType))
 {
-    $strType = 'incremental';
+    $strType = BACKUP_TYPE_INCR;
 }
-elsif ($strType eq 'diff')
+elsif ($strType ne BACKUP_TYPE_FULL && $strType ne BACKUP_TYPE_DIFF && $strType ne BACKUP_TYPE_INCR)
 {
-    $strType = 'differential';
-}
-elsif ($strType eq 'incr')
-{
-    $strType = 'incremental';
-}
-elsif ($strType ne 'full' && $strType ne 'differential' && $strType ne 'incremental')
-{
-    confess &log(ERROR, 'backup type must be full, differential (diff), incremental (incr)');
+    confess &log(ERROR, 'backup type must be full, diff (differential), incr (incremental)');
 }
 
 # Get the operational flags
