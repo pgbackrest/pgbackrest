@@ -10,6 +10,8 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 * Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
 
+* Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
+
 ### v0.30: core restructuring and unit tests
 
 * Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
