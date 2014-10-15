@@ -157,7 +157,7 @@ sub BackRestTestBackup_Drop
 
     # Remove the test directory
     system('rm -rf ' . BackRestTestCommon_TestPathGet()) == 0
-        or die 'unable to remove ' . BackRestTestCommon_TestPathGet() .  'path';
+        or die 'unable to remove ' . BackRestTestCommon_TestPathGet() .  ' path';
 }
 
 ####################################################################################################################################
@@ -176,32 +176,19 @@ sub BackRestTestBackup_Create
     BackRestTestBackup_Drop();
 
     # Create the test directory
-    mkdir(BackRestTestCommon_TestPathGet(), oct('0770'))
-        or confess 'Unable to create ' . BackRestTestCommon_TestPathGet() . ' path';
+    BackRestTestCommon_PathCreate(BackRestTestCommon_TestPathGet(), '0770');
 
-    # Create the db directory
-    mkdir(BackRestTestCommon_DbPathGet(), oct('0700'))
-        or confess 'Unable to create ' . BackRestTestCommon_DbPathGet() . ' path';
+    # Create the db paths
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbPathGet());
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet());
 
-    # Create the db/common directory
-    mkdir(BackRestTestCommon_DbCommonPathGet())
-        or confess 'Unable to create ' . BackRestTestCommon_DbCommonPathGet() . ' path';
-
-    # Create the db/tablespace directory
-    mkdir(BackRestTestCommon_DbTablespacePathGet())
-        or confess 'Unable to create ' . BackRestTestCommon_DbTablespacePathGet() . ' path';
-
-    # Create the db/tablespace/ts1 directory
-    mkdir(BackRestTestCommon_DbTablespacePathGet() . '/ts1')
-        or confess 'Unable to create ' . BackRestTestCommon_DbTablespacePathGet() . '/ts1 path';
-
-    # Create the db/tablespace/ts2 directory
-    mkdir(BackRestTestCommon_DbTablespacePathGet() . '/ts2')
-        or confess 'Unable to create ' . BackRestTestCommon_DbTablespacePathGet() . '/ts2 path';
+    # Create tablespace paths
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet());
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet() . '/ts1');
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet() . '/ts2');
 
     # Create the archive directory
-    mkdir(BackRestTestCommon_ArchivePathGet(), oct('0700'))
-        or confess 'Unable to create ' . BackRestTestCommon_ArchivePathGet() . ' path';
+    BackRestTestCommon_PathCreate(BackRestTestCommon_ArchivePathGet());
 
     # Create the backup directory
     if ($bRemote)
@@ -210,15 +197,32 @@ sub BackRestTestBackup_Create
     }
     else
     {
-        mkdir(BackRestTestCommon_BackupPathGet(), oct('0700'))
-            or confess 'Unable to create ' . BackRestTestCommon_BackupPathGet() . ' path';
+        BackRestTestCommon_PathCreate(BackRestTestCommon_BackupPathGet());
     }
 
     # Create the cluster
     if ($bCluster)
     {
+        &log(INFO, 'Creating cluster');
         BackRestTestBackup_ClusterCreate(BackRestTestCommon_DbCommonPathGet(), BackRestTestCommon_DbPortGet());
     }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_LastBackup
+####################################################################################################################################
+sub BackRestTestBackup_LastBackup
+{
+    my $oFile = shift;
+
+    my @stryBackup = $oFile->list(PATH_BACKUP_CLUSTER, undef, undef, 'reverse');
+
+    if (!defined($stryBackup[0]))
+    {
+        confess 'no backup was found';
+    }
+
+    return $stryBackup[0];
 }
 
 ####################################################################################################################################
@@ -238,6 +242,8 @@ sub BackRestTestBackup_Test
     $strTestPath = BackRestTestCommon_TestPathGet();
     $strHost = BackRestTestCommon_HostGet();
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
+    my $strUser = BackRestTestCommon_UserGet();
+    my $strGroup = BackRestTestCommon_GroupGet();
 
     # Setup test variables
     my $iRun;
@@ -535,6 +541,103 @@ sub BackRestTestBackup_Test
     #
     # Check the backup and restore functionality using synthetic data.
     #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'all' || $strTest eq 'backup')
+    {
+        $iRun = 0;
+
+        &log(INFO, "Test Backup\n");
+
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        {
+        for (my $bCompress = false; $bCompress <= true; $bCompress++)
+        {
+        for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
+        {
+        for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
+        {
+        for (my $bTablespace = false; $bTablespace <= true; $bTablespace++)
+        {
+            # Increment the run, log, and decide whether this unit test should be run
+            if (!BackRestTestCommon_Run(++$iRun,
+                                        "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, " .
+                                        "hardlink ${bHardlink}, tblspc ${bTablespace}")) {next}
+                                        # Initialize the manifest
+
+            # Build the manifest
+            my %oManifest;
+
+            $oManifest{backup}{version} = version_get();
+            $oManifest{'backup:option'}{compress} = $bCompress;
+            $oManifest{'backup:option'}{checksum} = $bChecksum;
+
+            # Create the test directory
+            BackRestTestBackup_Create($bRemote, false);
+
+            $oManifest{'base:path'}{'.'}{user} = $strUser;
+            $oManifest{'base:path'}{'.'}{group} = $strGroup;
+            $oManifest{'base:path'}{'.'}{permission} = '0700';
+
+            # Create the file object
+            my $oFile = new BackRest::File
+            (
+                $strStanza,
+                BackRestTestCommon_BackupPathGet(),
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : undef
+            );
+
+            # Create the db/common/pg_tblspc directory
+            BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc');
+
+            $oManifest{'base:path'}{'pg_tblspc'}{user} = $strUser;
+            $oManifest{'base:path'}{'pg_tblspc'}{group} = $strGroup;
+            $oManifest{'base:path'}{'pg_tblspc'}{permission} = '0700';
+
+            # Create db config
+            BackRestTestCommon_ConfigCreate('db',                              # local
+                                            $bRemote ? REMOTE_BACKUP : undef,  # remote
+                                            $bCompress,                        # compress
+                                            $bChecksum,                        # checksum
+                                            $bRemote ? undef : $bHardlink,     # hardlink
+                                            $bRemote ? undef : $iThreadMax,    # thread-max
+                                            undef,                             # archive-async
+                                            undef);                            # compress-async
+
+            # Create backup config
+            if ($bRemote)
+            {
+                BackRestTestCommon_ConfigCreate('backup',                      # local
+                                                $bRemote ? REMOTE_DB : undef,  # remote
+                                                $bCompress,                    # compress
+                                                $bChecksum,                    # checksum
+                                                $bHardlink,                    # hardlink
+                                                $iThreadMax,                   # thread-max
+                                                undef,                         # archive-async
+                                                undef);                        # compress-async
+            }
+
+            # Create the backup command
+            my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
+                                       ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
+                                       "/pg_backrest.conf --test --test-delay=1 --no-start-stop --stanza=${strStanza} backup";
+
+            # Perform first full backup
+            BackRestTestCommon_Execute($strCommand . ' --type=full', $bRemote);
+
+            # Find most recent backup
+            &log(INFO, 'last backup was ' . BackRestTestBackup_LastBackup($oFile));
+        }
+        }
+        }
+        }
+        }
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop();
+        }
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test aborted
@@ -579,14 +682,14 @@ sub BackRestTestBackup_Test
                 }
 
                 # Create db config
-                BackRestTestCommon_ConfigCreate('db',                                    # local
-                                                $bRemote ? REMOTE_BACKUP : undef,        # remote
-                                                $bCompress,                              # compress
-                                                $bChecksum,                              # checksum
-                                                defined($bRemote) ? undef : $bHardlink,  # hardlink
-                                                defined($bRemote) ? undef : $iThreadMax, # thread-max
-                                                $bArchiveAsync,                          # archive-async
-                                                undef);                                  # compress-async
+                BackRestTestCommon_ConfigCreate('db',                              # local
+                                                $bRemote ? REMOTE_BACKUP : undef,  # remote
+                                                $bCompress,                        # compress
+                                                $bChecksum,                        # checksum
+                                                $bRemote ? undef : $bHardlink,     # hardlink
+                                                $bRemote ? undef : $iThreadMax,    # thread-max
+                                                $bArchiveAsync,                    # archive-async
+                                                undef);                            # compress-async
 
                 # Create backup config
                 if ($bRemote)
@@ -605,7 +708,6 @@ sub BackRestTestBackup_Test
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
                                            ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
                                            "/pg_backrest.conf --test --type=incr --stanza=${strStanza} backup";
-
 
                 # Run the full/incremental tests
                 for (my $iFull = 1; $iFull <= 1; $iFull++)

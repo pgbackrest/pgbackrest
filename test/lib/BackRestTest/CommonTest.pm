@@ -24,6 +24,7 @@ use BackRest::File;
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
+                 BackRestTestCommon_PathCreate BackRestTestCommon_FileCreate
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
@@ -62,7 +63,7 @@ my $pId;
 my $strCommand;
 
 ####################################################################################################################################
-# BackRestTestBackup_Run
+# BackRestTestCommon_Run
 ####################################################################################################################################
 sub BackRestTestCommon_Run
 {
@@ -85,7 +86,7 @@ sub BackRestTestCommon_Run
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_Cleanup
+# BackRestTestCommon_Cleanup
 ####################################################################################################################################
 sub BackRestTestCommon_Cleanup
 {
@@ -93,7 +94,7 @@ sub BackRestTestCommon_Cleanup
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_ExecuteBegin
+# BackRestTestCommon_ExecuteBegin
 ####################################################################################################################################
 sub BackRestTestCommon_ExecuteBegin
 {
@@ -124,7 +125,7 @@ sub BackRestTestCommon_ExecuteBegin
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_ExecuteEnd
+# BackRestTestCommon_ExecuteEnd
 ####################################################################################################################################
 sub BackRestTestCommon_ExecuteEnd
 {
@@ -192,7 +193,7 @@ sub BackRestTestCommon_ExecuteEnd
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_Execute
+# BackRestTestCommon_Execute
 ####################################################################################################################################
 sub BackRestTestCommon_Execute
 {
@@ -202,6 +203,60 @@ sub BackRestTestCommon_Execute
 
     BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
     return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError);
+}
+
+####################################################################################################################################
+# BackRestTestCommon_PathCreate
+#
+# Create a path and set mode.
+####################################################################################################################################
+sub BackRestTestCommon_PathCreate
+{
+    my $strPath = shift;
+    my $strMode = shift;
+
+    # Create the path
+    mkdir($strPath)
+        or confess 'unable to create ${strPath} path';
+
+    # Set the permissions
+    chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)
+        or confess 'unable to set mode ${strMode} for ${strPath}';
+}
+
+####################################################################################################################################
+# BackRestTestCommon_FileCreate
+#
+# Create a file specifying content, mode, and time.
+####################################################################################################################################
+sub BackRestTestCommon_FileCreate
+{
+    my $strFile = shift;
+    my $strContent = shift;
+    my $strMode = shift;
+    my $lTime = shift;
+
+    # Open the file and save strContent to it
+    my $hFile = shift;
+
+    open($hFile, '>', $strFile)
+        or confess "unable to open ${strFile} for writing";
+
+    syswrite($hFile, $strContent)
+        or confess "unable to write lf: $!";
+
+    close($hFile);
+
+    # Set the time
+    if (defined($lTime))
+    {
+        utime($lTime, $lTime, $strFile)
+            or confess 'unable to set time ${lTime} for ${strPath}';
+    }
+
+    # Set the permissions
+    chmod(oct(defined($strMode) ? $strMode : '0600'), $strFile)
+        or confess 'unable to set mode ${strMode} for ${strFile}';
 }
 
 ####################################################################################################################################
