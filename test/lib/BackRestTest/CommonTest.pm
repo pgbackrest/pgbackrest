@@ -12,6 +12,7 @@ use warnings;
 use Carp;
 
 use File::Basename;
+use File::Path qw(remove_tree);
 use Cwd 'abs_path';
 use IPC::Open3;
 use POSIX ':sys_wait_h';
@@ -24,7 +25,7 @@ use BackRest::File;
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
-                 BackRestTestCommon_PathCreate BackRestTestCommon_FileCreate
+                 BackRestTestCommon_PathCreate BackRestTestCommon_PathRemove BackRestTestCommon_FileCreate
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
@@ -222,6 +223,34 @@ sub BackRestTestCommon_PathCreate
     # Set the permissions
     chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)
         or confess 'unable to set mode ${strMode} for ${strPath}';
+}
+
+####################################################################################################################################
+# BackRestTestCommon_PathRemove
+#
+# Remove a path and all subpaths.
+####################################################################################################################################
+sub BackRestTestCommon_PathRemove
+{
+    my $strPath = shift;
+    my $bRemote = shift;
+    my $bSuppressError = shift;
+
+    BackRestTestCommon_Execute('rm -rf ' . $strPath, $bRemote, $bSuppressError);
+
+    # remove_tree($strPath, {result => \my $oError});
+    #
+    # if (@$oError)
+    # {
+    #     my $strMessage = "error(s) occurred while removing ${strPath}:";
+    #
+    #     for my $strFile (@$oError)
+    #     {
+    #         $strMessage .= "\nunable to remove: " . $strFile;
+    #     }
+    #
+    #     confess $strMessage;
+    # }
 }
 
 ####################################################################################################################################

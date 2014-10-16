@@ -154,12 +154,11 @@ sub BackRestTestBackup_Drop
     # Remove the backrest private directory
     if (-e BackRestTestCommon_BackupPathGet())
     {
-        BackRestTestCommon_Execute('rm -rf ' . BackRestTestCommon_BackupPathGet(), true, true);
+        BackRestTestCommon_PathRemove(BackRestTestCommon_BackupPathGet(), true, true);
     }
 
     # Remove the test directory
-    system('rm -rf ' . BackRestTestCommon_TestPathGet()) == 0
-        or die 'unable to remove ' . BackRestTestCommon_TestPathGet() .  ' path';
+    BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
 }
 
 ####################################################################################################################################
@@ -309,10 +308,6 @@ sub BackRestTestBackup_Test
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);
-                    #
-                    # # Create the db/common/pg_xlog directory
-                    # mkdir($strXlogPath)
-                    #     or confess 'Unable to create ${strXlogPath} path';
 
                     $bCreate = false;
                 }
@@ -441,8 +436,7 @@ sub BackRestTestBackup_Test
                     BackRestTestBackup_Create($bRemote, false);
 
                     # Create the db/common/pg_xlog directory
-                    mkdir($strXlogPath)
-                        or confess 'Unable to create ${strXlogPath} path';
+                    BackRestTestCommon_PathCreate($strXlogPath);
 
                     $bCreate = false;
                 }
