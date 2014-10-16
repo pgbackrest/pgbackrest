@@ -27,6 +27,8 @@ our @EXPORT = qw(BackRestTestBackup_Test);
 
 my $strTestPath;
 my $strHost;
+my $strUser;
+my $strGroup;
 my $strUserBackRest;
 my $hDb;
 
@@ -203,7 +205,6 @@ sub BackRestTestBackup_Create
     # Create the cluster
     if ($bCluster)
     {
-        &log(INFO, 'Creating cluster');
         BackRestTestBackup_ClusterCreate(BackRestTestCommon_DbCommonPathGet(), BackRestTestCommon_DbPortGet());
     }
 }
@@ -242,14 +243,13 @@ sub BackRestTestBackup_Test
     $strTestPath = BackRestTestCommon_TestPathGet();
     $strHost = BackRestTestCommon_HostGet();
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
-    my $strUser = BackRestTestCommon_UserGet();
-    my $strGroup = BackRestTestCommon_GroupGet();
+    $strUser = BackRestTestCommon_UserGet();
+    $strGroup = BackRestTestCommon_GroupGet();
 
     # Setup test variables
     my $iRun;
     my $bCreate;
     my $strStanza = BackRestTestCommon_StanzaGet();
-    my $strGroup = BackRestTestCommon_GroupGet();
 
     my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
     my $iArchiveMax = 3;

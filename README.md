@@ -12,6 +12,8 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 * Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
 
+* Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.
+
 * More comprehensive backup unit tests.
 
 ### v0.30: core restructuring and unit tests
