@@ -600,7 +600,7 @@ sub config_save
             {
                 if (ref($strValue) eq "HASH")
                 {
-                    syswrite($hFile, "${strKey}=" . encode_json($strValue) . "\n")
+                    syswrite($hFile, "${strKey}=" . to_json($strValue, {canonical => true}) . "\n")
                         or confess "unable to write key ${strKey}: $!";
                 }
                 else

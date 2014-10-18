@@ -262,8 +262,8 @@ sub BackRestTestCommon_FileCreate
 {
     my $strFile = shift;
     my $strContent = shift;
-    my $strMode = shift;
     my $lTime = shift;
+    my $strMode = shift;
 
     # Open the file and save strContent to it
     my $hFile = shift;

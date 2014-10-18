@@ -865,14 +865,14 @@ sub backup_manifest_build
 
         if ($cType eq 'f')
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size};
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time};
+            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
+            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
         }
 
         if ($cType eq 'f')
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} = $oManifestHash{name}{"${strName}"}{inode};
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size};
+            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} = $oManifestHash{name}{"${strName}"}{inode} + 0;
+            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
 
             if (defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{size}) &&
                 defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{inode}) &&
@@ -894,6 +894,12 @@ sub backup_manifest_build
                     {
                         ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{reference} =
                             ${$oLastManifestRef}{backup}{label};
+                    }
+
+                    if (defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{checksum}))
+                    {
+                        ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{checksum} =
+                            ${$oLastManifestRef}{"${strSection}"}{"${strName}"}{checksum};
                     }
 
                     my $strReference = ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{reference};
@@ -923,7 +929,7 @@ sub backup_manifest_build
                 my $strTablespaceOid = basename($strName);
                 my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"${strTablespaceOid}"}{name};
 
-                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid;
+                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid + 0;
                 ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
 
                 backup_manifest_build($strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
@@ -978,6 +984,8 @@ sub backup_file
             $strBackupSourcePath = $strDbClusterPath;
             $strBackupDestinationPath = 'base';
             $strSectionFile = 'base:file';
+
+            ${$oBackupManifestRef}{'backup:path'}{base} = $strDbClusterPath;
 
             # Create the archive log directory
             $oFile->path_create(PATH_BACKUP_TMP, 'base/pg_xlog');

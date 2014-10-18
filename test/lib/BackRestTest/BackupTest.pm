@@ -13,6 +13,8 @@ use Carp;
 
 use File::Basename;
 use File::Copy 'cp';
+use File::stat;
+use Fcntl ':mode';
 use DBI;
 
 use lib dirname($0) . '/../lib';
@@ -209,6 +211,106 @@ sub BackRestTestBackup_Create
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_ManifestFileCreate
+#
+# Create a file specifying content, mode, and time and add it to the manifest.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestFileCreate
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strFile = shift;
+    my $strContent = shift;
+    my $strChecksum = shift;
+    my $lTime = shift;
+    my $strMode = shift;
+
+    # Create actual file location
+    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+
+    # Create the file
+    BackRestTestCommon_FileCreate($strPathFile, $strContent, $lTime, $strMode);
+
+    # Stat the file
+    my $oStat = lstat($strPathFile);
+
+    # Check for errors in stat
+    if (!defined($oStat))
+    {
+        confess 'unable to stat ${strFile}';
+    }
+
+    # Load file into manifest
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{group} = getgrgid($oStat->gid);
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{user} = getpwuid($oStat->uid);
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{modification_time} = $oStat->mtime;
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{inode} = $oStat->ino;
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{size} = $oStat->size;
+    delete(${$oManifestRef}{"${strPath}:file"}{$strFile}{reference});
+
+    if (defined($strChecksum))
+    {
+        ${$oManifestRef}{"${strPath}:file"}{$strFile}{checksum} = $strChecksum;
+    }
+    else
+    {
+        delete(${$oManifestRef}{"${strPath}:file"}{$strFile}{checksum});
+    }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_ManifestReference
+#
+# Update all files that do not have a reference with the supplied reference.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestReference
+{
+    my $oManifestRef = shift;
+    my $strReference = shift;
+
+    # Set prior backup
+    ${$oManifestRef}{backup}{prior} = $strReference;
+
+    # Find all file sections
+    my $iTotal = 0;
+
+    foreach my $strSectionFile (sort(keys $oManifestRef))
+    {
+        # Skip non-file sections
+        if ($strSectionFile !~ /\:file$/)
+        {
+            next;
+        }
+
+        foreach my $strFile (sort(keys ${$oManifestRef}{$strSectionFile}))
+        {
+            if (!defined(${$oManifestRef}{$strSectionFile}{$strFile}{reference}))
+            {
+                ${$oManifestRef}{$strSectionFile}{$strFile}{reference} = $strReference;
+                $iTotal++;
+            }
+        }
+    }
+
+    if ($iTotal > 0)
+    {
+
+        if (!defined(${$oManifestRef}{backup}{reference}))
+        {
+            ${$oManifestRef}{backup}{reference} = $strReference;
+        }
+        else
+        {
+            if (${$oManifestRef}{backup}{reference} !~ /$strReference/)
+            {
+                ${$oManifestRef}{backup}{reference} .= ",${strReference}";
+            }
+        }
+    }
+}
+
+####################################################################################################################################
 # BackRestTestBackup_LastBackup
 ####################################################################################################################################
 sub BackRestTestBackup_LastBackup
@@ -223,6 +325,47 @@ sub BackRestTestBackup_LastBackup
     }
 
     return $stryBackup[0];
+}
+
+####################################################################################################################################
+# BackRestTestBackup_CompareBackup
+####################################################################################################################################
+sub BackRestTestBackup_CompareBackup
+{
+    my $oFile = shift;
+    my $bRemote = shift;
+    my $strBackup = shift;
+    my $oExpectedManifestRef = shift;
+
+    ${$oExpectedManifestRef}{backup}{label} = $strBackup;
+
+    # Change permissions on the backup path so it can be read
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+    }
+
+    my %oActualManifest;
+    config_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oActualManifest);
+
+    $oActualManifest{backup}{'timestamp-start'} = undef;
+    $oActualManifest{backup}{'timestamp-stop'} = undef;
+
+    my $strTestPath = BackRestTestCommon_TestPathGet();
+
+    config_save("${strTestPath}/actual.manifest", \%oActualManifest);
+    config_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);
+
+    BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
+
+    # Change permissions on the backup path back before unit tests continue
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+    }
+
+    $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
+    $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/actual.manifest");
 }
 
 ####################################################################################################################################
@@ -557,18 +700,23 @@ sub BackRestTestBackup_Test
                                         "hardlink ${bHardlink}, tblspc ${bTablespace}")) {next}
                                         # Initialize the manifest
 
+            # Get base time
+            my $lTime = time() - 100000;
+
             # Build the manifest
             my %oManifest;
 
             $oManifest{backup}{version} = version_get();
-            $oManifest{'backup:option'}{compress} = $bCompress;
-            $oManifest{'backup:option'}{checksum} = $bChecksum;
+            $oManifest{'backup:option'}{compress} = $bCompress ? 'y' : 'n';
+            $oManifest{'backup:option'}{checksum} = $bChecksum ? 'y' : 'n';
 
             # Create the test directory
             BackRestTestBackup_Create($bRemote, false);
 
-            $oManifest{'base:path'}{'.'}{user} = $strUser;
+            $oManifest{'backup:path'}{base} = BackRestTestCommon_DbCommonPathGet();
+
             $oManifest{'base:path'}{'.'}{group} = $strGroup;
+            $oManifest{'base:path'}{'.'}{user} = $strUser;
             $oManifest{'base:path'}{'.'}{permission} = '0700';
 
             # Create the file object
@@ -583,9 +731,20 @@ sub BackRestTestBackup_Test
             # Create the db/common/pg_tblspc directory
             BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc');
 
-            $oManifest{'base:path'}{'pg_tblspc'}{user} = $strUser;
             $oManifest{'base:path'}{'pg_tblspc'}{group} = $strGroup;
+            $oManifest{'base:path'}{'pg_tblspc'}{user} = $strUser;
             $oManifest{'base:path'}{'pg_tblspc'}{permission} = '0700';
+
+            # Create the db/common/base directory
+            BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/base');
+
+            $oManifest{'base:path'}{'base'}{group} = $strGroup;
+            $oManifest{'base:path'}{'base'}{user} = $strUser;
+            $oManifest{'base:path'}{'base'}{permission} = '0700';
+
+            # Create the db/common/base/base.txt file
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base.txt', 'BASE',
+                                                  $bChecksum ? 'a3b357a3e395e43fcfb19bb13f3c1b5179279593' : undef, $lTime);
 
             # Create db config
             BackRestTestCommon_ConfigCreate('db',                              # local
@@ -613,13 +772,31 @@ sub BackRestTestBackup_Test
             # Create the backup command
             my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
                                        ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
-                                       "/pg_backrest.conf --test --test-delay=1 --no-start-stop --stanza=${strStanza} backup";
+                                       "/pg_backrest.conf --no-start-stop --stanza=${strStanza} backup";
 
             # Perform first full backup
-            BackRestTestCommon_Execute($strCommand . ' --type=full', $bRemote);
+            my $strType = 'full';
+            &log(INFO, "    ${strType} backup");
 
-            # Find most recent backup
-            &log(INFO, 'last backup was ' . BackRestTestBackup_LastBackup($oFile));
+            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+
+            $oManifest{backup}{type} = $strType;
+            my $strBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
+
+            # Perform first incr backup
+            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
+
+            $strType = 'incr';
+            &log(INFO, "    ${strType} backup (no file changes, only references)");
+
+            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+
+            $oManifest{backup}{type} = $strType;
+            $strBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
         }
         }
         }
