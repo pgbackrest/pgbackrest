@@ -211,6 +211,105 @@ sub BackRestTestBackup_Create
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_ManifestPathCreate
+#
+# Create a path specifying mode and add it to the manifest.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestPathCreate
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strSubPath = shift;
+    my $strMode = shift;
+
+    # Create final file location
+    my $strFinalPath = ${$oManifestRef}{'backup:path'}{$strPath} . (defined($strSubPath) ? "/${strSubPath}" : '');
+
+    # Create the path
+    if (!(-e $strFinalPath))
+    {
+        BackRestTestCommon_PathCreate($strFinalPath, $strMode);
+    }
+
+    # Stat the file
+    my $oStat = lstat($strFinalPath);
+
+    # Check for errors in stat
+    if (!defined($oStat))
+    {
+        confess 'unable to stat ${strSubPath}';
+    }
+
+    my $strManifestPath = defined($strSubPath) ? $strSubPath : '.';
+
+    # Load file into manifest
+    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{group} = getgrgid($oStat->gid);
+    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{user} = getpwuid($oStat->uid);
+    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+}
+
+####################################################################################################################################
+# BackRestTestBackup_ManifestTablespaceCreate
+#
+# Create a tablespace specifying mode and add it to the manifest.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestTablespaceCreate
+{
+    my $oManifestRef = shift;
+    my $iOid = shift;
+    my $strMode = shift;
+
+    # Create final file location
+    my $strPath = BackRestTestCommon_DbPathGet() . "/ts${iOid}";
+
+    # Create the path
+    if (!(-e $strPath))
+    {
+        BackRestTestCommon_PathCreate($strPath, $strMode);
+    }
+
+    # Stat the path
+    my $oStat = lstat($strPath);
+
+    # Check for errors in stat
+    if (!defined($oStat))
+    {
+        confess 'unable to stat path ${strPath}';
+    }
+
+    # Load path into manifest
+    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{group} = getgrgid($oStat->gid);
+    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{user} = getpwuid($oStat->uid);
+    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+
+    # Create the link in pg_tblspc
+    my $strLink = BackRestTestCommon_DbCommonPathGet() . "/pg_tblspc/${iOid}";
+
+    symlink($strPath, $strLink)
+        or confess "unable to link ${strLink} to ${strPath}";
+
+    # Stat the link
+    $oStat = lstat($strLink);
+
+    # Check for errors in stat
+    if (!defined($oStat))
+    {
+        confess 'unable to stat link ${strLink}';
+    }
+
+    # Load link into the manifest
+    ${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"}{group} = getgrgid($oStat->gid);
+    ${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"}{user} = getpwuid($oStat->uid);
+    ${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"}{link_destination} = $strPath;
+
+    # Load tablespace into the manifest
+    ${$oManifestRef}{"backup:tablespace"}{$iOid}{link} = $iOid;
+    ${$oManifestRef}{"backup:tablespace"}{$iOid}{path} = $strPath;
+
+    ${$oManifestRef}{"backup:path"}{"tablespace:${iOid}"} = $strPath;
+}
+
+####################################################################################################################################
 # BackRestTestBackup_ManifestFileCreate
 #
 # Create a file specifying content, mode, and time and add it to the manifest.
@@ -252,10 +351,6 @@ sub BackRestTestBackup_ManifestFileCreate
     if (defined($strChecksum))
     {
         ${$oManifestRef}{"${strPath}:file"}{$strFile}{checksum} = $strChecksum;
-    }
-    else
-    {
-        delete(${$oManifestRef}{"${strPath}:file"}{$strFile}{checksum});
     }
 }
 
@@ -692,13 +787,12 @@ sub BackRestTestBackup_Test
         {
         for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
         {
-        for (my $bTablespace = false; $bTablespace <= true; $bTablespace++)
+        for (my $iTablespaceTotal = false; $iTablespaceTotal <= 2; $iTablespaceTotal++)
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
                                         "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, " .
-                                        "hardlink ${bHardlink}, tblspc ${bTablespace}")) {next}
-                                        # Initialize the manifest
+                                        "hardlink ${bHardlink}, tblspc ${iTablespaceTotal}")) {next}
 
             # Get base time
             my $lTime = time() - 100000;
@@ -715,9 +809,7 @@ sub BackRestTestBackup_Test
 
             $oManifest{'backup:path'}{base} = BackRestTestCommon_DbCommonPathGet();
 
-            $oManifest{'base:path'}{'.'}{group} = $strGroup;
-            $oManifest{'base:path'}{'.'}{user} = $strUser;
-            $oManifest{'base:path'}{'.'}{permission} = '0700';
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base');
 
             # Create the file object
             my $oFile = new BackRest::File
@@ -728,23 +820,22 @@ sub BackRestTestBackup_Test
                 $bRemote ? $oRemote : undef
             );
 
-            # Create the db/common/pg_tblspc directory
-            BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc');
+            # Create base path
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'base');
 
-            $oManifest{'base:path'}{'pg_tblspc'}{group} = $strGroup;
-            $oManifest{'base:path'}{'pg_tblspc'}{user} = $strUser;
-            $oManifest{'base:path'}{'pg_tblspc'}{permission} = '0700';
-
-            # Create the db/common/base directory
-            BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/base');
-
-            $oManifest{'base:path'}{'base'}{group} = $strGroup;
-            $oManifest{'base:path'}{'base'}{user} = $strUser;
-            $oManifest{'base:path'}{'base'}{permission} = '0700';
-
-            # Create the db/common/base/base.txt file
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base.txt', 'BASE',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASE',
                                                   $bChecksum ? 'a3b357a3e395e43fcfb19bb13f3c1b5179279593' : undef, $lTime);
+
+            # Create tablespace path
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'pg_tblspc');
+
+            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            {
+                BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, $iTablespaceIdx);
+
+                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace.txt', 'TBLSPC',
+                                                      $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
+            }
 
             # Create db config
             BackRestTestCommon_ConfigCreate('db',                              # local
@@ -787,6 +878,7 @@ sub BackRestTestBackup_Test
 
             # Perform first incr backup
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
+            $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
 
             $strType = 'incr';
             &log(INFO, "    ${strType} backup (no file changes, only references)");

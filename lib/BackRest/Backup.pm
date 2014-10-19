@@ -705,7 +705,7 @@ sub backup_file_not_in_manifest
 
         if ($strBasePath eq $strName)
         {
-            my $strSection = $strBasePath eq 'tablespace' ? 'base:tablespace' : "${strBasePath}:path";
+            my $strSection = $strBasePath eq 'tablespace' ? 'backup:tablespace' : "${strBasePath}:path";
 
             if (defined(${$oManifestRef}{"${strSection}"}))
             {
@@ -861,16 +861,15 @@ sub backup_manifest_build
 
         ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{user} = $oManifestHash{name}{"${strName}"}{user};
         ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{group} = $oManifestHash{name}{"${strName}"}{group};
-        ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
 
-        if ($cType eq 'f')
+        if ($cType eq 'f' || $cType eq 'd')
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
+            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
         }
 
         if ($cType eq 'f')
         {
+            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
             ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} = $oManifestHash{name}{"${strName}"}{inode} + 0;
             ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
 
@@ -929,8 +928,8 @@ sub backup_manifest_build
                 my $strTablespaceOid = basename($strName);
                 my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"${strTablespaceOid}"}{name};
 
-                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{oid} = $strTablespaceOid + 0;
-                ${$oBackupManifestRef}{"${strLevel}:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
+                ${$oBackupManifestRef}{"backup:tablespace"}{"${strTablespaceName}"}{link} = $strTablespaceOid;
+                ${$oBackupManifestRef}{"backup:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
 
                 backup_manifest_build($strLinkDestination, $oBackupManifestRef, $oLastManifestRef,
                                       $oTablespaceMapRef, "tablespace:${strTablespaceName}");
@@ -995,9 +994,11 @@ sub backup_file
         {
             $lTablespaceIdx++;
             my $strTablespaceName = (split(':', $strSectionPath))[1];
-            $strBackupSourcePath = ${$oBackupManifestRef}{'base:tablespace'}{"${strTablespaceName}"}{path};
+            $strBackupSourcePath = ${$oBackupManifestRef}{'backup:tablespace'}{"${strTablespaceName}"}{path};
             $strBackupDestinationPath = "tablespace/${strTablespaceName}";
             $strSectionFile = "tablespace:${strTablespaceName}:file";
+
+            ${$oBackupManifestRef}{'backup:path'}{"tablespace:${strTablespaceName}"} = $strBackupSourcePath;
 
             # Create the tablespace directory and link
             if ($bPathCreate)
@@ -1006,7 +1007,7 @@ sub backup_file
 
                 $oFile->link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
                                    PATH_BACKUP_TMP,
-                                   'base/pg_tblspc/' . ${$oBackupManifestRef}{'base:tablespace'}{"${strTablespaceName}"}{oid},
+                                   'base/pg_tblspc/' . ${$oBackupManifestRef}{'backup:tablespace'}{"${strTablespaceName}"}{link},
                                    false, true);
             }
         }
@@ -1385,6 +1386,11 @@ sub backup
     }
 
     ${oBackupManifest}{backup}{type} = $strType;
+
+    if ($strType ne BACKUP_TYPE_FULL)
+    {
+        ${oBackupManifest}{'backup:option'}{'hardlink'} = $bHardLink ? 'y' : 'n';
+    }
 
     # Build backup tmp and config
     my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);

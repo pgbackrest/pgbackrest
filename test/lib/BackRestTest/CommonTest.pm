@@ -372,12 +372,13 @@ sub BackRestTestCommon_ConfigCreate
     $oParamHash{'global:log'}{'level-console'} = 'error';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
+    if (defined($bHardlink) && !$bHardlink)
+    {
+        $oParamHash{'global:backup'}{'hardlink'} = 'n';
+    }
+
     if ($strLocal eq REMOTE_BACKUP)
     {
-        if (defined($bHardlink) && $bHardlink)
-        {
-            $oParamHash{'global:backup'}{'hardlink'} = 'y';
-        }
     }
     elsif ($strLocal eq REMOTE_DB)
     {
