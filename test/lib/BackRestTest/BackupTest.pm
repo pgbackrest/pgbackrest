@@ -366,10 +366,9 @@ sub BackRestTestBackup_ManifestReference
 
     # Set prior backup
     ${$oManifestRef}{backup}{prior} = $strReference;
+    delete(${$oManifestRef}{backup}{reference});
 
     # Find all file sections
-    my $iTotal = 0;
-
     foreach my $strSectionFile (sort(keys $oManifestRef))
     {
         # Skip non-file sections
@@ -383,23 +382,6 @@ sub BackRestTestBackup_ManifestReference
             if (!defined(${$oManifestRef}{$strSectionFile}{$strFile}{reference}))
             {
                 ${$oManifestRef}{$strSectionFile}{$strFile}{reference} = $strReference;
-                $iTotal++;
-            }
-        }
-    }
-
-    if ($iTotal > 0)
-    {
-
-        if (!defined(${$oManifestRef}{backup}{reference}))
-        {
-            ${$oManifestRef}{backup}{reference} = $strReference;
-        }
-        else
-        {
-            if (${$oManifestRef}{backup}{reference} !~ /$strReference/)
-            {
-                ${$oManifestRef}{backup}{reference} .= ",${strReference}";
             }
         }
     }
@@ -433,6 +415,39 @@ sub BackRestTestBackup_CompareBackup
     my $oExpectedManifestRef = shift;
 
     ${$oExpectedManifestRef}{backup}{label} = $strBackup;
+
+    # Remove old reference list
+    delete(${$oExpectedManifestRef}{backup}{reference});
+
+    # Build the new reference list
+    foreach my $strSectionFile (sort(keys $oExpectedManifestRef))
+    {
+        # Skip non-file sections
+        if ($strSectionFile !~ /\:file$/)
+        {
+            next;
+        }
+
+        foreach my $strFile (sort(keys ${$oExpectedManifestRef}{$strSectionFile}))
+        {
+            if (defined(${$oExpectedManifestRef}{$strSectionFile}{$strFile}{reference}))
+            {
+                my $strFileReference = ${$oExpectedManifestRef}{$strSectionFile}{$strFile}{reference};
+
+                if (!defined(${$oExpectedManifestRef}{backup}{reference}))
+                {
+                    ${$oExpectedManifestRef}{backup}{reference} = $strFileReference;
+                }
+                else
+                {
+                    if (${$oExpectedManifestRef}{backup}{reference} !~ /$strFileReference/)
+                    {
+                        ${$oExpectedManifestRef}{backup}{reference} .= ",${strFileReference}";
+                    }
+                }
+            }
+        }
+    }
 
     # Change permissions on the backup path so it can be read
     if ($bRemote)
@@ -820,6 +835,9 @@ sub BackRestTestBackup_Test
                 $bRemote ? $oRemote : undef
             );
 
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'PG_VERSION', '9.3',
+                                                  $bChecksum ? 'e1f7a3a299f62225cba076fc6d3d6e677f303482' : undef, $lTime);
+
             # Create base path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'base');
 
@@ -833,7 +851,7 @@ sub BackRestTestBackup_Test
             {
                 BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, $iTablespaceIdx);
 
-                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace.txt', 'TBLSPC',
+                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPC',
                                                       $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
             }
 
@@ -898,6 +916,34 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2',
                                                   $bChecksum ? '09b5e31766be1dba1ec27de82f975c1b6eea2a92' : undef, $lTime);
+
+            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            {
+                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', 'TBLSPC2',
+                                                      $bChecksum ? 'dc7f76e43c46101b47acc55ae4d593a9e6983578' : undef, $lTime);
+            }
+
+            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+
+            $oManifest{backup}{type} = $strType;
+            $strBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
+
+            # Perform third incr backup
+            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
+
+            $strType = 'incr';
+            &log(INFO, "    ${strType} backup (update files)");
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT',
+                                                  $bChecksum ? '9a53d532e27785e681766c98516a5e93f096a501' : undef, $lTime);
+
+            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            {
+                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPCUPDT',
+                                                      $bChecksum ? 'ff21d59b07e8d9cfa7b1286202610550a71884b5' : undef, $lTime);
+            }
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
