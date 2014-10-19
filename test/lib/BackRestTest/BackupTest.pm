@@ -348,8 +348,8 @@ sub BackRestTestBackup_CompareBackup
     my %oActualManifest;
     config_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oActualManifest);
 
-    $oActualManifest{backup}{'timestamp-start'} = undef;
-    $oActualManifest{backup}{'timestamp-stop'} = undef;
+    ${$oExpectedManifestRef}{backup}{'timestamp-start'} = $oActualManifest{backup}{'timestamp-start'};
+    ${$oExpectedManifestRef}{backup}{'timestamp-stop'} = $oActualManifest{backup}{'timestamp-stop'};
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
@@ -790,6 +790,22 @@ sub BackRestTestBackup_Test
 
             $strType = 'incr';
             &log(INFO, "    ${strType} backup (no file changes, only references)");
+
+            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+
+            $oManifest{backup}{type} = $strType;
+            $strBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
+
+            # Perform second incr backup
+            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
+
+            $strType = 'incr';
+            &log(INFO, "    ${strType} backup (add files)");
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2',
+                                                  $bChecksum ? '09b5e31766be1dba1ec27de82f975c1b6eea2a92' : undef, $lTime);
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 

@@ -1302,7 +1302,7 @@ sub backup_file_thread
         {
             # Generate the checksum
             my $strChecksum = $oFileThread->hash(PATH_BACKUP_TMP,
-                                                 $oFileCopyMap{$strFile}{backup_file} . ($bCompress ? '.gz' : ''));
+                                                 $oFileCopyMap{$strFile}{backup_file} . ($bCompress ? '.gz' : ''), $bCompress);
 
             # Write the checksum message into the master queue
             $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
