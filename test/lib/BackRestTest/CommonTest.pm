@@ -25,7 +25,8 @@ use BackRest::File;
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
-                 BackRestTestCommon_PathCreate BackRestTestCommon_PathRemove BackRestTestCommon_FileCreate
+                 BackRestTestCommon_PathCreate BackRestTestCommon_PathRemove
+                 BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
@@ -272,7 +273,7 @@ sub BackRestTestCommon_FileCreate
         or confess "unable to open ${strFile} for writing";
 
     syswrite($hFile, $strContent)
-        or confess "unable to write lf: $!";
+        or confess "unable to write to ${strFile}: $!";
 
     close($hFile);
 
@@ -286,6 +287,19 @@ sub BackRestTestCommon_FileCreate
     # Set the permissions
     chmod(oct(defined($strMode) ? $strMode : '0600'), $strFile)
         or confess 'unable to set mode ${strMode} for ${strFile}';
+}
+
+####################################################################################################################################
+# BackRestTestCommon_FileRemove
+#
+# Remove a file.
+####################################################################################################################################
+sub BackRestTestCommon_FileRemove
+{
+    my $strFile = shift;
+
+    unlink($strFile)
+        or confess "unable to remove ${strFile}: $!";
 }
 
 ####################################################################################################################################
