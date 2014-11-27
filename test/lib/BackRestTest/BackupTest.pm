@@ -1126,6 +1126,8 @@ sub BackRestTestBackup_Test
             $strBackup = BackRestTestBackup_LastBackup($oFile);
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
+
+#            !!! Add test for removed tablespace during backup
         }
         }
         }
