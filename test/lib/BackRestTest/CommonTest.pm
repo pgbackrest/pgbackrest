@@ -441,7 +441,7 @@ sub BackRestTestCommon_ConfigCreate
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';
-    config_save($strFile, \%oParamHash);
+    ini_save($strFile, \%oParamHash);
 
     # Move the configuration file based on local
     if ($strLocal eq 'db')

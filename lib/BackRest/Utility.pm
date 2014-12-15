@@ -22,7 +22,7 @@ our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file file_size_format execute
                  log log_file_set log_level_set test_set test_check
                  lock_file_create lock_file_remove
-                 config_save config_load timestamp_string_get timestamp_file_string_get
+                 ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
                  TEST TEST_ENCLOSE TEST_MANIFEST_BUILD);
 
@@ -506,16 +506,16 @@ sub log
 }
 
 ####################################################################################################################################
-# CONFIG_LOAD
+# INI_LOAD
 #
-# Load configuration file from standard INI format to a hash.
+# Load file from standard INI format to a hash.
 ####################################################################################################################################
-sub config_load
+sub ini_load
 {
-    my $strFile = shift;    # Full path to config file to load from
-    my $oConfig = shift;    # Reference to the hash where config data will be stored
+    my $strFile = shift;    # Full path to ini file to load from
+    my $oConfig = shift;    # Reference to the hash where ini data will be stored
 
-    # Open the config file for reading
+    # Open the ini file for reading
     my $hFile;
     my $strSection;
 
@@ -565,16 +565,16 @@ sub config_load
 }
 
 ####################################################################################################################################
-# CONFIG_SAVE
+# INI_SAVE
 #
-# Save configuration file from a hash to standard INI format.
+# Save from a hash to standard INI format.
 ####################################################################################################################################
-sub config_save
+sub ini_save
 {
-    my $strFile = shift;    # Full path to config file to save to
-    my $oConfig = shift;    # Reference to the hash where config data is stored
+    my $strFile = shift;    # Full path to ini file to save to
+    my $oConfig = shift;    # Reference to the hash where ini data is stored
 
-    # Open the config file for writing
+    # Open the ini file for writing
     my $hFile;
     my $bFirst = true;
 

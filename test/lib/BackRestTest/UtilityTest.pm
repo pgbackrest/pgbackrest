@@ -96,18 +96,18 @@ sub BackRestTestUtility_Test
 
             # Save the test config
             my $strFile = "${strTestPath}/config.cfg";
-            config_save($strFile, \%oConfig);
+            ini_save($strFile, \%oConfig);
 
             my $strConfigHash = $oFile->hash(PATH_ABSOLUTE, $strFile);
 
             # Reload the test config
             my %oConfigTest;
 
-            config_load($strFile, \%oConfigTest);
+            ini_load($strFile, \%oConfigTest);
 
             # Resave the test config and compare hashes
             my $strFileTest = "${strTestPath}/config-test.cfg";
-            config_save($strFileTest, \%oConfigTest);
+            ini_save($strFileTest, \%oConfigTest);
 
             my $strConfigTestHash = $oFile->hash(PATH_ABSOLUTE, $strFileTest);
 

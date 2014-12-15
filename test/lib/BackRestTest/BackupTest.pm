@@ -506,15 +506,15 @@ sub BackRestTestBackup_CompareBackup
     }
 
     my %oActualManifest;
-    config_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oActualManifest);
+    ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oActualManifest);
 
     ${$oExpectedManifestRef}{backup}{'timestamp-start'} = $oActualManifest{backup}{'timestamp-start'};
     ${$oExpectedManifestRef}{backup}{'timestamp-stop'} = $oActualManifest{backup}{'timestamp-stop'};
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
-    config_save("${strTestPath}/actual.manifest", \%oActualManifest);
-    config_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);
+    ini_save("${strTestPath}/actual.manifest", \%oActualManifest);
+    ini_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);
 
     BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 

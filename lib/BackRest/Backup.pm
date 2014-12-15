@@ -1361,7 +1361,7 @@ sub backup
 
     if (defined($strBackupLastPath))
     {
-        config_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest", \%oLastManifest);
+        ini_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest", \%oLastManifest);
 
         if (!defined($oLastManifest{backup}{label}))
         {
@@ -1471,7 +1471,7 @@ sub backup
         {
             # Load the aborted manifest
             my %oAbortedManifest;
-            config_load("${strBackupTmpPath}/backup.manifest", \%oAbortedManifest);
+            ini_load("${strBackupTmpPath}/backup.manifest", \%oAbortedManifest);
 
             # Default values if they are not set
             my $strAbortedType = defined($oAbortedManifest{backup}{type}) ?
@@ -1529,7 +1529,7 @@ sub backup
     close($hVersionFile);
 
     # Save the backup conf file with the manifest
-    config_save($strBackupConfFile, \%oBackupManifest);
+    ini_save($strBackupConfFile, \%oBackupManifest);
 
     # Perform the backup
     backup_file($strDbClusterPath, \%oBackupManifest);
@@ -1550,7 +1550,7 @@ sub backup
     if ($bArchiveRequired)
     {
         # Save the backup conf file second time - before getting archive logs in case that fails
-        config_save($strBackupConfFile, \%oBackupManifest);
+        ini_save($strBackupConfFile, \%oBackupManifest);
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
@@ -1608,7 +1608,7 @@ sub backup
     ${oBackupManifest}{backup}{label} = $strBackupPath;
 
     # Save the backup conf file final time
-    config_save($strBackupConfFile, \%oBackupManifest);
+    ini_save($strBackupConfFile, \%oBackupManifest);
 
     &log(INFO, "new backup label: ${strBackupPath}");
 
@@ -1836,7 +1836,7 @@ sub backup_expire
     &log(INFO, 'archive retention based on backup ' . $strArchiveRetentionBackup);
 
     my %oManifest;
-    config_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strArchiveRetentionBackup}/backup.manifest", \%oManifest);
+    ini_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strArchiveRetentionBackup}/backup.manifest", \%oManifest);
     my $strArchiveLast = ${oManifest}{backup}{'archive-start'};
 
     if (!defined($strArchiveLast))
