@@ -9,13 +9,22 @@ use warnings;
 use Carp;
 
 use File::Basename;
+use Getopt::Long;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(config_load config_key_load
+our @EXPORT = qw(config_load config_key_load operation_get operation_set param_get
+
+                 OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_EXPIRE
+
+                 BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
+
+                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_NO_START_STOP PARAM_FORCE PARAM_VERSION PARAM_HELP
+
+                 PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
                  CONFIG_SECTION_ARCHIVE CONFIG_SECTION_RETENTION CONFIG_SECTION_STANZA
@@ -33,7 +42,46 @@ our @EXPORT = qw(config_load config_key_load
                  CONFIG_KEY_ARCHIVE_RETENTION);
 
 ####################################################################################################################################
-# Configuration constants - configuration sections and keys
+# Operation constants - basic operations that are allowed in backrest
+####################################################################################################################################
+use constant
+{
+    OP_ARCHIVE_GET  => 'archive-get',
+    OP_ARCHIVE_PUSH => 'archive-push',
+    OP_BACKUP       => 'backup',
+    OP_EXPIRE       => 'expire'
+};
+
+####################################################################################################################################
+# BACKUP Type Constants
+####################################################################################################################################
+use constant
+{
+    BACKUP_TYPE_FULL          => 'full',
+    BACKUP_TYPE_DIFF          => 'diff',
+    BACKUP_TYPE_INCR          => 'incr'
+};
+
+####################################################################################################################################
+# Parameter constants
+####################################################################################################################################
+use constant
+{
+    PARAM_CONFIG          => 'config',
+    PARAM_STANZA          => 'stanza',
+    PARAM_TYPE            => 'type',
+    PARAM_NO_START_STOP   => 'no-start-stop',
+    PARAM_FORCE           => 'force',
+    PARAM_VERSION         => 'version',
+    PARAM_HELP            => 'help',
+
+    PARAM_TEST            => 'test',
+    PARAM_TEST_DELAY      => 'test-delay',
+    PARAM_TEST_NO_FORK    => 'no-fork'
+};
+
+####################################################################################################################################
+# Configuration constants
 ####################################################################################################################################
 use constant
 {
@@ -75,8 +123,8 @@ use constant
 # Global variables
 ####################################################################################################################################
 my %oConfig;            # Configuration hash
-
-my $strStanza;          # Config stanza
+my %oParam = ();        # Parameter hash
+my $strOperation;       # Operation (backup, archive-get, ...)
 
 ####################################################################################################################################
 # CONFIG_LOAD
@@ -86,17 +134,69 @@ my $strStanza;          # Config stanza
 sub config_load
 {
     my $strFile = shift;    # Full path to ini file to load from
-    my $strStanzaParam = shift;  # Stanza specified on command line
 
-    if (!defined($strFile))
+    # Default for general parameters
+    param_set(PARAM_NO_START_STOP, false); # Do not perform start/stop backup (and archive-required gets set to false)
+    param_set(PARAM_FORCE, false);         # Force an action that would not normally be allowed (varies by action)
+    param_set(PARAM_VERSION, false);       # Display version and exit
+    param_set(PARAM_HELP, false);          # Display help and exit
+
+    # Defaults for test parameters - not for general use
+    param_set(PARAM_TEST_NO_FORK, false);  # Prevents the archive process from forking when local archiving is enabled
+    param_set(PARAM_TEST, false);          # Enters test mode - not harmful, but adds special logging and pauses for unit testing
+    param_set(PARAM_TEST_DELAY, 5);        # Seconds to delay after a test point (default is not enough for manual tests)
+
+    # Get command line parameters
+    GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_NO_START_STOP, PARAM_FORCE,
+                          PARAM_VERSION, PARAM_HELP,
+                          PARAM_TEST, PARAM_TEST_DELAY . '=s', PARAM_TEST_NO_FORK)
+        or pod2usage(2);
+
+    # Get and validate the operation
+    $strOperation = $ARGV[0];
+
+    if (!defined($strOperation))
     {
-        $strFile = '/etc/pg_backrest.conf';
+        confess &log(ERROR, 'operation is not defined');
     }
 
-    ini_load($strFile, \%oConfig);
+    if ($strOperation ne OP_ARCHIVE_GET &&
+        $strOperation ne OP_ARCHIVE_PUSH &&
+        $strOperation ne OP_BACKUP &&
+        $strOperation ne OP_EXPIRE)
+    {
+        confess &log(ERROR, "invalid operation ${strOperation}");
+    }
+
+    # Type should only be specified for backups
+    if (defined(param_get(PARAM_TYPE)) && $strOperation ne OP_BACKUP)
+    {
+        confess &log(ERROR, 'type can only be specified for the backup operation')
+    }
+
+    # Set the backup type
+    if ($strOperation ne OP_BACKUP)
+    {
+        if (!defined(param_get(PARAM_TYPE)))
+        {
+            param_set(PARAM_TYPE, BACKUP_TYPE_INCR);
+        }
+        elsif (param_get(PARAM_TYPE) ne BACKUP_TYPE_FULL && param_get(PARAM_TYPE) ne BACKUP_TYPE_DIFF &&
+               param_get(PARAM_TYPE) ne BACKUP_TYPE_INCR)
+        {
+            confess &log(ERROR, 'backup type must be full, diff (differential), incr (incremental)');
+        }
+    }
+
+    if (!defined(param_get(PARAM_CONFIG)))
+    {
+        param_set(PARAM_CONFIG, '/etc/pg_backrest.conf');
+    }
+
+    ini_load(param_get(PARAM_CONFIG), \%oConfig);
 
     # Load and check the cluster
-    if (!defined($strStanzaParam))
+    if (!defined(param_get(PARAM_STANZA)))
     {
         confess 'a backup stanza must be specified';
     }
@@ -105,8 +205,8 @@ sub config_load
     log_level_set(uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, INFO)),
                   uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, ERROR)));
 
-    # Set globals
-    $strStanza = $strStanzaParam;
+    # Set test parameters
+    test_set(param_get(PARAM_TEST), param_get(PARAM_TEST_DELAY));
 }
 
 ####################################################################################################################################
@@ -130,13 +230,13 @@ sub config_key_load
     # Look in the default stanza section
     if ($strSection eq CONFIG_SECTION_STANZA)
     {
-        $strValue = $oConfig{"${strStanza}"}{"${strKey}"};
+        $strValue = $oConfig{param_get(PARAM_STANZA)}{"${strKey}"};
     }
     # Else look in the supplied section
     else
     {
         # First check the stanza section
-        $strValue = $oConfig{"${strStanza}:${strSection}"}{"${strKey}"};
+        $strValue = $oConfig{param_get(PARAM_STANZA) . ":${strSection}"}{"${strKey}"};
 
         # If the stanza section value is undefined then check global
         if (!defined($strValue))
@@ -166,6 +266,53 @@ sub config_key_load
     }
 
     return $strValue;
+}
+
+####################################################################################################################################
+# OPERATION_GET
+#
+# Get the current operation.
+####################################################################################################################################
+sub operation_get
+{
+    return $strOperation;
+}
+
+####################################################################################################################################
+# OPERATION_SET
+#
+# Set current operation (usually for triggering follow-on operations).
+####################################################################################################################################
+sub operation_set
+{
+    my $strValue = shift;
+
+    $strOperation = $strValue;
+}
+
+####################################################################################################################################
+# PARAM_GET
+#
+# Get param value.
+####################################################################################################################################
+sub param_get
+{
+    my $strParam = shift;
+
+    return $oParam{$strParam};
+}
+
+####################################################################################################################################
+# PARAM_SET
+#
+# Set param value.
+####################################################################################################################################
+sub param_set
+{
+    my $strParam = shift;
+    my $strValue = shift;
+
+    $oParam{$strParam} = $strValue;
 }
 
 1;

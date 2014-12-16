@@ -12,7 +12,6 @@ use warnings;
 use Carp;
 
 use File::Basename;
-use Getopt::Long;
 use Pod::Usage;
 
 use lib dirname($0) . '/../lib';
@@ -54,69 +53,28 @@ pg_backrest.pl [options] [operation]
 =cut
 
 ####################################################################################################################################
-# Operation constants - basic operations that are allowed in backrest
+# Load command line parameters and config
 ####################################################################################################################################
-use constant
-{
-    OP_ARCHIVE_GET  => 'archive-get',
-    OP_ARCHIVE_PUSH => 'archive-push',
-    OP_BACKUP       => 'backup',
-    OP_EXPIRE       => 'expire'
-};
-
-####################################################################################################################################
-# Command line parameters
-####################################################################################################################################
-my $strConfigFile;           # Configuration file
-my $strStanza;               # Stanza in the configuration file to load
-my $strType;                 # Type of backup: full, diff (differential), incr (incremental)
-my $bNoStartStop = false;    # Do not perform start/stop backup (and archive-required gets set to false)
-my $bForce = false;          # Force an action that would not normally be allowed (varies by action)
-my $bVersion = false;        # Display version and exit
-my $bHelp = false;           # Display help and exit
-
-# Test parameters - not for general use
-my $bNoFork = false;    # Prevents the archive process from forking when local archiving is enabled
-my $bTest = false;      # Enters test mode - not harmful in anyway, but adds special logging and pauses for unit testing
-my $iTestDelay = 5;     # Amount of time to delay after hitting a test point (the default would not be enough for manual tests)
-
-GetOptions ('config=s'      => \$strConfigFile,
-            'stanza=s'      => \$strStanza,
-            'type=s'        => \$strType,
-            'no-start-stop' => \$bNoStartStop,
-            'force'         => \$bForce,
-            'version'       => \$bVersion,
-            'help'          => \$bHelp,
-
-            # Test parameters - not for general use (and subject to change without notice)
-            'no-fork'       => \$bNoFork,
-            'test'          => \$bTest,
-            'test-delay=s'  => \$iTestDelay)
-    or pod2usage(2);
+# Load the config file
+config_load();
 
 # Display version and exit if requested
-if ($bVersion || $bHelp)
+if (param_get(PARAM_VERSION) || param_get(PARAM_HELP))
 {
     print 'pg_backrest ' . version_get() . "\n";
 
-    if (!$bHelp)
+    if (!param_get(PARAM_HELP))
     {
         exit 0;
     }
 }
 
 # Display help and exit if requested
-if ($bHelp)
+if (param_get(PARAM_HELP))
 {
     print "\n";
     pod2usage();
 }
-
-# Set test parameters
-test_set($bTest, $iTestDelay);
-
-# Load the config file
-config_load($strConfigFile, $strStanza);
 
 ####################################################################################################################################
 # Global variables
@@ -184,28 +142,6 @@ eval {
 ####################################################################################################################################
 # START MAIN
 ####################################################################################################################################
-# Get the operation
-my $strOperation = $ARGV[0];
-
-# Validate the operation
-if (!defined($strOperation))
-{
-    confess &log(ERROR, 'operation is not defined');
-}
-
-if ($strOperation ne OP_ARCHIVE_GET &&
-    $strOperation ne OP_ARCHIVE_PUSH &&
-    $strOperation ne OP_BACKUP &&
-    $strOperation ne OP_EXPIRE)
-{
-    confess &log(ERROR, "invalid operation ${strOperation}");
-}
-
-# Type should only be specified for backups
-if (defined($strType) && $strOperation ne OP_BACKUP)
-{
-    confess &log(ERROR, 'type can only be specified for the backup operation')
-}
 
 ####################################################################################################################################
 # DETERMINE IF THERE IS A REMOTE
@@ -234,7 +170,7 @@ else
 ####################################################################################################################################
 # ARCHIVE-PUSH Command
 ####################################################################################################################################
-if ($strOperation eq OP_ARCHIVE_PUSH)
+if (operation_get() eq OP_ARCHIVE_PUSH)
 {
     # Make sure the archive push operation happens on the db side
     if ($strRemote eq REMOTE_DB)
@@ -263,7 +199,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
 
     if ($bArchiveLocal)
     {
-        $strStopFile = "${strArchivePath}/lock/${strStanza}-archive.stop";
+        $strStopFile = "${strArchivePath}/lock/" + param_get(PARAM_STANZA) + "-archive.stop";
     }
 
     # If an archive file is defined, then push it
@@ -285,7 +221,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         # Create the file object
         my $oFile = new BackRest::File
         (
-            $strStanza,
+            param_get(PARAM_STANZA),
             config_key_load($strSection, CONFIG_KEY_PATH, true),
             $bArchiveLocal ? REMOTE_NONE : $strRemote,
             $bArchiveLocal ? undef : remote_get()
@@ -313,7 +249,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         }
 
         # Fork and exit the parent process so the async process can continue
-        if (!$bNoFork)
+        if (!param_get(PARAM_TEST_NO_FORK))
         {
             if (fork())
             {
@@ -336,7 +272,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     &log(INFO, 'starting async archive-push');
 
     # Create a lock file to make sure async archive-push does not run more than once
-    my $strLockPath = "${strArchivePath}/lock/${strStanza}-archive.lock";
+    my $strLockPath = "${strArchivePath}/lock/" . param_get(PARAM_STANZA) . "-archive.lock";
 
     if (!lock_file_create($strLockPath))
     {
@@ -345,7 +281,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
     }
 
     # Build the basic command string that will be used to modify the command during processing
-    my $strCommand = $^X . ' ' . $0 . " --stanza=${strStanza}";
+    my $strCommand = $^X . ' ' . $0 . " --stanza=" . param_get(PARAM_STANZA);
 
     # Get the new operational flags
     my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
@@ -356,7 +292,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
         # Create the file object
         my $oFile = new BackRest::File
         (
-            $strStanza,
+            param_get(PARAM_STANZA),
             config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
             $strRemote,
             remote_get()
@@ -381,7 +317,8 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
 
         while (!defined($iLogTotal) || $iLogTotal > 0)
         {
-            $iLogTotal = archive_xfer($strArchivePath . "/archive/${strStanza}", $strStopFile, $strCommand, $iArchiveMaxMB);
+            $iLogTotal = archive_xfer($strArchivePath . "/archive/" . param_get(PARAM_STANZA), $strStopFile,
+                                      $strCommand, $iArchiveMaxMB);
 
             if ($iLogTotal > 0)
             {
@@ -442,7 +379,7 @@ if ($strOperation eq OP_ARCHIVE_PUSH)
 ####################################################################################################################################
 # ARCHIVE-GET Command
 ####################################################################################################################################
-if ($strOperation eq OP_ARCHIVE_GET)
+if (operation_get() eq OP_ARCHIVE_GET)
 {
     # Make sure the archive file is defined
     if (!defined($ARGV[1]))
@@ -459,7 +396,7 @@ if ($strOperation eq OP_ARCHIVE_GET)
     # Init the file object
     my $oFile = new BackRest::File
     (
-        $strStanza,
+        param_get(PARAM_STANZA),
         config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
         $strRemote,
         remote_get()
@@ -487,7 +424,7 @@ if (defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
     confess &log(ASSERT, 'backup/expire operations must be performed locally on the backup server');
 }
 
-log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/${strStanza}");
+log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/" . param_get(PARAM_STANZA));
 
 ####################################################################################################################################
 # GET MORE CONFIG INFO
@@ -498,33 +435,24 @@ if ($strRemote eq REMOTE_BACKUP)
     confess &log(ERROR, 'backup and expire operations must run on the backup host');
 }
 
-# Set the backup type
-if (!defined($strType))
-{
-    $strType = BACKUP_TYPE_INCR;
-}
-elsif ($strType ne BACKUP_TYPE_FULL && $strType ne BACKUP_TYPE_DIFF && $strType ne BACKUP_TYPE_INCR)
-{
-    confess &log(ERROR, 'backup type must be full, diff (differential), incr (incremental)');
-}
-
 # Get the operational flags
 my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
 my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, 'y') eq 'y' ? true : false;
 
 # Set the lock path
-my $strLockPath = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) .  "/lock/${strStanza}-${strOperation}.lock";
+my $strLockPath = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) .  '/lock/' .
+                                  param_get(PARAM_STANZA) . '-' . operation_get() . '.lock';
 
 if (!lock_file_create($strLockPath))
 {
-    &log(ERROR, "backup process is already running for stanza ${strStanza} - exiting");
+    &log(ERROR, 'backup process is already running for stanza ' . param_get(PARAM_STANZA) . ' - exiting');
     remote_exit(0);
 }
 
 # Initialize the default file object
 my $oFile = new BackRest::File
 (
-    $strStanza,
+    param_get(PARAM_STANZA),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
     $strRemote,
     remote_get()
@@ -533,7 +461,7 @@ my $oFile = new BackRest::File
 # Initialize the db object
 my $oDb;
 
-if (!$bNoStartStop)
+if (!param_get(PARAM_NO_START_STOP))
 {
     $oDb = new BackRest::Db
     (
@@ -548,32 +476,32 @@ backup_init
 (
     $oDb,
     $oFile,
-    $strType,
+    param_get(PARAM_TYPE),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, 'y') eq 'y' ? true : false,
     !$bChecksum,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, 'y') eq 'y' ? true : false,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT),
-    $bNoStartStop,
-    $bForce
+    param_get(PARAM_NO_START_STOP),
+    param_get(PARAM_FORCE)
 );
 
 ####################################################################################################################################
 # BACKUP
 ####################################################################################################################################
-if ($strOperation eq OP_BACKUP)
+if (operation_get() eq OP_BACKUP)
 {
     backup(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, 'n') eq 'y' ? true : false);
 
-    $strOperation = OP_EXPIRE;
+    operation_set(OP_EXPIRE);
 }
 
 ####################################################################################################################################
 # EXPIRE
 ####################################################################################################################################
-if ($strOperation eq OP_EXPIRE)
+if (operation_get() eq OP_EXPIRE)
 {
     backup_expire
     (

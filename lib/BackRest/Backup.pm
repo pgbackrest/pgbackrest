@@ -15,6 +15,7 @@ use Thread::Queue;
 
 use lib dirname($0);
 use BackRest::Utility;
+use BackRest::Config;
 use BackRest::File;
 use BackRest::Db;
 
@@ -44,16 +45,6 @@ my @oThread;
 my @oThreadQueue;
 my @oMasterQueue;
 my %oFileCopyMap;
-
-####################################################################################################################################
-# BACKUP Type Constants
-####################################################################################################################################
-use constant
-{
-    BACKUP_TYPE_FULL          => 'full',
-    BACKUP_TYPE_DIFF          => 'diff',
-    BACKUP_TYPE_INCR          => 'incr'
-};
 
 ####################################################################################################################################
 # BACKUP_INIT
