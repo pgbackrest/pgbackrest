@@ -1392,17 +1392,18 @@ sub backup
 
     if ($bNoStartStop)
     {
-        if ($oFile->exists(PATH_DB_ABSOLUTE, $strDbClusterPath . '/postmaster.pid'))
+        if ($oFile->exists(PATH_DB_ABSOLUTE, $strDbClusterPath . '/' . FILE_POSTMASTER_PID))
         {
             if ($bForce)
             {
-                &log(WARN, '--no-start-stop passed and postmaster.pid exists but --force was passed so backup will continue, ' .
-                           'though it looks like the postmaster is running and the backup will probably not be consistent');
+                &log(WARN, '--no-start-stop passed and ' . FILE_POSTMASTER_PID . ' exists but --force was passed so backup will ' .
+                           'continue though it looks like the postmaster is running and the backup will probably not be ' .
+                           'consistent');
             }
             else
             {
-                &log(ERROR, '--no-start-stop passed but postmaster.pid exists - looks like the postmaster is running. ' .
-                            'Shutdown the postmaster and try again, or use --force.');
+                &log(ERROR, '--no-start-stop passed but ' . FILE_POSTMASTER_PID . ' exists - looks like the postmaster is ' .
+                            'running. Shutdown the postmaster and try again, or use --force.');
                 exit 1;
             }
         }
@@ -1514,7 +1515,7 @@ sub backup
 
     # Write the VERSION file
     my $hVersionFile;
-    open($hVersionFile, '>', "${strBackupTmpPath}/version") or confess 'unable to open version file';
+    open($hVersionFile, '>', "${strBackupTmpPath}/" . FILE_VERSION) or confess 'unable to open version file';
     print $hVersionFile version_get();
     close($hVersionFile);
 

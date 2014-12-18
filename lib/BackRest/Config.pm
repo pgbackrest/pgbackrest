@@ -18,6 +18,8 @@ use Exporter qw(import);
 
 our @EXPORT = qw(config_load config_key_load operation_get operation_set param_get
 
+                 FILE_MANIFEST FILE_VERSION FILE_POSTMASTER_PID
+
                  OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_RESTORE OP_EXPIRE
 
                  BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
@@ -40,6 +42,16 @@ our @EXPORT = qw(config_load config_key_load operation_get operation_set param_g
 
                  CONFIG_KEY_FULL_RETENTION CONFIG_KEY_DIFFERENTIAL_RETENTION CONFIG_KEY_ARCHIVE_RETENTION_TYPE
                  CONFIG_KEY_ARCHIVE_RETENTION);
+
+####################################################################################################################################
+# File/path constants
+####################################################################################################################################
+use constant
+{
+    FILE_MANIFEST       => 'backup.manifest',
+    FILE_VERSION        => 'version',
+    FILE_POSTMASTER_PID => 'postmaster.pid'
+};
 
 ####################################################################################################################################
 # Operation constants - basic operations that are allowed in backrest

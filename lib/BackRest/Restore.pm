@@ -58,7 +58,7 @@ sub restore
     my $self = shift;       # Class hash
 
     # Make sure that Postgres is not running
-    if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/postmaster.pid'))
+    if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
     {
         confess &log(ERROR, 'unable to restore while Postgres is running');
     }
@@ -67,14 +67,14 @@ sub restore
     if ($self->{oFile}->exists(PATH_BACKUP_CLUSTER, $self->{strBackupPath}))
     {
         # Copy the backup manifest to the db cluster path
-        $self->{oFile}->copy(PATH_BACKUP_CLUSTER, $self->{strBackupPath} . '/backup.manifest',
-                             PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/backup.manifest');
+        $self->{oFile}->copy(PATH_BACKUP_CLUSTER, $self->{strBackupPath} . '/' . FILE_MANIFEST,
+                             PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
          # Load the manifest into a hash
-         ini_load($self->{oFile}->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/backup.manifest'));
+         ini_load($self->{oFile}->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST));
 
          # Remove the manifest now that it is in memory
-         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/backup.manifest');
+         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
     }
     else
     {
