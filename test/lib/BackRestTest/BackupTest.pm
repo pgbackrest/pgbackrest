@@ -446,12 +446,12 @@ sub BackRestTestBackup_LastBackup
 
     my @stryBackup = $oFile->list(PATH_BACKUP_CLUSTER, undef, undef, 'reverse');
 
-    if (!defined($stryBackup[0]))
+    if (!defined($stryBackup[1]))
     {
         confess 'no backup was found';
     }
 
-    return $stryBackup[0];
+    return $stryBackup[1];
 }
 
 ####################################################################################################################################

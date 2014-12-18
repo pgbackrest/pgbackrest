@@ -16,6 +16,8 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 * More comprehensive backup unit tests.
 
+* Link (called latest) always points to the last backup.  This has been added for convenience.
+
 ### v0.30: core restructuring and unit tests
 
 * Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.

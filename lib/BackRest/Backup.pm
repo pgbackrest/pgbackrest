@@ -22,8 +22,7 @@ use BackRest::Db;
 use Exporter qw(import);
 
 our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_xfer archive_get archive_compress
-                 backup backup_expire archive_list_get
-                 BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR);
+                 backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
@@ -1606,6 +1605,10 @@ sub backup
     # Rename the backup tmp path to complete the backup
     &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
     $oFile->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+
+    # Create a link to the most recent backup
+    $oFile->remove(PATH_BACKUP_CLUSTER, "latest");
+    $oFile->link_create(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
 }
 
 ####################################################################################################################################
