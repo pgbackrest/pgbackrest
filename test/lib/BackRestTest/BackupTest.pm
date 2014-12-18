@@ -1150,7 +1150,8 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test full
     #
-    # Check the entire backup mechanism using actual clusters.
+    # Check the entire backup mechanism using actual clusters.  Only the archive and start/stop mechanisms need to be tested since
+    # everything else was tested in the backup test.
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'full')
     {
@@ -1161,98 +1162,85 @@ sub BackRestTestBackup_Test
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
-        for (my $bLarge = false; $bLarge <= false; $bLarge++)
+        for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
         {
-            for (my $bCompress = false; $bCompress <= true; $bCompress++)
-            {
-            for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
-            {
-            for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
-            {
-            for (my $bArchiveAsync = false; $bArchiveAsync <= $bRemote; $bArchiveAsync++)
-            {
-                # Increment the run, log, and decide whether this unit test should be run
-                if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, lrg ${bLarge}, cmp ${bCompress}, chk ${bChecksum}, " .
-                                            "hardlink ${bHardlink}, arc_async ${bArchiveAsync}")) {next}
+            # Increment the run, log, and decide whether this unit test should be run
+            if (!BackRestTestCommon_Run(++$iRun,
+                                        "rmt ${bRemote}, arc_async ${bArchiveAsync}")) {next}
 
-                # Create the test directory
-                if ($bCreate)
+            # Create the test directory
+            if ($bCreate)
+            {
+                BackRestTestBackup_Create($bRemote);
+                $bCreate = false;
+            }
+
+            # Create db config
+            BackRestTestCommon_ConfigCreate('db',                              # local
+                                            $bRemote ? REMOTE_BACKUP : undef,  # remote
+                                            false,                             # compress
+                                            false,                             # checksum
+                                            $bRemote ? undef : true,           # hardlink
+                                            $bRemote ? undef : $iThreadMax,    # thread-max
+                                            $bArchiveAsync,                    # archive-async
+                                            undef);                            # compress-async
+
+            # Create backup config
+            if ($bRemote)
+            {
+                BackRestTestCommon_ConfigCreate('backup',                      # local
+                                                $bRemote ? REMOTE_DB : undef,  # remote
+                                                false,                         # compress
+                                                false,                         # checksum
+                                                true,                          # hardlink
+                                                $iThreadMax,                   # thread-max
+                                                undef,                         # archive-async
+                                                undef);                        # compress-async
+            }
+
+            # Create the backup command
+            my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
+                                       ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
+                                       "/pg_backrest.conf --test --type=incr --stanza=${strStanza} backup";
+
+            # Run the full/incremental tests
+            for (my $iFull = 1; $iFull <= 1; $iFull++)
+            {
+
+                for (my $iIncr = 0; $iIncr <= 2; $iIncr++)
                 {
-                    BackRestTestBackup_Create($bRemote);
-                    $bCreate = false;
-                }
+                    &log(INFO, '    ' . ($iIncr == 0 ? ('full ' . sprintf('%02d', $iFull)) :
+                                                       ('    incr ' . sprintf('%02d', $iIncr))));
 
-                # Create db config
-                BackRestTestCommon_ConfigCreate('db',                              # local
-                                                $bRemote ? REMOTE_BACKUP : undef,  # remote
-                                                $bCompress,                        # compress
-                                                $bChecksum,                        # checksum
-                                                $bRemote ? undef : $bHardlink,     # hardlink
-                                                $bRemote ? undef : $iThreadMax,    # thread-max
-                                                $bArchiveAsync,                    # archive-async
-                                                undef);                            # compress-async
-
-                # Create backup config
-                if ($bRemote)
-                {
-                    BackRestTestCommon_ConfigCreate('backup',                      # local
-                                                    $bRemote ? REMOTE_DB : undef,  # remote
-                                                    $bCompress,                    # compress
-                                                    $bChecksum,                    # checksum
-                                                    $bHardlink,                    # hardlink
-                                                    $iThreadMax,                   # thread-max
-                                                    undef,                         # archive-async
-                                                    undef);                        # compress-async
-                }
-
-                # Create the backup command
-                my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
-                                           ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
-                                           "/pg_backrest.conf --test --type=incr --stanza=${strStanza} backup";
-
-                # Run the full/incremental tests
-                for (my $iFull = 1; $iFull <= 1; $iFull++)
-                {
-
-                    for (my $iIncr = 0; $iIncr <= 2; $iIncr++)
+                    # Create tablespace
+                    if ($iIncr == 0)
                     {
-                        &log(INFO, '    ' . ($iIncr == 0 ? ('full ' . sprintf('%02d', $iFull)) :
-                                                           ('    incr ' . sprintf('%02d', $iIncr))));
+                        BackRestTestBackup_PgExecute("create tablespace ts1 location '" .
+                                                     BackRestTestCommon_DbTablespacePathGet() . "/ts1'", true);
+                    }
 
-                        # Create tablespace
-                        if ($iIncr == 0)
-                        {
-                            BackRestTestBackup_PgExecute("create tablespace ts1 location '" .
-                                                         BackRestTestCommon_DbTablespacePathGet() . "/ts1'", true);
-                        }
+                    # Create a table in each backup to check references
+                    BackRestTestBackup_PgExecute("create table test_backup_${iIncr} (id int)", true);
 
-                        # Create a table in each backup to check references
-                        BackRestTestBackup_PgExecute("create table test_backup_${iIncr} (id int)", true);
+                    # Create a table to be dropped to test missing file code
+                    BackRestTestBackup_PgExecute('create table test_drop (id int)');
 
-                        # Create a table to be dropped to test missing file code
-                        BackRestTestBackup_PgExecute('create table test_drop (id int)');
+                    BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
 
-                        BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
+                    if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
+                    {
+                        BackRestTestBackup_PgExecute('drop table test_drop', true);
 
-                        if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
-                        {
-                            BackRestTestBackup_PgExecute('drop table test_drop', true);
-
-                            BackRestTestCommon_ExecuteEnd();
-                        }
-                        else
-                        {
-                            confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
-                        }
+                        BackRestTestCommon_ExecuteEnd();
+                    }
+                    else
+                    {
+                        confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
                     }
                 }
+            }
 
-                $bCreate = true;
-            }
-            }
-            }
-            }
+            $bCreate = true;
         }
         }
 
