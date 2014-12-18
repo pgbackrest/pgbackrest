@@ -528,6 +528,22 @@ sub BackRestTestBackup_CompareBackup
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/actual.manifest");
 }
 
+
+####################################################################################################################################
+# BackRestTestBackup_CompareRestore
+####################################################################################################################################
+sub BackRestTestBackup_CompareRestore
+{
+    my $oFile = shift;
+    my $strBackup = shift;
+    my $strStanza = shift;
+    my $oExpectedManifestRef = shift;
+
+    # Create the backup command
+    BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                               "/pg_backrest.conf --stanza=${strStanza} restore");
+}
+
 ####################################################################################################################################
 # BackRestTestBackup_Test
 ####################################################################################################################################
@@ -943,6 +959,7 @@ sub BackRestTestBackup_Test
             my $strFullBackup = BackRestTestBackup_LastBackup($oFile);
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
+            BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest);
 
             # Perform first incr backup
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);

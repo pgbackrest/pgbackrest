@@ -19,6 +19,7 @@ use BackRest::Utility;
 use BackRest::Config;
 use BackRest::File;
 use BackRest::Backup;
+use BackRest::Restore;
 use BackRest::Db;
 
 ####################################################################################################################################
@@ -491,6 +492,19 @@ if (operation_get() eq OP_BACKUP)
            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, 'n') eq 'y' ? true : false);
 
     operation_set(OP_EXPIRE);
+}
+
+####################################################################################################################################
+# RESTORE
+####################################################################################################################################
+if (operation_get() eq OP_RESTORE)
+{
+    new BackRest::Restore
+    (
+        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
+        undef,
+        $oFile
+    )->restore;
 }
 
 ####################################################################################################################################

@@ -18,7 +18,7 @@ use Exporter qw(import);
 
 our @EXPORT = qw(config_load config_key_load operation_get operation_set param_get
 
-                 OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_EXPIRE
+                 OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_RESTORE OP_EXPIRE
 
                  BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
 
@@ -46,10 +46,11 @@ our @EXPORT = qw(config_load config_key_load operation_get operation_set param_g
 ####################################################################################################################################
 use constant
 {
-    OP_ARCHIVE_GET  => 'archive-get',
-    OP_ARCHIVE_PUSH => 'archive-push',
-    OP_BACKUP       => 'backup',
-    OP_EXPIRE       => 'expire'
+    OP_ARCHIVE_GET   => 'archive-get',
+    OP_ARCHIVE_PUSH  => 'archive-push',
+    OP_BACKUP        => 'backup',
+    OP_RESTORE       => 'restore',
+    OP_EXPIRE        => 'expire'
 };
 
 ####################################################################################################################################
@@ -163,6 +164,7 @@ sub config_load
     if ($strOperation ne OP_ARCHIVE_GET &&
         $strOperation ne OP_ARCHIVE_PUSH &&
         $strOperation ne OP_BACKUP &&
+        $strOperation ne OP_RESTORE &&
         $strOperation ne OP_EXPIRE)
     {
         confess &log(ERROR, "invalid operation ${strOperation}");
