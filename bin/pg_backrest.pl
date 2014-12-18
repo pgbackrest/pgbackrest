@@ -53,52 +53,10 @@ pg_backrest.pl [options] [operation]
 =cut
 
 ####################################################################################################################################
-# Load command line parameters and config
-####################################################################################################################################
-# Load the config file
-config_load();
-
-# Display version and exit if requested
-if (param_get(PARAM_VERSION) || param_get(PARAM_HELP))
-{
-    print 'pg_backrest ' . version_get() . "\n";
-
-    if (!param_get(PARAM_HELP))
-    {
-        exit 0;
-    }
-}
-
-# Display help and exit if requested
-if (param_get(PARAM_HELP))
-{
-    print "\n";
-    pod2usage();
-}
-
-####################################################################################################################################
 # Global variables
 ####################################################################################################################################
 my $oRemote;            # Remote object
 my $strRemote;          # Defines which side is remote, DB or BACKUP
-
-####################################################################################################################################
-# REMOTE_EXIT - Close the remote object if it exists
-####################################################################################################################################
-sub remote_exit
-{
-    my $iExitCode = shift;
-
-    if (defined($oRemote))
-    {
-        $oRemote->thread_kill()
-    }
-
-    if (defined($iExitCode))
-    {
-        exit $iExitCode;
-    }
-}
 
 ####################################################################################################################################
 # REMOTE_GET - Get the remote object or create it if not exists
@@ -135,13 +93,50 @@ $SIG{HUP} = \&safe_exit;
 $SIG{INT} = \&safe_exit;
 
 ####################################################################################################################################
+# REMOTE_EXIT - Close the remote object if it exists
+####################################################################################################################################
+sub remote_exit
+{
+    my $iExitCode = shift;
+
+    if (defined($oRemote))
+    {
+        $oRemote->thread_kill()
+    }
+
+    if (defined($iExitCode))
+    {
+        exit $iExitCode;
+    }
+}
+
+####################################################################################################################################
 # START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
 ####################################################################################################################################
 eval {
 
 ####################################################################################################################################
-# START MAIN
+# Load command line parameters and config
 ####################################################################################################################################
+config_load();
+
+# Display version and exit if requested
+if (param_get(PARAM_VERSION) || param_get(PARAM_HELP))
+{
+    print 'pg_backrest ' . version_get() . "\n";
+
+    if (!param_get(PARAM_HELP))
+    {
+        exit 0;
+    }
+}
+
+# Display help and exit if requested
+if (param_get(PARAM_HELP))
+{
+    print "\n";
+    pod2usage();
+}
 
 ####################################################################################################################################
 # DETERMINE IF THERE IS A REMOTE
