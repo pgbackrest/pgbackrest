@@ -4,7 +4,9 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 ## release notes
 
-### v0.31: ???
+### v0.50: ???
+
+* Added restore functionality.
 
 * Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
 
@@ -16,7 +18,7 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 * More comprehensive backup unit tests.
 
-* Link (called latest) always points to the last backup.  This has been added for convenience.
+* Link (called latest) always points to the last backup.  This has been added for convenience and to make restore simpler.
 
 ### v0.30: core restructuring and unit tests
 
