@@ -211,11 +211,11 @@ sub BackRestTestBackup_Create
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_ManifestPathCreate
+# BackRestTestBackup_PathCreate
 #
-# Create a path specifying mode and add it to the manifest.
+# Create a path specifying mode.
 ####################################################################################################################################
-sub BackRestTestBackup_ManifestPathCreate
+sub BackRestTestBackup_PathCreate
 {
     my $oManifestRef = shift;
     my $strPath = shift;
@@ -230,6 +230,24 @@ sub BackRestTestBackup_ManifestPathCreate
     {
         BackRestTestCommon_PathCreate($strFinalPath, $strMode);
     }
+
+    return $strFinalPath;
+}
+
+####################################################################################################################################
+# BackRestTestBackup_ManifestPathCreate
+#
+# Create a path specifying mode and add it to the manifest.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestPathCreate
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strSubPath = shift;
+    my $strMode = shift;
+
+    # Create final file location
+    my $strFinalPath = BackRestTestBackup_PathCreate($oManifestRef, $strPath, $strSubPath, $strMode);
 
     # Stat the file
     my $oStat = lstat($strFinalPath);
@@ -310,6 +328,30 @@ sub BackRestTestBackup_ManifestTablespaceCreate
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_FileCreate
+#
+# Create a file specifying content, mode, and time.
+####################################################################################################################################
+sub BackRestTestBackup_FileCreate
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strFile = shift;
+    my $strContent = shift;
+    my $lTime = shift;
+    my $strMode = shift;
+
+    # Create actual file location
+    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+
+    # Create the file
+    BackRestTestCommon_FileCreate($strPathFile, $strContent, $lTime, $strMode);
+
+    # Return path to created file
+    return $strPathFile;
+}
+
+####################################################################################################################################
 # BackRestTestBackup_ManifestFileCreate
 #
 # Create a file specifying content, mode, and time and add it to the manifest.
@@ -324,11 +366,8 @@ sub BackRestTestBackup_ManifestFileCreate
     my $lTime = shift;
     my $strMode = shift;
 
-    # Create actual file location
-    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
-
     # Create the file
-    BackRestTestCommon_FileCreate($strPathFile, $strContent, $lTime, $strMode);
+    my $strPathFile = BackRestTestBackup_FileCreate($oManifestRef, $strPath, $strFile, $strContent, $lTime, $strMode);
 
     # Stat the file
     my $oStat = lstat($strPathFile);
@@ -541,7 +580,7 @@ sub BackRestTestBackup_CompareRestore
 
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               "/pg_backrest.conf --stanza=${strStanza} restore");
+                               "/pg_backrest.conf --force --stanza=${strStanza} restore");
 }
 
 ####################################################################################################################################
@@ -959,6 +998,11 @@ sub BackRestTestBackup_Test
             my $strFullBackup = BackRestTestBackup_LastBackup($oFile);
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
+
+            # Create a bogus file that should be deleted by the restore
+            BackRestTestBackup_PathCreate(\%oManifest, 'base', 'deleteme');
+            BackRestTestBackup_FileCreate(\%oManifest, 'base', 'deleteme/deleteme.txt', 'DELETEME');
+
             BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest);
 
             # Perform first incr backup

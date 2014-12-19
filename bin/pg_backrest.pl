@@ -413,14 +413,44 @@ if (operation_get() eq OP_ARCHIVE_GET)
 }
 
 ####################################################################################################################################
-# OPEN THE LOG FILE
+# Initialize the default file object
 ####################################################################################################################################
-if (defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
-{
-    confess &log(ASSERT, 'backup/expire operations must be performed locally on the backup server');
-}
 
-log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . "/log/" . param_get(PARAM_STANZA));
+# Open the log file
+log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA));
+
+my $oFile = new BackRest::File
+(
+    param_get(PARAM_STANZA),
+    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
+    $strRemote,
+    remote_get()
+);
+
+####################################################################################################################################
+# RESTORE
+####################################################################################################################################
+if (operation_get() eq OP_RESTORE)
+{
+    if ($strRemote eq REMOTE_DB)
+    {
+        confess &log(ASSERT, 'restore operation must be performed locally on the db server');
+    }
+
+    # Open the log file
+#    log_file_set(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH) . '/restore-' . param_get(PARAM_STANZA));
+
+    # Do the restore
+    new BackRest::Restore
+    (
+        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
+        undef,
+        $oFile,
+        param_get(PARAM_FORCE)
+    )->restore;
+
+    remote_exit(0);
+}
 
 ####################################################################################################################################
 # GET MORE CONFIG INFO
@@ -444,15 +474,6 @@ if (!lock_file_create($strLockPath))
     &log(ERROR, 'backup process is already running for stanza ' . param_get(PARAM_STANZA) . ' - exiting');
     remote_exit(0);
 }
-
-# Initialize the default file object
-my $oFile = new BackRest::File
-(
-    param_get(PARAM_STANZA),
-    config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
-    $strRemote,
-    remote_get()
-);
 
 # Initialize the db object
 my $oDb;
@@ -492,19 +513,6 @@ if (operation_get() eq OP_BACKUP)
            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_START_FAST, true, 'n') eq 'y' ? true : false);
 
     operation_set(OP_EXPIRE);
-}
-
-####################################################################################################################################
-# RESTORE
-####################################################################################################################################
-if (operation_get() eq OP_RESTORE)
-{
-    new BackRest::Restore
-    (
-        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
-        undef,
-        $oFile
-    )->restore;
 }
 
 ####################################################################################################################################
