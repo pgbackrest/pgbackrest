@@ -235,6 +235,26 @@ sub BackRestTestBackup_PathCreate
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_PathMode
+#
+# Change the mode of a path.
+####################################################################################################################################
+sub BackRestTestBackup_PathMode
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strSubPath = shift;
+    my $strMode = shift;
+
+    # Create final file location
+    my $strFinalPath = ${$oManifestRef}{'backup:path'}{$strPath} . (defined($strSubPath) ? "/${strSubPath}" : '');
+
+    BackRestTestCommon_PathMode($strFinalPath, $strMode);
+
+    return $strFinalPath;
+}
+
+####################################################################################################################################
 # BackRestTestBackup_ManifestPathCreate
 #
 # Create a path specifying mode and add it to the manifest.
@@ -264,6 +284,26 @@ sub BackRestTestBackup_ManifestPathCreate
     ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{group} = getgrgid($oStat->gid);
     ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{user} = getpwuid($oStat->uid);
     ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+}
+
+####################################################################################################################################
+# BackRestTestBackup_PathRemove
+#
+# Remove a path.
+####################################################################################################################################
+sub BackRestTestBackup_PathRemove
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strSubPath = shift;
+
+    # Create final file location
+    my $strFinalPath = ${$oManifestRef}{'backup:path'}{$strPath} . (defined($strSubPath) ? "/${strSubPath}" : '');
+
+    # Create the path
+    BackRestTestCommon_PathRemove($strFinalPath);
+
+    return $strFinalPath;
 }
 
 ####################################################################################################################################
@@ -394,31 +434,48 @@ sub BackRestTestBackup_ManifestFileCreate
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_FileRemove
+#
+# Remove a file from disk.
+####################################################################################################################################
+sub BackRestTestBackup_FileRemove
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strFile = shift;
+    my $bIgnoreMissing = shift;
+
+    # Create actual file location
+    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+
+    # Remove the file
+    if (!(defined($bIgnoreMissing) && $bIgnoreMissing && !(-e $strPathFile)))
+    {
+        BackRestTestCommon_FileRemove($strPathFile);
+    }
+
+    return $strPathFile;
+}
+
+####################################################################################################################################
 # BackRestTestBackup_ManifestFileRemove
 #
-# Remove a file from disk and the manifest.
+# Remove a file from disk and (optionally) the manifest.
 ####################################################################################################################################
 sub BackRestTestBackup_ManifestFileRemove
 {
     my $oManifestRef = shift;
     my $strPath = shift;
     my $strFile = shift;
-    my $bManifestRemove = shift;
 
     # Create actual file location
     my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
 
     # Remove the file
-    if (-e $strPathFile)
-    {
-        BackRestTestCommon_FileRemove($strPathFile);
-    }
+    BackRestTestBackup_FileRemove($oManifestRef, $strPath, $strFile, true);
 
     # Remove from manifest
-    if (defined($bManifestRemove) && $bManifestRemove)
-    {
-        delete(${$oManifestRef}{"${strPath}:file"}{$strFile});
-    }
+    delete(${$oManifestRef}{"${strPath}:file"}{$strFile});
 }
 
 ####################################################################################################################################
@@ -474,6 +531,87 @@ sub BackRestTestBackup_ManifestReference
             }
         }
     }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_LinkCreate
+#
+# Create a file specifying content, mode, and time.
+####################################################################################################################################
+sub BackRestTestBackup_LinkCreate
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strFile = shift;
+    my $strDestination = shift;
+
+    # Create actual file location
+    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+
+    # Create the file
+    symlink($strDestination, $strPathFile)
+        or confess "unable to link ${strPathFile} to ${strDestination}";
+
+    # Return path to created file
+    return $strPathFile;
+}
+
+####################################################################################################################################
+# BackRestTestBackup_LinkRemove
+#
+# Remove a link from disk.
+####################################################################################################################################
+# sub BackRestTestBackup_LinkRemove
+# {
+#     my $oManifestRef = shift;
+#     my $strPath = shift;
+#     my $strFile = shift;
+#     my $bManifestRemove = shift;
+#
+#     # Create actual file location
+#     my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+#
+#     # Remove the file
+#     if (-e $strPathFile)
+#     {
+#         BackRestTestCommon_FileRemove($strPathFile);
+#     }
+#
+#     # Remove from manifest
+#     if (defined($bManifestRemove) && $bManifestRemove)
+#     {
+#         delete(${$oManifestRef}{"${strPath}:file"}{$strFile});
+#     }
+# }
+
+####################################################################################################################################
+# BackRestTestBackup_ManifestLinkCreate
+#
+# Create a link and add it to the manifest.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestLinkCreate
+{
+    my $oManifestRef = shift;
+    my $strPath = shift;
+    my $strFile = shift;
+    my $strDestination = shift;
+
+    # Create the file
+    my $strPathFile = BackRestTestBackup_LinkCreate($oManifestRef, $strPath, $strFile, $strDestination);
+
+    # Stat the file
+    my $oStat = lstat($strPathFile);
+
+    # Check for errors in stat
+    if (!defined($oStat))
+    {
+        confess 'unable to stat ${strFile}';
+    }
+
+    # Load file into manifest
+    ${$oManifestRef}{"${strPath}:link"}{$strFile}{group} = getgrgid($oStat->gid);
+    ${$oManifestRef}{"${strPath}:link"}{$strFile}{user} = getpwuid($oStat->uid);
+    ${$oManifestRef}{"${strPath}:link"}{$strFile}{link_destination} = $strDestination;
 }
 
 ####################################################################################################################################
@@ -577,10 +715,11 @@ sub BackRestTestBackup_CompareRestore
     my $strBackup = shift;
     my $strStanza = shift;
     my $oExpectedManifestRef = shift;
+    my $bForce = shift;
 
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               "/pg_backrest.conf --force --stanza=${strStanza} restore");
+                               '/pg_backrest.conf '  . (defined($bForce)? '--force ' : '') . "--stanza=${strStanza} restore");
 }
 
 ####################################################################################################################################
@@ -992,6 +1131,9 @@ sub BackRestTestBackup_Test
             my $strType = 'full';
             &log(INFO, "    ${strType} backup");
 
+            BackRestTestBackup_ManifestLinkCreate(\%oManifest, 'base', 'link-test', '/test');
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'path-test');
+
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
             $oManifest{backup}{type} = $strType;
@@ -1000,10 +1142,19 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
 
             # Create a bogus file that should be deleted by the restore
+            my $bForce = true;
+            &log(INFO, '        ' . ($bForce ? 'force ' : '') . 'restore');
+
             BackRestTestBackup_PathCreate(\%oManifest, 'base', 'deleteme');
             BackRestTestBackup_FileCreate(\%oManifest, 'base', 'deleteme/deleteme.txt', 'DELETEME');
+            BackRestTestBackup_PathMode(\%oManifest, 'base', 'base', '0777');
 
-            BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest);
+            BackRestTestBackup_FileRemove(\%oManifest, 'base', 'link-test');
+            BackRestTestBackup_LinkCreate(\%oManifest, 'base', 'link-test', '/wrong');
+
+            BackRestTestBackup_PathRemove(\%oManifest, 'base', 'path-test');
+
+            BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest, $bForce);
 
             # Perform first incr backup
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
@@ -1086,11 +1237,11 @@ sub BackRestTestBackup_Test
 
             if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
             {
-                BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base1.txt');
+                BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
 
                 for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
                 {
-                    BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
+                    BackRestTestBackup_FileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
                 }
 
                 BackRestTestCommon_ExecuteEnd();
@@ -1111,11 +1262,11 @@ sub BackRestTestBackup_Test
             $strType = 'diff';
             &log(INFO, "    ${strType} backup (remove files)");
 
-            BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base1.txt', true);
+            BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base1.txt');
 
             for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
             {
-                BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', true);
+                BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
             }
 
             BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=1", $bRemote);

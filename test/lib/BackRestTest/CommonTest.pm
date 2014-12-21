@@ -25,7 +25,7 @@ use BackRest::File;
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
-                 BackRestTestCommon_PathCreate BackRestTestCommon_PathRemove
+                 BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
                  BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
@@ -223,6 +223,21 @@ sub BackRestTestCommon_PathCreate
 
     # Set the permissions
     chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)
+        or confess 'unable to set mode ${strMode} for ${strPath}';
+}
+
+####################################################################################################################################
+# BackRestTestCommon_PathMode
+#
+# Set mode of an existing path.
+####################################################################################################################################
+sub BackRestTestCommon_PathMode
+{
+    my $strPath = shift;
+    my $strMode = shift;
+
+    # Set the permissions
+    chmod(oct($strMode), $strPath)
         or confess 'unable to set mode ${strMode} for ${strPath}';
 }
 

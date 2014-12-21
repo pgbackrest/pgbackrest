@@ -105,7 +105,8 @@ use constant
     OP_FILE_COPY        => 'File->copy',
     OP_FILE_COPY_OUT    => 'File->copy_out',
     OP_FILE_COPY_IN     => 'File->copy_in',
-    OP_FILE_PATH_CREATE => 'File->path_create'
+    OP_FILE_PATH_CREATE => 'File->path_create',
+    OP_FILE_LINK_CREATE => 'File->link_create'
 };
 
 ####################################################################################################################################
@@ -379,7 +380,7 @@ sub link_create
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
 
-    # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
+    # Source and destination path types must be the same (e.g. both PATH_DB or both PATH_BACKUP, etc.)
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
         confess &log(ASSERT, 'path types must be equal in link create');
@@ -388,6 +389,15 @@ sub link_create
     # Generate source and destination files
     my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
     my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_LINK_CREATE;
+
+    my $strDebug = "${strSourcePathType}" . (defined($strSource) ? ":${strSource}" : '') .
+                   " to ${strDestinationPathType}" . (defined($strDestination) ? ":${strDestination}" : '') .
+                   ', hard = ' . ($bHard ? 'true' : 'false') . ", relative = " . ($bRelative ? 'true' : 'false') .
+                   ', destination_path_create = ' . ($bPathCreate ? 'true' : 'false');
+    &log(DEBUG, "${strOperation}: ${strDebug}");
 
     # If the destination path is backup and does not exist, create it
     if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
@@ -423,22 +433,24 @@ sub link_create
         }
     }
 
-    # Create the command
-    my $strCommand = 'ln' . (!$bHard ? ' -s' : '') . " ${strSource} ${strDestination}";
-
     # Run remotely
     if ($self->is_remote($strSourcePathType))
     {
-        &log(TRACE, "link_create: remote ${strSourcePathType} '${strCommand}'");
-
-        my $oSSH = $self->remote_get($strSourcePathType);
-        $oSSH->system($strCommand) or confess &log("unable to create link from ${strSource} to ${strDestination}");
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
     }
     # Run locally
     else
     {
-        &log(TRACE, "link_create: local '${strCommand}'");
-        system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
+        if ($bHard)
+        {
+            link($strSource, $strDestination)
+                or confess &log(ERROR, "unable to create hardlink from ${strSource} to ${strDestination}");
+        }
+        else
+        {
+            symlink($strSource, $strDestination)
+                or confess &log(ERROR, "unable to create symlink from ${strSource} to ${strDestination}");
+        }
     }
 }
 
