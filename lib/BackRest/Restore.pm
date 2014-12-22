@@ -4,6 +4,8 @@
 package BackRest::Restore;
 
 use threads;
+use threads::shared;
+use Thread::Queue;
 use strict;
 use warnings;
 use Carp;
@@ -15,9 +17,19 @@ use File::Basename;
 
 use lib dirname($0);
 use BackRest::Utility;
+use BackRest::ThreadGroup;
 use BackRest::Config;
 use BackRest::File;
-use BackRest::Db;
+
+####################################################################################################################################
+# Global variables
+####################################################################################################################################
+# !!! Passing this to the threads does not work if it is created in the object - what's up with that?
+my @oyThreadQueue;
+my %oManifest;
+my $oFile;
+my $strBackupPath;
+my $bSourceCompressed = false;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -26,8 +38,9 @@ sub new
 {
     my $class = shift;              # Class name
     my $strDbClusterPath = shift;   # Database cluster path
-    my $strBackupPath = shift;      # Backup to restore
-    my $oFile = shift;              # Default file object
+    my $strBackupPathParam = shift;      # Backup to restore
+    my $oFileParam = shift;         # Default file object
+    my $iThreadTotal = shift;       # Total threads to run for restore
     my $bForce = shift;             # Force the restore even if files are present
 
     # Create the class hash
@@ -36,17 +49,18 @@ sub new
 
     # Initialize variables
     $self->{strDbClusterPath} = $strDbClusterPath;
-    $self->{oFile} = $oFile;
+    $oFile = $oFileParam;
+    $self->{thread_total} = $iThreadTotal;
     $self->{bForce} = $bForce;
 
     # If backup path is not specified then default to latest
-    if (defined($strBackupPath))
+    if (defined($strBackupPathParam))
     {
-        $self->{strBackupPath} = $strBackupPath;
+        $strBackupPath = $strBackupPathParam;
     }
     else
     {
-        $self->{strBackupPath} = PATH_LATEST;
+        $strBackupPath = PATH_LATEST;
     }
 
     return $self;
@@ -60,30 +74,37 @@ sub restore
     my $self = shift;       # Class hash
 
     # Make sure that Postgres is not running
-    if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
+    if ($oFile->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
     {
         confess &log(ERROR, 'unable to restore while Postgres is running');
     }
 
     # Make sure the backup path is valid and load the manifest
-    my %oManifest;
-
-    if ($self->{oFile}->exists(PATH_BACKUP_CLUSTER, $self->{strBackupPath}))
+    if ($oFile->exists(PATH_BACKUP_CLUSTER, $strBackupPath))
     {
         # Copy the backup manifest to the db cluster path
-        $self->{oFile}->copy(PATH_BACKUP_CLUSTER, $self->{strBackupPath} . '/' . FILE_MANIFEST,
+        $oFile->copy(PATH_BACKUP_CLUSTER, $strBackupPath . '/' . FILE_MANIFEST,
                              PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
          # Load the manifest into a hash
-         ini_load($self->{oFile}->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST), \%oManifest);
+         ini_load($oFile->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST), \%oManifest);
 
          # Remove the manifest now that it is in memory
-         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
+         $oFile->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
     }
     else
     {
-        confess &log(ERROR, 'backup ' . $self->{strBackupPath} . ' does not exist');
+        confess &log(ERROR, 'backup ' . $strBackupPath . ' does not exist');
     }
+
+    # Set source compression
+    if ($oManifest{'backup:option'}{compress} eq 'y')
+    {
+        $bSourceCompressed = true;
+    }
+
+    # Declare thread queues that will be used to process files
+    my $iThreadQueueTotal = 0;
 
     # Check each restore directory in the manifest and make sure that it exists and is empty.
     # The --force option can be used to override the empty requirement.
@@ -93,14 +114,14 @@ sub restore
 
         &log(INFO, "processing db path ${strPath}");
 
-        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
+        if (!$oFile->exists(PATH_DB_ABSOLUTE,  $strPath))
         {
             confess &log(ERROR, "required db path '${strPath}' does not exist");
         }
 
         # Load path manifest so it can be compared to delete files/paths/links that are not in the backup
         my %oPathManifest;
-        $self->{oFile}->manifest(PATH_DB_ABSOLUTE, $strPath, \%oPathManifest);
+        $oFile->manifest(PATH_DB_ABSOLUTE, $strPath, \%oPathManifest);
 
         foreach my $strName (sort {$b cmp $a} (keys $oPathManifest{name}))
         {
@@ -192,7 +213,7 @@ sub restore
             }
 
             # Create the Path
-            $self->{oFile}->path_create(PATH_DB_ABSOLUTE, "${strPath}/${strName}",
+            $oFile->path_create(PATH_DB_ABSOLUTE, "${strPath}/${strName}",
                                         $oManifest{"${strPathKey}:path"}{$strName}{permission});
         }
 
@@ -201,14 +222,110 @@ sub restore
         {
             foreach my $strName (sort (keys $oManifest{"${strPathKey}:link"}))
             {
-                if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
+                if (!$oFile->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
                 {
-                    $self->{oFile}->link_create(PATH_DB_ABSOLUTE, $oManifest{"${strPathKey}:link"}{$strName}{link_destination},
+                    $oFile->link_create(PATH_DB_ABSOLUTE, $oManifest{"${strPathKey}:link"}{$strName}{link_destination},
                                                 PATH_DB_ABSOLUTE, "${strPath}/${strName}");
                 }
             }
         }
+
+        # Assign the files in each path to a thread queue
+        if (defined($oManifest{"${strPathKey}:file"}))
+        {
+            $oyThreadQueue[$iThreadQueueTotal] = Thread::Queue->new();
+
+            foreach my $strName (sort (keys $oManifest{"${strPathKey}:file"}))
+            {
+                $oyThreadQueue[$iThreadQueueTotal]->enqueue("${strPathKey}|${strName}");
+            }
+
+            $oyThreadQueue[$iThreadQueueTotal]->end();
+            $iThreadQueueTotal++;
+        }
     }
+
+    # Create threads to process the thread queues
+    my $oThreadGroup = new BackRest::ThreadGroup();
+
+    for (my $iThreadIdx = 0; $iThreadIdx < $self->{thread_total}; $iThreadIdx++)
+    {
+#        &log(INFO, "creating thread $iThreadIdx");
+        $oThreadGroup->add(threads->create(\&restore_thread, $iThreadIdx, $self->{thread_total}));
+    }
+
+    $oThreadGroup->complete();
+}
+
+sub restore_thread
+{
+    my @args = @_;
+
+    my $iThreadIdx = $args[0];          # Defines the index of this thread
+    my $iThreadTotal = $args[1];        # Total threads running
+
+    my $iDirection = $iThreadIdx % 2 == 0 ? 1 : -1; # Size of files currently copied by this thread
+    my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
+
+    # Initialize the starting and current queue index
+    my $iQueueStartIdx = int((@oyThreadQueue / $iThreadTotal) * $iThreadIdx);
+    my $iQueueIdx = $iQueueStartIdx;
+
+    # When a KILL signal is received, immediately abort
+    $SIG{'KILL'} = sub {threads->exit();};
+
+    # Loop through all the queues to restore files
+    do
+    {
+        while (my $strMessage = $oyThreadQueue[$iQueueIdx]->dequeue())
+        {
+            my $strSourcePath = (split(/\|/, $strMessage))[0];                   # Source path from backup
+            my $strSection = "${strSourcePath}:file";                            # Backup section with file info
+            my $strDestinationPath = $oManifest{'backup:path'}{$strSourcePath};  # Destination path stored in manifest
+            $strSourcePath =~ s/\:/\//g;                                         # Replace : with / in source path
+            my $strName = (split(/\|/, $strMessage))[1];                         # Name of file to be restored
+
+            # Generate destination file name
+            my $strDestinationFile = $oFileThread->path_get(PATH_DB_ABSOLUTE, "${strDestinationPath}/${strName}");
+
+            # If checksum is set the destination file already exists, try a checksum before copying
+            my $strChecksum = $oManifest{$strSection}{$strName}{checksum};
+
+            if ($oFileThread->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
+            {
+                if (defined($strChecksum) && $oFileThread->hash(PATH_DB_ABSOLUTE, $strDestinationFile) eq $strChecksum)
+                {
+                    &log(DEBUG, "${strDestinationFile} exists and matches backup checksum ${strChecksum}");
+                    next;
+                }
+
+                $oFileThread->remove(PATH_DB_ABSOLUTE, $strDestinationFile);
+            }
+
+            # Copy the file from the backup to the database
+            $oFileThread->copy(PATH_BACKUP_CLUSTER, "${strBackupPath}/${strSourcePath}/${strName}" .
+                               ($bSourceCompressed ? '.' . $oFileThread->{strCompressExtension} : ''),
+                               PATH_DB_ABSOLUTE, $strDestinationFile,
+                               $bSourceCompressed,   # Source is compressed based on backup settings
+                               false, false,
+                               $oManifest{$strSection}{$strName}{modification_time},
+                               $oManifest{$strSection}{$strName}{permission});
+        }
+
+        $iQueueIdx += $iDirection;
+
+        if ($iQueueIdx < 0)
+        {
+            $iQueueIdx = @oyThreadQueue - 1;
+        }
+        elsif ($iQueueIdx >= @oyThreadQueue)
+        {
+            $iQueueIdx = 0;
+        }
+    }
+    while ($iQueueIdx != $iQueueStartIdx);
+
+    &log(DEBUG, "thread ${iThreadIdx} exiting");
 }
 
 1;

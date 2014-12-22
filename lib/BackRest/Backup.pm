@@ -175,6 +175,8 @@ sub backup_thread_complete
     # Rejoin the threads
     while ($iThreadComplete < $iThreadLocalMax)
     {
+        # !!! This should be shorter - currently it is this to be sure that backups to not happen more than once a second and cause
+        # path naming conflicts
         sleep(1);
 
         # If a timeout has been defined, make sure we have not been running longer than that
@@ -860,17 +862,17 @@ sub backup_manifest_build
         if ($cType eq 'f')
         {
             ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} = $oManifestHash{name}{"${strName}"}{inode} + 0;
+#            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} = $oManifestHash{name}{"${strName}"}{inode} + 0;
             ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
 
             if (defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{size}) &&
-                defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{inode}) &&
+#                defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{inode}) &&
                 defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{modification_time}))
             {
                 if (${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} ==
                         ${$oLastManifestRef}{"${strSection}"}{"${strName}"}{size} &&
-                   ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} ==
-                       ${$oLastManifestRef}{"${strSection}"}{"${strName}"}{inode} &&
+#                   ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} ==
+#                       ${$oLastManifestRef}{"${strSection}"}{"${strName}"}{inode} &&
                     ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} ==
                         ${$oLastManifestRef}{"${strSection}"}{"${strName}"}{modification_time})
                 {

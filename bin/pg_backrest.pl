@@ -415,10 +415,6 @@ if (operation_get() eq OP_ARCHIVE_GET)
 ####################################################################################################################################
 # Initialize the default file object
 ####################################################################################################################################
-
-# Open the log file
-log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA));
-
 my $oFile = new BackRest::File
 (
     param_get(PARAM_STANZA),
@@ -438,7 +434,7 @@ if (operation_get() eq OP_RESTORE)
     }
 
     # Open the log file
-#    log_file_set(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH) . '/restore-' . param_get(PARAM_STANZA));
+    log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA) . '-restore');
 
     # Do the restore
     new BackRest::Restore
@@ -446,6 +442,7 @@ if (operation_get() eq OP_RESTORE)
         config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
         undef,
         $oFile,
+        4,
         param_get(PARAM_FORCE)
     )->restore;
 
@@ -455,6 +452,9 @@ if (operation_get() eq OP_RESTORE)
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
+# Open the log file
+log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA));
+
 # Make sure backup and expire operations happen on the backup side
 if ($strRemote eq REMOTE_BACKUP)
 {

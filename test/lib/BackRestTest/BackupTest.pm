@@ -423,7 +423,6 @@ sub BackRestTestBackup_ManifestFileCreate
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{user} = getpwuid($oStat->uid);
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{modification_time} = $oStat->mtime;
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{inode} = $oStat->ino;
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{size} = $oStat->size;
     delete(${$oManifestRef}{"${strPath}:file"}{$strFile}{reference});
 
@@ -1153,6 +1152,8 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_LinkCreate(\%oManifest, 'base', 'link-test', '/wrong');
 
             BackRestTestBackup_PathRemove(\%oManifest, 'base', 'path-test');
+
+            BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
 
             BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest, $bForce);
 
