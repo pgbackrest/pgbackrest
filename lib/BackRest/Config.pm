@@ -25,7 +25,7 @@ our @EXPORT = qw(config_load config_key_load operation_get operation_set param_g
 
                  BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
 
-                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_NO_START_STOP PARAM_FORCE PARAM_VERSION PARAM_HELP
+                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_REMAP PARAM_NO_START_STOP PARAM_FORCE PARAM_VERSION PARAM_HELP
                  PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
@@ -86,6 +86,7 @@ use constant
     PARAM_STANZA          => 'stanza',
     PARAM_TYPE            => 'type',
     PARAM_NO_START_STOP   => 'no-start-stop',
+    PARAM_REMAP           => 'remap',
     PARAM_FORCE           => 'force',
     PARAM_VERSION         => 'version',
     PARAM_HELP            => 'help',
@@ -162,8 +163,8 @@ sub config_load
     param_set(PARAM_TEST_DELAY, 5);        # Seconds to delay after a test point (default is not enough for manual tests)
 
     # Get command line parameters
-    GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_NO_START_STOP, PARAM_FORCE,
-                          PARAM_VERSION, PARAM_HELP,
+    GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_REMAP . '=s%', PARAM_NO_START_STOP,
+                          PARAM_FORCE, PARAM_VERSION, PARAM_HELP,
                           PARAM_TEST, PARAM_TEST_DELAY . '=s', PARAM_TEST_NO_FORK)
         or pod2usage(2);
 

@@ -441,6 +441,7 @@ if (operation_get() eq OP_RESTORE)
     (
         config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
         undef,
+        param_get(PARAM_REMAP),
         $oFile,
         4,
         param_get(PARAM_FORCE)
