@@ -185,6 +185,10 @@ In order to restore a backup, simply rsync the files from the base backup direct
 
 It's best to practice restoring backups in advance of needing to do so.
 
+[reference this when writing about tablespace remapping]
+
+http://www.databasesoup.com/2013/11/moving-tablespaces.html
+
 ## configuration options
 
 Each section defines important aspects of the backup.  All configuration sections below should be prefixed with `global:` as demonstrated in the configuration samples.
