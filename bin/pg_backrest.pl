@@ -17,6 +17,7 @@ use Pod::Usage;
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::Config;
+use BackRest::Remote;
 use BackRest::File;
 use BackRest::Backup;
 use BackRest::Restore;
@@ -38,6 +39,7 @@ pg_backrest.pl [options] [operation]
    archive-get      retrieve an archive file from backup
    archive-push     push an archive file to backup
    backup           backup a cluster
+   restore          restore a cluster
    expire           expire old backups (automatically run after backup)
 
  General Options:
@@ -50,7 +52,14 @@ pg_backrest.pl [options] [operation]
     --type           type of backup to perform (full, diff, incr)
     --no-start-stop  do not call pg_start/stop_backup().  Postmaster should not be running.
     --force          force backup when --no-start-stop passed and postmaster.pid exists.
-                     Use with extreme caution as this will produce an inconsistent backup!
+                     Use with extreme caution as this will probably produce an inconsistent backup!
+
+ Restore Options:
+    --set            backup set to restore (defaults to latest set).
+    --remap          remaps the base or a tablespace to another path.
+    --thread         # of threads to use for restore (defaults to 1).
+    --force          force restore when destination paths are not empty.
+                     Use with extreme caution as this will delete data in those paths!
 =cut
 
 ####################################################################################################################################
@@ -64,12 +73,12 @@ my $strRemote;          # Defines which side is remote, DB or BACKUP
 ####################################################################################################################################
 sub remote_get
 {
-    if (!defined($oRemote) && $strRemote ne REMOTE_NONE)
+    if (!defined($oRemote) && $strRemote ne NONE)
     {
         $oRemote = new BackRest::Remote
         (
-            config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
-            config_key_load($strRemote eq REMOTE_DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
+            config_key_load($strRemote eq DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
+            config_key_load($strRemote eq DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
             config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
         );
     }
@@ -145,7 +154,7 @@ if (param_get(PARAM_HELP))
 # First check if backup is remote
 if (defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
 {
-    $strRemote = REMOTE_BACKUP;
+    $strRemote = BACKUP;
 }
 # Else check if db is remote
 elsif (defined(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
@@ -156,11 +165,11 @@ elsif (defined(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_HOST)))
         confess &log(ERROR, 'db and backup cannot both be configured as remote');
     }
 
-    $strRemote = REMOTE_DB;
+    $strRemote = DB;
 }
 else
 {
-    $strRemote = REMOTE_NONE;
+    $strRemote = NONE;
 }
 
 ####################################################################################################################################
@@ -169,7 +178,7 @@ else
 if (operation_get() eq OP_ARCHIVE_PUSH)
 {
     # Make sure the archive push operation happens on the db side
-    if ($strRemote eq REMOTE_DB)
+    if ($strRemote eq DB)
     {
         confess &log(ERROR, 'archive-push operation must run on the db host');
     }
@@ -219,7 +228,7 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
         (
             param_get(PARAM_STANZA),
             config_key_load($strSection, CONFIG_KEY_PATH, true),
-            $bArchiveLocal ? REMOTE_NONE : $strRemote,
+            $bArchiveLocal ? NONE : $strRemote,
             $bArchiveLocal ? undef : remote_get()
         );
 
@@ -428,22 +437,26 @@ my $oFile = new BackRest::File
 ####################################################################################################################################
 if (operation_get() eq OP_RESTORE)
 {
-    if ($strRemote eq REMOTE_DB)
+    if ($strRemote eq DB)
     {
         confess &log(ASSERT, 'restore operation must be performed locally on the db server');
     }
 
     # Open the log file
-    log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA) . '-restore');
+    log_file_set(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA) . '-restore');
+
+    # Set the lock path
+    my $strLockPath = config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_PATH, true) .  '/lock/' .
+                                      param_get(PARAM_STANZA) . '-' . operation_get() . '.lock';
 
     # Do the restore
     new BackRest::Restore
     (
         config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
-        undef,
+        param_get(PARAM_SET),
         param_get(PARAM_REMAP),
         $oFile,
-        4,
+        param_get(PARAM_THREAD),
         param_get(PARAM_FORCE)
     )->restore;
 
@@ -457,7 +470,7 @@ if (operation_get() eq OP_RESTORE)
 log_file_set(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) . '/log/' . param_get(PARAM_STANZA));
 
 # Make sure backup and expire operations happen on the backup side
-if ($strRemote eq REMOTE_BACKUP)
+if ($strRemote eq BACKUP)
 {
     confess &log(ERROR, 'backup and expire operations must run on the backup host');
 }

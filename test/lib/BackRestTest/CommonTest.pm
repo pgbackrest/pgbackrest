@@ -20,6 +20,7 @@ use IO::Select;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::Remote;
 use BackRest::File;
 
 use Exporter qw(import);
@@ -387,12 +388,12 @@ sub BackRestTestCommon_ConfigCreate
 
     $oParamHash{'global:command'}{'psql'} = $strCommonCommandPsql;
 
-    if (defined($strRemote) && $strRemote eq REMOTE_BACKUP)
+    if (defined($strRemote) && $strRemote eq BACKUP)
     {
         $oParamHash{'global:backup'}{'host'} = $strCommonHost;
         $oParamHash{'global:backup'}{'user'} = $strCommonUserBackRest;
     }
-    elsif (defined($strRemote) && $strRemote eq REMOTE_DB)
+    elsif (defined($strRemote) && $strRemote eq DB)
     {
         $oParamHash{$strCommonStanza}{'host'} = $strCommonHost;
         $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
@@ -401,19 +402,21 @@ sub BackRestTestCommon_ConfigCreate
     $oParamHash{'global:log'}{'level-console'} = 'error';
     $oParamHash{'global:log'}{'level-file'} = 'trace';
 
-    if (defined($bHardlink) && !$bHardlink)
-    {
-        $oParamHash{'global:backup'}{'hardlink'} = 'n';
-    }
-
-    if ($strLocal eq REMOTE_BACKUP)
+    if ($strLocal eq BACKUP)
     {
     }
-    elsif ($strLocal eq REMOTE_DB)
+    elsif ($strLocal eq DB)
     {
         if (defined($strRemote))
         {
             $oParamHash{'global:log'}{'level-console'} = 'trace';
+
+            if (!$bArchiveLocal)
+            {
+                $oParamHash{'global:restore'}{path} = BackRestTestCommon_ArchivePathGet();
+            }
+
+            $oParamHash{'global:restore'}{'thread-max'} = $iThreadMax;
         }
 
         if ($bArchiveLocal)
@@ -431,9 +434,15 @@ sub BackRestTestCommon_ConfigCreate
         confess "invalid local type ${strLocal}";
     }
 
-    if (($strLocal eq REMOTE_BACKUP) || ($strLocal eq REMOTE_DB && !defined($strRemote)))
+    if (($strLocal eq BACKUP) || ($strLocal eq DB && !defined($strRemote)))
     {
         $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
+        $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
+
+        if (defined($bHardlink) && !$bHardlink)
+        {
+            $oParamHash{'global:backup'}{'hardlink'} = 'n';
+        }
     }
 
     if (defined($bCompress) && !$bCompress)
@@ -448,11 +457,6 @@ sub BackRestTestCommon_ConfigCreate
 
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
-
-    if (defined($iThreadMax))
-    {
-        $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
-    }
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';

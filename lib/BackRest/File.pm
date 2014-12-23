@@ -35,8 +35,6 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
 
                  PIPE_STDIN PIPE_STDOUT PIPE_STDERR
 
-                 REMOTE_DB REMOTE_BACKUP REMOTE_NONE
-
                  OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
                  OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
@@ -78,16 +76,6 @@ use constant
     PIPE_STDIN   => '<STDIN>',
     PIPE_STDOUT  => '<STDOUT>',
     PIPE_STDERR  => '<STDERR>'
-};
-
-####################################################################################################################################
-# Remote Types
-####################################################################################################################################
-use constant
-{
-    REMOTE_DB     => PATH_DB,
-    REMOTE_BACKUP => PATH_BACKUP,
-    REMOTE_NONE   => 'none'
 };
 
 ####################################################################################################################################
@@ -142,12 +130,12 @@ sub new
     $self->{iThreadIdx} = $iThreadIdx;
 
     # If remote is defined check parameters and open session
-    if (defined($self->{strRemote}) && $self->{strRemote} ne REMOTE_NONE)
+    if (defined($self->{strRemote}) && $self->{strRemote} ne NONE)
     {
         # Make sure remote is valid
-        if ($self->{strRemote} ne REMOTE_DB && $self->{strRemote} ne REMOTE_BACKUP)
+        if ($self->{strRemote} ne DB && $self->{strRemote} ne BACKUP)
         {
-            confess &log(ASSERT, 'strRemote must be "' . REMOTE_DB . '" or "' . REMOTE_BACKUP .
+            confess &log(ASSERT, 'strRemote must be "' . DB . '" or "' . BACKUP .
                                  "\", $self->{strRemote} was passed");
         }
 

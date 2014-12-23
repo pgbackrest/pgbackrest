@@ -38,7 +38,7 @@ sub new
     # Initialize variables
     $self->{strDbClusterPath} = $strDbClusterPath;
     $self->{oFile} = $oFile;
-    $self->{thread_total} = $iThreadTotal;
+    $self->{thread_total} = defined($iThreadTotal) ? $iThreadTotal : 1;
     $self->{bForce} = $bForce;
     $self->{oRemapRef} = $oRemapRef;
 
@@ -71,50 +71,50 @@ sub manifest_load
         $self->{oFile}->copy(PATH_BACKUP_CLUSTER, $self->{strBackupPath} . '/' . FILE_MANIFEST,
                              PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
-         # Load the manifest into a hash
-         ini_load($self->{oFile}->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST), $oManifestRef);
+        # Load the manifest into a hash
+        ini_load($self->{oFile}->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST), $oManifestRef);
 
-         # Remove the manifest now that it is in memory
-         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
+        # Remove the manifest now that it is in memory
+        $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
-         # If tablespaces have been remapped, update the manifest
-         if (defined($self->{oRemapRef}))
-         {
-             foreach my $strPathKey (sort(keys $self->{oRemapRef}))
-             {
-                 my $strRemapPath = ${$self->{oRemapRef}}{$strPathKey};
+        # If tablespaces have been remapped, update the manifest
+        if (defined($self->{oRemapRef}))
+        {
+            foreach my $strPathKey (sort(keys $self->{oRemapRef}))
+            {
+                my $strRemapPath = ${$self->{oRemapRef}}{$strPathKey};
 
-                 if ($strPathKey eq 'base')
-                 {
-                     &log(INFO, "remapping base to ${strRemapPath}");
-                     ${$oManifestRef}{'backup:path'}{$strPathKey} = $strRemapPath;
-                 }
-                 else
-                 {
-                     # If the tablespace beigns with prefix 'tablespace:' then strip the prefix.  This only needs to be used in
-                     # the case that there is a tablespace called 'base'
-                     if (index($strPathKey, 'tablespace:') == 0)
-                     {
-                         $strPathKey = substr($strPathKey, length('tablespace:'));
-                     }
+                if ($strPathKey eq 'base')
+                {
+                    &log(INFO, "remapping base to ${strRemapPath}");
+                    ${$oManifestRef}{'backup:path'}{$strPathKey} = $strRemapPath;
+                }
+                else
+                {
+                    # If the tablespace beigns with prefix 'tablespace:' then strip the prefix.  This only needs to be used in
+                    # the case that there is a tablespace called 'base'
+                    if (index($strPathKey, 'tablespace:') == 0)
+                    {
+                        $strPathKey = substr($strPathKey, length('tablespace:'));
+                    }
 
-                     # Make sure that the tablespace exists in the manifest
-                     if (!defined(${$oManifestRef}{'backup:tablespace'}{$strPathKey}))
-                     {
-                         confess &log(ERROR, "cannot remap invalid tablespace ${strPathKey} to ${strRemapPath}");
-                     }
+                    # Make sure that the tablespace exists in the manifest
+                    if (!defined(${$oManifestRef}{'backup:tablespace'}{$strPathKey}))
+                    {
+                        confess &log(ERROR, "cannot remap invalid tablespace ${strPathKey} to ${strRemapPath}");
+                    }
 
-                     # Remap the tablespace in the manifest
-                     &log(INFO, "remapping tablespace to ${strRemapPath}");
+                    # Remap the tablespace in the manifest
+                    &log(INFO, "remapping tablespace to ${strRemapPath}");
 
-                     my $strTablespaceLink = ${$oManifestRef}{'backup:tablespace'}{$strPathKey}{link};
+                    my $strTablespaceLink = ${$oManifestRef}{'backup:tablespace'}{$strPathKey}{link};
 
-                     ${$oManifestRef}{'backup:path'}{"tablespace:${strPathKey}"} = $strRemapPath;
-                     ${$oManifestRef}{'backup:tablespace'}{$strPathKey}{path} = $strRemapPath;
-                     ${$oManifestRef}{'base:link'}{"pg_tblspc/${strTablespaceLink}"}{link_destination} = $strRemapPath;
-                 }
-             }
-         }
+                    ${$oManifestRef}{'backup:path'}{"tablespace:${strPathKey}"} = $strRemapPath;
+                    ${$oManifestRef}{'backup:tablespace'}{$strPathKey}{path} = $strRemapPath;
+                    ${$oManifestRef}{'base:link'}{"pg_tblspc/${strTablespaceLink}"}{link_destination} = $strRemapPath;
+                }
+            }
+        }
     }
     else
     {
@@ -291,6 +291,9 @@ sub restore
     {
         confess &log(ERROR, 'unable to restore while Postgres is running');
     }
+
+    # Log the backup set to restore
+    &log(INFO, "Restoring backup set " . $self->{strBackupPath});
 
     # Make sure the backup path is valid and load the manifest
     my %oManifest;
