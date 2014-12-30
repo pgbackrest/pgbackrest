@@ -38,7 +38,7 @@ sub new
     # Initialize variables
     $self->{strDbClusterPath} = $strDbClusterPath;
     $self->{oFile} = $oFile;
-    $self->{thread_total} = defined($iThreadTotal) ? $iThreadTotal : 1;
+    $self->{iThreadTotal} = defined($iThreadTotal) ? $iThreadTotal : 1;
     $self->{bForce} = $bForce;
     $self->{oRemapRef} = $oRemapRef;
 
@@ -70,14 +70,17 @@ sub manifest_ownership_test
     my %oOwnerHash = ();
 
     # Create hash for each type and owner to be checked
-    my %oFileTypeHash = ('path' => true, 'link' => true, 'file' => true);
-    my %oOwnerTypeHash = ('user' => getpwuid($<), 'group' => getgrgid($());
+    my $strDefaultUser = getpwuid($<);
+    my $strDefaultGroup = getgrgid($();
 
-    # Loop through all backup paths
-    foreach my $strPathKey (sort(keys ${$oManifestRef}{'backup:path'}))
+    my %oFileTypeHash = ('path' => true, 'link' => true, 'file' => true);
+    my %oOwnerTypeHash = ('user' => $strDefaultUser, 'group' => $strDefaultGroup);
+
+    # Loop through owner types
+    foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
     {
-        # Loop through owner types
-        foreach my $strOwnerType (sort (keys %oOwnerHash))
+        # Loop through all backup paths
+        foreach my $strPathKey (sort(keys ${$oManifestRef}{'backup:path'}))
         {
             # Loop through types
             foreach my $strFileType (sort (keys %oFileTypeHash))
@@ -115,13 +118,13 @@ sub manifest_ownership_test
                     }
                 }
             }
+        }
 
-            # Output warning for any invalid owners
-            foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
-            {
-                &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
-                           ", changed to $oOwnerTypeHash{$strOwnerType}");
-            }
+        # Output warning for any invalid owners
+        foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
+        {
+            &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
+                       ", changed to $oOwnerTypeHash{$strOwnerType}");
         }
     }
 }
@@ -147,6 +150,17 @@ sub manifest_load
 
         # Remove the manifest now that it is in memory
         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
+        
+        # If backup is latest then set it equal to backup label, else verify that requested backup and label match
+        if ($self->{strBackupPath} eq PATH_LATEST)
+        {
+            $self->{strBackupPath} = ${$oManifestRef}{'backup'}{label};
+        }
+        elsif ($self->{strBackupPath} ne ${$oManifestRef}{'backup'}{label})
+        {
+            confess &log(ASSERT, "request backup $self->{strBackupPath} and label ${$oManifestRef}{'backup'}{label} do not match " .
+                                 " - this indicates some sort of corruption (at the very least paths have been renamed.");
+        }
 
         # If tablespaces have been remapped, update the manifest
         if (defined($self->{oRemapRef}))
@@ -297,8 +311,8 @@ sub clean
                 # Else delete a file/link
                 else
                 {
-                    &log(DEBUG, "removing file ${strFile}");
-                    unlink($strFile) or confess &log(ERROR, "unable to delete file ${strFile}");
+                    &log(DEBUG, "removing file/link ${strFile}");
+                    unlink($strFile) or confess &log(ERROR, "unable to delete file/link ${strFile}");
                 }
             }
         }
@@ -330,8 +344,11 @@ sub build
             }
 
             # Create the Path
-            $self->{oFile}->path_create(PATH_DB_ABSOLUTE, "${strPath}/${strName}",
-                                        ${$oManifestRef}{"${strPathKey}:path"}{$strName}{permission});
+            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
+            {
+                $self->{oFile}->path_create(PATH_DB_ABSOLUTE, "${strPath}/${strName}",
+                                            ${$oManifestRef}{"${strPathKey}:path"}{$strName}{permission});
+            }
         }
 
         # Create all links in the manifest that do not already exist
@@ -399,7 +416,7 @@ sub restore
     # Create threads to process the thread queues
     my $oThreadGroup = new BackRest::ThreadGroup();
 
-    for (my $iThreadIdx = 0; $iThreadIdx < $self->{thread_total}; $iThreadIdx++)
+    for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
     {
         $oThreadGroup->add(threads->create(\&restore_thread, $self, $iThreadIdx, \@oyRestoreQueue, \%oManifest));
     }
@@ -423,11 +440,11 @@ sub restore_thread
     my $oFileThread = $self->{oFile}->clone($iThreadIdx);   # Thread local file object
 
     # Initialize the starting and current queue index based in the total number of threads in relation to this thread
-    my $iQueueStartIdx = int((@{$oyRestoreQueueRef} / $self->{thread_total}) * $iThreadIdx);
+    my $iQueueStartIdx = int((@{$oyRestoreQueueRef} / $self->{iThreadTotal}) * $iThreadIdx);
     my $iQueueIdx = $iQueueStartIdx;
 
     # Set source compression
-    my $bSourceCompression = ${$oManifestRef}{'backup:option'}{compress} eq 'y';
+    my $bSourceCompression = ${$oManifestRef}{'backup:option'}{compress} eq 'y' ? true : false;
 
     # When a KILL signal is received, immediately abort
     $SIG{'KILL'} = sub {threads->exit();};
@@ -446,6 +463,10 @@ sub restore_thread
             my $strDestinationPath = ${$oManifestRef}{'backup:path'}{$strSourcePath}; # Destination path stored in manifest
             $strSourcePath =~ s/\:/\//g;                                              # Replace : with / in source path
             my $strName = (split(/\|/, $strMessage))[1];                              # Name of file to be restored
+
+            # If the file is a reference to a previous backup and hardlinks are off, then fetch it from that backup
+            my $strReference = ${$oManifestRef}{'backup:option'}{hardlink} eq 'y' ? undef :
+                                   ${$oManifestRef}{$strSection}{$strName}{reference};
 
             # Generate destination file name
             my $strDestinationFile = $oFileThread->path_get(PATH_DB_ABSOLUTE, "${strDestinationPath}/${strName}");
@@ -486,7 +507,8 @@ sub restore_thread
             }
 
             # Copy the file from the backup to the database
-            $oFileThread->copy(PATH_BACKUP_CLUSTER, $self->{strBackupPath} . "/${strSourcePath}/${strName}" .
+            $oFileThread->copy(PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $self->{strBackupPath}) .
+                               "/${strSourcePath}/${strName}" .
                                ($bSourceCompression ? '.' . $oFileThread->{strCompressExtension} : ''),
                                PATH_DB_ABSOLUTE, $strDestinationFile,
                                $bSourceCompression,   # Source is compressed based on backup settings

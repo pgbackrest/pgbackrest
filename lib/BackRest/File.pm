@@ -726,7 +726,7 @@ sub remove
     my $bRemoved = true;
 
     # Set operation and debug strings
-    my $strOperation = OP_FILE_EXISTS;
+    my $strOperation = OP_FILE_REMOVE;
     my $strDebug = "${strPathType}:${strPathOp}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
