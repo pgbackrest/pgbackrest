@@ -4,7 +4,7 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 ## release notes
 
-### v0.50: ???
+### v0.50: [under development]
 
 * Added restore functionality.
 

@@ -578,7 +578,7 @@ sub path_create
     my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
-    my $strPermission = shift;
+    my $strMode = shift;
     my $bIgnoreExists = shift;
 
     # Set operation variables
@@ -586,7 +586,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strPermission) ? $strPermission : '[undef]');
+    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strMode) ? $strMode : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -596,9 +596,9 @@ sub path_create
 
         $oParamHash{path} = ${strPathOp};
 
-        if (defined($strPermission))
+        if (defined($strMode))
         {
-            $oParamHash{permission} = ${strPermission};
+            $oParamHash{permission} = ${strMode};
         }
 
         # Add remote info to debug string
@@ -616,9 +616,9 @@ sub path_create
             # Attempt the create the directory
             my $stryError;
 
-            if (defined($strPermission))
+            if (defined($strMode))
             {
-                make_path($strPathOp, {mode => oct($strPermission), error => \$stryError});
+                make_path($strPathOp, {mode => oct($strMode), error => \$stryError});
             }
             else
             {
@@ -1169,7 +1169,7 @@ sub manifest_recurse
 # * source and destination can be local or remote
 # * wire and output compression/decompression are supported
 # * intermediate temp files are used to prevent partial copies
-# * modification time and permissions can be set on destination file
+# * modification time, mode, and ownership can be set on destination file
 # * destination path can optionally be created
 ####################################################################################################################################
 sub copy
@@ -1183,8 +1183,10 @@ sub copy
     my $bDestinationCompress = shift;
     my $bIgnoreMissingSource = shift;
     my $lModificationTime = shift;
-    my $strPermission = shift;
+    my $strMode = shift;
     my $bDestinationPathCreate = shift;
+    my $strUser = shift;
+    my $strGroup = shift;
 
     # Set defaults
     $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
@@ -1210,7 +1212,11 @@ sub copy
                    ', source_compressed = ' . ($bSourceCompressed ? 'true' : 'false') .
                    ', destination_compress = ' . ($bDestinationCompress ? 'true' : 'false') .
                    ', ignore_missing_source = ' . ($bIgnoreMissingSource ? 'true' : 'false') .
-                   ', destination_path_create = ' . ($bDestinationPathCreate ? 'true' : 'false');
+                   ', destination_path_create = ' . ($bDestinationPathCreate ? 'true' : 'false') .
+                   ', modification_time = ' . (defined($lModificationTime) ? $lModificationTime : '[undef]') .
+                   ', mode = ' . (defined($strMode) ? $strMode : '[undef]') .
+                   ', user = ' . (defined($strUser) ? $strUser : '[undef]') .
+                   ', group = ' . (defined($strGroup) ? $strUser : '[undef]');
     &log(DEBUG, OP_FILE_COPY . ": ${strDebug}");
 
     # Open the source and destination files (if needed)
@@ -1331,9 +1337,19 @@ sub copy
                 $oParamHash{destination_compress} = $bDestinationCompress;
                 $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
-                if (defined($strPermission))
+                if (defined($strMode))
                 {
-                    $oParamHash{permission} = $strPermission;
+                    $oParamHash{permission} = $strMode;
+                }
+
+                if (defined($strUser))
+                {
+                    $oParamHash{user} = $strUser;
+                }
+
+                if (defined($strGroup))
+                {
+                    $oParamHash{group} = $strGroup;
                 }
 
                 $hOut = $self->{oRemote}->{hIn};
@@ -1350,9 +1366,19 @@ sub copy
             $oParamHash{destination_compress} = $bDestinationCompress;
             $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
-            if (defined($strPermission))
+            if (defined($strMode))
             {
-                $oParamHash{permission} = $strPermission;
+                $oParamHash{permission} = $strMode;
+            }
+
+            if (defined($strUser))
+            {
+                $oParamHash{user} = $strUser;
+            }
+
+            if (defined($strGroup))
+            {
+                $oParamHash{group} = $strGroup;
             }
 
             if ($bIgnoreMissingSource)
@@ -1457,9 +1483,9 @@ sub copy
     if (!$bDestinationRemote)
     {
         # Set the file permission if required
-        if (defined($strPermission))
+        if (defined($strMode))
         {
-            chmod(oct($strPermission), $strDestinationTmpOp)
+            chmod(oct($strMode), $strDestinationTmpOp)
                 or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
         }
 
@@ -1468,6 +1494,20 @@ sub copy
         {
             utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
                 or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
+        }
+
+        # if user or group is defined
+        if (defined($strUser) || defined($strGroup))
+        {
+            chown(defined($strUser) ? getpwnam($strUser) : $<,
+                  defined($strGroup) ? getgrnam($strGroup) : $(,
+                  $strDestinationTmpOp);
+        }
+
+        if (defined($strMode))
+        {
+            chmod(oct($strMode), $strDestinationTmpOp)
+                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
         }
 
         # Move the file from tmp to final destination

@@ -56,6 +56,77 @@ sub new
 }
 
 ####################################################################################################################################
+# MANIFEST_OWNERSHIP_TEST
+#
+# Checks the users and groups that exist in the manifest and emits warnings for ownership that cannot be set properly, either
+# because the current user does not have permissions or because the user/group does not exist.
+####################################################################################################################################
+sub manifest_ownership_test
+{
+    my $self = shift;               # Class hash
+    my $oManifestRef = shift;       # Backup manifest
+
+    # Create hashes to track valid/invalid users/groups
+    my %oOwnerHash = ();
+
+    # Create hash for each type and owner to be checked
+    my %oFileTypeHash = ('path' => true, 'link' => true, 'file' => true);
+    my %oOwnerTypeHash = ('user' => getpwuid($<), 'group' => getgrgid($());
+
+    # Loop through all backup paths
+    foreach my $strPathKey (sort(keys ${$oManifestRef}{'backup:path'}))
+    {
+        # Loop through owner types
+        foreach my $strOwnerType (sort (keys %oOwnerHash))
+        {
+            # Loop through types
+            foreach my $strFileType (sort (keys %oFileTypeHash))
+            {
+                # Get users and groups for paths
+                foreach my $strName (sort (keys ${$oManifestRef}{"${strPathKey}:${strFileType}"}))
+                {
+                    my $strOwner = ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType};
+
+                    # If root then test to see if the user/group is valid
+                    if ($< == 0)
+                    {
+                        # If the owner has not been tested yet then test it
+                        if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
+                        {
+                            $oOwnerHash{$strOwnerType}{$strOwner} = ($strOwnerType eq 'user' && defined(getpwnam($strOwner))) ||
+                                                                    ($strOwnerType eq 'group' && defined(getpwnam($strOwner)));
+                        }
+
+                        if (!$oOwnerHash{$strOwnerType}{$strOwner})
+                        {
+                            ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
+                                $oOwnerTypeHash{$strOwnerType};
+                        }
+                    }
+                    # Else set user/group to current user/group
+                    else
+                    {
+                        if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
+                        {
+                            $oOwnerHash{$strOwnerType}{$strOwner} = false;
+                            ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
+                                $oOwnerTypeHash{$strOwnerType};
+                        }
+                    }
+                }
+            }
+
+            # Output warning for any invalid owners
+            foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
+            {
+                &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
+                           ", changed to $oOwnerTypeHash{$strOwnerType}");
+            }
+        }
+    }
+}
+
+####################################################################################################################################
 # MANIFEST_LOAD
 #
 # Loads the backup manifest and performs requested tablespace remaps.
@@ -120,6 +191,8 @@ sub manifest_load
     {
         confess &log(ERROR, 'backup ' . $self->{strBackupPath} . ' does not exist');
     }
+
+    $self->manifest_ownership_test($oManifestRef);
 }
 
 ####################################################################################################################################
@@ -359,16 +432,20 @@ sub restore_thread
     # When a KILL signal is received, immediately abort
     $SIG{'KILL'} = sub {threads->exit();};
 
+    # Get the current user and group to compare with stored permissions
+    my $strCurrentUser = getpwuid($<);
+    my $strCurrentGroup = getgrgid($();
+
     # Loop through all the queues to restore files (exit when the original queue is reached
     do
     {
         while (my $strMessage = ${$oyRestoreQueueRef}[$iQueueIdx]->dequeue())
         {
-            my $strSourcePath = (split(/\|/, $strMessage))[0];                  # Source path from backup
-            my $strSection = "${strSourcePath}:file";                           # Backup section with file info
+            my $strSourcePath = (split(/\|/, $strMessage))[0];                        # Source path from backup
+            my $strSection = "${strSourcePath}:file";                                 # Backup section with file info
             my $strDestinationPath = ${$oManifestRef}{'backup:path'}{$strSourcePath}; # Destination path stored in manifest
-            $strSourcePath =~ s/\:/\//g;                                        # Replace : with / in source path
-            my $strName = (split(/\|/, $strMessage))[1];                        # Name of file to be restored
+            $strSourcePath =~ s/\:/\//g;                                              # Replace : with / in source path
+            my $strName = (split(/\|/, $strMessage))[1];                              # Name of file to be restored
 
             # Generate destination file name
             my $strDestinationFile = $oFileThread->path_get(PATH_DB_ABSOLUTE, "${strDestinationPath}/${strName}");
@@ -387,6 +464,27 @@ sub restore_thread
                 $oFileThread->remove(PATH_DB_ABSOLUTE, $strDestinationFile);
             }
 
+            # Set user and group if running as root (otherwise current user and group will be used for restore)
+            my $strUser = undef;
+            my $strGroup = undef;
+
+            if ($< == 0)
+            {
+                $strUser = ${$oManifestRef}{$strSection}{$strName}{user};
+
+                if (!defined(getpwnam($strUser)))
+                {
+                    $strUser = $strCurrentUser;
+                }
+
+                $strGroup = ${$oManifestRef}{$strSection}{$strName}{group};
+
+                if (!defined(getgrnam($strGroup)))
+                {
+                    $strGroup = $strCurrentGroup;
+                }
+            }
+
             # Copy the file from the backup to the database
             $oFileThread->copy(PATH_BACKUP_CLUSTER, $self->{strBackupPath} . "/${strSourcePath}/${strName}" .
                                ($bSourceCompression ? '.' . $oFileThread->{strCompressExtension} : ''),
@@ -394,7 +492,8 @@ sub restore_thread
                                $bSourceCompression,   # Source is compressed based on backup settings
                                undef, undef,
                                ${$oManifestRef}{$strSection}{$strName}{modification_time},
-                               ${$oManifestRef}{$strSection}{$strName}{permission});
+                               ${$oManifestRef}{$strSection}{$strName}{permission},
+                               $strUser, $strGroup);
         }
 
         # Even number threads move up when they have finished a queue, odd numbered threads move down

@@ -97,7 +97,9 @@ while ($strCommand ne OP_EXIT)
                          undef, param_get(\%oParamHash, 'destination_compress'),
                          undef, undef,
                          param_get(\%oParamHash, 'permission', false),
-                         param_get(\%oParamHash, 'destination_path_create'));
+                         param_get(\%oParamHash, 'destination_path_create'),
+                         param_get(\%oParamHash, 'user', false),
+                         param_get(\%oParamHash, 'group', false));
 
             $oRemote->output_write();
         }
@@ -143,7 +145,9 @@ while ($strCommand ne OP_EXIT)
                              param_get(\%oParamHash, 'ignore_missing_source', false),
                              undef,
                              param_get(\%oParamHash, 'permission', false),
-                             param_get(\%oParamHash, 'destination_path_create')) ? 'Y' : 'N');
+                             param_get(\%oParamHash, 'destination_path_create')) ? 'Y' : 'N',
+                             param_get(\%oParamHash, 'user', false),
+                             param_get(\%oParamHash, 'group', false));
         }
         # Generate a manifest
         elsif ($strCommand eq OP_FILE_MANIFEST)
