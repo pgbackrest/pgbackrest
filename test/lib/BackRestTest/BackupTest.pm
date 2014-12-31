@@ -1045,12 +1045,10 @@ sub BackRestTestBackup_Test
         {
         for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
         {
-        for (my $iTablespaceTotal = false; $iTablespaceTotal <= 2; $iTablespaceTotal++)
-        {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
                                         "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, " .
-                                        "hardlink ${bHardlink}, tblspc ${iTablespaceTotal}")) {next}
+                                        "hardlink ${bHardlink}")) {next}
 
             # Get base time
             my $lTime = time() - 100000;
@@ -1090,13 +1088,13 @@ sub BackRestTestBackup_Test
             # Create tablespace path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'pg_tblspc');
 
-            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            {
-                BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, $iTablespaceIdx);
-
-                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPC',
-                                                      $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
-            }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, $iTablespaceIdx);
+            #
+            #     BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPC',
+            #                                           $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
+            # }
 
             # Create db config
             BackRestTestCommon_ConfigCreate('db',                           # local
@@ -1104,21 +1102,17 @@ sub BackRestTestBackup_Test
                                             $bCompress,                     # compress
                                             $bChecksum,                     # checksum
                                             $bRemote ? undef : $bHardlink,  # hardlink
-                                            $iThreadMax,                    # thread-max
-                                            undef,                          # archive-async
-                                            undef);                         # compress-async
+                                            $iThreadMax);                   # thread-max
 
             # Create backup config
             if ($bRemote)
             {
                 BackRestTestCommon_ConfigCreate('backup',                   # local
-                                                $bRemote ? DB : undef,      # remote
+                                                DB,                         # remote
                                                 $bCompress,                 # compress
                                                 $bChecksum,                 # checksum
                                                 $bHardlink,                 # hardlink
-                                                $iThreadMax,                # thread-max
-                                                undef,                      # archive-async
-                                                undef);                     # compress-async
+                                                $iThreadMax);               # thread-max
             }
 
             # Create the backup command
@@ -1126,7 +1120,8 @@ sub BackRestTestBackup_Test
                                        ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
                                        "/pg_backrest.conf --no-start-stop --stanza=${strStanza} backup";
 
-            # Perform first full backup
+            # Full backup
+            #-----------------------------------------------------------------------------------------------------------------------
             my $strType = 'full';
             &log(INFO, "    ${strType} backup");
 
@@ -1140,29 +1135,37 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
 
-            # Create a bogus file that should be deleted by the restore
+            # Restore - tests various permissions, extra files/paths, missing files/paths
+            #-----------------------------------------------------------------------------------------------------------------------
             my $bForce = true;
             &log(INFO, '        ' . ($bForce ? 'force ' : '') . 'restore');
 
+            # Create a path and file that are not in the manifest
             BackRestTestBackup_PathCreate(\%oManifest, 'base', 'deleteme');
             BackRestTestBackup_FileCreate(\%oManifest, 'base', 'deleteme/deleteme.txt', 'DELETEME');
+
+            # Change path mode
             BackRestTestBackup_PathMode(\%oManifest, 'base', 'base', '0777');
 
+            # Change an existing link to the wrong directory
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'link-test');
             BackRestTestBackup_LinkCreate(\%oManifest, 'base', 'link-test', '/wrong');
 
+            # Remove an path
             BackRestTestBackup_PathRemove(\%oManifest, 'base', 'path-test');
 
+            # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
 
             BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest, $bForce);
 
-            # Perform first incr backup
+            # Incr backup - add a tablespace
+            #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
             $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
 
             $strType = 'incr';
-            &log(INFO, "    ${strType} backup (no updates)");
+            &log(INFO, "    ${strType} backup (add tablespace 1)");
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
@@ -1180,11 +1183,11 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2',
                                                   $bChecksum ? '09b5e31766be1dba1ec27de82f975c1b6eea2a92' : undef, $lTime);
 
-            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            {
-                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', 'TBLSPC2',
-                                                      $bChecksum ? 'dc7f76e43c46101b47acc55ae4d593a9e6983578' : undef, $lTime);
-            }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', 'TBLSPC2',
+            #                                           $bChecksum ? 'dc7f76e43c46101b47acc55ae4d593a9e6983578' : undef, $lTime);
+            # }
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
@@ -1202,11 +1205,11 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT',
                                                   $bChecksum ? '9a53d532e27785e681766c98516a5e93f096a501' : undef, $lTime);
 
-            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            {
-                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPCUPDT',
-                                                      $bChecksum ? 'ff21d59b07e8d9cfa7b1286202610550a71884b5' : undef, $lTime);
-            }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPCUPDT',
+            #                                           $bChecksum ? 'ff21d59b07e8d9cfa7b1286202610550a71884b5' : undef, $lTime);
+            # }
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
@@ -1240,10 +1243,10 @@ sub BackRestTestBackup_Test
             {
                 BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
 
-                for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-                {
-                    BackRestTestBackup_FileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
-                }
+                # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+                # {
+                #     BackRestTestBackup_FileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
+                # }
 
                 BackRestTestCommon_ExecuteEnd();
             }
@@ -1265,10 +1268,10 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base1.txt');
 
-            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            {
-                BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
-            }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
+            # }
 
             BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=1", $bRemote);
 
@@ -1276,11 +1279,11 @@ sub BackRestTestBackup_Test
             {
                 BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base2.txt', true);
 
-                for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-                {
-                    BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', true);
-                    delete($oManifest{"tablespace:${iTablespaceIdx}:file"});
-                }
+                # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+                # {
+                #     BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', true);
+                #     delete($oManifest{"tablespace:${iTablespaceIdx}:file"});
+                # }
 
                 BackRestTestCommon_ExecuteEnd();
             }
@@ -1301,11 +1304,11 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT2',
                                                   $bChecksum ? '7579ada0808d7f98087a0a586d0df9de009cdc33' : undef, $lTime);
 
-            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            {
-                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPCUPDT2',
-                                                      $bChecksum ? '42f9bdebc34de4476f21688d00b37ea77d1a2ffc' : undef, $lTime);
-            }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPCUPDT2',
+            #                                           $bChecksum ? '42f9bdebc34de4476f21688d00b37ea77d1a2ffc' : undef, $lTime);
+            # }
 
             $strType = 'full';
             &log(INFO, "    ${strType} backup");
@@ -1327,11 +1330,11 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2UPDT',
                                                   $bChecksum ? 'cafac3c59553f2cfde41ce2e62e7662295f108c0' : undef, $lTime);
 
-            for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            {
-                BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', 'TBLSPC2UPDT',
-                                                      $bChecksum ? 'bee4bf711a7533db234eda606782af7e80a76cf2' : undef, $lTime);
-            }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', 'TBLSPC2UPDT',
+            #                                           $bChecksum ? 'bee4bf711a7533db234eda606782af7e80a76cf2' : undef, $lTime);
+            # }
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
@@ -1339,9 +1342,6 @@ sub BackRestTestBackup_Test
             $strBackup = BackRestTestBackup_LastBackup($oFile);
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
-
-#            !!! Add test for removed tablespace during backup
-        }
         }
         }
         }
