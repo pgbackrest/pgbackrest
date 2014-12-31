@@ -1514,12 +1514,12 @@ sub copy
             {
                 $iUserId = getpwnam($strUser);
             }
-            
+
             if (defined($strGroup))
             {
                 $iGroupId = getgrnam($strGroup);
             }
-            
+
             chown(defined($iUserId) ? $iUserId : $<,
                   defined($iGroupId) ? $iGroupId : $(,
                   $strDestinationTmpOp);

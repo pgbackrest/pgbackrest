@@ -86,44 +86,47 @@ sub manifest_ownership_check
             foreach my $strFileType (sort (keys %oFileTypeHash))
             {
                 # Get users and groups for paths
-                foreach my $strName (sort (keys ${$oManifestRef}{"${strPathKey}:${strFileType}"}))
+                if (defined(${$oManifestRef}{"${strPathKey}:${strFileType}"}))
                 {
-                    my $strOwner = ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType};
-
-                    # If root then test to see if the user/group is valid
-                    if ($< == 0)
+                    foreach my $strName (sort (keys ${$oManifestRef}{"${strPathKey}:${strFileType}"}))
                     {
-                        # If the owner has not been tested yet then test it
-                        if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
-                        {
-                            my $strOwnerId;
-                            
-                            if ($strOwnerType eq 'user')
-                            {
-                                $strOwnerId = getpwnam($strOwner);
-                            }
-                            else
-                            {
-                                $strOwnerId = getgrnam($strOwner);
-                            }
-                            
-                            $oOwnerHash{$strOwnerType}{$strOwner} = defined($strOwnerId) ? true : false;
-                        }
+                        my $strOwner = ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType};
 
-                        if (!$oOwnerHash{$strOwnerType}{$strOwner})
+                        # If root then test to see if the user/group is valid
+                        if ($< == 0)
                         {
-                            ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
-                                $oOwnerTypeHash{$strOwnerType};
+                            # If the owner has not been tested yet then test it
+                            if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
+                            {
+                                my $strOwnerId;
+
+                                if ($strOwnerType eq 'user')
+                                {
+                                    $strOwnerId = getpwnam($strOwner);
+                                }
+                                else
+                                {
+                                    $strOwnerId = getgrnam($strOwner);
+                                }
+
+                                $oOwnerHash{$strOwnerType}{$strOwner} = defined($strOwnerId) ? true : false;
+                            }
+
+                            if (!$oOwnerHash{$strOwnerType}{$strOwner})
+                            {
+                                ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
+                                    $oOwnerTypeHash{$strOwnerType};
+                            }
                         }
-                    }
-                    # Else set user/group to current user/group
-                    else
-                    {
-                        if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
+                        # Else set user/group to current user/group
+                        else
                         {
-                            $oOwnerHash{$strOwnerType}{$strOwner} = false;
-                            ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
-                                $oOwnerTypeHash{$strOwnerType};
+                            if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
+                            {
+                                $oOwnerHash{$strOwnerType}{$strOwner} = false;
+                                ${$oManifestRef}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
+                                    $oOwnerTypeHash{$strOwnerType};
+                            }
                         }
                     }
                 }
@@ -131,12 +134,15 @@ sub manifest_ownership_check
         }
 
         # Output warning for any invalid owners
-        foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
+        if (defined($oOwnerHash{$strOwnerType}))
         {
-            if (!$oOwnerHash{$strOwnerType}{$strOwner})
+            foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
             {
-                &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
-                           ", changed to $oOwnerTypeHash{$strOwnerType}");
+                if (!$oOwnerHash{$strOwnerType}{$strOwner})
+                {
+                    &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
+                               ", changed to $oOwnerTypeHash{$strOwnerType}");
+                }
             }
         }
     }
@@ -163,7 +169,7 @@ sub manifest_load
 
         # Remove the manifest now that it is in memory
         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
-        
+
         # If backup is latest then set it equal to backup label, else verify that requested backup and label match
         if ($self->{strBackupPath} eq PATH_LATEST)
         {
