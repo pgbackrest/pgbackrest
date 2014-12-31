@@ -1216,7 +1216,7 @@ sub copy
                    ', modification_time = ' . (defined($lModificationTime) ? $lModificationTime : '[undef]') .
                    ', mode = ' . (defined($strMode) ? $strMode : '[undef]') .
                    ', user = ' . (defined($strUser) ? $strUser : '[undef]') .
-                   ', group = ' . (defined($strGroup) ? $strUser : '[undef]');
+                   ', group = ' . (defined($strGroup) ? $strGroup : '[undef]');
     &log(DEBUG, OP_FILE_COPY . ": ${strDebug}");
 
     # Open the source and destination files (if needed)
@@ -1435,8 +1435,16 @@ sub copy
                     return false;
                 }
 
-                # Otherwise report the error
-                confess $oMessage;
+                # Otherwise report the error.  I don't like this method of error reporting - raising the exception object makes the
+                # error hard to interpret and hides the error stack, raising test loses the error code.
+                if ($oMessage->isa('BackRest::Exception'))
+                {
+                    confess $oMessage->message();
+                }
+                else
+                {
+                    confess $oMessage;
+                }
             }
 
             # If this was a remote copy, then return the result
@@ -1499,8 +1507,21 @@ sub copy
         # if user or group is defined
         if (defined($strUser) || defined($strGroup))
         {
-            chown(defined($strUser) ? getpwnam($strUser) : $<,
-                  defined($strGroup) ? getgrnam($strGroup) : $(,
+            my $iUserId;
+            my $iGroupId;
+
+            if (defined($strUser))
+            {
+                $iUserId = getpwnam($strUser);
+            }
+            
+            if (defined($strGroup))
+            {
+                $iGroupId = getgrnam($strGroup);
+            }
+            
+            chown(defined($iUserId) ? $iUserId : $<,
+                  defined($iGroupId) ? $iGroupId : $(,
                   $strDestinationTmpOp);
         }
 

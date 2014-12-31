@@ -56,12 +56,12 @@ sub new
 }
 
 ####################################################################################################################################
-# MANIFEST_OWNERSHIP_TEST
+# MANIFEST_OWNERSHIP_CHECK
 #
 # Checks the users and groups that exist in the manifest and emits warnings for ownership that cannot be set properly, either
 # because the current user does not have permissions or because the user/group does not exist.
 ####################################################################################################################################
-sub manifest_ownership_test
+sub manifest_ownership_check
 {
     my $self = shift;               # Class hash
     my $oManifestRef = shift;       # Backup manifest
@@ -76,13 +76,13 @@ sub manifest_ownership_test
     my %oFileTypeHash = ('path' => true, 'link' => true, 'file' => true);
     my %oOwnerTypeHash = ('user' => $strDefaultUser, 'group' => $strDefaultGroup);
 
-    # Loop through owner types
+    # Loop through owner types (user, group)
     foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
     {
-        # Loop through all backup paths
+        # Loop through all backup paths (base and tablespaces)
         foreach my $strPathKey (sort(keys ${$oManifestRef}{'backup:path'}))
         {
-            # Loop through types
+            # Loop through types (path, link, file)
             foreach my $strFileType (sort (keys %oFileTypeHash))
             {
                 # Get users and groups for paths
@@ -96,8 +96,18 @@ sub manifest_ownership_test
                         # If the owner has not been tested yet then test it
                         if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
                         {
-                            $oOwnerHash{$strOwnerType}{$strOwner} = ($strOwnerType eq 'user' && defined(getpwnam($strOwner))) ||
-                                                                    ($strOwnerType eq 'group' && defined(getpwnam($strOwner)));
+                            my $strOwnerId;
+                            
+                            if ($strOwnerType eq 'user')
+                            {
+                                $strOwnerId = getpwnam($strOwner);
+                            }
+                            else
+                            {
+                                $strOwnerId = getgrnam($strOwner);
+                            }
+                            
+                            $oOwnerHash{$strOwnerType}{$strOwner} = defined($strOwnerId) ? true : false;
                         }
 
                         if (!$oOwnerHash{$strOwnerType}{$strOwner})
@@ -123,8 +133,11 @@ sub manifest_ownership_test
         # Output warning for any invalid owners
         foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
         {
-            &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
-                       ", changed to $oOwnerTypeHash{$strOwnerType}");
+            if (!$oOwnerHash{$strOwnerType}{$strOwner})
+            {
+                &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
+                           ", changed to $oOwnerTypeHash{$strOwnerType}");
+            }
         }
     }
 }
@@ -206,7 +219,7 @@ sub manifest_load
         confess &log(ERROR, 'backup ' . $self->{strBackupPath} . ' does not exist');
     }
 
-    $self->manifest_ownership_test($oManifestRef);
+    $self->manifest_ownership_check($oManifestRef);
 }
 
 ####################################################################################################################################
@@ -486,26 +499,6 @@ sub restore_thread
             }
 
             # Set user and group if running as root (otherwise current user and group will be used for restore)
-            my $strUser = undef;
-            my $strGroup = undef;
-
-            if ($< == 0)
-            {
-                $strUser = ${$oManifestRef}{$strSection}{$strName}{user};
-
-                if (!defined(getpwnam($strUser)))
-                {
-                    $strUser = $strCurrentUser;
-                }
-
-                $strGroup = ${$oManifestRef}{$strSection}{$strName}{group};
-
-                if (!defined(getgrnam($strGroup)))
-                {
-                    $strGroup = $strCurrentGroup;
-                }
-            }
-
             # Copy the file from the backup to the database
             $oFileThread->copy(PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $self->{strBackupPath}) .
                                "/${strSourcePath}/${strName}" .
@@ -515,7 +508,9 @@ sub restore_thread
                                undef, undef,
                                ${$oManifestRef}{$strSection}{$strName}{modification_time},
                                ${$oManifestRef}{$strSection}{$strName}{permission},
-                               $strUser, $strGroup);
+                               undef,
+                               ${$oManifestRef}{$strSection}{$strName}{user},
+                               ${$oManifestRef}{$strSection}{$strName}{group});
         }
 
         # Even number threads move up when they have finished a queue, odd numbered threads move down
