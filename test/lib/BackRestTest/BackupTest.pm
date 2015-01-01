@@ -1463,6 +1463,130 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Drop();
         }
     }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test collision
+    #
+    # See if it is possible for a table to be written to, have stop backup run, and be written to again all in the same second.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'collision')
+    {
+        $iRun = 0;
+        my $iRunMax = 1000;
+
+        &log(INFO, "Test Backup Collision\n");
+
+        # Create the file object
+        my $oFile = (BackRest::File->new
+        (
+            $strStanza,
+            BackRestTestCommon_BackupPathGet(),
+            undef,
+            undef
+        ))->clone();
+
+        # Create the test database
+        BackRestTestBackup_Create(false);
+
+        # Create the config file
+        BackRestTestCommon_ConfigCreate('db',                              # local
+                                        undef,                             # remote
+                                        false,                             # compress
+                                        false,                             # checksum
+                                        false,                             # hardlink
+                                        $iThreadMax,                       # thread-max
+                                        false,                             # archive-async
+                                        undef);                            # compress-async
+
+        # Create the test table
+        BackRestTestBackup_PgExecute("create table test_collision (id int)");
+
+        # Construct filename to test
+        my $strFile = BackRestTestCommon_DbCommonPathGet() . "/base";
+
+        # Get the oid of the user db
+        my $strSql = "select oid from pg_database where datname = 'postgres'";
+        my $hStatement = $hDb->prepare($strSql);
+
+        $hStatement->execute() or
+            confess &log(ERROR, "Unable to execute: ${strSql}");
+
+        my @oyRow = $hStatement->fetchrow_array();
+        $strFile .= '/' . $oyRow[0];
+
+        $hStatement->finish();
+
+        # Get the oid of the new table so we can check the file on disk
+        $strSql = "select oid from pg_class where relname = 'test_collision'";
+        $hStatement = $hDb->prepare($strSql);
+
+        $hStatement->execute() or
+            confess &log(ERROR, "Unable to execute: ${strSql}");
+
+        my @oyRow = $hStatement->fetchrow_array();
+        $strFile .= '/' . $oyRow[0];
+
+        &log(INFO, 'table filename = ' . $strFile);
+
+        $hStatement->finish();
+
+        BackRestTestBackup_PgExecute("select pg_start_backup('test');");
+
+        # File modified in the same second that the manifest is taken and file is copied
+        while ($iRun < $iRunMax)
+        {
+            # Increment the run, log, and decide whether this unit test should be run
+            if (!BackRestTestCommon_Run(++$iRun,
+                                        "mod after manifest")) {next}
+
+            my $strTestChecksum = $oFile->hash(PATH_DB_ABSOLUTE, $strFile);
+
+            # Insert a row and do a checkpoint
+            BackRestTestBackup_PgExecute("insert into test_collision values (1)", true);
+
+            # Stat the file to get size/modtime after the backup has started
+            my $strBeginChecksum = $oFile->hash(PATH_DB_ABSOLUTE, $strFile);
+            my $oStat = lstat($strFile);
+            my $lBeginSize = $oStat->size;
+            my $lBeginTime = $oStat->mtime;
+
+            # Sleep .5 seconds to give a reasonable amount of time for the file to be copied after the manifest was generated
+            sleep(.5);
+
+            # Insert another row
+            BackRestTestBackup_PgExecute("insert into test_collision values (1)");
+
+            # Stop backup, start a new backup
+            BackRestTestBackup_PgExecute("select pg_stop_backup();");
+            BackRestTestBackup_PgExecute("select pg_start_backup('test');");
+
+            # Stat the file to get size/modtime after the backup has restarted
+            my $strEndChecksum = $oFile->hash(PATH_DB_ABSOLUTE, $strFile);
+            $oStat = lstat($strFile);
+            my $lEndSize = $oStat->size;
+            my $lEndTime = $oStat->mtime;
+
+            # Error if the size/modtime are the same between the backups
+            &log(INFO, "    begin size = ${lBeginSize}, time = ${lBeginTime}, hash ${strBeginChecksum} - " .
+                       "end size = ${lEndSize}, time = ${lEndTime}, hash ${strEndChecksum} - test hash ${strTestChecksum}");
+
+            if ($lBeginSize == $lEndSize && $lBeginTime == $lEndTime &&
+                $strTestChecksum ne $strBeginChecksum && $strBeginChecksum ne $strEndChecksum)
+            {
+                &log(ERROR, "size and mod time are the same between backups");
+                $iRun = $iRunMax;
+                next;
+            }
+        }
+
+        BackRestTestBackup_PgExecute("select pg_stop_backup();");
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop();
+        }
+    }
 }
 
 1;
