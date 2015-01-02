@@ -239,6 +239,9 @@ sub clean
     my $self = shift;               # Class hash
     my $oManifestRef = shift;       # Backup manifest
 
+    # Track if files/links/paths where removed
+    my %oRemoveHash = ('file' => 0, 'path' => 0, 'link' => 0);
+
     # Check each restore directory in the manifest and make sure that it exists and is empty.
     # The --force option can be used to override the empty requirement.
     foreach my $strPathKey (sort(keys ${$oManifestRef}{'backup:path'}))
@@ -333,7 +336,18 @@ sub clean
                     &log(DEBUG, "removing file/link ${strFile}");
                     unlink($strFile) or confess &log(ERROR, "unable to delete file/link ${strFile}");
                 }
+
+                $oRemoveHash{$strType} += 1;
             }
+        }
+    }
+
+    # Loop through types (path, link, file) and emit info if any were removed
+    foreach my $strFileType (sort (keys %oRemoveHash))
+    {
+        if ($oRemoveHash{$strFileType} > 0)
+        {
+            &log(INFO, "$oRemoveHash{$strFileType} ${strFileType}(s) removed during cleanup");
         }
     }
 }
