@@ -8,6 +8,7 @@ use strict;
 use warnings;
 use Carp;
 
+use POSIX;
 use Net::OpenSSH;
 use File::Basename;
 use File::Copy qw(cp);
@@ -18,6 +19,7 @@ use Fcntl ':mode';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::String;
+use Time::HiRes qw/gettimeofday usleep/;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -961,6 +963,10 @@ sub manifest
     my $strPathType = shift;
     my $strPath = shift;
     my $oManifestHashRef = shift;
+    my $bPause = shift;             # Wait until next second before returning?
+
+    # Set defaults
+    $bPause = defined($bPause) ? ($bPause ? true : false) : false;
 
     # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath);
@@ -990,6 +996,22 @@ sub manifest
     else
     {
         $self->manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef, $strDebug);
+
+        # If pause is requested then sleep into the next clock second.  The manifest is being built to determine which files to
+        # copy, but sometimes the files can be modified after the manifest is built but before a second has elapsed.  In this case
+        # there is a small window where an earlier version of the file might be copied and a later version of the file will have
+        # the same size/timestamp.  By waiting this race condition is eliminated.  Waiting a partial second must be done on the db
+        # side to be correct (which is why pause is not in the backup code).  The wait could also be a full second but that has an
+        # impact on how long it takes to run unit tests, and this is simple enough.
+        if ($bPause)
+        {
+            my $lTimeBegin = gettimeofday();
+            my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+
+            usleep($lSleepMs * 1000);
+
+            &log(DEBUG, "slept ${lSleepMs}ms after manifest: begin ${lTimeBegin}, end " . gettimeofday());
+        }
     }
 }
 

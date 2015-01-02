@@ -1504,7 +1504,7 @@ sub BackRestTestBackup_Test
         # Construct filename to test
         my $strFile = BackRestTestCommon_DbCommonPathGet() . "/base";
 
-        # Get the oid of the user db
+        # Get the oid of the postgres db
         my $strSql = "select oid from pg_database where datname = 'postgres'";
         my $hStatement = $hDb->prepare($strSql);
 
@@ -1523,7 +1523,7 @@ sub BackRestTestBackup_Test
         $hStatement->execute() or
             confess &log(ERROR, "Unable to execute: ${strSql}");
 
-        my @oyRow = $hStatement->fetchrow_array();
+        @oyRow = $hStatement->fetchrow_array();
         $strFile .= '/' . $oyRow[0];
 
         &log(INFO, 'table filename = ' . $strFile);
@@ -1532,7 +1532,7 @@ sub BackRestTestBackup_Test
 
         BackRestTestBackup_PgExecute("select pg_start_backup('test');");
 
-        # File modified in the same second that the manifest is taken and file is copied
+        # File modified in the same second after the manifest is taken and file is copied
         while ($iRun < $iRunMax)
         {
             # Increment the run, log, and decide whether this unit test should be run

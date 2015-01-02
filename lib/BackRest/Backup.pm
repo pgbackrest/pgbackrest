@@ -177,7 +177,7 @@ sub backup_thread_complete
     {
         # !!! This should be shorter - currently it is this to be sure that backups to not happen more than once a second and cause
         # path naming conflicts
-        sleep(1);
+        sleep(.1);
 
         # If a timeout has been defined, make sure we have not been running longer than that
         if (defined($iTimeout))
@@ -823,7 +823,7 @@ sub backup_manifest_build
 
     my %oManifestHash;
 
-    $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash);
+    $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash, true);
 
     foreach my $strName (sort(keys $oManifestHash{name}))
     {
