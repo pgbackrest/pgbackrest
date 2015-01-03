@@ -295,13 +295,19 @@ sub file_size_format
 sub timestamp_string_get
 {
     my $strFormat = shift;
+    my $lTime = shift;
 
     if (!defined($strFormat))
     {
         $strFormat = '%4d-%02d-%02d %02d:%02d:%02d';
     }
 
-    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime(time);
+    if (!defined($lTime))
+    {
+        $lTime = time();
+    }
+
+    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime($lTime);
 
     return sprintf($strFormat, $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
 }

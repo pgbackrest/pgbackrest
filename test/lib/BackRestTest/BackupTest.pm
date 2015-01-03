@@ -686,6 +686,7 @@ sub BackRestTestBackup_CompareBackup
 
     ${$oExpectedManifestRef}{backup}{'timestamp-start'} = $oActualManifest{backup}{'timestamp-start'};
     ${$oExpectedManifestRef}{backup}{'timestamp-stop'} = $oActualManifest{backup}{'timestamp-stop'};
+    ${$oExpectedManifestRef}{backup}{'timestamp-last-modified'} = $oActualManifest{backup}{'timestamp-last-modified'};
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 

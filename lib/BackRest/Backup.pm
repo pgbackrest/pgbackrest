@@ -824,6 +824,8 @@ sub backup_manifest_build
 
     $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash, true);
 
+    ${$oBackupManifestRef}{backup}{'timestamp-last-modified'} = 0;
+
     foreach my $strName (sort(keys $oManifestHash{name}))
     {
         # Skip certain files during backup
@@ -863,6 +865,11 @@ sub backup_manifest_build
             ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
 #            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{inode} = $oManifestHash{name}{"${strName}"}{inode} + 0;
             ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
+
+            if ($oManifestHash{name}{"${strName}"}{modification_time} + 0 > ${$oBackupManifestRef}{backup}{'timestamp-last-modified'})
+            {
+                ${$oBackupManifestRef}{backup}{'timestamp-last-modified'} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
+            }
 
             if (defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{size}) &&
 #                defined(${$oLastManifestRef}{"${strSection}"}{"${strName}"}{inode}) &&
@@ -927,6 +934,9 @@ sub backup_manifest_build
             }
         }
     }
+
+    ${$oBackupManifestRef}{backup}{'timestamp-last-modified'} =
+        timestamp_string_get(undef, ${$oBackupManifestRef}{backup}{'timestamp-last-modified'});
 }
 
 ####################################################################################################################################
@@ -1411,7 +1421,7 @@ sub backup
     }
     else
     {
-        $strArchiveStart = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
+        ($strArchiveStart, ${oBackupManifest}{backup}{'timestamp-db-start'}) = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
         ${oBackupManifest}{backup}{'archive-start'} = $strArchiveStart;
         &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{'archive-start'});
     }
@@ -1531,7 +1541,7 @@ sub backup
 
     if (!$bNoStartStop)
     {
-        $strArchiveStop = $oDb->backup_stop();
+        ($strArchiveStop, ${oBackupManifest}{backup}{'timestamp-db-stop'}) = $oDb->backup_stop();
         ${oBackupManifest}{backup}{'archive-stop'} = $strArchiveStop;
         &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{'archive-stop'});
     }

@@ -10,7 +10,7 @@ use Carp;
 
 use POSIX qw(ceil);
 use Net::OpenSSH;
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use Digest::SHA;
