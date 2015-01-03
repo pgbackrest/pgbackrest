@@ -7,6 +7,7 @@ use threads;
 use strict;
 use warnings;
 use Carp;
+use Pod::Usage;
 
 use File::Basename;
 use Getopt::Long;
@@ -170,6 +171,24 @@ sub config_load
                           PARAM_THREAD . '=s', PARAM_NO_START_STOP, PARAM_FORCE, PARAM_VERSION, PARAM_HELP,
                           PARAM_TEST, PARAM_TEST_DELAY . '=s', PARAM_TEST_NO_FORK)
         or pod2usage(2);
+
+    # Display version and exit if requested
+    if (param_get(PARAM_VERSION) || param_get(PARAM_HELP))
+    {
+        print 'pg_backrest ' . version_get() . "\n";
+
+        if (!param_get(PARAM_HELP))
+        {
+            exit 0;
+        }
+    }
+
+    # Display help and exit if requested
+    if (param_get(PARAM_HELP))
+    {
+        print "\n";
+        pod2usage();
+    }
 
     # Get and validate the operation
     $strOperation = $ARGV[0];

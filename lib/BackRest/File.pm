@@ -8,9 +8,9 @@ use strict;
 use warnings;
 use Carp;
 
-use POSIX;
+use POSIX qw(ceil);
 use Net::OpenSSH;
-use File::Basename;
+use File::Basename qw(dirname);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use Digest::SHA;
@@ -19,7 +19,7 @@ use Fcntl ':mode';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::String;
-use Time::HiRes qw/gettimeofday usleep/;
+use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -983,6 +983,7 @@ sub manifest
         my %oParamHash;
 
         $oParamHash{path} = $strPathOp;
+        $oParamHash{pause} = $bPause ? 'y' : 'n';
 
         # Add remote info to debug string
         my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
@@ -1010,7 +1011,18 @@ sub manifest
 
             usleep($lSleepMs * 1000);
 
-            &log(DEBUG, "slept ${lSleepMs}ms after manifest: begin ${lTimeBegin}, end " . gettimeofday());
+            &log(TRACE, "${strOperation}: slept ${lSleepMs}ms after manifest: begin ${lTimeBegin}, end " . gettimeofday());
+
+            # Now we'll test and make sure that there are no files with modification times in the future.
+            foreach my $strName (sort(keys ${$oManifestHashRef}{name}))
+            {
+                if (defined(${$oManifestHashRef}{name}{$strName}{modification_time}) &&
+                    ${$oManifestHashRef}{name}{$strName}{modification_time} > int($lTimeBegin))
+                {
+                    ${$oManifestHashRef}{name}{$strName}{modification_time} = int($lTimeBegin);
+                    ${$oManifestHashRef}{name}{$strName}{future} = 'y';
+                }
+            }
         }
     }
 }

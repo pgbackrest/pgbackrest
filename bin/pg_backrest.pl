@@ -130,24 +130,6 @@ eval {
 ####################################################################################################################################
 config_load();
 
-# Display version and exit if requested
-if (param_get(PARAM_VERSION) || param_get(PARAM_HELP))
-{
-    print 'pg_backrest ' . version_get() . "\n";
-
-    if (!param_get(PARAM_HELP))
-    {
-        exit 0;
-    }
-}
-
-# Display help and exit if requested
-if (param_get(PARAM_HELP))
-{
-    print "\n";
-    pod2usage();
-}
-
 ####################################################################################################################################
 # DETERMINE IF THERE IS A REMOTE
 ####################################################################################################################################

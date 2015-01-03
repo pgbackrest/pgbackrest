@@ -175,10 +175,6 @@ sub backup_thread_complete
     # Rejoin the threads
     while ($iThreadComplete < $iThreadLocalMax)
     {
-        # !!! This should be shorter - currently it is this to be sure that backups to not happen more than once a second and cause
-        # path naming conflicts
-        sleep(.1);
-
         # If a timeout has been defined, make sure we have not been running longer than that
         if (defined($iTimeout))
         {
@@ -220,6 +216,9 @@ sub backup_thread_complete
                 }
             }
         }
+
+        # Sleep before trying again
+        sleep(.1);
     }
 
     &log(DEBUG, 'all threads exited');

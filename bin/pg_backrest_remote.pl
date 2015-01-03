@@ -154,9 +154,10 @@ while ($strCommand ne OP_EXIT)
         {
             my %oManifestHash;
 
-            $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash);
+            $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash,
+                             param_get(\%oParamHash, 'pause') eq 'y' ? true : false);
 
-            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination";
+            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\tfuture";
 
             foreach my $strName (sort(keys $oManifestHash{name}))
             {
@@ -170,7 +171,8 @@ while ($strCommand ne OP_EXIT)
                     (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                        $oManifestHash{name}{"${strName}"}{link_destination} : "");
+                        $oManifestHash{name}{"${strName}"}{link_destination} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{future}) ? $oManifestHash{name}{"${strName}"}{future} : "");
             }
 
             $oRemote->output_write($strOutput);
