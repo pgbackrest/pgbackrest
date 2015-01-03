@@ -1587,6 +1587,88 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Drop();
         }
     }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # rsync-collision
+    #
+    # See if it is possible for a table to be written to, have stop backup run, and be written to again all in the same second.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'rsync-collision')
+    {
+        $iRun = 0;
+        my $iRunMax = 1000;
+
+        &log(INFO, "Test Rsync Collision\n");
+
+        # Create the file object
+        my $oFile = (BackRest::File->new
+        (
+            $strStanza,
+            BackRestTestCommon_BackupPathGet(),
+            undef,
+            undef
+        ))->clone();
+
+        # Create the test database
+        BackRestTestBackup_Create(false, false);
+
+        # Create test paths
+        my $strPathRsync1 = BackRestTestCommon_TestPathGet() . "/rsync1";
+        my $strPathRsync2 = BackRestTestCommon_TestPathGet() . "/rsync2";
+
+        BackRestTestCommon_PathCreate($strPathRsync1);
+        BackRestTestCommon_PathCreate($strPathRsync2);
+
+        # Rsync command
+        my $strCommand = "rsync -vvrt ${strPathRsync1}/ ${strPathRsync2}";
+
+        # File modified in the same second after the manifest is taken and file is copied
+        while ($iRun < $iRunMax)
+        {
+            # Increment the run, log, and decide whether this unit test should be run
+            if (!BackRestTestCommon_Run(++$iRun,
+                                        "rsync test")) {next}
+
+            # Create test file
+            &log(INFO, "create test file");
+            BackRestTestCommon_FileCreate("${strPathRsync1}/test.txt", 'TEST1');
+
+            # Stat the file to get size/modtime after the backup has started
+            my $strBeginChecksum = $oFile->hash(PATH_DB_ABSOLUTE, "${strPathRsync1}/test.txt");
+
+            # Rsync
+            &log(INFO, "rsync 1st time");
+            BackRestTestCommon_Execute($strCommand, false, false, true);
+
+            # Modify the test file within the same second
+            &log(INFO, "modify test file");
+            BackRestTestCommon_FileCreate("${strPathRsync1}/test.txt", 'TEST2');
+
+            my $strEndChecksum = $oFile->hash(PATH_DB_ABSOLUTE, "${strPathRsync1}/test.txt");
+
+            # Rsync again
+            &log(INFO, "rsync 2nd time");
+            BackRestTestCommon_Execute($strCommand, false, false, true);
+
+            my $strTestChecksum = $oFile->hash(PATH_DB_ABSOLUTE, "${strPathRsync2}/test.txt");
+
+            # Error if checksums are not the same after rsync
+            &log(INFO, "    begin hash ${strBeginChecksum} - end hash ${strEndChecksum} - test hash ${strTestChecksum}");
+
+            if ($strTestChecksum ne $strEndChecksum)
+            {
+                &log(ERROR, "end and test checksums are not the same");
+                $iRun = $iRunMax;
+                next;
+            }
+        }
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop();
+        }
+    }
 }
 
 1;

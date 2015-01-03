@@ -134,9 +134,11 @@ sub BackRestTestCommon_ExecuteEnd
 {
     my $strTest = shift;
     my $bSuppressError = shift;
+    my $bShowOutput = shift;
 
     # Set defaults
     $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
+    $bShowOutput = defined($bShowOutput) ? $bShowOutput : false;
 
     # Create select objects
     my $oErrorSelect = IO::Select->new();
@@ -189,6 +191,11 @@ sub BackRestTestCommon_ExecuteEnd
         }
     }
 
+    if ($bShowOutput)
+    {
+        print "output:\n${strOutLog}\n";
+    }
+
     $hError = undef;
     $hOut = undef;
 
@@ -203,9 +210,10 @@ sub BackRestTestCommon_Execute
     my $strCommand = shift;
     my $bRemote = shift;
     my $bSuppressError = shift;
+    my $bShowOutput = shift;
 
     BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
-    return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError);
+    return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError, $bShowOutput);
 }
 
 ####################################################################################################################################
