@@ -149,15 +149,19 @@ while ($strCommand ne OP_EXIT)
                              param_get(\%oParamHash, 'user', false),
                              param_get(\%oParamHash, 'group', false));
         }
+        # Wait
+        elsif ($strCommand eq OP_FILE_WAIT)
+        {
+            $oRemote->output_write($oFile->wait(PATH_ABSOLUTE));
+        }
         # Generate a manifest
         elsif ($strCommand eq OP_FILE_MANIFEST)
         {
             my %oManifestHash;
 
-            $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash,
-                             param_get(\%oParamHash, 'pause') eq 'y' ? true : false);
+            $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash);
 
-            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination\tfuture";
+            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination";
 
             foreach my $strName (sort(keys $oManifestHash{name}))
             {
@@ -171,8 +175,7 @@ while ($strCommand ne OP_EXIT)
                     (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                        $oManifestHash{name}{"${strName}"}{link_destination} : "") . "\t" .
-                    (defined($oManifestHash{name}{"${strName}"}{future}) ? $oManifestHash{name}{"${strName}"}{future} : "");
+                        $oManifestHash{name}{"${strName}"}{link_destination} : "");
             }
 
             $oRemote->output_write($strOutput);

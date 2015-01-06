@@ -605,10 +605,13 @@ sub command_param_string
 
     my $strParamList;
 
-    foreach my $strParam (sort(keys $oParamHashRef))
+    if (defined($oParamHashRef))
     {
-        $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
-                         (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
+        foreach my $strParam (sort(keys $oParamHashRef))
+        {
+            $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
+                             (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
+        }
     }
 
     return $strParamList;

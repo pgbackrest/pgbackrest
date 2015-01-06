@@ -666,7 +666,7 @@ sub BackRestTestBackup_CompareBackup
                 }
                 else
                 {
-                    if (${$oExpectedManifestRef}{backup}{reference} !~ /$strFileReference/)
+                    if (${$oExpectedManifestRef}{backup}{reference} !~ /^$strFileReference|,$strFileReference/)
                     {
                         ${$oExpectedManifestRef}{backup}{reference} .= ",${strFileReference}";
                     }
@@ -686,7 +686,7 @@ sub BackRestTestBackup_CompareBackup
 
     ${$oExpectedManifestRef}{backup}{'timestamp-start'} = $oActualManifest{backup}{'timestamp-start'};
     ${$oExpectedManifestRef}{backup}{'timestamp-stop'} = $oActualManifest{backup}{'timestamp-stop'};
-    ${$oExpectedManifestRef}{backup}{'timestamp-last-modified'} = $oActualManifest{backup}{'timestamp-last-modified'};
+    ${$oExpectedManifestRef}{backup}{'timestamp-copy-start'} = $oActualManifest{backup}{'timestamp-copy-start'};
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 

@@ -16,6 +16,8 @@ use Cwd 'abs_path';
 use File::stat;
 use Fcntl ':mode';
 use Scalar::Util 'blessed';
+use Time::HiRes qw(gettimeofday usleep);
+use POSIX qw(ceil);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
@@ -395,6 +397,63 @@ sub BackRestTestFile_Test
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------
+    # Test wait()
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'all' || $strTest eq 'wait')
+    {
+        $iRun = 0;
+
+        &log(INFO, '--------------------------------------------------------------------------------');
+        &log(INFO, "Test File->wait()\n");
+
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            # Create the file object
+            my $oFile = new BackRest::File
+            (
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'db' : undef,
+                $bRemote ? $oRemote : undef
+            );
+
+            my $lTimeBegin = gettimeofday();
+
+            if (!BackRestTestCommon_Run(++$iRun,
+                                        "rmt ${bRemote}, begin ${lTimeBegin}")) {next}
+
+            # If there is not enough time to complete the test then sleep
+            if (ceil($lTimeBegin) - $lTimeBegin < .250)
+            {
+                my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+
+                usleep($lSleepMs * 1000);
+
+                &log(DEBUG, "slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+
+                $lTimeBegin = gettimeofday();
+            }
+
+            # Run the test
+            my $lTimeBeginCheck = $oFile->wait(PATH_DB_ABSOLUTE);
+
+            &log(DEBUG, "begin ${lTimeBegin}, check ${lTimeBeginCheck}, end " . time());
+
+            # Current time should have advanced by 1 second
+            if (time() == int($lTimeBegin))
+            {
+                confess "time was not advanced by 1 second";
+            }
+
+            # lTimeBegin and lTimeBeginCheck should be equal
+            if (int($lTimeBegin) != $lTimeBeginCheck)
+            {
+                confess 'time begin ' || int($lTimeBegin) || "and check ${lTimeBeginCheck} should be equal";
+            }
+        }
+    }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
     # Test manifest()
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'manifest')
@@ -405,16 +464,16 @@ sub BackRestTestFile_Test
         &log(INFO, "Test File->manifest()\n");
 
         my $strManifestCompare =
-            ".,d,${strUser},${strGroup},0770,,,,,\n" .
-            "sub1,d,${strUser},${strGroup},0750,,,,,\n" .
-            "sub1/sub2,d,${strUser},${strGroup},0750,,,,,\n" .
-            "sub1/sub2/test,l,${strUser},${strGroup},,,,,../..,\n" .
-            "sub1/sub2/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,,\n" .
-            "sub1/sub2/test-sub2.txt,f,${strUser},${strGroup},0666,1111111113,0,11,,\n" .
-            "sub1/test,l,${strUser},${strGroup},,,,,..,\n" .
-            "sub1/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,,\n" .
-            "sub1/test-sub1.txt,f,${strUser},${strGroup},0646,1111111112,0,10,,\n" .
-            "test.txt,f,${strUser},${strGroup},1640,1111111111,0,9,,";
+            ".,d,${strUser},${strGroup},0770,,,,\n" .
+            "sub1,d,${strUser},${strGroup},0750,,,,\n" .
+            "sub1/sub2,d,${strUser},${strGroup},0750,,,,\n" .
+            "sub1/sub2/test,l,${strUser},${strGroup},,,,,../..\n" .
+            "sub1/sub2/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
+            "sub1/sub2/test-sub2.txt,f,${strUser},${strGroup},0666,1111111113,0,11,\n" .
+            "sub1/test,l,${strUser},${strGroup},,,,,..\n" .
+            "sub1/test-hardlink.txt,f,${strUser},${strGroup},1640,1111111111,0,9,\n" .
+            "sub1/test-sub1.txt,f,${strUser},${strGroup},0646,1111111112,0,10,\n" .
+            "test.txt,f,${strUser},${strGroup},1640,1111111111,0,9,";
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
@@ -431,10 +490,8 @@ sub BackRestTestFile_Test
             {
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
-            for (my $bPause = false; $bPause <= $bExists && !$bError; $bPause++)
-            {
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, exists ${bExists}, pause ${bPause}, err ${bError}")) {next}
+                                            "rmt ${bRemote}, exists ${bExists}, err ${bError}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -452,7 +509,7 @@ sub BackRestTestFile_Test
                 system("chmod 0640 ${strTestPath}/sub1/test-sub1.txt");
 
                 system("echo 'TESTDATA__' > ${strTestPath}/sub1/sub2/test-sub2.txt");
-                utime(1111111113, $bPause ? time() + 10 : 1111111113, "${strTestPath}/sub1/sub2/test-sub2.txt");
+                utime(1111111113, 1111111113, "${strTestPath}/sub1/sub2/test-sub2.txt");
                 system("chmod 0646 ${strTestPath}/sub1/test-sub1.txt");
 
                 system("ln ${strTestPath}/test.txt ${strTestPath}/sub1/test-hardlink.txt");
@@ -483,7 +540,7 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash, $bPause);
+                    $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash);
                 };
 
                 # Check for an error
@@ -522,23 +579,6 @@ sub BackRestTestFile_Test
                         $oManifestHash{name}{"${strName}"}{inode} = 0;
                     }
 
-                    if ($bPause && $strName eq 'sub1/sub2/test-sub2.txt')
-                    {
-                        if (!(defined($oManifestHash{name}{$strName}{future}) &&
-                             $oManifestHash{name}{$strName}{future} eq 'y'))
-                        {
-                            confess "${strName} is not marked as future";
-                        }
-
-                        if ($oManifestHash{name}{$strName}{modification_time} != time() - 1)
-                        {
-                            confess "${strName} does not have future time reset to past";
-                        }
-
-                        delete($oManifestHash{name}{$strName}{future});
-                        $oManifestHash{name}{$strName}{modification_time} = 1111111113;
-                    }
-
                     $strManifest .=
                         "${strName}," .
                         $oManifestHash{name}{"${strName}"}{type} . ',' .
@@ -555,16 +595,13 @@ sub BackRestTestFile_Test
                         (defined($oManifestHash{name}{"${strName}"}{size}) ?
                             $oManifestHash{name}{"${strName}"}{size} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                            $oManifestHash{name}{"${strName}"}{link_destination} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{future}) ?
-                            $oManifestHash{name}{"${strName}"}{future} : '');
+                            $oManifestHash{name}{"${strName}"}{link_destination} : '');
                 }
 
                 if ($strManifest ne $strManifestCompare)
                 {
                     confess "manifest is not equal:\n\n${strManifest}\n\ncompare:\n\n${strManifestCompare}\n\n";
                 }
-            }
             }
             }
         }

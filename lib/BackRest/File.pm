@@ -37,7 +37,7 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
 
                  PIPE_STDIN PIPE_STDOUT PIPE_STDERR
 
-                 OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
+                 OP_FILE_WAIT OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
                  OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
 ####################################################################################################################################
@@ -85,6 +85,7 @@ use constant
 ####################################################################################################################################
 use constant
 {
+    OP_FILE_WAIT        => 'File->wait',
     OP_FILE_LIST        => 'File->list',
     OP_FILE_EXISTS      => 'File->exists',
     OP_FILE_HASH        => 'File->hash',
@@ -952,6 +953,54 @@ sub list
 }
 
 ####################################################################################################################################
+# WAIT
+#
+# Wait until the next second.  This is done in the file object because it must be performed on whichever side the db is on, local or
+# remote.  This function is used to make sure that no files are copied in the same second as the manifest is created.  The reason is
+# that the db might modify they file again in the same second as the copy and that change will not be visible to a subsequent
+# incremental backup using timestamp/size to determine deltas.
+####################################################################################################################################
+sub wait
+{
+    my $self = shift;
+    my $strPathType = shift;
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_WAIT;
+    my $strDebug = "${strPathType}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Second when the function was called
+    my $lTimeBegin;
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        # Add remote info to debug string
+        $strDebug = "${strOperation}: remote: ${strDebug}";
+        &log(TRACE, "${strOperation}: remote");
+
+        # Execute the command
+        $lTimeBegin = $self->{oRemote}->command_execute($strOperation, undef, true, $strDebug);
+    }
+    # Run locally
+    else
+    {
+        # Wait the remainder of the current second
+        $lTimeBegin = gettimeofday();
+        my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+
+        usleep($lSleepMs * 1000);
+
+        &log(TRACE, "${strOperation}: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+
+        $lTimeBegin = int($lTimeBegin);
+    }
+
+    return $lTimeBegin;
+}
+
+####################################################################################################################################
 # MANIFEST
 #
 # Builds a path/file manifest starting with the base path and including all subpaths.  The manifest contains all the information
@@ -963,10 +1012,6 @@ sub manifest
     my $strPathType = shift;
     my $strPath = shift;
     my $oManifestHashRef = shift;
-    my $bPause = shift;             # Wait until next second before returning?
-
-    # Set defaults
-    $bPause = defined($bPause) ? ($bPause ? true : false) : false;
 
     # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath);
@@ -983,7 +1028,6 @@ sub manifest
         my %oParamHash;
 
         $oParamHash{path} = $strPathOp;
-        $oParamHash{pause} = $bPause ? 'y' : 'n';
 
         # Add remote info to debug string
         my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
@@ -997,33 +1041,6 @@ sub manifest
     else
     {
         $self->manifest_recurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef, $strDebug);
-
-        # If pause is requested then sleep into the next clock second.  The manifest is being built to determine which files to
-        # copy, but sometimes the files can be modified after the manifest is built but before a second has elapsed.  In this case
-        # there is a small window where an earlier version of the file might be copied and a later version of the file will have
-        # the same size/timestamp.  By waiting this race condition is eliminated.  Waiting a partial second must be done on the db
-        # side to be correct (which is why pause is not in the backup code).  The wait could also be a full second but that has an
-        # impact on how long it takes to run unit tests, and this is simple enough.
-        if ($bPause)
-        {
-            my $lTimeBegin = gettimeofday();
-            my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
-
-            usleep($lSleepMs * 1000);
-
-            &log(TRACE, "${strOperation}: slept ${lSleepMs}ms after manifest: begin ${lTimeBegin}, end " . gettimeofday());
-
-            # Now we'll test and make sure that there are no files with modification times in the future.
-            foreach my $strName (sort(keys ${$oManifestHashRef}{name}))
-            {
-                if (defined(${$oManifestHashRef}{name}{$strName}{modification_time}) &&
-                    ${$oManifestHashRef}{name}{$strName}{modification_time} > int($lTimeBegin))
-                {
-                    ${$oManifestHashRef}{name}{$strName}{modification_time} = int($lTimeBegin);
-                    ${$oManifestHashRef}{name}{$strName}{future} = 'y';
-                }
-            }
-        }
     }
 }
 
