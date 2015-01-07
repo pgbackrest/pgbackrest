@@ -303,8 +303,7 @@ sub clean
                 {
                     &log(DEBUG, "setting ${strFile} ownership to ${strUser}:${strGroup}");
 
-                    # !!! Need to decide if it makes sense to set the user to anything other than the db owner
-                    # !!! Follow what is done in file->copy (should create a new mode function?)
+                    $self->{oFile}->owner(PATH_DB_ABSOLUTE, $strFile, $strUser, $strGroup);
                 }
 
                 # If a link does not have the same destination, then delete it (it will be recreated later)

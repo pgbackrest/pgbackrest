@@ -37,8 +37,8 @@ our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_
 
                  PIPE_STDIN PIPE_STDOUT PIPE_STDERR
 
-                 OP_FILE_WAIT OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
-                 OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
+                 OP_FILE_OWNER OP_FILE_WAIT OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST
+                 OP_FILE_COMPRESS OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
 ####################################################################################################################################
 # COMMAND Error Constants
@@ -85,6 +85,7 @@ use constant
 ####################################################################################################################################
 use constant
 {
+    OP_FILE_OWNER       => 'File->owner',
     OP_FILE_WAIT        => 'File->wait',
     OP_FILE_LIST        => 'File->list',
     OP_FILE_EXISTS      => 'File->exists',
@@ -770,29 +771,83 @@ sub remove
 }
 
 ####################################################################################################################################
-# HASH
+# REMOVE
 ####################################################################################################################################
-sub hash
+sub remove
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+    my $bTemp = shift;
+    my $bIgnoreMissing = shift;
+
+    # Set defaults
+    $bIgnoreMissing = defined($bIgnoreMissing) ? $bIgnoreMissing : true;
+
+    # Set operation variables
+    my $strPathOp = $self->path_get($strPathType, $strPath, $bTemp);
+    my $bRemoved = true;
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_REMOVE;
+    my $strDebug = "${strPathType}:${strPathOp}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+    }
+    # Run locally
+    else
+    {
+        if (unlink($strPathOp) != 1)
+        {
+            $bRemoved = false;
+
+            my $strError = "${strPathOp} could not be removed: " . $!;
+            my $iErrorCode = COMMAND_ERR_PATH_READ;
+
+            if (!$self->exists($strPathType, $strPath))
+            {
+                $strError = "${strPathOp} does not exist";
+                $iErrorCode = COMMAND_ERR_PATH_MISSING;
+            }
+
+            if (!($iErrorCode == COMMAND_ERR_PATH_MISSING && $bIgnoreMissing))
+            {
+                if ($strPathType eq PATH_ABSOLUTE)
+                {
+                    confess &log(ERROR, $strError, $iErrorCode);
+                }
+
+                confess &log(ERROR, "${strDebug}: " . $strError);
+            }
+        }
+    }
+
+    return $bRemoved;
+}
+
+####################################################################################################################################
+# OWNER
+####################################################################################################################################
+sub owner
 {
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
-    my $bCompressed = shift;
-    my $strHashType = shift;
-
-    # Set defaults
-    $bCompressed = defined($bCompressed) ? $bCompressed : false;
-    $strHashType = defined($strHashType) ? $strHashType : 'sha1';
+    my $strUser = shift;
+    my $strGroup = shift;
 
     # Set operation variables
     my $strFileOp = $self->path_get($strPathType, $strFile);
-    my $strHash;
 
     # Set operation and debug strings
-    my $strOperation = OP_FILE_HASH;
+    my $strOperation = OP_FILE_OWNER;
     my $strDebug = "${strPathType}:${strFileOp}, " .
-                   'compressed = ' . ($bCompressed ? 'true' : 'false') . ', ' .
-                   "hash_type = ${strHashType}";
+                   'user = ' . (defined($strUser) ? $strUser : '[undef]') .
+                   'group = ' . (defined($strGroup) ? $strGroup : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -801,45 +856,41 @@ sub hash
     }
     else
     {
-        my $hFile;
+        my $iUserId;
+        my $iGroupId;
+        my $oStat;
 
-        if (!open($hFile, '<', $strFileOp))
+        if (!defined($strUser) || !defined($strGroup))
         {
-            my $strError = "${strFileOp} could not be read: " . $!;
-            my $iErrorCode = 2;
+            $oStat = stat($strFileOp);
 
-            if (!$self->exists($strPathType, $strFile))
+            if (!defined($oStat))
             {
-                $strError = "${strFileOp} does not exist";
-                $iErrorCode = 1;
+                confess &log(ERROR, 'unable to stat ${strFileOp}');
             }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
-
-            confess &log(ERROR, "${strDebug}: " . $strError);
         }
 
-        my $oSHA = Digest::SHA->new($strHashType);
-
-        if ($bCompressed)
+        if (defined($strUser))
         {
-            $oSHA->addfile($self->process_async_get()->process_begin('decompress', $hFile));
-            $self->process_async_get()->process_end();
+            $iUserId = getpwnam($strUser);
         }
         else
         {
-            $oSHA->addfile($hFile);
+            $iUserId = $oStat->uid;
         }
 
-        close($hFile);
+        if (defined($strGroup))
+        {
+            $iGroupId = getgrnam($strGroup);
+        }
+        else
+        {
+            $iGroupId = $oStat->gid;
+        }
 
-        $strHash = $oSHA->hexdigest();
+        chown($iUserId, $iGroupId, $strFileOp)
+            or confess &log(ERROR, "unable to set ownership for ${strFileOp}");
     }
-
-    return $strHash;
 }
 
 ####################################################################################################################################
@@ -1555,31 +1606,10 @@ sub copy
                 or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
         }
 
-        # if user or group is defined
+        # set user and/or group if required
         if (defined($strUser) || defined($strGroup))
         {
-            my $iUserId;
-            my $iGroupId;
-
-            if (defined($strUser))
-            {
-                $iUserId = getpwnam($strUser);
-            }
-
-            if (defined($strGroup))
-            {
-                $iGroupId = getgrnam($strGroup);
-            }
-
-            chown(defined($iUserId) ? $iUserId : $<,
-                  defined($iGroupId) ? $iGroupId : $(,
-                  $strDestinationTmpOp);
-        }
-
-        if (defined($strMode))
-        {
-            chmod(oct($strMode), $strDestinationTmpOp)
-                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
+            $self->owner(PATH_ABSOLUTE, $strDestinationTmpOp, $strUser, $strGroup);
         }
 
         # Move the file from tmp to final destination
