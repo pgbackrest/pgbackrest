@@ -771,65 +771,6 @@ sub remove
 }
 
 ####################################################################################################################################
-# REMOVE
-####################################################################################################################################
-sub remove
-{
-    my $self = shift;
-    my $strPathType = shift;
-    my $strPath = shift;
-    my $bTemp = shift;
-    my $bIgnoreMissing = shift;
-
-    # Set defaults
-    $bIgnoreMissing = defined($bIgnoreMissing) ? $bIgnoreMissing : true;
-
-    # Set operation variables
-    my $strPathOp = $self->path_get($strPathType, $strPath, $bTemp);
-    my $bRemoved = true;
-
-    # Set operation and debug strings
-    my $strOperation = OP_FILE_REMOVE;
-    my $strDebug = "${strPathType}:${strPathOp}";
-    &log(DEBUG, "${strOperation}: ${strDebug}");
-
-    # Run remotely
-    if ($self->is_remote($strPathType))
-    {
-        confess &log(ASSERT, "${strDebug}: remote operation not supported");
-    }
-    # Run locally
-    else
-    {
-        if (unlink($strPathOp) != 1)
-        {
-            $bRemoved = false;
-
-            my $strError = "${strPathOp} could not be removed: " . $!;
-            my $iErrorCode = COMMAND_ERR_PATH_READ;
-
-            if (!$self->exists($strPathType, $strPath))
-            {
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = COMMAND_ERR_PATH_MISSING;
-            }
-
-            if (!($iErrorCode == COMMAND_ERR_PATH_MISSING && $bIgnoreMissing))
-            {
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    confess &log(ERROR, $strError, $iErrorCode);
-                }
-
-                confess &log(ERROR, "${strDebug}: " . $strError);
-            }
-        }
-    }
-
-    return $bRemoved;
-}
-
-####################################################################################################################################
 # OWNER
 ####################################################################################################################################
 sub owner

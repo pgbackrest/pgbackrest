@@ -192,11 +192,11 @@ sub manifest_load
                 if ($strPathKey eq 'base')
                 {
                     &log(INFO, "remapping base to ${strRemapPath}");
-                    ${$oManifest}{'backup:path'}{$strPathKey} = $strRemapPath;
+                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey) = $strRemapPath;
                 }
                 else
                 {
-                    # If the tablespace beigns with prefix 'tablespace:' then strip the prefix.  This only needs to be used in
+                    # If the tablespace begins with prefix 'tablespace:' then strip the prefix.  This only needs to be used in
                     # the case that there is a tablespace called 'base'
                     if (index($strPathKey, 'tablespace:') == 0)
                     {
@@ -204,7 +204,7 @@ sub manifest_load
                     }
 
                     # Make sure that the tablespace exists in the manifest
-                    if (!defined(${$oManifest}{'backup:tablespace'}{$strPathKey}))
+                    if (!$oManifest->test(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey))
                     {
                         confess &log(ERROR, "cannot remap invalid tablespace ${strPathKey} to ${strRemapPath}");
                     }
@@ -212,11 +212,11 @@ sub manifest_load
                     # Remap the tablespace in the manifest
                     &log(INFO, "remapping tablespace to ${strRemapPath}");
 
-                    my $strTablespaceLink = ${$oManifest}{'backup:tablespace'}{$strPathKey}{link};
+                    my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_LINK);
 
-                    ${$oManifest}{'backup:path'}{"tablespace:${strPathKey}"} = $strRemapPath;
-                    ${$oManifest}{'backup:tablespace'}{$strPathKey}{path} = $strRemapPath;
-                    ${$oManifest}{'base:link'}{"pg_tblspc/${strTablespaceLink}"}{link_destination} = $strRemapPath;
+                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strPathKey}", undef, $strRemapPath);
+                    $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_PATH, $strRemapPath);
+                    $oManifest->set('base:link', "pg_tblspc/${strTablespaceLink}", MANIFEST_SUBKEY_DESTINATION, $strRemapPath);
                 }
             }
         }
@@ -294,8 +294,8 @@ sub clean
             # Check to see if the file/path/link exists in the manifest
             if ($oManifest->test($strSection, $strName))
             {
-                my $strUser = $oManifest->get($strSection, $strName, MANIFEST_SUBVALUE_USER);
-                my $strGroup = $oManifest->get($strSection, $strName, MANIFEST_SUBVALUE_GROUP);
+                my $strUser = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER);
+                my $strGroup = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP);
 
                 # If ownership does not match, fix it
                 if ($strUser ne $oPathManifest{name}{$strName}{user} ||
@@ -309,7 +309,7 @@ sub clean
                 # If a link does not have the same destination, then delete it (it will be recreated later)
                 if ($strType eq 'link')
                 {
-                    if ($strType eq 'link' && $oManifest->get($strSection, $strName, MANIFEST_SUBVALUE_DESTINATION) ne
+                    if ($strType eq 'link' && $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION) ne
                         $oPathManifest{name}{$strName}{link_destination})
                     {
                         &log(DEBUG, "removing link ${strFile} - destination changed");
@@ -319,7 +319,7 @@ sub clean
                 # Else if file/path mode does not match, fix it
                 else
                 {
-                    my $strMode = $oManifest->get($strSection, $strName, MANIFEST_SUBVALUE_MODE);
+                    my $strMode = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE);
 
                     if ($strType ne 'link' && $strMode ne $oPathManifest{name}{$strName}{permission})
                     {
@@ -389,7 +389,7 @@ sub build
             if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
             {
                 $self->{oFile}->path_create(PATH_DB_ABSOLUTE, "${strPath}/${strName}",
-                                            $oManifest->get("${strPathKey}:path", $strName, MANIFEST_SUBVALUE_MODE));
+                                            $oManifest->get("${strPathKey}:path", $strName, MANIFEST_SUBKEY_MODE));
             }
         }
 
@@ -399,7 +399,7 @@ sub build
             if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
             {
                 $self->{oFile}->link_create(PATH_DB_ABSOLUTE,
-                                            $oManifest->get("${strPathKey}:link", $strName, MANIFEST_SUBVALUE_DESTINATION),
+                                            $oManifest->get("${strPathKey}:link", $strName, MANIFEST_SUBKEY_DESTINATION),
                                             PATH_DB_ABSOLUTE, "${strPath}/${strName}");
             }
         }

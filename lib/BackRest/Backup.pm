@@ -914,7 +914,7 @@ sub backup_manifest_build
                     # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
                     # allow a reference
                     if (${$oBackupManifestRef}{$strSection}{$strName}{modification_time} > $lTimeBegin ||
-                        (defined($oLastManifest) && $oLastManifest->test($strSection, $strName, MANIFEST_SUBVALUE_FUTURE, 'y')))
+                        (defined($oLastManifest) && $oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y')))
                     {
                         $bTimeInFuture = true;
 
@@ -927,28 +927,28 @@ sub backup_manifest_build
                     # Else check if modification time and size are unchanged since last backup
                     elsif (defined($oLastManifest) && $oLastManifest->test($strSection, $strName) &&
                            ${$oBackupManifestRef}{$strSection}{$strName}{size} ==
-                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBVALUE_SIZE) &&
+                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
                            ${$oBackupManifestRef}{$strSection}{$strName}{modification_time} ==
-                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBVALUE_MODIFICATION_TIME))
+                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME))
                     {
                         # Copy reference from previous backup if possible
-                        if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBVALUE_REFERENCE))
+                        if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_REFERENCE))
                         {
                             ${$oBackupManifestRef}{$strSection}{$strName}{reference} =
-                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBVALUE_REFERENCE);
+                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE);
                         }
                         # Otherwise the reference is to the previous backup
                         else
                         {
                             ${$oBackupManifestRef}{$strSection}{$strName}{reference} =
-                                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_VALUE_LABEL);
+                                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
                         }
 
                         # Copy the checksum from previous manifest
-                        if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBVALUE_CHECKSUM))
+                        if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM))
                         {
                             ${$oBackupManifestRef}{$strSection}{$strName}{checksum} =
-                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBVALUE_CHECKSUM);
+                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM);
                         }
 
                         # Build the manifest reference list - not used for processing but is useful for debugging

@@ -16,12 +16,13 @@ use BackRest::Utility;
 # Exports
 use Exporter qw(import);
 our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
+                 MANIFEST_SECTION_BACKUP_TABLESPACE
 
-                 MANIFEST_VALUE_LABEL
+                 MANIFEST_KEY_LABEL
 
-                 MANIFEST_SUBVALUE_CHECKSUM MANIFEST_SUBVALUE_DESTINATION MANIFEST_SUBVALUE_FUTURE MANIFEST_SUBVALUE_GROUP
-                 MANIFEST_SUBVALUE_MODE MANIFEST_SUBVALUE_MODIFICATION_TIME MANIFEST_SUBVALUE_REFERENCE MANIFEST_SUBVALUE_SIZE
-                 MANIFEST_SUBVALUE_USER);
+                 MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
+                 MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
+                 MANIFEST_SUBKEY_REFERENCE MANIFEST_SUBKEY_SIZE MANIFEST_SUBKEY_USER);
 
 ####################################################################################################################################
 # MANIFEST Constants
@@ -31,18 +32,21 @@ use constant
     MANIFEST_SECTION_BACKUP             => 'backup',
     MANIFEST_SECTION_BACKUP_OPTION      => 'backup:option',
     MANIFEST_SECTION_BACKUP_PATH        => 'backup:path',
+    MANIFEST_SECTION_BACKUP_TABLESPACE  => 'backup:tablespace',
 
-    MANIFEST_VALUE_LABEL                => 'label',
+    MANIFEST_KEY_LABEL                  => 'label',
 
-    MANIFEST_SUBVALUE_CHECKSUM          => 'checksum',
-    MANIFEST_SUBVALUE_DESTINATION       => 'link_destination',
-    MANIFEST_SUBVALUE_FUTURE            => 'future',
-    MANIFEST_SUBVALUE_GROUP             => 'group',
-    MANIFEST_SUBVALUE_MODE              => 'permission',
-    MANIFEST_SUBVALUE_MODIFICATION_TIME => 'modification_time',
-    MANIFEST_SUBVALUE_REFERENCE         => 'reference',
-    MANIFEST_SUBVALUE_SIZE              => 'size',
-    MANIFEST_SUBVALUE_USER              => 'user'
+    MANIFEST_SUBKEY_CHECKSUM            => 'checksum',
+    MANIFEST_SUBKEY_DESTINATION         => 'link_destination',
+    MANIFEST_SUBKEY_FUTURE              => 'future',
+    MANIFEST_SUBKEY_GROUP               => 'group',
+    MANIFEST_SUBKEY_LINK                => 'link',
+    MANIFEST_SUBKEY_MODE                => 'permission',
+    MANIFEST_SUBKEY_MODIFICATION_TIME   => 'modification_time',
+    MANIFEST_SUBKEY_PATH                => 'path',
+    MANIFEST_SUBKEY_REFERENCE           => 'reference',
+    MANIFEST_SUBKEY_SIZE                => 'size',
+    MANIFEST_SUBKEY_USER                => 'user'
 };
 
 ####################################################################################################################################
@@ -119,7 +123,63 @@ sub get
 }
 
 ####################################################################################################################################
-# keys
+# SET
+#
+# Set a value.
+####################################################################################################################################
+sub set
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $strValue = shift;
+
+    # Make sure the keys are valid
+    $self->valid($strSection, $strSubKey, $strValue);
+
+    if (defined($strSubKey))
+    {
+        ${$self}{$strSection}{$strKey}{$strSubKey} = $strValue;
+    }
+    else
+    {
+        ${$self}{$strSection}{$strKey} = $strValue;
+    }
+}
+
+####################################################################################################################################
+# VALID
+#
+# Determine if section, key, subkey combination is valid.
+####################################################################################################################################
+sub valid
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+
+    # Section and key must always be defined
+    if (!defined($strSection) || !defined($strKey))
+    {
+        confess &log(ASSERT, 'section or key is not defined');
+    }
+
+    if ($strSection eq MANIFEST_SECTION_BACKUP_PATH)
+    {
+        if ($strKey eq 'base' || $strKey =~ /^tablespace\:.*$/)
+        {
+            return true;
+        }
+    }
+
+    confess &log(ASSERT, "manifest section '${strSection}', key '${strKey}'" .
+                          (defined($strSubKey) ? ", subkey '$strSubKey'" : '') . ' is not valid');
+}
+
+####################################################################################################################################
+# KEYS
 #
 # Get a list of keys.
 ####################################################################################################################################
