@@ -771,6 +771,79 @@ sub remove
 }
 
 ####################################################################################################################################
+# HASH
+####################################################################################################################################
+sub hash
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+    my $bCompressed = shift;
+    my $strHashType = shift;
+
+    # Set defaults
+    $bCompressed = defined($bCompressed) ? $bCompressed : false;
+    $strHashType = defined($strHashType) ? $strHashType : 'sha1';
+
+    # Set operation variables
+    my $strFileOp = $self->path_get($strPathType, $strFile);
+    my $strHash;
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_HASH;
+    my $strDebug = "${strPathType}:${strFileOp}, " .
+                   'compressed = ' . ($bCompressed ? 'true' : 'false') . ', ' .
+                   "hash_type = ${strHashType}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+    }
+    else
+    {
+        my $hFile;
+
+        if (!open($hFile, '<', $strFileOp))
+        {
+            my $strError = "${strFileOp} could not be read: " . $!;
+            my $iErrorCode = 2;
+
+            if (!$self->exists($strPathType, $strFile))
+            {
+                $strError = "${strFileOp} does not exist";
+                $iErrorCode = 1;
+            }
+
+            if ($strPathType eq PATH_ABSOLUTE)
+            {
+                confess &log(ERROR, $strError, $iErrorCode);
+            }
+
+            confess &log(ERROR, "${strDebug}: " . $strError);
+        }
+
+        my $oSHA = Digest::SHA->new($strHashType);
+
+        if ($bCompressed)
+        {
+            $oSHA->addfile($self->process_async_get()->process_begin('decompress', $hFile));
+            $self->process_async_get()->process_end();
+        }
+        else
+        {
+            $oSHA->addfile($hFile);
+        }
+
+        close($hFile);
+
+        $strHash = $oSHA->hexdigest();
+    }
+
+    return $strHash;
+}
+
+####################################################################################################################################
 # OWNER
 ####################################################################################################################################
 sub owner
