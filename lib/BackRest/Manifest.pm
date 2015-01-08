@@ -9,6 +9,7 @@ use warnings;
 use Carp;
 
 use File::Basename qw(dirname);
+use Time::Local qw(timelocal);
 
 use lib dirname($0);
 use BackRest::Utility;
@@ -18,7 +19,7 @@ use Exporter qw(import);
 our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
                  MANIFEST_SECTION_BACKUP_TABLESPACE
 
-                 MANIFEST_KEY_LABEL
+                 MANIFEST_KEY_LABEL MANIFEST_KEY_TIMESTAMP_COPY_START
 
                  MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
                  MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
@@ -35,6 +36,7 @@ use constant
     MANIFEST_SECTION_BACKUP_TABLESPACE  => 'backup:tablespace',
 
     MANIFEST_KEY_LABEL                  => 'label',
+    MANIFEST_KEY_TIMESTAMP_COPY_START   => 'timestamp-copy-start',
 
     MANIFEST_SUBKEY_CHECKSUM            => 'checksum',
     MANIFEST_SUBKEY_DESTINATION         => 'link_destination',
@@ -176,6 +178,25 @@ sub valid
 
     confess &log(ASSERT, "manifest section '${strSection}', key '${strKey}'" .
                           (defined($strSubKey) ? ", subkey '$strSubKey'" : '') . ' is not valid');
+}
+
+####################################################################################################################################
+# epoch
+#
+# Retrieves a value in the format YYYY-MM-DD HH24:MI:SS and converts to epoch time.
+####################################################################################################################################
+sub epoch
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+
+    my $strValue = $self->get($strSection, $strKey, $strSubKey);
+
+    my ($iYear, $iMonth, $iDay, $iHour, $iMinute, $iSecond) = split(/[\s\-\:]+/, $strValue);
+
+    return timelocal($iSecond, $iMinute, $iHour, $iDay , $iMonth - 1, $iYear);
 }
 
 ####################################################################################################################################

@@ -64,7 +64,7 @@ sub complete
     my $bConfessOnError = shift;
 
     # Set defaults
-    $bConfessOnError = defined($bConfessOnError) ? true : $bConfessOnError;
+    $bConfessOnError = defined($bConfessOnError) ? $bConfessOnError : true;
 
     # Wait for all threads to complete and handle errors
     my $iThreadComplete = 0;

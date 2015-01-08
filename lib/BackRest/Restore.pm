@@ -10,7 +10,8 @@ use strict;
 use warnings;
 use Carp;
 
-use File::Basename;
+use File::Basename qw(dirname);
+use File::stat qw(lstat);
 
 use lib dirname($0);
 use BackRest::Utility;
@@ -30,7 +31,8 @@ sub new
     my $oRemapRef = shift;          # Tablespace remaps
     my $oFile = shift;              # Default file object
     my $iThreadTotal = shift;       # Total threads to run for restore
-    my $bForce = shift;             # Force the restore even if files are present
+    my $bDelta = shift;             # perform delta restore
+    my $bForce = shift;             # force a restore
 
     # Create the class hash
     my $self = {};
@@ -40,6 +42,7 @@ sub new
     $self->{strDbClusterPath} = $strDbClusterPath;
     $self->{oFile} = $oFile;
     $self->{iThreadTotal} = defined($iThreadTotal) ? $iThreadTotal : 1;
+    $self->{bDelta} = $bDelta;
     $self->{bForce} = $bForce;
     $self->{oRemapRef} = $oRemapRef;
 
@@ -269,7 +272,7 @@ sub clean
             }
 
             # If force was not specified then error if any file is found
-            if (!$self->{bForce})
+            if (!$self->{bForce} && !$self->{bDelta})
             {
                 confess &log(ERROR, "db path '${strPath}' contains files");
             }
@@ -473,7 +476,7 @@ sub restore_thread
     my $self = shift;               # Class hash
     my $iThreadIdx = shift;         # Defines the index of this thread
     my $oyRestoreQueueRef = shift;  # Restore queues
-    my $oManifest = shift;       # Backup manifest
+    my $oManifest = shift;          # Backup manifest
 
     my $iDirection = $iThreadIdx % 2 == 0 ? 1 : -1;         # Size of files currently copied by this thread
     my $oFileThread = $self->{oFile}->clone($iThreadIdx);   # Thread local file object
@@ -481,6 +484,9 @@ sub restore_thread
     # Initialize the starting and current queue index based in the total number of threads in relation to this thread
     my $iQueueStartIdx = int((@{$oyRestoreQueueRef} / $self->{iThreadTotal}) * $iThreadIdx);
     my $iQueueIdx = $iQueueStartIdx;
+
+    # Time when the backup copying began - used for size/timestamp deltas
+    my $lCopyTimeBegin = $oManifest->epoch(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
 
     # Set source compression
     my $bSourceCompression = ${$oManifest}{'backup:option'}{compress} eq 'y' ? true : false;
@@ -504,7 +510,7 @@ sub restore_thread
             my $strName = (split(/\|/, $strMessage))[1];                              # Name of file to be restored
 
             # If the file is a reference to a previous backup and hardlinks are off, then fetch it from that backup
-            my $strReference = ${$oManifest}{'backup:option'}{hardlink} eq 'y' ? undef :
+            my $strReference = defined(${$oManifest}{'backup:option'}{hardlink}) && ${$oManifest}{'backup:option'}{hardlink} eq 'y' ? undef :
                                    ${$oManifest}{$strSection}{$strName}{reference};
 
             # Generate destination file name
@@ -515,10 +521,32 @@ sub restore_thread
 
             if ($oFileThread->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
             {
-                if (defined($strChecksum) && $oFileThread->hash(PATH_DB_ABSOLUTE, $strDestinationFile) eq $strChecksum)
+                # Perform delta if requested
+                if ($self->{bDelta})
                 {
-                    &log(DEBUG, "${strDestinationFile} exists and matches backup checksum ${strChecksum}");
-                    next;
+                    # Do checksum delta if --force was not requested and checksums exist
+                    if (!$self->{bForce} && defined($strChecksum) &&
+                        $oFileThread->hash(PATH_DB_ABSOLUTE, $strDestinationFile) eq $strChecksum)
+                    {
+                        &log(DEBUG, "${strDestinationFile} exists and matches backup checksum ${strChecksum}");
+                        next;
+                    }
+                    # Else use size/timestamp delta
+                    else
+                    {
+                        my $oStat = lstat($strDestinationFile);
+
+                        # Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
+                        if (defined($oStat) &&
+                            $oStat->size == $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
+                            $oStat->mtime == $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) &&
+                            $oStat->mtime < $lCopyTimeBegin)
+                        {
+                            &log(DEBUG, "${strDestinationFile} exists and matches size " . $oStat->size .
+                                        " and modification time " . $oStat->mtime);
+                            next;
+                        }
+                    }
                 }
 
                 $oFileThread->remove(PATH_DB_ABSOLUTE, $strDestinationFile);

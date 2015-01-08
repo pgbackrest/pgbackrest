@@ -719,7 +719,7 @@ sub BackRestTestBackup_CompareRestore
 
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               '/pg_backrest.conf '  . (defined($bForce)? '--force ' : '') . "--stanza=${strStanza} restore");
+                               '/pg_backrest.conf '  . (defined($bForce)? '--delta ' : '') . "--stanza=${strStanza} restore");
 }
 
 ####################################################################################################################################

@@ -26,7 +26,7 @@ our @EXPORT = qw(config_load config_key_load operation_get operation_set param_g
 
                  BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
 
-                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_REMAP PARAM_SET PARAM_NO_START_STOP PARAM_THREAD PARAM_FORCE
+                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_DELTA PARAM_SET PARAM_NO_START_STOP PARAM_FORCE
                  PARAM_VERSION PARAM_HELP PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
@@ -87,9 +87,8 @@ use constant
     PARAM_STANZA          => 'stanza',
     PARAM_TYPE            => 'type',
     PARAM_NO_START_STOP   => 'no-start-stop',
-    PARAM_REMAP           => 'remap',
+    PARAM_DELTA           => 'delta',
     PARAM_SET             => 'set',
-    PARAM_THREAD          => 'thread',
     PARAM_FORCE           => 'force',
     PARAM_VERSION         => 'version',
     PARAM_HELP            => 'help',
@@ -109,6 +108,7 @@ use constant
     CONFIG_SECTION_LOG                 => 'log',
     CONFIG_SECTION_BACKUP              => 'backup',
     CONFIG_SECTION_RESTORE             => 'restore',
+    CONFIG_SECTION_RESTORE_REMAP       => 'restore:remap',
     CONFIG_SECTION_ARCHIVE             => 'archive',
     CONFIG_SECTION_RETENTION           => 'retention',
     CONFIG_SECTION_STANZA              => 'stanza',
@@ -167,8 +167,8 @@ sub config_load
     param_set(PARAM_TEST_DELAY, 5);        # Seconds to delay after a test point (default is not enough for manual tests)
 
     # Get command line parameters
-    GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_REMAP . '=s%', PARAM_SET . '=s',
-                          PARAM_THREAD . '=s', PARAM_NO_START_STOP, PARAM_FORCE, PARAM_VERSION, PARAM_HELP,
+    GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_DELTA, PARAM_SET . '=s',
+                          PARAM_NO_START_STOP, PARAM_FORCE, PARAM_VERSION, PARAM_HELP,
                           PARAM_TEST, PARAM_TEST_DELAY . '=s', PARAM_TEST_NO_FORK)
         or pod2usage(2);
 
@@ -227,11 +227,11 @@ sub config_load
         }
     }
 
-    # Validate thread parameter
-    if (defined(param_get(PARAM_THREAD)) && !(param_get(PARAM_THREAD) >= 1))
-    {
-        confess &log(ERROR, 'thread parameter should be >= 1');
-    }
+    # # Validate thread parameter
+    # if (defined(param_get(PARAM_THREAD)) && !(param_get(PARAM_THREAD) >= 1))
+    # {
+    #     confess &log(ERROR, 'thread parameter should be >= 1');
+    # }
 
     # Get configuration parameter and load it
     if (!defined(param_get(PARAM_CONFIG)))

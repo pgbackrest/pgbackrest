@@ -56,10 +56,9 @@ pg_backrest.pl [options] [operation]
 
  Restore Options:
     --set            backup set to restore (defaults to latest set).
-    --remap          remaps the base or a tablespace to another path.
-    --thread         # of threads to use for restore (defaults to 1).
-    --force          force restore when destination paths are not empty.
-                     Use with extreme caution as this will delete data in those paths!
+    --delta          perform a delta restore using checksums when available.
+    --force          force a restore and overwrite all existing files.
+                     with --delta forces size/timestamp delta even if checksums are present.
 =cut
 
 ####################################################################################################################################
@@ -436,9 +435,10 @@ if (operation_get() eq OP_RESTORE)
     (
         config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
         param_get(PARAM_SET),
-        param_get(PARAM_REMAP),
+        undef, #param_get(PARAM_REMAP),
         $oFile,
-        param_get(PARAM_THREAD),
+        undef, #param_get(PARAM_THREAD),
+        param_get(PARAM_DELTA),
         param_get(PARAM_FORCE)
     )->restore;
 
