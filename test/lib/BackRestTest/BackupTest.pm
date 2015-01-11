@@ -715,11 +715,11 @@ sub BackRestTestBackup_CompareRestore
     my $strBackup = shift;
     my $strStanza = shift;
     my $oExpectedManifestRef = shift;
-    my $bForce = shift;
+    my $bDelta = shift;
 
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               '/pg_backrest.conf '  . (defined($bForce)? '--delta ' : '') . "--stanza=${strStanza} restore");
+                               '/pg_backrest.conf '  . (defined($bDelta)? '--delta ' : '') . "--stanza=${strStanza} restore");
 }
 
 ####################################################################################################################################

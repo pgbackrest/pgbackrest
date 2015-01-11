@@ -134,7 +134,7 @@ if (!defined($strPgSqlBin))
 
             if (-e "${strVersionPath}/initdb")
             {
-                &log(INFO, "found pgsqlbin at ${strVersionPath}\n");
+                &log(INFO, "found pgsql-bin at ${strVersionPath}\n");
                 $strPgSqlBin = ${strVersionPath};
             }
         }
