@@ -37,21 +37,21 @@ test.pl - Simple Postgres Backup and Restore Unit Tests
 test.pl [options]
 
  Test Options:
-   module           test module to execute:
-   module-test      execute the specified test in a module
-   module-test-run  execute only the specified test run
-   dry-run          show only the tests that would be executed but don't execute them
-   no-cleanup       don't cleaup after the last test is complete - useful for debugging
+   --module             test module to execute:
+   --module-test        execute the specified test in a module
+   --module-test-run    execute only the specified test run
+   --dry-run            show only the tests that would be executed but don't execute them
+   --no-cleanup         don't cleaup after the last test is complete - useful for debugging
 
  Configuration Options:
-   --psql-bin       path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
-   --test-path      path where tests are executed (defaults to ./test)
-   --log-level      log level to use for tests (defaults to INFO)
-   --quiet, -q      equivalent to --log-level=off
+   --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
+   --test-path          path where tests are executed (defaults to ./test)
+   --log-level          log level to use for tests (defaults to INFO)
+   --quiet, -q          equivalent to --log-level=off
 
  General Options:
-   --version        display version and exit
-   --help           display usage and exit
+   --version            display version and exit
+   --help               display usage and exit
 =cut
 
 ####################################################################################################################################
