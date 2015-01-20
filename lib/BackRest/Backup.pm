@@ -1388,8 +1388,12 @@ sub backup
     # Create the cluster backup path
     $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
 
+    # Build backup tmp and config
+    my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
+    my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
+
     # Declare the backup manifest
-    my $oBackupManifest = new BackRest::Manifest();
+    my $oBackupManifest = new BackRest::Manifest($strBackupConfFile, false);
 
     ${$oBackupManifest->{oManifest}}{'backup:option'}{'compress'} = $bCompress ? 'y' : 'n';
     ${$oBackupManifest->{oManifest}}{'backup:option'}{'checksum'} = !$bNoChecksum ? 'y' : 'n';
@@ -1431,10 +1435,6 @@ sub backup
     {
         ${$oBackupManifest->{oManifest}}{'backup:option'}{'hardlink'} = $bHardLink ? 'y' : 'n';
     }
-
-    # Build backup tmp and config
-    my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
-    my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
 
     # Start backup (unless no-start-stop is set)
     ${$oBackupManifest->{oManifest}}{backup}{'timestamp-start'} = $strTimestampStart;
@@ -1531,7 +1531,8 @@ sub backup
                 {
                     $bUsable = true;
                 }
-                elsif ($strAbortedType eq ${$oBackupManifest->{oManifest}}{backup}{type} && $strAbortedPrior eq ${$oBackupManifest->{oManifest}}{backup}{prior})
+                elsif ($strAbortedType eq ${$oBackupManifest->{oManifest}}{backup}{type} &&
+                       $strAbortedPrior eq ${$oBackupManifest->{oManifest}}{backup}{prior})
                 {
                     $bUsable = true;
                 }
@@ -1569,8 +1570,8 @@ sub backup
     print $hVersionFile version_get();
     close($hVersionFile);
 
-    # Save the backup conf file with the manifest
-    ini_save($strBackupConfFile, $oBackupManifest->{oManifest});
+    # Save the backup manifest
+    $oBackupManifest->save();
 
     # Perform the backup
     backup_file($strDbClusterPath, $oBackupManifest->{oManifest});
@@ -1590,8 +1591,8 @@ sub backup
     # consistent - at least not in this routine.
     if ($bArchiveRequired)
     {
-        # Save the backup conf file second time - before getting archive logs in case that fails
-        ini_save($strBackupConfFile, $oBackupManifest->{oManifest});
+        # Save the backup manifest a second time - before getting archive logs in case that fails
+        $oBackupManifest->save();
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
@@ -1648,8 +1649,8 @@ sub backup
     ${$oBackupManifest->{oManifest}}{backup}{'timestamp-stop'} = timestamp_string_get();
     ${$oBackupManifest->{oManifest}}{backup}{label} = $strBackupPath;
 
-    # Save the backup conf file final time
-    ini_save($strBackupConfFile, $oBackupManifest->{oManifest});
+    # Save the backup manifest final time
+    $oBackupManifest->save();
 
     &log(INFO, "new backup label: ${strBackupPath}");
 

@@ -60,16 +60,24 @@ sub new
 {
     my $class = shift;       # Class name
     my $strFileName = shift; # Filename to load manifest from
+    my $bLoad = shift;       # Load the manifest?
 
     # Create the class hash
     my $self = {};
     bless $self, $class;
 
-    # Create the manifest hash
-    $self->{oManifest} = {};
+    # Filename must be specified
+    if (!defined($strFileName))
+    {
+        confess &log(ASSERT, 'filename must be provided');
+    }
 
-    # Load the manifest if a filename is provided
-    if (defined($strFileName))
+    # Set variables
+    $self->{oManifest} = {};
+    $self->{strFileName} = $strFileName;
+
+    # Load the manifest if specified
+    if (!(defined($bLoad) && $bLoad == false))
     {
         ini_load($strFileName, $self->{oManifest});
     }
@@ -80,18 +88,15 @@ sub new
 ####################################################################################################################################
 # SAVE
 #
-# Save the config file.
+# Save the manifest.
 ####################################################################################################################################
-# sub save
-# {
-#     my $self = shift;
-#     my $strFileName = shift; # Filename to save manifest to
-#
-#     # Save the config file
-#     ini_save($strFileName, $self);
-#
-#     return $self;
-# }
+sub save
+{
+    my $self = shift;
+
+    # Save the config file
+    ini_save($self->{strFileName}, $self->{oManifest});
+}
 
 ####################################################################################################################################
 # GET
