@@ -4,7 +4,7 @@ PgBackRest aims to be a simple backup and restore system that can seamlessly sca
 
 Instead of relying on traditional backup tools like tar and rsync, PgBackRest implements all backup features internally and features a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.  Each thread requires only one SSH connection for remote backups.
 
-A complete list of backrest features:
+Primary PgBackRest features:
 
 * Local or remote backup
 * Multi-threaded backup/restore for performance

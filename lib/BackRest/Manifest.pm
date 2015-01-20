@@ -19,7 +19,7 @@ use Exporter qw(import);
 our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
                  MANIFEST_SECTION_BACKUP_TABLESPACE
 
-                 MANIFEST_KEY_LABEL MANIFEST_KEY_TIMESTAMP_COPY_START
+                 MANIFEST_KEY_COMPRESS MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_TIMESTAMP_COPY_START
 
                  MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
                  MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
@@ -35,6 +35,8 @@ use constant
     MANIFEST_SECTION_BACKUP_PATH        => 'backup:path',
     MANIFEST_SECTION_BACKUP_TABLESPACE  => 'backup:tablespace',
 
+    MANIFEST_KEY_COMPRESS               => 'compress',
+    MANIFEST_KEY_HARDLINK               => 'hardlink',
     MANIFEST_KEY_LABEL                  => 'label',
     MANIFEST_KEY_TIMESTAMP_COPY_START   => 'timestamp-copy-start',
 
@@ -63,8 +65,33 @@ sub new
     my $self = {};
     bless $self, $class;
 
+    # Create the manifest hash
+    $self->{oManifest} = {};
+
+    # Load the manifest if a filename is provided
+    if (defined($strFileName))
+    {
+        ini_load($strFileName, $self->{oManifest});
+    }
+
     return $self;
 }
+
+####################################################################################################################################
+# SAVE
+#
+# Save the config file.
+####################################################################################################################################
+# sub save
+# {
+#     my $self = shift;
+#     my $strFileName = shift; # Filename to save manifest to
+#
+#     # Save the config file
+#     ini_save($strFileName, $self);
+#
+#     return $self;
+# }
 
 ####################################################################################################################################
 # GET
@@ -79,6 +106,8 @@ sub get
     my $strSubValue = shift;
     my $bRequired = shift;
 
+    my $oManifest = $self->{oManifest};
+
     # Section must always be defined
     if (!defined($strSection))
     {
@@ -89,7 +118,7 @@ sub get
     $bRequired = defined($bRequired) ? $bRequired : true;
 
     # Store the result
-    my $oResult;
+    my $oResult = undef;
 
     if (defined($strSubValue))
     {
@@ -98,21 +127,21 @@ sub get
             confess &log(ASSERT, 'subvalue requested bu value is not defined');
         }
 
-        if (defined(${$self}{$strSection}{$strValue}))
+        if (defined(${$oManifest}{$strSection}{$strValue}))
         {
-            $oResult = ${$self}{$strSection}{$strValue}{$strSubValue};
+            $oResult = ${$oManifest}{$strSection}{$strValue}{$strSubValue};
         }
     }
     elsif (defined($strValue))
     {
-        if (defined(${$self}{$strSection}))
+        if (defined(${$oManifest}{$strSection}))
         {
-            $oResult = ${$self}{$strSection}{$strValue};
+            $oResult = ${$oManifest}{$strSection}{$strValue};
         }
     }
     else
     {
-        $oResult = ${$self}{$strSection};
+        $oResult = ${$oManifest}{$strSection};
     }
 
     if (!defined($oResult) && $bRequired)
@@ -137,16 +166,18 @@ sub set
     my $strSubKey = shift;
     my $strValue = shift;
 
+    my $oManifest = $self->{oManifest};
+
     # Make sure the keys are valid
     $self->valid($strSection, $strSubKey, $strValue);
 
     if (defined($strSubKey))
     {
-        ${$self}{$strSection}{$strKey}{$strSubKey} = $strValue;
+        ${$oManifest}{$strSection}{$strKey}{$strSubKey} = $strValue;
     }
     else
     {
-        ${$self}{$strSection}{$strKey} = $strValue;
+        ${$oManifest}{$strSection}{$strKey} = $strValue;
     }
 }
 
@@ -213,6 +244,8 @@ sub keys
     {
         return sort(keys $self->get($strSection));
     }
+
+    confess 'nothing was returned';
 
     return [];
 }

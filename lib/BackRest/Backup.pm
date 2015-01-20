@@ -1389,10 +1389,10 @@ sub backup
     $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
 
     # Declare the backup manifest
-    my %oBackupManifest;
+    my $oBackupManifest = new BackRest::Manifest();
 
-    ${oBackupManifest}{'backup:option'}{'compress'} = $bCompress ? 'y' : 'n';
-    ${oBackupManifest}{'backup:option'}{'checksum'} = !$bNoChecksum ? 'y' : 'n';
+    ${$oBackupManifest->{oManifest}}{'backup:option'}{'compress'} = $bCompress ? 'y' : 'n';
+    ${$oBackupManifest->{oManifest}}{'backup:option'}{'checksum'} = !$bNoChecksum ? 'y' : 'n';
 
     # Find the previous backup based on the type
     my $oLastManifest;
@@ -1401,16 +1401,15 @@ sub backup
 
     if (defined($strBackupLastPath))
     {
-        $oLastManifest = new BackRest::Manifest();
-        ini_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest", $oLastManifest);
+        $oLastManifest = new BackRest::Manifest($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest");
 
-        if (!defined(${$oLastManifest}{backup}{label}))
+        if (!defined(${$oLastManifest->{oManifest}}{backup}{label}))
         {
             confess &log(ERROR, "unable to find label in backup ${strBackupLastPath}");
         }
 
-        &log(INFO, "last backup label: ${$oLastManifest}{backup}{label}, version ${$oLastManifest}{backup}{version}");
-        ${oBackupManifest}{backup}{prior} = ${$oLastManifest}{backup}{label};
+        &log(INFO, "last backup label: ${$oLastManifest->{oManifest}}{backup}{label}, version ${$oLastManifest->{oManifest}}{backup}{version}");
+        ${$oBackupManifest->{oManifest}}{backup}{prior} = ${$oLastManifest->{oManifest}}{backup}{label};
     }
     else
     {
@@ -1426,11 +1425,11 @@ sub backup
         $strType = BACKUP_TYPE_FULL;
     }
 
-    ${oBackupManifest}{backup}{type} = $strType;
+    ${$oBackupManifest->{oManifest}}{backup}{type} = $strType;
 
     if ($strType ne BACKUP_TYPE_FULL)
     {
-        ${oBackupManifest}{'backup:option'}{'hardlink'} = $bHardLink ? 'y' : 'n';
+        ${$oBackupManifest->{oManifest}}{'backup:option'}{'hardlink'} = $bHardLink ? 'y' : 'n';
     }
 
     # Build backup tmp and config
@@ -1438,7 +1437,7 @@ sub backup
     my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
 
     # Start backup (unless no-start-stop is set)
-    ${oBackupManifest}{backup}{'timestamp-start'} = $strTimestampStart;
+    ${$oBackupManifest->{oManifest}}{backup}{'timestamp-start'} = $strTimestampStart;
     my $strArchiveStart;
 
     if ($bNoStartStop)
@@ -1461,12 +1460,12 @@ sub backup
     }
     else
     {
-        ($strArchiveStart, ${oBackupManifest}{backup}{'timestamp-db-start'}) = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
-        ${oBackupManifest}{backup}{'archive-start'} = $strArchiveStart;
-        &log(INFO, 'archive start: ' . ${oBackupManifest}{backup}{'archive-start'});
+        ($strArchiveStart, ${$oBackupManifest->{oManifest}}{backup}{'timestamp-db-start'}) = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
+        ${$oBackupManifest->{oManifest}}{backup}{'archive-start'} = $strArchiveStart;
+        &log(INFO, 'archive start: ' . ${$oBackupManifest->{oManifest}}{backup}{'archive-start'});
     }
 
-    ${oBackupManifest}{backup}{version} = version_get();
+    ${$oBackupManifest->{oManifest}}{backup}{version} = version_get();
 
     # Build the backup manifest
     my %oTablespaceMap;
@@ -1498,7 +1497,7 @@ sub backup
         $oDb->tablespace_map_get(\%oTablespaceMap);
     }
 
-    backup_manifest_build($strDbClusterPath, \%oBackupManifest, $oLastManifest, \%oTablespaceMap);
+    backup_manifest_build($strDbClusterPath, $oBackupManifest->{oManifest}, $oLastManifest, \%oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # Check if an aborted backup exists for this stanza
@@ -1526,13 +1525,13 @@ sub backup
             # The backup is usable if between the current backup and the aborted backup:
             # 1) The version matches
             # 2) The type of both is full or the types match and prior matches
-            if ($strAbortedVersion eq $oBackupManifest{backup}{version})
+            if ($strAbortedVersion eq ${$oBackupManifest->{oManifest}}{backup}{version})
             {
-                if ($strAbortedType eq BACKUP_TYPE_FULL && $oBackupManifest{backup}{type} eq BACKUP_TYPE_FULL)
+                if ($strAbortedType eq BACKUP_TYPE_FULL && ${$oBackupManifest->{oManifest}}{backup}{type} eq BACKUP_TYPE_FULL)
                 {
                     $bUsable = true;
                 }
-                elsif ($strAbortedType eq $oBackupManifest{backup}{type} && $strAbortedPrior eq $oBackupManifest{backup}{prior})
+                elsif ($strAbortedType eq ${$oBackupManifest->{oManifest}}{backup}{type} && $strAbortedPrior eq ${$oBackupManifest->{oManifest}}{backup}{prior})
                 {
                     $bUsable = true;
                 }
@@ -1545,7 +1544,7 @@ sub backup
             &log(WARN, 'aborted backup of same type exists, will be cleaned to remove invalid files and resumed');
 
             # Clean the old backup tmp path
-            backup_tmp_clean(\%oBackupManifest);
+            backup_tmp_clean($oBackupManifest->{oManifest});
         }
         # Else remove it
         else
@@ -1571,19 +1570,19 @@ sub backup
     close($hVersionFile);
 
     # Save the backup conf file with the manifest
-    ini_save($strBackupConfFile, \%oBackupManifest);
+    ini_save($strBackupConfFile, $oBackupManifest->{oManifest});
 
     # Perform the backup
-    backup_file($strDbClusterPath, \%oBackupManifest);
+    backup_file($strDbClusterPath, $oBackupManifest->{oManifest});
 
     # Stop backup (unless no-start-stop is set)
     my $strArchiveStop;
 
     if (!$bNoStartStop)
     {
-        ($strArchiveStop, ${oBackupManifest}{backup}{'timestamp-db-stop'}) = $oDb->backup_stop();
-        ${oBackupManifest}{backup}{'archive-stop'} = $strArchiveStop;
-        &log(INFO, 'archive stop: ' . ${oBackupManifest}{backup}{'archive-stop'});
+        ($strArchiveStop, ${$oBackupManifest->{oManifest}}{backup}{'timestamp-db-stop'}) = $oDb->backup_stop();
+        ${$oBackupManifest->{oManifest}}{backup}{'archive-stop'} = $strArchiveStop;
+        &log(INFO, 'archive stop: ' . ${$oBackupManifest->{oManifest}}{backup}{'archive-stop'});
     }
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
@@ -1592,7 +1591,7 @@ sub backup
     if ($bArchiveRequired)
     {
         # Save the backup conf file second time - before getting archive logs in case that fails
-        ini_save($strBackupConfFile, \%oBackupManifest);
+        ini_save($strBackupConfFile, $oBackupManifest->{oManifest});
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
@@ -1646,11 +1645,11 @@ sub backup
     }
 
     # Record timestamp stop in the config
-    ${oBackupManifest}{backup}{'timestamp-stop'} = timestamp_string_get();
-    ${oBackupManifest}{backup}{label} = $strBackupPath;
+    ${$oBackupManifest->{oManifest}}{backup}{'timestamp-stop'} = timestamp_string_get();
+    ${$oBackupManifest->{oManifest}}{backup}{label} = $strBackupPath;
 
     # Save the backup conf file final time
-    ini_save($strBackupConfFile, \%oBackupManifest);
+    ini_save($strBackupConfFile, $oBackupManifest->{oManifest});
 
     &log(INFO, "new backup label: ${strBackupPath}");
 

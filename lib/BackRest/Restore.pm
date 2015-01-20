@@ -68,7 +68,7 @@ sub new
 sub manifest_ownership_check
 {
     my $self = shift;               # Class hash
-    my $oManifest = shift;       # Backup manifest
+    my $oManifest = shift;          # Backup manifest
 
     # Create hashes to track valid/invalid users/groups
     my %oOwnerHash = ();
@@ -78,23 +78,25 @@ sub manifest_ownership_check
     my $strDefaultGroup = getgrgid($();
 
     my %oFileTypeHash = ('path' => true, 'link' => true, 'file' => true);
-    my %oOwnerTypeHash = ('user' => $strDefaultUser, 'group' => $strDefaultGroup);
+    my %oOwnerTypeHash = (&MANIFEST_SUBKEY_USER => $strDefaultUser, &MANIFEST_SUBKEY_GROUP => $strDefaultGroup);
 
     # Loop through owner types (user, group)
     foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
     {
         # Loop through all backup paths (base and tablespaces)
-        foreach my $strPathKey (sort(keys ${$oManifest}{'backup:path'}))
+        foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
         {
             # Loop through types (path, link, file)
             foreach my $strFileType (sort (keys %oFileTypeHash))
             {
+                my $strSection = "${strPathKey}:${strFileType}";
+
                 # Get users and groups for paths
-                if (defined(${$oManifest}{"${strPathKey}:${strFileType}"}))
+                if ($oManifest->test($strSection))
                 {
-                    foreach my $strName (sort (keys ${$oManifest}{"${strPathKey}:${strFileType}"}))
+                    foreach my $strName ($oManifest->keys($strSection))
                     {
-                        my $strOwner = ${$oManifest}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType};
+                        my $strOwner = $oManifest->get($strSection, $strName, $strOwnerType);
 
                         # If root then test to see if the user/group is valid
                         if ($< == 0)
@@ -118,8 +120,7 @@ sub manifest_ownership_check
 
                             if (!$oOwnerHash{$strOwnerType}{$strOwner})
                             {
-                                ${$oManifest}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
-                                    $oOwnerTypeHash{$strOwnerType};
+                                $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
                             }
                         }
                         # Else set user/group to current user/group
@@ -128,11 +129,10 @@ sub manifest_ownership_check
                             if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
                             {
                                 $oOwnerHash{$strOwnerType}{$strOwner} = false;
-                                ${$oManifest}{"${strPathKey}:${strFileType}"}{$strName}{$strOwnerType} =
-                                    $oOwnerTypeHash{$strOwnerType};
+                                $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
                             }
                         }
-                    }
+                   }
                 }
             }
         }
@@ -160,7 +160,6 @@ sub manifest_ownership_check
 sub manifest_load
 {
     my $self = shift;           # Class hash
-    my $oManifest = shift;   # Backup manifest
 
     if ($self->{oFile}->exists(PATH_BACKUP_CLUSTER, $self->{strBackupPath}))
     {
@@ -169,20 +168,23 @@ sub manifest_load
                              PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
         # Load the manifest into a hash
-        ini_load($self->{oFile}->path_get(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST), $oManifest);
+        my $oManifest = new BackRest::Manifest($self->{oFile}->path_get(PATH_DB_ABSOLUTE,
+                                                                        $self->{strDbClusterPath} . '/' . FILE_MANIFEST));
 
         # Remove the manifest now that it is in memory
         $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
         # If backup is latest then set it equal to backup label, else verify that requested backup and label match
+        my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
+
         if ($self->{strBackupPath} eq PATH_LATEST)
         {
-            $self->{strBackupPath} = ${$oManifest}{'backup'}{label};
+            $self->{strBackupPath} = $strBackupLabel;
         }
-        elsif ($self->{strBackupPath} ne ${$oManifest}{'backup'}{label})
+        elsif ($self->{strBackupPath} ne $strBackupLabel)
         {
-            confess &log(ASSERT, "request backup $self->{strBackupPath} and label ${$oManifest}{'backup'}{label} do not match " .
-                                 " - this indicates some sort of corruption (at the very least paths have been renamed.");
+            confess &log(ASSERT, "request backup $self->{strBackupPath} and label ${strBackupLabel} do not match " .
+                                 ' - this indicates some sort of corruption (at the very least paths have been renamed.');
         }
 
         # If tablespaces have been remapped, update the manifest
@@ -195,7 +197,7 @@ sub manifest_load
                 if ($strPathKey eq 'base')
                 {
                     &log(INFO, "remapping base to ${strRemapPath}");
-                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey) = $strRemapPath;
+                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, undef, $strRemapPath);
                 }
                 else
                 {
@@ -223,13 +225,13 @@ sub manifest_load
                 }
             }
         }
-    }
-    else
-    {
-        confess &log(ERROR, 'backup ' . $self->{strBackupPath} . ' does not exist');
+
+        $self->manifest_ownership_check($oManifest);
+
+        return $oManifest;
     }
 
-    $self->manifest_ownership_check($oManifest);
+    confess &log(ERROR, 'backup ' . $self->{strBackupPath} . ' does not exist');
 }
 
 ####################################################################################################################################
@@ -375,12 +377,14 @@ sub build
     my $oManifest = shift;       # Backup manifest
 
     # Build paths/links in each restore path
-    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    foreach my $strSectionPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+        my $strSectionPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey);
 
         # Create all paths in the manifest that do not already exist
-        foreach my $strName ($oManifest->keys("${strPathKey}:path"))
+        my $strSection = "${strSectionPathKey}:path";
+
+        foreach my $strName ($oManifest->keys($strSection))
         {
             # Skip the root path
             if ($strName eq '.')
@@ -389,21 +393,27 @@ sub build
             }
 
             # Create the Path
-            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
+            my $strPath = "${strSectionPath}/${strName}";
+
+            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strPath))
             {
-                $self->{oFile}->path_create(PATH_DB_ABSOLUTE, "${strPath}/${strName}",
-                                            $oManifest->get("${strPathKey}:path", $strName, MANIFEST_SUBKEY_MODE));
+                $self->{oFile}->path_create(PATH_DB_ABSOLUTE, $strPath,
+                                            $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE));
             }
         }
 
         # Create all links in the manifest that do not already exist
-        foreach my $strName ($oManifest->keys("${strPathKey}:link"))
+        $strSection = "${strSectionPathKey}:link";
+
+        foreach my $strName ($oManifest->keys($strSection))
         {
-            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, "${strPath}/${strName}"))
+            my $strLink = "${strSectionPath}/${strName}";
+
+            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strLink))
             {
                 $self->{oFile}->link_create(PATH_DB_ABSOLUTE,
-                                            $oManifest->get("${strPathKey}:link", $strName, MANIFEST_SUBKEY_DESTINATION),
-                                            PATH_DB_ABSOLUTE, "${strPath}/${strName}");
+                                            $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION),
+                                            PATH_DB_ABSOLUTE, $strLink);
             }
         }
     }
@@ -428,8 +438,7 @@ sub restore
     &log(INFO, "Restoring backup set " . $self->{strBackupPath});
 
     # Make sure the backup path is valid and load the manifest
-    my $oManifest = new BackRest::Manifest();
-    $self->manifest_load($oManifest);
+    my $oManifest = $self->manifest_load();
 
     # Clean the restore paths
     $self->clean($oManifest);
@@ -440,13 +449,15 @@ sub restore
     # Assign the files in each path to a thread queue
     my @oyRestoreQueue;
 
-    foreach my $strPathKey (sort(keys ${$oManifest}{'backup:path'}))
+    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        if (defined(${$oManifest}{"${strPathKey}:file"}))
+        my $strSection = "${strPathKey}:file";
+
+        if ($oManifest->test($strSection))
         {
             $oyRestoreQueue[@oyRestoreQueue] = Thread::Queue->new();
 
-            foreach my $strName (sort (keys ${$oManifest}{"${strPathKey}:file"}))
+            foreach my $strName ($oManifest->keys($strSection))
             {
                 $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue("${strPathKey}|${strName}");
             }
@@ -489,7 +500,7 @@ sub restore_thread
     my $lCopyTimeBegin = $oManifest->epoch(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
 
     # Set source compression
-    my $bSourceCompression = ${$oManifest}{'backup:option'}{compress} eq 'y' ? true : false;
+    my $bSourceCompression = $oManifest->get(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) eq 'y' ? true : false;
 
     # When a KILL signal is received, immediately abort
     $SIG{'KILL'} = sub {threads->exit();};
@@ -505,19 +516,17 @@ sub restore_thread
         {
             my $strSourcePath = (split(/\|/, $strMessage))[0];                        # Source path from backup
             my $strSection = "${strSourcePath}:file";                                 # Backup section with file info
-            my $strDestinationPath = ${$oManifest}{'backup:path'}{$strSourcePath}; # Destination path stored in manifest
+            my $strDestinationPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH,    # Destination path stored in manifest
+                                                     $strSourcePath);
             $strSourcePath =~ s/\:/\//g;                                              # Replace : with / in source path
             my $strName = (split(/\|/, $strMessage))[1];                              # Name of file to be restored
 
             # If the file is a reference to a previous backup and hardlinks are off, then fetch it from that backup
-            my $strReference = defined(${$oManifest}{'backup:option'}{hardlink}) && ${$oManifest}{'backup:option'}{hardlink} eq 'y' ? undef :
-                                   ${$oManifest}{$strSection}{$strName}{reference};
+            my $strReference = $oManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, 'y') ? undef :
+                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE, false);
 
             # Generate destination file name
             my $strDestinationFile = $oFileThread->path_get(PATH_DB_ABSOLUTE, "${strDestinationPath}/${strName}");
-
-            # If checksum is set the destination file already exists, try a checksum before copying
-            my $strChecksum = ${$oManifest}{$strSection}{$strName}{checksum};
 
             if ($oFileThread->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
             {
@@ -525,6 +534,8 @@ sub restore_thread
                 if ($self->{bDelta})
                 {
                     # Do checksum delta if --force was not requested and checksums exist
+                    my $strChecksum = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM, false);
+
                     if (!$self->{bForce} && defined($strChecksum) &&
                         $oFileThread->hash(PATH_DB_ABSOLUTE, $strDestinationFile) eq $strChecksum)
                     {
@@ -560,11 +571,11 @@ sub restore_thread
                                PATH_DB_ABSOLUTE, $strDestinationFile,
                                $bSourceCompression,   # Source is compressed based on backup settings
                                undef, undef,
-                               ${$oManifest}{$strSection}{$strName}{modification_time},
-                               ${$oManifest}{$strSection}{$strName}{permission},
+                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
+                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE),
                                undef,
-                               ${$oManifest}{$strSection}{$strName}{user},
-                               ${$oManifest}{$strSection}{$strName}{group});
+                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER),
+                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP));
         }
 
         # Even number threads move up when they have finished a queue, odd numbered threads move down
