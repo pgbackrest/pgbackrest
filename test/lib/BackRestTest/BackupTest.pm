@@ -1061,6 +1061,7 @@ sub BackRestTestBackup_Test
             $oManifest{backup}{version} = version_get();
             $oManifest{'backup:option'}{compress} = $bCompress ? 'y' : 'n';
             $oManifest{'backup:option'}{checksum} = $bChecksum ? 'y' : 'n';
+            $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
 
             # Create the test directory
             BackRestTestBackup_Create($bRemote, false);
@@ -1164,7 +1165,6 @@ sub BackRestTestBackup_Test
             # Incr backup - add a tablespace
             #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
-            $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
 
             $strType = 'incr';
             &log(INFO, "    ${strType} backup (add tablespace 1)");
@@ -1301,7 +1301,6 @@ sub BackRestTestBackup_Test
 
             # Perform second full backup
             BackRestTestBackup_ManifestReference(\%oManifest);
-            delete($oManifest{'backup:option'}{hardlink});
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT2',
                                                   $bChecksum ? '7579ada0808d7f98087a0a586d0df9de009cdc33' : undef, $lTime);
@@ -1324,7 +1323,6 @@ sub BackRestTestBackup_Test
 
             # Perform third diff backup
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
-            $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
 
             $strType = 'diff';
             &log(INFO, "    ${strType} backup (add files)");

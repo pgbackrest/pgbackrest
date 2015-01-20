@@ -20,8 +20,10 @@ use Exporter qw(import);
 our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
                  MANIFEST_SECTION_BACKUP_TABLESPACE
 
-                 MANIFEST_KEY_CHECKSUM MANIFEST_KEY_COMPRESS MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL
-                 MANIFEST_KEY_TIMESTAMP_COPY_START
+                 MANIFEST_KEY_ARCHIVE_START MANIFEST_KEY_ARCHIVE_STOP MANIFEST_KEY_CHECKSUM MANIFEST_KEY_COMPRESS
+                 MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_PRIOR MANIFEST_KEY_TIMESTAMP_DB_START
+                 MANIFEST_KEY_TIMESTAMP_DB_STOP MANIFEST_KEY_TIMESTAMP_COPY_START MANIFEST_KEY_TIMESTAMP_START
+                 MANIFEST_KEY_TIMESTAMP_STOP MANIFEST_KEY_TYPE MANIFEST_KEY_VERSION
 
                  MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
                  MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
@@ -37,11 +39,20 @@ use constant
     MANIFEST_SECTION_BACKUP_PATH        => 'backup:path',
     MANIFEST_SECTION_BACKUP_TABLESPACE  => 'backup:tablespace',
 
+    MANIFEST_KEY_ARCHIVE_START          => 'archive-start',
+    MANIFEST_KEY_ARCHIVE_STOP           => 'archive-stop',
     MANIFEST_KEY_CHECKSUM               => 'checksum',
     MANIFEST_KEY_COMPRESS               => 'compress',
     MANIFEST_KEY_HARDLINK               => 'hardlink',
     MANIFEST_KEY_LABEL                  => 'label',
+    MANIFEST_KEY_PRIOR                  => 'prior',
+    MANIFEST_KEY_TIMESTAMP_DB_START     => 'timestamp-db-start',
+    MANIFEST_KEY_TIMESTAMP_DB_STOP      => 'timestamp-db-stop',
     MANIFEST_KEY_TIMESTAMP_COPY_START   => 'timestamp-copy-start',
+    MANIFEST_KEY_TIMESTAMP_START        => 'timestamp-start',
+    MANIFEST_KEY_TIMESTAMP_STOP         => 'timestamp-stop',
+    MANIFEST_KEY_TYPE                   => 'type',
+    MANIFEST_KEY_VERSION                => 'version',
 
     MANIFEST_SUBKEY_CHECKSUM            => 'checksum',
     MANIFEST_SUBKEY_DESTINATION         => 'link_destination',
@@ -310,13 +321,31 @@ sub valid
 
     if ($strSection eq MANIFEST_SECTION_BACKUP)
     {
-        if ($strKey eq MANIFEST_KEY_CHECKSUM)
+        if ($strKey eq MANIFEST_KEY_ARCHIVE_START ||
+            $strKey eq MANIFEST_KEY_ARCHIVE_STOP ||
+            $strKey eq MANIFEST_KEY_CHECKSUM ||
+            $strKey eq MANIFEST_KEY_LABEL ||
+            $strKey eq MANIFEST_KEY_PRIOR ||
+            $strKey eq MANIFEST_KEY_TIMESTAMP_DB_START ||
+            $strKey eq MANIFEST_KEY_TIMESTAMP_DB_STOP ||
+            $strKey eq MANIFEST_KEY_TIMESTAMP_START ||
+            $strKey eq MANIFEST_KEY_TIMESTAMP_STOP ||
+            $strKey eq MANIFEST_KEY_TYPE ||
+            $strKey eq MANIFEST_KEY_VERSION)
         {
             return true;
         }
     }
-
-    if ($strSection eq MANIFEST_SECTION_BACKUP_PATH)
+    elsif ($strSection eq MANIFEST_SECTION_BACKUP_OPTION)
+    {
+        if ($strKey eq MANIFEST_KEY_CHECKSUM ||
+            $strKey eq MANIFEST_KEY_COMPRESS ||
+            $strKey eq MANIFEST_KEY_HARDLINK)
+        {
+            return true;
+        }
+    }
+    elsif ($strSection eq MANIFEST_SECTION_BACKUP_PATH)
     {
         if ($strKey eq 'base' || $strKey =~ /^tablespace\:.*$/)
         {

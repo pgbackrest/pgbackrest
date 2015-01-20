@@ -1395,9 +1395,6 @@ sub backup
     # Declare the backup manifest
     my $oBackupManifest = new BackRest::Manifest($strBackupConfFile, false);
 
-    ${$oBackupManifest->{oManifest}}{'backup:option'}{'compress'} = $bCompress ? 'y' : 'n';
-    ${$oBackupManifest->{oManifest}}{'backup:option'}{'checksum'} = !$bNoChecksum ? 'y' : 'n';
-
     # Find the previous backup based on the type
     my $oLastManifest;
 
@@ -1407,13 +1404,11 @@ sub backup
     {
         $oLastManifest = new BackRest::Manifest($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest");
 
-        if (!defined(${$oLastManifest->{oManifest}}{backup}{label}))
-        {
-            confess &log(ERROR, "unable to find label in backup ${strBackupLastPath}");
-        }
+        my $strLastBackupLabel = $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
-        &log(INFO, "last backup label: ${$oLastManifest->{oManifest}}{backup}{label}, version ${$oLastManifest->{oManifest}}{backup}{version}");
-        ${$oBackupManifest->{oManifest}}{backup}{prior} = ${$oLastManifest->{oManifest}}{backup}{label};
+        &log(INFO, "last backup label: ${strLastBackupLabel}, version " .
+             $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION));
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, $strLastBackupLabel);
     }
     else
     {
@@ -1429,15 +1424,14 @@ sub backup
         $strType = BACKUP_TYPE_FULL;
     }
 
-    ${$oBackupManifest->{oManifest}}{backup}{type} = $strType;
-
-    if ($strType ne BACKUP_TYPE_FULL)
-    {
-        ${$oBackupManifest->{oManifest}}{'backup:option'}{'hardlink'} = $bHardLink ? 'y' : 'n';
-    }
+    # Backup settings
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $strTimestampStart);
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress ? 'y' : 'n');
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM, undef, !$bNoChecksum ? 'y' : 'n');
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink ? 'y' : 'n');
 
     # Start backup (unless no-start-stop is set)
-    ${$oBackupManifest->{oManifest}}{backup}{'timestamp-start'} = $strTimestampStart;
     my $strArchiveStart;
 
     if ($bNoStartStop)
@@ -1460,12 +1454,17 @@ sub backup
     }
     else
     {
-        ($strArchiveStart, ${$oBackupManifest->{oManifest}}{backup}{'timestamp-db-start'}) = $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
-        ${$oBackupManifest->{oManifest}}{backup}{'archive-start'} = $strArchiveStart;
-        &log(INFO, 'archive start: ' . ${$oBackupManifest->{oManifest}}{backup}{'archive-start'});
+        my $strTimestampDbStart;
+
+        ($strArchiveStart, $strTimestampDbStart) =
+            $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
+
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_START, undef, $strTimestampDbStart);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
+        &log(INFO, "archive start: ${strArchiveStart}");
     }
 
-    ${$oBackupManifest->{oManifest}}{backup}{version} = version_get();
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION, undef, version_get());
 
     # Build the backup manifest
     my %oTablespaceMap;
@@ -1525,14 +1524,15 @@ sub backup
             # The backup is usable if between the current backup and the aborted backup:
             # 1) The version matches
             # 2) The type of both is full or the types match and prior matches
-            if ($strAbortedVersion eq ${$oBackupManifest->{oManifest}}{backup}{version})
+            if ($strAbortedVersion eq $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION))
             {
-                if ($strAbortedType eq BACKUP_TYPE_FULL && ${$oBackupManifest->{oManifest}}{backup}{type} eq BACKUP_TYPE_FULL)
+                if ($strAbortedType eq BACKUP_TYPE_FULL
+                    && $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) eq BACKUP_TYPE_FULL)
                 {
                     $bUsable = true;
                 }
-                elsif ($strAbortedType eq ${$oBackupManifest->{oManifest}}{backup}{type} &&
-                       $strAbortedPrior eq ${$oBackupManifest->{oManifest}}{backup}{prior})
+                elsif ($strAbortedType eq $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) &&
+                       $strAbortedPrior eq $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR))
                 {
                     $bUsable = true;
                 }
@@ -1581,9 +1581,13 @@ sub backup
 
     if (!$bNoStartStop)
     {
-        ($strArchiveStop, ${$oBackupManifest->{oManifest}}{backup}{'timestamp-db-stop'}) = $oDb->backup_stop();
-        ${$oBackupManifest->{oManifest}}{backup}{'archive-stop'} = $strArchiveStop;
-        &log(INFO, 'archive stop: ' . ${$oBackupManifest->{oManifest}}{backup}{'archive-stop'});
+        my $strTimestampDbStop;
+        ($strArchiveStop, $strTimestampDbStop) = $oDb->backup_stop();
+
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_STOP, undef, $strTimestampDbStop);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
+
+        &log(INFO, 'archive stop: ' . $strArchiveStop);
     }
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
@@ -1646,8 +1650,8 @@ sub backup
     }
 
     # Record timestamp stop in the config
-    ${$oBackupManifest->{oManifest}}{backup}{'timestamp-stop'} = timestamp_string_get();
-    ${$oBackupManifest->{oManifest}}{backup}{label} = $strBackupPath;
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, timestamp_string_get());
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupPath);
 
     # Save the backup manifest final time
     $oBackupManifest->save();
@@ -1881,9 +1885,8 @@ sub backup_expire
     # even though they are also in the pg_xlog directory (since they have been copied more than once).
     &log(INFO, 'archive retention based on backup ' . $strArchiveRetentionBackup);
 
-    my %oManifest;
-    ini_load($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strArchiveRetentionBackup}/backup.manifest", \%oManifest);
-    my $strArchiveLast = ${oManifest}{backup}{'archive-start'};
+    my $oManifest = new BackRest::Manifest($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strArchiveRetentionBackup}/backup.manifest");
+    my $strArchiveLast = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START);
 
     if (!defined($strArchiveLast))
     {
