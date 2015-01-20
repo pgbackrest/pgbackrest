@@ -10,6 +10,7 @@ use Carp;
 
 use File::Basename qw(dirname);
 use Time::Local qw(timelocal);
+use Digest::SHA;
 
 use lib dirname($0);
 use BackRest::Utility;
@@ -19,7 +20,8 @@ use Exporter qw(import);
 our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
                  MANIFEST_SECTION_BACKUP_TABLESPACE
 
-                 MANIFEST_KEY_COMPRESS MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_TIMESTAMP_COPY_START
+                 MANIFEST_KEY_CHECKSUM MANIFEST_KEY_COMPRESS MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL
+                 MANIFEST_KEY_TIMESTAMP_COPY_START
 
                  MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
                  MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
@@ -35,6 +37,7 @@ use constant
     MANIFEST_SECTION_BACKUP_PATH        => 'backup:path',
     MANIFEST_SECTION_BACKUP_TABLESPACE  => 'backup:tablespace',
 
+    MANIFEST_KEY_CHECKSUM               => 'checksum',
     MANIFEST_KEY_COMPRESS               => 'compress',
     MANIFEST_KEY_HARDLINK               => 'hardlink',
     MANIFEST_KEY_LABEL                  => 'label',
@@ -73,13 +76,22 @@ sub new
     }
 
     # Set variables
-    $self->{oManifest} = {};
+    my $oManifest = {};
+    $self->{oManifest} = $oManifest;
     $self->{strFileName} = $strFileName;
 
     # Load the manifest if specified
     if (!(defined($bLoad) && $bLoad == false))
     {
-        ini_load($strFileName, $self->{oManifest});
+        ini_load($strFileName, $oManifest);
+
+        # Make sure the manifest is valid by testing checksum
+        my $strChecksum = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM);
+
+        if ($strChecksum ne $self->hash())
+        {
+            confess &log(ERROR, 'backup.manifest checksum is invalid');
+        }
     }
 
     return $self;
@@ -94,12 +106,75 @@ sub save
 {
     my $self = shift;
 
+    # Create the checksum
+    $self->hash();
+
     # Save the config file
     ini_save($self->{strFileName}, $self->{oManifest});
 }
 
 ####################################################################################################################################
-# GET
+# HASH
+#
+# Generate hash for the manifest.
+####################################################################################################################################
+sub hash
+{
+    my $self = shift;
+
+    my $oManifest = $self->{oManifest};
+
+    # Remove the old checksum
+    $self->remove(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM);
+
+    my $oSHA = Digest::SHA->new('sha1');
+
+    foreach my $strSection ($self->keys())
+    {
+        $oSHA->add($strSection);
+
+        foreach my $strKey ($self->keys($strSection))
+        {
+            $oSHA->add($strKey);
+
+            my $strValue = $self->get($strSection, $strKey);
+
+            if (!defined($strValue))
+            {
+                confess &log(ASSERT, "section ${strSection}, key ${$strKey} has undef value");
+            }
+
+            if (ref($strValue) eq "HASH")
+            {
+                foreach my $strSubKey ($self->keys($strSection, $strKey))
+                {
+                    my $strSubValue = $self->get($strSection, $strKey, $strSubKey);
+
+                    if (!defined($strSubValue))
+                    {
+                        confess &log(ASSERT, "section ${strSection}, key ${strKey}, subkey ${strSubKey} has undef value");
+                    }
+
+                    $oSHA->add($strSubValue);
+                }
+            }
+            else
+            {
+                $oSHA->add($strValue);
+            }
+        }
+    }
+
+    # Set the new checksum
+    my $strHash = $oSHA->hexdigest();
+
+    $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM, undef, $strHash);
+
+    return $strHash;
+}
+
+####################################################################################################################################
+# HASH
 #
 # Get a value.
 ####################################################################################################################################
@@ -174,7 +249,7 @@ sub set
     my $oManifest = $self->{oManifest};
 
     # Make sure the keys are valid
-    $self->valid($strSection, $strSubKey, $strValue);
+    $self->valid($strSection, $strKey, $strSubKey);
 
     if (defined($strSubKey))
     {
@@ -183,6 +258,34 @@ sub set
     else
     {
         ${$oManifest}{$strSection}{$strKey} = $strValue;
+    }
+}
+
+####################################################################################################################################
+# REMOVE
+#
+# Remove a value.
+####################################################################################################################################
+sub remove
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $strValue = shift;
+
+    my $oManifest = $self->{oManifest};
+
+    # Make sure the keys are valid
+    $self->valid($strSection, $strKey, $strSubKey);
+
+    if (defined($strSubKey))
+    {
+        delete(${$oManifest}{$strSection}{$strKey}{$strSubKey});
+    }
+    else
+    {
+        delete(${$oManifest}{$strSection}{$strKey});
     }
 }
 
@@ -202,6 +305,14 @@ sub valid
     if (!defined($strSection) || !defined($strKey))
     {
         confess &log(ASSERT, 'section or key is not defined');
+    }
+
+    if ($strSection eq MANIFEST_SECTION_BACKUP)
+    {
+        if ($strKey eq MANIFEST_KEY_CHECKSUM)
+        {
+            return true;
+        }
     }
 
     if ($strSection eq MANIFEST_SECTION_BACKUP_PATH)
@@ -244,15 +355,19 @@ sub keys
 {
     my $self = shift;
     my $strSection = shift;
+    my $strKey = shift;
 
-    if ($self->test($strSection))
+    if (defined($strSection))
     {
-        return sort(keys $self->get($strSection));
+        if ($self->test($strSection, $strKey))
+        {
+            return sort(keys $self->get($strSection, $strKey));
+        }
+
+        return [];
     }
 
-    confess 'nothing was returned';
-
-    return [];
+    return sort(keys $self->{oManifest});
 }
 
 ####################################################################################################################################
