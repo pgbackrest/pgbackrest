@@ -39,6 +39,8 @@ Primary PgBackRest features:
 
 * Link (called latest) always points to the last backup.  This has been added for convenience and to make restore simpler.
 
+* Checksum for backup.manifest to detect corrupted/modified manifest.
+
 ### v0.30: core restructuring and unit tests
 
 * Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.

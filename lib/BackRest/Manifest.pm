@@ -87,10 +87,11 @@ sub new
 
         # Make sure the manifest is valid by testing checksum
         my $strChecksum = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM);
+        my $strTestChecksum = $self->hash();
 
-        if ($strChecksum ne $self->hash())
+        if ($strChecksum ne $strTestChecksum)
         {
-            confess &log(ERROR, 'backup.manifest checksum is invalid');
+            confess &log(ERROR, "backup.manifest checksum is invalid, should be ${strTestChecksum}");
         }
     }
 
