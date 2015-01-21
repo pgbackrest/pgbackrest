@@ -654,6 +654,7 @@ sub backup_type_find
 {
     my $strType = shift;
     my $strBackupClusterPath = shift;
+
     my $strDirectory;
 
     if ($strType eq BACKUP_TYPE_INCR)
@@ -675,7 +676,7 @@ sub backup_type_find
 sub backup_file_not_in_manifest
 {
     my $strPathType = shift;
-    my $oManifestRef = shift;
+    my $oManifest = shift;
 
     my %oFileHash;
     $oFile->manifest($strPathType, undef, \%oFileHash);
@@ -687,6 +688,7 @@ sub backup_file_not_in_manifest
     {
         # Ignore certain files that will never be in the manifest
         if ($strName eq 'backup.manifest' ||
+            $strName eq 'version' ||
             $strName eq '.')
         {
             next;
@@ -699,7 +701,7 @@ sub backup_file_not_in_manifest
         {
             my $strSection = $strBasePath eq 'tablespace' ? 'backup:tablespace' : "${strBasePath}:path";
 
-            if (defined(${$oManifestRef}{"${strSection}"}))
+            if ($oManifest->test($strSection))
             {
                 next;
             }
@@ -719,7 +721,7 @@ sub backup_file_not_in_manifest
 
                 if ($strTablespace eq $strPath)
                 {
-                    if (defined(${$oManifestRef}{"${strSection}:path"}))
+                    if ($oManifest->test("${strSection}:path"))
                     {
                         next;
                     }
@@ -732,21 +734,21 @@ sub backup_file_not_in_manifest
 
             if ($cType eq 'd')
             {
-                if (defined(${$oManifestRef}{"${strSection}:path"}{"${strPath}"}))
+                if ($oManifest->test("${strSection}:path", "${strPath}"))
                 {
                     next;
                 }
             }
             else
             {
-                if (defined(${$oManifestRef}{"${strSection}:file"}{"${strPath}"}))
+                if ($oManifest->test("${strSection}:file", "${strPath}"))
                 {
-                    if (${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{size} ==
+                    if ($oManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_SIZE) ==
                             $oFileHash{name}{"${strName}"}{size} &&
-                        ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{modification_time} ==
+                        $oManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_MODIFICATION_TIME) ==
                             $oFileHash{name}{"${strName}"}{modification_time})
                     {
-                        ${$oManifestRef}{"${strSection}:file"}{"${strPath}"}{exists} = true;
+                        $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_EXISTS, true);
                         next;
                     }
                 }
@@ -767,7 +769,7 @@ sub backup_file_not_in_manifest
 ####################################################################################################################################
 sub backup_tmp_clean
 {
-    my $oManifestRef = shift;
+    my $oManifest = shift;
 
     &log(INFO, 'cleaning backup tmp path');
 
@@ -784,7 +786,7 @@ sub backup_tmp_clean
     }
 
     # Get the list of files that should be deleted from temp
-    my @stryFile = backup_file_not_in_manifest(PATH_BACKUP_TMP, $oManifestRef);
+    my @stryFile = backup_file_not_in_manifest(PATH_BACKUP_TMP, $oManifest);
 
     foreach my $strFile (sort {$b cmp $a} @stryFile)
     {
@@ -1087,7 +1089,7 @@ sub backup_file
             my $bProcess = false;
             my $bProcessChecksumOnly = false;
 
-            if ($oBackupManifest->test($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS, 'y'))
+            if ($oBackupManifest->test($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS, true))
             {
                 &log(TRACE, "file ${strFile} already exists from previous backup attempt");
                 $oBackupManifest->remove($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS);
@@ -1319,7 +1321,8 @@ sub backup_file_thread
                                       false,        # Source is not compressed since it is the db directory
                                       $bCompress,   # Destination should be compressed based on backup settings
                                       true,         # Ignore missing files
-                                      undef, undef, # Do not set permissions or modification time
+                                      $oFileCopyMap{$strFile}{modification_time}, # Set modification time
+                                      undef,        # Do not set original permissions
                                       true))        # Create the destiation directory if it does not exist
             {
                 # If file is missing assume the database removed it (else corruption and nothing we can do!)
@@ -1505,16 +1508,12 @@ sub backup
         eval
         {
             # Load the aborted manifest
-            my %oAbortedManifest;
-            ini_load("${strBackupTmpPath}/backup.manifest", \%oAbortedManifest);
+            my $oAbortedManifest = new BackRest::Manifest("${strBackupTmpPath}/backup.manifest");
 
             # Default values if they are not set
-            my $strAbortedType = defined($oAbortedManifest{backup}{type}) ?
-                defined($oAbortedManifest{backup}{type}) : '<invalid>';
-            my $strAbortedPrior = defined($oAbortedManifest{backup}{prior}) ?
-                defined($oAbortedManifest{backup}{prior}) : '<invalid>';
-            my $strAbortedVersion = defined($oAbortedManifest{backup}{version}) ?
-                defined($oAbortedManifest{backup}{version}) : '<invalid>';
+            my $strAbortedType = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+            my $strAbortedPrior = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR);
+            my $strAbortedVersion = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION);
 
             # The backup is usable if between the current backup and the aborted backup:
             # 1) The version matches
@@ -1540,7 +1539,7 @@ sub backup
             &log(WARN, 'aborted backup of same type exists, will be cleaned to remove invalid files and resumed');
 
             # Clean the old backup tmp path
-            backup_tmp_clean($oBackupManifest->{oManifest});
+            backup_tmp_clean($oBackupManifest);
         }
         # Else remove it
         else

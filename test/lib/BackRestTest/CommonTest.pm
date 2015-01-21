@@ -17,6 +17,7 @@ use Cwd 'abs_path';
 use IPC::Open3;
 use POSIX ':sys_wait_h';
 use IO::Select;
+use File::Copy qw(move);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
@@ -27,7 +28,7 @@ use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
-                 BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove
+                 BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove BackRestTestCommon_PathCopy
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
@@ -228,7 +229,7 @@ sub BackRestTestCommon_PathCreate
 
     # Create the path
     mkdir($strPath)
-        or confess 'unable to create ${strPath} path';
+        or confess "unable to create ${strPath} path";
 
     # Set the permissions
     chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)
@@ -276,6 +277,21 @@ sub BackRestTestCommon_PathRemove
     #
     #     confess $strMessage;
     # }
+}
+
+####################################################################################################################################
+# BackRestTestCommon_PathCopy
+#
+# Copy a path.
+####################################################################################################################################
+sub BackRestTestCommon_PathCopy
+{
+    my $strSourcePath = shift;
+    my $strDestinationPath = shift;
+    my $bRemote = shift;
+    my $bSuppressError = shift;
+
+    BackRestTestCommon_Execute("cp -rp ${strSourcePath} ${strDestinationPath}", $bRemote, $bSuppressError);
 }
 
 ####################################################################################################################################

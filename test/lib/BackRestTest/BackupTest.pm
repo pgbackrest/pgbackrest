@@ -1138,6 +1138,23 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
 
+            # Resume Full Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'full';
+            &log(INFO, "        ${strType} backup resume");
+
+            my $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
+
+            BackRestTestCommon_PathCopy(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strFullBackup}",
+                                        $strTmpPath, $bRemote);
+
+            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+
+            $oManifest{backup}{type} = $strType;
+            $strFullBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
+
             # Restore - tests various permissions, extra files/paths, missing files/paths
             #-----------------------------------------------------------------------------------------------------------------------
             my $bForce = true;

@@ -199,6 +199,7 @@ sub get
     my $strValue = shift;
     my $strSubValue = shift;
     my $bRequired = shift;
+    my $oDefault = shift;
 
     my $oManifest = $self->{oManifest};
 
@@ -242,6 +243,11 @@ sub get
     {
         confess &log(ASSERT, "manifest section '$strSection'" . (defined($strValue) ? ", value '$strValue'" : '') .
                               (defined($strSubValue) ? ", subvalue '$strSubValue'" : '') . ' is required but not defined');
+    }
+
+    if (!defined($oResult) && defined($oDefault))
+    {
+        $oResult = $oDefault;
     }
 
     return $oResult
@@ -349,6 +355,7 @@ sub valid
         }
         elsif ($strType eq 'file' &&
                ($strSubKey eq MANIFEST_SUBKEY_CHECKSUM ||
+                $strSubKey eq MANIFEST_SUBKEY_EXISTS ||
                 $strSubKey eq MANIFEST_SUBKEY_FUTURE ||
                 $strSubKey eq MANIFEST_SUBKEY_MODIFICATION_TIME ||
                 $strSubKey eq MANIFEST_SUBKEY_REFERENCE ||
