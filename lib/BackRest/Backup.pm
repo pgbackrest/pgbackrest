@@ -811,7 +811,7 @@ sub backup_tmp_clean
 sub backup_manifest_build
 {
     my $strDbClusterPath = shift;
-    my $oBackupManifestRef = shift;
+    my $oBackupManifest = shift;
     my $oLastManifest = shift;
     my $oTablespaceMapRef = shift;
     my $strLevel = shift;
@@ -826,7 +826,7 @@ sub backup_manifest_build
     my %oManifestHash;
     $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash);
 
-    ${$oBackupManifestRef}{'backup:path'}{$strLevel} = $strDbClusterPath;
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strLevel, undef, $strDbClusterPath);
 
     # Loop though all paths/files/links in the manifest
     foreach my $strName (sort(keys $oManifestHash{name}))
@@ -856,27 +856,28 @@ sub backup_manifest_build
         }
 
         # User and group required for all types
-        ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{user} = $oManifestHash{name}{"${strName}"}{user};
-        ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{group} = $oManifestHash{name}{"${strName}"}{group};
+        $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_USER, $oManifestHash{name}{"${strName}"}{user});
+        $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{"${strName}"}{group});
 
         # Mode for required file and path type only
         if ($cType eq 'f' || $cType eq 'd')
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{permission} = $oManifestHash{name}{"${strName}"}{permission};
+            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{"${strName}"}{permission});
         }
 
         # Modification time and size required for file type only
         if ($cType eq 'f')
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{modification_time} = $oManifestHash{name}{"${strName}"}{modification_time} + 0;
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{size} = $oManifestHash{name}{"${strName}"}{size} + 0;
+            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME,
+                                  $oManifestHash{name}{"${strName}"}{modification_time} + 0);
+            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{"${strName}"}{size} + 0);
         }
 
         # Link destination required for link type only
         if ($cType eq 'l')
         {
-            ${$oBackupManifestRef}{"${strSection}"}{"${strName}"}{link_destination} =
-                $oManifestHash{name}{"${strName}"}{link_destination};
+            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_DESTINATION,
+                                  $oManifestHash{name}{"${strName}"}{link_destination});
 
             # If this is a tablespace then follow the link
             if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq 'base')
@@ -884,10 +885,12 @@ sub backup_manifest_build
                 my $strTablespaceOid = basename($strName);
                 my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"${strTablespaceOid}"}{name};
 
-                ${$oBackupManifestRef}{"backup:tablespace"}{"${strTablespaceName}"}{link} = $strTablespaceOid;
-                ${$oBackupManifestRef}{"backup:tablespace"}{"${strTablespaceName}"}{path} = $strLinkDestination;
+                $oBackupManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                                      MANIFEST_SUBKEY_LINK, $strTablespaceOid);
+                $oBackupManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                                      MANIFEST_SUBKEY_PATH, $strLinkDestination);
 
-                backup_manifest_build($strLinkDestination, $oBackupManifestRef, undef,
+                backup_manifest_build($strLinkDestination, $oBackupManifest, undef,
                                       $oTablespaceMapRef, "tablespace:${strTablespaceName}");
             }
         }
@@ -901,68 +904,72 @@ sub backup_manifest_build
         my $lTimeBegin = $oFile->wait(PATH_DB_ABSOLUTE);
 
         # Loop through all backup paths (base and tablespaces)
-        foreach my $strPathKey (sort(keys ${$oBackupManifestRef}{'backup:path'}))
+        foreach my $strPathKey ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
         {
             my $strSection = "${strPathKey}:file";
 
             # Make sure file section exists
-            if (defined(${$oBackupManifestRef}{$strSection}))
+            if ($oBackupManifest->test($strSection))
             {
                 # Loop though all files
-                foreach my $strName (sort (keys ${$oBackupManifestRef}{$strSection}))
+                foreach my $strName ($oBackupManifest->keys($strSection))
                 {
                     # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
                     # allow a reference
-                    if (${$oBackupManifestRef}{$strSection}{$strName}{modification_time} > $lTimeBegin ||
+                    if ($oBackupManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) > $lTimeBegin ||
                         (defined($oLastManifest) && $oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y')))
                     {
                         $bTimeInFuture = true;
 
                         # Only mark as future if still in the future in the current backup
-                        if (${$oBackupManifestRef}{$strSection}{$strName}{modification_time} > $lTimeBegin)
+                        if ($oBackupManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) > $lTimeBegin)
                         {
-                            ${$oBackupManifestRef}{$strSection}{$strName}{future} = 'y';
+                            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y');
                         }
                     }
                     # Else check if modification time and size are unchanged since last backup
                     elsif (defined($oLastManifest) && $oLastManifest->test($strSection, $strName) &&
-                           ${$oBackupManifestRef}{$strSection}{$strName}{size} ==
+                           $oBackupManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) ==
                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
-                           ${$oBackupManifestRef}{$strSection}{$strName}{modification_time} ==
+                           $oBackupManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) ==
                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME))
                     {
                         # Copy reference from previous backup if possible
                         if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_REFERENCE))
                         {
-                            ${$oBackupManifestRef}{$strSection}{$strName}{reference} =
-                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE);
+                            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_REFERENCE,
+                                                  $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE));
                         }
                         # Otherwise the reference is to the previous backup
                         else
                         {
-                            ${$oBackupManifestRef}{$strSection}{$strName}{reference} =
-                                $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
+                            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_REFERENCE,
+                                                  $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
                         }
 
                         # Copy the checksum from previous manifest
                         if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM))
                         {
-                            ${$oBackupManifestRef}{$strSection}{$strName}{checksum} =
-                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM);
+                            $oBackupManifest->set($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM,
+                                                  $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM));
                         }
 
                         # Build the manifest reference list - not used for processing but is useful for debugging
-                        my $strReference = ${$oBackupManifestRef}{$strSection}{$strName}{reference};
+                        my $strFileReference = $oBackupManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE);
 
-                        if (!defined(${$oBackupManifestRef}{backup}{reference}))
+                        my $strManifestReference = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE,
+                                                                         undef, false);
+
+                        if (!defined($strManifestReference))
                         {
-                            ${$oBackupManifestRef}{backup}{reference} = $strReference;
+                            $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE, undef, $strFileReference);
                         }
                         else
                         {
-                            if (${$oBackupManifestRef}{backup}{reference} !~ /^$strReference|,$strReference/)
+                            if ($strManifestReference !~ /^$strFileReference|,$strFileReference/)
                             {
-                                ${$oBackupManifestRef}{backup}{reference} .= ",${strReference}";
+                                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE, undef,
+                                                      $strManifestReference . ",${strFileReference}");
                             }
                         }
                     }
@@ -977,7 +984,8 @@ sub backup_manifest_build
         }
 
         # Record the time when copying will start
-        ${$oBackupManifestRef}{backup}{'timestamp-copy-start'} = timestamp_string_get(undef, $lTimeBegin + 1);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
+                              timestamp_string_get(undef, $lTimeBegin + 1));
     }
 
 }
@@ -1496,7 +1504,7 @@ sub backup
         $oDb->tablespace_map_get(\%oTablespaceMap);
     }
 
-    backup_manifest_build($strDbClusterPath, $oBackupManifest->{oManifest}, $oLastManifest, \%oTablespaceMap);
+    backup_manifest_build($strDbClusterPath, $oBackupManifest, $oLastManifest, \%oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # Check if an aborted backup exists for this stanza

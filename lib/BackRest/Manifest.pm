@@ -21,7 +21,7 @@ our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST
                  MANIFEST_SECTION_BACKUP_TABLESPACE
 
                  MANIFEST_KEY_ARCHIVE_START MANIFEST_KEY_ARCHIVE_STOP MANIFEST_KEY_CHECKSUM MANIFEST_KEY_COMPRESS
-                 MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_PRIOR MANIFEST_KEY_TIMESTAMP_DB_START
+                 MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_PRIOR MANIFEST_KEY_REFERENCE MANIFEST_KEY_TIMESTAMP_DB_START
                  MANIFEST_KEY_TIMESTAMP_DB_STOP MANIFEST_KEY_TIMESTAMP_COPY_START MANIFEST_KEY_TIMESTAMP_START
                  MANIFEST_KEY_TIMESTAMP_STOP MANIFEST_KEY_TYPE MANIFEST_KEY_VERSION
 
@@ -46,6 +46,7 @@ use constant
     MANIFEST_KEY_HARDLINK               => 'hardlink',
     MANIFEST_KEY_LABEL                  => 'label',
     MANIFEST_KEY_PRIOR                  => 'prior',
+    MANIFEST_KEY_REFERENCE              => 'reference',
     MANIFEST_KEY_TIMESTAMP_DB_START     => 'timestamp-db-start',
     MANIFEST_KEY_TIMESTAMP_DB_STOP      => 'timestamp-db-stop',
     MANIFEST_KEY_TIMESTAMP_COPY_START   => 'timestamp-copy-start',
@@ -319,6 +320,37 @@ sub valid
         confess &log(ASSERT, 'section or key is not defined');
     }
 
+    if ($strSection =~ /^.*\:(file|path|link)$/ && $strSection !~ /^backup\:path$/)
+    {
+        my $strPath = (split(':', $strSection))[0];
+        my $strType = (split(':', $strSection))[1];
+
+        if (($strType eq 'path' || $strType eq 'file' || $strType eq 'link') &&
+            ($strSubKey eq MANIFEST_SUBKEY_USER ||
+             $strSubKey eq MANIFEST_SUBKEY_GROUP))
+        {
+            return true;
+        }
+        elsif (($strType eq 'path' || $strType eq 'file') &&
+               ($strSubKey eq MANIFEST_SUBKEY_MODE))
+        {
+            return true;
+        }
+        elsif ($strType eq 'file' &&
+               ($strSubKey eq MANIFEST_SUBKEY_CHECKSUM ||
+                $strSubKey eq MANIFEST_SUBKEY_FUTURE ||
+                $strSubKey eq MANIFEST_SUBKEY_MODIFICATION_TIME ||
+                $strSubKey eq MANIFEST_SUBKEY_REFERENCE ||
+                $strSubKey eq MANIFEST_SUBKEY_SIZE))
+        {
+            return true;
+        }
+        elsif ($strType eq 'link' &&
+               $strSubKey eq MANIFEST_SUBKEY_DESTINATION)
+        {
+            return true;
+        }
+    }
     if ($strSection eq MANIFEST_SECTION_BACKUP)
     {
         if ($strKey eq MANIFEST_KEY_ARCHIVE_START ||
@@ -326,8 +358,10 @@ sub valid
             $strKey eq MANIFEST_KEY_CHECKSUM ||
             $strKey eq MANIFEST_KEY_LABEL ||
             $strKey eq MANIFEST_KEY_PRIOR ||
+            $strKey eq MANIFEST_KEY_REFERENCE ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_DB_START ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_DB_STOP ||
+            $strKey eq MANIFEST_KEY_TIMESTAMP_COPY_START ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_START ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_STOP ||
             $strKey eq MANIFEST_KEY_TYPE ||
