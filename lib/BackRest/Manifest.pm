@@ -25,9 +25,9 @@ our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST
                  MANIFEST_KEY_TIMESTAMP_DB_STOP MANIFEST_KEY_TIMESTAMP_COPY_START MANIFEST_KEY_TIMESTAMP_START
                  MANIFEST_KEY_TIMESTAMP_STOP MANIFEST_KEY_TYPE MANIFEST_KEY_VERSION
 
-                 MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
-                 MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
-                 MANIFEST_SUBKEY_REFERENCE MANIFEST_SUBKEY_SIZE MANIFEST_SUBKEY_USER);
+                 MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_EXISTS MANIFEST_SUBKEY_FUTURE
+                 MANIFEST_SUBKEY_GROUP MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME
+                 MANIFEST_SUBKEY_PATH MANIFEST_SUBKEY_REFERENCE MANIFEST_SUBKEY_SIZE MANIFEST_SUBKEY_USER);
 
 ####################################################################################################################################
 # MANIFEST Constants
@@ -57,6 +57,7 @@ use constant
 
     MANIFEST_SUBKEY_CHECKSUM            => 'checksum',
     MANIFEST_SUBKEY_DESTINATION         => 'link_destination',
+    MANIFEST_SUBKEY_EXISTS              => 'exists',
     MANIFEST_SUBKEY_FUTURE              => 'future',
     MANIFEST_SUBKEY_GROUP               => 'group',
     MANIFEST_SUBKEY_LINK                => 'link',
@@ -290,7 +291,7 @@ sub remove
     my $oManifest = $self->{oManifest};
 
     # Make sure the keys are valid
-    $self->valid($strSection, $strKey, $strSubKey);
+#    $self->valid($strSection, $strKey, $strSubKey);
 
     if (defined($strSubKey))
     {

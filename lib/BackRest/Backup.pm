@@ -998,8 +998,8 @@ sub backup_manifest_build
 ####################################################################################################################################
 sub backup_file
 {
-    my $strDbClusterPath = shift;      # Database base data path
-    my $oBackupManifestRef = shift;    # Manifest for the current backup
+    my $strDbClusterPath = shift;   # Database base data path
+    my $oBackupManifest = shift;    # Manifest for the current backup
 
     # Variables used for parallel copy
     my $lTablespaceIdx = 0;
@@ -1013,9 +1013,7 @@ sub backup_file
     my $bPathCreate = $bHardLink || $strType eq BACKUP_TYPE_FULL;
 
     # Iterate through the path sections of the manifest to backup
-    my $strSectionPath;
-
-    foreach $strSectionPath (sort(keys $oBackupManifestRef))
+    foreach my $strSectionPath ($oBackupManifest->keys())
     {
         # Skip non-path sections
         if ($strSectionPath !~ /\:path$/ || $strSectionPath =~ /^backup\:path$/)
@@ -1044,7 +1042,8 @@ sub backup_file
         {
             $lTablespaceIdx++;
             my $strTablespaceName = (split(':', $strSectionPath))[1];
-            $strBackupSourcePath = ${$oBackupManifestRef}{'backup:tablespace'}{"${strTablespaceName}"}{path};
+            $strBackupSourcePath = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                                                         MANIFEST_SUBKEY_PATH);
             $strBackupDestinationPath = "tablespace/${strTablespaceName}";
             $strSectionFile = "tablespace:${strTablespaceName}:file";
 
@@ -1055,7 +1054,8 @@ sub backup_file
 
                 $oFile->link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
                                    PATH_BACKUP_TMP,
-                                   'base/pg_tblspc/' . ${$oBackupManifestRef}{'backup:tablespace'}{"${strTablespaceName}"}{link},
+                                   'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                                                                             MANIFEST_SUBKEY_LINK),
                                    false, true);
             }
         }
@@ -1067,43 +1067,30 @@ sub backup_file
         # Create all the sub paths if this is a full backup or hardlinks are requested
         if ($bPathCreate)
         {
-            my $strPath;
-
-            foreach $strPath (sort(keys ${$oBackupManifestRef}{"${strSectionPath}"}))
+            foreach my $strPath ($oBackupManifest->keys($strSectionPath))
             {
-                if (defined(${$oBackupManifestRef}{"${strSectionPath}"}{"${strPath}"}{exists}))
-                {
-                    &log(TRACE, "path ${strPath} already exists from previous backup attempt");
-                    ${$oBackupManifestRef}{"${strSectionPath}"}{"${strPath}"}{exists} = undef;
-                }
-                else
-                {
-                    $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}",
-                                        ${$oBackupManifestRef}{"${strSectionPath}"}{"${strPath}"}{permission});
-                }
+                $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}", undef, true);
             }
         }
 
         # Possible for the path section to exist with no files (i.e. empty tablespace)
-        if (!defined(${$oBackupManifestRef}{"${strSectionFile}"}))
+        if (!$oBackupManifest->test($strSectionFile))
         {
             next;
         }
 
         # Iterate through the files for each backup source path
-        my $strFile;
-
-        foreach $strFile (sort(keys ${$oBackupManifestRef}{"${strSectionFile}"}))
+        foreach my $strFile ($oBackupManifest->keys($strSectionFile))
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
 
             my $bProcess = false;
             my $bProcessChecksumOnly = false;
 
-            if (defined(${$oBackupManifestRef}{"${strSectionFile}"}{"${strFile}"}{exists}))
+            if ($oBackupManifest->test($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS, 'y'))
             {
                 &log(TRACE, "file ${strFile} already exists from previous backup attempt");
-                ${$oBackupManifestRef}{"${strSectionPath}"}{"${strFile}"}{exists} = undef;
+                $oBackupManifest->remove($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS);
 
                 $bProcess = !$bNoChecksum && $bHardLink;
                 $bProcessChecksumOnly = $bProcess;
@@ -1112,7 +1099,7 @@ sub backup_file
             {
                 # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
                 # However, if hard-linking is turned on the link will need to be created
-                my $strReference = ${$oBackupManifestRef}{"${strSectionFile}"}{"${strFile}"}{reference};
+                my $strReference = $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
 
                 if (defined($strReference))
                 {
@@ -1134,7 +1121,7 @@ sub backup_file
 
             if ($bProcess)
             {
-                my $lFileSize = ${$oBackupManifestRef}{"${strSectionFile}"}{"${strFile}"}{size};
+                my $lFileSize = $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_SIZE);
 
                 # Setup variables needed for threaded copy
                 $lFileTotal++;
@@ -1153,10 +1140,10 @@ sub backup_file
                 $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
                 $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
                 $oFileCopyMap{"${strKey}"}{modification_time} =
-                    ${$oBackupManifestRef}{"${strSectionFile}"}{"${strFile}"}{modification_time};
+                    $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_MODIFICATION_TIME);
                 $oFileCopyMap{"${strKey}"}{checksum_only} = $bProcessChecksumOnly;
                 $oFileCopyMap{"${strKey}"}{checksum} =
-                    ${$oBackupManifestRef}{"${strSectionFile}"}{"${strFile}"}{checksum};
+                    $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
             }
         }
     }
@@ -1272,7 +1259,7 @@ sub backup_file
             # If command is 'remove' then mark the skipped file in the manifest
             if ($strCommand eq 'remove')
             {
-                delete ${$oBackupManifestRef}{"${strFileSection}"}{"${strFile}"};
+                $oBackupManifest->remove($strFileSection, $strFile);
 
                 &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
             }
@@ -1287,7 +1274,7 @@ sub backup_file
                     confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
                 }
 
-                ${$oBackupManifestRef}{"${strFileSection}"}{"${strFile}"}{checksum} = $strChecksum;
+                $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
 
                 # Log the checksum
                 &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum}");
@@ -1582,7 +1569,7 @@ sub backup
     $oBackupManifest->save();
 
     # Perform the backup
-    backup_file($strDbClusterPath, $oBackupManifest->{oManifest});
+    backup_file($strDbClusterPath, $oBackupManifest);
 
     # Stop backup (unless no-start-stop is set)
     my $strArchiveStop;
