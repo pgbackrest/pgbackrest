@@ -291,7 +291,7 @@ sub remove
     my $oManifest = $self->{oManifest};
 
     # Make sure the keys are valid
-#    $self->valid($strSection, $strKey, $strSubKey);
+    $self->valid($strSection, $strKey, $strSubKey, undef, true);
 
     if (defined($strSubKey))
     {
@@ -314,6 +314,8 @@ sub valid
     my $strSection = shift;
     my $strKey = shift;
     my $strSubKey = shift;
+    my $strValue = shift;
+    my $bDelete = shift;
 
     # Section and key must always be defined
     if (!defined($strSection) || !defined($strKey))
@@ -321,8 +323,16 @@ sub valid
         confess &log(ASSERT, 'section or key is not defined');
     }
 
+    # Default bDelete
+    $bDelete = defined($bDelete) ? $bDelete : false;
+
     if ($strSection =~ /^.*\:(file|path|link)$/ && $strSection !~ /^backup\:path$/)
     {
+        if (!defined($strSubKey) && $bDelete)
+        {
+            return true;
+        }
+
         my $strPath = (split(':', $strSection))[0];
         my $strType = (split(':', $strSection))[1];
 
