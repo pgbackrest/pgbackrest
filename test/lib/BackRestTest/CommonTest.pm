@@ -197,6 +197,11 @@ sub BackRestTestCommon_ExecuteEnd
         print "output:\n${strOutLog}\n";
     }
 
+    if (defined($strTest))
+    {
+        confess &log(ASSERT, "test point ${strTest} was not found");
+    }
+
     $hError = undef;
     $hOut = undef;
 

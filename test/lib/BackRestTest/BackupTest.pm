@@ -631,9 +631,82 @@ sub BackRestTestBackup_LastBackup
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_CompareBackup
+# BackRestTestBackup_BackupBegin
 ####################################################################################################################################
-sub BackRestTestBackup_CompareBackup
+sub BackRestTestBackup_BackupBegin
+{
+    my $strType = shift;
+    my $strStanza = shift;
+    my $bRemote = shift;
+    my $strComment = shift;
+    my $bTestPoint = shift;
+    my $fTestDelay = shift;
+
+    # Set defaults
+    $bTestPoint = defined($bTestPoint) ? $bTestPoint : false;
+    $fTestDelay = defined($fTestDelay) ? $fTestDelay : 0;
+
+    &log(INFO, "    ${strType} backup" . (defined($strComment) ? " (${strComment})" : ''));
+
+    BackRestTestCommon_ExecuteBegin(BackRestTestCommon_CommandMainGet() . ' --config=' .
+                                    ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
+                                    "/pg_backrest.conf --no-start-stop --type=${strType} --stanza=${strStanza} backup" .
+                                    ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''), $bRemote);
+}
+
+####################################################################################################################################
+# BackRestTestBackup_BackupEnd
+####################################################################################################################################
+sub BackRestTestBackup_BackupEnd
+{
+    my $strType = shift;
+    my $oFile = shift;
+    my $bRemote = shift;
+    my $strBackup = shift;
+    my $oExpectedManifestRef = shift;
+
+    BackRestTestCommon_ExecuteEnd();
+
+    ${$oExpectedManifestRef}{backup}{type} = $strType;
+
+    if (!defined($strBackup))
+    {
+        $strBackup = BackRestTestBackup_LastBackup($oFile);
+    }
+
+    BackRestTestBackup_BackupCompare($oFile, $bRemote, $strBackup, $oExpectedManifestRef);
+
+    return $strBackup;
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Backup
+####################################################################################################################################
+sub BackRestTestBackup_Backup
+{
+    my $strType = shift;
+    my $strStanza = shift;
+    my $bRemote = shift;
+    my $oFile = shift;
+    my $oExpectedManifestRef = shift;
+    my $strComment = shift;
+    my $strTestPoint = shift;
+    my $fTestDelay = shift;
+
+    BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, defined($strTestPoint), $fTestDelay);
+
+    if (defined($strTestPoint))
+    {
+        BackRestTestCommon_ExecuteEnd($strTestPoint);
+    }
+
+    return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, $oExpectedManifestRef);
+}
+
+####################################################################################################################################
+# BackRestTestBackup_BackupCompare
+####################################################################################################################################
+sub BackRestTestBackup_BackupCompare
 {
     my $oFile = shift;
     my $bRemote = shift;
@@ -1126,45 +1199,23 @@ sub BackRestTestBackup_Test
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             my $strType = 'full';
-            &log(INFO, "    ${strType} backup");
 
             BackRestTestBackup_ManifestLinkCreate(\%oManifest, 'base', 'link-test', '/test');
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'path-test');
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
-
-            $oManifest{backup}{type} = $strType;
-            my $strFullBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
+            my $strFullBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest);
 
             # Resume Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'full';
-            &log(INFO, "        ${strType} backup resume");
 
             my $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
             BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strFullBackup}",
                                         $strTmpPath, $bRemote);
 
-            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=0", $bRemote);
-
-            if (BackRestTestCommon_ExecuteEnd(TEST_BACKUP_RESUME))
-            {
-                BackRestTestCommon_ExecuteEnd();
-            }
-            else
-            {
-                confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
-            }
-
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
-
-            $oManifest{backup}{type} = $strType;
-            $strFullBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
+            $strFullBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                       'resume', TEST_BACKUP_RESUME);
 
             # Restore - tests various permissions, extra files/paths, missing files/paths
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1192,80 +1243,43 @@ sub BackRestTestBackup_Test
 
             # Incr backup - add a tablespace
             #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'incr';
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
-            $strType = 'incr';
-            &log(INFO, "    ${strType} backup (add tablespace 1)");
+            # Actually do add tablespace here
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
-
-            $oManifest{backup}{type} = $strType;
-            my $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
+            my $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add tablespace 1');
 
             # Resume Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
-
             $strType = 'incr';
-            &log(INFO, "        ${strType} backup resume");
+            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
             BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
-            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=0", $bRemote);
-
-            if (BackRestTestCommon_ExecuteEnd(TEST_BACKUP_RESUME))
-            {
-                BackRestTestCommon_ExecuteEnd();
-            }
-            else
-            {
-                confess &log(ERROR, 'test point ' . TEST_BACKUP_RESUME . ' was not found');
-            }
-
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
+            $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                   'resume', TEST_BACKUP_RESUME);
 
             # Resume Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
-
             $strType = 'diff';
-            &log(INFO, "        ${strType} backup resume (fail)");
+            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
             BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
-            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=0", $bRemote);
-
-            if (BackRestTestCommon_ExecuteEnd(TEST_BACKUP_NORESUME))
-            {
-                BackRestTestCommon_ExecuteEnd();
-            }
-            else
-            {
-                confess &log(ERROR, 'test point ' . TEST_BACKUP_NORESUME . ' was not found');
-            }
-
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
+            $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                   'resume', TEST_BACKUP_NORESUME);
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
-
             $strType = 'incr';
-            &log(INFO, "    ${strType} backup (add files)");
+            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2',
                                                   $bChecksum ? '09b5e31766be1dba1ec27de82f975c1b6eea2a92' : undef, $lTime);
@@ -1276,18 +1290,12 @@ sub BackRestTestBackup_Test
             #                                           $bChecksum ? 'dc7f76e43c46101b47acc55ae4d593a9e6983578' : undef, $lTime);
             # }
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+            $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add files');
 
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
-
-            # Perform third incr backup
-            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
-
+            # Incr Backup
+            #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
-            &log(INFO, "    ${strType} backup (update files)");
+            BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT',
                                                   $bChecksum ? '9a53d532e27785e681766c98516a5e93f096a501' : undef, $lTime);
@@ -1298,60 +1306,37 @@ sub BackRestTestBackup_Test
             #                                           $bChecksum ? 'ff21d59b07e8d9cfa7b1286202610550a71884b5' : undef, $lTime);
             # }
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
+            $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'update files');
 
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
-
-            # Perform first diff backup
+            # Diff Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'diff';
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup, true);
 
-            $strType = 'diff';
-            &log(INFO, "    ${strType} backup (no updates)");
+            $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'no updates');
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
-
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
-
-            # Perform fourth incr backup
+            # Incr Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'incr';
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
-            $strType = 'incr';
-            &log(INFO, "    ${strType} backup (remove files - but won't affect manifest)");
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files - but won't affect manifest", true, 1);
+            BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
 
-            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=1", $bRemote);
-
-            if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
-            {
-                BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
+            BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
 
                 # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
                 # {
                 #     BackRestTestBackup_FileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
                 # }
 
-                BackRestTestCommon_ExecuteEnd();
-            }
-            else
-            {
-                confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
-            }
+            $strBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, \%oManifest);
 
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
-
-            # Perform second diff backup
+            # Diff Backup
+            #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup, true);
 
             $strType = 'diff';
-            &log(INFO, "    ${strType} backup (remove files)");
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base1.txt');
 
@@ -1360,31 +1345,22 @@ sub BackRestTestBackup_Test
             #     BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt');
             # }
 
-            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=1", $bRemote);
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files", true, 1);
+            BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
 
-            if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
-            {
-                BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base2.txt', true);
+            BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base2.txt', true);
 
-                # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-                # {
-                #     BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', true);
-                #     delete($oManifest{"tablespace:${iTablespaceIdx}:file"});
-                # }
+            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
+            # {
+            #     BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace2.txt', true);
+            #     delete($oManifest{"tablespace:${iTablespaceIdx}:file"});
+            # }
 
-                BackRestTestCommon_ExecuteEnd();
-            }
-            else
-            {
-                confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
-            }
+            $strBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, \%oManifest);
 
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
-
-            # Perform second full backup
+            # Full Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'full';
             BackRestTestBackup_ManifestReference(\%oManifest);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT2',
@@ -1396,21 +1372,12 @@ sub BackRestTestBackup_Test
             #                                           $bChecksum ? '42f9bdebc34de4476f21688d00b37ea77d1a2ffc' : undef, $lTime);
             # }
 
-            $strType = 'full';
-            &log(INFO, "    ${strType} backup");
+            $strFullBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest);
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
-
-            $oManifest{backup}{type} = $strType;
-            $strFullBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strFullBackup, \%oManifest);
-
-            # Perform third diff backup
-            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
-
+            # Diff Backup
+            #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'diff';
-            &log(INFO, "    ${strType} backup (add files)");
+            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2UPDT',
                                                   $bChecksum ? 'cafac3c59553f2cfde41ce2e62e7662295f108c0' : undef, $lTime);
@@ -1421,12 +1388,7 @@ sub BackRestTestBackup_Test
             #                                           $bChecksum ? 'bee4bf711a7533db234eda606782af7e80a76cf2' : undef, $lTime);
             # }
 
-            BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
-
-            $oManifest{backup}{type} = $strType;
-            $strBackup = BackRestTestBackup_LastBackup($oFile);
-
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
+            $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add files');
         }
         }
         }

@@ -677,6 +677,7 @@ sub backup_file_not_in_manifest
 {
     my $strPathType = shift;
     my $oManifest = shift;
+    my $oAbortedManifest = shift;
 
     my %oFileHash;
     $oFile->manifest($strPathType, undef, \%oFileHash);
@@ -748,6 +749,13 @@ sub backup_file_not_in_manifest
                         $oManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_MODIFICATION_TIME) ==
                             $oFileHash{name}{"${strName}"}{modification_time})
                     {
+                        my $strChecksum = $oAbortedManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, false);
+
+                        if (defined($strChecksum))
+                        {
+                            $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+                        }
+
                         $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_EXISTS, true);
                         next;
                     }
@@ -770,6 +778,7 @@ sub backup_file_not_in_manifest
 sub backup_tmp_clean
 {
     my $oManifest = shift;
+    my $oAbortedManifest = shift;
 
     &log(INFO, 'cleaning backup tmp path');
 
@@ -786,7 +795,7 @@ sub backup_tmp_clean
     }
 
     # Get the list of files that should be deleted from temp
-    my @stryFile = backup_file_not_in_manifest(PATH_BACKUP_TMP, $oManifest);
+    my @stryFile = backup_file_not_in_manifest(PATH_BACKUP_TMP, $oManifest, $oAbortedManifest);
 
     foreach my $strFile (sort {$b cmp $a} @stryFile)
     {
@@ -1094,7 +1103,7 @@ sub backup_file
                 &log(TRACE, "file ${strFile} already exists from previous backup attempt");
                 $oBackupManifest->remove($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS);
 
-                $bProcess = !$bNoChecksum && $bHardLink;
+                $bProcess = !$bNoChecksum && !$oBackupManifest->test($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM);
                 $bProcessChecksumOnly = $bProcess;
             }
             else
@@ -1346,6 +1355,14 @@ sub backup_file_thread
             # Write the checksum message into the master queue
             $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
 
+            # Output information about the file to be checksummed
+            if (!defined($strLog))
+            {
+                $strLog = "thread ${iThreadIdx} checksum-only $oFileCopyMap{$strFile}{db_file} (" .
+                          file_size_format($oFileCopyMap{$strFile}{size}) .
+                          ($lSizeTotal > 0 ? ', ' . int($lSize * 100 / $lSizeTotal) . '%' : '') . ')';
+            }
+
             &log(INFO, $strLog . " checksum ${strChecksum}");
         }
         else
@@ -1509,6 +1526,7 @@ sub backup
         my $strAbortedType = '<undef>';
         my $strAbortedPrior = '<undef>';
         my $strAbortedVersion = '<undef>';
+        my $oAbortedManifest;
 
         # Attempt to read the manifest file in the aborted backup to see if the backup type and prior backup are the same as the
         # new backup that is being started.  If any error at all occurs then the backup will be considered unusable and a resume
@@ -1516,7 +1534,7 @@ sub backup
         eval
         {
             # Load the aborted manifest
-            my $oAbortedManifest = new BackRest::Manifest("${strBackupTmpPath}/backup.manifest");
+            $oAbortedManifest = new BackRest::Manifest("${strBackupTmpPath}/backup.manifest");
 
             # Default values if they are not set
             $strAbortedType = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
@@ -1548,7 +1566,7 @@ sub backup
             &log(TEST, TEST_BACKUP_RESUME);
 
             # Clean the old backup tmp path
-            backup_tmp_clean($oBackupManifest);
+            backup_tmp_clean($oBackupManifest, $oAbortedManifest);
         }
         # Else remove it
         else
