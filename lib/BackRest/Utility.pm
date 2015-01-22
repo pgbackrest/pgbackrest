@@ -24,7 +24,7 @@ our @EXPORT = qw(version_get
                  lock_file_create lock_file_remove
                  ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
-                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD);
+                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME);
 
 # Global constants
 use constant
@@ -65,9 +65,12 @@ $oLogLevelRank{OFF}{rank} = 0;
 ####################################################################################################################################
 use constant
 {
-    TEST                => 'TEST',
-    TEST_ENCLOSE        => 'PgBaCkReStTeSt',
-    TEST_MANIFEST_BUILD => 'MANIFEST_BUILD'
+    TEST                    => 'TEST',
+    TEST_ENCLOSE            => 'PgBaCkReStTeSt',
+
+    TEST_MANIFEST_BUILD     => 'MANIFEST_BUILD',
+    TEST_BACKUP_RESUME      => 'BACKUP_RESUME',
+    TEST_BACKUP_NORESUME    => 'BACKUP_NORESUME',
 };
 
 # Test global variables
@@ -369,7 +372,7 @@ sub test_set
     }
 
     # Test delay should be between 1 and 600 seconds
-    if (!($iTestDelay >= 1 && $iTestDelay <= 600))
+    if (!($iTestDelay >= 0 && $iTestDelay <= 600))
     {
         confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
     }
@@ -485,7 +488,11 @@ sub log
         if ($bTest && $strLevel eq TEST)
         {
             *STDOUT->flush();
-            sleep($iTestDelay);
+
+            if ($iTestDelay > 0)
+            {
+                sleep($iTestDelay);
+            }
         }
     }
 

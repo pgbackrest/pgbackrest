@@ -1502,6 +1502,14 @@ sub backup
     {
         my $bUsable = false;
 
+        my $strType = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+        my $strPrior = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
+        my $strVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION);
+
+        my $strAbortedType = '<undef>';
+        my $strAbortedPrior = '<undef>';
+        my $strAbortedVersion = '<undef>';
+
         # Attempt to read the manifest file in the aborted backup to see if the backup type and prior backup are the same as the
         # new backup that is being started.  If any error at all occurs then the backup will be considered unusable and a resume
         # will not be attempted.
@@ -1511,14 +1519,14 @@ sub backup
             my $oAbortedManifest = new BackRest::Manifest("${strBackupTmpPath}/backup.manifest");
 
             # Default values if they are not set
-            my $strAbortedType = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
-            my $strAbortedPrior = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR);
-            my $strAbortedVersion = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION);
+            $strAbortedType = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+            $strAbortedPrior = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
+            $strAbortedVersion = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION);
 
             # The backup is usable if between the current backup and the aborted backup:
             # 1) The version matches
             # 2) The type of both is full or the types match and prior matches
-            if ($strAbortedVersion eq $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION))
+            if ($strAbortedVersion eq $strVersion)
             {
                 if ($strAbortedType eq BACKUP_TYPE_FULL
                     && $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) eq BACKUP_TYPE_FULL)
@@ -1537,6 +1545,7 @@ sub backup
         if ($bUsable)
         {
             &log(WARN, 'aborted backup of same type exists, will be cleaned to remove invalid files and resumed');
+            &log(TEST, TEST_BACKUP_RESUME);
 
             # Clean the old backup tmp path
             backup_tmp_clean($oBackupManifest);
@@ -1544,7 +1553,22 @@ sub backup
         # Else remove it
         else
         {
-            &log(WARN, 'aborted backup exists, but cannot be resumed - will be dropped and recreated');
+            my $strReason = "new version '${strVersion}' does not match aborted version '${strVersion}'";
+
+            if ($strVersion eq $strAbortedVersion)
+            {
+                if ($strType ne $strAbortedType)
+                {
+                    $strReason = "new type '${strType}' does not match aborted type '${strAbortedType}'";
+                }
+                else
+                {
+                    $strReason = "new prior '${strPrior}' does not match aborted prior '${strAbortedPrior}'";
+                }
+            }
+
+            &log(WARN, "aborted backup exists, but cannot be resumed (${strReason}) - will be dropped and recreated");
+            &log(TEST, TEST_BACKUP_NORESUME);
 
             remove_tree($oFile->path_get(PATH_BACKUP_TMP))
                 or confess &log(ERROR, "unable to delete tmp path: ${strBackupTmpPath}");

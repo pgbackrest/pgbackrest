@@ -1145,8 +1145,19 @@ sub BackRestTestBackup_Test
 
             my $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
-            BackRestTestCommon_PathCopy(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strFullBackup}",
+            BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strFullBackup}",
                                         $strTmpPath, $bRemote);
+
+            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=0", $bRemote);
+
+            if (BackRestTestCommon_ExecuteEnd(TEST_BACKUP_RESUME))
+            {
+                BackRestTestCommon_ExecuteEnd();
+            }
+            else
+            {
+                confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
+            }
 
             BackRestTestCommon_Execute("${strCommand} --type=${strType}", $bRemote);
 
@@ -1193,7 +1204,64 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
 
-            # Perform second incr backup
+            # Resume Incr Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
+
+            $strType = 'incr';
+            &log(INFO, "        ${strType} backup resume");
+
+            $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
+
+            BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
+                                        $strTmpPath, $bRemote);
+
+            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=0", $bRemote);
+
+            if (BackRestTestCommon_ExecuteEnd(TEST_BACKUP_RESUME))
+            {
+                BackRestTestCommon_ExecuteEnd();
+            }
+            else
+            {
+                confess &log(ERROR, 'test point ' . TEST_BACKUP_RESUME . ' was not found');
+            }
+
+            $oManifest{backup}{type} = $strType;
+            $strBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
+
+            # Resume Diff Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
+
+            $strType = 'diff';
+            &log(INFO, "        ${strType} backup resume (fail)");
+
+            $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
+
+            BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
+                                        $strTmpPath, $bRemote);
+
+            BackRestTestCommon_ExecuteBegin("${strCommand} --type=${strType} --test --test-delay=0", $bRemote);
+
+            if (BackRestTestCommon_ExecuteEnd(TEST_BACKUP_NORESUME))
+            {
+                BackRestTestCommon_ExecuteEnd();
+            }
+            else
+            {
+                confess &log(ERROR, 'test point ' . TEST_BACKUP_NORESUME . ' was not found');
+            }
+
+            $oManifest{backup}{type} = $strType;
+            $strBackup = BackRestTestBackup_LastBackup($oFile);
+
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
+
+            # Incr Backup
+            #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
             $strType = 'incr';
@@ -1213,7 +1281,7 @@ sub BackRestTestBackup_Test
             $oManifest{backup}{type} = $strType;
             $strBackup = BackRestTestBackup_LastBackup($oFile);
 
-            BackRestTestBackup_CompareBackup($oFile, $bRemote, BackRestTestBackup_LastBackup($oFile), \%oManifest);
+            BackRestTestBackup_CompareBackup($oFile, $bRemote, $strBackup, \%oManifest);
 
             # Perform third incr backup
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);

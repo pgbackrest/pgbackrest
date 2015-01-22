@@ -28,7 +28,7 @@ use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
-                 BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove BackRestTestCommon_PathCopy
+                 BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove BackRestTestCommon_PathCopy BackRestTestCommon_PathMove
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
@@ -292,6 +292,22 @@ sub BackRestTestCommon_PathCopy
     my $bSuppressError = shift;
 
     BackRestTestCommon_Execute("cp -rp ${strSourcePath} ${strDestinationPath}", $bRemote, $bSuppressError);
+}
+
+####################################################################################################################################
+# BackRestTestCommon_PathMove
+#
+# Copy a path.
+####################################################################################################################################
+sub BackRestTestCommon_PathMove
+{
+    my $strSourcePath = shift;
+    my $strDestinationPath = shift;
+    my $bRemote = shift;
+    my $bSuppressError = shift;
+
+    BackRestTestCommon_PathCopy($strSourcePath, $strDestinationPath, $bRemote, $bSuppressError);
+    BackRestTestCommon_PathRemove($strSourcePath, $bRemote, $bSuppressError);
 }
 
 ####################################################################################################################################
