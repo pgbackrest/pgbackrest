@@ -1716,6 +1716,9 @@ sub BackRestTestBackup_Test
             &log(INFO, "rsync 1st time");
             BackRestTestCommon_Execute($strCommand, false, false, true);
 
+            # Sleep for a while to show there is a large window where this can happen
+            sleep(.9);
+
             # Modify the test file within the same second
             &log(INFO, "modify test file");
             BackRestTestCommon_FileCreate("${strPathRsync1}/test.txt", 'TEST2');
