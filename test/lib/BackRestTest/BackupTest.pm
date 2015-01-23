@@ -16,6 +16,7 @@ use File::Copy 'cp';
 use File::stat;
 use Fcntl ':mode';
 use DBI;
+use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
@@ -1627,7 +1628,10 @@ sub BackRestTestBackup_Test
             my $lBeginTime = $oStat->mtime;
 
             # Sleep .5 seconds to give a reasonable amount of time for the file to be copied after the manifest was generated
-            sleep(.5);
+            # Sleep for a while to show there is a large window where this can happen
+            &log(INFO, 'time ' . gettimeofday());
+            usleep(.5 * 1000000);
+            &log(INFO, 'time ' . gettimeofday());
 
             # Insert another row
             BackRestTestBackup_PgExecute("insert into test_collision values (1)");
@@ -1717,7 +1721,9 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_Execute($strCommand, false, false, true);
 
             # Sleep for a while to show there is a large window where this can happen
-            sleep(.9);
+            &log(INFO, 'time ' . gettimeofday());
+            usleep(.5 * 1000000);
+            &log(INFO, 'time ' . gettimeofday());
 
             # Modify the test file within the same second
             &log(INFO, "modify test file");
