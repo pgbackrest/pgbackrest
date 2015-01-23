@@ -184,12 +184,14 @@ sub BackRestTestBackup_Create
     # Create the db paths
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbPathGet());
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet());
-    BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '2');
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet(2));
 
     # Create tablespace paths
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet());
-    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet() . '/ts1');
-    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet() . '/ts2');
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet(1));
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet(1, 2));
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet(2));
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet(2, 2));
 
     # Create the archive directory
     BackRestTestCommon_PathCreate(BackRestTestCommon_ArchivePathGet());
@@ -319,13 +321,13 @@ sub BackRestTestBackup_ManifestTablespaceCreate
     my $strMode = shift;
 
     # Create final file location
-    my $strPath = BackRestTestCommon_DbPathGet() . "/ts${iOid}";
+    my $strPath = BackRestTestCommon_DbTablespacePathGet($iOid);
 
     # Create the path
-    if (!(-e $strPath))
-    {
-        BackRestTestCommon_PathCreate($strPath, $strMode);
-    }
+    # if (!(-e $strPath))
+    # {
+    #     BackRestTestCommon_PathCreate($strPath, $strMode);
+    # }
 
     # Stat the path
     my $oStat = lstat($strPath);
@@ -1181,14 +1183,6 @@ sub BackRestTestBackup_Test
             # Create tablespace path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'pg_tblspc');
 
-            # for (my $iTablespaceIdx = 1; $iTablespaceIdx <= $iTablespaceTotal; $iTablespaceIdx++)
-            # {
-            #     BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, $iTablespaceIdx);
-            #
-            #     BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:${iTablespaceIdx}", 'tablespace1.txt', 'TBLSPC',
-            #                                           $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
-            # }
-
             # Create db config
             BackRestTestCommon_ConfigCreate('db',                           # local
                                             $bRemote ? BACKUP : undef,      # remote
@@ -1263,25 +1257,19 @@ sub BackRestTestBackup_Test
             $strType = 'incr';
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
-            # Actually do add tablespace here
+            # Add tablespace 1
+            BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 1);
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:1", 'tablespace1.txt', 'TBLSPC',
+                                                  $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
+
 
             my $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add tablespace 1');
-
-            # Restore -
-            #-----------------------------------------------------------------------------------------------------------------------
-            $bDelta = false;
-
-            # Remap the base path
-            my %oRemapHash;
-            $oRemapHash{base} = BackRestTestCommon_DbCommonPathGet . '2';
-
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, \%oManifest, \%oRemapHash, $bDelta, $bForce,
-                                       'remap base path');
 
             # Resume Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
-            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
+#            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
@@ -1294,7 +1282,7 @@ sub BackRestTestBackup_Test
             # Resume Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'diff';
-            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
+#            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
@@ -1303,6 +1291,18 @@ sub BackRestTestBackup_Test
 
             $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                    'resume - fail', TEST_BACKUP_NORESUME);
+
+            # Restore -
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = false;
+
+            # Remap the base path
+            my %oRemapHash;
+            $oRemapHash{base} = BackRestTestCommon_DbCommonPathGet(2);
+#            $oRemapHash{1} = BackRestTestCommon_DbTablespacePathGet(1, 2);
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, \%oManifest, \%oRemapHash, $bDelta, $bForce,
+                                       'remap base path');
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------

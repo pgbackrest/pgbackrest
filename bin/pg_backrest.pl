@@ -435,7 +435,7 @@ if (operation_get() eq OP_RESTORE)
     (
         config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
         param_get(PARAM_SET),
-        undef, #param_get(PARAM_REMAP),
+        config_section_load(CONFIG_SECTION_TABLESPACE_MAP),
         $oFile,
         undef, #param_get(PARAM_THREAD),
         param_get(PARAM_DELTA),

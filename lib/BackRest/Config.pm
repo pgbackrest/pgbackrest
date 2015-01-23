@@ -17,7 +17,7 @@ use BackRest::Utility;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(config_load config_key_load operation_get operation_set param_get
+our @EXPORT = qw(config_load config_key_load config_section_load operation_get operation_set param_get
 
                  FILE_MANIFEST FILE_VERSION FILE_POSTMASTER_PID
                  PATH_LATEST
@@ -30,7 +30,8 @@ our @EXPORT = qw(config_load config_key_load operation_get operation_set param_g
                  PARAM_VERSION PARAM_HELP PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
-                 CONFIG_SECTION_RESTORE CONFIG_SECTION_ARCHIVE CONFIG_SECTION_RETENTION CONFIG_SECTION_STANZA
+                 CONFIG_SECTION_RESTORE CONFIG_SECTION_TABLESPACE_MAP CONFIG_SECTION_ARCHIVE CONFIG_SECTION_RETENTION
+                 CONFIG_SECTION_STANZA
 
                  CONFIG_KEY_USER CONFIG_KEY_HOST CONFIG_KEY_PATH
 
@@ -108,7 +109,7 @@ use constant
     CONFIG_SECTION_LOG                 => 'log',
     CONFIG_SECTION_BACKUP              => 'backup',
     CONFIG_SECTION_RESTORE             => 'restore',
-    CONFIG_SECTION_RESTORE_REMAP       => 'restore:remap',
+    CONFIG_SECTION_TABLESPACE_MAP      => 'tablespace:map',
     CONFIG_SECTION_ARCHIVE             => 'archive',
     CONFIG_SECTION_RETENTION           => 'retention',
     CONFIG_SECTION_STANZA              => 'stanza',
@@ -264,6 +265,18 @@ sub config_load
 
     # Set test parameters
     test_set(param_get(PARAM_TEST), param_get(PARAM_TEST_DELAY));
+}
+
+####################################################################################################################################
+# CONFIG_STANZA_SECTION_LOAD - Get an entire stanza section
+####################################################################################################################################
+sub config_section_load
+{
+    my $strSection = shift;
+
+    $strSection = param_get(PARAM_STANZA) . ':' . $strSection;
+
+    return $oConfig{$strSection};
 }
 
 ####################################################################################################################################

@@ -23,6 +23,7 @@ use lib dirname($0) . '/../lib';
 use BackRest::Utility;
 use BackRest::Remote;
 use BackRest::File;
+use BackRest::Manifest;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
@@ -431,14 +432,20 @@ sub BackRestTestCommon_ConfigRemap
 
     foreach my $strRemap (sort(keys $oRemapHashRef))
     {
+        my $strRemapPath = ${$oRemapHashRef}{$strRemap};
+
         if ($strRemap eq 'base')
         {
-            $oConfig{$strStanza}{path} = ${$oRemapHashRef}{$strRemap};
-            ${$oManifestRef}{'backup:path'}{base} = ${$oRemapHashRef}{$strRemap};
+            $oConfig{$strStanza}{path} = $strRemapPath;
+            ${$oManifestRef}{'backup:path'}{base} = $strRemapPath;
         }
         else
         {
-            confess " not coded yet";
+            $oConfig{"${strStanza}:tablespace:map"}{$strRemap} = $strRemapPath;
+
+            ${$oManifestRef}{'backup:path'}{"tablespace:${strRemap}"} = $strRemapPath;
+            ${$oManifestRef}{'backup:tablespace'}{$strRemap}{'path'} = $strRemapPath;
+            ${$oManifestRef}{'base:link'}{"pg_tblspc/${strRemap}"}{'link_destination'} = $strRemapPath;
         }
     }
 
@@ -630,12 +637,17 @@ sub BackRestTestCommon_DbPathGet
 
 sub BackRestTestCommon_DbCommonPathGet
 {
-    return $strCommonDbCommonPath;
+    my $iIndex = shift;
+
+    return $strCommonDbCommonPath . (defined($iIndex) ? "-${iIndex}" : '');
 }
 
 sub BackRestTestCommon_DbTablespacePathGet
 {
-    return $strCommonDbTablespacePath;
+    my $iTablespace = shift;
+    my $iIndex = shift;
+
+    return $strCommonDbTablespacePath . (defined($iTablespace) ? "/ts${iTablespace}" . (defined($iIndex) ? "-${iIndex}" : '') : '');
 }
 
 sub BackRestTestCommon_DbPortGet

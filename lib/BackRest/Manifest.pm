@@ -343,6 +343,12 @@ sub valid
         my $strPath = (split(':', $strSection))[0];
         my $strType = (split(':', $strSection))[1];
 
+        if ($strPath eq 'tablespace')
+        {
+            $strPath = (split(':', $strSection))[1];
+            $strType = (split(':', $strSection))[2];
+        }
+
         if (($strType eq 'path' || $strType eq 'file' || $strType eq 'link') &&
             ($strSubKey eq MANIFEST_SUBKEY_USER ||
              $strSubKey eq MANIFEST_SUBKEY_GROUP))
@@ -394,6 +400,14 @@ sub valid
         if ($strKey eq MANIFEST_KEY_CHECKSUM ||
             $strKey eq MANIFEST_KEY_COMPRESS ||
             $strKey eq MANIFEST_KEY_HARDLINK)
+        {
+            return true;
+        }
+    }
+    elsif ($strSection eq MANIFEST_SECTION_BACKUP_TABLESPACE)
+    {
+        if ($strSubKey eq 'link' ||
+            $strSubKey eq 'path')
         {
             return true;
         }
