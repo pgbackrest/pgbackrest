@@ -29,7 +29,7 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRe
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
                  BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove BackRestTestCommon_PathCopy BackRestTestCommon_PathMove
-                 BackRestTestCommon_ConfigCreate BackRestTestCommon_Run BackRestTestCommon_Cleanup
+                 BackRestTestCommon_ConfigCreate BackRestTestCommon_ConfigRemap BackRestTestCommon_Run BackRestTestCommon_Cleanup
                  BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
                  BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
                  BackRestTestCommon_GroupGet BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet
@@ -408,6 +408,42 @@ sub BackRestTestCommon_Setup
     $iModuleTestRun = $iModuleTestRunParam;
     $bDryRun = $bDryRunParam;
     $bNoCleanup = $bNoCleanupParam;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_ConfigRemap
+####################################################################################################################################
+sub BackRestTestCommon_ConfigRemap
+{
+    my $oRemapHashRef = shift;
+    my $oManifestRef = shift;
+
+    # Create config filename
+    my $strConfigFile = BackRestTestCommon_DbPathGet() . '/pg_backrest.conf';
+    my $strStanza = BackRestTestCommon_StanzaGet();
+
+    # Load Config file
+    my %oConfig;
+    ini_load($strConfigFile, \%oConfig);
+
+    # Rewrite remap section
+    delete($oConfig{"${strStanza}:tablespace:map"});
+
+    foreach my $strRemap (sort(keys $oRemapHashRef))
+    {
+        if ($strRemap eq 'base')
+        {
+            $oConfig{$strStanza}{path} = ${$oRemapHashRef}{$strRemap};
+            ${$oManifestRef}{'backup:path'}{base} = ${$oRemapHashRef}{$strRemap};
+        }
+        else
+        {
+            confess " not coded yet";
+        }
+    }
+
+    # Resave the config file
+    ini_save($strConfigFile, \%oConfig);
 }
 
 ####################################################################################################################################

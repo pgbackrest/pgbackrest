@@ -187,44 +187,50 @@ sub manifest_load
                                  ' - this indicates some sort of corruption (at the very least paths have been renamed.');
         }
 
-        # If tablespaces have been remapped, update the manifest
-        if (defined($self->{oRemapRef}))
+        if ($self->{strDbClusterPath} ne $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE))
         {
-            foreach my $strPathKey (sort(keys $self->{oRemapRef}))
-            {
-                my $strRemapPath = ${$self->{oRemapRef}}{$strPathKey};
-
-                if ($strPathKey eq 'base')
-                {
-                    &log(INFO, "remapping base to ${strRemapPath}");
-                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, undef, $strRemapPath);
-                }
-                else
-                {
-                    # If the tablespace begins with prefix 'tablespace:' then strip the prefix.  This only needs to be used in
-                    # the case that there is a tablespace called 'base'
-                    if (index($strPathKey, 'tablespace:') == 0)
-                    {
-                        $strPathKey = substr($strPathKey, length('tablespace:'));
-                    }
-
-                    # Make sure that the tablespace exists in the manifest
-                    if (!$oManifest->test(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey))
-                    {
-                        confess &log(ERROR, "cannot remap invalid tablespace ${strPathKey} to ${strRemapPath}");
-                    }
-
-                    # Remap the tablespace in the manifest
-                    &log(INFO, "remapping tablespace to ${strRemapPath}");
-
-                    my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_LINK);
-
-                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strPathKey}", undef, $strRemapPath);
-                    $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_PATH, $strRemapPath);
-                    $oManifest->set('base:link', "pg_tblspc/${strTablespaceLink}", MANIFEST_SUBKEY_DESTINATION, $strRemapPath);
-                }
-            }
+            &log(INFO, 'base path remapped to ' . $self->{strDbClusterPath});
+            $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, undef, $self->{strDbClusterPath});
         }
+
+        # # If tablespaces have been remapped, update the manifest
+        # if (defined($self->{oRemapRef}))
+        # {
+        #     foreach my $strPathKey (sort(keys $self->{oRemapRef}))
+        #     {
+        #         my $strRemapPath = ${$self->{oRemapRef}}{$strPathKey};
+        #
+        #         if ($strPathKey eq 'base')
+        #         {
+        #             &log(INFO, "remapping base to ${strRemapPath}");
+        #             $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, undef, $strRemapPath);
+        #         }
+        #         else
+        #         {
+        #             # If the tablespace begins with prefix 'tablespace:' then strip the prefix.  This only needs to be used in
+        #             # the case that there is a tablespace called 'base'
+        #             if (index($strPathKey, 'tablespace:') == 0)
+        #             {
+        #                 $strPathKey = substr($strPathKey, length('tablespace:'));
+        #             }
+        #
+        #             # Make sure that the tablespace exists in the manifest
+        #             if (!$oManifest->test(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey))
+        #             {
+        #                 confess &log(ERROR, "cannot remap invalid tablespace ${strPathKey} to ${strRemapPath}");
+        #             }
+        #
+        #             # Remap the tablespace in the manifest
+        #             &log(INFO, "remapping tablespace to ${strRemapPath}");
+        #
+        #             my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_LINK);
+        #
+        #             $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strPathKey}", undef, $strRemapPath);
+        #             $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_PATH, $strRemapPath);
+        #             $oManifest->set('base:link', "pg_tblspc/${strTablespaceLink}", MANIFEST_SUBKEY_DESTINATION, $strRemapPath);
+        #         }
+        #     }
+        # }
 
         $self->manifest_ownership_check($oManifest);
 
@@ -276,7 +282,7 @@ sub clean
             # If force was not specified then error if any file is found
             if (!$self->{bForce} && !$self->{bDelta})
             {
-                confess &log(ERROR, "db path '${strPath}' contains files");
+                die &log(ERROR, "db path '${strPath}' contains files");
             }
 
             my $strFile = "${strPath}/${strName}";

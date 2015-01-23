@@ -184,6 +184,7 @@ sub BackRestTestBackup_Create
     # Create the db paths
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbPathGet());
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet());
+    BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '2');
 
     # Create tablespace paths
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet());
@@ -779,21 +780,37 @@ sub BackRestTestBackup_BackupCompare
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/actual.manifest");
 }
 
-
 ####################################################################################################################################
-# BackRestTestBackup_CompareRestore
+# BackRestTestBackup_Restore
 ####################################################################################################################################
-sub BackRestTestBackup_CompareRestore
+sub BackRestTestBackup_Restore
 {
     my $oFile = shift;
     my $strBackup = shift;
     my $strStanza = shift;
     my $oExpectedManifestRef = shift;
+    my $oRemapHashRef = shift;
     my $bDelta = shift;
+    my $bForce = shift;
+    my $strComment = shift;
+
+    # Set defaults
+    $bDelta = defined($bDelta) ? $bDelta : false;
+    $bForce = defined($bForce) ? $bForce : false;
+
+    if (defined($oRemapHashRef))
+    {
+        BackRestTestCommon_ConfigRemap($oRemapHashRef, $oExpectedManifestRef);
+    }
+
+    &log(INFO, '        ' . ($bDelta ? 'delta ' : '') . ($bForce ? 'force ' : '') .
+                            (defined($oRemapHashRef) ? 'remap ' : '') . 'restore' .
+                            (defined($strComment) ? " (${strComment})" : ''));
 
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               '/pg_backrest.conf '  . (defined($bDelta)? '--delta ' : '') . "--stanza=${strStanza} restore");
+                               '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
+                               (defined($bForce) && $bForce ? ' --force' : '') . " --stanza=${strStanza} restore");
 }
 
 ####################################################################################################################################
@@ -1219,8 +1236,8 @@ sub BackRestTestBackup_Test
 
             # Restore - tests various permissions, extra files/paths, missing files/paths
             #-----------------------------------------------------------------------------------------------------------------------
-            my $bForce = true;
-            &log(INFO, '        ' . ($bForce ? 'force ' : '') . 'restore');
+            my $bDelta = true;
+            my $bForce = false;
 
             # Create a path and file that are not in the manifest
             BackRestTestBackup_PathCreate(\%oManifest, 'base', 'deleteme');
@@ -1238,8 +1255,8 @@ sub BackRestTestBackup_Test
 
             # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
-
-            BackRestTestBackup_CompareRestore($oFile, $strFullBackup, $strStanza, \%oManifest, $bForce);
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, \%oManifest, undef, $bDelta, $bForce,
+                                       'add and delete files');
 
             # Incr backup - add a tablespace
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1249,6 +1266,17 @@ sub BackRestTestBackup_Test
             # Actually do add tablespace here
 
             my $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add tablespace 1');
+
+            # Restore -
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = false;
+
+            # Remap the base path
+            my %oRemapHash;
+            $oRemapHash{base} = BackRestTestCommon_DbCommonPathGet . '2';
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, \%oManifest, \%oRemapHash, $bDelta, $bForce,
+                                       'remap base path');
 
             # Resume Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1274,7 +1302,7 @@ sub BackRestTestBackup_Test
                                         $strTmpPath, $bRemote);
 
             $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                   'resume', TEST_BACKUP_NORESUME);
+                                                   'resume - fail', TEST_BACKUP_NORESUME);
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
