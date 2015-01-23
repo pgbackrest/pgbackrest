@@ -418,6 +418,7 @@ sub BackRestTestCommon_ConfigRemap
 {
     my $oRemapHashRef = shift;
     my $oManifestRef = shift;
+    my $bRemote = shift;
 
     # Create config filename
     my $strConfigFile = BackRestTestCommon_DbPathGet() . '/pg_backrest.conf';
@@ -426,6 +427,16 @@ sub BackRestTestCommon_ConfigRemap
     # Load Config file
     my %oConfig;
     ini_load($strConfigFile, \%oConfig);
+
+    # Load remote config file
+    my %oRemoteConfig;
+    my $strRemoteConfigFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf.remote';
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("mv " . BackRestTestCommon_BackupPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
+        ini_load($strRemoteConfigFile, \%oRemoteConfig);
+    }
 
     # Rewrite remap section
     delete($oConfig{"${strStanza}:tablespace:map"});
@@ -438,6 +449,11 @@ sub BackRestTestCommon_ConfigRemap
         {
             $oConfig{$strStanza}{path} = $strRemapPath;
             ${$oManifestRef}{'backup:path'}{base} = $strRemapPath;
+
+            if ($bRemote)
+            {
+                $oRemoteConfig{$strStanza}{path} = $strRemapPath;
+            }
         }
         else
         {
@@ -451,6 +467,13 @@ sub BackRestTestCommon_ConfigRemap
 
     # Resave the config file
     ini_save($strConfigFile, \%oConfig);
+
+    # Load remote config file
+    if ($bRemote)
+    {
+        ini_save($strRemoteConfigFile, \%oRemoteConfig);
+        BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+    }
 }
 
 ####################################################################################################################################

@@ -790,6 +790,7 @@ sub BackRestTestBackup_Restore
     my $oFile = shift;
     my $strBackup = shift;
     my $strStanza = shift;
+    my $bRemote = shift;
     my $oExpectedManifestRef = shift;
     my $oRemapHashRef = shift;
     my $bDelta = shift;
@@ -800,14 +801,14 @@ sub BackRestTestBackup_Restore
     $bDelta = defined($bDelta) ? $bDelta : false;
     $bForce = defined($bForce) ? $bForce : false;
 
-    if (defined($oRemapHashRef))
-    {
-        BackRestTestCommon_ConfigRemap($oRemapHashRef, $oExpectedManifestRef);
-    }
-
     &log(INFO, '        ' . ($bDelta ? 'delta ' : '') . ($bForce ? 'force ' : '') .
                             (defined($oRemapHashRef) ? 'remap ' : '') . 'restore' .
                             (defined($strComment) ? " (${strComment})" : ''));
+
+    if (defined($oRemapHashRef))
+    {
+        BackRestTestCommon_ConfigRemap($oRemapHashRef, $oExpectedManifestRef, $bRemote);
+    }
 
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
@@ -1249,7 +1250,7 @@ sub BackRestTestBackup_Test
 
             # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, \%oManifest, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        'add and delete files');
 
             # Incr backup - add a tablespace
@@ -1299,9 +1300,9 @@ sub BackRestTestBackup_Test
             # Remap the base path
             my %oRemapHash;
             $oRemapHash{base} = BackRestTestCommon_DbCommonPathGet(2);
-#            $oRemapHash{1} = BackRestTestCommon_DbTablespacePathGet(1, 2);
+            $oRemapHash{1} = BackRestTestCommon_DbTablespacePathGet(1, 2);
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, \%oManifest, \%oRemapHash, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
                                        'remap base path');
 
             # Incr Backup
