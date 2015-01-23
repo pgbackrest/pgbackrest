@@ -137,6 +137,7 @@ sub BackRestTestCommon_ExecuteEnd
     my $strTest = shift;
     my $bSuppressError = shift;
     my $bShowOutput = shift;
+    my $iExpectedExitStatus = shift;
 
     # Set defaults
     $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
@@ -179,6 +180,11 @@ sub BackRestTestCommon_ExecuteEnd
     # Check the exit status and output an error if needed
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
+    if (defined($iExpectedExitStatus) && $iExitStatus == $iExpectedExitStatus)
+    {
+        return $iExitStatus;
+    }
+
     if ($iExitStatus != 0)
     {
         if ($bSuppressError)
@@ -187,7 +193,8 @@ sub BackRestTestCommon_ExecuteEnd
         }
         else
         {
-            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus . "\n" .
+            confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus .
+                         (defined($iExpectedExitStatus) ? ", but ${iExpectedExitStatus} was expected" : '') . "\n" .
                          ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
                          ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
         }
@@ -218,9 +225,10 @@ sub BackRestTestCommon_Execute
     my $bRemote = shift;
     my $bSuppressError = shift;
     my $bShowOutput = shift;
+    my $iExpectedExitStatus = shift;
 
     BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
-    return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError, $bShowOutput);
+    return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError, $bShowOutput, $iExpectedExitStatus);
 }
 
 ####################################################################################################################################

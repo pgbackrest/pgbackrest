@@ -6,7 +6,7 @@ package BackRest::Utility;
 use threads;
 use strict;
 use warnings;
-use Carp;
+use Carp qw(confess longmess);
 
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
@@ -20,7 +20,7 @@ use Exporter qw(import);
 
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file file_size_format execute
-                 log log_file_set log_level_set test_set test_check
+                 log log_file_set log_level_set test_set test_get test_check
                  lock_file_create lock_file_remove
                  ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
@@ -379,6 +379,14 @@ sub test_set
 }
 
 ####################################################################################################################################
+# TEST_GET - are we in test mode?
+####################################################################################################################################
+sub test_get
+{
+    return $bTest;
+}
+
+####################################################################################################################################
 # LOG_LEVEL_SET - set the log level for file and console
 ####################################################################################################################################
 sub log_level_set
@@ -453,6 +461,8 @@ sub log
         $strMessageFormat = '(undefined)';
     }
 
+    $strMessageFormat = (defined($iCode) ? "[${iCode}] " : '') . $strMessageFormat;
+
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
@@ -473,8 +483,7 @@ sub log
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
     $strMessageFormat = timestamp_string_get() . sprintf(' T%02d', threads->tid()) .
-                        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
-                        (defined($iCode) ? " (code ${iCode})" : '') . "\n";
+                        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to console depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
@@ -504,6 +513,14 @@ sub log
             if (!$bSuppressLog)
             {
                 print $hLogFile $strMessageFormat;
+
+                if ($strLevel eq ERROR || $strLevel eq ASSERT)
+                {
+                    my $strStackTrace = longmess() . "\n";
+                    $strStackTrace =~ s/\n/\n                                   /g;
+
+                    print $hLogFile $strStackTrace;
+                }
             }
         }
     }

@@ -19,6 +19,7 @@ use DBI;
 use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
+use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
@@ -668,8 +669,14 @@ sub BackRestTestBackup_BackupEnd
     my $bRemote = shift;
     my $strBackup = shift;
     my $oExpectedManifestRef = shift;
+    my $iExpectedExitStatus = shift;
 
-    BackRestTestCommon_ExecuteEnd();
+    my $iExitStatus = BackRestTestCommon_ExecuteEnd(undef, undef, undef, $iExpectedExitStatus);
+
+    if (defined($iExpectedExitStatus))
+    {
+        return undef;
+    }
 
     ${$oExpectedManifestRef}{backup}{type} = $strType;
 
@@ -696,6 +703,7 @@ sub BackRestTestBackup_Backup
     my $strComment = shift;
     my $strTestPoint = shift;
     my $fTestDelay = shift;
+    my $iExpectedExitStatus = shift;
 
     BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, defined($strTestPoint), $fTestDelay);
 
@@ -704,7 +712,7 @@ sub BackRestTestBackup_Backup
         BackRestTestCommon_ExecuteEnd($strTestPoint);
     }
 
-    return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, $oExpectedManifestRef);
+    return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, $oExpectedManifestRef, $iExpectedExitStatus);
 }
 
 ####################################################################################################################################
@@ -797,6 +805,7 @@ sub BackRestTestBackup_Restore
     my $bDelta = shift;
     my $bForce = shift;
     my $strComment = shift;
+    my $iExpectedExitStatus = shift;
 
     # Set defaults
     $bDelta = defined($bDelta) ? $bDelta : false;
@@ -814,7 +823,8 @@ sub BackRestTestBackup_Restore
     # Create the backup command
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
-                               (defined($bForce) && $bForce ? ' --force' : '') . " --stanza=${strStanza} restore");
+                               (defined($bForce) && $bForce ? ' --force' : '') . " --stanza=${strStanza} restore",
+                               undef, undef, undef, $iExpectedExitStatus);
 }
 
 ####################################################################################################################################
@@ -1262,8 +1272,8 @@ sub BackRestTestBackup_Test
             # Add tablespace 1
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 1);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:1", 'tablespace1.txt', 'TBLSPC',
-                                                  $bChecksum ? '44ad0bf042936c576c75891d0e5ded8e2b60fb54' : undef, $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:1", 'tablespace1.txt', 'TBLSPC1',
+                                                  $bChecksum ? 'd85de07d6421d90aa9191c11c889bfde43680f0f' : undef, $lTime);
 
 
             my $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add tablespace 1');
@@ -1271,20 +1281,25 @@ sub BackRestTestBackup_Test
             # Resume Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
-#            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
+            # Move database from backup to temp
             $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
             BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
+            # Add tablespace 2
+            BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 2);
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2.txt', 'TBLSPC2',
+                                                  $bChecksum ? 'dc7f76e43c46101b47acc55ae4d593a9e6983578' : undef, $lTime);
+
             $strBackup = BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                   'resume', TEST_BACKUP_RESUME);
+                                                   'resume and add tablespace 2', TEST_BACKUP_RESUME);
 
             # Resume Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'diff';
-#            BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
 
@@ -1298,13 +1313,17 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
 
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                       'fail on used path', ERROR_RESTORE_PATH_NOT_EMPTY);
+
             # Remap the base path
             my %oRemapHash;
             $oRemapHash{base} = BackRestTestCommon_DbCommonPathGet(2);
             $oRemapHash{1} = BackRestTestCommon_DbTablespacePathGet(1, 2);
+            $oRemapHash{2} = BackRestTestCommon_DbTablespacePathGet(2, 2);
 
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
-                                       'remap base path');
+                                       'remap all paths');
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------

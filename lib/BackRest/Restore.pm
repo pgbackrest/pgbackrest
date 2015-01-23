@@ -14,6 +14,7 @@ use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
 use lib dirname($0);
+use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::ThreadGroup;
 use BackRest::Config;
@@ -267,7 +268,8 @@ sub clean
             # If force was not specified then error if any file is found
             if (!$self->{bForce} && !$self->{bDelta})
             {
-                die &log(ERROR, "db path '${strPath}' contains files");
+                confess &log(ERROR, "cannot restore to path '${strPath}' that contains files - " .
+                                    'try using --delta if this is what you intended', ERROR_RESTORE_PATH_NOT_EMPTY);
             }
 
             my $strFile = "${strPath}/${strName}";

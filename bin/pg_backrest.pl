@@ -536,6 +536,14 @@ remote_exit(0);
 ####################################################################################################################################
 if ($@)
 {
+    my $oMessage = $@;
+
+    # If a backrest exception then return the code - don't confess
+    if ($oMessage->isa('BackRest::Exception'))
+    {
+        remote_exit($oMessage->code());
+    }
+
     remote_exit();
     confess $@;
 }
