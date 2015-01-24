@@ -81,7 +81,7 @@ Primary PgBackRest features:
 
 Tweaking a few settings after running backups for about a month.
 
-* Removed master_stderr_discard option on database SSH connections.  There have been occasional lockups and they could be related issues originally seen in the file code.
+* Removed master_stderr_discard option on database SSH connections.  There have been occasional lockups and they could be related to issues originally seen in the file code.
 
 * Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
 
