@@ -15,8 +15,8 @@ use File::Basename;
 use File::Copy 'cp';
 use File::stat;
 use Fcntl ':mode';
+use Time::HiRes qw(gettimeofday);
 use DBI;
-use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -999,7 +999,7 @@ sub BackRestTestBackup_Test
 
                         if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
                         {
-                            sleep(1);
+                            hsleep(1);
 
                             if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
                             {
@@ -1644,7 +1644,7 @@ sub BackRestTestBackup_Test
             # Sleep .5 seconds to give a reasonable amount of time for the file to be copied after the manifest was generated
             # Sleep for a while to show there is a large window where this can happen
             &log(INFO, 'time ' . gettimeofday());
-            usleep(.5 * 1000000);
+            hsleep(.5);
             &log(INFO, 'time ' . gettimeofday());
 
             # Insert another row
@@ -1736,7 +1736,7 @@ sub BackRestTestBackup_Test
 
             # Sleep for a while to show there is a large window where this can happen
             &log(INFO, 'time ' . gettimeofday());
-            usleep(.5 * 1000000);
+            hsleep(.5);
             &log(INFO, 'time ' . gettimeofday());
 
             # Modify the test file within the same second

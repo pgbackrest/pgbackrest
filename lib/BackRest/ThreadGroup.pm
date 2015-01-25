@@ -8,16 +8,10 @@ use strict;
 use warnings;
 use Carp;
 
-# use Scalar::Util;
-# use Net::OpenSSH;
 use File::Basename;
-# use POSIX ':sys_wait_h';
-# use Scalar::Util 'blessed';
-#
+
 use lib dirname($0) . '/../lib';
-# use BackRest::Exception;
 use BackRest::Utility;
-# use BackRest::ProcessAsync;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -73,7 +67,7 @@ sub complete
     # Rejoin the threads
     while ($iThreadComplete < $self->{iThreadTotal})
     {
-        sleep(.1);
+        hsleep(.1);
 
         # If a timeout has been defined, make sure we have not been running longer than that
         if (defined($iTimeout))

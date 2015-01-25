@@ -219,7 +219,7 @@ sub backup_thread_complete
         }
 
         # Sleep before trying again
-        sleep(.1);
+        hsleep(.1);
     }
 
     &log(DEBUG, 'all threads exited');

@@ -10,6 +10,7 @@ use Carp qw(confess longmess);
 
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
+use Time::HiRes qw(usleep);
 use File::Basename;
 use JSON;
 
@@ -21,7 +22,7 @@ use Exporter qw(import);
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file file_size_format execute
                  log log_file_set log_level_set test_set test_get test_check
-                 lock_file_create lock_file_remove
+                 lock_file_create lock_file_remove hsleep
                  ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
                  TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME);
@@ -75,7 +76,7 @@ use constant
 
 # Test global variables
 my $bTest = false;
-my $iTestDelay;
+my $fTestDelay;
 
 ####################################################################################################################################
 # VERSION_GET
@@ -213,6 +214,16 @@ sub trim
 }
 
 ####################################################################################################################################
+# hsleep - wrapper for usleep that takes seconds in fractions and returns time slept in ms
+####################################################################################################################################
+sub hsleep
+{
+    my $fSecond = shift;
+
+    return usleep($fSecond * 1000000);
+}
+
+####################################################################################################################################
 # WAIT_FOR_FILE
 ####################################################################################################################################
 sub wait_for_file
@@ -237,7 +248,7 @@ sub wait_for_file
             return;
         }
 
-        sleep(1);
+        hsleep(.1);
     }
 
     confess &log(ERROR, "could not find $strDir/$strRegEx after ${iSeconds} second(s)");
@@ -359,20 +370,20 @@ sub log_file_set
 sub test_set
 {
     my $bTestParam = shift;
-    my $iTestDelayParam = shift;
+    my $fTestDelayParam = shift;
 
     # Set defaults
     $bTest = defined($bTestParam) ? $bTestParam : false;
-    $iTestDelay = defined($bTestParam) ? $iTestDelayParam : $iTestDelay;
+    $fTestDelay = defined($bTestParam) ? $fTestDelayParam : $fTestDelay;
 
     # Make sure that a delay is specified in test mode
-    if ($bTest && !defined($iTestDelay))
+    if ($bTest && !defined($fTestDelay))
     {
         confess &log(ASSERT, 'iTestDelay must be provided when bTest is true');
     }
 
     # Test delay should be between 1 and 600 seconds
-    if (!($iTestDelay >= 0 && $iTestDelay <= 600))
+    if (!($fTestDelay >= 0 && $fTestDelay <= 600))
     {
         confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
     }
@@ -498,9 +509,9 @@ sub log
         {
             *STDOUT->flush();
 
-            if ($iTestDelay > 0)
+            if ($fTestDelay > 0)
             {
-                sleep($iTestDelay);
+                hsleep($fTestDelay);
             }
         }
     }
