@@ -394,6 +394,21 @@ Number of backups worth of archive log to keep.  If not defined, then `full-rete
 required: n
 example: archive-retention=2
 ```
+
+### restore section
+
+?????
+
+### restore:option section
+
+`Archive Recovery` and `Standby Server` `restore.conf` options can be specified here.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on `restore.conf` options (replace `X.X` with your database version).
+
+Note: `restore_command` will automatically be generated unless overridden in this section.  Be careful about specifying your own `restore_command` as PgBackRest is designed to handle this for you.
+
+'Target Recovery` options are specified on the command-line since they end to change from restore to restore (or not be needed at all in the case of a standby server).
+
+Since PgBackRest does not start PostgreSQL after writing the recovery.conf file, it is always possible to edit/check the file before manually restarting.
+
 ### stanza sections
 
 A stanza defines a backup for a specific database.  The stanza section must define the base database path and host/user if the database is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.

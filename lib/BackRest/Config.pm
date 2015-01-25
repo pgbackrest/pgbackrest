@@ -13,6 +13,7 @@ use File::Basename;
 use Getopt::Long;
 
 use lib dirname($0) . '/../lib';
+use BackRest::Exception;
 use BackRest::Utility;
 
 use Exporter qw(import);
@@ -80,23 +81,41 @@ use constant
 };
 
 ####################################################################################################################################
+# RESTORE Type Constants
+####################################################################################################################################
+use constant
+{
+    RESTORE_TYPE_NAME          => 'name',
+    RESTORE_TYPE_TIME          => 'time',
+    RESTORE_TYPE_XID           => 'xid',
+    RESTORE_TYPE_PRESERVE      => 'preserve',
+    RESTORE_TYPE_NONE          => 'none',
+    RESTORE_TYPE_DEFAULT       => 'default'
+};
+
+####################################################################################################################################
 # Parameter constants
 ####################################################################################################################################
 use constant
 {
-    PARAM_CONFIG          => 'config',
-    PARAM_STANZA          => 'stanza',
-    PARAM_TYPE            => 'type',
-    PARAM_NO_START_STOP   => 'no-start-stop',
-    PARAM_DELTA           => 'delta',
-    PARAM_SET             => 'set',
-    PARAM_FORCE           => 'force',
-    PARAM_VERSION         => 'version',
-    PARAM_HELP            => 'help',
+    PARAM_CONFIG            => 'config',
+    PARAM_STANZA            => 'stanza',
+    PARAM_TYPE              => 'type',
+    PARAM_NO_START_STOP     => 'no-start-stop',
+    PARAM_DELTA             => 'delta',
+    PARAM_SET               => 'set',
+    PARAM_FORCE             => 'force',
+    PARAM_VERSION           => 'version',
+    PARAM_HELP              => 'help',
 
-    PARAM_TEST            => 'test',
-    PARAM_TEST_DELAY      => 'test-delay',
-    PARAM_TEST_NO_FORK    => 'no-fork'
+    PARAM_TARGET            => 'target',
+    PARAM_TARGET_EXCLUSIVE  => 'target-exclusive',
+    PARAM_TARGET_RESUME     => 'target-resume',
+    PARAM_TARGET_TIMELINE   => 'target-timeline',
+
+    PARAM_TEST              => 'test',
+    PARAM_TEST_DELAY        => 'test-delay',
+    PARAM_TEST_NO_FORK      => 'no-fork'
 };
 
 ####################################################################################################################################
@@ -109,6 +128,7 @@ use constant
     CONFIG_SECTION_LOG                 => 'log',
     CONFIG_SECTION_BACKUP              => 'backup',
     CONFIG_SECTION_RESTORE             => 'restore',
+    CONFIG_SECTION_RESTORE_OPTION      => 'restore:option',
     CONFIG_SECTION_TABLESPACE_MAP      => 'tablespace:map',
     CONFIG_SECTION_ARCHIVE             => 'archive',
     CONFIG_SECTION_RETENTION           => 'retention',
@@ -169,7 +189,8 @@ sub config_load
 
     # Get command line parameters
     GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_DELTA, PARAM_SET . '=s',
-                          PARAM_NO_START_STOP, PARAM_FORCE, PARAM_VERSION, PARAM_HELP,
+                          PARAM_NO_START_STOP, PARAM_FORCE, PARAM_TARGET . '=s', PARAM_TARGET_EXCLUSIVE, PARAM_TARGET_RESUME,
+                          PARAM_TARGET_TIMELINE . '=s', PARAM_VERSION, PARAM_HELP,
                           PARAM_TEST, PARAM_TEST_DELAY . '=s', PARAM_TEST_NO_FORK)
         or pod2usage(2);
 
@@ -193,40 +214,22 @@ sub config_load
 
     # Get and validate the operation
     $strOperation = $ARGV[0];
-
-    if (!defined($strOperation))
-    {
-        confess &log(ERROR, 'operation is not defined');
-    }
-
-    if ($strOperation ne OP_ARCHIVE_GET &&
-        $strOperation ne OP_ARCHIVE_PUSH &&
-        $strOperation ne OP_BACKUP &&
-        $strOperation ne OP_RESTORE &&
-        $strOperation ne OP_EXPIRE)
-    {
-        confess &log(ERROR, "invalid operation ${strOperation}");
-    }
-
-    # Type should only be specified for backups
-    if (defined(param_get(PARAM_TYPE)) && $strOperation ne OP_BACKUP)
-    {
-        confess &log(ERROR, 'type can only be specified for the backup operation')
-    }
+        
+    param_valid();
 
     # Set the backup type
-    if ($strOperation ne OP_BACKUP)
-    {
-        if (!defined(param_get(PARAM_TYPE)))
-        {
-            param_set(PARAM_TYPE, BACKUP_TYPE_INCR);
-        }
-        elsif (param_get(PARAM_TYPE) ne BACKUP_TYPE_FULL && param_get(PARAM_TYPE) ne BACKUP_TYPE_DIFF &&
-               param_get(PARAM_TYPE) ne BACKUP_TYPE_INCR)
-        {
-            confess &log(ERROR, 'backup type must be full, diff (differential), incr (incremental)');
-        }
-    }
+    # if ($strOperation ne OP_BACKUP)
+    # {
+    #     if (!defined(param_get(PARAM_TYPE)))
+    #     {
+    #         param_set(PARAM_TYPE, BACKUP_TYPE_INCR);
+    #     }
+    #     elsif (param_get(PARAM_TYPE) ne BACKUP_TYPE_FULL && param_get(PARAM_TYPE) ne BACKUP_TYPE_DIFF &&
+    #            param_get(PARAM_TYPE) ne BACKUP_TYPE_INCR)
+    #     {
+    #         confess &log(ERROR, 'backup type must be full, diff (differential), incr (incremental)');
+    #     }
+    # }
 
     # # Validate thread parameter
     # if (defined(param_get(PARAM_THREAD)) && !(param_get(PARAM_THREAD) >= 1))
@@ -241,12 +244,6 @@ sub config_load
     }
 
     ini_load(param_get(PARAM_CONFIG), \%oConfig);
-
-    # Load and check the cluster
-    if (!defined(param_get(PARAM_STANZA)))
-    {
-        confess 'a backup stanza must be specified';
-    }
 
     # If this is a restore, then try to default config
     if (!defined(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_PATH)))
@@ -339,6 +336,111 @@ sub config_key_load
 }
 
 ####################################################################################################################################
+# PARAM_VALID
+#
+# Make sure the command-line parameters are valid.
+####################################################################################################################################
+sub param_valid
+{
+    # Check the stanza
+    if (!defined(param_get(PARAM_STANZA)))
+    {
+        confess 'a backup stanza must be specified';
+    }
+
+    # Check that the operation is present and valid
+    if (!defined($strOperation))
+    {
+        confess &log(ERROR, "operation must be specified", ERROR_PARAM);
+    }
+    
+    if ($strOperation ne OP_ARCHIVE_GET &&
+        $strOperation ne OP_ARCHIVE_PUSH &&
+        $strOperation ne OP_BACKUP &&
+        $strOperation ne OP_RESTORE &&
+        $strOperation ne OP_EXPIRE)
+    {
+        confess &log(ERROR, "invalid operation ${strOperation}");
+    }
+    
+    # Check type param
+    my $strParam = PARAM_TYPE;
+    my $strType = param_get($strParam);
+
+    # Type is only valid for backup and restore operations
+    if (operation_test(OP_BACKUP) || operation_test(OP_RESTORE))
+    {
+        # Check types for backup
+        if (operation_test(OP_BACKUP))
+        {
+            # If type is not defined set to incr
+            if (!defined($strType))
+            {
+                $strType = BACKUP_TYPE_INCR;
+            }
+
+            # Check that type is in valid list
+            if (!($strType eq BACKUP_TYPE_FULL || $strType eq BACKUP_TYPE_DIFF || $strType eq BACKUP_TYPE_INCR))
+            {
+                confess &log(ERROR, "invalid type '${strType}' for ${strOperation}, must be: '" . BACKUP_TYPE_FULL . "', '" .
+                             BACKUP_TYPE_DIFF . "', '" . BACKUP_TYPE_INCR . "'", ERROR_PARAM);
+            }
+        }
+
+        # Check types for restore
+        elsif (operation_test(OP_RESTORE))
+        {
+            # If type is not defined set to default
+            if (!defined($strType))
+            {
+                $strType = RESTORE_TYPE_DEFAULT;
+            }
+
+            if (!($strType eq RESTORE_TYPE_NAME || $strType eq RESTORE_TYPE_TIME || $strType eq RESTORE_TYPE_XID ||
+                  $strType eq RESTORE_TYPE_PRESERVE || $strType eq RESTORE_TYPE_NONE || $strType eq RESTORE_TYPE_DEFAULT))
+            {
+                confess &log(ERROR, "invalid type '${strType}' for ${strOperation}, must be: '" . RESTORE_TYPE_NAME .
+                             "', '" . RESTORE_TYPE_TIME . "', '" . RESTORE_TYPE_XID . "', '" . RESTORE_TYPE_PRESERVE .
+                             "', '" . RESTORE_TYPE_NONE . "', '" . RESTORE_TYPE_DEFAULT . "'", ERROR_PARAM);
+            }
+        }
+    }
+    else
+    {
+        if (defined($strType))
+        {
+            confess &log(ERROR, PARAM_TYPE . ' is only valid for '. OP_BACKUP . ' and ' . OP_RESTORE . ' operations', ERROR_PARAM);
+        }
+    }
+    
+    # Check target param
+    $strParam = PARAM_TARGET;
+    my $strTarget = param_get($strParam);
+    my $strTargetMessage = 'for ' . OP_RESTORE . " operations where type is '" . RESTORE_TYPE_NAME .
+                           "', '" . RESTORE_TYPE_TIME . "', or '" . RESTORE_TYPE_XID . "'";
+
+    if (operation_test(OP_RESTORE) &&
+        ($strType eq RESTORE_TYPE_NAME || $strType eq RESTORE_TYPE_TIME || $strType eq RESTORE_TYPE_XID))
+    {
+         if (!defined($strTarget))
+         {
+             confess &log(ERROR, PARAM_TARGET . ' is required ' . $strTargetMessage, ERROR_PARAM);
+         }
+    }
+    elsif (defined($strTarget))
+    {
+        confess &log(ERROR, PARAM_TARGET . ' is only required ' . $strTargetMessage, ERROR_PARAM);
+    }
+    
+    # Check target-exclusive, target-resume, target-timeline parameters
+    if ((defined(PARAM_TARGET_EXCLUSIVE) || defined(PARAM_TARGET_RESUME) || defined(PARAM_TARGET_TIMELINE)) && !defined($strTarget))
+    {
+        confess &log(ERROR, PARAM_TARGET_EXCLUSIVE . ', ' . PARAM_TARGET_RESUME . ', and ' . PARAM_TARGET_TIMELINE .
+                     ' are only valid when target is specified');
+    }
+}
+
+####################################################################################################################################
 # OPERATION_GET
 #
 # Get the current operation.
@@ -346,6 +448,18 @@ sub config_key_load
 sub operation_get
 {
     return $strOperation;
+}
+
+####################################################################################################################################
+# OPERATION_TEST
+#
+# Test the current operation.
+####################################################################################################################################
+sub operation_test
+{
+    my $strOperationTest = shift;
+    
+    return $strOperationTest eq $strOperation;
 }
 
 ####################################################################################################################################

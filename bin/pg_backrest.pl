@@ -59,6 +59,14 @@ pg_backrest.pl [options] [operation]
     --delta          perform a delta restore using checksums when available.
     --force          force a restore and overwrite all existing files.
                      with --delta forces size/timestamp delta even if checksums are present.
+
+ Recovery Options:
+    --type               type of restore (name, time, xid, preserve, none).
+    --target             target to restore if name, time, or xid specified for type.
+    --target-exclusive   stop just before the recovery target (default is inclusive).
+    --target-resume      do not pause after recovery to target.
+    --target-timeline    recover into the specified timeline.
+
 =cut
 
 ####################################################################################################################################
