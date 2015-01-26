@@ -454,6 +454,7 @@ if (operation_get() eq OP_RESTORE)
         undef, #param_get(PARAM_THREAD),
         param_get(PARAM_DELTA),
         param_get(PARAM_FORCE),
+        param_get(PARAM_TYPE),
         param_get(PARAM_TARGET),
         param_get(PARAM_TARGET_EXCLUSIVE),
         param_get(PARAM_TARGET_RESUME),

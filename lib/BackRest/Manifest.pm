@@ -17,7 +17,9 @@ use BackRest::Utility;
 
 # Exports
 use Exporter qw(import);
-our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
+our @EXPORT = qw(MANIFEST_PATH MANIFEST_FILE MANIFEST_LINK
+
+                 MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
                  MANIFEST_SECTION_BACKUP_TABLESPACE
 
                  MANIFEST_KEY_ARCHIVE_START MANIFEST_KEY_ARCHIVE_STOP MANIFEST_KEY_BASE MANIFEST_KEY_CHECKSUM MANIFEST_KEY_COMPRESS
@@ -34,6 +36,10 @@ our @EXPORT = qw(MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST
 ####################################################################################################################################
 use constant
 {
+    MANIFEST_PATH                       => 'path',
+    MANIFEST_FILE                       => 'file',
+    MANIFEST_LINK                       => 'link',
+
     MANIFEST_SECTION_BACKUP             => 'backup',
     MANIFEST_SECTION_BACKUP_OPTION      => 'backup:option',
     MANIFEST_SECTION_BACKUP_PATH        => 'backup:path',

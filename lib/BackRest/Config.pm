@@ -20,12 +20,15 @@ use Exporter qw(import);
 
 our @EXPORT = qw(config_load config_key_load config_section_load operation_get operation_set param_get
 
-                 FILE_MANIFEST FILE_VERSION FILE_POSTMASTER_PID
+                 FILE_MANIFEST FILE_VERSION FILE_POSTMASTER_PID FILE_RECOVERY_CONF
                  PATH_LATEST
 
                  OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_RESTORE OP_EXPIRE
 
                  BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
+
+                 RECOVERY_TYPE_NAME RECOVERY_TYPE_TIME RECOVERY_TYPE_XID RECOVERY_TYPE_PRESERVE RECOVERY_TYPE_NONE
+                 RECOVERY_TYPE_DEFAULT
 
                  PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_DELTA PARAM_SET PARAM_NO_START_STOP PARAM_FORCE PARAM_TARGET
                  PARAM_TARGET_EXCLUSIVE PARAM_TARGET_RESUME PARAM_TARGET_TIMELINE CONFIG_SECTION_RECOVERY
@@ -56,6 +59,7 @@ use constant
     FILE_MANIFEST       => 'backup.manifest',
     FILE_VERSION        => 'version',
     FILE_POSTMASTER_PID => 'postmaster.pid',
+    FILE_RECOVERY_CONF  => 'recovery.conf',
 
     PATH_LATEST         => 'latest'
 };
@@ -83,16 +87,16 @@ use constant
 };
 
 ####################################################################################################################################
-# RESTORE Type Constants
+# RECOVERY Type Constants
 ####################################################################################################################################
 use constant
 {
-    RESTORE_TYPE_NAME          => 'name',
-    RESTORE_TYPE_TIME          => 'time',
-    RESTORE_TYPE_XID           => 'xid',
-    RESTORE_TYPE_PRESERVE      => 'preserve',
-    RESTORE_TYPE_NONE          => 'none',
-    RESTORE_TYPE_DEFAULT       => 'default'
+    RECOVERY_TYPE_NAME          => 'name',
+    RECOVERY_TYPE_TIME          => 'time',
+    RECOVERY_TYPE_XID           => 'xid',
+    RECOVERY_TYPE_PRESERVE      => 'preserve',
+    RECOVERY_TYPE_NONE          => 'none',
+    RECOVERY_TYPE_DEFAULT       => 'default'
 };
 
 ####################################################################################################################################
@@ -393,19 +397,19 @@ sub param_valid
         # Check types for restore
         elsif (operation_test(OP_RESTORE))
         {
-            # If type is not defined set to RESTORE_TYPE_DEFAULT
+            # If type is not defined set to RECOVERY_TYPE_DEFAULT
             if (!defined($strType))
             {
-                $strType = RESTORE_TYPE_DEFAULT;
+                $strType = RECOVERY_TYPE_DEFAULT;
                 param_set($strParam, $strType);
             }
 
-            if (!($strType eq RESTORE_TYPE_NAME || $strType eq RESTORE_TYPE_TIME || $strType eq RESTORE_TYPE_XID ||
-                  $strType eq RESTORE_TYPE_PRESERVE || $strType eq RESTORE_TYPE_NONE || $strType eq RESTORE_TYPE_DEFAULT))
+            if (!($strType eq RECOVERY_TYPE_NAME || $strType eq RECOVERY_TYPE_TIME || $strType eq RECOVERY_TYPE_XID ||
+                  $strType eq RECOVERY_TYPE_PRESERVE || $strType eq RECOVERY_TYPE_NONE || $strType eq RECOVERY_TYPE_DEFAULT))
             {
-                confess &log(ERROR, "invalid type '${strType}' for ${strOperation}, must be: '" . RESTORE_TYPE_NAME .
-                             "', '" . RESTORE_TYPE_TIME . "', '" . RESTORE_TYPE_XID . "', '" . RESTORE_TYPE_PRESERVE .
-                             "', '" . RESTORE_TYPE_NONE . "', '" . RESTORE_TYPE_DEFAULT . "'", ERROR_PARAM);
+                confess &log(ERROR, "invalid type '${strType}' for ${strOperation}, must be: '" . RECOVERY_TYPE_NAME .
+                             "', '" . RECOVERY_TYPE_TIME . "', '" . RECOVERY_TYPE_XID . "', '" . RECOVERY_TYPE_PRESERVE .
+                             "', '" . RECOVERY_TYPE_NONE . "', '" . RECOVERY_TYPE_DEFAULT . "'", ERROR_PARAM);
             }
         }
     }
@@ -420,11 +424,11 @@ sub param_valid
     # Check target param
     $strParam = PARAM_TARGET;
     my $strTarget = param_get($strParam);
-    my $strTargetMessage = 'for ' . OP_RESTORE . " operations where type is '" . RESTORE_TYPE_NAME .
-                           "', '" . RESTORE_TYPE_TIME . "', or '" . RESTORE_TYPE_XID . "'";
+    my $strTargetMessage = 'for ' . OP_RESTORE . " operations where type is '" . RECOVERY_TYPE_NAME .
+                           "', '" . RECOVERY_TYPE_TIME . "', or '" . RECOVERY_TYPE_XID . "'";
 
     if (operation_test(OP_RESTORE) &&
-        ($strType eq RESTORE_TYPE_NAME || $strType eq RESTORE_TYPE_TIME || $strType eq RESTORE_TYPE_XID))
+        ($strType eq RECOVERY_TYPE_NAME || $strType eq RECOVERY_TYPE_TIME || $strType eq RECOVERY_TYPE_XID))
     {
          if (!defined($strTarget))
          {

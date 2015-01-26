@@ -90,7 +90,7 @@ sub manifest_ownership_check
     my $strDefaultUser = getpwuid($<);
     my $strDefaultGroup = getgrgid($();
 
-    my %oFileTypeHash = ('path' => true, 'link' => true, 'file' => true);
+    my %oFileTypeHash = (&MANIFEST_PATH => true, &MANIFEST_LINK => true, &MANIFEST_FILE => true);
     my %oOwnerTypeHash = (&MANIFEST_SUBKEY_USER => $strDefaultUser, &MANIFEST_SUBKEY_GROUP => $strDefaultGroup);
 
     # Loop through owner types (user, group)
@@ -250,7 +250,7 @@ sub clean
     my $oManifest = shift;       # Backup manifest
 
     # Track if files/links/paths where removed
-    my %oRemoveHash = ('file' => 0, 'path' => 0, 'link' => 0);
+    my %oRemoveHash = (&MANIFEST_FILE => 0, &MANIFEST_PATH => 0, &MANIFEST_LINK => 0);
 
     # Check each restore directory in the manifest and make sure that it exists and is empty.
     # The --force option can be used to override the empty requirement.
@@ -287,15 +287,15 @@ sub clean
             my $strFile = "${strPath}/${strName}";
 
             # Determine the file/path/link type
-            my $strType = 'file';
+            my $strType = MANIFEST_FILE;
 
             if ($oPathManifest{name}{$strName}{type} eq 'd')
             {
-                $strType = 'path';
+                $strType = MANIFEST_PATH;
             }
             elsif ($oPathManifest{name}{$strName}{type} eq 'l')
             {
-                $strType = 'link';
+                $strType = MANIFEST_LINK;
             }
 
             # Build the section name
@@ -317,9 +317,9 @@ sub clean
                 }
 
                 # If a link does not have the same destination, then delete it (it will be recreated later)
-                if ($strType eq 'link')
+                if ($strType eq MANIFEST_LINK)
                 {
-                    if ($strType eq 'link' && $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION) ne
+                    if ($strType eq MANIFEST_LINK && $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION) ne
                         $oPathManifest{name}{$strName}{link_destination})
                     {
                         &log(DEBUG, "removing link ${strFile} - destination changed");
@@ -331,7 +331,7 @@ sub clean
                 {
                     my $strMode = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE);
 
-                    if ($strType ne 'link' && $strMode ne $oPathManifest{name}{$strName}{permission})
+                    if ($strType ne MANIFEST_LINK && $strMode ne $oPathManifest{name}{$strName}{permission})
                     {
                         &log(DEBUG, "setting ${strFile} mode to ${strMode}");
 
@@ -344,7 +344,7 @@ sub clean
             else
             {
                 # If a path then remove it, all the files should have already been deleted since we are going in reverse order
-                if ($strType eq 'path')
+                if ($strType eq MANIFEST_PATH)
                 {
                     &log(DEBUG, "removing path ${strFile}");
                     rmdir($strFile) or confess &log(ERROR, "unable to delete path ${strFile}, is it empty?");
@@ -352,8 +352,13 @@ sub clean
                 # Else delete a file/link
                 else
                 {
-                    &log(DEBUG, "removing file/link ${strFile}");
-                    unlink($strFile) or confess &log(ERROR, "unable to delete file/link ${strFile}");
+                    # Delete only if this is not the recovery.conf file.  This is in case the use wants the recovery.conf file
+                    # preserved.  It will be written/deleted/preserved as needed in recovery().
+                    if (!($strName eq FILE_RECOVERY_CONF && $strType eq MANIFEST_FILE))
+                    {
+                        &log(DEBUG, "removing file/link ${strFile}");
+                        unlink($strFile) or confess &log(ERROR, "unable to delete file/link ${strFile}");
+                    }
                 }
 
                 $oRemoveHash{$strType} += 1;
@@ -428,6 +433,101 @@ sub build
 }
 
 ####################################################################################################################################
+# RECOVERY
+#
+# Creates the recovery.conf file.
+####################################################################################################################################
+sub recovery
+{
+    my $self = shift;       # Class hash
+
+    # Create recovery.conf path/file
+    my $strRecoveryConf = $self->{strDbClusterPath} . '/' . FILE_RECOVERY_CONF;
+
+    # See if recovery.conf already exists
+    my $bRecoveryConfExists = $self->{oFile}->exists(PATH_DB_ABSOLUTE, $strRecoveryConf);
+
+    # If RECOVERY_TYPE_PRESERVE then make sure recovery.conf exists and return
+    if ($self->{strType} eq RECOVERY_TYPE_PRESERVE)
+    {
+        if (!$bRecoveryConfExists)
+        {
+            confess &log(ERROR, "recovery type is $self->{strType} but recovery file does not exist at ${strRecoveryConf}");
+        }
+
+        return;
+    }
+
+    # In all other cases the old recovery.conf should be removed if it exists
+    if ($bRecoveryConfExists)
+    {
+        $self->{oFile}->remove(PATH_DB_ABSOLUTE, $strRecoveryConf);
+    }
+
+    # If RECOVERY_TYPE_NONE then return
+    if ($self->{strType} eq RECOVERY_TYPE_NONE)
+    {
+        return;
+    }
+
+    # Write the recovery options from pg_backrest.conf
+    my $strRecovery = '';
+
+    if (defined($self->{strRecoveryRef}))
+    {
+        foreach my $strKey (sort(keys $self->{strRecoveryRef}))
+        {
+            $strRecovery .= ${$self->{strRecoveryRef}}{$strKey} . "\n";
+        }
+    }
+
+    # If RECOVERY_TYPE_DEFAULT then return
+    if ($self->{strType} eq RECOVERY_TYPE_DEFAULT)
+    {
+        return;
+    }
+
+    # Write the recovery target
+    $strRecovery .= "recovery_target_$self->{strType} = $self->{strTarget}\n";
+
+    # Write recovery_target_inclusive
+    if ($self->{bTargetExclusive})
+    {
+        $strRecovery .= "recovery_target_inclusive = false\n";
+    }
+
+    # Write recovery_target_inclusive
+    if ($self->{bTargetExclusive})
+    {
+        $strRecovery .= "recovery_target_inclusive = false\n";
+    }
+
+    # Write pause_at_recovery_target
+    if ($self->{bTargetResult})
+    {
+        $strRecovery .= "pause_at_recovery_target = false\n";
+    }
+
+    # Write recovery_target_timeline
+    if (defined($self->{strTargetTimeline}))
+    {
+        $strRecovery .= "recovery_target_timeline = $self->{strTargetTimeline}\n";
+    }
+
+    # Write recovery.conf
+    my $hFile;
+
+    open($hFile, '>', $strRecoveryConf)
+        or confess &log(ERROR, "unable to open ${strRecoveryConf}: $!");
+
+    syswrite($hFile, $strRecovery)
+        or confess "unable to write section ${strRecoveryConf}: $!";
+
+    close($hFile)
+        or confess "unable to close ${strRecoveryConf}: $!";
+}
+
+####################################################################################################################################
 # RESTORE
 #
 # Takes a backup and restores it back to the original or a remapped location.
@@ -483,6 +583,9 @@ sub restore
     }
 
     $oThreadGroup->complete();
+
+    # Create recovery.conf file
+    $self->recovery();
 }
 
 ####################################################################################################################################

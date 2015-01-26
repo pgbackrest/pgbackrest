@@ -830,6 +830,12 @@ sub BackRestTestBackup_Restore
     my $oRemapHashRef = shift;
     my $bDelta = shift;
     my $bForce = shift;
+    my $strType = shift;
+    my $strTarget = shift;
+    my $bTargetExclusive = shift;
+    my $bTargetResume = shift;
+    my $strTargetTimeline = shift;
+    my $oRecoveryHashRef = shift;
     my $strComment = shift;
     my $iExpectedExitStatus = shift;
 
@@ -1288,6 +1294,7 @@ sub BackRestTestBackup_Test
             # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
                                        'add and delete files');
 
             # Incr backup - add a tablespace
@@ -1340,6 +1347,7 @@ sub BackRestTestBackup_Test
             $bDelta = false;
 
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
                                        'fail on used path', ERROR_RESTORE_PATH_NOT_EMPTY);
 
             # Remap the base path
@@ -1349,6 +1357,7 @@ sub BackRestTestBackup_Test
             $oRemapHash{2} = BackRestTestCommon_DbTablespacePathGet(2, 2);
 
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
                                        'remap all paths');
 
             # Incr Backup

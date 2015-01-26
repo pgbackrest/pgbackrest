@@ -843,8 +843,9 @@ sub backup_manifest_build
     foreach my $strName (sort(keys $oManifestHash{name}))
     {
         # Skip certain files during backup
-        if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) ||    # pg_xlog/ - this will be reconstructed
-            $strName =~ /^postmaster\.pid$/)  # postmaster.pid - to avoid confusing postgres when restoring
+        if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) || # pg_xlog/ - this will be reconstructed
+            $strName =~ /^postmaster\.pid$/ ||                 # postmaster.pid - to avoid confusing postgres when restoring
+            $strName =~ /^recovery\.conf$/)                    # recovery.conf - doesn't make sense to backup this file
         {
             next;
         }
