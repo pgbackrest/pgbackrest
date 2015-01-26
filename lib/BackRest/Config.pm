@@ -27,12 +27,14 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
 
                  BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
 
-                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_DELTA PARAM_SET PARAM_NO_START_STOP PARAM_FORCE
+                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_DELTA PARAM_SET PARAM_NO_START_STOP PARAM_FORCE PARAM_TARGET
+                 PARAM_TARGET_EXCLUSIVE PARAM_TARGET_RESUME PARAM_TARGET_TIMELINE CONFIG_SECTION_RECOVERY
+
                  PARAM_VERSION PARAM_HELP PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
-                 CONFIG_SECTION_RESTORE CONFIG_SECTION_TABLESPACE_MAP CONFIG_SECTION_ARCHIVE CONFIG_SECTION_RETENTION
-                 CONFIG_SECTION_STANZA
+                 CONFIG_SECTION_RESTORE CONFIG_SECTION_RECOVERY CONFIG_SECTION_TABLESPACE_MAP CONFIG_SECTION_ARCHIVE
+                 CONFIG_SECTION_RETENTION CONFIG_SECTION_STANZA
 
                  CONFIG_KEY_USER CONFIG_KEY_HOST CONFIG_KEY_PATH
 
@@ -128,7 +130,7 @@ use constant
     CONFIG_SECTION_LOG                 => 'log',
     CONFIG_SECTION_BACKUP              => 'backup',
     CONFIG_SECTION_RESTORE             => 'restore',
-    CONFIG_SECTION_RESTORE_OPTION      => 'restore:option',
+    CONFIG_SECTION_RECOVERY            => 'recovery',
     CONFIG_SECTION_TABLESPACE_MAP      => 'tablespace:map',
     CONFIG_SECTION_ARCHIVE             => 'archive',
     CONFIG_SECTION_RETENTION           => 'retention',
@@ -214,7 +216,7 @@ sub config_load
 
     # Get and validate the operation
     $strOperation = $ARGV[0];
-        
+
     param_valid();
 
     # Set the backup type
@@ -353,7 +355,7 @@ sub param_valid
     {
         confess &log(ERROR, "operation must be specified", ERROR_PARAM);
     }
-    
+
     if ($strOperation ne OP_ARCHIVE_GET &&
         $strOperation ne OP_ARCHIVE_PUSH &&
         $strOperation ne OP_BACKUP &&
@@ -362,7 +364,7 @@ sub param_valid
     {
         confess &log(ERROR, "invalid operation ${strOperation}");
     }
-    
+
     # Check type param
     my $strParam = PARAM_TYPE;
     my $strType = param_get($strParam);
@@ -373,10 +375,11 @@ sub param_valid
         # Check types for backup
         if (operation_test(OP_BACKUP))
         {
-            # If type is not defined set to incr
+            # If type is not defined set to BACKUP_TYPE_INCR
             if (!defined($strType))
             {
                 $strType = BACKUP_TYPE_INCR;
+                param_set($strParam, $strType);
             }
 
             # Check that type is in valid list
@@ -390,10 +393,11 @@ sub param_valid
         # Check types for restore
         elsif (operation_test(OP_RESTORE))
         {
-            # If type is not defined set to default
+            # If type is not defined set to RESTORE_TYPE_DEFAULT
             if (!defined($strType))
             {
                 $strType = RESTORE_TYPE_DEFAULT;
+                param_set($strParam, $strType);
             }
 
             if (!($strType eq RESTORE_TYPE_NAME || $strType eq RESTORE_TYPE_TIME || $strType eq RESTORE_TYPE_XID ||
@@ -412,7 +416,7 @@ sub param_valid
             confess &log(ERROR, PARAM_TYPE . ' is only valid for '. OP_BACKUP . ' and ' . OP_RESTORE . ' operations', ERROR_PARAM);
         }
     }
-    
+
     # Check target param
     $strParam = PARAM_TARGET;
     my $strTarget = param_get($strParam);
@@ -431,9 +435,10 @@ sub param_valid
     {
         confess &log(ERROR, PARAM_TARGET . ' is only required ' . $strTargetMessage, ERROR_PARAM);
     }
-    
+
     # Check target-exclusive, target-resume, target-timeline parameters
-    if ((defined(PARAM_TARGET_EXCLUSIVE) || defined(PARAM_TARGET_RESUME) || defined(PARAM_TARGET_TIMELINE)) && !defined($strTarget))
+    if ((defined(param_get(PARAM_TARGET_EXCLUSIVE)) || defined(param_get(PARAM_TARGET_RESUME)) ||
+         defined(param_get(PARAM_TARGET_TIMELINE))) && !defined($strTarget))
     {
         confess &log(ERROR, PARAM_TARGET_EXCLUSIVE . ', ' . PARAM_TARGET_RESUME . ', and ' . PARAM_TARGET_TIMELINE .
                      ' are only valid when target is specified');
@@ -458,7 +463,7 @@ sub operation_get
 sub operation_test
 {
     my $strOperationTest = shift;
-    
+
     return $strOperationTest eq $strOperation;
 }
 

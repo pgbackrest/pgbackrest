@@ -680,8 +680,9 @@ sub BackRestTestBackup_BackupBegin
 
     BackRestTestCommon_ExecuteBegin(BackRestTestCommon_CommandMainGet() . ' --config=' .
                                     ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
-                                    "/pg_backrest.conf --no-start-stop --type=${strType} --stanza=${strStanza} backup" .
-                                    ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''), $bRemote);
+                                    "/pg_backrest.conf --no-start-stop" . ($strType ne 'incr' ? " --type=${strType}" : '') .
+                                    " --stanza=${strStanza} backup" . ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''),
+                                    $bRemote);
 }
 
 ####################################################################################################################################

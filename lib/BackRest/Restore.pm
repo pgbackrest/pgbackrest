@@ -34,6 +34,12 @@ sub new
     my $iThreadTotal = shift;       # Total threads to run for restore
     my $bDelta = shift;             # perform delta restore
     my $bForce = shift;             # force a restore
+    my $strType = shift;            # Recovery type
+    my $strTarget = shift;          # Recovery target
+    my $bTargetExclusive = shift;   # Target exlusive option
+    my $bTargetResume = shift;      # Target resume option
+    my $bTargetTimeline = shift;    # Target timeline option
+    my $oRecoveryRef = shift;       # Other recovery options
 
     # Create the class hash
     my $self = {};
@@ -41,11 +47,17 @@ sub new
 
     # Initialize variables
     $self->{strDbClusterPath} = $strDbClusterPath;
+    $self->{oRemapRef} = $oRemapRef;
     $self->{oFile} = $oFile;
     $self->{iThreadTotal} = defined($iThreadTotal) ? $iThreadTotal : 1;
     $self->{bDelta} = $bDelta;
     $self->{bForce} = $bForce;
-    $self->{oRemapRef} = $oRemapRef;
+    $self->{strType} = $strType;
+    $self->{strTarget} = $strTarget;
+    $self->{bTargetExclusive} = $bTargetExclusive;
+    $self->{bTargetResume} = $bTargetResume;
+    $self->{bTargetTimeline} = $bTargetTimeline;
+    $self->{oRecoveryRef} = $oRecoveryRef;
 
     # If backup path is not specified then default to latest
     if (defined($strBackupPath))

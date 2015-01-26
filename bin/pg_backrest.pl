@@ -35,7 +35,7 @@ pg_backrest.pl - Simple Postgres Backup and Restore
 
 pg_backrest.pl [options] [operation]
 
- Operation:
+ Operations:
    archive-get      retrieve an archive file from backup
    archive-push     push an archive file to backup
    backup           backup a cluster
@@ -56,16 +56,22 @@ pg_backrest.pl [options] [operation]
 
  Restore Options:
     --set            backup set to restore (defaults to latest set).
-    --delta          perform a delta restore using checksums when available.
+    --delta          perform a delta restore using checksums when present.
     --force          force a restore and overwrite all existing files.
                      with --delta forces size/timestamp delta even if checksums are present.
 
  Recovery Options:
-    --type               type of restore (name, time, xid, preserve, none).
-    --target             target to restore if name, time, or xid specified for type.
+    --type               type of recovery:
+                             name - restore point target
+                             time - timestamp target
+                             xid - transaction id target
+                             preserve - preserve the existing recovery.conf
+                             none - no recovery past database becoming consistent
+                             default - recover to end of archive log stream
+    --target             recovery target if type is name, time, or xid.
     --target-exclusive   stop just before the recovery target (default is inclusive).
-    --target-resume      do not pause after recovery to target.
-    --target-timeline    recover into the specified timeline.
+    --target-resume      do not pause after recovery (default is to pause).
+    --target-timeline    recover into specified timeline (default is current timeline).
 
 =cut
 
@@ -447,7 +453,12 @@ if (operation_get() eq OP_RESTORE)
         $oFile,
         undef, #param_get(PARAM_THREAD),
         param_get(PARAM_DELTA),
-        param_get(PARAM_FORCE)
+        param_get(PARAM_FORCE),
+        param_get(PARAM_TARGET),
+        param_get(PARAM_TARGET_EXCLUSIVE),
+        param_get(PARAM_TARGET_RESUME),
+        param_get(PARAM_TARGET_TIMELINE),
+        config_section_load(CONFIG_SECTION_RECOVERY)
     )->restore;
 
     remote_exit(0);
