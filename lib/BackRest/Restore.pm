@@ -40,6 +40,9 @@ sub new
     my $bTargetResume = shift;      # Target resume option
     my $bTargetTimeline = shift;    # Target timeline option
     my $oRecoveryRef = shift;       # Other recovery options
+    my $strStanza = shift;          # Restore stanza
+    my $strBackRestBin = shift;     # Absolute backrest filename
+    my $strConfigFile = shift;      # Absolute config filename (optional)
 
     # Create the class hash
     my $self = {};
@@ -58,6 +61,9 @@ sub new
     $self->{bTargetResume} = $bTargetResume;
     $self->{bTargetTimeline} = $bTargetTimeline;
     $self->{oRecoveryRef} = $oRecoveryRef;
+    $self->{strStanza} = $strStanza;
+    $self->{strBackRestBin} = $strBackRestBin;
+    $self->{strConfigFile} = $strConfigFile;
 
     # If backup path is not specified then default to latest
     if (defined($strBackupPath))
@@ -481,37 +487,40 @@ sub recovery
         }
     }
 
-    # If RECOVERY_TYPE_DEFAULT then return
-    if ($self->{strType} eq RECOVERY_TYPE_DEFAULT)
-    {
-        return;
-    }
+    # Write the restore command
+    $strRecovery .=  "restore_command = '$self->{strBackRestBin} --stanza=$self->{strStanza}" .
+                     (defined($self->{strConfigFile}) ? " --config=$self->{strConfigFile}" : '') .
+                     " archive-get %f \"%p\"'\n";
 
-    # Write the recovery target
-    $strRecovery .= "recovery_target_$self->{strType} = $self->{strTarget}\n";
-
-    # Write recovery_target_inclusive
-    if ($self->{bTargetExclusive})
+    # If RECOVERY_TYPE_DEFAULT do not write target options
+    if ($self->{strType} ne RECOVERY_TYPE_DEFAULT)
     {
-        $strRecovery .= "recovery_target_inclusive = false\n";
-    }
+        # Write the recovery target
+        $strRecovery .= "recovery_target_$self->{strType} = $self->{strTarget}\n";
 
-    # Write recovery_target_inclusive
-    if ($self->{bTargetExclusive})
-    {
-        $strRecovery .= "recovery_target_inclusive = false\n";
-    }
+        # Write recovery_target_inclusive
+        if ($self->{bTargetExclusive})
+        {
+            $strRecovery .= "recovery_target_inclusive = false\n";
+        }
 
-    # Write pause_at_recovery_target
-    if ($self->{bTargetResult})
-    {
-        $strRecovery .= "pause_at_recovery_target = false\n";
-    }
+        # Write recovery_target_inclusive
+        if ($self->{bTargetExclusive})
+        {
+            $strRecovery .= "recovery_target_inclusive = false\n";
+        }
 
-    # Write recovery_target_timeline
-    if (defined($self->{strTargetTimeline}))
-    {
-        $strRecovery .= "recovery_target_timeline = $self->{strTargetTimeline}\n";
+        # Write pause_at_recovery_target
+        if ($self->{bTargetResult})
+        {
+            $strRecovery .= "pause_at_recovery_target = false\n";
+        }
+
+        # Write recovery_target_timeline
+        if (defined($self->{strTargetTimeline}))
+        {
+            $strRecovery .= "recovery_target_timeline = $self->{strTargetTimeline}\n";
+        }
     }
 
     # Write recovery.conf

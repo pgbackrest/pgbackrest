@@ -10,7 +10,8 @@ use Carp qw(confess longmess);
 
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
-use Time::HiRes qw(usleep);
+use Time::HiRes qw(gettimeofday usleep);
+use POSIX qw(ceil);
 use File::Basename;
 use JSON;
 
@@ -22,7 +23,7 @@ use Exporter qw(import);
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file file_size_format execute
                  log log_file_set log_level_set test_set test_get test_check
-                 lock_file_create lock_file_remove hsleep
+                 lock_file_create lock_file_remove hsleep wait_remainder
                  ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
                  TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME);
@@ -157,6 +158,21 @@ sub lock_file_remove
     {
         confess &log(ASSERT, 'there is no lock to free');
     }
+}
+
+####################################################################################################################################
+# WAIT_REMAINDER - Wait the remainder of the current second
+####################################################################################################################################
+sub wait_remainder
+{
+    my $lTimeBegin = gettimeofday();
+    my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+
+    usleep($lSleepMs * 1000);
+
+    &log(TRACE, "WAIT_REMAINDER: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+
+    return int($lTimeBegin);
 }
 
 ####################################################################################################################################

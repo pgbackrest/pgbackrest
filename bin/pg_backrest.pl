@@ -459,7 +459,10 @@ if (operation_get() eq OP_RESTORE)
         param_get(PARAM_TARGET_EXCLUSIVE),
         param_get(PARAM_TARGET_RESUME),
         param_get(PARAM_TARGET_TIMELINE),
-        config_section_load(CONFIG_SECTION_RECOVERY)
+        config_section_load(CONFIG_SECTION_RECOVERY),
+        param_get(PARAM_STANZA),
+        $0,
+        param_get(PARAM_CONFIG)
     )->restore;
 
     remote_exit(0);

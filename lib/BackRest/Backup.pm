@@ -15,6 +15,7 @@ use Thread::Queue;
 
 use lib dirname($0);
 use BackRest::Utility;
+use BackRest::Exception;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
@@ -69,6 +70,7 @@ sub backup_init
     $bCompress = $bCompressParam;
     $bHardLink = $bHardLinkParam;
     $bNoChecksum = $bNoChecksumParam;
+    $bArchiveRequired = $bArchiveRequiredParam;
     $iThreadMax = $iThreadMaxParam;
     $iThreadTimeout = $iThreadTimeoutParam;
     $bNoStartStop = $bNoStartStopParam;
@@ -1635,6 +1637,9 @@ sub backup
         # Save the backup manifest a second time - before getting archive logs in case that fails
         $oBackupManifest->save();
 
+        # Create the modification time for the archive logs
+        my $lModificationTime = time();
+
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
         my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
@@ -1655,10 +1660,39 @@ sub backup
 
             &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
+            # Copy the log file from the archive repo to the backup
+            my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : '');
+
             $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
-                         PATH_BACKUP_TMP, "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : ''),
+                         PATH_BACKUP_TMP, $strDestinationFile,
                          $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
-                         $bCompress);
+                         $bCompress, undef, $lModificationTime);
+
+            # Add the archive file to the manifest so it can be part of the restore and checked in validation
+            my $strPathSection = 'base:path';
+            my $strPathLog = 'pg_xlog';
+            my $strFileSection = 'base:file';
+            my $strFileLog = "pg_xlog/${strArchive}";
+
+            # Get the checksum and compare against the one already on log log file (if there is one)
+            my $strChecksum = $oFile->hash(PATH_BACKUP_TMP, $strDestinationFile, $bCompress);
+
+            if ($stryArchiveFile[0] =~ "^${strArchive}-[0-f]+(\\.$oFile->{strCompressExtension}){0,1}\$" &&
+                $stryArchiveFile[0] !~ "^${strArchive}-${strChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+            {
+                confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recored with file does " .
+                                    "not match actual checksum of '${strChecksum}'", ERROR_CHECKSUM);
+            }
+
+            # Set manifest values
+            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_USER,
+                                  $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_USER));
+            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_GROUP,
+                                  $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_GROUP));
+            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
+            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODIFICATION_TIME, $lModificationTime);
+            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_SIZE, 16777216);
+            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
         }
     }
 

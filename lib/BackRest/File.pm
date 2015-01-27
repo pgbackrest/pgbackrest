@@ -8,7 +8,6 @@ use strict;
 use warnings;
 use Carp;
 
-use POSIX qw(ceil);
 use Net::OpenSSH;
 use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
@@ -19,7 +18,6 @@ use Fcntl ':mode';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::String;
-use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -1052,14 +1050,7 @@ sub wait
     else
     {
         # Wait the remainder of the current second
-        $lTimeBegin = gettimeofday();
-        my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
-
-        usleep($lSleepMs * 1000);
-
-        &log(TRACE, "${strOperation}: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
-
-        $lTimeBegin = int($lTimeBegin);
+        $lTimeBegin = wait_remainder();
     }
 
     return $lTimeBegin;
