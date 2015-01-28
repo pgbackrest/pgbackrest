@@ -253,15 +253,15 @@ sub wait_for_file
 
     while ($lTime > time() - $iSeconds)
     {
-        opendir $hDir, $strDir
-            or confess &log(ERROR, "Could not open path ${strDir}: $!\n");
-
-        my @stryFile = grep(/$strRegEx/i, readdir $hDir);
-        close $hDir;
-
-        if (scalar @stryFile == 1)
+        if (opendir($hDir, $strDir))
         {
-            return;
+            my @stryFile = grep(/$strRegEx/i, readdir $hDir);
+            close $hDir;
+
+            if (scalar @stryFile == 1)
+            {
+                return;
+            }
         }
 
         hsleep(.1);
