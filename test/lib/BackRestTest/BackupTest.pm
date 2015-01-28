@@ -167,7 +167,7 @@ sub BackRestTestBackup_ClusterStop
     # If postmaster process is running them stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m fast");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s");
     }
 }
 
@@ -249,9 +249,10 @@ sub BackRestTestBackup_Drop
     BackRestTestBackup_ClusterStop(BackRestTestCommon_DbCommonPathGet());
 
     # Remove the backrest private directory
-    if (-e BackRestTestCommon_BackupPathGet())
+    while (-e BackRestTestCommon_BackupPathGet())
     {
         BackRestTestCommon_PathRemove(BackRestTestCommon_BackupPathGet(), true, true);
+        hsleep(.1);
     }
 
     # Remove the test directory
@@ -1050,7 +1051,7 @@ sub BackRestTestBackup_Test
             {
             for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
             {
-            for (my $bArchiveAsync = false; $bArchiveAsync <= true $bArchiveAsync++)
+            for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
             {
             for (my $bCompressAsync = false; $bCompressAsync <= true; $bCompressAsync++)
             {
