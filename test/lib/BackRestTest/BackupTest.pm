@@ -1050,7 +1050,7 @@ sub BackRestTestBackup_Test
             {
             for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
             {
-            for (my $bArchiveAsync = false; $bArchiveAsync <= $bRemote; $bArchiveAsync++)
+            for (my $bArchiveAsync = false; $bArchiveAsync <= true $bArchiveAsync++)
             {
             for (my $bCompressAsync = false; $bCompressAsync <= true; $bCompressAsync++)
             {

@@ -254,7 +254,10 @@ sub config_load
     # If this is a restore, then try to default config
     if (!defined(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_PATH)))
     {
-        $oConfig{'global:restore'}{path} = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH);
+        if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
+        {
+            $oConfig{'global:restore'}{path} = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH);
+        }
 
         if (!defined(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_PATH)))
         {

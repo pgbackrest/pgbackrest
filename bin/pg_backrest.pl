@@ -199,7 +199,7 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
 
     if ($bArchiveLocal)
     {
-        $strStopFile = "${strArchivePath}/lock/" + param_get(PARAM_STANZA) + "-archive.stop";
+        $strStopFile = "${strArchivePath}/lock/" . param_get(PARAM_STANZA) . "-archive.stop";
     }
 
     # If an archive file is defined, then push it
@@ -242,8 +242,8 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
 
         archive_push(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1]);
 
-        # Exit if we are archiving local but no backup host has been defined
-        if (!($bArchiveLocal && defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST))))
+        # Exit if we are archiving async
+        if (!$bArchiveLocal)
         {
             remote_exit(0);
         }
@@ -264,10 +264,10 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
     }
 
     # If no backup host is defined it makes no sense to run archive-push without a specified archive file so throw an error
-    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
-    {
-        &log(ERROR, 'archive-push called without an archive file or backup host');
-    }
+    # if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST)))
+    # {
+    #     &log(ERROR, 'archive-push called without an archive file or backup host');
+    # }
 
     &log(INFO, 'starting async archive-push');
 
