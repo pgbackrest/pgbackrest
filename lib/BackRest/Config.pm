@@ -440,12 +440,18 @@ sub param_valid
         confess &log(ERROR, PARAM_TARGET . ' is only required ' . $strTargetMessage, ERROR_PARAM);
     }
 
-    # Check target-exclusive, target-resume, target-timeline parameters
-    if ((defined(param_get(PARAM_TARGET_EXCLUSIVE)) || defined(param_get(PARAM_TARGET_RESUME)) ||
-         defined(param_get(PARAM_TARGET_TIMELINE))) && !defined($strTarget))
+    # Check target-resume, target-timeline parameters - can only be used when target is specified
+    if ((defined(param_get(PARAM_TARGET_RESUME)) || defined(param_get(PARAM_TARGET_TIMELINE))) && !defined($strTarget))
     {
-        confess &log(ERROR, PARAM_TARGET_EXCLUSIVE . ', ' . PARAM_TARGET_RESUME . ', and ' . PARAM_TARGET_TIMELINE .
-                     ' are only valid when target is specified');
+        confess &log(ERROR, PARAM_TARGET_RESUME . ' and ' . PARAM_TARGET_TIMELINE .
+                            ' are only valid when target is specified', ERROR_PARAM);
+    }
+
+    # Check target-exclusive - can only be used when target is time or xid
+    if (defined(param_get(PARAM_TARGET_EXCLUSIVE)) && !($strType eq RECOVERY_TYPE_TIME || $strType eq RECOVERY_TYPE_XID))
+    {
+        confess &log(ERROR, PARAM_TARGET_EXCLUSIVE . ' is only valid when target is specified and recovery type is ' .
+                            RECOVERY_TYPE_TIME . ' or ' . RECOVERY_TYPE_XID, ERROR_PARAM);
     }
 }
 

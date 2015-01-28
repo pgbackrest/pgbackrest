@@ -496,7 +496,7 @@ sub recovery
     if ($self->{strType} ne RECOVERY_TYPE_DEFAULT)
     {
         # Write the recovery target
-        $strRecovery .= "recovery_target_$self->{strType} = $self->{strTarget}\n";
+        $strRecovery .= "recovery_target_$self->{strType} = '$self->{strTarget}'\n";
 
         # Write recovery_target_inclusive
         if ($self->{bTargetExclusive})

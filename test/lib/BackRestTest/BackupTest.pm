@@ -100,6 +100,25 @@ sub BackRestTestBackup_PgExecute
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_PgSwitchXlog
+####################################################################################################################################
+sub BackRestTestBackup_PgSwitchXlog
+{
+    BackRestTestBackup_PgExecute('select pg_switch_xlog()', false, false);
+    BackRestTestBackup_PgExecute('select pg_switch_xlog()', false, false);
+}
+
+####################################################################################################################################
+# BackRestTestBackup_PgCommit
+####################################################################################################################################
+sub BackRestTestBackup_PgCommit
+{
+    my $bCheckpoint = shift;
+
+    BackRestTestBackup_PgExecute('commit', $bCheckpoint, false);
+}
+
+####################################################################################################################################
 # BackRestTestBackup_PgSelect
 ####################################################################################################################################
 sub BackRestTestBackup_PgSelect
@@ -148,7 +167,7 @@ sub BackRestTestBackup_ClusterStop
     # If postmaster process is running them stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m immediate");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m fast");
     }
 }
 
@@ -949,6 +968,8 @@ sub BackRestTestBackup_Restore
 
     &log(INFO, '        ' . ($bDelta ? 'delta ' : '') . ($bForce ? 'force ' : '') .
                             ($strType ? "type '${strType}' " : '') .
+                            ($strTarget ? "target '${strTarget}' " : '') .
+                            (defined($bTargetExclusive) && $bTargetExclusive ? "exclusive " : '') .
                             (defined($oRemapHashRef) ? 'remap ' : '') . 'restore' .
                             (defined($strComment) ? " (${strComment})" : ''));
 
@@ -962,6 +983,8 @@ sub BackRestTestBackup_Restore
                                '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
                                (defined($bForce) && $bForce ? ' --force' : '') .
                                (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
+                               (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
+                               (defined($bTargetExclusive) && $bTargetExclusive ? " --target-exclusive" : '') .
                                " --stanza=${strStanza} restore",
                                undef, undef, undef, $iExpectedExitStatus);
 }
@@ -1628,25 +1651,50 @@ sub BackRestTestBackup_Test
             my $bForce = false;
             my $strType;
 
-            my $strFullMessage = 'full_backup';
-            my $strTimeMessage = 'time_pitr';
+            my $strFullMessage = 'full';
+            my $strTimeMessage = 'time';
+            my $strXidMessage = 'xid';
+            my $strNameMessage = 'name';
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_PgExecute("create table test (message text not null)");
+            BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("insert into test values ('$strFullMessage')");
+            BackRestTestBackup_PgSwitchXlog();
 
             my $strFullBackup = BackRestTestBackup_Backup('full', $strStanza, $bRemote, $oFile);
 
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_PgExecute("update test set message = '$strTimeMessage'", false, false);
-            my $strTimeTarget = BackRestTestBackup_PgSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS')");
-            BackRestTestBackup_PgExecute("commit", true, false);
+            BackRestTestBackup_PgExecute("update test set message = '$strTimeMessage'", false);
+            BackRestTestBackup_PgSwitchXlog();
+            my $strTimeTarget = BackRestTestBackup_PgSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
+            &log(INFO, "        time target is ${strTimeTarget}");
 
-            # Restore to full (restore type = none)
+            # Setup the xid target
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_PgExecute("update test set message = '$strXidMessage'", false, false);
+            BackRestTestBackup_PgSwitchXlog();
+            my $strXidTarget = BackRestTestBackup_PgSelectOne("select txid_current()");
+            BackRestTestBackup_PgCommit();
+            &log(INFO, "        xid target is ${strXidTarget}");
+
+            # Setup the name target
+            #-----------------------------------------------------------------------------------------------------------------------
+            my $strNameTarget = 'backrest';
+
+            BackRestTestBackup_PgExecute("update test set message = '$strNameMessage'", false, true);
+            BackRestTestBackup_PgSwitchXlog();
+            BackRestTestBackup_PgExecute("select pg_create_restore_point('${strNameTarget}')", false, false);
+
+            &log(INFO, "        name target is ${strNameTarget}");
+
+            # Restore (type = default)
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = RECOVERY_TYPE_DEFAULT;
+
+            &log(INFO, "    testing recovery type = ${strType}");
 
             BackRestTestBackup_ClusterStop();
 
@@ -1655,7 +1703,99 @@ sub BackRestTestBackup_Test
                                        'restore to full');
 
             BackRestTestBackup_ClusterStart();
-            # BackRestTestBackup_ClusterStop();
+
+            my $strMessageActual = BackRestTestBackup_PgSelectOne("select message from test");
+            my $strMessageExpected = $strNameMessage;
+
+            if ($strMessageActual ne $strMessageExpected)
+            {
+                confess "expected message '${strMessageExpected}' but found '${strMessageActual}'";
+            }
+
+            # Restore (restore type = xid, inclusive)
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = RECOVERY_TYPE_XID;
+
+            &log(INFO, "    testing recovery type = ${strType}");
+
+            BackRestTestBackup_ClusterStop();
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, $strXidTarget, undef, undef, undef, undef);
+
+            BackRestTestBackup_ClusterStart();
+
+            $strMessageActual = BackRestTestBackup_PgSelectOne("select message from test");
+            $strMessageExpected = $strXidMessage;
+
+            if ($strMessageActual ne $strMessageExpected)
+            {
+                confess "expected message '${strMessageExpected}' but found '${strMessageActual}'";
+            }
+
+            # Restore (restore type = time, inclusive) - there is no exclusive time test because I can't find a way to find the
+            # exact commit time of a transaction.
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = RECOVERY_TYPE_TIME;
+
+            &log(INFO, "    testing recovery type = ${strType}");
+
+            BackRestTestBackup_ClusterStop();
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, $strTimeTarget, undef, undef, undef, undef);
+
+            BackRestTestBackup_ClusterStart();
+
+            $strMessageActual = BackRestTestBackup_PgSelectOne("select message from test");
+            $strMessageExpected = $strTimeMessage;
+
+            if ($strMessageActual ne $strMessageExpected)
+            {
+                confess "expected message '${strMessageExpected}' but found '${strMessageActual}'";
+            }
+
+            # Restore (restore type = xid, exclusive)
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = RECOVERY_TYPE_XID;
+
+            &log(INFO, "    testing recovery type = ${strType}");
+
+            BackRestTestBackup_ClusterStop();
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, $strXidTarget, true, undef, undef, undef);
+
+            BackRestTestBackup_ClusterStart();
+
+            $strMessageActual = BackRestTestBackup_PgSelectOne("select message from test");
+            $strMessageExpected = $strTimeMessage;
+
+            if ($strMessageActual ne $strMessageExpected)
+            {
+                confess "expected message '${strMessageExpected}' but found '${strMessageActual}'";
+            }
+
+            # Restore (restore type = name)
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = RECOVERY_TYPE_NAME;
+
+            &log(INFO, "    testing recovery type = ${strType}");
+
+            BackRestTestBackup_ClusterStop();
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, $strNameTarget, undef, undef, undef, undef);
+
+            BackRestTestBackup_ClusterStart();
+
+            $strMessageActual = BackRestTestBackup_PgSelectOne("select message from test");
+            $strMessageExpected = $strNameMessage;
+
+            if ($strMessageActual ne $strMessageExpected)
+            {
+                confess "expected message '${strMessageExpected}' but found '${strMessageActual}'";
+            }
 
             # # Run the full/incremental tests
             # for (my $iFull = 1; $iFull <= 1; $iFull++)
