@@ -167,10 +167,9 @@ sub BackRestTestBackup_ClusterStop
     # If postmaster process is running them stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s");
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m fast");
     }
 }
-
 
 ####################################################################################################################################
 # BackRestTestBackup_ClusterStart
@@ -252,6 +251,7 @@ sub BackRestTestBackup_Drop
     while (-e BackRestTestCommon_BackupPathGet())
     {
         BackRestTestCommon_PathRemove(BackRestTestCommon_BackupPathGet(), true, true);
+        BackRestTestCommon_PathRemove(BackRestTestCommon_BackupPathGet(), false, true);
         hsleep(.1);
     }
 
@@ -968,6 +968,7 @@ sub BackRestTestBackup_Restore
     $bForce = defined($bForce) ? $bForce : false;
 
     &log(INFO, '        ' . ($bDelta ? 'delta ' : '') . ($bForce ? 'force ' : '') .
+                            ($strBackup ne 'latest' ? "backup '${strBackup}' " : '') .
                             ($strType ? "type '${strType}' " : '') .
                             ($strTarget ? "target '${strTarget}' " : '') .
                             (defined($bTargetExclusive) && $bTargetExclusive ? "exclusive " : '') .
@@ -983,6 +984,7 @@ sub BackRestTestBackup_Restore
     BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
                                (defined($bForce) && $bForce ? ' --force' : '') .
+                               ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .
                                (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
                                (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
                                (defined($bTargetExclusive) && $bTargetExclusive ? " --target-exclusive" : '') .
@@ -1648,23 +1650,38 @@ sub BackRestTestBackup_Test
                                                 undef);                        # compress-async
             }
 
+            # Backup parameters
+            my $strType;
+            my $bSynthetic = false;
+            my $bTestPoint = false;
+            my $fTestDelay = .1;
             my $bDelta = true;
             my $bForce = false;
-            my $strType;
 
+            # Restore test string
+            my $strDefaultMessage = 'default';
             my $strFullMessage = 'full';
+            my $strIncrMessage = 'incr';
             my $strTimeMessage = 'time';
             my $strXidMessage = 'xid';
             my $strNameMessage = 'name';
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_FULL;
+            $bTestPoint = true;
+
             BackRestTestBackup_PgExecute("create table test (message text not null)");
             BackRestTestBackup_PgSwitchXlog();
-            BackRestTestBackup_PgExecute("insert into test values ('$strFullMessage')");
-            BackRestTestBackup_PgSwitchXlog();
+            BackRestTestBackup_PgExecute("insert into test values ('$strDefaultMessage')");
 
-            my $strFullBackup = BackRestTestBackup_Backup('full', $strStanza, $bRemote, $oFile);
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "insert during backup", $bSynthetic, $bTestPoint,
+                                           $fTestDelay);
+            BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
+
+            BackRestTestBackup_PgExecute("update test set message = '$strFullMessage'", false);
+
+            my $strFullBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, $bSynthetic);
 
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1672,6 +1689,22 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgSwitchXlog();
             my $strTimeTarget = BackRestTestBackup_PgSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
             &log(INFO, "        time target is ${strTimeTarget}");
+
+            # Incr backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_INCR;
+            $bTestPoint = true;
+
+            BackRestTestBackup_PgExecute("update test set message = '$strDefaultMessage'", false);
+            BackRestTestBackup_PgSwitchXlog();
+
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "update during backup", $bSynthetic, $bTestPoint,
+                                           $fTestDelay);
+            BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
+
+            BackRestTestBackup_PgExecute("update test set message = '$strIncrMessage'", false);
+
+            my $strIncrBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, $bSynthetic);
 
             # Setup the xid target
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1721,7 +1754,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strXidTarget, undef, undef, undef, undef);
 
             BackRestTestBackup_ClusterStart();
@@ -1770,7 +1803,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ClusterStart();
 
             $strMessageActual = BackRestTestBackup_PgSelectOne("select message from test");
-            $strMessageExpected = $strTimeMessage;
+            $strMessageExpected = $strIncrMessage;
 
             if ($strMessageActual ne $strMessageExpected)
             {
@@ -1785,7 +1818,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strNameTarget, undef, undef, undef, undef);
 
             BackRestTestBackup_ClusterStart();
