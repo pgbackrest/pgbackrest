@@ -12,7 +12,7 @@ use Carp;
 # Exports
 ####################################################################################################################################
 use Exporter qw(import);
-our @EXPORT = qw(ERROR_CHECKSUM ERROR_PARAM ERROR_RESTORE_PATH_NOT_EMPTY);
+our @EXPORT = qw(ERROR_CHECKSUM ERROR_PARAM ERROR_POSTMASTER_RUNNING ERROR_RESTORE_PATH_NOT_EMPTY);
 
 ####################################################################################################################################
 # Exception Codes
@@ -21,7 +21,8 @@ use constant
 {
     ERROR_CHECKSUM                     => 100,
     ERROR_PARAM                        => 101,
-    ERROR_RESTORE_PATH_NOT_EMPTY       => 102
+    ERROR_RESTORE_PATH_NOT_EMPTY       => 102,
+    ERROR_POSTMASTER_RUNNING           => 103
 };
 
 ####################################################################################################################################

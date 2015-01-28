@@ -223,20 +223,6 @@ sub config_load
 
     param_valid();
 
-    # Set the backup type
-    # if ($strOperation ne OP_BACKUP)
-    # {
-    #     if (!defined(param_get(PARAM_TYPE)))
-    #     {
-    #         param_set(PARAM_TYPE, BACKUP_TYPE_INCR);
-    #     }
-    #     elsif (param_get(PARAM_TYPE) ne BACKUP_TYPE_FULL && param_get(PARAM_TYPE) ne BACKUP_TYPE_DIFF &&
-    #            param_get(PARAM_TYPE) ne BACKUP_TYPE_INCR)
-    #     {
-    #         confess &log(ERROR, 'backup type must be full, diff (differential), incr (incremental)');
-    #     }
-    # }
-
     # # Validate thread parameter
     # if (defined(param_get(PARAM_THREAD)) && !(param_get(PARAM_THREAD) >= 1))
     # {

@@ -548,7 +548,7 @@ sub restore
     # Make sure that Postgres is not running
     if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
     {
-        confess &log(ERROR, 'unable to restore while Postgres is running');
+        confess &log(ERROR, 'unable to restore while Postgres is running', ERROR_POSTMASTER_RUNNING);
     }
 
     # Log the backup set to restore

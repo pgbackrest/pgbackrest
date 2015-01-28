@@ -967,13 +967,16 @@ sub BackRestTestBackup_Restore
     $bDelta = defined($bDelta) ? $bDelta : false;
     $bForce = defined($bForce) ? $bForce : false;
 
-    &log(INFO, '        ' . ($bDelta ? 'delta ' : '') . ($bForce ? 'force ' : '') .
-                            ($strBackup ne 'latest' ? "backup '${strBackup}' " : '') .
-                            ($strType ? "type '${strType}' " : '') .
-                            ($strTarget ? "target '${strTarget}' " : '') .
-                            (defined($bTargetExclusive) && $bTargetExclusive ? "exclusive " : '') .
-                            (defined($oRemapHashRef) ? 'remap ' : '') . 'restore' .
-                            (defined($strComment) ? " (${strComment})" : ''));
+    &log(INFO, '        restore' .
+               ($bDelta ? ' delta' : '') .
+               ($bForce ? ', force' : '') .
+               ($strBackup ne 'latest' ? ", backup '${strBackup}'" : '') .
+               ($strType ? ", type '${strType}' " : '') .
+               ($strTarget ? ", target '${strTarget}'" : '') .
+               (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
+               (defined($oRemapHashRef) ? ', remap' : '') .
+               (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
+               (defined($strComment) ? " (${strComment})" : ''));
 
     if (defined($oRemapHashRef))
     {
@@ -1654,7 +1657,7 @@ sub BackRestTestBackup_Test
             my $strType;
             my $bSynthetic = false;
             my $bTestPoint = false;
-            my $fTestDelay = .1;
+            my $fTestDelay = .25;
             my $bDelta = true;
             my $bForce = false;
 
@@ -1695,6 +1698,8 @@ sub BackRestTestBackup_Test
             $strType = BACKUP_TYPE_INCR;
             $bTestPoint = true;
 
+            BackRestTestBackup_PgExecute("create table test_remove (id int)", false);
+            BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("update test set message = '$strDefaultMessage'", false);
             BackRestTestBackup_PgSwitchXlog();
 
@@ -1702,6 +1707,8 @@ sub BackRestTestBackup_Test
                                            $fTestDelay);
             BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
 
+            BackRestTestBackup_PgExecute("drop table test_remove", false);
+            BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("update test set message = '$strIncrMessage'", false);
 
             my $strIncrBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, $bSynthetic);
@@ -1727,14 +1734,30 @@ sub BackRestTestBackup_Test
             # Restore (type = default)
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = RECOVERY_TYPE_DEFAULT;
+            $bDelta = false;
+            $bForce = false;
 
             &log(INFO, "    testing recovery type = ${strType}");
 
-            BackRestTestBackup_ClusterStop();
-
+            # Expect failure because postmaster.pid exists
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, undef, undef, undef, undef, undef,
-                                       'restore to full');
+                                       'postmaster running', ERROR_POSTMASTER_RUNNING);
+
+            BackRestTestBackup_ClusterStop();
+
+            # Expect failure because db path is not empty
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, undef, undef, undef, undef, undef,
+                                       'path not empty', ERROR_RESTORE_PATH_NOT_EMPTY);
+
+            # Drop and recreate db path
+            BackRestTestCommon_PathRemove(BackRestTestCommon_DbCommonPathGet());
+            BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet());
+
+            # Now the restore should work
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, undef, undef, undef, undef, undef);
 
             BackRestTestBackup_ClusterStart();
 
@@ -1749,6 +1772,8 @@ sub BackRestTestBackup_Test
             # Restore (restore type = xid, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = RECOVERY_TYPE_XID;
+            $bDelta = false;
+            $bForce = true;
 
             &log(INFO, "    testing recovery type = ${strType}");
 
@@ -1771,6 +1796,8 @@ sub BackRestTestBackup_Test
             # exact commit time of a transaction.
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = RECOVERY_TYPE_TIME;
+            $bDelta = true;
+            $bForce = false;
 
             &log(INFO, "    testing recovery type = ${strType}");
 
@@ -1792,6 +1819,8 @@ sub BackRestTestBackup_Test
             # Restore (restore type = xid, exclusive)
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = RECOVERY_TYPE_XID;
+            $bDelta = true;
+            $bForce = false;
 
             &log(INFO, "    testing recovery type = ${strType}");
 
@@ -1813,6 +1842,8 @@ sub BackRestTestBackup_Test
             # Restore (restore type = name)
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = RECOVERY_TYPE_NAME;
+            $bDelta = true;
+            $bForce = true;
 
             &log(INFO, "    testing recovery type = ${strType}");
 
