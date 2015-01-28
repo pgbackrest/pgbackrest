@@ -1483,7 +1483,7 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
                                        'fail on used path', ERROR_RESTORE_PATH_NOT_EMPTY);
 
@@ -1493,7 +1493,7 @@ sub BackRestTestBackup_Test
             $oRemapHash{1} = BackRestTestCommon_DbTablespacePathGet(1, 2);
             $oRemapHash{2} = BackRestTestCommon_DbTablespacePathGet(2, 2);
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
                                        'remap all paths');
 
@@ -1608,11 +1608,15 @@ sub BackRestTestBackup_Test
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
+        for (my $bCompress = false; $bCompress <= true; $bCompress++)
+        {
+        for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
+        {
         for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
-                                        "rmt ${bRemote}, arc_async ${bArchiveAsync}")) {next}
+                                        "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, arc_async ${bArchiveAsync}")) {next}
 
             # Create the file object
             my $oFile = new BackRest::File
@@ -1633,8 +1637,8 @@ sub BackRestTestBackup_Test
             # Create db config
             BackRestTestCommon_ConfigCreate('db',                              # local
                                             $bRemote ? BACKUP : undef,         # remote
-                                            false,                             # compress
-                                            true,                              # checksum
+                                            $bCompress,                        # compress
+                                            $bChecksum,                        # checksum
                                             $bRemote ? undef : true,           # hardlink
                                             $iThreadMax,                       # thread-max
                                             $bArchiveAsync,                    # archive-async
@@ -1645,8 +1649,8 @@ sub BackRestTestBackup_Test
             {
                 BackRestTestCommon_ConfigCreate('backup',                      # local
                                                 $bRemote ? DB : undef,         # remote
-                                                false,                         # compress
-                                                true,                          # checksum
+                                                $bCompress,                    # compress
+                                                $bChecksum,                    # checksum
                                                 true,                          # hardlink
                                                 $iThreadMax,                   # thread-max
                                                 undef,                         # archive-async
@@ -1862,44 +1866,9 @@ sub BackRestTestBackup_Test
                 confess "expected message '${strMessageExpected}' but found '${strMessageActual}'";
             }
 
-            # # Run the full/incremental tests
-            # for (my $iFull = 1; $iFull <= 1; $iFull++)
-            # {
-            #
-            #     for (my $iIncr = 0; $iIncr <= 2; $iIncr++)
-            #     {
-            #         &log(INFO, '    ' . ($iIncr == 0 ? ('full ' . sprintf('%02d', $iFull)) :
-            #                                            ('    incr ' . sprintf('%02d', $iIncr))));
-            #
-            #         # Create tablespace
-            #         if ($iIncr == 0)
-            #         {
-            #             BackRestTestBackup_PgExecute("create tablespace ts1 location '" .
-            #                                          BackRestTestCommon_DbTablespacePathGet() . "/ts1'", true);
-            #         }
-            #
-            #         # Create a table in each backup to check references
-            #         BackRestTestBackup_PgExecute("create table test_backup_${iIncr} (id int)", true);
-            #
-            #         # Create a table to be dropped to test missing file code
-            #         BackRestTestBackup_PgExecute('create table test_drop (id int)');
-            #
-            #         BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
-            #
-            #         if (BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD))
-            #         {
-            #             BackRestTestBackup_PgExecute('drop table test_drop', true);
-            #
-            #             BackRestTestCommon_ExecuteEnd();
-            #         }
-            #         else
-            #         {
-            #             confess &log(ERROR, 'test point ' . TEST_MANIFEST_BUILD . ' was not found');
-            #         }
-            #     }
-            # }
-
             $bCreate = true;
+        }
+        }
         }
         }
 

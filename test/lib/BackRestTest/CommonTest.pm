@@ -519,7 +519,7 @@ sub BackRestTestCommon_ConfigCreate
     }
 
     $oParamHash{'global:log'}{'level-console'} = 'error';
-    $oParamHash{'global:log'}{'level-file'} = 'trace';
+    $oParamHash{'global:log'}{'level-file'} = 'debug';
 
     if ($strLocal eq BACKUP)
     {
