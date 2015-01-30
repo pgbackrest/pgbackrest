@@ -1226,6 +1226,10 @@ sub backup_file
         }
     }
 
+
+    # Create threads to process the thread queues
+    my $oThreadGroup = new BackRest::ThreadGroup('backup');
+
     # End each thread queue and start the backup_file threads
     for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
     {
@@ -1239,12 +1243,13 @@ sub backup_file
         $oThreadQueue[$iThreadIdx]->enqueue(undef);
 
         # Start the thread
-        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, !$bNoChecksum, !$bPathCreate,
-                                                $oyThreadData[$iThreadIdx]{size});
+        $oThreadGroup->add(threads->create(\&backup_file_thread, $iThreadIdx, !$bNoChecksum, !$bPathCreate,
+                                           $oyThreadData[$iThreadIdx]{size}));
     }
 
     # Wait for the threads to complete
-    backup_thread_complete($iThreadTimeout);
+    # backup_thread_complete($iThreadTimeout);
+    $oThreadGroup->complete(30);
 
     # Read the messages that we passed back from the threads.  These should be two types:
     # 1) remove - files that were skipped because they were removed from the database during backup
@@ -1375,6 +1380,7 @@ sub backup_file_thread
     }
 
     &log(DEBUG, "thread ${iThreadIdx} exiting");
+    # $oFileThread = undef;
 }
 
 ####################################################################################################################################
@@ -1675,13 +1681,18 @@ sub backup
             my $strFileLog = "pg_xlog/${strArchive}";
 
             # Get the checksum and compare against the one already on log log file (if there is one)
-            my $strChecksum = $oFile->hash(PATH_BACKUP_TMP, $strDestinationFile, $bCompress);
+            my $strChecksum = undef;
 
-            if ($stryArchiveFile[0] =~ "^${strArchive}-[0-f]+(\\.$oFile->{strCompressExtension}){0,1}\$" &&
-                $stryArchiveFile[0] !~ "^${strArchive}-${strChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+            if (!$bNoChecksum)
             {
-                confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recored with file does " .
-                                    "not match actual checksum of '${strChecksum}'", ERROR_CHECKSUM);
+                $strChecksum = $oFile->hash(PATH_BACKUP_TMP, $strDestinationFile, $bCompress);
+
+                if ($stryArchiveFile[0] =~ "^${strArchive}-[0-f]+(\\.$oFile->{strCompressExtension}){0,1}\$" &&
+                    $stryArchiveFile[0] !~ "^${strArchive}-${strChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+                {
+                    confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recored with file does " .
+                                        "not match actual checksum of '${strChecksum}'", ERROR_CHECKSUM);
+                }
             }
 
             # Set manifest values
@@ -1692,7 +1703,11 @@ sub backup
             $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
             $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODIFICATION_TIME, $lModificationTime);
             $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_SIZE, 16777216);
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+
+            if (defined($strChecksum))
+            {
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+            }
         }
     }
 

@@ -16,6 +16,7 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::ThreadGroup;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -28,10 +29,16 @@ sub new
     my $self = {};
     bless $self, $class;
 
+    &log(TRACE, ref($self) . " create [$self]");
+
+    $self->{iThreadId} = threads->tid();
+
     # Initialize thread and queues
     $self->{oThreadQueue} = Thread::Queue->new();
     $self->{oThreadResult} = Thread::Queue->new();
-    $self->{oThread} = threads->create(\&process_thread, $self);
+
+    $self->{oThreadGroup} = new BackRest::ThreadGroup('process_async');
+    $self->{oThreadGroup}->add(threads->create(\&process_thread, $self));
 
     return $self;
 }
@@ -39,17 +46,18 @@ sub new
 ####################################################################################################################################
 # THREAD_KILL
 ####################################################################################################################################
-sub thread_kill
-{
-    my $self = shift;
-
-    if (defined($self->{oThread}))
-    {
-        $self->{oThreadQueue}->enqueue(undef);
-        $self->{oThread}->join();
-        $self->{oThread} = undef;
-    }
-}
+# sub thread_kill
+# {
+#     my $self = shift;
+#
+#     if (defined($self->{oThreadGroup}))
+#     {
+#         $self->{oThreadQueue}->enqueue(undef);
+#         $self->{oThreadGroup}->complete();
+#         $self->{oThread}->join();
+#         $self->{oThread} = undef;
+#     }
+# }
 
 ####################################################################################################################################
 # DESTRUCTOR
@@ -58,7 +66,19 @@ sub DESTROY
 {
     my $self = shift;
 
-    $self->thread_kill();
+    if ($self->{iThreadId} != threads->tid())
+    {
+        return;
+    }
+
+    &log(TRACE, ref($self) . " destroy [$self]");
+
+    if (defined($self->{oThreadGroup}))
+    {
+        $self->{oThreadQueue}->enqueue(undef);
+        $self->{oThreadGroup}->complete();
+#        $self->{oThreadGroup} = undef;
+    }
 }
 
 ####################################################################################################################################
@@ -69,6 +89,9 @@ sub DESTROY
 sub process_thread
 {
     my $self = shift;
+
+    # When a KILL signal is received, immediately abort
+    $SIG{'KILL'} = sub {threads->exit();};
 
     while (my $strMessage = $self->{oThreadQueue}->dequeue())
     {

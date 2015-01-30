@@ -180,6 +180,8 @@ sub BackRestTestCommon_ExecuteEnd
     # Check the exit status and output an error if needed
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
+    &log(TRACE, "command exited with status ${iExitStatus}");
+
     if (defined($iExpectedExitStatus) && $iExitStatus == $iExpectedExitStatus)
     {
         return $iExitStatus;
@@ -519,7 +521,7 @@ sub BackRestTestCommon_ConfigCreate
     }
 
     $oParamHash{'global:log'}{'level-console'} = 'error';
-    $oParamHash{'global:log'}{'level-file'} = 'debug';
+    $oParamHash{'global:log'}{'level-file'} = 'trace';
 
     if ($strLocal eq BACKUP)
     {

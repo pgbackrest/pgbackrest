@@ -113,9 +113,13 @@ sub new
     my $strDefaultFilePermission = shift;
     my $iThreadIdx = shift;
 
+    &log(TRACE, 'BackRest::File create' . (defined($iThreadIdx) ? " 'thread ${iThreadIdx}'" : ''));
+
     # Create the class hash
     my $self = {};
     bless $self, $class;
+
+    $self->{iThreadId} = threads->tid();
 
     # Default compression extension to gz
     $self->{strCompressExtension} = 'gz';
@@ -154,19 +158,26 @@ sub new
 ####################################################################################################################################
 # DESTRUCTOR
 ####################################################################################################################################
-sub DEMOLISH
+sub DESTROY
 {
     my $self = shift;
 
-    if (defined($self->{oRemote}))
-    {
-        $self->{oRemote} = undef;
-    }
+    # if ($self->{iThreadId} != threads->tid())
+    # {
+    #     return;
+    # }
 
-    if (defined($self->{oProcessAsync}))
-    {
-        $self->{oProcessAsync} = undef;
-    }
+    &log(TRACE, 'BackRest::File destroy' . (defined($self->{iThreadIdx}) ? " 'thread $self->{iThreadIdx}'" : ''));
+
+    # if (defined($self->{oRemote}))
+    # {
+    #     $self->{oRemote} = undef;
+    # }
+    #
+    # if (defined($self->{oProcessAsync}))
+    # {
+    #     $self->{oProcessAsync} = undef;
+    # }
 }
 
 ####################################################################################################################################

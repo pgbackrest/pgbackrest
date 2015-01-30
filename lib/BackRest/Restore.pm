@@ -584,7 +584,7 @@ sub restore
     }
 
     # Create threads to process the thread queues
-    my $oThreadGroup = new BackRest::ThreadGroup();
+    my $oThreadGroup = new BackRest::ThreadGroup('restore');
 
     for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
     {
