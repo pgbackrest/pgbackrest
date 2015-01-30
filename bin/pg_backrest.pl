@@ -75,7 +75,6 @@ pg_backrest.pl [options] [operation]
 
 =cut
 
-
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
@@ -125,14 +124,11 @@ sub remote_exit
 
     if (defined($oRemote))
     {
-        $oRemote = undef;
+        $oRemote->thread_kill()
     }
-
-    BackRest::ThreadGroup::print();
 
     if (defined($iExitCode))
     {
-        &log(DEBUG, "process exited with code ${iExitCode}");
         exit $iExitCode;
     }
 }
@@ -265,8 +261,6 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
         {
             &log(INFO, 'No fork on archive local for TESTING');
         }
-
-        $oFile = undef;
     }
 
     # If no backup host is defined it makes no sense to run archive-push without a specified archive file so throw an error
@@ -335,8 +329,6 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
                 &log(DEBUG, 'no more logs to transfer - exiting');
             }
         }
-
-        $oFile = undef;
     #
     # };
 
@@ -422,8 +414,6 @@ if (operation_get() eq OP_ARCHIVE_GET)
 
     # Get the archive file
     remote_exit(archive_get(config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH), $ARGV[1], $ARGV[2]));
-
-    $oFile = undef;
 }
 
 ####################################################################################################################################
@@ -561,7 +551,6 @@ if (operation_get() eq OP_EXPIRE)
     lock_file_remove();
 }
 
-$oFile->DESTROY();
 remote_exit(0);
 };
 
