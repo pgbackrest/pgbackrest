@@ -169,7 +169,7 @@ The following backup types are supported:
 
 ##### no-start-stop
 
-This option prevents PgBackRest from running pg_start_backup() and pg_stop_backup() on the database.  In order for this to work Postgres should be shut down and PgBackRest will generate an error if it is not.
+This option prevents PgBackRest from running `pg_start_backup()` and `pg_stop_backup()` on the database.  In order for this to work Postgres should be shut down and PgBackRest will generate an error if it is not.
 
 The purpose of this option is to allow cold backups.  The `pg_xlog` directory is copied as-is and `backup::archive-required` is automatically set to `n` for the backup.
 
@@ -177,7 +177,7 @@ The purpose of this option is to allow cold backups.  The `pg_xlog` directory is
 
 When used with  `--no-start-stop` a backup will be run even if PgBackRest thinks that Postgres is running.  **This option should be used with extreme care as it will likely result in a bad backup.**
 
-There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and database volume can only be mounted read-only, it would be a good idea to take a backup even if postmaster.pid is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.
+There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and database volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.
 
 #### usage examples
 
@@ -210,15 +210,61 @@ Expire (rotate) any backups that exceed the defined retention.  Expiration is ru
 
 ### restore
 
+Restore a database from the PgBackRest repository.
+
+#### restore options
+
+##### set
+
+The backup set to be restored.  `latest` will restore the latest backup, otherwise provide the name of the backup to restore.  For example: `20150131-153358F` or `20150131-153358F_20150131-153401I`.
+
+##### delta
+
+By default the database base and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums if available and timestamp/size when checksums are not available.
+
+##### force
+
+By itself this option forces the database base and tablespace paths to be completely overwritten.  In combination with `--delta` a timestamp/size delta will be performed even if checksums are available.
+
+#### recovery options
+
+##### type
+
+The following recovery types are supported:
+
+- `default` - recover to the end of the archive stream.
+- `name` - recover the restore point specified in `--target`.
+- `xid` - recover to the transaction id specified in `--target`.
+- `time` - recover to the time specified in `--target`.
+- `preserve` - preserve the existing `recovery.conf` file.
+- `none` - no recovery past database becoming consistent.
+
+Note that the `none` option may produce duplicate WAL if the database is started with archive logging enabled.  It is recommended that a new stanza be created for production databases restored in this way.
+
+##### target
+
+Defines the recovery target when `--type` is `name`, `xid`, or `time`.  For example, `--type=time` and `--target=2015-01-30 14:15:11 EST`.
+
+##### target-exclusive
+
+Defines whether recovery to the target whould be exclusive (the default is inclusive) and is only valid when `--type` is `time` or `xid`.  For example, using `--target-exclusive` would exclude the contents of transaction `1007` when `--type=xid` and `-target=1007`.  See `recovery_target_inclusive` option in Postgres docs for more information.
+
+##### target-resume
+
+Specifies whether recovery should resume when the recovery target is reached.  See `pause_at_recovery_target` in Postgres docs for more information.
+
+##### target-timeline
+
+Recovers along the specified timeline.  See `recovery_target_timeline` in Postgres docs for more information.
+
+#### usage examples
+
 ```
-/path/to/pg_backrest.pl --stanza=db --set=latest --type=name --target=restore
+/path/to/pg_backrest.pl --stanza=db --set=latest --type=name --target=release
 ```
+Restores the latest database backup and then recovers to the `release` restore point.
 
-PgBackRest does not currently have a restore command - this is planned for the near future.  However, PgBackRest stores backups in a way that makes restoring very easy.  If `compress=n` it is even possible to start Postgres directly on the backup directory.
-
-In order to restore a backup, simply rsync the files from the base backup directory to your data directory.  If you have used compression, then recursively ungzip the files.  If you have tablespaces, repeat the process for each tablespace in the backup tablespace directory.
-
-It's best to practice restoring backups in advance of needing to do so.
+**MORE TO BE ADDED HERE**
 
 [reference this when writing about tablespace remapping]
 
@@ -275,6 +321,7 @@ Allows command line parameters to be passed to psql.
 required: no
 example: psql=--port=5433
 ```
+
 #### log section
 
 The log section defines logging-related settings.  The following log levels are supported:

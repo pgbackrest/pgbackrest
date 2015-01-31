@@ -62,12 +62,12 @@ pg_backrest.pl [options] [operation]
 
  Recovery Options:
     --type               type of recovery:
+                             default - recover to end of archive log stream
                              name - restore point target
                              time - timestamp target
                              xid - transaction id target
                              preserve - preserve the existing recovery.conf
                              none - no recovery past database becoming consistent
-                             default - recover to end of archive log stream
     --target             recovery target if type is name, time, or xid.
     --target-exclusive   stop just before the recovery target (default is inclusive).
     --target-resume      do not pause after recovery (default is to pause).
