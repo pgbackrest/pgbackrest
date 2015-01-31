@@ -70,6 +70,9 @@ sub process_thread
 {
     my $self = shift;
 
+    # When a KILL signal is received, immediately abort
+    $SIG{'KILL'} = sub {threads->exit();};
+
     while (my $strMessage = $self->{oThreadQueue}->dequeue())
     {
         my @stryMessage = split(':', $strMessage);

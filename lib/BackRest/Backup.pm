@@ -23,7 +23,7 @@ use BackRest::Db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_thread_kill archive_push archive_xfer archive_get archive_compress
+our @EXPORT = qw(backup_init backup_uninit backup_thread_kill archive_push archive_xfer archive_get archive_compress
                  backup backup_expire archive_list_get);
 
 my $oDb;
@@ -91,6 +91,14 @@ sub backup_init
     {
         confess &log(ERROR, 'thread_max must be between 1 and 32');
     }
+}
+
+####################################################################################################################################
+# BACKUP_UNINIT
+####################################################################################################################################
+sub backup_uninit
+{
+    undef($oFile);
 }
 
 ####################################################################################################################################
@@ -1675,24 +1683,32 @@ sub backup
             my $strFileLog = "pg_xlog/${strArchive}";
 
             # Get the checksum and compare against the one already on log log file (if there is one)
-            my $strChecksum = $oFile->hash(PATH_BACKUP_TMP, $strDestinationFile, $bCompress);
+            my $strChecksum = undef;
 
-            if ($stryArchiveFile[0] =~ "^${strArchive}-[0-f]+(\\.$oFile->{strCompressExtension}){0,1}\$" &&
-                $stryArchiveFile[0] !~ "^${strArchive}-${strChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+            if (!$bNoChecksum)
             {
-                confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recored with file does " .
-                                    "not match actual checksum of '${strChecksum}'", ERROR_CHECKSUM);
+                $strChecksum = $oFile->hash(PATH_BACKUP_TMP, $strDestinationFile, $bCompress);
+
+                if ($stryArchiveFile[0] =~ "^${strArchive}-[0-f]+(\\.$oFile->{strCompressExtension}){0,1}\$" &&
+                    $stryArchiveFile[0] !~ "^${strArchive}-${strChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+                {
+                    confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recored with file does " .
+                                        "not match actual checksum of '${strChecksum}'", ERROR_CHECKSUM);
+                }
             }
 
-            # Set manifest values
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_USER,
-                                  $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_USER));
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_GROUP,
-                                  $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_GROUP));
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODIFICATION_TIME, $lModificationTime);
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_SIZE, 16777216);
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+            if (defined($strChecksum))
+            {
+                # Set manifest values
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_USER,
+                                      $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_USER));
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_GROUP,
+                                      $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_GROUP));
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODIFICATION_TIME, $lModificationTime);
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_SIZE, 16777216);
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+            }
         }
     }
 
