@@ -23,7 +23,7 @@ use BackRest::Db;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_uninit backup_thread_kill archive_push archive_xfer archive_get archive_compress
+our @EXPORT = qw(backup_init backup_cleanup backup_thread_kill archive_push archive_xfer archive_get archive_compress
                  backup backup_expire archive_list_get);
 
 my $oDb;
@@ -94,9 +94,9 @@ sub backup_init
 }
 
 ####################################################################################################################################
-# BACKUP_UNINIT
+# BACKUP_CLEANUP
 ####################################################################################################################################
-sub backup_uninit
+sub backup_cleanup
 {
     undef($oFile);
 }

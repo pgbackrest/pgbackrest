@@ -551,7 +551,7 @@ if (operation_get() eq OP_EXPIRE)
     lock_file_remove();
 }
 
-backup_uninit();
+backup_cleanup();
 remote_exit(0);
 };
 
