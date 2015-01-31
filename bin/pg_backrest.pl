@@ -447,11 +447,11 @@ if (operation_get() eq OP_RESTORE)
     # Do the restore
     new BackRest::Restore
     (
-        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH),
+        config_key_load(CONFIG_SECTION_STANZA, CONFIG_KEY_PATH, true),
         param_get(PARAM_SET),
         config_section_load(CONFIG_SECTION_TABLESPACE_MAP),
         $oFile,
-        undef, #param_get(PARAM_THREAD),
+        config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_THREAD_MAX, true),
         param_get(PARAM_DELTA),
         param_get(PARAM_FORCE),
         param_get(PARAM_TYPE),

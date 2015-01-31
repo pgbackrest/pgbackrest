@@ -1007,7 +1007,7 @@ sub BackRestTestBackup_Restore
                ($bDelta ? ' delta' : '') .
                ($bForce ? ', force' : '') .
                ($strBackup ne 'latest' ? ", backup '${strBackup}'" : '') .
-               ($strType ? ", type '${strType}' " : '') .
+               ($strType ? ", type '${strType}'" : '') .
                ($strTarget ? ", target '${strTarget}'" : '') .
                ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
                (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .

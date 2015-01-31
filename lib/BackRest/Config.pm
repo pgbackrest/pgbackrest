@@ -345,6 +345,26 @@ sub config_key_load
     return $strValue;
 }
 
+####################################################################################################################################
+# CONFIG_KEY_SET
+####################################################################################################################################
+sub config_key_set
+{
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strValue = shift;
+
+    # Make sure all parameters are defined
+    if (!defined($strSection) || !defined($strKey) || !defined($strValue))
+    {
+        confess &log(ASSERT, 'section, key and value must all be defined');
+    }
+
+    # Set the value
+    $strSection = param_get(PARAM_STANZA) . ':' . $strSection;
+
+    $oConfig{$strSection}{$strKey} = $strValue;
+}
 
 ####################################################################################################################################
 # CONFIG_VALID
@@ -357,7 +377,7 @@ sub config_valid
     my $strSection;
     my $oSectionHashRef;
 
-    # Check recovery:option section
+    # Check [stanza]:recovery:option section
     $strSection = param_get(PARAM_STANZA) . ':' . CONFIG_SECTION_RECOVERY_OPTION;
     $oSectionHashRef = $oConfig{$strSection};
 
@@ -378,6 +398,18 @@ sub config_valid
                              CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND . "', '" . CONFIG_KEY_RECOVERY_END_COMMAND . "'", ERROR_CONFIG);
             }
         }
+    }
+
+    # Default thread-max
+    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)))
+    {
+        config_key_set(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX, 1);
+    }
+
+    if (!defined(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_THREAD_MAX)))
+    {
+        config_key_set(CONFIG_SECTION_RESTORE, CONFIG_KEY_THREAD_MAX,
+                       config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX, true));
     }
 }
 
