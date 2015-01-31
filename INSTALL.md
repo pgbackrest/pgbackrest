@@ -159,23 +159,19 @@ Expire (rotate) any backups that exceed the defined retention.  Expiration is ru
 
 ## structure
 
-PgBackRest stores files in a way that is easy for users to work with directly.  Each backup directory has two files and two subdirectories:
+PgBackRest stores files in a way that is easy for users to work with directly.  Each backup directory has one file and two subdirectories:
 
 1. `backup.manifest` file
 
 Stores information about all the directories, links, and files in the backup.  The file is plaintext and should be very clear, but documentation of the format is planned in a future release.
 
-2. `version` file
+2. `base` directory
 
-Contains the PgBackRest version that was used to create the backup.
+Contains the Postgres data directory as defined by the data_directory setting in `postgresql.conf`.
 
-3. `base` directory
+3. `tablespace` directory
 
-Contains the Postgres data directory as defined by the data_directory setting in postgresql.conf
-
-4. `tablespace` directory
-
-Contains each tablespace in a separate subdirectory.  The links in `base/pg_tblspc` are rewritten to this directory.
+If tablespaces are present in the database, contains each tablespace in a separate subdirectory.  Tablespace names are used for the subdirectories unless --no-start-stop is specified in which case oids will be used instead.  The links in `base/pg_tblspc` are rewritten to the tablespace directory in either case.
 
 ## restoring
 

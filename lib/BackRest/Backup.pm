@@ -699,7 +699,6 @@ sub backup_file_not_in_manifest
     {
         # Ignore certain files that will never be in the manifest
         if ($strName eq 'backup.manifest' ||
-            $strName eq 'version' ||
             $strName eq '.')
         {
             next;
@@ -1610,12 +1609,6 @@ sub backup
         &log(DEBUG, "creating backup path ${strBackupTmpPath}");
         $oFile->path_create(PATH_BACKUP_TMP);
     }
-
-    # Write the VERSION file
-    my $hVersionFile;
-    open($hVersionFile, '>', "${strBackupTmpPath}/" . FILE_VERSION) or confess 'unable to open version file';
-    print $hVersionFile version_get();
-    close($hVersionFile);
 
     # Save the backup manifest
     $oBackupManifest->save();
