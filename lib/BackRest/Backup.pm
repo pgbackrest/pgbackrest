@@ -1308,29 +1308,7 @@ sub backup
     # Build the backup manifest
     my %oTablespaceMap;
 
-    if ($bNoStartStop)
-    {
-        my %oTablespaceManifestHash;
-        $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/pg_tblspc', \%oTablespaceManifestHash);
-
-        foreach my $strName (sort(keys $oTablespaceManifestHash{name}))
-        {
-            if ($strName eq '.' or $strName eq '..')
-            {
-                next;
-            }
-
-            if ($oTablespaceManifestHash{name}{"${strName}"}{type} ne 'l')
-            {
-                confess &log(ERROR, "pg_tblspc/${strName} is not a link");
-            }
-
-            &log(DEBUG, "Found tablespace ${strName}");
-
-            $oTablespaceMap{oid}{"${strName}"}{name} = $strName;
-        }
-    }
-    else
+    if (!$bNoStartStop)
     {
         $oDb->tablespace_map_get(\%oTablespaceMap);
     }

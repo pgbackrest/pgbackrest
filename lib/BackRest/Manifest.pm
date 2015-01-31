@@ -503,7 +503,9 @@ sub test
 }
 
 ####################################################################################################################################
-# BUILD - Build the backup manifest
+# BUILD
+#
+# Build the manifest object.
 ####################################################################################################################################
 sub build
 {
@@ -519,6 +521,32 @@ sub build
     if (!defined($strLevel))
     {
         $strLevel = 'base';
+
+        # If bNoStartStop then build the tablespace map from pg_tblspc path
+        if ($bNoStartStop)
+        {
+            $oTablespaceMapRef = {};
+
+            my %oTablespaceManifestHash;
+            $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/pg_tblspc', \%oTablespaceManifestHash);
+
+            foreach my $strName (sort(keys $oTablespaceManifestHash{name}))
+            {
+                if ($strName eq '.' or $strName eq '..')
+                {
+                    next;
+                }
+
+                if ($oTablespaceManifestHash{name}{"${strName}"}{type} ne 'l')
+                {
+                    confess &log(ERROR, "pg_tblspc/${strName} is not a link");
+                }
+
+                &log(DEBUG, "Found tablespace ${strName}");
+
+                ${$oTablespaceMapRef}{oid}{"${strName}"}{name} = $strName;
+            }
+        }
     }
 
     # Get the manifest for this level
