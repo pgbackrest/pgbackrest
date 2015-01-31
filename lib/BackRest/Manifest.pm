@@ -8,12 +8,13 @@ use strict;
 use warnings;
 use Carp;
 
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 use Time::Local qw(timelocal);
 use Digest::SHA;
 
 use lib dirname($0);
 use BackRest::Utility;
+use BackRest::File;
 
 # Exports
 use Exporter qw(import);
@@ -499,6 +500,194 @@ sub test
     }
 
     return false;
+}
+
+####################################################################################################################################
+# BUILD - Build the backup manifest
+####################################################################################################################################
+sub build
+{
+    my $self = shift;
+    my $oFile = shift;
+    my $strDbClusterPath = shift;
+    my $oLastManifest = shift;
+    my $bNoStartStop = shift;
+    my $oTablespaceMapRef = shift;
+    my $strLevel = shift;
+
+    # If no level is defined then it must be base
+    if (!defined($strLevel))
+    {
+        $strLevel = 'base';
+    }
+
+    # Get the manifest for this level
+    my %oManifestHash;
+    $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash);
+
+    $self->set(MANIFEST_SECTION_BACKUP_PATH, $strLevel, undef, $strDbClusterPath);
+
+    # Loop though all paths/files/links in the manifest
+    foreach my $strName (sort(CORE::keys $oManifestHash{name}))
+    {
+        # Skip certain files during backup
+        if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) || # pg_xlog/ - this will be reconstructed
+            $strName =~ /^postmaster\.pid$/ ||                 # postmaster.pid - to avoid confusing postgres when restoring
+            $strName =~ /^recovery\.conf$/)                    # recovery.conf - doesn't make sense to backup this file
+        {
+            next;
+        }
+
+        my $cType = $oManifestHash{name}{"${strName}"}{type};
+        my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
+        my $strSection = "${strLevel}:path";
+
+        if ($cType eq 'f')
+        {
+            $strSection = "${strLevel}:file";
+        }
+        elsif ($cType eq 'l')
+        {
+            $strSection = "${strLevel}:link";
+        }
+        elsif ($cType ne 'd')
+        {
+            confess &log(ASSERT, "unrecognized file type $cType for file $strName");
+        }
+
+        # User and group required for all types
+        $self->set($strSection, $strName, MANIFEST_SUBKEY_USER, $oManifestHash{name}{"${strName}"}{user});
+        $self->set($strSection, $strName, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{"${strName}"}{group});
+
+        # Mode for required file and path type only
+        if ($cType eq 'f' || $cType eq 'd')
+        {
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{"${strName}"}{permission});
+        }
+
+        # Modification time and size required for file type only
+        if ($cType eq 'f')
+        {
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME,
+                       $oManifestHash{name}{"${strName}"}{modification_time} + 0);
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{"${strName}"}{size} + 0);
+        }
+
+        # Link destination required for link type only
+        if ($cType eq 'l')
+        {
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_DESTINATION,
+                       $oManifestHash{name}{"${strName}"}{link_destination});
+
+            # If this is a tablespace then follow the link
+            if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq 'base')
+            {
+                my $strTablespaceOid = basename($strName);
+                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"${strTablespaceOid}"}{name};
+
+                $self->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                           MANIFEST_SUBKEY_LINK, $strTablespaceOid);
+                $self->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                           MANIFEST_SUBKEY_PATH, $strLinkDestination);
+
+                $self->build($oFile, $strLinkDestination, $oLastManifest, $bNoStartStop, $oTablespaceMapRef,
+                             "tablespace:${strTablespaceName}");
+            }
+        }
+    }
+
+    # If this is the base level then do post-processing
+    if ($strLevel eq 'base')
+    {
+        my $bTimeInFuture = false;
+
+        my $lTimeBegin = $oFile->wait(PATH_DB_ABSOLUTE);
+
+        # Loop through all backup paths (base and tablespaces)
+        foreach my $strPathKey ($self->keys(MANIFEST_SECTION_BACKUP_PATH))
+        {
+            my $strSection = "${strPathKey}:file";
+
+            # Make sure file section exists
+            if ($self->test($strSection))
+            {
+                # Loop though all files
+                foreach my $strName ($self->keys($strSection))
+                {
+                    # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
+                    # allow a reference
+                    if ($self->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) > $lTimeBegin ||
+                        (defined($oLastManifest) && $oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y')))
+                    {
+                        $bTimeInFuture = true;
+
+                        # Only mark as future if still in the future in the current backup
+                        if ($self->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) > $lTimeBegin)
+                        {
+                            $self->set($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y');
+                        }
+                    }
+                    # Else check if modification time and size are unchanged since last backup
+                    elsif (defined($oLastManifest) && $oLastManifest->test($strSection, $strName) &&
+                           $self->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) ==
+                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
+                           $self->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) ==
+                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME))
+                    {
+                        # Copy reference from previous backup if possible
+                        if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_REFERENCE))
+                        {
+                            $self->set($strSection, $strName, MANIFEST_SUBKEY_REFERENCE,
+                                       $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE));
+                        }
+                        # Otherwise the reference is to the previous backup
+                        else
+                        {
+                            $self->set($strSection, $strName, MANIFEST_SUBKEY_REFERENCE,
+                                       $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+                        }
+
+                        # Copy the checksum from previous manifest
+                        if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM))
+                        {
+                            $self->set($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM,
+                                       $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM));
+                        }
+
+                        # Build the manifest reference list - not used for processing but is useful for debugging
+                        my $strFileReference = $self->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE);
+
+                        my $strManifestReference = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE,
+                                                              undef, false);
+
+                        if (!defined($strManifestReference))
+                        {
+                            $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE, undef, $strFileReference);
+                        }
+                        else
+                        {
+                            if ($strManifestReference !~ /^$strFileReference|,$strFileReference/)
+                            {
+                                $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE, undef,
+                                           $strManifestReference . ",${strFileReference}");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        # Warn if any files in the current backup are in the future
+        if ($bTimeInFuture)
+        {
+            &log(WARN, "some files have timestamps in the future - they will be copied to prevent possible race conditions");
+        }
+
+        # Record the time when copying will start
+        $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
+                   timestamp_string_get(undef, $lTimeBegin + 1));
+    }
+
 }
 
 1;
