@@ -212,23 +212,23 @@ Expire (rotate) any backups that exceed the defined retention.  Expiration is ru
 
 Restore a database from the PgBackRest repository.
 
-#### restore options
+* restore options
 
-##### set
+  * set
 
 The backup set to be restored.  `latest` will restore the latest backup, otherwise provide the name of the backup to restore.  For example: `20150131-153358F` or `20150131-153358F_20150131-153401I`.
 
-##### delta
+  * delta
 
 By default the database base and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums if available and timestamp/size when checksums are not available.
 
-##### force
+  * force
 
 By itself this option forces the database base and tablespace paths to be completely overwritten.  In combination with `--delta` a timestamp/size delta will be performed even if checksums are available.
 
-#### recovery options
+* recovery options
 
-##### type
+  * type
 
 The following recovery types are supported:
 
@@ -241,23 +241,23 @@ The following recovery types are supported:
 
 Note that the `none` option may produce duplicate WAL if the database is started with archive logging enabled.  It is recommended that a new stanza be created for production databases restored in this way.
 
-##### target
+  * target
 
 Defines the recovery target when `--type` is `name`, `xid`, or `time`.  For example, `--type=time` and `--target=2015-01-30 14:15:11 EST`.
 
-##### target-exclusive
+  * target-exclusive
 
 Defines whether recovery to the target whould be exclusive (the default is inclusive) and is only valid when `--type` is `time` or `xid`.  For example, using `--target-exclusive` would exclude the contents of transaction `1007` when `--type=xid` and `-target=1007`.  See `recovery_target_inclusive` option in Postgres docs for more information.
 
-##### target-resume
+  * target-resume
 
 Specifies whether recovery should resume when the recovery target is reached.  See `pause_at_recovery_target` in Postgres docs for more information.
 
-##### target-timeline
+  * target-timeline
 
 Recovers along the specified timeline.  See `recovery_target_timeline` in Postgres docs for more information.
 
-#### usage examples
+  * usage examples
 
 ```
 /path/to/pg_backrest.pl --stanza=db --set=latest --type=name --target=release
