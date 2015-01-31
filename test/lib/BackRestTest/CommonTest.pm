@@ -30,13 +30,13 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRe
                  BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
                  BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove BackRestTestCommon_PathCopy BackRestTestCommon_PathMove
-                 BackRestTestCommon_ConfigCreate BackRestTestCommon_ConfigRemap BackRestTestCommon_Run BackRestTestCommon_Cleanup
-                 BackRestTestCommon_PgSqlBinPathGet BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet
-                 BackRestTestCommon_CommandRemoteGet BackRestTestCommon_HostGet BackRestTestCommon_UserGet
-                 BackRestTestCommon_GroupGet BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet
-                 BackRestTestCommon_DataPathGet BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet
-                 BackRestTestCommon_DbPathGet BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbTablespacePathGet
-                 BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_ConfigCreate BackRestTestCommon_ConfigRemap BackRestTestCommon_ConfigRecovery
+                 BackRestTestCommon_Run BackRestTestCommon_Cleanup BackRestTestCommon_PgSqlBinPathGet
+                 BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
+                 BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
+                 BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
+                 BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet
+                 BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbTablespacePathGet BackRestTestCommon_DbPortGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -471,6 +471,50 @@ sub BackRestTestCommon_ConfigRemap
             ${$oManifestRef}{'backup:tablespace'}{$strRemap}{'path'} = $strRemapPath;
             ${$oManifestRef}{'base:link'}{"pg_tblspc/${strRemap}"}{'link_destination'} = $strRemapPath;
         }
+    }
+
+    # Resave the config file
+    ini_save($strConfigFile, \%oConfig);
+
+    # Load remote config file
+    if ($bRemote)
+    {
+        ini_save($strRemoteConfigFile, \%oRemoteConfig);
+        BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+    }
+}
+####################################################################################################################################
+# BackRestTestCommon_ConfigRecovery
+####################################################################################################################################
+sub BackRestTestCommon_ConfigRecovery
+{
+    my $oRecoveryHashRef = shift;
+    my $bRemote = shift;
+
+    # Create config filename
+    my $strConfigFile = BackRestTestCommon_DbPathGet() . '/pg_backrest.conf';
+    my $strStanza = BackRestTestCommon_StanzaGet();
+
+    # Load Config file
+    my %oConfig;
+    ini_load($strConfigFile, \%oConfig);
+
+    # Load remote config file
+    my %oRemoteConfig;
+    my $strRemoteConfigFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf.remote';
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("mv " . BackRestTestCommon_BackupPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
+        ini_load($strRemoteConfigFile, \%oRemoteConfig);
+    }
+
+    # Rewrite remap section
+    delete($oConfig{"${strStanza}:recovery:option"});
+
+    foreach my $strOption (sort(keys $oRecoveryHashRef))
+    {
+        $oConfig{"${strStanza}:recovery:option"}{$strOption} = ${$oRecoveryHashRef}{$strOption};
     }
 
     # Resave the config file

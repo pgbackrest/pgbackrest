@@ -38,7 +38,7 @@ sub new
     my $strTarget = shift;          # Recovery target
     my $bTargetExclusive = shift;   # Target exlusive option
     my $bTargetResume = shift;      # Target resume option
-    my $bTargetTimeline = shift;    # Target timeline option
+    my $strTargetTimeline = shift;  # Target timeline option
     my $oRecoveryRef = shift;       # Other recovery options
     my $strStanza = shift;          # Restore stanza
     my $strBackRestBin = shift;     # Absolute backrest filename
@@ -59,7 +59,7 @@ sub new
     $self->{strTarget} = $strTarget;
     $self->{bTargetExclusive} = $bTargetExclusive;
     $self->{bTargetResume} = $bTargetResume;
-    $self->{bTargetTimeline} = $bTargetTimeline;
+    $self->{strTargetTimeline} = $strTargetTimeline;
     $self->{oRecoveryRef} = $oRecoveryRef;
     $self->{strStanza} = $strStanza;
     $self->{strBackRestBin} = $strBackRestBin;
@@ -478,19 +478,31 @@ sub recovery
 
     # Write the recovery options from pg_backrest.conf
     my $strRecovery = '';
+    my $bRestoreCommandOverride = false;
 
-    if (defined($self->{strRecoveryRef}))
+    if (defined($self->{oRecoveryRef}))
     {
-        foreach my $strKey (sort(keys $self->{strRecoveryRef}))
+        foreach my $strKey (sort(keys $self->{oRecoveryRef}))
         {
-            $strRecovery .= ${$self->{strRecoveryRef}}{$strKey} . "\n";
+            my $strPgKey = $strKey;
+            $strPgKey =~ s/\-/\_/g;
+
+            if ($strKey eq CONFIG_KEY_RESTORE_COMMAND)
+            {
+                $bRestoreCommandOverride = true;
+            }
+
+            $strRecovery .= "$strPgKey = '${$self->{oRecoveryRef}}{$strKey}'\n";
         }
     }
 
     # Write the restore command
-    $strRecovery .=  "restore_command = '$self->{strBackRestBin} --stanza=$self->{strStanza}" .
-                     (defined($self->{strConfigFile}) ? " --config=$self->{strConfigFile}" : '') .
-                     " archive-get %f \"%p\"'\n";
+    if (!$bRestoreCommandOverride)
+    {
+        $strRecovery .=  "restore_command = '$self->{strBackRestBin} --stanza=$self->{strStanza}" .
+                         (defined($self->{strConfigFile}) ? " --config=$self->{strConfigFile}" : '') .
+                         " archive-get %f \"%p\"'\n";
+    }
 
     # If RECOVERY_TYPE_DEFAULT do not write target options
     if ($self->{strType} ne RECOVERY_TYPE_DEFAULT)
@@ -503,24 +515,18 @@ sub recovery
         {
             $strRecovery .= "recovery_target_inclusive = false\n";
         }
+    }
 
-        # Write recovery_target_inclusive
-        if ($self->{bTargetExclusive})
-        {
-            $strRecovery .= "recovery_target_inclusive = false\n";
-        }
+    # Write pause_at_recovery_target
+    if ($self->{bTargetResume})
+    {
+        $strRecovery .= "pause_at_recovery_target = false\n";
+    }
 
-        # Write pause_at_recovery_target
-        if ($self->{bTargetResult})
-        {
-            $strRecovery .= "pause_at_recovery_target = false\n";
-        }
-
-        # Write recovery_target_timeline
-        if (defined($self->{strTargetTimeline}))
-        {
-            $strRecovery .= "recovery_target_timeline = $self->{strTargetTimeline}\n";
-        }
+    # Write recovery_target_timeline
+    if (defined($self->{strTargetTimeline}))
+    {
+        $strRecovery .= "recovery_target_timeline = $self->{strTargetTimeline}\n";
     }
 
     # Write recovery.conf

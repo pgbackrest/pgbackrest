@@ -36,8 +36,8 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
                  PARAM_VERSION PARAM_HELP PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
-                 CONFIG_SECTION_RESTORE CONFIG_SECTION_RECOVERY CONFIG_SECTION_TABLESPACE_MAP CONFIG_SECTION_ARCHIVE
-                 CONFIG_SECTION_RETENTION CONFIG_SECTION_STANZA
+                 CONFIG_SECTION_RESTORE CONFIG_SECTION_RECOVERY CONFIG_SECTION_RECOVERY_OPTION CONFIG_SECTION_TABLESPACE_MAP
+                 CONFIG_SECTION_ARCHIVE CONFIG_SECTION_RETENTION CONFIG_SECTION_STANZA
 
                  CONFIG_KEY_USER CONFIG_KEY_HOST CONFIG_KEY_PATH
 
@@ -49,7 +49,10 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
                  CONFIG_KEY_COMPRESS CONFIG_KEY_CHECKSUM CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
 
                  CONFIG_KEY_FULL_RETENTION CONFIG_KEY_DIFFERENTIAL_RETENTION CONFIG_KEY_ARCHIVE_RETENTION_TYPE
-                 CONFIG_KEY_ARCHIVE_RETENTION);
+                 CONFIG_KEY_ARCHIVE_RETENTION
+
+                 CONFIG_KEY_STANDBY_MODE CONFIG_KEY_PRIMARY_CONNINFO CONFIG_KEY_TRIGGER_FILE CONFIG_KEY_RESTORE_COMMAND
+                 CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND CONFIG_KEY_RECOVERY_END_COMMAND);
 
 ####################################################################################################################################
 # File/path constants
@@ -135,6 +138,7 @@ use constant
     CONFIG_SECTION_BACKUP              => 'backup',
     CONFIG_SECTION_RESTORE             => 'restore',
     CONFIG_SECTION_RECOVERY            => 'recovery',
+    CONFIG_SECTION_RECOVERY_OPTION     => 'recovery:option',
     CONFIG_SECTION_TABLESPACE_MAP      => 'tablespace:map',
     CONFIG_SECTION_ARCHIVE             => 'archive',
     CONFIG_SECTION_RETENTION           => 'retention',
@@ -163,7 +167,14 @@ use constant
     CONFIG_KEY_FULL_RETENTION          => 'full-retention',
     CONFIG_KEY_DIFFERENTIAL_RETENTION  => 'differential-retention',
     CONFIG_KEY_ARCHIVE_RETENTION_TYPE  => 'archive-retention-type',
-    CONFIG_KEY_ARCHIVE_RETENTION       => 'archive-retention'
+    CONFIG_KEY_ARCHIVE_RETENTION       => 'archive-retention',
+
+    CONFIG_KEY_STANDBY_MODE            => 'standby-mode',
+    CONFIG_KEY_PRIMARY_CONNINFO        => 'primary-conninfo',
+    CONFIG_KEY_TRIGGER_FILE            => 'trigger-file',
+    CONFIG_KEY_RESTORE_COMMAND         => 'restore-command',
+    CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND => 'archive-cleanup-command',
+    CONFIG_KEY_RECOVERY_END_COMMAND    => 'recovery-end-command'
 };
 
 ####################################################################################################################################
@@ -221,6 +232,7 @@ sub config_load
     # Get and validate the operation
     $strOperation = $ARGV[0];
 
+    # Validate params
     param_valid();
 
     # # Validate thread parameter
@@ -254,6 +266,9 @@ sub config_load
     # Set the log levels
     log_level_set(uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_FILE, true, INFO)),
                   uc(config_key_load(CONFIG_SECTION_LOG, CONFIG_KEY_LEVEL_CONSOLE, true, ERROR)));
+
+    # Validate config
+    config_valid();
 
     # Set test parameters
     test_set(param_get(PARAM_TEST), param_get(PARAM_TEST_DELAY));
@@ -328,6 +343,42 @@ sub config_key_load
     }
 
     return $strValue;
+}
+
+
+####################################################################################################################################
+# CONFIG_VALID
+#
+# Make sure the configuration is valid.
+####################################################################################################################################
+sub config_valid
+{
+    # Local variables
+    my $strSection;
+    my $oSectionHashRef;
+
+    # Check recovery:option section
+    $strSection = param_get(PARAM_STANZA) . ':' . CONFIG_SECTION_RECOVERY_OPTION;
+    $oSectionHashRef = $oConfig{$strSection};
+
+    if (defined($oSectionHashRef) && keys($oSectionHashRef) != 0)
+    {
+        foreach my $strKey (sort(keys($oSectionHashRef)))
+        {
+            if ($strKey ne CONFIG_KEY_STANDBY_MODE &&
+                $strKey ne CONFIG_KEY_PRIMARY_CONNINFO &&
+                $strKey ne CONFIG_KEY_TRIGGER_FILE &&
+                $strKey ne CONFIG_KEY_RESTORE_COMMAND &&
+                $strKey ne CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND &&
+                $strKey ne CONFIG_KEY_RECOVERY_END_COMMAND)
+            {
+                confess &log(ERROR, "invalid key '${strKey}' for section '${strSection}', must be: '" .
+                             CONFIG_KEY_STANDBY_MODE . "', '" . CONFIG_KEY_PRIMARY_CONNINFO . "', '" .
+                             CONFIG_KEY_TRIGGER_FILE . "', '" . CONFIG_KEY_RESTORE_COMMAND . "', '" .
+                             CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND . "', '" . CONFIG_KEY_RECOVERY_END_COMMAND . "'", ERROR_CONFIG);
+            }
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -429,8 +480,8 @@ sub param_valid
         confess &log(ERROR, PARAM_TARGET . ' is only required ' . $strTargetMessage, ERROR_PARAM);
     }
 
-    # Check target-resume, target-timeline parameters - can only be used when target is specified
-    if ((defined(param_get(PARAM_TARGET_RESUME)) || defined(param_get(PARAM_TARGET_TIMELINE))) && !defined($strTarget))
+    # Check target-resume - can only be used when target is specified
+    if (defined(param_get(PARAM_TARGET_RESUME)) && !defined($strTarget))
     {
         confess &log(ERROR, PARAM_TARGET_RESUME . ' and ' . PARAM_TARGET_TIMELINE .
                             ' are only valid when target is specified', ERROR_PARAM);

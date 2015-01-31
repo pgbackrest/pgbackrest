@@ -362,7 +362,7 @@ sub archive_xfer
 
     foreach my $strFile (sort(keys $oManifestHash{name}))
     {
-        if ($strFile =~ /^[0-F]{16}\/[0-F]{24}.*/)
+        if ($strFile =~ /^[0-F]{16}\/[0-F]{24}.*/ || $strFile =~ /^[0-F]{8}\.history$/)
         {
             push @stryFile, $strFile;
 
