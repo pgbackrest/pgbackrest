@@ -666,6 +666,14 @@ sub restore_thread
                         $oFileThread->hash(PATH_DB_ABSOLUTE, $strDestinationFile) eq $strChecksum)
                     {
                         &log(DEBUG, "${strDestinationFile} exists and matches backup checksum ${strChecksum}");
+
+                        # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
+                        # presents a pristine version of the database.
+                        utime($oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
+                              $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
+                              $strDestinationFile)
+                            or confess &log(ERROR, "unable to set time for ${strDestinationFile}");
+
                         next;
                     }
                     # Else use size/timestamp delta

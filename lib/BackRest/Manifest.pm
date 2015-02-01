@@ -530,7 +530,7 @@ sub build
             my %oTablespaceManifestHash;
             $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/pg_tblspc', \%oTablespaceManifestHash);
 
-            foreach my $strName (sort(keys $oTablespaceManifestHash{name}))
+            foreach my $strName (sort(CORE::keys $oTablespaceManifestHash{name}))
             {
                 if ($strName eq '.' or $strName eq '..')
                 {

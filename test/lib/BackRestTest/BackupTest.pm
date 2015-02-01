@@ -1016,6 +1016,26 @@ sub BackRestTestBackup_Restore
                (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
                (defined($strComment) ? " (${strComment})" : ''));
 
+    if (!defined($oExpectedManifestRef))
+    {
+        # Change permissions on the backup path so it can be read
+        if ($bRemote)
+        {
+            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+        }
+
+        my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
+                                                       "/backup/${strStanza}/${strBackup}/backup.manifest", true);
+
+        $oExpectedManifestRef = $oExpectedManifest->{oManifest};
+
+        # Change permissions on the backup path back before unit tests continue
+        if ($bRemote)
+        {
+            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+        }
+    }
+
     if (defined($oRemapHashRef))
     {
         BackRestTestCommon_ConfigRemap($oRemapHashRef, $oExpectedManifestRef, $bRemote);
@@ -1038,6 +1058,102 @@ sub BackRestTestBackup_Restore
                                (defined($bTargetResume) && $bTargetResume ? " --target-resume" : '') .
                                " --stanza=${strStanza} restore",
                                undef, undef, undef, $iExpectedExitStatus);
+
+    if (!defined($iExpectedExitStatus))
+    {
+        BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $oExpectedManifestRef);
+    }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_RestoreCompare
+####################################################################################################################################
+sub BackRestTestBackup_RestoreCompare
+{
+    my $oFile = shift;
+    my $strStanza = shift;
+    my $bRemote = shift;
+    my $strBackup = shift;
+    my $oExpectedManifestRef = shift;
+
+    my $strTestPath = BackRestTestCommon_TestPathGet();
+
+    # Load the last manifest if it exists
+    my $oLastManifest = undef;
+
+    if (defined(${$oExpectedManifestRef}{'backup'}{'prior'}))
+    {
+        $oLastManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
+                                                "/backup/${strStanza}/${strBackup}/backup.manifest", true);
+    }
+
+    # Generate the actual manifest
+    my $oActualManifest = new BackRest::Manifest("${strTestPath}/actual.manifest", false);
+
+    my %oTablespaceMap;
+    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, false, \%oTablespaceMap);
+    delete(${$oActualManifest->{oManifest}}{'backup'}{'timestamp-copy-start'});
+
+    # Build paths/links in each restore path
+    if (defined(${$oExpectedManifestRef}{'backup:option'}{checksum}) && ${$oExpectedManifestRef}{'backup:option'}{checksum} eq 'y')
+    {
+        foreach my $strSectionPathKey ($oActualManifest->keys('backup:path'))
+        {
+            my $strSectionPath = $oActualManifest->get('backup:path', $strSectionPathKey);
+
+            # Create all paths in the manifest that do not already exist
+            my $strSection = "${strSectionPathKey}:file";
+
+            foreach my $strName ($oActualManifest->keys($strSection))
+            {
+                if ($oActualManifest->get($strSection, $strName, 'size') != 0)
+                {
+                    $oActualManifest->set($strSection, $strName, 'checksum',
+                                          $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
+                }
+            }
+        }
+    }
+
+    # Now get rid of all pg_xlog files in the actual and expected manifests
+    my $strSection = "base:file";
+
+    foreach my $strName ($oActualManifest->keys($strSection))
+    {
+        if ($strName =~ /^pg_xlog\/.*$/)
+        {
+            $oActualManifest->remove($strSection, $strName);
+        }
+    }
+
+    foreach my $strName (sort(keys(${$oExpectedManifestRef}{$strSection})))
+    {
+        if ($strName =~ /^pg_xlog\/.*$/)
+        {
+            delete(${$oExpectedManifestRef}{$strSection}{$strName});
+        }
+    }
+
+    delete(${$oExpectedManifestRef}{'backup:option'});
+    delete(${$oExpectedManifestRef}{'backup'}{'archive-start'});
+    delete(${$oExpectedManifestRef}{'backup'}{'archive-stop'});
+    delete(${$oExpectedManifestRef}{'backup'}{'label'});
+    delete(${$oExpectedManifestRef}{'backup'}{'type'});
+    delete(${$oExpectedManifestRef}{'backup'}{'version'});
+    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-db-start'});
+    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-db-stop'});
+    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-start'});
+    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-stop'});
+    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-copy-start'});
+    delete(${$oExpectedManifestRef}{'backup'}{'checksum'});
+
+    ini_save("${strTestPath}/actual.manifest", $oActualManifest->{oManifest});
+    ini_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);
+
+    BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
+
+    $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
+    $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/actual.manifest");
 }
 
 ####################################################################################################################################
