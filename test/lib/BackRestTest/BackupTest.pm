@@ -22,6 +22,7 @@ use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Config;
+use BackRest::Manifest;
 use BackRest::File;
 use BackRest::Remote;
 
@@ -1003,6 +1004,8 @@ sub BackRestTestBackup_Restore
     $bDelta = defined($bDelta) ? $bDelta : false;
     $bForce = defined($bForce) ? $bForce : false;
 
+    my $bSynthetic = defined($oExpectedManifestRef) ? true : false;
+
     &log(INFO, '        restore' .
                ($bDelta ? ' delta' : '') .
                ($bForce ? ', force' : '') .
@@ -1061,7 +1064,7 @@ sub BackRestTestBackup_Restore
 
     if (!defined($iExpectedExitStatus))
     {
-        BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $oExpectedManifestRef);
+        BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $bSynthetic, $oExpectedManifestRef);
     }
 }
 
@@ -1074,6 +1077,7 @@ sub BackRestTestBackup_RestoreCompare
     my $strStanza = shift;
     my $bRemote = shift;
     my $strBackup = shift;
+    my $bSynthetic = shift;
     my $oExpectedManifestRef = shift;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
@@ -1083,18 +1087,35 @@ sub BackRestTestBackup_RestoreCompare
 
     if (defined(${$oExpectedManifestRef}{'backup'}{'prior'}))
     {
+        # Change permissions on the backup path so it can be read
+        if ($bRemote)
+        {
+            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+        }
+
+        my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
+                                                       "/backup/${strStanza}/${strBackup}/backup.manifest", true);
+
         $oLastManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
-                                                "/backup/${strStanza}/${strBackup}/backup.manifest", true);
+                                                "/backup/${strStanza}/" . ${$oExpectedManifestRef}{'backup'}{'prior'} .
+                                                '/backup.manifest', true);
+
+        # Change permissions on the backup path back before unit tests continue
+        if ($bRemote)
+        {
+            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+        }
+
     }
 
     # Generate the actual manifest
     my $oActualManifest = new BackRest::Manifest("${strTestPath}/actual.manifest", false);
 
-    my %oTablespaceMap;
-    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, false, \%oTablespaceMap);
-    delete(${$oActualManifest->{oManifest}}{'backup'}{'timestamp-copy-start'});
+    my $oTablespaceMapRef = undef;
+    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, $bSynthetic, undef);
 
-    # Build paths/links in each restore path
+    # Generate checksums for all files if required
+    # Also fudge size if this is a synthetic test - sizes may change during backup.
     foreach my $strSectionPathKey ($oActualManifest->keys('backup:path'))
     {
         my $strSectionPath = $oActualManifest->get('backup:path', $strSectionPathKey);
@@ -1104,7 +1125,10 @@ sub BackRestTestBackup_RestoreCompare
 
         foreach my $strName ($oActualManifest->keys($strSection))
         {
-            $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
+            if (!$bSynthetic)
+            {
+                $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
+            }
 
             if ($oActualManifest->get($strSection, $strName, 'size') != 0 &&
                 defined(${$oExpectedManifestRef}{'backup:option'}{checksum}) &&
@@ -1116,37 +1140,40 @@ sub BackRestTestBackup_RestoreCompare
         }
     }
 
-    # Now get rid of all pg_xlog files in the actual and expected manifests
-    # my $strSection = "base:file";
-    #
-    # foreach my $strName ($oActualManifest->keys($strSection))
-    # {
-    #     if ($strName =~ /^pg_xlog\/.*$/)
-    #     {
-    #         $oActualManifest->remove($strSection, $strName);
-    #     }
-    # }
-    #
-    # foreach my $strName (sort(keys(${$oExpectedManifestRef}{$strSection})))
-    # {
-    #     if ($strName =~ /^pg_xlog\/.*$/)
-    #     {
-    #         delete(${$oExpectedManifestRef}{$strSection}{$strName});
-    #     }
-    # }
+    # Set actual to expected for settings that always change from backup to backup
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM, undef,
+                          ${$oExpectedManifestRef}{'backup:option'}{checksum});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef,
+                          ${$oExpectedManifestRef}{'backup:option'}{compress});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef,
+                          ${$oExpectedManifestRef}{'backup:option'}{hardlink});
 
-    delete(${$oExpectedManifestRef}{'backup:option'});
-    delete(${$oExpectedManifestRef}{'backup'}{'archive-start'});
-    delete(${$oExpectedManifestRef}{'backup'}{'archive-stop'});
-    delete(${$oExpectedManifestRef}{'backup'}{'label'});
-    delete(${$oExpectedManifestRef}{'backup'}{'type'});
-    delete(${$oExpectedManifestRef}{'backup'}{'version'});
-    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-db-start'});
-    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-db-stop'});
-    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-start'});
-    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-stop'});
-    delete(${$oExpectedManifestRef}{'backup'}{'timestamp-copy-start'});
-    delete(${$oExpectedManifestRef}{'backup'}{'checksum'});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION, undef,
+                          ${$oExpectedManifestRef}{'backup'}{version});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
+                          ${$oExpectedManifestRef}{'backup'}{'timestamp-copy-start'});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef,
+                          ${$oExpectedManifestRef}{'backup'}{'timestamp-start'});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef,
+                          ${$oExpectedManifestRef}{'backup'}{'timestamp-stop'});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
+                          ${$oExpectedManifestRef}{'backup'}{'label'});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
+                          ${$oExpectedManifestRef}{'backup'}{'type'});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM, undef,
+                          ${$oExpectedManifestRef}{'backup'}{'checksum'});
+
+    if (!$bSynthetic)
+    {
+        $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef,
+                              ${$oExpectedManifestRef}{'backup'}{'archive-start'});
+        $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef,
+                              ${$oExpectedManifestRef}{'backup'}{'archive-stop'});
+        $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_START, undef,
+                              ${$oExpectedManifestRef}{'backup'}{'timestamp-db-start'});
+        $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_STOP, undef,
+                              ${$oExpectedManifestRef}{'backup'}{'timestamp-db-stop'});
+    }
 
     ini_save("${strTestPath}/actual.manifest", $oActualManifest->{oManifest});
     ini_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);

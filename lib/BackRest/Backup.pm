@@ -1235,7 +1235,7 @@ sub backup
     my $oBackupManifest = new BackRest::Manifest($strBackupConfFile, false);
 
     # Find the previous backup based on the type
-    my $oLastManifest;
+    my $oLastManifest = undef;
 
     my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
 
@@ -1243,11 +1243,8 @@ sub backup
     {
         $oLastManifest = new BackRest::Manifest($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest");
 
-        my $strLastBackupLabel = $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
-
-        &log(INFO, "last backup label: ${strLastBackupLabel}, version " .
-             $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION));
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, $strLastBackupLabel);
+        &log(INFO, 'last backup label: ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
+                   ', version ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION));
     }
     else
     {

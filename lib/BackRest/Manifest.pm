@@ -517,10 +517,18 @@ sub build
     my $oTablespaceMapRef = shift;
     my $strLevel = shift;
 
+    &log(DEBUG, 'Manifest->build');
+
     # If no level is defined then it must be base
     if (!defined($strLevel))
     {
         $strLevel = 'base';
+
+        if (defined($oLastManifest))
+        {
+            $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef,
+                       $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+        }
 
         # If bNoStartStop then build the tablespace map from pg_tblspc path
         if ($bNoStartStop)
@@ -537,14 +545,14 @@ sub build
                     next;
                 }
 
-                if ($oTablespaceManifestHash{name}{"${strName}"}{type} ne 'l')
+                if ($oTablespaceManifestHash{name}{$strName}{type} ne 'l')
                 {
                     confess &log(ERROR, "pg_tblspc/${strName} is not a link");
                 }
 
                 &log(DEBUG, "Found tablespace ${strName}");
 
-                ${$oTablespaceMapRef}{oid}{"${strName}"}{name} = $strName;
+                ${$oTablespaceMapRef}{oid}{$strName}{name} = $strName;
             }
         }
     }
@@ -611,7 +619,7 @@ sub build
             if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq 'base')
             {
                 my $strTablespaceOid = basename($strName);
-                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{"${strTablespaceOid}"}{name};
+                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{$strTablespaceOid}{name};
 
                 $self->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
                            MANIFEST_SUBKEY_LINK, $strTablespaceOid);
