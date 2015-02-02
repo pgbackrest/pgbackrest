@@ -585,7 +585,7 @@ sub restore
                 $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue("${strPathKey}|${strName}");
             }
 
-            $oyRestoreQueue[@oyRestoreQueue - 1]->end();
+            $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue(undef);
         }
     }
 
