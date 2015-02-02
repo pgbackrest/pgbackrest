@@ -1095,44 +1095,45 @@ sub BackRestTestBackup_RestoreCompare
     delete(${$oActualManifest->{oManifest}}{'backup'}{'timestamp-copy-start'});
 
     # Build paths/links in each restore path
-    if (defined(${$oExpectedManifestRef}{'backup:option'}{checksum}) && ${$oExpectedManifestRef}{'backup:option'}{checksum} eq 'y')
+    foreach my $strSectionPathKey ($oActualManifest->keys('backup:path'))
     {
-        foreach my $strSectionPathKey ($oActualManifest->keys('backup:path'))
+        my $strSectionPath = $oActualManifest->get('backup:path', $strSectionPathKey);
+
+        # Create all paths in the manifest that do not already exist
+        my $strSection = "${strSectionPathKey}:file";
+
+        foreach my $strName ($oActualManifest->keys($strSection))
         {
-            my $strSectionPath = $oActualManifest->get('backup:path', $strSectionPathKey);
+            $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
 
-            # Create all paths in the manifest that do not already exist
-            my $strSection = "${strSectionPathKey}:file";
-
-            foreach my $strName ($oActualManifest->keys($strSection))
+            if ($oActualManifest->get($strSection, $strName, 'size') != 0 &&
+                defined(${$oExpectedManifestRef}{'backup:option'}{checksum}) &&
+                ${$oExpectedManifestRef}{'backup:option'}{checksum} eq 'y')
             {
-                if ($oActualManifest->get($strSection, $strName, 'size') != 0)
-                {
-                    $oActualManifest->set($strSection, $strName, 'checksum',
-                                          $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
-                }
+                $oActualManifest->set($strSection, $strName, 'checksum',
+                                      $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
             }
         }
     }
 
     # Now get rid of all pg_xlog files in the actual and expected manifests
-    my $strSection = "base:file";
-
-    foreach my $strName ($oActualManifest->keys($strSection))
-    {
-        if ($strName =~ /^pg_xlog\/.*$/)
-        {
-            $oActualManifest->remove($strSection, $strName);
-        }
-    }
-
-    foreach my $strName (sort(keys(${$oExpectedManifestRef}{$strSection})))
-    {
-        if ($strName =~ /^pg_xlog\/.*$/)
-        {
-            delete(${$oExpectedManifestRef}{$strSection}{$strName});
-        }
-    }
+    # my $strSection = "base:file";
+    #
+    # foreach my $strName ($oActualManifest->keys($strSection))
+    # {
+    #     if ($strName =~ /^pg_xlog\/.*$/)
+    #     {
+    #         $oActualManifest->remove($strSection, $strName);
+    #     }
+    # }
+    #
+    # foreach my $strName (sort(keys(${$oExpectedManifestRef}{$strSection})))
+    # {
+    #     if ($strName =~ /^pg_xlog\/.*$/)
+    #     {
+    #         delete(${$oExpectedManifestRef}{$strSection}{$strName});
+    #     }
+    # }
 
     delete(${$oExpectedManifestRef}{'backup:option'});
     delete(${$oExpectedManifestRef}{'backup'}{'archive-start'});
