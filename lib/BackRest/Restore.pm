@@ -569,7 +569,7 @@ sub restore
     # Build paths/links in the restore paths
     $self->build($oManifest);
 
-    # Assign the files in each path to a thread queue
+    # Create thread queues
     my @oyRestoreQueue;
 
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
@@ -584,8 +584,6 @@ sub restore
             {
                 $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue("${strPathKey}|${strName}");
             }
-
-            $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue(undef);
         }
     }
 
@@ -594,9 +592,11 @@ sub restore
 
     for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
     {
+        &log(DEBUG, "starting restore thread ${iThreadIdx}");
         $oThreadGroup->add(threads->create(\&restore_thread, $self, $iThreadIdx, \@oyRestoreQueue, $oManifest));
     }
 
+    # Complete thread queues
     $oThreadGroup->complete();
 
     # Create recovery.conf file
@@ -638,7 +638,7 @@ sub restore_thread
     # Loop through all the queues to restore files (exit when the original queue is reached
     do
     {
-        while (my $strMessage = ${$oyRestoreQueueRef}[$iQueueIdx]->dequeue())
+        while (my $strMessage = ${$oyRestoreQueueRef}[$iQueueIdx]->dequeue_nb())
         {
             my $strSourcePath = (split(/\|/, $strMessage))[0];                        # Source path from backup
             my $strSection = "${strSourcePath}:file";                                 # Backup section with file info
