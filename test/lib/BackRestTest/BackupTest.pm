@@ -1112,7 +1112,7 @@ sub BackRestTestBackup_RestoreCompare
     my $oActualManifest = new BackRest::Manifest("${strTestPath}/actual.manifest", false);
 
     my $oTablespaceMapRef = undef;
-    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, $bSynthetic, undef);
+    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, true, undef);
 
     # Generate checksums for all files if required
     # Also fudge size if this is a synthetic test - sizes may change during backup.
