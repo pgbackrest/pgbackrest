@@ -2106,7 +2106,7 @@ sub BackRestTestBackup_Test
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
             BackRestTestBackup_ClusterStart(undef, undef, true);
-            BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 30);
+            BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 120);
 
             $bCreate = true;
         }
