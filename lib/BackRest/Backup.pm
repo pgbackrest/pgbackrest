@@ -1056,9 +1056,6 @@ sub backup_file
         &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " .
                     "size $oyThreadData[$iThreadIdx]{small_size}");
 
-        # End each queue
-        $oThreadQueue[$iThreadIdx]->enqueue(undef);
-
         # Start the thread
         $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, !$bNoChecksum, !$bPathCreate,
                                                 $oyThreadData[$iThreadIdx]{size});
@@ -1135,7 +1132,7 @@ sub backup_file_thread
     $SIG{'KILL'} = sub {threads->exit();};
 
     # Iterate through all the files in this thread's queue to be copied from the database to the backup
-    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
+    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue_nb())
     {
         # Add the size of the current file to keep track of percent complete
         $lSize += $oFileCopyMap{$strFile}{size};
