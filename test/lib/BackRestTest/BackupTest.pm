@@ -55,7 +55,7 @@ sub BackRestTestBackup_PgConnect
 }
 
 ####################################################################################################################################
-# BackRestTestBackup_Disconnect
+# BackRestTestBackup_PgDisconnect
 ####################################################################################################################################
 sub BackRestTestBackup_PgDisconnect
 {
@@ -194,7 +194,7 @@ sub BackRestTestBackup_ClusterStop
     # Disconnect user session
     BackRestTestBackup_PgDisconnect();
 
-    # If postmaster process is running them stop the cluster
+    # If postmaster process is running then stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
         BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m " .

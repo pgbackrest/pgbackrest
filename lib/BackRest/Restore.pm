@@ -724,6 +724,8 @@ sub restore_thread
         {
             $iQueueIdx = 0;
         }
+
+        &log(TRACE, "thread waiting for new file from queue: queue ${iQueueIdx}, start queue ${iQueueStartIdx}");
     }
     while ($iQueueIdx != $iQueueStartIdx);
 

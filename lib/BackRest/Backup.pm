@@ -1190,6 +1190,8 @@ sub backup_file_thread
         {
             &log(INFO, $strLog);
         }
+
+        &log(TRACE, "thread waiting for new file from queue");
     }
 
     &log(DEBUG, "thread ${iThreadIdx} exiting");
