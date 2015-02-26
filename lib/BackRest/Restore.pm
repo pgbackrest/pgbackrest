@@ -588,16 +588,16 @@ sub restore
     }
 
     # Create threads to process the thread queues
-    my $oThreadGroup = new BackRest::ThreadGroup();
+    my $oThreadGroup = thread_group_create();
 
     for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
     {
         &log(DEBUG, "starting restore thread ${iThreadIdx}");
-        $oThreadGroup->add(threads->create(\&restore_thread, $self, $iThreadIdx, \@oyRestoreQueue, $oManifest));
+        thread_group_add($oThreadGroup, threads->create(\&restore_thread, $self, $iThreadIdx, \@oyRestoreQueue, $oManifest));
     }
 
     # Complete thread queues
-    $oThreadGroup->complete();
+    thread_group_complete($oThreadGroup);
 
     # Create recovery.conf file
     $self->recovery();

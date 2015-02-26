@@ -13,11 +13,11 @@ use Net::OpenSSH;
 use File::Basename;
 use POSIX ':sys_wait_h';
 use Scalar::Util 'blessed';
+use IO::Compress::Gzip qw(gzip $GzipError);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
-use BackRest::ProcessAsync;
 
 use Exporter qw(import);
 our @EXPORT = qw(DB BACKUP NONE);
@@ -114,11 +114,6 @@ sub new
 sub thread_kill
 {
     my $self = shift;
-
-    if (defined($self->{oCompressAsync}))
-    {
-        $self->{oCompressAsync} = undef;
-    }
 }
 
 ####################################################################################################################################
@@ -145,21 +140,6 @@ sub clone
         $self->{strCommand},
         $self->{iBlockSize}
     );
-}
-
-####################################################################################################################################
-# COMPRESS_ASYNC_GET
-####################################################################################################################################
-sub compress_async_get
-{
-    my $self = shift;
-
-    if (!defined($self->{oCompressAsync}))
-    {
-        $self->{oCompressAsync} = new BackRest::ProcessAsync;
-    }
-
-    return $self->{oCompressAsync};
 }
 
 ####################################################################################################################################
@@ -369,7 +349,8 @@ sub wait_pid
 ####################################################################################################################################
 # BINARY_XFER
 #
-# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
+# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.  If $strRemote != none
+# then one side is a protocol stream.
 ####################################################################################################################################
 sub binary_xfer
 {
@@ -396,11 +377,13 @@ sub binary_xfer
     my $iBlockSize = $self->{iBlockSize};
     my $iBlockIn;
     my $iBlockInTotal = $iBlockSize;
+    my $iBlockBufferIn;
     my $iBlockOut;
     my $iBlockTotal = 0;
     my $strBlockHeader;
     my $strBlock;
-    my $bThreadRunning = false;
+    my $strBlockBuffer;
+    my $oGzip;
 
     # Both the in and out streams must be defined
     if (!defined($hIn) || !defined($hOut))
@@ -411,22 +394,20 @@ sub binary_xfer
     # If this is output and the source is not already compressed
     if ($strRemote eq 'out' && !$bSourceCompressed)
     {
-        $hIn = $self->compress_async_get()->process_begin('compress', $hIn);
-
-        $bThreadRunning = true;
+        $oGzip = new IO::Compress::Gzip(\$strBlock);
     }
-    # Spawn a child process to do decompression
+    # If this is input and the destination should be uncompressed
     elsif ($strRemote eq 'in' && !$bDestinationCompress)
     {
-        $hOut = $self->compress_async_get()->process_begin('decompress', $hOut, 'out');
-
-        $bThreadRunning = true;
+        # Open Unzip - TBD
     }
 
     while (1)
     {
+        # Read from the protocol stream
         if ($strRemote eq 'in')
         {
+            # Read the block header (at start or when the previous block is complete)
             if ($iBlockInTotal == $iBlockSize)
             {
                 $strBlockHeader = $self->read_line($hIn);
@@ -437,12 +418,14 @@ sub binary_xfer
                     confess "unable to read block header ${strBlockHeader}";
                 }
 
-                $iBlockInTotal = 0;
+                # Parse the block size
+                $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, ' ') + 1));
                 $iBlockTotal += 1;
+                $iBlockInTotal = 0;
             }
 
-            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, ' ') + 1));
-
+            # If the block size > 0 then read from protocol stream.  The entire block may not have been read before so keep reading
+            # until we get it all.
             if ($iBlockSize != 0)
             {
                 $iBlockIn = sysread($hIn, $strBlock, $iBlockSize - $iBlockInTotal);
@@ -458,22 +441,58 @@ sub binary_xfer
 
                 $iBlockInTotal += $iBlockIn;
             }
+            # Else indicate the stream is complete
             else
             {
                 $iBlockIn = 0;
             }
         }
+        # Read from file input stream
         else
         {
-            $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+            # Read a block from the input stream
+            $iBlockBufferIn = sysread($hIn, $strBlockBuffer, $iBlockSize);
 
-            if (!defined($iBlockIn))
+            if (!defined($iBlockBufferIn))
             {
                 $self->wait_pid();
                 confess &log(ERROR, 'unable to read');
             }
+
+            # Clear the compression output buffer
+            undef($strBlock);
+
+            # If new data was read from the input stream then compress
+            if ($iBlockBufferIn > 0)
+            {
+                $iBlockIn = $oGzip->syswrite($strBlockBuffer, $iBlockBufferIn);
+
+                if (!defined($iBlockIn) || $iBlockIn != $iBlockBufferIn)
+                {
+                    $self->wait_pid();
+                    confess &log(ERROR, 'unable to read');
+                }
+            }
+
+            # If there was nothing new to compress then flush
+            if (!defined($strBlock))
+            {
+                $oGzip->flush();
+            }
+
+            # If there is data in the compressed buffer, then output
+            if (defined($strBlock))
+            {
+                $iBlockIn = length($strBlock);
+            }
+            # Else indicate that the stream is complete
+            else
+            {
+                $iBlockIn = 0;
+            }
         }
 
+        # Write block header to the protocal stream
         if ($strRemote eq 'out')
         {
             $strBlockHeader = "block ${iBlockIn}\n";
@@ -487,6 +506,7 @@ sub binary_xfer
             }
         }
 
+        # Write block to output stream
         if ($iBlockIn > 0)
         {
             $iBlockOut = syswrite($hOut, $strBlock, $iBlockIn);
@@ -497,16 +517,14 @@ sub binary_xfer
                 confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ': ' . $! : '');
             }
         }
+        # When there is no more data to write then exit
         else
         {
             last;
         }
     }
 
-    if ($bThreadRunning)
-    {
-        $self->compress_async_get()->process_end();
-    }
+#    &log(INFO, 'got to end');
 }
 
 ####################################################################################################################################

@@ -23,7 +23,6 @@ use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Remote;
-use BackRest::ProcessAsync;
 
 # Exports
 use Exporter qw(import);
@@ -162,11 +161,6 @@ sub DEMOLISH
     {
         $self->{oRemote} = undef;
     }
-
-    if (defined($self->{oProcessAsync}))
-    {
-        $self->{oProcessAsync} = undef;
-    }
 }
 
 ####################################################################################################################################
@@ -187,21 +181,6 @@ sub clone
         $self->{strDefaultFilePermission},
         $iThreadIdx
     );
-}
-
-####################################################################################################################################
-# PROCESS_ASYNC_GET
-####################################################################################################################################
-sub process_async_get
-{
-    my $self = shift;
-
-    if (!defined($self->{oProcessAsync}))
-    {
-        $self->{oProcessAsync} = new BackRest::ProcessAsync;
-    }
-
-    return $self->{oProcessAsync};
 }
 
 ####################################################################################################################################
@@ -825,8 +804,7 @@ sub hash
 
         if ($bCompressed)
         {
-            $oSHA->addfile($self->process_async_get()->process_begin('decompress', $hFile));
-            $self->process_async_get()->process_end();
+            confess "CANNOT DECOMPRESS WITH MISSING REMOTE";
         }
         else
         {
