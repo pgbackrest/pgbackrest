@@ -394,7 +394,7 @@ sub binary_xfer
     # If this is output and the source is not already compressed
     if ($strRemote eq 'out' && !$bSourceCompressed)
     {
-        $oGzip = new IO::Compress::Gzip(\$strBlock);
+        $oGzip = new IO::Compress::Gzip(\$strBlock, Append => 1);
     }
     # If this is input and the destination should be uncompressed
     elsif ($strRemote eq 'in' && !$bDestinationCompress)
@@ -459,8 +459,8 @@ sub binary_xfer
                 confess &log(ERROR, 'unable to read');
             }
 
-            # Clear the compression output buffer
-            undef($strBlock);
+            # # Clear the compression output buffer
+            # undef($strBlock);
 
             # If new data was read from the input stream then compress
             if ($iBlockBufferIn > 0)
@@ -474,10 +474,10 @@ sub binary_xfer
                 }
             }
 
-            # If there was nothing new to compress then flush
+            # If there was nothing new to compress then close
             if (!defined($strBlock))
             {
-                $oGzip->flush();
+                $oGzip->close();
             }
 
             # If there is data in the compressed buffer, then output
@@ -492,7 +492,7 @@ sub binary_xfer
             }
         }
 
-        # Write block header to the protocal stream
+        # Write block header to the protocol stream
         if ($strRemote eq 'out')
         {
             $strBlockHeader = "block ${iBlockIn}\n";
@@ -516,6 +516,8 @@ sub binary_xfer
                 $self->wait_pid();
                 confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ': ' . $! : '');
             }
+
+            undef($strBlock);
         }
         # When there is no more data to write then exit
         else
