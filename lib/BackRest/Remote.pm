@@ -361,17 +361,17 @@ sub block_read
     # Read the block header and make sure it's valid
     my $strBlockHeader = $self->read_line($hIn);
 
-    if ($strBlockHeader !~ /^block [0-9]+$/)
+    if ($strBlockHeader !~ /^block -{0,1}[0-9]+$/)
     {
         $self->wait_pid();
-        confess "unable to read block header: ${strBlockHeader}";
+        confess "unable to read block header ${strBlockHeader}";
     }
 
     # Get block size from the header
     my $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, ' ') + 1));
 
-    # If block size is zero then undef the buffer
-    if ($iBlockSize == 0)
+    # If block size is 0 or an error code then undef the buffer
+    if ($iBlockSize <= 0)
     {
         undef($$strBlockRef);
     }
@@ -542,12 +542,23 @@ sub binary_xfer
                 # Read a block from the protocol stream
                 $iBlockSize = $self->block_read($hIn, \$strBlockBuffer);
 
+                # If block size = -1 it means an error happened on the remote we need to exit so it can be returned.
+                if ($iBlockSize == -1)
+                {
+                    last;
+                }
+
                 # If this is the first block then initialize Gunzip
                 if ($bFirst)
                 {
+                    if ($iBlockSize == 0)
+                    {
+                        &log(ASSERT, 'first protocol block is zero');
+                    }
+
                     # Gunzip doesn't like to be initialized with just the header, so if the first block is 10 bytes then fetch
                     # another another block to make sure so is at least some payload.
-                    if ($iBlockSize == 10)
+                    if ($iBlockSize <= 10)
                     {
                         $iBlockSize = $self->block_read($hIn, \$strBlockBuffer);
                     }
@@ -555,7 +566,7 @@ sub binary_xfer
                     # Initialize Gunzip
                     $oGzip = new IO::Uncompress::Gunzip(\$strBlockBuffer, Append => 1, Transparent => 0,
                                                                           BlockSize => $self->{iBlockSize})
-                        or confess "IO::Uncompress::Gunzip failed: $GunzipError";
+                        or confess "IO::Uncompress::Gunzip failed (${iBlockSize}): $GunzipError";
 
                     # Clear first block flag
                     $bFirst = false;

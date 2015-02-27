@@ -804,7 +804,51 @@ sub hash
 
         if ($bCompressed)
         {
-            confess "CANNOT DECOMPRESS WITH MISSING REMOTE";
+            my $bFirst = true;
+            my $tCompressedBuffer;
+            my $tUncompressedBuffer;
+            my $iBlockSize;
+            my $iBlockIn;
+            my $oGzip;
+
+            do
+            {
+                # Read a block from the file
+                $iBlockSize = sysread($hFile, $tCompressedBuffer, 1000000);
+
+                if (!defined($iBlockSize))
+                {
+                    confess &log(ERROR, "${strFileOp} could not be read: " . $!);
+                }
+
+                # If this is the first block then initialize Gunzip
+                if ($bFirst)
+                {
+                    # Initialize Gunzip
+                    $oGzip = new IO::Uncompress::Gunzip(\$tCompressedBuffer, Transparent => 0, BlockSize => 1000000)
+                        or confess "IO::Uncompress::Gunzip failed: $GunzipError";
+
+                    # Clear first block flag
+                    $bFirst = false;
+                }
+
+                # Loop while there is more data to uncompress
+                while (!$oGzip->eof())
+                {
+                    # Decompress the block
+                    $iBlockIn = $oGzip->read($tUncompressedBuffer);
+
+                    if ($iBlockIn < 0)
+                    {
+                        confess &log(ERROR, "unable to decompress stream ($iBlockIn): ${GunzipError}");
+                    }
+
+                    $oSHA->add($tUncompressedBuffer);
+                }
+            }
+            while ($iBlockSize > 0);
+
+            $oGzip->close();
         }
         else
         {
@@ -1332,7 +1376,7 @@ sub copy
             {
                 if ($strDestinationPathType eq PIPE_STDOUT)
                 {
-                    $self->{oRemote}->write_line(*STDOUT, 'block 0');
+                    $self->{oRemote}->write_line(*STDOUT, 'block -1');
                 }
 
                 confess &log(ERROR, $strError, $iErrorCode);
