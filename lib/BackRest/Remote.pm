@@ -573,9 +573,7 @@ sub binary_xfer
             }
 
             # Read block from protocol stream
-#            &log(INFO, "read new block");
             $iBlockSize = $self->block_read($hIn, \$strBlock);
-#            &log(INFO, "block size = ${iBlockSize}");
 
             if (!$bDestinationCompress)
             {
@@ -640,40 +638,35 @@ sub binary_xfer
                         $self->wait_pid();
                         confess &log(ERROR, 'unable to read');
                     }
-                }
 
+                    $self->block_write($hOut, \$strBlock);
+                    undef($strBlock);
+                }
                 # If there was nothing new to compress then close
-                if (!defined($strBlock))
-                {
-                    $oGzip->close();
-                }
-
-                # If there is data in the compressed buffer, then output
-                if (defined($strBlock))
-                {
-                    $iBlockIn = length($strBlock);
-                }
-                # Else indicate that the stream is complete
                 else
                 {
-#                        &log(INFO, "set block in 0");
-                    $iBlockIn = 0;
+                    $oGzip->close();
+
+                    $self->block_write($hOut, \$strBlock);
+                    $self->block_write($hOut, undef, 0);
+                    last;
                 }
             }
             # If source is already compressed or transfer is not compressed then just read the stream
             else
             {
                 $iBlockIn = $self->stream_read($hIn, \$strBlock, $iBlockSize);
+
+                if ($iBlockIn > 0)
+                {
+                    $self->block_write($hOut, \$strBlock, $iBlockIn);
+                }
+                else
+                {
+                    $self->block_write($hOut, undef, 0);
+                    last;
+                }
             }
-
-            $self->block_write($hOut, \$strBlock, $iBlockIn);
-
-            if ($iBlockIn == 0)
-            {
-                last;
-            }
-
-            undef($strBlock);
         }
     }
 }
