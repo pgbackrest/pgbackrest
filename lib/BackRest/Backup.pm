@@ -1047,71 +1047,79 @@ sub backup_file
         }
     }
 
-    # End each thread queue and start the backup_file threads
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+    if ($iThreadLocalMax > 1)
     {
-        # Output info about how much work each thread is going to do
-        &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " .
-                    "size $oyThreadData[$iThreadIdx]{large_size}");
-        &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " .
-                    "size $oyThreadData[$iThreadIdx]{small_size}");
-
-        # Start the thread
-        $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, $iThreadIdx, !$bNoChecksum, !$bPathCreate,
-                                                $oyThreadData[$iThreadIdx]{size});
-    }
-
-    # Wait for the threads to complete
-    backup_thread_complete($iThreadTimeout);
-
-    # Read the messages that we passed back from the threads.  These should be two types:
-    # 1) remove - files that were skipped because they were removed from the database during backup
-    # 2) checksum - file checksums calculated by the threads
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-    {
-        while (my $strMessage = $oMasterQueue[$iThreadIdx]->dequeue_nb())
+        # End each thread queue and start the backup_file threads
+        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
         {
-            &log (DEBUG, "message received in master queue: ${strMessage}");
+            # Output info about how much work each thread is going to do
+            &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " .
+                        "size $oyThreadData[$iThreadIdx]{large_size}");
+            &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " .
+                        "size $oyThreadData[$iThreadIdx]{small_size}");
 
-            # Split the message.  Currently using | as the split character.  Not ideal, but it will do for now.
-            my @strSplit = split(/\|/, $strMessage);
+            # Start the thread
+            $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, true, $iThreadIdx, !$bNoChecksum, !$bPathCreate,
+                                                    $oyThreadData[$iThreadIdx]{size}, $oBackupManifest);
+        }
 
-            my $strCommand = $strSplit[0];      # Command to execute on a file
-            my $strFileSection = $strSplit[1];  # File section where the file is located
-            my $strFile = $strSplit[2];         # The file to act on
+        # Wait for the threads to complete
+        backup_thread_complete($iThreadTimeout);
 
-            # These three parts are required
-            if (!defined($strCommand) || !defined($strFileSection) || !defined($strFile))
+        # Read the messages that we passed back from the threads.  These should be two types:
+        # 1) remove - files that were skipped because they were removed from the database during backup
+        # 2) checksum - file checksums calculated by the threads
+        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+        {
+            while (my $strMessage = $oMasterQueue[$iThreadIdx]->dequeue_nb())
             {
-                confess &log(ASSERT, 'thread messages must have strCommand, strFileSection and strFile defined');
-            }
+                &log (DEBUG, "message received in master queue: ${strMessage}");
 
-            &log (DEBUG, "command = ${strCommand}, file_section = ${strFileSection}, file = ${strFile}");
+                # Split the message.  Currently using | as the split character.  Not ideal, but it will do for now.
+                my @strSplit = split(/\|/, $strMessage);
 
-            # If command is 'remove' then mark the skipped file in the manifest
-            if ($strCommand eq 'remove')
-            {
-                $oBackupManifest->remove($strFileSection, $strFile);
+                my $strCommand = $strSplit[0];      # Command to execute on a file
+                my $strFileSection = $strSplit[1];  # File section where the file is located
+                my $strFile = $strSplit[2];         # The file to act on
 
-                &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
-            }
-            # If command is 'checksum' then record the checksum in the manifest
-            elsif ($strCommand eq 'checksum')
-            {
-                my $strChecksum = $strSplit[3];  # File checksum calculated by the thread
-
-                # Checksum must be defined
-                if (!defined($strChecksum))
+                # These three parts are required
+                if (!defined($strCommand) || !defined($strFileSection) || !defined($strFile))
                 {
-                    confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
+                    confess &log(ASSERT, 'thread messages must have strCommand, strFileSection and strFile defined');
                 }
 
-                $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+                &log (DEBUG, "command = ${strCommand}, file_section = ${strFileSection}, file = ${strFile}");
 
-                # Log the checksum
-                &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum}");
+                # If command is 'remove' then mark the skipped file in the manifest
+                if ($strCommand eq 'remove')
+                {
+                    $oBackupManifest->remove($strFileSection, $strFile);
+
+                    &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
+                }
+                # If command is 'checksum' then record the checksum in the manifest
+                elsif ($strCommand eq 'checksum')
+                {
+                    my $strChecksum = $strSplit[3];  # File checksum calculated by the thread
+
+                    # Checksum must be defined
+                    if (!defined($strChecksum))
+                    {
+                        confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
+                    }
+
+                    $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+
+                    # Log the checksum
+                    &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum}");
+                }
             }
         }
+    }
+    else
+    {
+        &log(DEBUG, "starting backup in main process");
+        backup_file_thread(false, 0, !$bNoChecksum, !$bPathCreate, $oyThreadData[0]{size}, $oBackupManifest);
     }
 }
 
@@ -1119,14 +1127,26 @@ sub backup_file_thread
 {
     my @args = @_;
 
-    my $iThreadIdx = $args[0];      # Defines the index of this thread
-    my $bChecksum = $args[1];       # Should checksums be generated on files after they have been backed up?
-    my $bPathCreate = $args[2];     # Should paths be created automatically?
-    my $lSizeTotal = $args[3];      # Total size of the files to be copied by this thread
+    my $bMulti = $args[0];          # Is this thread one of many?
+    my $iThreadIdx = $args[1];      # Defines the index of this thread
+    my $bChecksum = $args[2];       # Should checksums be generated on files after they have been backed up?
+    my $bPathCreate = $args[3];     # Should paths be created automatically?
+    my $lSizeTotal = $args[4];      # Total size of the files to be copied by this thread
+    my $oBackupManifest = $args[5]; # Backup manifest object (only used when single-threaded)
 
-    my $lSize = 0;                                  # Size of files currently copied by this thread
-    my $strLog;                                     # Store the log message
-    my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
+    my $lSize = 0;                  # Size of files currently copied by this thread
+    my $strLog;                     # Store the log message
+    my $oFileThread;                # Thread local file object
+
+    # If multi-threaded, then clone the file object
+    if ($bMulti)
+    {
+        $oFileThread = $oFile->clone($iThreadIdx);
+    }
+    else
+    {
+        $oFileThread = $oFile;
+    }
 
     # When a KILL signal is received, immediately abort
     $SIG{'KILL'} = sub {threads->exit();};
@@ -1158,8 +1178,18 @@ sub backup_file_thread
                 # If file is missing assume the database removed it (else corruption and nothing we can do!)
                 &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
 
-                # Write a message into the master queue to have the file removed from the manifest
-                $oMasterQueue[$iThreadIdx]->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}");
+                # Remove file from the manifest
+                if ($bMulti)
+                {
+                    # Write a message into the master queue to have the file removed from the manifest
+                    $oMasterQueue[$iThreadIdx]->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|".
+                                                        "$oFileCopyMap{$strFile}{file}");
+                }
+                else
+                {
+                    # remove it directly
+                    $oBackupManifest->remove($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file});
+                }
 
                 # Move on to the next file
                 next;
@@ -1173,8 +1203,19 @@ sub backup_file_thread
             my $strChecksum = $oFileThread->hash(PATH_BACKUP_TMP,
                                                  $oFileCopyMap{$strFile}{backup_file} . ($bCompress ? '.gz' : ''), $bCompress);
 
-            # Write the checksum message into the master queue
-            $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|$oFileCopyMap{$strFile}{file}|${strChecksum}");
+            # Store checksum in the manifest
+            if ($bMulti)
+            {
+                # Write the checksum message into the master queue
+                $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|" .
+                                                    "$oFileCopyMap{$strFile}{file}|${strChecksum}");
+            }
+            else
+            {
+                # Write it directly
+                $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
+                                      MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+            }
 
             # Output information about the file to be checksummed
             if (!defined($strLog))

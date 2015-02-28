@@ -587,17 +587,28 @@ sub restore
         }
     }
 
-    # Create threads to process the thread queues
-    my $oThreadGroup = thread_group_create();
-
-    for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
+    # If multi-threaded then create threads to copy files
+    if ($self->{iThreadTotal} > 1)
     {
-        &log(DEBUG, "starting restore thread ${iThreadIdx}");
-        thread_group_add($oThreadGroup, threads->create(\&restore_thread, $self, $iThreadIdx, \@oyRestoreQueue, $oManifest));
-    }
+        # Create threads to process the thread queues
+        my $oThreadGroup = thread_group_create();
 
-    # Complete thread queues
-    thread_group_complete($oThreadGroup);
+        for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
+        {
+            &log(DEBUG, "starting restore thread ${iThreadIdx}");
+            thread_group_add($oThreadGroup, threads->create(\&restore_thread, true, $self,
+                                                            $iThreadIdx, \@oyRestoreQueue, $oManifest));
+        }
+
+        # Complete thread queues
+        thread_group_complete($oThreadGroup);
+    }
+    # Else copy in the main process
+    else
+    {
+        &log(DEBUG, "starting restore in main process");
+        $self->restore_thread(false, 0, \@oyRestoreQueue, $oManifest);
+    }
 
     # Create recovery.conf file
     $self->recovery();
@@ -611,12 +622,24 @@ sub restore
 sub restore_thread
 {
     my $self = shift;               # Class hash
+    my $bMulti = shift;             # Is this thread one of many?
     my $iThreadIdx = shift;         # Defines the index of this thread
     my $oyRestoreQueueRef = shift;  # Restore queues
     my $oManifest = shift;          # Backup manifest
 
     my $iDirection = $iThreadIdx % 2 == 0 ? 1 : -1;         # Size of files currently copied by this thread
-    my $oFileThread = $self->{oFile}->clone($iThreadIdx);   # Thread local file object
+    my $oFileThread = $self->{oFile};                       # Thread local file object
+
+    # If multi-threaded, then clone the file object
+    if ($bMulti)
+    {
+        $oFileThread = $self->{oFile}->clone($iThreadIdx);
+    }
+    # Else use the master file object
+    else
+    {
+        $oFileThread = $self->{oFile};
+    }
 
     # Initialize the starting and current queue index based in the total number of threads in relation to this thread
     my $iQueueStartIdx = int((@{$oyRestoreQueueRef} / $self->{iThreadTotal}) * $iThreadIdx);
