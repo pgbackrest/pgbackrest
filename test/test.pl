@@ -42,6 +42,7 @@ test.pl [options]
    --module-test-run    execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
+   --infinite           repeat selected tests forever
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -68,6 +69,7 @@ my $strTestPath;
 my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
+my $bInfinite = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -79,7 +81,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'module-test=s' => \$strModuleTest,
             'module-test-run=s' => \$iModuleTestRun,
             'dry-run' => \$bDryRun,
-            'no-cleanup' => \$bNoCleanup)
+            'no-cleanup' => \$bNoCleanup,
+            'infinite' => \$bInfinite)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -202,20 +205,32 @@ BackRestTestCommon_Setup($strTestPath, $strPgSqlBin, $iModuleTestRun, $bDryRun, 
 # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
 #            "group = {strGroup}");
 
-if ($strModule eq 'all' || $strModule eq 'utility')
-{
-    BackRestTestUtility_Test($strModuleTest);
-}
+my $iRun = 0;
 
-if ($strModule eq 'all' || $strModule eq 'file')
+do
 {
-    BackRestTestFile_Test($strModuleTest);
-}
+    if ($bInfinite)
+    {
+        $iRun++;
+        &log(INFO, "INFINITE - RUN ${iRun}\n");
+    }
 
-if ($strModule eq 'all' || $strModule eq 'backup')
-{
-    BackRestTestBackup_Test($strModuleTest);
+    if ($strModule eq 'all' || $strModule eq 'utility')
+    {
+        BackRestTestUtility_Test($strModuleTest);
+    }
+
+    if ($strModule eq 'all' || $strModule eq 'file')
+    {
+        BackRestTestFile_Test($strModuleTest);
+    }
+
+    if ($strModule eq 'all' || $strModule eq 'backup')
+    {
+        BackRestTestBackup_Test($strModuleTest);
+    }
 }
+while ($bInfinite);
 
 if (!$bDryRun)
 {

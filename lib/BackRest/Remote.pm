@@ -35,10 +35,10 @@ use constant
 
 ####################################################################################################################################
 # Remote xfer default block size constant
-#####################################################################################################################################
+####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 8388608
+    DEFAULT_BLOCK_SIZE  => 99999
 };
 
 ####################################################################################################################################
@@ -444,9 +444,10 @@ sub stream_read
     my $hIn = shift;
     my $tBlockRef = shift;
     my $iBlockSize = shift;
+    my $bOffset = shift;
 
     # Read a block from the stream
-    my $iBlockIn = sysread($hIn, $$tBlockRef, $iBlockSize);
+    my $iBlockIn = sysread($hIn, $$tBlockRef, $iBlockSize, $bOffset ? length($$tBlockRef) : false);
 
     if (!defined($iBlockIn))
     {
@@ -636,6 +637,7 @@ sub binary_xfer
                     $oGzip = new IO::Compress::Gzip(\$strBlock, Append => 1)
                         or confess "IO::Compress::Gzip failed: $GzipError";
 
+                    # Clear first block flag
                     $bFirst = false;
                 }
 
@@ -650,11 +652,14 @@ sub binary_xfer
                     if (!defined($iBlockIn) || $iBlockIn != $iBlockBufferIn)
                     {
                         $self->wait_pid();
-                        confess &log(ERROR, 'unable to read');
+                        confess &log(ERROR, "IO::Compress::Gzip failed: $GzipError");
                     }
 
-                    $self->block_write($hOut, \$strBlock);
-                    undef($strBlock);
+                    if (defined($strBlock) && length($strBlock) > $self->{iBlockSize})
+                    {
+                        $self->block_write($hOut, \$strBlock);
+                        undef($strBlock);
+                    }
                 }
                 # If there was nothing new to compress then close
                 else

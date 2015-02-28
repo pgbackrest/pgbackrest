@@ -814,7 +814,8 @@ sub hash
             do
             {
                 # Read a block from the file
-                $iBlockSize = sysread($hFile, $tCompressedBuffer, 1000000);
+                $iBlockSize = sysread($hFile, $tCompressedBuffer, 1000000,
+                                      defined($tCompressedBuffer) ? length($tCompressedBuffer) : 0);
 
                 if (!defined($iBlockSize))
                 {
