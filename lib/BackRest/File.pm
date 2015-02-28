@@ -1334,6 +1334,10 @@ sub copy
     my $strDestinationTmpOp = $strDestinationPathType eq PIPE_STDOUT ?
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
+    # Checksum and size variables
+    my $strChecksum = undef;
+    my $iFileSize = undef;
+
     # Set debug string and log
     my $strDebug = ($bSourceRemote ? ' remote' : ' local') . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceOp}" : '') .
@@ -1367,7 +1371,7 @@ sub copy
 
                 if ($bIgnoreMissingSource && $strDestinationPathType ne PIPE_STDOUT)
                 {
-                    return false;
+                    return false, undef, undef;
                 }
             }
 
@@ -1535,7 +1539,8 @@ sub copy
         # Transfer the file (skip this for copies where both sides are remote)
         if ($strOperation ne OP_FILE_COPY)
         {
-            $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
         }
 
         # If this is the controlling process then wait for OK from remote
@@ -1562,25 +1567,16 @@ sub copy
                     close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
                     unlink($strDestinationTmpOp) or confess &log(ERROR, "cannot remove file ${strDestinationTmpOp}");
 
-                    return false;
+                    return false, undef, undef;
                 }
 
-                # Otherwise report the error.  I don't like this method of error reporting - raising the exception object makes the
-                # error hard to interpret and hides the error stack, raising test loses the error code.
-                if ($oMessage->isa('BackRest::Exception'))
-                {
-                    confess $oMessage->message();
-                }
-                else
-                {
-                    confess $oMessage;
-                }
+                confess $oMessage;
             }
 
             # If this was a remote copy, then return the result
             if ($strOperation eq OP_FILE_COPY)
             {
-                return false; #$strOutput eq 'N' ? true : false;
+                return false, undef, undef;
             }
         }
     }
@@ -1644,7 +1640,7 @@ sub copy
         $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
     }
 
-    return true;
+    return true, $strChecksum, $iFileSize;
 }
 
 1;

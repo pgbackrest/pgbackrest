@@ -38,7 +38,7 @@ use constant
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 4194304
+    DEFAULT_BLOCK_SIZE  => 8192
 };
 
 ####################################################################################################################################
@@ -523,7 +523,10 @@ sub binary_xfer
     my $strBlockHeader;
     my $strBlock;
     my $strBlockBuffer;
-    my $oGzip;
+    my $oGzip = undef;
+    my $oSHA = undef;
+    my $iFileSize = undef;
+
     my $bFirst = true;
 
     # Both the in and out streams must be defined
@@ -552,6 +555,9 @@ sub binary_xfer
                 # If this is the first block then initialize Gunzip
                 if ($bFirst)
                 {
+                    $oSHA = Digest::SHA->new('sha1');
+                    $iFileSize = 0;
+
                     if ($iBlockSize == 0)
                     {
                         &log(ASSERT, 'first protocol block is zero');
@@ -595,6 +601,9 @@ sub binary_xfer
                     # Write out the uncompressed bytes if there are any
                     if ($iUncompressedTotal > 0)
                     {
+                        $oSHA->add($strBlock);
+                        $iFileSize += $iUncompressedTotal;
+
                         $self->stream_write($hOut, \$strBlock, $iUncompressedTotal);
                         undef($strBlock);
                     }
@@ -634,6 +643,9 @@ sub binary_xfer
                 # Create the gzip object
                 if ($bFirst)
                 {
+                    $oSHA = Digest::SHA->new('sha1');
+                    $iFileSize = 0;
+
                     $oGzip = new IO::Compress::Gzip(\$strBlock, Append => 1)
                         or confess "IO::Compress::Gzip failed: $GzipError";
 
@@ -643,6 +655,8 @@ sub binary_xfer
 
                 # Read a block from the stream
                 $iBlockBufferIn = $self->stream_read($hIn, \$strBlockBuffer, $iBlockSize);
+                $oSHA->add($strBlockBuffer);
+                $iFileSize += $iBlockBufferIn;
 
                 # If block size > 0 then compress
                 if ($iBlockBufferIn > 0)
@@ -688,6 +702,9 @@ sub binary_xfer
             }
         }
     }
+
+    # Return the checksum and size if they are available
+    return defined($oSHA) ? $oSHA->hexdigest() : undef, $iFileSize;
 }
 
 ####################################################################################################################################

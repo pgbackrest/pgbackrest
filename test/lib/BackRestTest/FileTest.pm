@@ -1021,6 +1021,9 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
+        # Loop through small/large
+        for (my $bLarge = false; $bLarge <= 2; $bLarge++)
+        {
         # Loop through backup local vs remote
         for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
         {
@@ -1045,26 +1048,23 @@ sub BackRestTestFile_Test
                 defined($strRemote) ? $oRemote : undef
             );
 
-            # Loop through source compression
-            for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
-            {
-            # Loop through destination compression
-            for (my $bDestinationCompress = 0; $bDestinationCompress <= 1; $bDestinationCompress++)
-            {
             # Loop through source path types
             for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
             {
             # Loop through destination path types
             for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
             {
-            # Loop through source ignore/require
-            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= 1; $bSourceIgnoreMissing++)
-            {
             # Loop through source missing/present
-            for (my $bSourceMissing = 0; $bSourceMissing <= 1; $bSourceMissing++)
+            for (my $bSourceMissing = 0; $bSourceMissing <= !$bLarge; $bSourceMissing++)
             {
-            # Loop through small/large
-            for (my $bLarge = false; $bLarge <= defined($strRemote) && !$bSourceMissing; $bLarge++)
+            # Loop through source ignore/require
+            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= !$bLarge; $bSourceIgnoreMissing++)
+            {
+            # Loop through source compression
+            for (my $bSourceCompressed = 0; $bSourceCompressed <=   !$bSourceMissing; $bSourceCompressed++)
+            {
+            # Loop through destination compression
+            for (my $bDestinationCompress = 0; $bDestinationCompress <= !$bSourceMissing; $bDestinationCompress++)
             {
                 my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                 my $strSourcePath = $bSourcePathType ? 'db' : 'backup';
@@ -1073,13 +1073,12 @@ sub BackRestTestFile_Test
                 my $strDestinationPath = $bDestinationPathType ? 'db' : 'backup';
 
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            'rmt ' .
+                                            "lrg ${bLarge}, rmt " .
                                                 (defined($strRemote) && ($strRemote eq $strSourcePath ||
                                                  $strRemote eq $strDestinationPath) ? 1 : 0) .
-                                            ", lrg ${bLarge}, " .
-                                            'srcpth ' . (defined($strRemote) && $strRemote eq $strSourcePath ? 'rmt' : 'lcl') .
-                                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
-                                                "srcignmiss ${bSourceIgnoreMissing}, " .
+                                            ', srcpth ' . (defined($strRemote) && $strRemote eq $strSourcePath ? 'rmt' : 'lcl') .
+                                                ":${strSourcePath}, srcmiss ${bSourceMissing}, " .
+                                                "srcignmiss ${bSourceIgnoreMissing}, srccmp $bSourceCompressed, " .
                                             'dstpth ' .
                                                 (defined($strRemote) && $strRemote eq $strDestinationPath ? 'rmt' : 'lcl') .
                                                 ":${strDestinationPath}, dstcmp $bDestinationCompress")) {next}
@@ -1092,6 +1091,9 @@ sub BackRestTestFile_Test
                 my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source";
                 my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination";
 
+                my $strCopyHash;
+                my $iCopySize;
+
                 # Create the compressed or uncompressed test file
                 my $strSourceHash;
 
@@ -1102,7 +1104,7 @@ sub BackRestTestFile_Test
                         $strSourceFile .= '.bin';
                         $strDestinationFile .= '.bin';
 
-                        BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive.bin ${strSourceFile}");
+                        BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive${bLarge}.bin ${strSourceFile}");
                     }
                     else
                     {
@@ -1131,11 +1133,11 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $bReturn = $oFile->copy($strSourcePathType, $strSourceFile,
-                                            $strDestinationPathType, $strDestinationFile,
-                                            $bSourceCompressed, $bDestinationCompress,
-                                            $bSourceIgnoreMissing, undef,
-                                            '0700');
+                    ($bReturn, $strCopyHash, $iCopySize) =
+                        $oFile->copy($strSourcePathType, $strSourceFile,
+                                     $strDestinationPathType, $strDestinationFile,
+                                     $bSourceCompressed, $bDestinationCompress,
+                                     $bSourceIgnoreMissing, undef, '0700');
                 };
 
                 # Check for errors after copy
@@ -1198,6 +1200,11 @@ sub BackRestTestFile_Test
                 if ($strSourceHash ne $strDestinationHash)
                 {
                     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                }
+
+                if (defined($strCopyHash) && $strSourceHash ne $strCopyHash)
+                {
+                    confess "source ${strSourceHash} and copy ${strCopyHash} file hashes do not match";
                 }
             }
             }
