@@ -40,6 +40,7 @@ test.pl [options]
    --module             test module to execute:
    --module-test        execute the specified test in a module
    --module-test-run    execute only the specified test run
+   --thread-max         max threads to run for backup/restore (default 4)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --infinite           repeat selected tests forever
@@ -62,6 +63,7 @@ my $strLogLevel = 'info';   # Log level for tests
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
+my $iThreadMax = 4;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
@@ -80,6 +82,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'module=s' => \$strModule,
             'module-test=s' => \$strModuleTest,
             'module-test-run=s' => \$iModuleTestRun,
+            'thread-max=s' => \$iThreadMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
             'infinite' => \$bInfinite)
@@ -147,6 +150,12 @@ if (!defined($strPgSqlBin))
     {
         confess 'pgsql-bin was not defined and could not be located';
     }
+}
+
+# Check thread total
+if ($iThreadMax < 1 || $iThreadMax > 32)
+{
+    confess 'thread-max must be between 1 and 32';
 }
 
 ####################################################################################################################################
@@ -227,7 +236,7 @@ do
 
     if ($strModule eq 'all' || $strModule eq 'backup')
     {
-        BackRestTestBackup_Test($strModuleTest);
+        BackRestTestBackup_Test($strModuleTest, $iThreadMax);
     }
 }
 while ($bInfinite);

@@ -1190,6 +1190,7 @@ sub BackRestTestBackup_RestoreCompare
 sub BackRestTestBackup_Test
 {
     my $strTest = shift;
+    my $iThreadMax = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -1213,7 +1214,6 @@ sub BackRestTestBackup_Test
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
     my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive.bin';
-    my $iThreadMax = 4;
 
     # Print test banner
     &log(INFO, 'BACKUP MODULE ******************************************************************');
