@@ -814,7 +814,7 @@ sub hash
             do
             {
                 # Read a block from the file
-                $iBlockSize = sysread($hFile, $tCompressedBuffer, 1000000,
+                $iBlockSize = sysread($hFile, $tCompressedBuffer, 4194304,
                                       defined($tCompressedBuffer) ? length($tCompressedBuffer) : 0);
 
                 if (!defined($iBlockSize))
@@ -826,7 +826,7 @@ sub hash
                 if ($bFirst)
                 {
                     # Initialize Gunzip
-                    $oGzip = new IO::Uncompress::Gunzip(\$tCompressedBuffer, Transparent => 0, BlockSize => 1000000)
+                    $oGzip = new IO::Uncompress::Gunzip(\$tCompressedBuffer, Transparent => 0, BlockSize => 4194304)
                         or confess "IO::Uncompress::Gunzip failed: $GunzipError";
 
                     # Clear first block flag
