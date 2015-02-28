@@ -596,7 +596,7 @@ sub restore
         for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
         {
             &log(DEBUG, "starting restore thread ${iThreadIdx}");
-            thread_group_add($oThreadGroup, threads->create(\&restore_thread, true, $self,
+            thread_group_add($oThreadGroup, threads->create(\&restore_thread, $self, true,
                                                             $iThreadIdx, \@oyRestoreQueue, $oManifest));
         }
 
@@ -627,8 +627,8 @@ sub restore_thread
     my $oyRestoreQueueRef = shift;  # Restore queues
     my $oManifest = shift;          # Backup manifest
 
-    my $iDirection = $iThreadIdx % 2 == 0 ? 1 : -1;         # Size of files currently copied by this thread
-    my $oFileThread = $self->{oFile};                       # Thread local file object
+    my $iDirection = $iThreadIdx % 2 == 0 ? 1 : -1;     # Size of files currently copied by this thread
+    my $oFileThread;                                    # Thread local file object
 
     # If multi-threaded, then clone the file object
     if ($bMulti)
