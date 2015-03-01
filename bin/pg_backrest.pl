@@ -56,9 +56,9 @@ pg_backrest.pl [options] [operation]
 
  Restore Options:
     --set            backup set to restore (defaults to latest set).
-    --delta          perform a delta restore using checksums when present.
+    --delta          perform a delta restore.
     --force          force a restore and overwrite all existing files.
-                     with --delta forces size/timestamp delta even if checksums are present.
+                     with --delta forces size/timestamp deltas.
 
  Recovery Options:
     --type               type of recovery:
@@ -183,9 +183,6 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
     my $strSection =  $bArchiveLocal ? CONFIG_SECTION_ARCHIVE : CONFIG_SECTION_BACKUP;
     my $strArchivePath = config_key_load($strSection, CONFIG_KEY_PATH);
 
-    # Get checksum flag
-    my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, 'y') eq 'y' ? true : false;
-
     # Get the async compress flag.  If compress_async=y then compression is off for the initial push when archiving locally
     my $bCompressAsync = false;
 
@@ -234,8 +231,7 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
             $oFile,
             undef,
             $bCompress,
-            undef,
-            !$bChecksum
+            undef
         );
 
         &log(INFO, 'pushing archive log ' . $ARGV[1] . ($bArchiveLocal ? ' asynchronously' : ''));
@@ -306,7 +302,6 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
             undef,
             $bCompress,
             undef,
-            !$bChecksum,
             config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
             undef,
             config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT)
@@ -482,7 +477,6 @@ if ($strRemote eq BACKUP)
 
 # Get the operational flags
 my $bCompress = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false;
-my $bChecksum = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_CHECKSUM, true, 'y') eq 'y' ? true : false;
 
 # Set the lock path
 my $strLockPath = config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true) .  '/lock/' .
@@ -515,7 +509,6 @@ backup_init
     param_get(PARAM_TYPE),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS, true, 'y') eq 'y' ? true : false,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_HARDLINK, true, 'y') eq 'y' ? true : false,
-    !$bChecksum,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_ARCHIVE_REQUIRED, true, 'y') eq 'y' ? true : false,
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_TIMEOUT),

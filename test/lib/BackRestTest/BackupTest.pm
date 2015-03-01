@@ -191,12 +191,12 @@ sub BackRestTestBackup_ClusterStop
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
     $bImmediate = defined($bImmediate) ? $bImmediate : false;
 
-    # Disconnect user session
-    BackRestTestBackup_PgDisconnect();
-
     # If postmaster process is running then stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
+        # Disconnect user session
+        BackRestTestBackup_PgDisconnect();
+
         BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m " .
                                    ($bImmediate ? 'immediate' : 'fast'));
     }
@@ -1130,9 +1130,7 @@ sub BackRestTestBackup_RestoreCompare
                 $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
             }
 
-            if ($oActualManifest->get($strSection, $strName, 'size') != 0 &&
-                defined(${$oExpectedManifestRef}{'backup:option'}{checksum}) &&
-                ${$oExpectedManifestRef}{'backup:option'}{checksum} eq 'y')
+            if ($oActualManifest->get($strSection, $strName, 'size') != 0)
             {
                 $oActualManifest->set($strSection, $strName, 'checksum',
                                       $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
@@ -1141,8 +1139,6 @@ sub BackRestTestBackup_RestoreCompare
     }
 
     # Set actual to expected for settings that always change from backup to backup
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM, undef,
-                          ${$oExpectedManifestRef}{'backup:option'}{checksum});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef,
                           ${$oExpectedManifestRef}{'backup:option'}{compress});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef,
@@ -1243,15 +1239,13 @@ sub BackRestTestBackup_Test
         {
             for (my $bCompress = false; $bCompress <= true; $bCompress++)
             {
-            for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
-            {
             for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
             {
             for (my $bCompressAsync = false; $bCompressAsync <= true; $bCompressAsync++)
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, " .
+                                            "rmt ${bRemote}, cmp ${bCompress}, " .
                                             "arc_async ${bArchiveAsync}, cmp_async ${bCompressAsync}")) {next}
 
                 # Create the test directory
@@ -1274,7 +1268,7 @@ sub BackRestTestBackup_Test
                 BackRestTestCommon_ConfigCreate('db',
                                                 ($bRemote ? BACKUP : undef),
                                                 $bCompress,
-                                                $bChecksum,  # checksum
+                                                undef,       # checksum
                                                 undef,       # hardlink
                                                 undef,       # thread-max
                                                 $bArchiveAsync,
@@ -1317,12 +1311,7 @@ sub BackRestTestBackup_Test
                         BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
 
                         # Build the archive name to check for at the destination
-                        my $strArchiveCheck = $strArchiveFile;
-
-                        if ($bChecksum)
-                        {
-                            $strArchiveCheck .= "-${strArchiveChecksum}";
-                        }
+                        my $strArchiveCheck = "${strArchiveFile}-${strArchiveChecksum}";
 
                         if ($bCompress)
                         {
@@ -1342,7 +1331,6 @@ sub BackRestTestBackup_Test
 
                     # !!! Need to put in tests for .backup files here
                 }
-            }
             }
             }
             }
@@ -1372,13 +1360,11 @@ sub BackRestTestBackup_Test
         {
             for (my $bCompress = false; $bCompress <= true; $bCompress++)
             {
-            for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
-            {
             for (my $bExists = false; $bExists <= true; $bExists++)
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, exists ${bExists}")) {next}
+                                            "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}")) {next}
 
                 # Create the test directory
                 if ($bCreate)
@@ -1403,7 +1389,7 @@ sub BackRestTestBackup_Test
                 BackRestTestCommon_ConfigCreate('db',                           # local
                                                 ($bRemote ? BACKUP : undef),    # remote
                                                 $bCompress,                     # compress
-                                                $bChecksum,                     # checksum
+                                                undef,                          # checksum
                                                 undef,                          # hardlink
                                                 undef,                          # thread-max
                                                 undef,                          # archive-async
@@ -1430,12 +1416,7 @@ sub BackRestTestBackup_Test
                         &log(INFO, '    archive ' .sprintf('%02x', $iArchiveNo) .
                                    " - ${strArchiveFile}");
 
-                        my $strSourceFile = $strArchiveFile;
-
-                        if ($bChecksum)
-                        {
-                            $strSourceFile .= "-${strArchiveChecksum}";
-                        }
+                        my $strSourceFile = "${strArchiveFile}-${strArchiveChecksum}";
 
                         if ($bCompress)
                         {
@@ -1479,7 +1460,6 @@ sub BackRestTestBackup_Test
                 $bCreate = true;
             }
             }
-            }
         }
 
         if (BackRestTestCommon_Cleanup())
@@ -1504,14 +1484,11 @@ sub BackRestTestBackup_Test
         {
         for (my $bCompress = false; $bCompress <= true; $bCompress++)
         {
-        for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
-        {
         for (my $bHardlink = false; $bHardlink <= true; $bHardlink++)
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
-                                        "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, " .
-                                        "hardlink ${bHardlink}")) {next}
+                                        "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardlink}")) {next}
 
             # Get base time
             my $lTime = time() - 100000;
@@ -1521,7 +1498,6 @@ sub BackRestTestBackup_Test
 
             $oManifest{backup}{version} = version_get();
             $oManifest{'backup:option'}{compress} = $bCompress ? 'y' : 'n';
-            $oManifest{'backup:option'}{checksum} = $bChecksum ? 'y' : 'n';
             $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
 
             # Create the test directory
@@ -1541,13 +1517,13 @@ sub BackRestTestBackup_Test
             );
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'PG_VERSION', '9.3',
-                                                  $bChecksum ? 'e1f7a3a299f62225cba076fc6d3d6e677f303482' : undef, $lTime);
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             # Create base path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'base');
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASE',
-                                                  $bChecksum ? 'a3b357a3e395e43fcfb19bb13f3c1b5179279593' : undef, $lTime);
+                                                  'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
 
             # Create tablespace path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'pg_tblspc');
@@ -1556,7 +1532,7 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_ConfigCreate('db',                           # local
                                             $bRemote ? BACKUP : undef,      # remote
                                             $bCompress,                     # compress
-                                            $bChecksum,                     # checksum
+                                            true,                           # checksum
                                             $bRemote ? undef : $bHardlink,  # hardlink
                                             $iThreadMax);                   # thread-max
 
@@ -1566,7 +1542,7 @@ sub BackRestTestBackup_Test
                 BackRestTestCommon_ConfigCreate('backup',                   # local
                                                 DB,                         # remote
                                                 $bCompress,                 # compress
-                                                $bChecksum,                 # checksum
+                                                true,                       # checksum
                                                 $bHardlink,                 # hardlink
                                                 $iThreadMax);               # thread-max
             }
@@ -1631,7 +1607,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 1);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:1", 'tablespace1.txt', 'TBLSPC1',
-                                                  $bChecksum ? 'd85de07d6421d90aa9191c11c889bfde43680f0f' : undef, $lTime);
+                                                  'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
 
 
             my $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
@@ -1651,7 +1627,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 2);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2.txt', 'TBLSPC2',
-                                                  $bChecksum ? 'dc7f76e43c46101b47acc55ae4d593a9e6983578' : undef, $lTime);
+                                                  'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                             'resume and add tablespace 2', TEST_BACKUP_RESUME);
@@ -1692,12 +1668,12 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2',
-                                                  $bChecksum ? '09b5e31766be1dba1ec27de82f975c1b6eea2a92' : undef, $lTime);
+                                                  '09b5e31766be1dba1ec27de82f975c1b6eea2a92', $lTime);
 
             BackRestTestBackup_ManifestTablespaceDrop(\%oManifest, 1, 2);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2b.txt', 'TBLSPC2B',
-                                                  $bChecksum ? 'e324463005236d83e6e54795dbddd20a74533bf3' : undef, $lTime);
+                                                  'e324463005236d83e6e54795dbddd20a74533bf3', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                             'add files and remove tablespace 2');
@@ -1708,7 +1684,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT',
-                                                  $bChecksum ? '9a53d532e27785e681766c98516a5e93f096a501' : undef, $lTime);
+                                                  '9a53d532e27785e681766c98516a5e93f096a501', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'update files');
 
@@ -1742,7 +1718,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:2", 'tablespace2b.txt', true);
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2c.txt', 'TBLSPC2C',
-                                                  $bChecksum ? 'ad7df329ab97a1e7d35f1ff0351c079319121836' : undef, $lTime);
+                                                  'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime);
 
             BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files during backup", true, true, 1);
             BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
@@ -1757,7 +1733,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestReference(\%oManifest);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT2',
-                                                  $bChecksum ? '7579ada0808d7f98087a0a586d0df9de009cdc33' : undef, $lTime);
+                                                  '7579ada0808d7f98087a0a586d0df9de009cdc33', $lTime);
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest);
 
@@ -1767,10 +1743,9 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2UPDT',
-                                                  $bChecksum ? 'cafac3c59553f2cfde41ce2e62e7662295f108c0' : undef, $lTime);
+                                                  'cafac3c59553f2cfde41ce2e62e7662295f108c0', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add files');
-        }
         }
         }
         }
@@ -1799,13 +1774,11 @@ sub BackRestTestBackup_Test
         {
         for (my $bCompress = false; $bCompress <= true; $bCompress++)
         {
-        for (my $bChecksum = false; $bChecksum <= true; $bChecksum++)
-        {
         for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
-                                        "rmt ${bRemote}, cmp ${bCompress}, chk ${bChecksum}, arc_async ${bArchiveAsync}")) {next}
+                                        "rmt ${bRemote}, cmp ${bCompress}, arc_async ${bArchiveAsync}")) {next}
 
             # Create the file object
             my $oFile = new BackRest::File
@@ -1827,7 +1800,7 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_ConfigCreate('db',                              # local
                                             $bRemote ? BACKUP : undef,         # remote
                                             $bCompress,                        # compress
-                                            $bChecksum,                        # checksum
+                                            undef,                             # checksum
                                             $bRemote ? undef : true,           # hardlink
                                             $iThreadMax,                       # thread-max
                                             $bArchiveAsync,                    # archive-async
@@ -1839,7 +1812,7 @@ sub BackRestTestBackup_Test
                 BackRestTestCommon_ConfigCreate('backup',                      # local
                                                 $bRemote ? DB : undef,         # remote
                                                 $bCompress,                    # compress
-                                                $bChecksum,                    # checksum
+                                                undef,                         # checksum
                                                 true,                          # hardlink
                                                 $iThreadMax,                   # thread-max
                                                 undef,                         # archive-async
@@ -2109,7 +2082,6 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 120);
 
             $bCreate = true;
-        }
         }
         }
         }

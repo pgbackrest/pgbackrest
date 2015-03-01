@@ -46,7 +46,7 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
 
                  CONFIG_KEY_LEVEL_FILE CONFIG_KEY_LEVEL_CONSOLE
 
-                 CONFIG_KEY_COMPRESS CONFIG_KEY_CHECKSUM CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
+                 CONFIG_KEY_COMPRESS CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
 
                  CONFIG_KEY_FULL_RETENTION CONFIG_KEY_DIFFERENTIAL_RETENTION CONFIG_KEY_ARCHIVE_RETENTION_TYPE
                  CONFIG_KEY_ARCHIVE_RETENTION
@@ -160,7 +160,6 @@ use constant
     CONFIG_KEY_LEVEL_CONSOLE           => 'level-console',
 
     CONFIG_KEY_COMPRESS                => 'compress',
-    CONFIG_KEY_CHECKSUM                => 'checksum',
     CONFIG_KEY_PSQL                    => 'psql',
     CONFIG_KEY_REMOTE                  => 'remote',
 

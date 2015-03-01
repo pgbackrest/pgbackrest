@@ -682,25 +682,8 @@ sub restore_thread
                 # Perform delta if requested
                 if ($self->{bDelta})
                 {
-                    # Do checksum delta if --force was not requested and checksums exist
-                    my $strChecksum = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM, false);
-
-                    if (!$self->{bForce} && defined($strChecksum) &&
-                        $oFileThread->hash(PATH_DB_ABSOLUTE, $strDestinationFile) eq $strChecksum)
-                    {
-                        &log(DEBUG, "${strDestinationFile} exists and matches backup checksum ${strChecksum}");
-
-                        # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
-                        # presents a pristine version of the database.
-                        utime($oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                              $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                              $strDestinationFile)
-                            or confess &log(ERROR, "unable to set time for ${strDestinationFile}");
-
-                        next;
-                    }
-                    # Else use size/timestamp delta
-                    else
+                    # If force then use size/timestamp delta
+                    if ($self->{bForce})
                     {
                         my $oStat = lstat($strDestinationFile);
 
@@ -715,6 +698,25 @@ sub restore_thread
                             next;
                         }
                     }
+                    else
+                    {
+                        my ($strChecksum, $lSize) = $oFileThread->hash_size(PATH_DB_ABSOLUTE, $strDestinationFile);
+
+                        if (($lSize == $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) && $lSize == 0) ||
+                            ($strChecksum eq $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM)))
+                        {
+                            &log(DEBUG, "${strDestinationFile} exists and is zero size or matches backup checksum");
+
+                            # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
+                            # presents a pristine version of the database.
+                            utime($oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
+                                  $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
+                                  $strDestinationFile)
+                                or confess &log(ERROR, "unable to set time for ${strDestinationFile}");
+
+                            next;
+                        }
+                    }
                 }
 
                 $oFileThread->remove(PATH_DB_ABSOLUTE, $strDestinationFile);
@@ -722,17 +724,25 @@ sub restore_thread
 
             # Set user and group if running as root (otherwise current user and group will be used for restore)
             # Copy the file from the backup to the database
-            $oFileThread->copy(PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $self->{strBackupPath}) .
-                               "/${strSourcePath}/${strName}" .
-                               ($bSourceCompression ? '.' . $oFileThread->{strCompressExtension} : ''),
-                               PATH_DB_ABSOLUTE, $strDestinationFile,
-                               $bSourceCompression,   # Source is compressed based on backup settings
-                               undef, undef,
-                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE),
-                               undef,
-                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER),
-                               $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP));
+            my ($bCopyResult, $strCopyChecksum, $lCopySize) =
+                $oFileThread->copy(PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $self->{strBackupPath}) .
+                                   "/${strSourcePath}/${strName}" .
+                                   ($bSourceCompression ? '.' . $oFileThread->{strCompressExtension} : ''),
+                                   PATH_DB_ABSOLUTE, $strDestinationFile,
+                                   $bSourceCompression,   # Source is compressed based on backup settings
+                                   undef, undef,
+                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
+                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE),
+                                   undef,
+                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER),
+                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP));
+
+            if ($lCopySize != 0 && $strCopyChecksum ne $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM))
+            {
+                confess &log(ERROR, "error restoring ${strDestinationFile}: actual checksum ${strCopyChecksum} " .
+                                    "does not match expected checksum " .
+                                    $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM), ERROR_CHECKSUM);
+            }
         }
 
         # Even number threads move up when they have finished a queue, odd numbered threads move down

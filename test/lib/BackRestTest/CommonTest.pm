@@ -613,10 +613,10 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{'global:backup'}{'compress'} = 'n';
     }
 
-    if (defined($bChecksum) && !$bChecksum)
-    {
-        $oParamHash{'global:backup'}{'checksum'} = 'n';
-    }
+    # if (defined($bChecksum) && $bChecksum)
+    # {
+    #     $oParamHash{'global:backup'}{'checksum'} = 'y';
+    # }
 
     $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
     $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
