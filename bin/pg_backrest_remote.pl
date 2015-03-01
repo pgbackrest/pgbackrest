@@ -80,28 +80,54 @@ while ($strCommand ne OP_EXIT)
 
     eval
     {
-        # Copy a file to STDOUT
-        if ($strCommand eq OP_FILE_COPY_OUT)
+        # Copy file
+        if ($strCommand eq OP_FILE_COPY ||
+            $strCommand eq OP_FILE_COPY_IN ||
+            $strCommand eq OP_FILE_COPY_OUT)
         {
-            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
-                         PIPE_STDOUT, undef,
-                         param_get(\%oParamHash, 'source_compressed'), undef);
+            my $bResult;
+            my $strChecksum;
+            my $iFileSize;
 
-            $oRemote->output_write();
-        }
-        # Copy a file from STDIN
-        elsif ($strCommand eq OP_FILE_COPY_IN)
-        {
-            $oFile->copy(PIPE_STDIN, undef,
-                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                         undef, param_get(\%oParamHash, 'destination_compress'),
-                         undef, undef,
-                         param_get(\%oParamHash, 'permission', false),
-                         param_get(\%oParamHash, 'destination_path_create'),
-                         param_get(\%oParamHash, 'user', false),
-                         param_get(\%oParamHash, 'group', false));
+            # Copy a file locally
+            if ($strCommand eq OP_FILE_COPY)
+            {
+                ($bResult, $strChecksum, $iFileSize) =
+                    $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                                 PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                                 param_get(\%oParamHash, 'source_compressed'),
+                                 param_get(\%oParamHash, 'destination_compress'),
+                                 param_get(\%oParamHash, 'ignore_missing_source', false),
+                                 undef,
+                                 param_get(\%oParamHash, 'permission', false),
+                                 param_get(\%oParamHash, 'destination_path_create') ? 'Y' : 'N',
+                                 param_get(\%oParamHash, 'user', false),
+                                 param_get(\%oParamHash, 'group', false));
+            }
+            # Copy a file from STDIN
+            elsif ($strCommand eq OP_FILE_COPY_IN)
+            {
+                ($bResult, $strChecksum, $iFileSize) =
+                    $oFile->copy(PIPE_STDIN, undef,
+                                 PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                                 undef, param_get(\%oParamHash, 'destination_compress'),
+                                 undef, undef,
+                                 param_get(\%oParamHash, 'permission', false),
+                                 param_get(\%oParamHash, 'destination_path_create'),
+                                 param_get(\%oParamHash, 'user', false),
+                                 param_get(\%oParamHash, 'group', false));
+            }
+            # Copy a file to STDOUT
+            elsif ($strCommand eq OP_FILE_COPY_OUT)
+            {
+                ($bResult, $strChecksum, $iFileSize) =
+                    $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                                 PIPE_STDOUT, undef,
+                                 param_get(\%oParamHash, 'source_compressed'), undef);
+            }
 
-            $oRemote->output_write();
+            $oRemote->output_write(($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
+                                   (defined($iFileSize) ? $iFileSize : '?'));
         }
         # List files in a path
         elsif ($strCommand eq OP_FILE_LIST)
@@ -133,21 +159,6 @@ while ($strCommand ne OP_EXIT)
         elsif ($strCommand eq OP_FILE_EXISTS)
         {
             $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, param_get(\%oParamHash, 'path')) ? 'Y' : 'N');
-        }
-        # Copy a file locally
-        elsif ($strCommand eq OP_FILE_COPY)
-        {
-            $oRemote->output_write(
-                $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
-                             PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                             param_get(\%oParamHash, 'source_compressed'),
-                             param_get(\%oParamHash, 'destination_compress'),
-                             param_get(\%oParamHash, 'ignore_missing_source', false),
-                             undef,
-                             param_get(\%oParamHash, 'permission', false),
-                             param_get(\%oParamHash, 'destination_path_create')) ? 'Y' : 'N',
-                             param_get(\%oParamHash, 'user', false),
-                             param_get(\%oParamHash, 'group', false));
         }
         # Wait
         elsif ($strCommand eq OP_FILE_WAIT)

@@ -704,7 +704,7 @@ sub binary_xfer
     }
 
     # Return the checksum and size if they are available
-    return defined($oSHA) ? $oSHA->hexdigest() : undef, $iFileSize;
+    return (defined($oSHA) ? $oSHA->hexdigest() : undef), $iFileSize;
 }
 
 ####################################################################################################################################

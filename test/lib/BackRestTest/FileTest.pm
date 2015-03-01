@@ -339,6 +339,7 @@ sub BackRestTestFile_Test
 
                 my $strFile = "${strTestPath}/test.txt";
                 my $strSourceHash;
+                my $iSourceSize;
 
                 if ($bError)
                 {
@@ -347,7 +348,7 @@ sub BackRestTestFile_Test
                 elsif ($bExists)
                 {
                     system("echo 'TESTDATA' > ${strFile}");
-                    $strSourceHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile);
+                    ($strSourceHash, $iSourceSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile);
                 }
 
                 # Execute in eval in case of error
@@ -385,7 +386,7 @@ sub BackRestTestFile_Test
 
                 system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
 
-                my $strDestinationHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile);
+                my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile);
 
                 if ($strSourceHash ne $strDestinationHash)
                 {
@@ -895,11 +896,12 @@ sub BackRestTestFile_Test
 
                 # Execute in eval in case of error
                 my $strHash;
+                my $iSize;
                 my $bErrorExpected = !$bExists || $bError || $bRemote;
 
                 eval
                 {
-                    $strHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
+                    ($strHash, $iSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
                 };
 
                 if ($@)
@@ -1096,6 +1098,7 @@ sub BackRestTestFile_Test
 
                 # Create the compressed or uncompressed test file
                 my $strSourceHash;
+                my $iSourceSize;
 
                 if (!$bSourceMissing)
                 {
@@ -1114,7 +1117,7 @@ sub BackRestTestFile_Test
                         system("echo 'TESTDATA' > ${strSourceFile}");
                     }
 
-                    $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
+                    ($strSourceHash, $iSourceSize) = $oFile->hash_size(PATH_ABSOLUTE, $strSourceFile);
 
                     if ($bSourceCompressed)
                     {
@@ -1195,12 +1198,17 @@ sub BackRestTestFile_Test
                         or die "could not decompress ${strDestinationFile}";
                 }
 
-                my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationTest);
+                my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_ABSOLUTE, $strDestinationTest);
 
                 if ($strSourceHash ne $strDestinationHash)
                 {
                     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
                 }
+
+                # if ((!defined($strCopyHash) || !defined($iCopySize)) && !($bSourceCompressed && $bDestinationCompress))
+                # {
+                #     confess "copy hash/size must be set unless source and destination are compressed";
+                # }
 
                 if (defined($strCopyHash) && $strSourceHash ne $strCopyHash)
                 {

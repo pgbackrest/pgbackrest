@@ -758,6 +758,22 @@ sub hash
     my $bCompressed = shift;
     my $strHashType = shift;
 
+    my ($strHash, $iSize) = $self->hash_size($strPathType, $strFile, $bCompressed, $strHashType);
+
+    return $strHash;
+}
+
+####################################################################################################################################
+# HASH_SIZE
+####################################################################################################################################
+sub hash_size
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+    my $bCompressed = shift;
+    my $strHashType = shift;
+
     # Set defaults
     $bCompressed = defined($bCompressed) ? $bCompressed : false;
     $strHashType = defined($strHashType) ? $strHashType : 'sha1';
@@ -765,6 +781,7 @@ sub hash
     # Set operation variables
     my $strFileOp = $self->path_get($strPathType, $strFile);
     my $strHash;
+    my $iSize = 0;
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_HASH;
@@ -844,6 +861,7 @@ sub hash
                         confess &log(ERROR, "unable to decompress stream ($iBlockIn): ${GunzipError}");
                     }
 
+                    $iSize += length($tUncompressedBuffer);
                     $oSHA->add($tUncompressedBuffer);
                 }
             }
@@ -853,7 +871,23 @@ sub hash
         }
         else
         {
-            $oSHA->addfile($hFile);
+            my $iBlockSize;
+            my $tBuffer;
+
+            do
+            {
+                # Read a block from the file
+                $iBlockSize = sysread($hFile, $tBuffer, 4194304);
+
+                if (!defined($iBlockSize))
+                {
+                    confess &log(ERROR, "${strFileOp} could not be read: " . $!);
+                }
+
+                $iSize += $iBlockSize;
+                $oSHA->add($tBuffer);
+            }
+            while ($iBlockSize > 0);
         }
 
         close($hFile);
@@ -861,7 +895,7 @@ sub hash
         $strHash = $oSHA->hexdigest();
     }
 
-    return $strHash;
+    return $strHash, $iSize;
 }
 
 ####################################################################################################################################
@@ -1337,6 +1371,7 @@ sub copy
     # Checksum and size variables
     my $strChecksum = undef;
     my $iFileSize = undef;
+    my $bResult = true;
 
     # Set debug string and log
     my $strDebug = ($bSourceRemote ? ' remote' : ' local') . " ${strSourcePathType}" .
@@ -1551,7 +1586,29 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug, true);
+                $strOutput = $self->{oRemote}->output_read(true, $strDebug, true);
+
+                # Check the result of the remote call
+                if (substr($strOutput, 0, 1) eq 'Y')
+                {
+                    # If checksum/size is not already defined then get it from the remote
+                    if (!defined($strChecksum) || !defined($iFileSize))
+                    {
+                        my @stryToken = split(/ /, $strOutput);
+
+                        if ($bDestinationRemote && ($stryToken[1] eq '?' || $stryToken[1] eq '?'))
+                        {
+                            confess &log(ERROR, "checksum/size should have been returned from remote: ${strOutput}");
+                        }
+
+                        $strChecksum = $stryToken[1];
+                        $iFileSize = $stryToken[2];
+                    }
+                }
+                else
+                {
+                    $bResult = false;
+                }
             };
 
             # If there is an error then evaluate
@@ -1571,12 +1628,6 @@ sub copy
                 }
 
                 confess $oMessage;
-            }
-
-            # If this was a remote copy, then return the result
-            if ($strOperation eq OP_FILE_COPY)
-            {
-                return false, undef, undef;
             }
         }
     }
@@ -1638,9 +1689,12 @@ sub copy
 
         # Move the file from tmp to final destination
         $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
+
+        # Get the checksum and size
+        ($strChecksum, $iFileSize) = $self->hash_size(PATH_ABSOLUTE, $strDestinationOp, $bDestinationCompress);
     }
 
-    return true, $strChecksum, $iFileSize;
+    return $bResult, $strChecksum, $iFileSize;
 }
 
 1;

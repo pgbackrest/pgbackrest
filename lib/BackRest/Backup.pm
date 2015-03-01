@@ -1136,7 +1136,11 @@ sub backup_file_thread
 
     my $lSize = 0;                  # Size of files currently copied by this thread
     my $strLog;                     # Store the log message
+    my $strLogProgress;             # Part of the log message that shows progress
     my $oFileThread;                # Thread local file object
+    my $bCopyResult;                # Copy result
+    my $strCopyChecksum;            # Copy checksum
+    my $lCopySize;                  # Copy Size
 
     # If multi-threaded, then clone the file object
     if ($bMulti)
@@ -1160,20 +1164,21 @@ sub backup_file_thread
         if (!$oFileCopyMap{$strFile}{checksum_only})
         {
             # Output information about the file to be copied
-            $strLog = "thread ${iThreadIdx} backing up file $oFileCopyMap{$strFile}{db_file} (" .
-                      file_size_format($oFileCopyMap{$strFile}{size}) .
-                      ($lSizeTotal > 0 ? ', ' . int($lSize * 100 / $lSizeTotal) . '%' : '') . ')';
+            $strLog = "thread ${iThreadIdx} backing up file";
 
             # Copy the file from the database to the backup (will return false if the source file is missing)
-            unless($oFileThread->copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                      PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file} .
-                                          ($bCompress ? '.' . $oFile->{strCompressExtension} : ''),
-                                      false,        # Source is not compressed since it is the db directory
-                                      $bCompress,   # Destination should be compressed based on backup settings
-                                      true,         # Ignore missing files
-                                      $oFileCopyMap{$strFile}{modification_time}, # Set modification time
-                                      undef,        # Do not set original permissions
-                                      true))        # Create the destiation directory if it does not exist
+            ($bCopyResult, $strCopyChecksum, $lCopySize) =
+                $oFileThread->copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
+                                   PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file} .
+                                       ($bCompress ? '.' . $oFile->{strCompressExtension} : ''),
+                                   false,        # Source is not compressed since it is the db directory
+                                   $bCompress,   # Destination should be compressed based on backup settings
+                                   true,         # Ignore missing files
+                                   $oFileCopyMap{$strFile}{modification_time}, # Set modification time
+                                   undef,        # Do not set original permissions
+                                   true);        # Create the destination directory if it does not exist
+
+            if (!$bCopyResult)
             {
                 # If file is missing assume the database removed it (else corruption and nothing we can do!)
                 &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
@@ -1196,40 +1201,37 @@ sub backup_file_thread
             }
         }
 
-        # Generate checksum for file if configured
-        if ($bChecksum && $lSize != 0)
-        {
-            # Generate the checksum
-            my $strChecksum = $oFileThread->hash(PATH_BACKUP_TMP,
-                                                 $oFileCopyMap{$strFile}{backup_file} . ($bCompress ? '.gz' : ''), $bCompress);
+        $strLogProgress = "$oFileCopyMap{$strFile}{db_file} (" . file_size_format($lCopySize) .
+                          ($lSizeTotal > 0 ? ', ' . int($lSize * 100 / $lSizeTotal) . '%' : '') . ')';
 
+        # Generate checksum for file if configured
+        if ($bChecksum && $lCopySize != 0)
+        {
             # Store checksum in the manifest
             if ($bMulti)
             {
                 # Write the checksum message into the master queue
                 $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|" .
-                                                    "$oFileCopyMap{$strFile}{file}|${strChecksum}");
+                                                    "$oFileCopyMap{$strFile}{file}|${strCopyChecksum}");
             }
             else
             {
                 # Write it directly
                 $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
-                                      MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+                                      MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
             }
 
             # Output information about the file to be checksummed
             if (!defined($strLog))
             {
-                $strLog = "thread ${iThreadIdx} checksum-only $oFileCopyMap{$strFile}{db_file} (" .
-                          file_size_format($oFileCopyMap{$strFile}{size}) .
-                          ($lSizeTotal > 0 ? ', ' . int($lSize * 100 / $lSizeTotal) . '%' : '') . ')';
+                $strLog = "thread ${iThreadIdx} checksum-only ${strLogProgress}";
             }
 
-            &log(INFO, $strLog . " checksum ${strChecksum}");
+            &log(INFO, $strLog . " checksum ${strCopyChecksum}");
         }
         else
         {
-            &log(INFO, $strLog);
+            &log(INFO, $strLog . ' ' . $strLogProgress);
         }
 
         &log(TRACE, "thread waiting for new file from queue");
