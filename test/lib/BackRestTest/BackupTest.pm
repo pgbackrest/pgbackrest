@@ -1772,13 +1772,13 @@ sub BackRestTestBackup_Test
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
-        for (my $bCompress = false; $bCompress <= true; $bCompress++)
-        {
         for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
+        {
+        for (my $bCompress = false; $bCompress <= true; $bCompress++)
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
-                                        "rmt ${bRemote}, cmp ${bCompress}, arc_async ${bArchiveAsync}")) {next}
+                                        "rmt ${bRemote}, arc_async ${bArchiveAsync}, cmp ${bCompress}")) {next}
 
             # Create the file object
             my $oFile = new BackRest::File

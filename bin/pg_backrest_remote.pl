@@ -102,7 +102,8 @@ while ($strCommand ne OP_EXIT)
                                  param_get(\%oParamHash, 'permission', false),
                                  param_get(\%oParamHash, 'destination_path_create') ? 'Y' : 'N',
                                  param_get(\%oParamHash, 'user', false),
-                                 param_get(\%oParamHash, 'group', false));
+                                 param_get(\%oParamHash, 'group', false),
+                                 param_get(\%oParamHash, 'append_checksum', false));
             }
             # Copy a file from STDIN
             elsif ($strCommand eq OP_FILE_COPY_IN)
@@ -115,7 +116,8 @@ while ($strCommand ne OP_EXIT)
                                  param_get(\%oParamHash, 'permission', false),
                                  param_get(\%oParamHash, 'destination_path_create'),
                                  param_get(\%oParamHash, 'user', false),
-                                 param_get(\%oParamHash, 'group', false));
+                                 param_get(\%oParamHash, 'group', false),
+                                 param_get(\%oParamHash, 'append_checksum', false));
             }
             # Copy a file to STDOUT
             elsif ($strCommand eq OP_FILE_COPY_OUT)

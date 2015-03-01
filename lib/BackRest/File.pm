@@ -1291,12 +1291,14 @@ sub copy
     my $bDestinationPathCreate = shift;
     my $strUser = shift;
     my $strGroup = shift;
+    my $bAppendChecksum = shift;
 
     # Set defaults
     $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
     $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : false;
+    $bAppendChecksum = defined($bAppendChecksum) ? $bAppendChecksum : false;
 
     # Set working variables
     my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
@@ -1461,6 +1463,11 @@ sub copy
                     $oParamHash{group} = $strGroup;
                 }
 
+                if ($bAppendChecksum)
+                {
+                    $oParamHash{append_checksum} = true;
+                }
+
                 $hOut = $self->{oRemote}->{hIn};
             }
         }
@@ -1493,6 +1500,11 @@ sub copy
             if ($bIgnoreMissingSource)
             {
                 $oParamHash{ignore_missing_source} = $bIgnoreMissingSource;
+            }
+
+            if ($bAppendChecksum)
+            {
+                $oParamHash{append_checksum} = true;
             }
         }
 
@@ -1637,14 +1649,34 @@ sub copy
             $self->owner(PATH_ABSOLUTE, $strDestinationTmpOp, $strUser, $strGroup);
         }
 
-        # Move the file from tmp to final destination
-        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
-
         # Get the checksum and size if they are not already set
         if (!defined($strChecksum) || !defined($iFileSize))
         {
-            ($strChecksum, $iFileSize) = $self->hash_size(PATH_ABSOLUTE, $strDestinationOp, $bDestinationCompress);
+            ($strChecksum, $iFileSize) = $self->hash_size(PATH_ABSOLUTE, $strDestinationTmpOp, $bDestinationCompress);
         }
+
+        # Replace checksum in destination filename (if exists)
+        if ($bAppendChecksum)
+        {
+            if (!defined($strChecksum))
+            {
+                confess &log(ERROR, "${strDebug}: unable to append unset checksum");
+            }
+
+            if ($bDestinationCompress)
+            {
+                $strDestinationOp =
+                    substr($strDestinationOp, 0, length($strDestinationOp) - length($self->{strCompressExtension}) - 1) .
+                           '-' . $strChecksum . '.' . $self->{strCompressExtension};
+            }
+            else
+            {
+                $strDestinationOp .= '-' . $strChecksum;
+            }
+        }
+
+        # Move the file from tmp to final destination
+        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
     }
 
     return $bResult, $strChecksum, $iFileSize;

@@ -317,12 +317,6 @@ sub archive_push
     # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
     my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
 
-    # Append the checksum (if requested)
-    if ($bArchiveFile)
-    {
-        $strDestinationFile .= '-' . $oFile->hash(PATH_DB_ABSOLUTE, $strSourceFile);
-    }
-
     # Append compression extension
     if ($bArchiveFile && $bCompress)
     {
@@ -335,7 +329,9 @@ sub archive_push
                  false,                                        # Source is not compressed
                  $bArchiveFile && $bCompress,                  # Destination compress is configurable
                  undef, undef, undef,                          # Unused params
-                 true);                                        # Create path if it does not exist
+                 true,                                         # Create path if it does not exist
+                 undef, undef,                                 # User and group
+                 $bArchiveFile);                               # Append checksum if archive file
 }
 
 ####################################################################################################################################
@@ -1501,8 +1497,7 @@ sub backup
             my $strFileLog = "pg_xlog/${strArchive}";
 
             # Compare the checksum against the one already in the archive log name
-            if ($stryArchiveFile[0] =~ "^${strArchive}-[0-f]+(\\.$oFile->{strCompressExtension}){0,1}\$" &&
-                $stryArchiveFile[0] !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+            if ($stryArchiveFile[0] !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
             {
                 confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recorded with file does " .
                                     "not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
