@@ -220,11 +220,11 @@ The backup set to be restored.  `latest` will restore the latest backup, otherwi
 
 ##### delta
 
-By default the database base and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums if available and timestamp/size when checksums are not available.
+By default the database base and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.
 
 ##### force
 
-By itself this option forces the database base and tablespace paths to be completely overwritten.  In combination with `--delta` a timestamp/size delta will be performed even if checksums are available.
+By itself this option forces the database base and tablespace paths to be completely overwritten.  In combination with `--delta` a timestamp/size delta will be performed instead of using checksums.
 
 #### recovery options
 
@@ -378,13 +378,6 @@ Enable gzip compression.  Files stored in the backup are compatible with command
 ```
 default: y
 example: compress=n
-```
-##### checksum
-
-Enable SHA-1 checksums.  Backup checksums are stored in backup.manifest while archive checksums are stored in the filename.
-```
-default: y
-example: checksum=n
 ```
 ##### start-fast
 

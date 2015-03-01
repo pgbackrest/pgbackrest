@@ -39,6 +39,8 @@ Primary PgBackRest features:
 
 * Link (called latest) always points to the last backup.  This has been added for convenience and to make restore simpler.
 
+* De/compression is now performed without threads and checksum/size are calculated in stream.  That means file checksums are not longer optional.
+
 * Checksum for backup.manifest to detect corrupted/modified manifest.
 
 ### v0.30: core restructuring and unit tests
