@@ -15,9 +15,6 @@ use File::Path qw(make_path remove_tree);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
-use IO::Compress::Gzip qw(gzip $GzipError);
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
-use IO::String;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -129,6 +126,11 @@ sub new
     $self->{strRemote} = $strRemote;
     $self->{oRemote} = $oRemote;
     $self->{iThreadIdx} = $iThreadIdx;
+
+    if (!defined($self->{strRemote}) || $self->{strRemote} eq NONE)
+    {
+        $self->{oRemote} = new BackRest::Remote();
+    }
 
     # If remote is defined check parameters and open session
     if (defined($self->{strRemote}) && $self->{strRemote} ne NONE)
@@ -523,25 +525,8 @@ sub compress
     # Run locally
     else
     {
-        # Compress the file
-        if (!gzip($strPathOp => "${strPathOp}.gz"))
-        {
-            my $strError = "${strPathOp} could not be compressed:" . $!;
-            my $iErrorCode = COMMAND_ERR_FILE_READ;
-
-            if (!$self->exists($strPathType, $strFile))
-            {
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = COMMAND_ERR_FILE_MISSING;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
-
-            confess &log(ERROR, "${strDebug}: " . $strError);
-        }
+        # Use copy to compress the file
+        $self->copy($strPathType, $strFile, $strPathType, "${strFile}.gz", false, true);
 
         # Remove the old file
         unlink($strPathOp)
@@ -821,53 +806,8 @@ sub hash_size
 
         if ($bCompressed)
         {
-            my $bFirst = true;
-            my $tCompressedBuffer;
-            my $tUncompressedBuffer;
-            my $iBlockSize;
-            my $iBlockIn;
-            my $oGzip;
-
-            do
-            {
-                # Read a block from the file
-                $iBlockSize = sysread($hFile, $tCompressedBuffer, 4194304,
-                                      defined($tCompressedBuffer) ? length($tCompressedBuffer) : 0);
-
-                if (!defined($iBlockSize))
-                {
-                    confess &log(ERROR, "${strFileOp} could not be read: " . $!);
-                }
-
-                # If this is the first block then initialize Gunzip
-                if ($bFirst)
-                {
-                    # Initialize Gunzip
-                    $oGzip = new IO::Uncompress::Gunzip(\$tCompressedBuffer, Transparent => 0, BlockSize => 4194304)
-                        or confess "IO::Uncompress::Gunzip failed: $GunzipError";
-
-                    # Clear first block flag
-                    $bFirst = false;
-                }
-
-                # Loop while there is more data to uncompress
-                while (!$oGzip->eof())
-                {
-                    # Decompress the block
-                    $iBlockIn = $oGzip->read($tUncompressedBuffer);
-
-                    if ($iBlockIn < 0)
-                    {
-                        confess &log(ERROR, "unable to decompress stream ($iBlockIn): ${GunzipError}");
-                    }
-
-                    $iSize += length($tUncompressedBuffer);
-                    $oSHA->add($tUncompressedBuffer);
-                }
-            }
-            while ($iBlockSize > 0);
-
-            $oGzip->close();
+            ($strHash, $iSize) =
+                $self->{oRemote}->binary_xfer($hFile, undef, 'in', undef, false, false);
         }
         else
         {
@@ -888,11 +828,11 @@ sub hash_size
                 $oSHA->add($tBuffer);
             }
             while ($iBlockSize > 0);
+
+            $strHash = $oSHA->hexdigest();
         }
 
         close($hFile);
-
-        $strHash = $oSHA->hexdigest();
     }
 
     return $strHash, $iSize;
@@ -1596,13 +1536,21 @@ sub copy
                     {
                         my @stryToken = split(/ /, $strOutput);
 
-                        if ($bDestinationRemote && ($stryToken[1] eq '?' || $stryToken[1] eq '?'))
+                        if ($bDestinationRemote && ($stryToken[1] eq '?' || $stryToken[2] eq '?'))
                         {
                             confess &log(ERROR, "checksum/size should have been returned from remote: ${strOutput}");
                         }
 
-                        $strChecksum = $stryToken[1];
-                        $iFileSize = $stryToken[2];
+                        if ($stryToken[1] ne '?')
+                        {
+                            $strChecksum = $stryToken[1];
+                            $iFileSize = $stryToken[2];
+                        }
+
+                        if ($stryToken[2] ne '?')
+                        {
+                            $iFileSize = $stryToken[2];
+                        }
                     }
                 }
                 else
@@ -1637,14 +1585,16 @@ sub copy
         # If the source is compressed and the destination is not then decompress
         if ($bSourceCompressed && !$bDestinationCompress)
         {
-            gunzip($hSourceFile => $hDestinationFile)
-                or die confess &log(ERROR, "${strDebug}: unable to uncompress: " . $GunzipError);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', undef, false, false);
         }
+        # If the source is not compressed and the destination is then compress
         elsif (!$bSourceCompressed && $bDestinationCompress)
         {
-            gzip($hSourceFile => $hDestinationFile)
-                or die confess &log(ERROR, "${strDebug}: unable to compress: " . $GzipError);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, undef, false);
         }
+        # Else straight copy
         else
         {
            cp($hSourceFile, $hDestinationFile)
@@ -1690,8 +1640,11 @@ sub copy
         # Move the file from tmp to final destination
         $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
 
-        # Get the checksum and size
-        ($strChecksum, $iFileSize) = $self->hash_size(PATH_ABSOLUTE, $strDestinationOp, $bDestinationCompress);
+        # Get the checksum and size if they are not already set
+        if (!defined($strChecksum) || !defined($iFileSize))
+        {
+            ($strChecksum, $iFileSize) = $self->hash_size(PATH_ABSOLUTE, $strDestinationOp, $bDestinationCompress);
+        }
     }
 
     return $bResult, $strChecksum, $iFileSize;
