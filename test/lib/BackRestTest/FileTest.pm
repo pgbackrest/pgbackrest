@@ -1062,8 +1062,11 @@ sub BackRestTestFile_Test
             # Loop through source ignore/require
             for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= !$bLarge; $bSourceIgnoreMissing++)
             {
+            # Loop through checksum append
+            for (my $bChecksumAppend = 0; $bChecksumAppend <= !$bLarge; $bChecksumAppend++)
+            {
             # Loop through source compression
-            for (my $bSourceCompressed = 0; $bSourceCompressed <=   !$bSourceMissing; $bSourceCompressed++)
+            for (my $bSourceCompressed = 0; $bSourceCompressed <= !$bSourceMissing; $bSourceCompressed++)
             {
             # Loop through destination compression
             for (my $bDestinationCompress = 0; $bDestinationCompress <= !$bSourceMissing; $bDestinationCompress++)
@@ -1083,7 +1086,8 @@ sub BackRestTestFile_Test
                                                 "srcignmiss ${bSourceIgnoreMissing}, srccmp $bSourceCompressed, " .
                                             'dstpth ' .
                                                 (defined($strRemote) && $strRemote eq $strDestinationPath ? 'rmt' : 'lcl') .
-                                                ":${strDestinationPath}, dstcmp $bDestinationCompress")) {next}
+                                                ":${strDestinationPath}, chkapp ${bChecksumAppend}, " .
+                                                "dstcmp $bDestinationCompress")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup(false);
@@ -1117,7 +1121,21 @@ sub BackRestTestFile_Test
                         system("echo 'TESTDATA' > ${strSourceFile}");
                     }
 
-                    ($strSourceHash, $iSourceSize) = $oFile->hash_size(PATH_ABSOLUTE, $strSourceFile);
+                    if ($bLarge == 1)
+                    {
+                        $strSourceHash = 'c2e63b6a49d53a53d6df1aa6b70c7c16747ca099';
+                        $iSourceSize = 16777216;
+                    }
+                    elsif ($bLarge == 2)
+                    {
+                        $strSourceHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+                        $iSourceSize = 16777216;
+                    }
+                    else
+                    {
+                        $strSourceHash = '06364afe79d801433188262478a76d19777ef351';
+                        $iSourceSize = 9;
+                    }
 
                     if ($bSourceCompressed)
                     {
@@ -1140,7 +1158,8 @@ sub BackRestTestFile_Test
                         $oFile->copy($strSourcePathType, $strSourceFile,
                                      $strDestinationPathType, $strDestinationFile,
                                      $bSourceCompressed, $bDestinationCompress,
-                                     $bSourceIgnoreMissing, undef, '0700');
+                                     $bSourceIgnoreMissing, undef, '0700', false, undef, undef,
+                                     $bChecksumAppend);
                 };
 
                 # Check for errors after copy
@@ -1183,6 +1202,24 @@ sub BackRestTestFile_Test
                     confess 'expected source file missing error';
                 }
 
+                if (!defined($strCopyHash))
+                {
+                    confess 'copy hash must be defined';
+                }
+
+                if ($bChecksumAppend)
+                {
+                    if ($bDestinationCompress)
+                    {
+                        $strDestinationFile =
+                            substr($strDestinationFile, 0, length($strDestinationFile) -3) . "-${strSourceHash}.gz";
+                    }
+                    else
+                    {
+                        $strDestinationFile .= '-' . $strSourceHash;
+                    }
+                }
+
                 unless (-e $strDestinationFile)
                 {
                     confess "could not find destination file ${strDestinationFile}";
@@ -1200,20 +1237,16 @@ sub BackRestTestFile_Test
 
                 my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_ABSOLUTE, $strDestinationTest);
 
-                if ($strSourceHash ne $strDestinationHash)
+                if ($strSourceHash ne $strDestinationHash || $strSourceHash ne $strCopyHash)
                 {
-                    confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                    confess "source ${strSourceHash}, copy ${strCopyHash} and destination ${strDestinationHash} file hashes do not match";
                 }
 
-                # if ((!defined($strCopyHash) || !defined($iCopySize)) && !($bSourceCompressed && $bDestinationCompress))
-                # {
-                #     confess "copy hash/size must be set unless source and destination are compressed";
-                # }
-
-                if (defined($strCopyHash) && $strSourceHash ne $strCopyHash)
+                if ($iSourceSize != $iDestinationSize || $iSourceSize != $iCopySize)
                 {
-                    confess "source ${strSourceHash} and copy ${strCopyHash} file hashes do not match";
+                    confess "source ${iSourceSize}, copy ${iCopySize} and destination ${iDestinationSize} sizes do not match";
                 }
+            }
             }
             }
             }

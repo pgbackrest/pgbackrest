@@ -27,21 +27,21 @@ Primary PgBackRest features:
 
 * Added restore functionality.
 
-* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
+* De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.
 
-* Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
+* Added option (--no-start-stop) to allow backups when Postgres is shut down.  If postmaster.pid is present then --force is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
 
 * Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
 
 * Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.
 
-* More comprehensive backup unit tests.
+* Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
+
+* Checksum for backup.manifest to detect corrupted/modified manifest.
 
 * Link (called latest) always points to the last backup.  This has been added for convenience and to make restore simpler.
 
-* De/compression is now performed without threads and checksum/size are calculated in stream.  That means file checksums are not longer optional.
-
-* Checksum for backup.manifest to detect corrupted/modified manifest.
+* More comprehensive backup unit tests.
 
 ### v0.30: core restructuring and unit tests
 

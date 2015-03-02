@@ -1427,6 +1427,7 @@ sub copy
             {
                 $oParamHash{source_file} = $strSourceOp;
                 $oParamHash{source_compressed} = $bSourceCompressed;
+                $oParamHash{destination_compress} = $bDestinationCompress;
 
                 $hIn = $self->{oRemote}->{hOut};
             }
@@ -1445,6 +1446,7 @@ sub copy
             else
             {
                 $oParamHash{destination_file} = $strDestinationOp;
+                $oParamHash{source_compressed} = $bSourceCompressed;
                 $oParamHash{destination_compress} = $bDestinationCompress;
                 $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
@@ -1543,20 +1545,29 @@ sub copy
                 # Check the result of the remote call
                 if (substr($strOutput, 0, 1) eq 'Y')
                 {
-                    # If checksum/size is not already defined then get it from the remote
-                    if (!defined($strChecksum) || !defined($iFileSize))
+                    # If the operation was purely remote, get checksum/size
+                    if ($strOperation eq OP_FILE_COPY ||
+                        $strOperation eq OP_FILE_COPY_IN && $bSourceCompressed && !$bDestinationCompress)
                     {
-                        my @stryToken = split(/ /, $strOutput);
-
-                        if ($bDestinationRemote && ($stryToken[1] eq '?' || $stryToken[2] eq '?'))
+                        # Checksum shouldn't already be set
+                        if (defined($strChecksum) || defined($iFileSize))
                         {
-                            confess &log(ERROR, "checksum/size should have been returned from remote: ${strOutput}");
+                            confess &log(ASSERT, "checksum and size are already defined, but shouldn't be");
                         }
 
+                        # Parse output and check to make sure tokens are defined
+                        my @stryToken = split(/ /, $strOutput);
+
+                        if (!defined($stryToken[1]) || !defined($stryToken[2]) ||
+                            $stryToken[1] eq '?' && $stryToken[2] eq '?')
+                        {
+                            confess &log(ERROR, "invalid return from copy" . (defined($strOutput) ? ": ${strOutput}" : ''));
+                        }
+
+                        # Read the checksum and size
                         if ($stryToken[1] ne '?')
                         {
                             $strChecksum = $stryToken[1];
-                            $iFileSize = $stryToken[2];
                         }
 
                         if ($stryToken[2] ne '?')
@@ -1565,6 +1576,7 @@ sub copy
                         }
                     }
                 }
+                # Remote called returned false
                 else
                 {
                     $bResult = false;
@@ -1594,23 +1606,28 @@ sub copy
     # Else this is a local operation
     else
     {
-        # If the source is compressed and the destination is not then decompress
-        if ($bSourceCompressed && !$bDestinationCompress)
-        {
-            ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', undef, false, false);
-        }
         # If the source is not compressed and the destination is then compress
-        elsif (!$bSourceCompressed && $bDestinationCompress)
+        if (!$bSourceCompressed && $bDestinationCompress)
         {
             ($strChecksum, $iFileSize) =
                 $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, undef, false);
         }
-        # Else straight copy
+        # If the source is compressed and the destination is not then decompress
+        elsif ($bSourceCompressed && !$bDestinationCompress)
+        {
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', undef, false, false);
+        }
+        # Else both side are compressed, so copy capturing checksum
+        elsif ($bSourceCompressed)
+        {
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', true, true, false);
+        }
         else
         {
-           cp($hSourceFile, $hDestinationFile)
-               or die confess &log(ERROR, "${strDebug}: unable to copy: " . $!);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', undef, true, false);
         }
     }
 
@@ -1626,8 +1643,16 @@ sub copy
         close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
     }
 
+    # Checksum and file size should be set if the destination is not remote
+    if ($bResult &&
+        !(!$bSourceRemote && $bDestinationRemote && $bSourceCompressed) &&
+        (!defined($strChecksum) || !defined($iFileSize)))
+    {
+        confess &log(ASSERT, "${strDebug}: checksum or file size not set");
+    }
+
     # Where the destination is local, set permissions, modification time, and perform move to final location
-    if (!$bDestinationRemote)
+    if ($bResult && !$bDestinationRemote)
     {
         # Set the file permission if required
         if (defined($strMode))
@@ -1649,25 +1674,15 @@ sub copy
             $self->owner(PATH_ABSOLUTE, $strDestinationTmpOp, $strUser, $strGroup);
         }
 
-        # Get the checksum and size if they are not already set
-        if (!defined($strChecksum) || !defined($iFileSize))
-        {
-            ($strChecksum, $iFileSize) = $self->hash_size(PATH_ABSOLUTE, $strDestinationTmpOp, $bDestinationCompress);
-        }
-
         # Replace checksum in destination filename (if exists)
         if ($bAppendChecksum)
         {
-            if (!defined($strChecksum))
-            {
-                confess &log(ERROR, "${strDebug}: unable to append unset checksum");
-            }
-
+            # Replace destination filename
             if ($bDestinationCompress)
             {
                 $strDestinationOp =
                     substr($strDestinationOp, 0, length($strDestinationOp) - length($self->{strCompressExtension}) - 1) .
-                           '-' . $strChecksum . '.' . $self->{strCompressExtension};
+                    '-' . $strChecksum . '.' . $self->{strCompressExtension};
             }
             else
             {

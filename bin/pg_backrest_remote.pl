@@ -111,7 +111,8 @@ while ($strCommand ne OP_EXIT)
                 ($bResult, $strChecksum, $iFileSize) =
                     $oFile->copy(PIPE_STDIN, undef,
                                  PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                                 undef, param_get(\%oParamHash, 'destination_compress'),
+                                 param_get(\%oParamHash, 'source_compressed'),
+                                 param_get(\%oParamHash, 'destination_compress'),
                                  undef, undef,
                                  param_get(\%oParamHash, 'permission', false),
                                  param_get(\%oParamHash, 'destination_path_create'),
@@ -125,7 +126,8 @@ while ($strCommand ne OP_EXIT)
                 ($bResult, $strChecksum, $iFileSize) =
                     $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
                                  PIPE_STDOUT, undef,
-                                 param_get(\%oParamHash, 'source_compressed'), undef);
+                                 param_get(\%oParamHash, 'source_compressed'),
+                                 param_get(\%oParamHash, 'destination_compress'));
             }
 
             $oRemote->output_write(($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
