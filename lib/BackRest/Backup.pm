@@ -33,7 +33,7 @@ my $bCompress;
 my $bHardLink;
 my $iThreadMax;
 my $iThreadLocalMax;
-my $iThreadThreshold = 10;
+#my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
 my $bArchiveRequired;
 my $bNoStartStop;
@@ -546,7 +546,7 @@ sub archive_compress
     &log(INFO, "archive to be compressed total ${lFileTotal}, size " . file_size_format($lFileSize));
 
     # Init the thread variables
-    $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
+    $iThreadLocalMax = thread_init($iThreadMax);
     my $iThreadIdx = 0;
 
     # Distribute files among the threads
@@ -977,7 +977,7 @@ sub backup_file
     }
 
     # Build the thread queues
-    $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
+    $iThreadLocalMax = thread_init($iThreadMax);
     &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
 
     # Initialize the thread size array
@@ -1093,7 +1093,8 @@ sub backup_file
                 # If command is 'checksum' then record the checksum in the manifest
                 elsif ($strCommand eq 'checksum')
                 {
-                    my $strChecksum = $strSplit[3];  # File checksum calculated by the thread
+                    my $strChecksum = $strSplit[3]; # File checksum calculated by the thread
+                    my $lFileSize = $strSplit[4];   # File size calculated by the thread
 
                     # Checksum must be defined
                     if (!defined($strChecksum))
@@ -1101,10 +1102,17 @@ sub backup_file
                         confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
                     }
 
+                    # Checksum must be defined
+                    if (!defined($lFileSize))
+                    {
+                        confess &log(ASSERT, 'thread checksum messages must have lFileSize defined');
+                    }
+
                     $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+                    $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_SIZE, $lFileSize + 0);
 
                     # Log the checksum
-                    &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum}");
+                    &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum} (${lFileSize})");
                 }
             }
         }
@@ -1202,13 +1210,15 @@ sub backup_file_thread
             {
                 # Write the checksum message into the master queue
                 $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|" .
-                                                    "$oFileCopyMap{$strFile}{file}|${strCopyChecksum}");
+                                                    "$oFileCopyMap{$strFile}{file}|${strCopyChecksum}|${lCopySize}");
             }
             else
             {
                 # Write it directly
                 $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
                                       MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
+                $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
+                                      MANIFEST_SUBKEY_SIZE, $lCopySize + 0);
             }
 
             # Output information about the file to be checksummed

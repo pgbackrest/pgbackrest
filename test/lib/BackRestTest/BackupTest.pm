@@ -1723,6 +1723,9 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files during backup", true, true, 1);
             BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
 
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2c.txt', 'TBLSPCBIGGER',
+                                                  'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime);
+
             BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base2.txt', true);
 
             $strBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, \%oManifest, true);
