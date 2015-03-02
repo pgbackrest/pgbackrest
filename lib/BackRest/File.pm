@@ -1610,13 +1610,13 @@ sub copy
         if (!$bSourceCompressed && $bDestinationCompress)
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, undef, false);
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, true, false);
         }
         # If the source is compressed and the destination is not then decompress
         elsif ($bSourceCompressed && !$bDestinationCompress)
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', undef, false, false);
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', true, false, false);
         }
         # Else both side are compressed, so copy capturing checksum
         elsif ($bSourceCompressed)
@@ -1627,7 +1627,7 @@ sub copy
         else
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', undef, true, false);
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', false, true, false);
         }
     }
 
