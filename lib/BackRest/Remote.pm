@@ -567,7 +567,7 @@ sub binary_xfer
 
             # Initialize inflate object and check for errors
             my ($oZLib, $iZLibStatus) =
-                new Compress::Raw::Zlib::Inflate(WindowBits => !$bSourceCompressed ? 15 : WANT_GZIP,
+                new Compress::Raw::Zlib::Inflate(WindowBits => 15 & $bSourceCompressed ? WANT_GZIP : 0,
                                                  Bufsize => $self->{iBlockSize}, LimitOutput => 1);
 
             if ($iZLibStatus != Z_OK)
@@ -706,7 +706,7 @@ sub binary_xfer
 
             # Initialize inflate object and check for errors
             my ($oZLib, $iZLibStatus) =
-                new Compress::Raw::Zlib::Deflate(WindowBits => !$bDestinationCompress ? 15 : WANT_GZIP,
+                new Compress::Raw::Zlib::Deflate(WindowBits => 15 & $bDestinationCompress ? WANT_GZIP : 0,
                                                  Level => !$bSourceCompressed ? Z_BEST_SPEED : Z_DEFAULT_COMPRESSION,
                                                  Bufsize => $self->{iBlockSize}, AppendOutput => 1);
 
