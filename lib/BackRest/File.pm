@@ -3,10 +3,9 @@
 ####################################################################################################################################
 package BackRest::File;
 
-use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use Net::OpenSSH;
 use File::Basename qw(dirname basename);

@@ -5,7 +5,7 @@ package BackRest::Utility;
 
 use threads;
 use strict;
-use warnings;
+use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
 
 use Fcntl qw(:DEFAULT :flock);

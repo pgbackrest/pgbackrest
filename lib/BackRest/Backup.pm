@@ -5,8 +5,8 @@ package BackRest::Backup;
 
 use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use File::Basename;
 use File::Path qw(remove_tree);
@@ -383,7 +383,10 @@ sub archive_xfer
         return 0;
     }
 
-    $0 = "${strCommand} archive-push-async " . substr($stryFile[0], 17, 24) . '-' . substr($stryFile[scalar @stryFile - 1], 17, 24);
+    # Modify process name to indicate async archiving
+    # !!! This got broken when history files were added - exclude history files to fix
+    $0 = "${strCommand} archive-push-async ";
+#    $0 = "${strCommand} archive-push-async " . substr($stryFile[0], 17, 24) . '-' . substr($stryFile[scalar @stryFile - 1], 17, 24);
 
     # Output files to be moved to backup
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));

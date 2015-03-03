@@ -3,10 +3,9 @@
 ####################################################################################################################################
 package BackRest::Remote;
 
-use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use Scalar::Util;
 use Net::OpenSSH;
@@ -19,6 +18,8 @@ use IO::String;
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
+
+use fields qw(name weight _Pet_pid);
 
 use Exporter qw(import);
 our @EXPORT = qw(DB BACKUP NONE);
@@ -677,6 +678,7 @@ sub binary_xfer
                         else
                         {
                             $iBlockSize = 0;
+                            last;
                         }
                     }
                     while ($iZLibStatus == Z_OK && $iUncompressedBufferSize > 0 && $iBlockSize > 0);

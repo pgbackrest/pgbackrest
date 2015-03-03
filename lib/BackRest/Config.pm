@@ -3,12 +3,11 @@
 ####################################################################################################################################
 package BackRest::Config;
 
-use threads;
 use strict;
-use warnings;
-use Carp;
-use Pod::Usage;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
+use Pod::Usage;
 use File::Basename;
 use Getopt::Long;
 

@@ -8,8 +8,8 @@ package BackRestTest::FileTest;
 # Perl includes
 ####################################################################################################################################
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use File::Basename;
 use Cwd 'abs_path';

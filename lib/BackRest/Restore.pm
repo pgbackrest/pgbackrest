@@ -7,8 +7,8 @@ use threads;
 use threads::shared;
 use Thread::Queue;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
