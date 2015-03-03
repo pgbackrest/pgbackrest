@@ -7,20 +7,20 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Scalar::Util;
-use Net::OpenSSH;
-use File::Basename;
-use POSIX ':sys_wait_h';
-use Scalar::Util 'blessed';
-use Compress::Raw::Zlib;
-use IO::String;
+use Net::OpenSSH qw();
+use File::Basename qw(dirname);
+use POSIX qw(:sys_wait_h);
+use Scalar::Util qw(blessed);
+use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
+use IO::String qw();
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
+use BackRest::Exception qw(ERROR_PROTOCOL);
+use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false);
 
-use fields qw(name weight _Pet_pid);
-
+####################################################################################################################################
+# Exports
+####################################################################################################################################
 use Exporter qw(import);
 our @EXPORT = qw(DB BACKUP NONE);
 
