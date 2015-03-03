@@ -802,7 +802,7 @@ sub hash_size
         if ($bCompressed)
         {
             ($strHash, $iSize) =
-                $self->{oRemote}->binary_xfer($hFile, undef, 'in', undef, false, false);
+                $self->{oRemote}->binary_xfer($hFile, undef, 'in', true, false, false);
         }
         else
         {
