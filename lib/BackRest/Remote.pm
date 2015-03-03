@@ -34,14 +34,6 @@ use constant
 };
 
 ####################################################################################################################################
-# Remote xfer default block size constant
-####################################################################################################################################
-use constant
-{
-    DEFAULT_BLOCK_SIZE  => 1048576
-};
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -50,7 +42,7 @@ sub new
     my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
     my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
     my $strCommand = shift;             # Command to execute on remote ('remote' if this is the remote)
-    my $iBlockSize = shift;             # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
+    my $iBlockSize = shift;             # Buffer size
     my $iCompressLevel = shift;         # Set compression level
     my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
@@ -62,14 +54,7 @@ sub new
     $self->{strGreeting} = 'PG_BACKREST_REMOTE ' . version_get();
 
     # Set default block size
-    if (!defined($iBlockSize))
-    {
-        $self->{iBlockSize} = DEFAULT_BLOCK_SIZE;
-    }
-    else
-    {
-        $self->{iBlockSize} = $iBlockSize;
-    }
+    $self->{iBlockSize} = $iBlockSize;
 
     # Set compress levels
     $self->{iCompressLevel} = $iCompressLevel;
@@ -119,6 +104,12 @@ sub new
 
         # Read settings from master
         ($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork}) =  $self->setting_read();
+    }
+
+    # Check block size
+    if (!defined($self->{iBlockSize}))
+    {
+        confess &log(ASSERT, 'iBlockSize must be set');
     }
 
     # Check compress levels

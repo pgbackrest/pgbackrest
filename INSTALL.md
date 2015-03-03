@@ -347,6 +347,40 @@ Sets console log level.
 default: error
 example: level-file=info
 ```
+#### general section
+
+The `general` section defines settings that are shared between all operations.
+
+##### buffer-size
+
+Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.
+
+```
+default: 1048576
+allowed: 4096 - 8388608
+example: buffer-size=8192
+```
+##### compress-level
+
+Sets the zlib level to be used for file compression when `compress=y`.
+
+This setting can be overridden in the `backup` and `archive` sections.
+
+```
+default: 6
+allowed: 0 - 9
+example: compress-level=9
+```
+##### compress-level-network
+
+Sets the zlib level to be used for protocol compression when `compress=n` and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting `compress-level-network=0`.  When `compress=y` the `compress-level-network` setting is ignored and `compress-level` is used instead so that the file is only compressed once.  SSH compression is always disabled.
+
+This setting can be overridden in the `backup` and `archive`, and `restore` sections.
+```
+default: 3
+allowed: 0 - 9
+example: compress-level-network=1
+```
 #### backup section
 
 The backup section defines settings related to backup and archiving.
@@ -378,20 +412,6 @@ Enable gzip compression.  Files stored in the backup are compatible with command
 ```
 default: y
 example: compress=n
-```
-##### compress-level
-
-Sets the zlib level (0-9) to be used for file compression when `compress=y`.
-```
-default: 6
-example: compress-level=5
-```
-##### compress-level-network
-
-Sets the zlib level (0-9) to be used for protocol compression when `compress=n` and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting `compress-level-network=0`.  When `compress=y` the `compress-level-network` setting is ignored and `compress-level` is used instead so that the file is only compressed once.  SSH compression is never enabled.
-```
-default: 3
-example: compress-level-network=1
 ```
 ##### start-fast
 
@@ -448,18 +468,6 @@ When set then archive logs are not compressed immediately, but are instead compr
 default: n
 example: compress-async=y
 ```
-##### compress
-
-Overrides the setting in the `backup` section.
-
-##### compress-level
-
-Overrides the setting in the `backup` section.
-
-##### compress-level-network
-
-Overrides the setting in the `backup` section.
-
 ##### archive-max-mb
 
 Limits the amount of archive log that will be written locally.  After the limit is reached, the following will happen:
@@ -514,11 +522,7 @@ example: archive-retention=2
 
 ### restore section
 
-##### compress-level-network
-
-Overrides the setting in the `backup` section.
-
-???????
+?????
 
 ### restore:option section
 

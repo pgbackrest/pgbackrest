@@ -35,7 +35,7 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
 
                  PARAM_VERSION PARAM_HELP PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
-                 CONFIG_SECTION_COMMAND CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
+                 CONFIG_SECTION_COMMAND CONFIG_SECTION_GENERAL CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
                  CONFIG_SECTION_RESTORE CONFIG_SECTION_RECOVERY CONFIG_SECTION_RECOVERY_OPTION CONFIG_SECTION_TABLESPACE_MAP
                  CONFIG_SECTION_ARCHIVE CONFIG_SECTION_RETENTION CONFIG_SECTION_STANZA
 
@@ -46,13 +46,16 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
 
                  CONFIG_KEY_LEVEL_FILE CONFIG_KEY_LEVEL_CONSOLE
 
-                 CONFIG_KEY_COMPRESS CONFIG_KEY_COMPRESS_LEVEL CONFIG_KEY_COMPRESS_LEVEL_NETWORK CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
+                 CONFIG_KEY_BUFFER_SIZE CONFIG_KEY_COMPRESS CONFIG_KEY_COMPRESS_LEVEL CONFIG_KEY_COMPRESS_LEVEL_NETWORK
+                 CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
 
                  CONFIG_KEY_FULL_RETENTION CONFIG_KEY_DIFFERENTIAL_RETENTION CONFIG_KEY_ARCHIVE_RETENTION_TYPE
                  CONFIG_KEY_ARCHIVE_RETENTION
 
                  CONFIG_KEY_STANDBY_MODE CONFIG_KEY_PRIMARY_CONNINFO CONFIG_KEY_TRIGGER_FILE CONFIG_KEY_RESTORE_COMMAND
-                 CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND CONFIG_KEY_RECOVERY_END_COMMAND);
+                 CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND CONFIG_KEY_RECOVERY_END_COMMAND
+
+                 CONFIG_DEFAULT_BUFFER_SIZE CONFIG_DEFAULT_COMPRESS_LEVEL CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK);
 
 ####################################################################################################################################
 # File/path constants
@@ -134,6 +137,7 @@ use constant
 {
     CONFIG_SECTION_COMMAND             => 'command',
     CONFIG_SECTION_COMMAND_OPTION      => 'command:option',
+    CONFIG_SECTION_GENERAL             => 'general',
     CONFIG_SECTION_LOG                 => 'log',
     CONFIG_SECTION_BACKUP              => 'backup',
     CONFIG_SECTION_RESTORE             => 'restore',
@@ -159,6 +163,7 @@ use constant
     CONFIG_KEY_LEVEL_FILE              => 'level-file',
     CONFIG_KEY_LEVEL_CONSOLE           => 'level-console',
 
+    CONFIG_KEY_BUFFER_SIZE             => 'buffer-size',
     CONFIG_KEY_COMPRESS                => 'compress',
     CONFIG_KEY_COMPRESS_LEVEL          => 'compress-level',
     CONFIG_KEY_COMPRESS_LEVEL_NETWORK  => 'compress-level-network',
@@ -176,6 +181,36 @@ use constant
     CONFIG_KEY_RESTORE_COMMAND         => 'restore-command',
     CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND => 'archive-cleanup-command',
     CONFIG_KEY_RECOVERY_END_COMMAND    => 'recovery-end-command'
+};
+
+####################################################################################################################################
+# Configuration defaults
+####################################################################################################################################
+use constant
+{
+    CONFIG_DEFAULT_BUFFER_SIZE                  => 1048576,
+    CONFIG_DEFAULT_BUFFER_SIZE_MIN              => 4096,
+    CONFIG_DEFAULT_BUFFER_SIZE_MAX              => 8388608,
+
+    CONFIG_DEFAULT_COMPRESS_LEVEL               => 6,
+    CONFIG_DEFAULT_COMPRESS_LEVEL_MIN           => 0,
+    CONFIG_DEFAULT_COMPRESS_LEVEL_MAX           => 9,
+
+    CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK       => 3,
+    CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN   => 0,
+    CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX   => 9,
+
+    CONFIG_DEFAULT_THREAD_MAX                   => 1,
+    CONFIG_DEFAULT_THREAD_MAX_MIN               => 1,
+    CONFIG_DEFAULT_THREAD_MAX_MAX               => 64
+};
+
+####################################################################################################################################
+# Validation constants
+####################################################################################################################################
+use constant
+{
+    VALID_RANGE             => 'range'
 };
 
 ####################################################################################################################################
@@ -401,71 +436,87 @@ sub config_valid
         }
     }
 
-    # Default compression levels
-    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL)))
+    # Validate buffer_size
+    my @iyRange = [CONFIG_DEFAULT_BUFFER_SIZE_MIN, CONFIG_DEFAULT_BUFFER_SIZE_MAX];
+
+    config_key_valid(CONFIG_SECTION_GENERAL, CONFIG_KEY_BUFFER_SIZE, CONFIG_DEFAULT_BUFFER_SIZE, VALID_RANGE, @iyRange);
+
+    # Validate compress-level
+    @iyRange = [CONFIG_DEFAULT_COMPRESS_LEVEL_MIN, CONFIG_DEFAULT_COMPRESS_LEVEL_MAX];
+
+    config_key_valid(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL,
+                     CONFIG_DEFAULT_COMPRESS_LEVEL, VALID_RANGE, @iyRange);
+
+    config_key_valid(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL), VALID_RANGE, @iyRange);
+    config_key_valid(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL), VALID_RANGE, @iyRange);
+
+    # Validate compress-level-network
+    @iyRange = [CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN, CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX];
+
+    config_key_valid(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL_NETWORK,
+                     CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK, VALID_RANGE, @iyRange);
+
+    config_key_valid(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL_NETWORK), VALID_RANGE, @iyRange);
+    config_key_valid(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL_NETWORK), VALID_RANGE, @iyRange);
+    config_key_valid(CONFIG_SECTION_RESTORE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_COMPRESS_LEVEL_NETWORK), VALID_RANGE, @iyRange);
+
+    # Validate thread-max
+    @iyRange = [CONFIG_DEFAULT_THREAD_MAX_MIN, CONFIG_DEFAULT_THREAD_MAX_MAX];
+
+    config_key_valid(CONFIG_SECTION_GENERAL, CONFIG_KEY_THREAD_MAX,
+                     CONFIG_DEFAULT_THREAD_MAX, VALID_RANGE, @iyRange);
+
+    config_key_valid(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_THREAD_MAX), VALID_RANGE, @iyRange);
+    config_key_valid(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_THREAD_MAX,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_THREAD_MAX), VALID_RANGE, @iyRange);
+    config_key_valid(CONFIG_SECTION_RESTORE, CONFIG_KEY_THREAD_MAX,
+        config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_THREAD_MAX), VALID_RANGE, @iyRange);
+}
+
+####################################################################################################################################
+# CONFIG_KEY_VALID
+#
+# Validate that the config matches the specified range, and default if undefined
+####################################################################################################################################
+sub config_key_valid
+{
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strDefault = shift;
+    my $strValidType = shift;
+    my $stryValidDataRef = shift;
+
+    # Get the key value or set it to a default
+    my $strValue = defined($oConfig{$strSection}{$strKey}) ? $oConfig{$strSection}{$strKey} : $strDefault;
+
+    # Validate the value
+    if ($strValidType eq VALID_RANGE)
     {
-        config_key_set(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL, 6);
+        if (!defined($strValue) || $strValue < $$stryValidDataRef[0] || $strValue > $$stryValidDataRef[1])
+        {
+            confess &log(ERROR, "${strSection}::${strKey} is " . (defined($strValue) ? $strValue : 'not set') .
+                                ', but should be between ' . $$stryValidDataRef[0] . ' and ' . $$stryValidDataRef[1]);
+        }
     }
     else
     {
-        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) < 0 ||
-            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) > 9)
-        {
-            die &log(ERROR, 'compress-level must be between 0 and 9');
-        }
+        confess &log(ASSERT, "invalid validation type ${strValidType}");
     }
 
-    if (!defined(config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL)))
-    {
-        config_key_set(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL,
-                       config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL));
-    }
-    else
-    {
-        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) < 0 ||
-            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) > 9)
-        {
-            die &log(ERROR, 'compress-level must be between 0 and 9');
-        }
-    }
+    $oConfig{$strSection}{$strKey} = $strValue;
 
-    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK)))
-    {
-        config_key_set(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK, 3);
-    }
-    else
-    {
-        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) < 0 ||
-            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) > 9)
-        {
-            die &log(ERROR, 'compress-level must be between 0 and 9');
-        }
-    }
+    # Also do validation for the stanza section
+    my $strStanza = param_get(PARAM_STANZA);
 
-    if (!defined(config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK)))
+    if (substr($strSection, 0, length($strStanza) + 1) ne "${strStanza}:")
     {
-        config_key_set(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK,
-                       config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK));
-    }
-    else
-    {
-        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) < 0 ||
-            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) > 9)
-        {
-            die &log(ERROR, 'compress-level must be between 0 and 9');
-        }
-    }
-
-    # Default thread-max
-    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX)))
-    {
-        config_key_set(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX, 1);
-    }
-
-    if (!defined(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_THREAD_MAX)))
-    {
-        config_key_set(CONFIG_SECTION_RESTORE, CONFIG_KEY_THREAD_MAX,
-                       config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_THREAD_MAX, true));
+        config_key_valid("${strStanza}:${strSection}", $strKey, $strValue, $strValidType, $stryValidDataRef);
     }
 }
 

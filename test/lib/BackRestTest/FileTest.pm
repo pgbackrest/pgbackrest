@@ -21,6 +21,7 @@ use POSIX qw(ceil);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::Config;
 use BackRest::File;
 use BackRest::Remote;
 
@@ -91,24 +92,24 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = new BackRest::Remote
+    my $oRemote = BackRest::Remote->new
     (
-        $strHost,
-        $strUser,
-        BackRestTestCommon_CommandRemoteGet(),
-        undef,                                  # Buffer size
-        3,                                      # Compress level
-        1,                                      # Compress network level
+        $strHost,                               # Host
+        $strUser,                               # User
+        BackRestTestCommon_CommandRemoteGet(),  # Command
+        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
+        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     my $oLocal = new BackRest::Remote
     (
-        undef,
-        undef,
-        undef,
-        undef,                                  # Buffer size
-        3,                                      # Compress level
-        1,                                      # Compress network level
+        undef,                                  # Host
+        undef,                                  # User
+        undef,                                  # Command
+        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
+        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------

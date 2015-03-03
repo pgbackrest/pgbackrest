@@ -1219,22 +1219,22 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = BackRest::Remote->new
     (
-        $strHost,
-        $strUserBackRest,
-        BackRestTestCommon_CommandRemoteGet(),
-        undef,                                  # Buffer size
-        3,                                      # Compress level
-        1,                                      # Compress network level
+        $strHost,                               # Host
+        $strUserBackRest,                       # User
+        BackRestTestCommon_CommandRemoteGet(),  # Command
+        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
+        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     my $oLocal = new BackRest::Remote
     (
-        undef,
-        undef,
-        undef,
-        undef,                                  # Buffer size
-        3,                                      # Compress level
-        1,                                      # Compress network level
+        undef,                                  # Host
+        undef,                                  # User
+        undef,                                  # Command
+        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
+        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------

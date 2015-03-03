@@ -105,7 +105,8 @@ sub remote_get
             config_key_load($strRemote eq DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
             config_key_load($strRemote eq DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
             config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true),
-            undef, $iCompressLevel, $iCompressLevelNetwork
+            config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_BUFFER_SIZE, true),
+            $iCompressLevel, $iCompressLevelNetwork
         );
 
         return $oRemote;
@@ -117,7 +118,8 @@ sub remote_get
         $oLocal = new BackRest::Remote
         (
             undef, undef, undef,
-            undef, $iCompressLevel, $iCompressLevelNetwork
+            config_key_load(CONFIG_SECTION_GENERAL, CONFIG_KEY_BUFFER_SIZE, true),
+            $iCompressLevel, $iCompressLevelNetwork
         );
     }
 
