@@ -379,6 +379,20 @@ Enable gzip compression.  Files stored in the backup are compatible with command
 default: y
 example: compress=n
 ```
+##### compress-level
+
+Sets the zlib level (0-9) to be used for file compression when `compress=y`.
+```
+default: 6
+example: compress-level=5
+```
+##### compress-level-network
+
+Sets the zlib level (0-9) to be used for protocol compression when `compress=n` and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting `compress-level-network=0`.  When `compress=y` the `compress-level-network` setting is ignored and `compress-level` is used instead so that the file is only compressed once.  SSH compression is never enabled.
+```
+default: 3
+example: compress-level-network=1
+```
 ##### start-fast
 
 Forces an immediate checkpoint (by passing true to the fast parameter of pg_start_backup()) so the backup begins immediately.
@@ -434,6 +448,18 @@ When set then archive logs are not compressed immediately, but are instead compr
 default: n
 example: compress-async=y
 ```
+##### compress
+
+Overrides the setting in the `backup` section.
+
+##### compress-level
+
+Overrides the setting in the `backup` section.
+
+##### compress-level-network
+
+Overrides the setting in the `backup` section.
+
 ##### archive-max-mb
 
 Limits the amount of archive log that will be written locally.  After the limit is reached, the following will happen:
@@ -488,7 +514,11 @@ example: archive-retention=2
 
 ### restore section
 
-?????
+##### compress-level-network
+
+Overrides the setting in the `backup` section.
+
+???????
 
 ### restore:option section
 

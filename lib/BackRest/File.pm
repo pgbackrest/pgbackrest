@@ -127,9 +127,10 @@ sub new
     $self->{oRemote} = $oRemote;
     $self->{iThreadIdx} = $iThreadIdx;
 
-    if (!defined($self->{strRemote}) || $self->{strRemote} eq NONE)
+    # Remote object must be set
+    if (!defined($self->{oRemote}))
     {
-        $self->{oRemote} = new BackRest::Remote();
+        confess &log(ASSERT, 'oRemote must be defined');
     }
 
     # If remote is defined check parameters and open session
@@ -140,12 +141,6 @@ sub new
         {
             confess &log(ASSERT, 'strRemote must be "' . DB . '" or "' . BACKUP .
                                  "\", $self->{strRemote} was passed");
-        }
-
-        # Remote object must be set
-        if (!defined($self->{oRemote}))
-        {
-            confess &log(ASSERT, 'oRemote must be defined');
         }
     }
 

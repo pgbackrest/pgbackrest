@@ -12,7 +12,7 @@ use Carp;
 # Exports
 ####################################################################################################################################
 use Exporter qw(import);
-our @EXPORT = qw(ERROR_CHECKSUM ERROR_CONFIG ERROR_PARAM ERROR_POSTMASTER_RUNNING ERROR_RESTORE_PATH_NOT_EMPTY);
+our @EXPORT = qw(ERROR_CHECKSUM ERROR_CONFIG ERROR_PARAM ERROR_POSTMASTER_RUNNING ERROR_RESTORE_PATH_NOT_EMPTY ERROR_PROTOCOL);
 
 ####################################################################################################################################
 # Exception Codes
@@ -23,7 +23,8 @@ use constant
     ERROR_CONFIG                       => 101,
     ERROR_PARAM                        => 102,
     ERROR_RESTORE_PATH_NOT_EMPTY       => 103,
-    ERROR_POSTMASTER_RUNNING           => 104
+    ERROR_POSTMASTER_RUNNING           => 104,
+    ERROR_PROTOCOL                     => 105
 };
 
 ####################################################################################################################################

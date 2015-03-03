@@ -78,7 +78,8 @@ pg_backrest.pl [options] [operation]
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-my $oRemote;            # Remote object
+my $oRemote;            # Remote protocol object
+my $oLocal;             # Local protocol object
 my $strRemote;          # Defines which side is remote, DB or BACKUP
 
 ####################################################################################################################################
@@ -86,17 +87,41 @@ my $strRemote;          # Defines which side is remote, DB or BACKUP
 ####################################################################################################################################
 sub remote_get
 {
-    if (!defined($oRemote) && $strRemote ne NONE)
+    my $bForceLocal = shift;
+    my $iCompressLevel = shift;
+    my $iCompressLevelNetwork = shift;
+
+    # Return the remote if is already defined
+    if (defined($oRemote))
+    {
+        return $oRemote;
+    }
+
+    # Return the remote when required
+    if ($strRemote ne NONE && !$bForceLocal)
     {
         $oRemote = new BackRest::Remote
         (
             config_key_load($strRemote eq DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_HOST, true),
             config_key_load($strRemote eq DB ? CONFIG_SECTION_STANZA : CONFIG_SECTION_BACKUP, CONFIG_KEY_USER, true),
-            config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true)
+            config_key_load(CONFIG_SECTION_COMMAND, CONFIG_KEY_REMOTE, true),
+            undef, $iCompressLevel, $iCompressLevelNetwork
+        );
+
+        return $oRemote;
+    }
+
+    # Otherwise return local
+    if (!defined($oLocal))
+    {
+        $oLocal = new BackRest::Remote
+        (
+            undef, undef, undef,
+            undef, $iCompressLevel, $iCompressLevelNetwork
         );
     }
 
-    return $oRemote;
+    return $oLocal;
 }
 
 ####################################################################################################################################
@@ -221,7 +246,8 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
             param_get(PARAM_STANZA),
             config_key_load($strSection, CONFIG_KEY_PATH, true),
             $bArchiveLocal ? NONE : $strRemote,
-            $bArchiveLocal ? undef : remote_get()
+            remote_get($bArchiveLocal, config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL),
+                                       config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK))
         );
 
         # Init backup
@@ -291,7 +317,8 @@ if (operation_get() eq OP_ARCHIVE_PUSH)
             param_get(PARAM_STANZA),
             config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
             $strRemote,
-            remote_get()
+            remote_get(false, config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL),
+                              config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK))
         );
 
         # Init backup
@@ -394,7 +421,9 @@ if (operation_get() eq OP_ARCHIVE_GET)
         param_get(PARAM_STANZA),
         config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
         $strRemote,
-        remote_get()
+        remote_get(false,
+                   config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL),
+                   config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK))
     );
 
     # Init the backup object
@@ -419,7 +448,9 @@ my $oFile = new BackRest::File
     param_get(PARAM_STANZA),
     config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_PATH, true),
     $strRemote,
-    remote_get()
+    remote_get(false,
+               config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL),
+               config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK))
 );
 
 ####################################################################################################################################

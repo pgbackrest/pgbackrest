@@ -1209,7 +1209,7 @@ sub BackRestTestBackup_Test
     my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
-    my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive.bin';
+    my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive2.bin';
 
     # Print test banner
     &log(INFO, 'BACKUP MODULE ******************************************************************');
@@ -1221,7 +1221,20 @@ sub BackRestTestBackup_Test
     (
         $strHost,
         $strUserBackRest,
-        BackRestTestCommon_CommandRemoteGet()
+        BackRestTestCommon_CommandRemoteGet(),
+        undef,                                  # Buffer size
+        3,                                      # Compress level
+        1,                                      # Compress network level
+    );
+
+    my $oLocal = new BackRest::Remote
+    (
+        undef,
+        undef,
+        undef,
+        undef,                                  # Buffer size
+        3,                                      # Compress level
+        1,                                      # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -1257,7 +1270,7 @@ sub BackRestTestBackup_Test
                         $strStanza,
                         BackRestTestCommon_BackupPathGet(),
                         $bRemote ? 'backup' : undef,
-                        $bRemote ? $oRemote : undef
+                        $bRemote ? $oRemote : $oLocal
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);
@@ -1375,7 +1388,7 @@ sub BackRestTestBackup_Test
                         $strStanza,
                         BackRestTestCommon_BackupPathGet(),
                         $bRemote ? 'backup' : undef,
-                        $bRemote ? $oRemote : undef
+                        $bRemote ? $oRemote : $oLocal
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);
@@ -1513,7 +1526,7 @@ sub BackRestTestBackup_Test
                 $strStanza,
                 BackRestTestCommon_BackupPathGet(),
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'PG_VERSION', '9.3',
@@ -1789,7 +1802,7 @@ sub BackRestTestBackup_Test
                 $strStanza,
                 BackRestTestCommon_BackupPathGet(),
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Create the test directory

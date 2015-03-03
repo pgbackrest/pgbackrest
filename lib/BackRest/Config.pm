@@ -46,7 +46,7 @@ our @EXPORT = qw(config_load config_key_load config_section_load operation_get o
 
                  CONFIG_KEY_LEVEL_FILE CONFIG_KEY_LEVEL_CONSOLE
 
-                 CONFIG_KEY_COMPRESS CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
+                 CONFIG_KEY_COMPRESS CONFIG_KEY_COMPRESS_LEVEL CONFIG_KEY_COMPRESS_LEVEL_NETWORK CONFIG_KEY_PSQL CONFIG_KEY_REMOTE
 
                  CONFIG_KEY_FULL_RETENTION CONFIG_KEY_DIFFERENTIAL_RETENTION CONFIG_KEY_ARCHIVE_RETENTION_TYPE
                  CONFIG_KEY_ARCHIVE_RETENTION
@@ -160,6 +160,8 @@ use constant
     CONFIG_KEY_LEVEL_CONSOLE           => 'level-console',
 
     CONFIG_KEY_COMPRESS                => 'compress',
+    CONFIG_KEY_COMPRESS_LEVEL          => 'compress-level',
+    CONFIG_KEY_COMPRESS_LEVEL_NETWORK  => 'compress-level-network',
     CONFIG_KEY_PSQL                    => 'psql',
     CONFIG_KEY_REMOTE                  => 'remote',
 
@@ -396,6 +398,61 @@ sub config_valid
                              CONFIG_KEY_TRIGGER_FILE . "', '" . CONFIG_KEY_RESTORE_COMMAND . "', '" .
                              CONFIG_KEY_ARCHIVE_CLEANUP_COMMAND . "', '" . CONFIG_KEY_RECOVERY_END_COMMAND . "'", ERROR_CONFIG);
             }
+        }
+    }
+
+    # Default compression levels
+    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL)))
+    {
+        config_key_set(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL, 6);
+    }
+    else
+    {
+        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) < 0 ||
+            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) > 9)
+        {
+            die &log(ERROR, 'compress-level must be between 0 and 9');
+        }
+    }
+
+    if (!defined(config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL)))
+    {
+        config_key_set(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL,
+                       config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL));
+    }
+    else
+    {
+        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) < 0 ||
+            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL) > 9)
+        {
+            die &log(ERROR, 'compress-level must be between 0 and 9');
+        }
+    }
+
+    if (!defined(config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK)))
+    {
+        config_key_set(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK, 3);
+    }
+    else
+    {
+        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) < 0 ||
+            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) > 9)
+        {
+            die &log(ERROR, 'compress-level must be between 0 and 9');
+        }
+    }
+
+    if (!defined(config_key_load(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK)))
+    {
+        config_key_set(CONFIG_SECTION_ARCHIVE, CONFIG_KEY_COMPRESS_LEVEL_NETWORK,
+                       config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK));
+    }
+    else
+    {
+        if (config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) < 0 ||
+            config_key_load(CONFIG_SECTION_BACKUP, CONFIG_KEY_COMPRESS_LEVEL_NETWORK) > 9)
+        {
+            die &log(ERROR, 'compress-level must be between 0 and 9');
         }
     }
 

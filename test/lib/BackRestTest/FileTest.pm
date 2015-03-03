@@ -89,13 +89,26 @@ sub BackRestTestFile_Test
     &log(INFO, 'FILE MODULE ********************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Create remote
+    # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = new BackRest::Remote
     (
         $strHost,
         $strUser,
-        BackRestTestCommon_CommandRemoteGet()
+        BackRestTestCommon_CommandRemoteGet(),
+        undef,                                  # Buffer size
+        3,                                      # Compress level
+        1,                                      # Compress network level
+    );
+
+    my $oLocal = new BackRest::Remote
+    (
+        undef,
+        undef,
+        undef,
+        undef,                                  # Buffer size
+        3,                                      # Compress level
+        1,                                      # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -116,7 +129,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through error
@@ -224,7 +237,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             ))->clone(1);
 
             # Loop through source exists
@@ -323,7 +336,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through exists
@@ -415,7 +428,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'db' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             my $lTimeBegin = gettimeofday();
@@ -484,7 +497,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             for (my $bError = 0; $bError <= 1; $bError++)
@@ -626,7 +639,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             for (my $bSort = false; $bSort <= true; $bSort++)
@@ -752,7 +765,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through exists
@@ -855,7 +868,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through error
@@ -946,7 +959,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $bRemote ? 'backup' : undef,
-                $bRemote ? $oRemote : undef
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through exists
@@ -1047,7 +1060,7 @@ sub BackRestTestFile_Test
                 $strStanza,
                 $strTestPath,
                 $strRemote,
-                defined($strRemote) ? $oRemote : undef
+                defined($strRemote) ? $oRemote : $oLocal
             );
 
             # Loop through source path types

@@ -38,7 +38,7 @@ use constant
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 8192
+    DEFAULT_BLOCK_SIZE  => 1048576
 };
 
 ####################################################################################################################################
@@ -46,11 +46,13 @@ use constant
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;       # Class name
-    my $strHost = shift;     # Host to connect to for remote (optional as this can also be used on the remote)
-    my $strUser = shift;     # User to connect to for remote (must be set if strHost is set)
-    my $strCommand = shift;  # Command to execute on remote
-    my $iBlockSize = shift;  # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
+    my $class = shift;                  # Class name
+    my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
+    my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
+    my $strCommand = shift;             # Command to execute on remote ('remote' if this is the remote)
+    my $iBlockSize = shift;             # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
+    my $iCompressLevel = shift;         # Set compression level
+    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
     # Create the class hash
     my $self = {};
@@ -68,6 +70,10 @@ sub new
     {
         $self->{iBlockSize} = $iBlockSize;
     }
+
+    # Set compress levels
+    $self->{iCompressLevel} = $iCompressLevel;
+    $self->{iCompressLevelNetwork} = $iCompressLevelNetwork;
 
     # If host is defined then make a connnection
     if (defined($strHost))
@@ -104,6 +110,26 @@ sub new
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
 
         $self->greeting_read();
+        $self->setting_write($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork});
+    }
+    elsif (defined($strCommand) && $strCommand eq 'remote')
+    {
+        # Write the greeting so master process knows who we are
+        $self->greeting_write();
+
+        # Read settings from master
+        ($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork}) =  $self->setting_read();
+    }
+
+    # Check compress levels
+    if (!defined($self->{iCompressLevel}))
+    {
+        confess &log(ASSERT, 'iCompressLevel must be set');
+    }
+
+    if (!defined($self->{iCompressLevelNetwork}))
+    {
+        confess &log(ASSERT, 'iCompressLevelNetwork must be set');
     }
 
     return $self;
@@ -139,7 +165,9 @@ sub clone
         $self->{strHost},
         $self->{strUser},
         $self->{strCommand},
-        $self->{iBlockSize}
+        $self->{iBlockSize},
+        $self->{iCompressLevel},
+        $self->{iCompressLevelNetwork}
     );
 }
 
@@ -168,10 +196,50 @@ sub greeting_write
 {
     my $self = shift;
 
-    if (!syswrite(*STDOUT, "$self->{strGreeting}\n"))
+    $self->write_line(*STDOUT, $self->{strGreeting});
+}
+
+####################################################################################################################################
+# SETTING_READ
+#
+# Read the settings from the master process.
+####################################################################################################################################
+sub setting_read
+{
+    my $self = shift;
+
+    # Tokenize the settings
+    my @stryToken = split(/ /, $self->read_line(*STDIN));
+
+    # Make sure there are the correct number of tokens
+    if (@stryToken != 4)
     {
-        confess 'unable to write greeting';
+        confess &log(ASSERT, 'settings token count is invalid', ERROR_PROTOCOL);
     }
+
+    # Check for the setting token just to be sure
+    if ($stryToken[0] ne 'setting')
+    {
+        confess &log(ASSERT, 'settings token 0 must be \'setting\'');
+    }
+
+    # Return the settings
+    return $stryToken[1], $stryToken[2], $stryToken[3];
+}
+
+####################################################################################################################################
+# SETTING_WRITE
+#
+# Send settings to the remote process.
+####################################################################################################################################
+sub setting_write
+{
+    my $self = shift;
+    my $iBlockSize = shift;             # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
+    my $iCompressLevel = shift;         # Set compression level
+    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
+
+    $self->write_line($self->{hIn}, "setting ${iBlockSize} ${iCompressLevel} ${iCompressLevelNetwork}");
 }
 
 ####################################################################################################################################
@@ -306,13 +374,11 @@ sub write_line
     my $hOut = shift;
     my $strBuffer = shift;
 
-    $strBuffer = $strBuffer . "\n";
+    my $iLineOut = syswrite($hOut, $strBuffer . "\n");
 
-    my $iLineOut = syswrite($hOut, $strBuffer, length($strBuffer));
-
-    if (!defined($iLineOut) || $iLineOut != length($strBuffer))
+    if (!defined($iLineOut) || $iLineOut != length($strBuffer) + 1)
     {
-        confess 'unable to write ' . length($strBuffer) . ' byte(s)';
+        confess &log(ERROR, "unable to write ${strBuffer}: $!", ERROR_PROTOCOL);
     }
 }
 
@@ -707,7 +773,8 @@ sub binary_xfer
             # Initialize inflate object and check for errors
             my ($oZLib, $iZLibStatus) =
                 new Compress::Raw::Zlib::Deflate(WindowBits => 15 & $bDestinationCompress ? WANT_GZIP : 0,
-                                                 Level => !$bSourceCompressed ? Z_BEST_SPEED : Z_DEFAULT_COMPRESSION,
+                                                 Level => $bDestinationCompress ? $self->{iCompressLevel} :
+                                                                                  $self->{iCompressLevelNetwork},
                                                  Bufsize => $self->{iBlockSize}, AppendOutput => 1);
 
             if ($iZLibStatus != Z_OK)
