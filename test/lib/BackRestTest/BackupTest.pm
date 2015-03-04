@@ -2120,6 +2120,40 @@ sub BackRestTestBackup_Test
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
+            # Save recovery file to test so we can use it in the next test
+            $oFile->copy(PATH_ABSOLUTE, BackRestTestCommon_DbCommonPathGet() . '/recovery.conf',
+                         PATH_ABSOLUTE, BackRestTestCommon_TestPathGet() . '/recovery.conf');
+
+            BackRestTestBackup_ClusterStart();
+            BackRestTestBackup_PgSelectOneTest('select message from test', $strXidMessage);
+
+            BackRestTestBackup_PgExecute("update test set message = '$strTimelineMessage'", false);
+
+            # Restore (restore type = preserve, inclusive)
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = true;
+            $bForce = false;
+            $strType = RECOVERY_TYPE_PRESERVE;
+            $strTarget = undef;
+            $bTargetExclusive = undef;
+            $bTargetResume = undef;
+            $strTargetTimeline = undef;
+            $oRecoveryHashRef = undef;
+            $strComment = undef;
+            $iExpectedExitStatus = undef;
+
+            &log(INFO, "    testing recovery type = ${strType}");
+
+            BackRestTestBackup_ClusterStop();
+
+            # Restore recovery file that was save in last test
+            $oFile->move(PATH_ABSOLUTE, BackRestTestCommon_TestPathGet() . '/recovery.conf',
+                         PATH_ABSOLUTE, BackRestTestCommon_DbCommonPathGet() . '/recovery.conf');
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
+                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+
             BackRestTestBackup_ClusterStart();
             BackRestTestBackup_PgSelectOneTest('select message from test', $strXidMessage);
 
