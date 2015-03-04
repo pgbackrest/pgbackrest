@@ -266,6 +266,8 @@ Restores the latest database backup and then recovers to the `release` restore p
 
 **MORE TO BE ADDED HERE**
 
+PITR should start after the stop time in the .backup file.
+
 [reference this when writing about tablespace remapping]
 
 http://www.databasesoup.com/2013/11/moving-tablespaces.html

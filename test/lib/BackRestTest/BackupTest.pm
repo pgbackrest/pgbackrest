@@ -1279,10 +1279,6 @@ sub BackRestTestBackup_RestoreCompare
                               ${$oExpectedManifestRef}{'backup'}{'archive-start'});
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef,
                               ${$oExpectedManifestRef}{'backup'}{'archive-stop'});
-        $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_START, undef,
-                              ${$oExpectedManifestRef}{'backup'}{'timestamp-db-start'});
-        $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_STOP, undef,
-                              ${$oExpectedManifestRef}{'backup'}{'timestamp-db-stop'});
     }
 
     ini_save("${strTestPath}/actual.manifest", $oActualManifest->{oManifest});

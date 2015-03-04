@@ -1339,7 +1339,6 @@ sub backup
         ($strArchiveStart, $strTimestampDbStart) =
             $oDb->backup_start('pg_backrest backup started ' . $strTimestampStart, $bStartFast);
 
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_START, undef, $strTimestampDbStart);
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");
     }
@@ -1457,7 +1456,6 @@ sub backup
         my $strTimestampDbStop;
         ($strArchiveStop, $strTimestampDbStop) = $oDb->backup_stop();
 
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_DB_STOP, undef, $strTimestampDbStop);
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
 
         &log(INFO, 'archive stop: ' . $strArchiveStop);
