@@ -81,8 +81,10 @@ Header
 .header-title
 {
     font-size: 28pt;
-    font-family: 'Alfa Slab One', cursive;
-}
+    font-weight: bolder;
+    
+/*    font-family: 'Alfa Slab One', cursive;
+*/}
 
 .header-subtitle
 {
@@ -122,7 +124,7 @@ Menu
 /*******************************************************************************
 Content
 *******************************************************************************/
-.content
+doc-content
 {
     width: 100%;
 }
@@ -130,25 +132,76 @@ Content
 /*******************************************************************************
 Section
 *******************************************************************************/
-.section, .section-first
+doc-install, doc-configure, doc-intro
 {
+	display:block;
+    margin-top: 8px;
+}
+
+doc-install-header, doc-configure-header
+{
+	display:block;
+    background-color: #dddddd;
+    font-size: 14pt;
+    padding-left: 4px;
+	margin-bottom: 4px;
+}
+
+/*******************************************************************************
+SubSection
+*******************************************************************************/
+doc-configure-section
+{
+	display:block;
+    margin-top: 8px;
+}
+
+doc-configure-section-header
+{
+	display:block;
+	border-bottom: 2px #cccccc solid;
+	font-size: large;
+	font-weight: 500;
+	margin-bottom: 4px;
+}
+
+/*******************************************************************************
+SubSection2
+*******************************************************************************/
+doc-configure-key
+{
+	display:block;
     width:100%;
     margin-top: 8px;
     float: left;
 }
 
-.section-header
+doc-configure-key-header
 {
-    background-color: #dddddd;
+	display:block;
+    font-size: medium;
+    font-weight: 500;
+    border-bottom: 1px #dddddd solid;
+    margin-bottom: 4px;
 }
 
-.section-header-title
+/*******************************************************************************
+Fields
+*******************************************************************************/
+doc-id
 {
-    font-family: 'Alfa Slab One', cursive;
-    font-size: 14pt;
-    margin-left: 4px;
+    font-family: Courier, sans-serif;
 }
 
-.section-body
+doc-code, doc-codeblock
 {
+    font-family: Courier, sans-serif;
+    background-color: #f1f1f1;
+}
+
+doc-codeblock
+{
+    margin: 8px;
+    padding: 8px;
+	display:block;
 }

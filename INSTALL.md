@@ -40,8 +40,7 @@ cpanm DBI
 cpanm DBD::Pg
 cpanm IPC::System::Simple
 cpanm Digest::SHA
-cpanm IO::Compress::Gzip
-cpanm IO::Uncompress::Gunzip
+cpanm Compress::ZLib
 ```
 5. Install PgBackRest
 
