@@ -11,7 +11,8 @@ use Carp qw(confess);
 # Exports
 ####################################################################################################################################
 use Exporter qw(import);
-our @EXPORT = qw(ERROR_CHECKSUM ERROR_CONFIG ERROR_PARAM ERROR_POSTMASTER_RUNNING ERROR_RESTORE_PATH_NOT_EMPTY ERROR_PROTOCOL);
+our @EXPORT = qw(ERROR_CHECKSUM ERROR_CONFIG ERROR_PARAM ERROR_POSTMASTER_RUNNING ERROR_PROTOCOL ERROR_RESTORE_PATH_NOT_EMPTY
+                 ERROR_FORMAT);
 
 ####################################################################################################################################
 # Exception Codes
@@ -23,7 +24,8 @@ use constant
     ERROR_PARAM                        => 102,
     ERROR_RESTORE_PATH_NOT_EMPTY       => 103,
     ERROR_POSTMASTER_RUNNING           => 104,
-    ERROR_PROTOCOL                     => 105
+    ERROR_PROTOCOL                     => 105,
+    ERROR_FORMAT                       => 106
 };
 
 ####################################################################################################################################

@@ -185,7 +185,7 @@ sub BackRestTestCommon_ExecuteEnd
         return $iExitStatus;
     }
 
-    if ($iExitStatus != 0)
+    if ($iExitStatus != 0 || (defined($iExpectedExitStatus) && $iExitStatus != $iExpectedExitStatus))
     {
         if ($bSuppressError)
         {
@@ -483,6 +483,7 @@ sub BackRestTestCommon_ConfigRemap
         BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
     }
 }
+
 ####################################################################################################################################
 # BackRestTestCommon_ConfigRecovery
 ####################################################################################################################################

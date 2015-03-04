@@ -960,6 +960,7 @@ sub BackRestTestBackup_BackupCompare
     ${$oExpectedManifestRef}{backup}{'timestamp-stop'} = $oActualManifest{backup}{'timestamp-stop'};
     ${$oExpectedManifestRef}{backup}{'timestamp-copy-start'} = $oActualManifest{backup}{'timestamp-copy-start'};
     ${$oExpectedManifestRef}{backup}{'checksum'} = $oActualManifest{backup}{'checksum'};
+    ${$oExpectedManifestRef}{backup}{format} = FORMAT;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
@@ -976,6 +977,119 @@ sub BackRestTestBackup_BackupCompare
 
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/actual.manifest");
+}
+
+####################################################################################################################################
+# BackRestTestBackup_ManifestMunge
+#
+# Allows for munging of the manifest while make it appear to be valid.  This is used to create various error conditions that should
+# be caught by the unit tests.
+####################################################################################################################################
+sub BackRestTestBackup_ManifestMunge
+{
+    my $oFile = shift;
+    my $bRemote = shift;
+    my $strBackup = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $strValue = shift;
+
+    # Make sure the new value is at least vaguely reasonable
+    if (!defined($strSection) || !defined($strKey))
+    {
+        confess &log(ASSERT, 'strSection and strKey must be defined');
+    }
+
+    # Change permissions on the backup path so it can be read/written
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('chmod 770 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
+    }
+
+    # Read the manifest
+    my %oManifest;
+    ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oManifest);
+
+    # Write in the munged value
+    if (defined($strSubKey))
+    {
+        if (defined($strValue))
+        {
+            $oManifest{$strSection}{$strKey}{$strSubKey} = $strValue;
+        }
+        else
+        {
+            delete($oManifest{$strSection}{$strKey}{$strSubKey});
+        }
+    }
+    else
+    {
+        if (defined($strValue))
+        {
+            $oManifest{$strSection}{$strKey} = $strValue;
+        }
+        else
+        {
+            delete($oManifest{$strSection}{$strKey});
+        }
+    }
+
+    # Remove the old checksum
+    delete($oManifest{backup}{checksum});
+
+    my $oSHA = Digest::SHA->new('sha1');
+
+    # Calculate the checksum from manifest values
+    foreach my $strSection (sort(keys(%oManifest)))
+    {
+        $oSHA->add($strSection);
+
+        foreach my $strKey (sort(keys($oManifest{$strSection})))
+        {
+            $oSHA->add($strKey);
+
+            my $strValue = $oManifest{$strSection}{$strKey};
+
+            if (!defined($strValue))
+            {
+                confess &log(ASSERT, "section ${strSection}, key ${$strKey} has undef value");
+            }
+
+            if (ref($strValue) eq "HASH")
+            {
+                foreach my $strSubKey (sort(keys($oManifest{$strSection}{$strKey})))
+                {
+                    my $strSubValue = $oManifest{$strSection}{$strKey}{$strSubKey};
+
+                    if (!defined($strSubValue))
+                    {
+                        confess &log(ASSERT, "section ${strSection}, key ${strKey}, subkey ${strSubKey} has undef value");
+                    }
+
+                    $oSHA->add($strSubValue);
+                }
+            }
+            else
+            {
+                $oSHA->add($strValue);
+            }
+        }
+    }
+
+    # Set the new checksum
+    $oManifest{backup}{checksum} = $oSHA->hexdigest();
+
+    # Resave the manifest
+    ini_save($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oManifest);
+
+    # Change permissions on the backup path back before unit tests continue
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute('chmod 750 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
+        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+    }
 }
 
 ####################################################################################################################################
@@ -1655,15 +1769,31 @@ sub BackRestTestBackup_Test
                                         $strTmpPath, $bRemote);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'resume - fail', TEST_BACKUP_NORESUME);
+                                                            'cannot resume - new diff', TEST_BACKUP_NORESUME);
 
             # Restore -
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
 
+            # Fail on used path
             BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
                                        'fail on used path', ERROR_RESTORE_PATH_NOT_EMPTY);
+            # Fail on undef format
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, 'backup', 'format', undef, undef);
+
+            BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                      undef, undef, undef, undef, undef, undef,
+                                      'fail on undef format', ERROR_FORMAT);
+
+            # Fail on mismatch format
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, 'backup', 'format', undef, 0);
+
+            BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                      undef, undef, undef, undef, undef, undef,
+                                      'fail on mismatch format', ERROR_FORMAT);
+
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, 'backup', 'format', undef, 3);
 
             # Remap the base path
             my %oRemapHash;

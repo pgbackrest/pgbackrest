@@ -12,6 +12,7 @@ use Time::Local qw(timelocal);
 use Digest::SHA;
 
 use lib dirname($0);
+use BackRest::Exception qw(ERROR_CHECKSUM ERROR_FORMAT);
 use BackRest::Utility;
 use BackRest::File;
 
@@ -50,6 +51,7 @@ use constant
     MANIFEST_KEY_BASE                   => 'base',
     MANIFEST_KEY_CHECKSUM               => 'checksum',
     MANIFEST_KEY_COMPRESS               => 'compress',
+    MANIFEST_KEY_FORMAT                 => 'format',
     MANIFEST_KEY_HARDLINK               => 'hardlink',
     MANIFEST_KEY_LABEL                  => 'label',
     MANIFEST_KEY_PRIOR                  => 'prior',
@@ -82,7 +84,7 @@ use constant
 sub new
 {
     my $class = shift;       # Class name
-    my $strFileName = shift; # Filename to load manifest from
+    my $strFileName = shift; # Manifest filename
     my $bLoad = shift;       # Load the manifest?
 
     # Create the class hash
@@ -111,8 +113,23 @@ sub new
 
         if ($strChecksum ne $strTestChecksum)
         {
-            confess &log(ERROR, "backup.manifest checksum is invalid, should be ${strTestChecksum}");
+            confess &log(ERROR, "backup.manifest checksum is invalid, should be ${strTestChecksum}", ERROR_CHECKSUM);
         }
+
+        # Make sure that the format is current, otherwise error
+        my $iFormat = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_FORMAT, undef, false, 0);
+
+        if ($iFormat != FORMAT)
+        {
+            confess &log(ERROR, "backup format of ${strFileName} is ${iFormat} but " . FORMAT . ' is required by this version of ' .
+                                'PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  ' .
+                                "If you are trying to restore, you''ll need to use a version that supports format ${iFormat}." ,
+                                ERROR_FORMAT);
+        }
+    }
+    else
+    {
+        $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_FORMAT, undef, FORMAT);
     }
 
     return $self;
@@ -150,10 +167,12 @@ sub hash
 
     my $oSHA = Digest::SHA->new('sha1');
 
+    # Calculate the checksum from section values
     foreach my $strSection ($self->keys())
     {
         $oSHA->add($strSection);
 
+        # Calculate the checksum from key values
         foreach my $strKey ($self->keys($strSection))
         {
             $oSHA->add($strKey);
@@ -165,6 +184,7 @@ sub hash
                 confess &log(ASSERT, "section ${strSection}, key ${$strKey} has undef value");
             }
 
+            # Calculate the checksum from subkey values
             if (ref($strValue) eq "HASH")
             {
                 foreach my $strSubKey ($self->keys($strSection, $strKey))
@@ -195,7 +215,7 @@ sub hash
 }
 
 ####################################################################################################################################
-# HASH
+# GET
 #
 # Get a value.
 ####################################################################################################################################
@@ -387,6 +407,7 @@ sub valid
         if ($strKey eq MANIFEST_KEY_ARCHIVE_START ||
             $strKey eq MANIFEST_KEY_ARCHIVE_STOP ||
             $strKey eq MANIFEST_KEY_CHECKSUM ||
+            $strKey eq MANIFEST_KEY_FORMAT ||
             $strKey eq MANIFEST_KEY_LABEL ||
             $strKey eq MANIFEST_KEY_PRIOR ||
             $strKey eq MANIFEST_KEY_REFERENCE ||

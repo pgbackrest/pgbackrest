@@ -26,7 +26,7 @@ our @EXPORT = qw(version_get
                  lock_file_create lock_file_remove hsleep wait_remainder
                  ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
-                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME);
+                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME FORMAT);
 
 # Global constants
 use constant
@@ -61,6 +61,13 @@ $oLogLevelRank{WARN}{rank} = 3;
 $oLogLevelRank{ERROR}{rank} = 2;
 $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
+
+####################################################################################################################################
+# FORMAT Constant
+#
+# Identified the format of the manifest and file structure.  The format is used to determine compatability between versions.
+####################################################################################################################################
+use constant FORMAT => 3;
 
 ####################################################################################################################################
 # TEST Constants and Variables
