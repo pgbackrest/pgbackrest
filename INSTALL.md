@@ -350,7 +350,7 @@ example: level-file=info
 ```
 #### general section
 
-The `general` section defines settings that are shared between all operations.
+The `general` section defines settings that are shared between multiple operations.
 
 ##### buffer-size
 

@@ -5,9 +5,6 @@
 	<link rel="stylesheet" href="default.css" type="text/css"></link>
 	<meta name="viewport" content="width=device-width, initial-scale=1"></meta>
 	<meta http-equiv="Content-Type" content="text/html;charset=utf-8"></meta>
-	<meta name="og:site_name" content="PgBackRest - Simple Postgres Backup &amp; Restore"></meta>
-	<meta name="og:title"></meta>
-	<meta name="og:image" content="/logo.gif"></meta>
 </head>
 <body>
 	<!-- HEADER -->
@@ -38,38 +35,38 @@
 	<doc-configure>
 		<doc-configure-header><a id="configure">Configure</a></doc-configure-header>
 		
-		PgBackRest takes some command-line parameters, but depends on a configuration file for most of the settings. The default location for the configuration file is <doc-id>/etc/pg_backrest.conf</doc-id>.
+		PgBackRest takes some command-line parameters, but depends on a configuration file for most of the settings. The default location for the configuration file is <doc-file>/etc/pg_backrest.conf</doc-file>.
 
 		<!-- CONFIGURE - COMMAND SECTION -->
 		<doc-configure-section>
 			<doc-configure-section-header><doc-id>command</doc-id> section</doc-configure-section-header>
 
-			The command section defines the location external commands that are used by PgBackRest.
+			The <doc-id>command</doc-id> section defines the location external commands that are used by PgBackRest.
 
 			<!-- CONFIGURE - COMMAND SECTION - PSQL KEY -->
 			<doc-configure-key>
 				<doc-configure-key-header><doc-id>psql</doc-id> key</doc-configure-key-header>
 
-					Defines the full path to <doc-id>psql</doc-id>.  <doc-id>psql</doc-id> is used to call <doc-id>pg_start_backup()</doc-id> and <doc-id>pg_stop_backup()</doc-id>.
+				Defines the full path to <doc-file>psql</doc-file>.  <doc-file>psql</doc-file> is used to call <doc-function>pg_start_backup()</doc-function> and <doc-function>pg_stop_backup()</doc-function>.
 
-					<doc-codeblock>
-						required: y<br/>
-						example: psql=/usr/bin/psql
-					</doc-codeblock>
+				<doc-code-block>
+					required: y<br/>
+					example: psql=/usr/bin/psql
+				</doc-code-block>
 			</doc-configure-key>
 
 			<!-- CONFIGURE - COMMAND SECTION - REMOTE KEY -->
 			<doc-configure-key>
 				<doc-configure-key-header><doc-id>remote</doc-id> key</doc-configure-key-header>
 
-					Defines the file path to pg_backrest_remote.pl.
+				Defines the file path to pg_backrest_remote.pl.
 
-					Required only if the path to <doc-id>pg_backrest_remote.pl</doc-id> is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
+				Required only if the path to <doc-file>pg_backrest_remote.pl</doc-file> is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
 
-					<doc-codeblock>
-						required: n<br/>
-						example: remote=/home/postgres/backrest/bin/pg_backrest_remote.pl
-					</doc-codeblock>
+				<doc-code-block>
+					required: n<br/>
+					example: remote=/home/postgres/backrest/bin/pg_backrest_remote.pl
+				</doc-code-block>
 			</doc-configure-key>
 		</doc-configure-section>
 
@@ -77,18 +74,106 @@
 		<doc-configure-section>
 			<doc-configure-section-header><doc-id>command-option</doc-id> section</doc-configure-section-header>
 
-			The command section defines the location external commands that are used by PgBackRest.
+			The <doc-id>command-option</doc-id> section allows abitrary options to be passed to any command in the <doc-id>command</doc-id> section.
 
 			<!-- CONFIGURE - COMMAND-OPTION SECTION - PSQL KEY -->
 			<doc-configure-key>
 				<doc-configure-key-header><doc-id>psql</doc-id> key</doc-configure-key-header>
 
-					Allows command line parameters to be passed to psql.
+				Allows command line parameters to be passed to <doc-file>psql</doc-file>.
 
-					<doc-codeblock>
-						required: no
-						example: psql=--port=5433
-					</doc-codeblock>
+				<doc-code-block>
+					required: no<br/>
+					example: psql=--port=5433
+				</doc-code-block>
+			</doc-configure-key>
+		</doc-configure-section>
+
+		<!-- CONFIGURE - LOG SECTION -->
+		<doc-configure-section>
+			<doc-configure-section-header><doc-id>log</doc-id> section</doc-configure-section-header>
+
+			The <doc-id>log</doc-id> section defines logging-related settings.  The following log levels are supported:<br/>
+
+			<ul>
+				<li><doc-id>off  </doc-id> - No logging at all (not recommended)</li>
+				<li><doc-id>error</doc-id> - Log only errors</li>
+				<li><doc-id>warn </doc-id> - Log warnings and errors</li>
+				<li><doc-id>info </doc-id> - Log info, warnings, and errors</li>
+				<li><doc-id>debug</doc-id> - Log debug, info, warnings, and errors</li>
+				<li><doc-id>trace</doc-id> - Log trace (very verbose debugging), debug, info, warnings, and errors</li>
+			</ul>
+
+			<!-- CONFIGURE - LOG SECTION - LEVEL-FILE KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>level-file</doc-id> key</doc-configure-key-header>
+
+				Sets file log level.
+
+				<doc-code-block>
+					default: info</br>
+					example: level-file=debug
+				</doc-code-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - LOG SECTION - LEVEL-CONSOLE KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>level-console</doc-id> key</doc-configure-key-header>
+
+				Sets console log level.
+
+				<doc-code-block>
+					default: warn</br>
+					example: level-console=info
+				</doc-code-block>
+			</doc-configure-key>
+		</doc-configure-section>
+
+		<!-- CONFIGURE - GENERAL SECTION -->
+		<doc-configure-section>
+			<doc-configure-section-header><doc-id>general</doc-id> section</doc-configure-section-header>
+
+			The <doc-id>general</doc-id> section defines settings that are shared between multiple operations.
+
+			<!-- CONFIGURE - GENERAL SECTION - BUFFER_SIZE KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>buffer-size</doc-id> key</doc-configure-key-header>
+
+				Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>1048576</doc-detail-value></doc-detail>
+					<doc-detail>allowed:<doc-detail-value>4096 - 8388608</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>buffer-size=8192</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - LOG SECTION - COMPRESS-LEVEL KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>compress-level</doc-id> key</doc-configure-key-header>
+
+				Sets the zlib level to be used for file compression when `compress=y`.
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>6</doc-detail-value></doc-detail>
+					<doc-detail>allowed:<doc-detail-value>0-9</doc-detail-value></doc-detail>
+					<doc-detail>override:<doc-detail-value>backup, archive</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>compress-level=9</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - LOG SECTION - COMPRESS-LEVEL-NETWORK KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>compress-level-network</doc-id> key</doc-configure-key-header>
+
+				Sets the zlib level to be used for protocol compression when <doc-setting>compress=n</doc-setting> and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting <doc-setting>compress-level-network=0</doc-setting>.  When <doc-setting>compress=y</doc-setting> the <doc-setting>compress-level-network</doc-setting> setting is ignored and <doc-setting>compress-level</doc-setting> is used instead so that the file is only compressed once.  SSH compression is always disabled.
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>6</doc-detail-value></doc-detail>
+					<doc-detail>allowed:<doc-detail-value>0-9</doc-detail-value></doc-detail>
+					<doc-detail>override:<doc-detail-value>backup, archive</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>compress-level=9</doc-detail-value></doc-detail>
+				</doc-detail-block>
 			</doc-configure-key>
 		</doc-configure-section>
 	</doc-configure>

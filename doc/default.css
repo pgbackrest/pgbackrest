@@ -3,42 +3,28 @@ Html and body
 *******************************************************************************/
 html
 {
-    background-color: #F8F8F8;
-    font-family: Avenir, Corbel, sans-serif;
-    font-size: medium;
-    margin-top: 8px;
-    margin-left: 1%;
-    margin-right: 1%;
-    width: 98%;
+	background-color: #F8F8F8;
+	font-family: Avenir, Corbel, sans-serif;
+	font-size: medium;
+	margin-top: 8px;
+	margin-left: 1%;
+	margin-right: 1%;
+	width: 98%;
 }
 
 body
 {
-    margin: 0px auto;
-    padding: 0px;
-    width: 100%;
+	margin: 0px auto;
+	padding: 0px;
+	width: 100%;
 }
 
 @media (min-width: 1000px)
 {
-    body
-    {
-        width: 1000px;
-    }
-}
-
-/*******************************************************************************
-Web fonts
-*******************************************************************************/
-@font-face
-{
-    font-family: 'Alfa Slab One';
-    font-style: normal;
-    font-weight: 400;
-    src: local('Alfa Slab One'),
-         local('AlfaSlabOne-Regular'),
-         url(font/alpha_slab_one.woff)
-         format('woff');
+	body
+	{
+		width: 1000px;
+	}
 }
 
 /*******************************************************************************
@@ -46,26 +32,26 @@ Link default styling
 *******************************************************************************/
 a:link
 {
-    text-decoration: none;
-    color: black;
+	text-decoration: none;
+	color: black;
 }
 
 a:visited 
 {
-    text-decoration: none;
-    color: black;
+	text-decoration: none;
+	color: black;
 }
 
 a:hover
 {
-    text-decoration: underline;
-    color: black;
+	text-decoration: underline;
+	color: black;
 }
 
 a:active
 {
-    text-decoration: none;
-    color: black;
+	text-decoration: none;
+	color: black;
 }
 
 /*******************************************************************************
@@ -73,25 +59,23 @@ Header
 *******************************************************************************/
 .header
 {
-    width:100%;
-    text-align:center;
-    float:left;
+	width:100%;
+	text-align:center;
+	float:left;
 }
 
 .header-title
 {
-    font-size: 28pt;
-    font-weight: bolder;
-    
-/*    font-family: 'Alfa Slab One', cursive;
-*/}
+	font-size: 28pt;
+	font-weight: bolder;
+}
 
 .header-subtitle
 {
-    position: relative;
-    top: -.25em;
-    font-size: larger;
-    font-weight: bold;
+	position: relative;
+	top: -.25em;
+	font-size: larger;
+	font-weight: bold;
 }
 
 /*******************************************************************************
@@ -99,34 +83,26 @@ Menu
 *******************************************************************************/
 .menu-set
 {
-    text-align: center;
-    font-weight: 600;
-    border-bottom: 2px #dddddd solid;
+	text-align: center;
+	font-weight: 600;
+	border-bottom: 2px #dddddd solid;
 }
 
 .menu-first, .menu
 {
-    white-space: nowrap;
-    display: inline;
+	white-space: nowrap;
+	display: inline;
 }
 
 .menu
 {
-    margin-left: 6px;
+	margin-left: 6px;
 }
 
 .menu-link
 {
-    margin-left: 2px;
-    margin-right: 2px;
-}
-
-/*******************************************************************************
-Content
-*******************************************************************************/
-doc-content
-{
-    width: 100%;
+	margin-left: 2px;
+	margin-right: 2px;
 }
 
 /*******************************************************************************
@@ -135,15 +111,15 @@ Section
 doc-install, doc-configure, doc-intro
 {
 	display:block;
-    margin-top: 8px;
+	margin-top: 8px;
 }
 
 doc-install-header, doc-configure-header
 {
 	display:block;
-    background-color: #dddddd;
-    font-size: 14pt;
-    padding-left: 4px;
+	background-color: #dddddd;
+	font-size: 14pt;
+	padding-left: 4px;
 	margin-bottom: 4px;
 }
 
@@ -153,7 +129,7 @@ SubSection
 doc-configure-section
 {
 	display:block;
-    margin-top: 8px;
+	margin-top: 8px;
 }
 
 doc-configure-section-header
@@ -171,37 +147,58 @@ SubSection2
 doc-configure-key
 {
 	display:block;
-    width:100%;
-    margin-top: 8px;
-    float: left;
+	margin-top: 8px;
+	margin-left: 2em;
+	margin-right: 2em;
 }
 
 doc-configure-key-header
 {
 	display:block;
-    font-size: medium;
-    font-weight: 500;
-    border-bottom: 1px #dddddd solid;
-    margin-bottom: 4px;
+	font-size: medium;
+	font-weight: 500;
+	border-bottom: 1px #dddddd solid;
+	margin-bottom: 4px;
 }
 
 /*******************************************************************************
-Fields
+Code & Detail
 *******************************************************************************/
-doc-id
+doc-code, doc-code-block, doc-id, doc-file, doc-function, doc-detail,
+doc-setting
 {
-    font-family: Courier, sans-serif;
+	font-family: "Lucida Console", Monaco, monospace;
+	font-size: smaller;
 }
 
-doc-code, doc-codeblock
+doc-id, doc-file, doc-function
 {
-    font-family: Courier, sans-serif;
-    background-color: #f1f1f1;
+	white-space: pre;
 }
 
-doc-codeblock
+doc-code, doc-code-block, doc-detail-block
 {
-    margin: 8px;
-    padding: 8px;
+	background-color: #eeeeee;
+}
+
+doc-setting, doc-file
+{
+	background-color: #e0e0e0;
+}
+
+doc-code-block, doc-detail-block
+{
+	margin: 8px;
+	padding: 8px;
 	display:block;
+}
+
+doc-detail
+{
+	display: block;
+}
+
+doc-detail-value
+{
+	margin-left: .5em;
 }
