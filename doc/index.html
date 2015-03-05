@@ -1,5 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE HTML>
 <head>
 	<title>PgBackRest - Simple Postgres Backup &amp; Restore</title>
 	<link rel="stylesheet" href="default.css" type="text/css"></link>
@@ -28,7 +27,7 @@
 	<doc-install>
 		<doc-install-header><a id="install">Install</a></doc-install-header>
 		
-		Something.</br></br>
+		Something.<br/><br/>
 	</doc-install>
 
 	<!-- CONFIGURE -->
@@ -111,7 +110,7 @@
 				Sets file log level.
 
 				<doc-code-block>
-					default: info</br>
+					default: info<br/>
 					example: level-file=debug
 				</doc-code-block>
 			</doc-configure-key>
@@ -123,7 +122,7 @@
 				Sets console log level.
 
 				<doc-code-block>
-					default: warn</br>
+					default: warn<br/>
 					example: level-console=info
 				</doc-code-block>
 			</doc-configure-key>
@@ -173,6 +172,233 @@
 					<doc-detail>allowed:<doc-detail-value>0-9</doc-detail-value></doc-detail>
 					<doc-detail>override:<doc-detail-value>backup, archive</doc-detail-value></doc-detail>
 					<doc-detail>example:<doc-detail-value>compress-level=9</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+		</doc-configure-section>
+
+		<!-- CONFIGURE - BACKUP SECTION -->
+		<doc-configure-section>
+			<doc-configure-section-header><doc-id>backup</doc-id> section</doc-configure-section-header>
+
+			The <doc-id>backup</doc-id> section defines settings related to backup.
+
+			<!-- CONFIGURE - BACKUP SECTION - HOST KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>host</doc-id> key</doc-configure-key-header>
+
+				<p>Sets the backup host when backup up remotely via SSH.  Make sure that trusted SSH authentication is configured between the db host and the backup host.</p>
+				<p>When backing up to a locally mounted network filesystem this setting is not required.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>host=backup.mydomain.com</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - USER KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>user</doc-id> key</doc-configure-key-header>
+
+				<p>Sets user account on the backup host.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n (but must be set if host is defined)</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>user=backrest</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - PATH KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>path</doc-id> key</doc-configure-key-header>
+
+				<p>Path where backups are stored on the local or remote host.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>y</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>path=/var/lib/backrest</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - COMPRESS KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>compress</doc-id> key</doc-configure-key-header>
+
+				<p>Enable gzip compression.  Backup files are compatible with command-line gzip tools.</p>
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>y</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>compress=n</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - START-FAST KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>start-fast</doc-id> key</doc-configure-key-header>
+
+				<p>Forces a checkpoint (by passing <doc-id>true</doc-id> to the <doc-id>fast</doc-id> parameter of <doc-function>pg_start_backup()</doc-function>) so the backup begins immediately.</p>
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>start-fast=y</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - HARDLINK KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>hardlink</doc-id> key</doc-configure-key-header>
+
+				<p>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.</p>
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>hardlink=y</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - THREAD-MAX KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>thread-max</doc-id> key</doc-configure-key-header>
+
+				<p>Defines the number of threads to use for backup.  Each thread will perform compression and transfer to make the backup run faster, but don't set <doc-setting>thread-max</doc-setting> so high that it impacts database performance.</p>
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>1</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>thread-max=4</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - THREAD-TIMEOUT KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>thread-timeout</doc-id> key</doc-configure-key-header>
+
+				<p>Maximum amount of time (in seconds) that a backup thread should run.  This limits the amount of time that a thread might be stuck due to unforeseen issues during the backup.  Not valid when <doc-setting>thread-max=1</setting>.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>thread-timeout=3600</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - BACKUP SECTION - ARCHIVE-REQUIRED KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>archive-required</doc-id> key</doc-configure-key-header>
+
+				<p>Are archive logs required to to complete the backup?  It's a good idea to leave this as the default unless you are using another method for archiving.</p>
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>y</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>archive-required=n</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+		</doc-configure-section>
+
+		<!-- CONFIGURE - ARCHIVE SECTION -->
+		<doc-configure-section>
+			<doc-configure-section-header><doc-id>archive</doc-id> section</doc-configure-section-header>
+
+			<p>The <doc-id>archive</doc-id> section defines parameters when doing async archiving.  This means that the archive files will be stored locally, then a background process will pick them and move them to the backup.</p>
+
+			<!-- CONFIGURE - ARCHIVE SECTION - PATH KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>path</doc-id> key</doc-configure-key-header>
+
+				<p>Path where archive logs are stored before being asynchronously transferred to the backup.  Make sure this is not the same path as the backup is using if the backup is local.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>y</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>/var/lib/backest</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - ARCHIVE SECTION - COMPRESS-ASYNC KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>compress-async</doc-id> key</doc-configure-key-header>
+
+				<p>When set archive logs are not compressed immediately, but are instead compressed when copied to the backup host.  This means that more space will be used on local storage, but the initial archive process will complete more quickly allowing greater throughput from Postgres.</p>
+
+				<doc-detail-block>
+					<doc-detail>default:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>compress-async=y</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - ARCHIVE SECTION - ARCHIVE-MAX-MB KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>archive-max-mb</doc-id> key</doc-configure-key-header>
+
+				<p>Limits the amount of archive log that will be written locally when <doc-setting>compress-async=y</doc-setting>.  After the limit is reached, the following will happen:</p>
+				<ol>
+					<li>PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.</li>
+					<li>An error will be logged to the console and also to the Postgres log.</li>
+					<li>A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.</li>
+				</ol>
+
+				</p>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.</p>
+
+				<p>The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.</p>
+
+<p>To start normal archiving again you'll need to remove the stop file which will be located at <doc-id>${archive-path}/lock/${stanza}-archive.stop</doc-id> where <doc-id>${archive-path}</doc-id> is the path set in the <doc-id>archive</doc-id> section, and <doc-id>${stanza}</doc-id> is the backup stanza.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>archive-max-mb=1024</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+		</doc-configure-section>
+
+		<!-- CONFIGURE - RETENTION SECTION -->
+		<doc-configure-section>
+			<doc-configure-section-header><doc-id>archive</doc-id> section</doc-configure-section-header>
+
+			<p>The <doc-id>rentention</doc-id> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.</p>
+
+			<!-- CONFIGURE - RETENTION SECTION - FULL-RETENTION KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>full-retention</doc-id> key</doc-configure-key-header>
+
+				<p>Number of full backups to keep.  When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When not defined then all full backups will be kept.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>full-retention=2</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - RETENTION SECTION - DIFFERENTIAL-RETENTION KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>differential-retention</doc-id> key</doc-configure-key-header>
+
+				<p>Number of differential backups to keep.  When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>differential-retention=3</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - RETENTION SECTION - ARCHIVE-RETENTION-TYPE KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>archive-retention-type</doc-id> key</doc-configure-key-header>
+
+				<p>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <doc-setting>archive-retention</doc-setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <doc-setting>archive-retention</doc-setting>.</p>
+
+				<p>If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>archive-retention-type=full</doc-detail-value></doc-detail>
+				</doc-detail-block>
+			</doc-configure-key>
+
+			<!-- CONFIGURE - RETENTION SECTION - ARCHIVE-RETENTION KEY -->
+			<doc-configure-key>
+				<doc-configure-key-header><doc-id>archive-retention</doc-id> key</doc-configure-key-header>
+
+				<p>Number of backups worth of archive log to keep.  If not defined, then <doc-setting>full-retention</doc-setting> will be used when <doc-setting>archive-retention-type=full</doc-setting> and <doc-setting>differential-retention</doc-setting> will be used when <doc-setting>archive-retention-type=differential</doc-setting>.</p>
+
+				<doc-detail-block>
+					<doc-detail>required:<doc-detail-value>n</doc-detail-value></doc-detail>
+					<doc-detail>example:<doc-detail-value>archive-retention=2</doc-detail-value></doc-detail>
 				</doc-detail-block>
 			</doc-configure-key>
 		</doc-configure-section>
