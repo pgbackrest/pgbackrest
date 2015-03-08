@@ -1964,7 +1964,7 @@ sub BackRestTestBackup_Test
 
             # Static backup parameters
             my $bSynthetic = false;
-            my $fTestDelay = 1;
+            my $fTestDelay = .1;
 
             # Variable backup parameters
             my $bDelta = true;

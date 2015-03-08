@@ -1,0 +1,72 @@
+<!ELEMENT doc (intro, install, config, release, recognition)>
+	<!ATTLIST doc title CDATA #REQUIRED>
+	<!ATTLIST doc subtitle CDATA #REQUIRED>
+
+<!ELEMENT intro (text)>
+
+<!ELEMENT install (text, install-system-list)>
+	<!ATTLIST install title CDATA #REQUIRED>
+
+<!ELEMENT install-system-list (text?, install-system+)>
+
+<!ELEMENT install-system (text)>
+	<!ATTLIST install-system title CDATA #REQUIRED>
+
+<!ELEMENT config (text, config-example-list, config-section-list)>
+	<!ATTLIST config title CDATA #REQUIRED>
+
+<!ELEMENT config-example-list (text?, config-example+)>
+	<!ATTLIST config-example-list title CDATA #REQUIRED>
+
+<!ELEMENT config-example (text)>
+	<!ATTLIST config-example title CDATA #REQUIRED>
+
+<!ELEMENT config-section-list (text?, config-section+)>
+	<!ATTLIST config-section-list title CDATA #REQUIRED>
+
+<!ELEMENT config-section (text, config-key-list?)>
+	<!ATTLIST config-section id CDATA #REQUIRED>
+
+<!ELEMENT config-key-list (config-key+)>
+
+<!ELEMENT config-key (text, (required|default?), allow?, override?, example)>
+	<!ATTLIST config-key id CDATA #REQUIRED>
+
+<!ELEMENT required EMPTY>
+<!ELEMENT default (#PCDATA)>
+<!ELEMENT allow (#PCDATA)>
+<!ELEMENT override (#PCDATA)>
+<!ELEMENT example (#PCDATA)>
+
+<!ELEMENT release (text?, release-version-list)>
+	<!ATTLIST release title CDATA #REQUIRED>
+
+<!ELEMENT release-version-list (release-version+)>
+
+<!ELEMENT release-version (text?, release-feature-bullet-list)>
+	<!ATTLIST release-version version CDATA #REQUIRED>
+	<!ATTLIST release-version title CDATA #REQUIRED>
+
+<!ELEMENT release-feature-bullet-list (release-feature+)>
+
+<!ELEMENT release-feature (text)>
+
+<!ELEMENT recognition (text)>
+	<!ATTLIST recognition title CDATA #REQUIRED>
+
+<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest)*>
+<!ELEMENT i (#PCDATA)>
+<!ELEMENT b (#PCDATA)>
+<!ELEMENT bi (#PCDATA)>
+<!ELEMENT ul (li+)>
+<!ELEMENT ol (li+)>
+<!ELEMENT li (#PCDATA|id)*>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT code (#PCDATA)>
+<!ELEMENT code-block (#PCDATA)>
+<!ELEMENT file (#PCDATA)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT cmd (#PCDATA)>
+<!ELEMENT param (#PCDATA)>
+<!ELEMENT setting (#PCDATA)>
+<!ELEMENT backrest EMPTY>
