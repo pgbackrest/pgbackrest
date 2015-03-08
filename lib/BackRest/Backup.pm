@@ -16,6 +16,7 @@ use Thread::Queue;
 use lib dirname($0);
 use BackRest::Utility;
 use BackRest::Exception;
+use BackRest::Param;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;

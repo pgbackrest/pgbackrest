@@ -7,32 +7,20 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Pod::Usage;
 use File::Basename;
 use Getopt::Long;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
+use BackRest::Param;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(config_load config_key_load config_section_load operation_get operation_set param_get
+our @EXPORT = qw(config_load config_key_load config_section_load
 
                  FILE_MANIFEST FILE_VERSION FILE_POSTMASTER_PID FILE_RECOVERY_CONF
                  PATH_LATEST
-
-                 OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_RESTORE OP_EXPIRE
-
-                 BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR
-
-                 RECOVERY_TYPE_NAME RECOVERY_TYPE_TIME RECOVERY_TYPE_XID RECOVERY_TYPE_PRESERVE RECOVERY_TYPE_NONE
-                 RECOVERY_TYPE_DEFAULT
-
-                 PARAM_CONFIG PARAM_STANZA PARAM_TYPE PARAM_DELTA PARAM_SET PARAM_NO_START_STOP PARAM_FORCE PARAM_TARGET
-                 PARAM_TARGET_EXCLUSIVE PARAM_TARGET_RESUME PARAM_TARGET_TIMELINE CONFIG_SECTION_RECOVERY
-
-                 PARAM_VERSION PARAM_HELP PARAM_TEST PARAM_TEST_DELAY PARAM_TEST_NO_FORK
 
                  CONFIG_SECTION_COMMAND CONFIG_SECTION_GENERAL CONFIG_SECTION_COMMAND_OPTION CONFIG_SECTION_LOG CONFIG_SECTION_BACKUP
                  CONFIG_SECTION_RESTORE CONFIG_SECTION_RECOVERY CONFIG_SECTION_RECOVERY_OPTION CONFIG_SECTION_TABLESPACE_MAP
@@ -65,68 +53,6 @@ use constant
     FILE_VERSION        => 'version',
     FILE_POSTMASTER_PID => 'postmaster.pid',
     FILE_RECOVERY_CONF  => 'recovery.conf',
-
-    PATH_LATEST         => 'latest'
-};
-
-####################################################################################################################################
-# Operation constants - basic operations that are allowed in backrest
-####################################################################################################################################
-use constant
-{
-    OP_ARCHIVE_GET   => 'archive-get',
-    OP_ARCHIVE_PUSH  => 'archive-push',
-    OP_BACKUP        => 'backup',
-    OP_RESTORE       => 'restore',
-    OP_EXPIRE        => 'expire'
-};
-
-####################################################################################################################################
-# BACKUP Type Constants
-####################################################################################################################################
-use constant
-{
-    BACKUP_TYPE_FULL          => 'full',
-    BACKUP_TYPE_DIFF          => 'diff',
-    BACKUP_TYPE_INCR          => 'incr'
-};
-
-####################################################################################################################################
-# RECOVERY Type Constants
-####################################################################################################################################
-use constant
-{
-    RECOVERY_TYPE_NAME          => 'name',
-    RECOVERY_TYPE_TIME          => 'time',
-    RECOVERY_TYPE_XID           => 'xid',
-    RECOVERY_TYPE_PRESERVE      => 'preserve',
-    RECOVERY_TYPE_NONE          => 'none',
-    RECOVERY_TYPE_DEFAULT       => 'default'
-};
-
-####################################################################################################################################
-# Parameter constants
-####################################################################################################################################
-use constant
-{
-    PARAM_CONFIG            => 'config',
-    PARAM_STANZA            => 'stanza',
-    PARAM_TYPE              => 'type',
-    PARAM_NO_START_STOP     => 'no-start-stop',
-    PARAM_DELTA             => 'delta',
-    PARAM_SET               => 'set',
-    PARAM_FORCE             => 'force',
-    PARAM_VERSION           => 'version',
-    PARAM_HELP              => 'help',
-
-    PARAM_TARGET            => 'target',
-    PARAM_TARGET_EXCLUSIVE  => 'target-exclusive',
-    PARAM_TARGET_RESUME     => 'target-resume',
-    PARAM_TARGET_TIMELINE   => 'target-timeline',
-
-    PARAM_TEST              => 'test',
-    PARAM_TEST_DELAY        => 'test-delay',
-    PARAM_TEST_NO_FORK      => 'no-fork'
 };
 
 ####################################################################################################################################
@@ -216,8 +142,6 @@ use constant
 # Global variables
 ####################################################################################################################################
 my %oConfig;            # Configuration hash
-my %oParam = ();        # Parameter hash
-my $strOperation;       # Operation (backup, archive-get, ...)
 
 ####################################################################################################################################
 # CONFIG_LOAD
@@ -228,61 +152,9 @@ sub config_load
 {
     my $strFile = shift;    # Full path to ini file to load from
 
-    # Default for general parameters
-    param_set(PARAM_NO_START_STOP, false); # Do not perform start/stop backup (and archive-required gets set to false)
-    param_set(PARAM_FORCE, false);         # Force an action that would not normally be allowed (varies by action)
-    param_set(PARAM_VERSION, false);       # Display version and exit
-    param_set(PARAM_HELP, false);          # Display help and exit
-
-    # Defaults for test parameters - not for general use
-    param_set(PARAM_TEST_NO_FORK, false);  # Prevents the archive process from forking when local archiving is enabled
-    param_set(PARAM_TEST, false);          # Enters test mode - not harmful, but adds special logging and pauses for unit testing
-    param_set(PARAM_TEST_DELAY, 5);        # Seconds to delay after a test point (default is not enough for manual tests)
-
-    # Get command line parameters
-    GetOptions (\%oParam, PARAM_CONFIG . '=s', PARAM_STANZA . '=s', PARAM_TYPE . '=s', PARAM_DELTA, PARAM_SET . '=s',
-                          PARAM_NO_START_STOP, PARAM_FORCE, PARAM_TARGET . '=s', PARAM_TARGET_EXCLUSIVE, PARAM_TARGET_RESUME,
-                          PARAM_TARGET_TIMELINE . '=s', PARAM_VERSION, PARAM_HELP,
-                          PARAM_TEST, PARAM_TEST_DELAY . '=s', PARAM_TEST_NO_FORK)
-        or pod2usage(2);
-
-    # Display version and exit if requested
-    if (param_get(PARAM_VERSION) || param_get(PARAM_HELP))
-    {
-        print 'pg_backrest ' . version_get() . "\n";
-
-        if (!param_get(PARAM_HELP))
-        {
-            exit 0;
-        }
-    }
-
-    # Display help and exit if requested
-    if (param_get(PARAM_HELP))
-    {
-        print "\n";
-        pod2usage();
-    }
-
-    # Get and validate the operation
-    $strOperation = $ARGV[0];
-
-    # Validate params
-    param_valid();
-
-    # # Validate thread parameter
-    # if (defined(param_get(PARAM_THREAD)) && !(param_get(PARAM_THREAD) >= 1))
-    # {
-    #     confess &log(ERROR, 'thread parameter should be >= 1');
-    # }
-
-    # Get configuration parameter and load it
-    if (!defined(param_get(PARAM_CONFIG)))
-    {
-        param_set(PARAM_CONFIG, '/etc/pg_backrest.conf');
-    }
-
-    ini_load(param_get(PARAM_CONFIG), \%oConfig);
+    # Load parameters
+    configLoad();
+    ini_load(optionGet(OPTION_CONFIG), \%oConfig);
 
     # If this is a restore, then try to default config
     if (!defined(config_key_load(CONFIG_SECTION_RESTORE, CONFIG_KEY_PATH)))
@@ -304,9 +176,6 @@ sub config_load
 
     # Validate config
     config_valid();
-
-    # Set test parameters
-    test_set(param_get(PARAM_TEST), param_get(PARAM_TEST_DELAY));
 }
 
 ####################################################################################################################################
@@ -316,7 +185,7 @@ sub config_section_load
 {
     my $strSection = shift;
 
-    $strSection = param_get(PARAM_STANZA) . ':' . $strSection;
+    $strSection = optionGet(OPTION_STANZA) . ':' . $strSection;
 
     return $oConfig{$strSection};
 }
@@ -342,13 +211,13 @@ sub config_key_load
     # Look in the default stanza section
     if ($strSection eq CONFIG_SECTION_STANZA)
     {
-        $strValue = $oConfig{param_get(PARAM_STANZA)}{"${strKey}"};
+        $strValue = $oConfig{optionGet(OPTION_STANZA)}{"${strKey}"};
     }
     # Else look in the supplied section
     else
     {
         # First check the stanza section
-        $strValue = $oConfig{param_get(PARAM_STANZA) . ":${strSection}"}{"${strKey}"};
+        $strValue = $oConfig{optionGet(OPTION_STANZA) . ":${strSection}"}{"${strKey}"};
 
         # If the stanza section value is undefined then check global
         if (!defined($strValue))
@@ -396,7 +265,7 @@ sub config_key_set
     }
 
     # Set the value
-    $strSection = param_get(PARAM_STANZA) . ':' . $strSection;
+    $strSection = optionGet(OPTION_STANZA) . ':' . $strSection;
 
     $oConfig{$strSection}{$strKey} = $strValue;
 }
@@ -413,7 +282,7 @@ sub config_valid
     my $oSectionHashRef;
 
     # Check [stanza]:recovery:option section
-    $strSection = param_get(PARAM_STANZA) . ':' . CONFIG_SECTION_RECOVERY_OPTION;
+    $strSection = optionGet(OPTION_STANZA) . ':' . CONFIG_SECTION_RECOVERY_OPTION;
     $oSectionHashRef = $oConfig{$strSection};
 
     if (defined($oSectionHashRef) && keys($oSectionHashRef) != 0)
@@ -511,185 +380,12 @@ sub config_key_valid
     $oConfig{$strSection}{$strKey} = $strValue;
 
     # Also do validation for the stanza section
-    my $strStanza = param_get(PARAM_STANZA);
+    my $strStanza = optionGet(OPTION_STANZA);
 
     if (substr($strSection, 0, length($strStanza) + 1) ne "${strStanza}:")
     {
         config_key_valid("${strStanza}:${strSection}", $strKey, $strValue, $strValidType, $stryValidDataRef);
     }
-}
-
-####################################################################################################################################
-# PARAM_VALID
-#
-# Make sure the command-line parameters are valid.
-####################################################################################################################################
-sub param_valid
-{
-    # Check the stanza
-    if (!defined(param_get(PARAM_STANZA)))
-    {
-        confess 'a backup stanza must be specified';
-    }
-
-    # Check that the operation is present and valid
-    if (!defined($strOperation))
-    {
-        confess &log(ERROR, "operation must be specified", ERROR_PARAM);
-    }
-
-    if ($strOperation ne OP_ARCHIVE_GET &&
-        $strOperation ne OP_ARCHIVE_PUSH &&
-        $strOperation ne OP_BACKUP &&
-        $strOperation ne OP_RESTORE &&
-        $strOperation ne OP_EXPIRE)
-    {
-        confess &log(ERROR, "invalid operation ${strOperation}");
-    }
-
-    # Check type param
-    my $strParam = PARAM_TYPE;
-    my $strType = param_get($strParam);
-
-    # Type is only valid for backup and restore operations
-    if (operation_test(OP_BACKUP) || operation_test(OP_RESTORE))
-    {
-        # Check types for backup
-        if (operation_test(OP_BACKUP))
-        {
-            # If type is not defined set to BACKUP_TYPE_INCR
-            if (!defined($strType))
-            {
-                $strType = BACKUP_TYPE_INCR;
-                param_set($strParam, $strType);
-            }
-
-            # Check that type is in valid list
-            if (!($strType eq BACKUP_TYPE_FULL || $strType eq BACKUP_TYPE_DIFF || $strType eq BACKUP_TYPE_INCR))
-            {
-                confess &log(ERROR, "invalid type '${strType}' for ${strOperation}, must be: '" . BACKUP_TYPE_FULL . "', '" .
-                             BACKUP_TYPE_DIFF . "', '" . BACKUP_TYPE_INCR . "'", ERROR_PARAM);
-            }
-        }
-
-        # Check types for restore
-        elsif (operation_test(OP_RESTORE))
-        {
-            # If type is not defined set to RECOVERY_TYPE_DEFAULT
-            if (!defined($strType))
-            {
-                $strType = RECOVERY_TYPE_DEFAULT;
-                param_set($strParam, $strType);
-            }
-
-            if (!($strType eq RECOVERY_TYPE_NAME || $strType eq RECOVERY_TYPE_TIME || $strType eq RECOVERY_TYPE_XID ||
-                  $strType eq RECOVERY_TYPE_PRESERVE || $strType eq RECOVERY_TYPE_NONE || $strType eq RECOVERY_TYPE_DEFAULT))
-            {
-                confess &log(ERROR, "invalid type '${strType}' for ${strOperation}, must be: '" . RECOVERY_TYPE_NAME .
-                             "', '" . RECOVERY_TYPE_TIME . "', '" . RECOVERY_TYPE_XID . "', '" . RECOVERY_TYPE_PRESERVE .
-                             "', '" . RECOVERY_TYPE_NONE . "', '" . RECOVERY_TYPE_DEFAULT . "'", ERROR_PARAM);
-            }
-        }
-    }
-    else
-    {
-        if (defined($strType))
-        {
-            confess &log(ERROR, PARAM_TYPE . ' is only valid for '. OP_BACKUP . ' and ' . OP_RESTORE . ' operations', ERROR_PARAM);
-        }
-    }
-
-    # Check target param
-    $strParam = PARAM_TARGET;
-    my $strTarget = param_get($strParam);
-    my $strTargetMessage = 'for ' . OP_RESTORE . " operations where type is '" . RECOVERY_TYPE_NAME .
-                           "', '" . RECOVERY_TYPE_TIME . "', or '" . RECOVERY_TYPE_XID . "'";
-
-    if (operation_test(OP_RESTORE) &&
-        ($strType eq RECOVERY_TYPE_NAME || $strType eq RECOVERY_TYPE_TIME || $strType eq RECOVERY_TYPE_XID))
-    {
-         if (!defined($strTarget))
-         {
-             confess &log(ERROR, PARAM_TARGET . ' is required ' . $strTargetMessage, ERROR_PARAM);
-         }
-    }
-    elsif (defined($strTarget))
-    {
-        confess &log(ERROR, PARAM_TARGET . ' is only required ' . $strTargetMessage, ERROR_PARAM);
-    }
-
-    # Check target-resume - can only be used when target is specified
-    if (defined(param_get(PARAM_TARGET_RESUME)) && !defined($strTarget))
-    {
-        confess &log(ERROR, PARAM_TARGET_RESUME . ' and ' . PARAM_TARGET_TIMELINE .
-                            ' are only valid when target is specified', ERROR_PARAM);
-    }
-
-    # Check target-exclusive - can only be used when target is time or xid
-    if (defined(param_get(PARAM_TARGET_EXCLUSIVE)) && !($strType eq RECOVERY_TYPE_TIME || $strType eq RECOVERY_TYPE_XID))
-    {
-        confess &log(ERROR, PARAM_TARGET_EXCLUSIVE . ' is only valid when target is specified and recovery type is ' .
-                            RECOVERY_TYPE_TIME . ' or ' . RECOVERY_TYPE_XID, ERROR_PARAM);
-    }
-}
-
-####################################################################################################################################
-# OPERATION_GET
-#
-# Get the current operation.
-####################################################################################################################################
-sub operation_get
-{
-    return $strOperation;
-}
-
-####################################################################################################################################
-# OPERATION_TEST
-#
-# Test the current operation.
-####################################################################################################################################
-sub operation_test
-{
-    my $strOperationTest = shift;
-
-    return $strOperationTest eq $strOperation;
-}
-
-####################################################################################################################################
-# OPERATION_SET
-#
-# Set current operation (usually for triggering follow-on operations).
-####################################################################################################################################
-sub operation_set
-{
-    my $strValue = shift;
-
-    $strOperation = $strValue;
-}
-
-####################################################################################################################################
-# PARAM_GET
-#
-# Get param value.
-####################################################################################################################################
-sub param_get
-{
-    my $strParam = shift;
-
-    return $oParam{$strParam};
-}
-
-####################################################################################################################################
-# PARAM_SET
-#
-# Set param value.
-####################################################################################################################################
-sub param_set
-{
-    my $strParam = shift;
-    my $strValue = shift;
-
-    $oParam{$strParam} = $strValue;
 }
 
 1;

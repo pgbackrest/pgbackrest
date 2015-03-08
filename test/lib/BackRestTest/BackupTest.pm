@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# BackupTest.pl - Unit Tests for BackRest::File
+# BackupTest.pl - Unit Tests for BackRest::Backup and BackRest::Restore
 ####################################################################################################################################
 package BackRestTest::BackupTest;
 
@@ -21,6 +21,7 @@ use DBI;
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
+use BackRest::Param;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
@@ -1963,7 +1964,7 @@ sub BackRestTestBackup_Test
 
             # Static backup parameters
             my $bSynthetic = false;
-            my $fTestDelay = .25;
+            my $fTestDelay = 1;
 
             # Variable backup parameters
             my $bDelta = true;

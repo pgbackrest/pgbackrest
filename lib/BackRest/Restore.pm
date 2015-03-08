@@ -17,6 +17,7 @@ use lib dirname($0);
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::ThreadGroup;
+use BackRest::Param;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
@@ -50,6 +51,7 @@ sub new
 
     # Initialize variables
     $self->{strDbClusterPath} = $strDbClusterPath;
+    $self->{strBackupPath} = $strBackupPath;
     $self->{oRemapRef} = $oRemapRef;
     $self->{oFile} = $oFile;
     $self->{iThreadTotal} = defined($iThreadTotal) ? $iThreadTotal : 1;
@@ -64,16 +66,6 @@ sub new
     $self->{strStanza} = $strStanza;
     $self->{strBackRestBin} = $strBackRestBin;
     $self->{strConfigFile} = $strConfigFile;
-
-    # If backup path is not specified then default to latest
-    if (defined($strBackupPath))
-    {
-        $self->{strBackupPath} = $strBackupPath;
-    }
-    else
-    {
-        $self->{strBackupPath} = PATH_LATEST;
-    }
 
     return $self;
 }
@@ -196,7 +188,7 @@ sub manifest_load
         # If backup is latest then set it equal to backup label, else verify that requested backup and label match
         my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
-        if ($self->{strBackupPath} eq PATH_LATEST)
+        if ($self->{strBackupPath} eq OPTION_DEFAULT_RESTORE_SET)
         {
             $self->{strBackupPath} = $strBackupLabel;
         }

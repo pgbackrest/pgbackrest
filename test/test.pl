@@ -14,6 +14,7 @@ use File::Basename;
 use Getopt::Long;
 use Cwd 'abs_path';
 use Pod::Usage;
+#use Test::More;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
@@ -21,6 +22,7 @@ use BackRest::Utility;
 use lib dirname($0) . '/lib';
 use BackRestTest::CommonTest;
 use BackRestTest::UtilityTest;
+use BackRestTest::ConfigTest;
 use BackRestTest::FileTest;
 use BackRestTest::BackupTest;
 
@@ -101,6 +103,8 @@ if ($bVersion || $bHelp)
 
     exit 0;
 }
+
+# Test::More->builder->output('/dev/null');
 
 ####################################################################################################################################
 # Setup
@@ -227,6 +231,11 @@ do
     if ($strModule eq 'all' || $strModule eq 'utility')
     {
         BackRestTestUtility_Test($strModuleTest);
+    }
+
+    if ($strModule eq 'all' || $strModule eq 'config')
+    {
+        BackRestTestConfig_Test($strModuleTest);
     }
 
     if ($strModule eq 'all' || $strModule eq 'file')

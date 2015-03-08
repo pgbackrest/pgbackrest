@@ -11,21 +11,25 @@ use Carp qw(confess);
 # Exports
 ####################################################################################################################################
 use Exporter qw(import);
-our @EXPORT = qw(ERROR_CHECKSUM ERROR_CONFIG ERROR_PARAM ERROR_POSTMASTER_RUNNING ERROR_PROTOCOL ERROR_RESTORE_PATH_NOT_EMPTY
-                 ERROR_FORMAT);
+our @EXPORT = qw(ERROR_ASSERT ERROR_CHECKSUM ERROR_CONFIG ERROR_OPERATION_REQUIRED ERROR_OPTION_REQUIRED ERROR_OPTION_INVALID
+                 ERROR_OPTION_INVALID_VALUE ERROR_POSTMASTER_RUNNING ERROR_PROTOCOL ERROR_RESTORE_PATH_NOT_EMPTY ERROR_FORMAT);
 
 ####################################################################################################################################
 # Exception Codes
 ####################################################################################################################################
 use constant
 {
-    ERROR_CHECKSUM                     => 100,
-    ERROR_CONFIG                       => 101,
-    ERROR_PARAM                        => 102,
-    ERROR_RESTORE_PATH_NOT_EMPTY       => 103,
-    ERROR_POSTMASTER_RUNNING           => 104,
-    ERROR_PROTOCOL                     => 105,
-    ERROR_FORMAT                       => 106
+    ERROR_ASSERT                       => 100,
+    ERROR_CHECKSUM                     => 101,
+    ERROR_CONFIG                       => 102,
+    ERROR_FORMAT                       => 103,
+    ERROR_OPERATION_REQUIRED           => 104,
+    ERROR_OPTION_REQUIRED              => 105,
+    ERROR_OPTION_INVALID               => 106,
+    ERROR_OPTION_INVALID_VALUE         => 107,
+    ERROR_POSTMASTER_RUNNING           => 108,
+    ERROR_PROTOCOL                     => 109,
+    ERROR_RESTORE_PATH_NOT_EMPTY       => 110
 };
 
 ####################################################################################################################################
