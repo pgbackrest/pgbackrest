@@ -16,7 +16,6 @@ use Thread::Queue;
 use lib dirname($0);
 use BackRest::Utility;
 use BackRest::Exception;
-use BackRest::Param;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
@@ -300,6 +299,7 @@ sub archive_push
 {
     my $strDbClusterPath = shift;
     my $strSourceFile = shift;
+    my $bAsync = shift;
 
     # If the source file path is not absolute then it is relative to the data path
     if (index($strSourceFile, '/',) != 0)
@@ -325,14 +325,15 @@ sub archive_push
     }
 
     # Copy the archive file
-    $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,             # Source file
-                 PATH_BACKUP_ARCHIVE, $strDestinationFile,     # Destination file
-                 false,                                        # Source is not compressed
-                 $bArchiveFile && $bCompress,                  # Destination compress is configurable
-                 undef, undef, undef,                          # Unused params
-                 true,                                         # Create path if it does not exist
-                 undef, undef,                                 # User and group
-                 $bArchiveFile);                               # Append checksum if archive file
+    $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,                          # Source type/file
+                 $bAsync ? PATH_BACKUP_ARCHIVE_OUT : PATH_BACKUP_ARCHIVE,   # Destination type
+                 $strDestinationFile,                                       # Destination file
+                 false,                                                     # Source is not compressed
+                 $bArchiveFile && $bCompress,                               # Destination compress is configurable
+                 undef, undef, undef,                                       # Unused params
+                 true,                                                      # Create path if it does not exist
+                 undef, undef,                                              # User and group
+                 $bArchiveFile);                                            # Append checksum if archive file
 }
 
 ####################################################################################################################################
@@ -356,7 +357,7 @@ sub archive_xfer
 
     foreach my $strFile (sort(keys $oManifestHash{name}))
     {
-        if ($strFile =~ /^[0-F]{16}\/[0-F]{24}.*/ || $strFile =~ /^[0-F]{8}\.history$/)
+        if ($strFile =~ /^[0-F]{24}.*/ || $strFile =~ /^[0-F]{8}\.history$/)
         {
             push @stryFile, $strFile;
 
@@ -385,35 +386,10 @@ sub archive_xfer
     }
 
     # Modify process name to indicate async archiving
-    # !!! This got broken when history files were added - exclude history files to fix
-    $0 = "${strCommand} archive-push-async ";
-#    $0 = "${strCommand} archive-push-async " . substr($stryFile[0], 17, 24) . '-' . substr($stryFile[scalar @stryFile - 1], 17, 24);
+    $0 = "${strCommand} archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
 
     # Output files to be moved to backup
     &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
-
-    # # Init the thread variables
-    # $iThreadLocalMax = thread_init(int($lFileTotal / $iThreadThreshold) + 1);
-    # my $iThreadIdx = 0;
-    #
-    # &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
-    #
-    # # Distribute files among the threads
-    # foreach my $strFile (sort @stryFile)
-    # {
-    #     $oThreadQueue[$iThreadIdx]->enqueue($strFile);
-    #
-    #     $iThreadIdx = ($iThreadIdx + 1 == $iThreadLocalMax) ? 0 : $iThreadIdx + 1;
-    # }
-    #
-    # # End each thread queue and start the thread
-    # for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-    # {
-    #     $oThreadQueue[$iThreadIdx]->enqueue(undef);
-    #     $oThread[$iThreadIdx] = threads->create(\&archive_pull_copy_thread, $iThreadIdx, $strArchivePath);
-    # }
-    #
-    # backup_thread_complete($iThreadTimeout);
 
     # Transfer each file
     foreach my $strFile (sort @stryFile)
@@ -456,141 +432,8 @@ sub archive_xfer
         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
     }
 
-    # Find the archive paths that need to be removed
-    my $strPathMax = substr((sort {$b cmp $a} @stryFile)[0], 0, 16);
-
-    &log(DEBUG, "local archive path max = ${strPathMax}");
-
-    foreach my $strPath ($oFile->list(PATH_DB_ABSOLUTE, $strArchivePath, "^[0-F]{16}\$"))
-    {
-        if ($strPath lt $strPathMax)
-        {
-            &log(DEBUG, "removing local archive path ${strPath}");
-            rmdir($strArchivePath . '/' . $strPath) or &log(WARN, "unable to remove archive path ${strPath}, is it empty?");
-        }
-
-        # If the dir is not empty check if the files are in the manifest
-        # If they are error - there has been some issue
-        # If not, they are new - continue processing without error - they'll be picked up on the next run
-    }
-
     # Return number of files indicating that processing should continue
     return $lFileTotal;
-}
-
-# sub archive_pull_copy_thread
-# {
-#     my @args = @_;
-#
-#     my $iThreadIdx = $args[0];
-#     my $strArchivePath = $args[1];
-#
-#     my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
-#
-#     # When a KILL signal is received, immediately abort
-#     $SIG{'KILL'} = sub {threads->exit();};
-#
-#     while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
-#     {
-#         &log(INFO, "thread ${iThreadIdx} backing up archive file ${strFile}");
-#
-#         my $strArchiveFile = "${strArchivePath}/${strFile}";
-#
-#         # Copy the file
-#         $oFileThread->file_copy(PATH_DB_ABSOLUTE, $strArchiveFile,
-#                                            PATH_BACKUP_ARCHIVE, basename($strFile),
-#                                            undef, undef,
-#                                            undef); # cannot set permissions remotely yet $oFile->{strDefaultFilePermission});
-#
-#         #  Remove the source archive file
-#         unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
-#     }
-# }
-
-sub archive_compress
-{
-    my $strArchivePath = shift;
-    my $strCommand = shift;
-    my $iFileCompressMax = shift;
-
-    # Load the archive manifest - all the files that need to be pushed
-    my %oManifestHash = $oFile->manifest_get(PATH_DB_ABSOLUTE, $strArchivePath);
-
-    # Get all the files to be compressed and calculate the total size
-    my @stryFile;
-    my $lFileSize = 0;
-    my $lFileTotal = 0;
-
-    foreach my $strFile (sort(keys $oManifestHash{name}))
-    {
-        if ($strFile =~ /^[0-F]{16}\/[0-F]{24}(\-[0-f]+){0,1}$/)
-        {
-            push @stryFile, $strFile;
-
-            $lFileSize += $oManifestHash{name}{"${strFile}"}{size};
-            $lFileTotal++;
-
-            if ($lFileTotal >= $iFileCompressMax)
-            {
-                last;
-            }
-        }
-    }
-
-    if ($lFileTotal == 0)
-    {
-        &log(DEBUG, 'no archive logs to be compressed');
-
-        return;
-    }
-
-    $0 = "${strCommand} archive-compress-async " . substr($stryFile[0], 17, 24) . '-' . substr($stryFile[scalar @stryFile - 1], 17, 24);
-
-    # Output files to be compressed
-    &log(INFO, "archive to be compressed total ${lFileTotal}, size " . file_size_format($lFileSize));
-
-    # Init the thread variables
-    $iThreadLocalMax = thread_init($iThreadMax);
-    my $iThreadIdx = 0;
-
-    # Distribute files among the threads
-    foreach my $strFile (sort @stryFile)
-    {
-        $oThreadQueue[$iThreadIdx]->enqueue($strFile);
-
-        $iThreadIdx = ($iThreadIdx + 1 == $iThreadLocalMax) ? 0 : $iThreadIdx + 1;
-    }
-
-    # End each thread queue and start the thread
-    for ($iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-    {
-        $oThreadQueue[$iThreadIdx]->enqueue(undef);
-        $oThread[$iThreadIdx] = threads->create(\&archive_pull_compress_thread, $iThreadIdx, $strArchivePath);
-    }
-
-    # Complete the threads
-    backup_thread_complete($iThreadTimeout);
-}
-
-sub archive_pull_compress_thread
-{
-    my @args = @_;
-
-    my $iThreadIdx = $args[0];
-    my $strArchivePath = $args[1];
-
-    my $oFileThread = $oFile->clone($iThreadIdx);   # Thread local file object
-
-    # When a KILL signal is received, immediately abort
-    $SIG{'KILL'} = sub {threads->exit();};
-
-    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue())
-    {
-        &log(INFO, "thread ${iThreadIdx} compressing archive file ${strFile}");
-
-        # Compress the file
-        $oFileThread->file_compress(PATH_DB_ABSOLUTE, "${strArchivePath}/${strFile}");
-    }
 }
 
 ####################################################################################################################################

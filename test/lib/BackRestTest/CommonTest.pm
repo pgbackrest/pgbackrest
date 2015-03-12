@@ -26,8 +26,8 @@ use BackRest::File;
 use BackRest::Manifest;
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRestTestCommon_ExecuteEnd
-                 BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
+our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
+                 BackRestTestCommon_ExecuteEnd BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
                  BackRestTestCommon_FileCreate BackRestTestCommon_FileRemove BackRestTestCommon_PathCopy BackRestTestCommon_PathMove
                  BackRestTestCommon_ConfigCreate BackRestTestCommon_ConfigRemap BackRestTestCommon_ConfigRecovery
@@ -35,8 +35,9 @@ our @EXPORT = qw(BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin BackRe
                  BackRestTestCommon_StanzaGet BackRestTestCommon_CommandMainGet BackRestTestCommon_CommandRemoteGet
                  BackRestTestCommon_HostGet BackRestTestCommon_UserGet BackRestTestCommon_GroupGet
                  BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
-                 BackRestTestCommon_BackupPathGet BackRestTestCommon_ArchivePathGet BackRestTestCommon_DbPathGet
-                 BackRestTestCommon_DbCommonPathGet BackRestTestCommon_DbTablespacePathGet BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_RepoPathGet BackRestTestCommon_LocalPathGet BackRestTestCommon_DbPathGet
+                 BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
+                 BackRestTestCommon_DbPortGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -49,8 +50,8 @@ my $strCommonGroup;
 my $strCommonUserBackRest;
 my $strCommonTestPath;
 my $strCommonDataPath;
-my $strCommonBackupPath;
-my $strCommonArchivePath;
+my $strCommonRepoPath;
+my $strCommonLocalPath;
 my $strCommonDbPath;
 my $strCommonDbCommonPath;
 my $strCommonDbTablespacePath;
@@ -66,6 +67,56 @@ my $strOutLog;
 my $hOut;
 my $pId;
 my $strCommand;
+
+
+####################################################################################################################################
+# BackRestTestCommon_ClusterStop
+####################################################################################################################################
+sub BackRestTestCommon_ClusterStop
+{
+    my $strPath = shift;
+    my $bImmediate = shift;
+
+    # Set default
+    $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
+    $bImmediate = defined($bImmediate) ? $bImmediate : false;
+
+    # If postmaster process is running then stop the cluster
+    if (-e $strPath . '/postmaster.pid')
+    {
+        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m " .
+                                   ($bImmediate ? 'immediate' : 'fast'));
+    }
+}
+
+####################################################################################################################################
+# BackRestTestCommon_Drop
+####################################################################################################################################
+sub BackRestTestCommon_Drop
+{
+    # Drop the cluster if it exists
+    BackRestTestCommon_ClusterStop(BackRestTestCommon_DbCommonPathGet(), true);
+
+    # Remove the backrest private directory
+    while (-e BackRestTestCommon_RepoPathGet())
+    {
+        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
+        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
+        hsleep(.1);
+    }
+
+    # Remove the test directory
+    BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
+}
+
+####################################################################################################################################
+# BackRestTestCommon_Create
+####################################################################################################################################
+sub BackRestTestCommon_Create
+{
+    # Create the test directory
+    BackRestTestCommon_PathCreate(BackRestTestCommon_TestPathGet(), '0770');
+}
 
 ####################################################################################################################################
 # BackRestTestCommon_Run
@@ -403,8 +454,8 @@ sub BackRestTestCommon_Setup
     }
 
     $strCommonDataPath = "${strBasePath}/test/data";
-    $strCommonBackupPath = "${strCommonTestPath}/backrest";
-    $strCommonArchivePath = "${strCommonTestPath}/archive";
+    $strCommonRepoPath = "${strCommonTestPath}/backrest";
+    $strCommonLocalPath = "${strCommonTestPath}/local";
     $strCommonDbPath = "${strCommonTestPath}/db";
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
@@ -442,12 +493,12 @@ sub BackRestTestCommon_ConfigRemap
 
     if ($bRemote)
     {
-        BackRestTestCommon_Execute("mv " . BackRestTestCommon_BackupPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
+        BackRestTestCommon_Execute("mv " . BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
         ini_load($strRemoteConfigFile, \%oRemoteConfig);
     }
 
     # Rewrite remap section
-    delete($oConfig{"${strStanza}:tablespace:map"});
+    delete($oConfig{"${strStanza}:restore:tablespace-map"});
 
     foreach my $strRemap (sort(keys $oRemapHashRef))
     {
@@ -455,17 +506,17 @@ sub BackRestTestCommon_ConfigRemap
 
         if ($strRemap eq 'base')
         {
-            $oConfig{$strStanza}{path} = $strRemapPath;
+            $oConfig{$strStanza}{'db-path'} = $strRemapPath;
             ${$oManifestRef}{'backup:path'}{base} = $strRemapPath;
 
             if ($bRemote)
             {
-                $oRemoteConfig{$strStanza}{path} = $strRemapPath;
+                $oRemoteConfig{$strStanza}{'db-path'} = $strRemapPath;
             }
         }
         else
         {
-            $oConfig{"${strStanza}:tablespace:map"}{$strRemap} = $strRemapPath;
+            $oConfig{"${strStanza}:restore:tablespace-map"}{$strRemap} = $strRemapPath;
 
             ${$oManifestRef}{'backup:path'}{"tablespace:${strRemap}"} = $strRemapPath;
             ${$oManifestRef}{'backup:tablespace'}{$strRemap}{'path'} = $strRemapPath;
@@ -480,7 +531,7 @@ sub BackRestTestCommon_ConfigRemap
     if ($bRemote)
     {
         ini_save($strRemoteConfigFile, \%oRemoteConfig);
-        BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+        BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf', true);
     }
 }
 
@@ -506,7 +557,7 @@ sub BackRestTestCommon_ConfigRecovery
 
     if ($bRemote)
     {
-        BackRestTestCommon_Execute("mv " . BackRestTestCommon_BackupPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
+        BackRestTestCommon_Execute("mv " . BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
         ini_load($strRemoteConfigFile, \%oRemoteConfig);
     }
 
@@ -525,7 +576,7 @@ sub BackRestTestCommon_ConfigRecovery
     if ($bRemote)
     {
         ini_save($strRemoteConfigFile, \%oRemoteConfig);
-        BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+        BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf', true);
     }
 }
 
@@ -540,34 +591,35 @@ sub BackRestTestCommon_ConfigCreate
     my $bChecksum = shift;
     my $bHardlink = shift;
     my $iThreadMax = shift;
-    my $bArchiveLocal = shift;
+    my $bArchiveAsync = shift;
     my $bCompressAsync = shift;
 
     my %oParamHash;
 
     if (defined($strRemote))
     {
-        $oParamHash{'global:command'}{'remote'} = $strCommonCommandRemote;
+        $oParamHash{'global:command'}{'command-remote'} = $strCommonCommandRemote;
     }
 
-    $oParamHash{'global:command'}{'psql'} = $strCommonCommandPsql;
+    $oParamHash{'global:command'}{'command-psql'} = $strCommonCommandPsql;
 
     if (defined($strRemote) && $strRemote eq BACKUP)
     {
-        $oParamHash{'global:backup'}{'host'} = $strCommonHost;
-        $oParamHash{'global:backup'}{'user'} = $strCommonUserBackRest;
+        $oParamHash{'global:backup'}{'backup-host'} = $strCommonHost;
+        $oParamHash{'global:backup'}{'backup-user'} = $strCommonUserBackRest;
     }
     elsif (defined($strRemote) && $strRemote eq DB)
     {
-        $oParamHash{$strCommonStanza}{'host'} = $strCommonHost;
-        $oParamHash{$strCommonStanza}{'user'} = $strCommonUser;
+        $oParamHash{$strCommonStanza}{'db-host'} = $strCommonHost;
+        $oParamHash{$strCommonStanza}{'db-user'} = $strCommonUser;
     }
 
-    $oParamHash{'global:log'}{'level-console'} = 'error';
-    $oParamHash{'global:log'}{'level-file'} = 'trace';
+    $oParamHash{'global:log'}{'log-level-console'} = 'error';
+    $oParamHash{'global:log'}{'log-level-file'} = 'trace';
 
     if ($strLocal eq BACKUP)
     {
+        $oParamHash{'global:general'}{'repo-path'} = $strCommonRepoPath;
     }
     elsif ($strLocal eq DB)
     {
@@ -575,17 +627,24 @@ sub BackRestTestCommon_ConfigCreate
         {
             $oParamHash{'global:log'}{'level-console'} = 'trace';
 
-            if (!$bArchiveLocal)
+            if ($bArchiveAsync)
             {
-                $oParamHash{'global:restore'}{path} = BackRestTestCommon_ArchivePathGet();
+                $oParamHash{'global:archive'}{path} = BackRestTestCommon_LocalPathGet();
             }
 
             $oParamHash{'global:restore'}{'thread-max'} = $iThreadMax;
+
+            $oParamHash{'global:general'}{'repo-remote-path'} = $strCommonRepoPath;
+            $oParamHash{'global:general'}{'repo-path'} = $strCommonLocalPath;
+        }
+        else
+        {
+            $oParamHash{'global:general'}{'repo-path'} = $strCommonRepoPath;
         }
 
-        if ($bArchiveLocal)
+        if ($bArchiveAsync)
         {
-            $oParamHash{'global:archive'}{path} = BackRestTestCommon_ArchivePathGet();
+            $oParamHash{'global:archive'}{'archive-async'} = 'y';
 
             if (!$bCompressAsync)
             {
@@ -600,12 +659,12 @@ sub BackRestTestCommon_ConfigCreate
 
     if (($strLocal eq BACKUP) || ($strLocal eq DB && !defined($strRemote)))
     {
-        $oParamHash{'db:command:option'}{'psql'} = "--port=${iCommonDbPort}";
+        $oParamHash{'db:command'}{'command-psql-option'} = "--port=${iCommonDbPort}";
         $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
 
-        if (defined($bHardlink) && !$bHardlink)
+        if (defined($bHardlink) && $bHardlink)
         {
-            $oParamHash{'global:backup'}{'hardlink'} = 'n';
+            $oParamHash{'global:backup'}{'hardlink'} = 'y';
         }
     }
 
@@ -619,8 +678,7 @@ sub BackRestTestCommon_ConfigCreate
     #     $oParamHash{'global:backup'}{'checksum'} = 'y';
     # }
 
-    $oParamHash{$strCommonStanza}{'path'} = $strCommonDbCommonPath;
-    $oParamHash{'global:backup'}{'path'} = $strCommonBackupPath;
+    $oParamHash{$strCommonStanza}{'db-path'} = $strCommonDbCommonPath;
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';
@@ -634,12 +692,12 @@ sub BackRestTestCommon_ConfigCreate
     }
     elsif ($strLocal eq 'backup' && !defined($strRemote))
     {
-        rename($strFile, BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf')
-            or die "unable to move ${strFile} to " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf path';
+        rename($strFile, BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf')
+            or die "unable to move ${strFile} to " . BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf path';
     }
     else
     {
-        BackRestTestCommon_Execute("mv ${strFile} " . BackRestTestCommon_BackupPathGet() . '/pg_backrest.conf', true);
+        BackRestTestCommon_Execute("mv ${strFile} " . BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf', true);
     }
 }
 
@@ -696,14 +754,14 @@ sub BackRestTestCommon_DataPathGet
     return $strCommonDataPath;
 }
 
-sub BackRestTestCommon_BackupPathGet
+sub BackRestTestCommon_RepoPathGet
 {
-    return $strCommonBackupPath;
+    return $strCommonRepoPath;
 }
 
-sub BackRestTestCommon_ArchivePathGet
+sub BackRestTestCommon_LocalPathGet
 {
-    return $strCommonArchivePath;
+    return $strCommonLocalPath;
 }
 
 sub BackRestTestCommon_DbPathGet

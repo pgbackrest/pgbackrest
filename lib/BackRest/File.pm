@@ -14,24 +14,12 @@ use File::Path qw(make_path remove_tree);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
+use Exporter qw(import);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Remote;
-
-# Exports
-use Exporter qw(import);
-our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
-                 PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
-
-                 COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
-                 COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
-
-                 PIPE_STDIN PIPE_STDOUT PIPE_STDERR
-
-                 OP_FILE_OWNER OP_FILE_WAIT OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST
-                 OP_FILE_COMPRESS OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
 ####################################################################################################################################
 # COMMAND Error Constants
@@ -48,20 +36,27 @@ use constant
     COMMAND_ERR_PATH_READ              => 8
 };
 
+our @EXPORT = qw(COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE COMMAND_ERR_LINK_READ
+                 COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM);
+
 ####################################################################################################################################
 # PATH_GET Constants
 ####################################################################################################################################
 use constant
 {
-    PATH_ABSOLUTE        => 'absolute',
-    PATH_DB              => 'db',
-    PATH_DB_ABSOLUTE     => 'db:absolute',
-    PATH_BACKUP          => 'backup',
-    PATH_BACKUP_ABSOLUTE => 'backup:absolute',
-    PATH_BACKUP_CLUSTER  => 'backup:cluster',
-    PATH_BACKUP_TMP      => 'backup:tmp',
-    PATH_BACKUP_ARCHIVE  => 'backup:archive'
+    PATH_ABSOLUTE           => 'absolute',
+    PATH_DB                 => 'db',
+    PATH_DB_ABSOLUTE        => 'db:absolute',
+    PATH_BACKUP             => 'backup',
+    PATH_BACKUP_ABSOLUTE    => 'backup:absolute',
+    PATH_BACKUP_CLUSTER     => 'backup:cluster',
+    PATH_BACKUP_TMP         => 'backup:tmp',
+    PATH_BACKUP_ARCHIVE     => 'backup:archive',
+    PATH_BACKUP_ARCHIVE_OUT => 'backup:archive:out'
 };
+
+push @EXPORT, qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP
+                 PATH_BACKUP_ARCHIVE PATH_BACKUP_ARCHIVE_OUT);
 
 ####################################################################################################################################
 # STD Pipe Constants
@@ -72,6 +67,8 @@ use constant
     PIPE_STDOUT  => '<STDOUT>',
     PIPE_STDERR  => '<STDERR>'
 };
+
+push @EXPORT, qw(PIPE_STDIN PIPE_STDOUT PIPE_STDERR);
 
 ####################################################################################################################################
 # Operation constants
@@ -93,6 +90,9 @@ use constant
     OP_FILE_PATH_CREATE => 'File->path_create',
     OP_FILE_LINK_CREATE => 'File->link_create'
 };
+
+push @EXPORT, qw(OP_FILE_OWNER OP_FILE_WAIT OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST
+                 OP_FILE_COMPRESS OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -225,10 +225,11 @@ sub path_get
         confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
     }
 
-    # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP and any absolute path
+    # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, PATH_BACKUP_TMP and any absolute path
     $bTemp = defined($bTemp) ? $bTemp : false;
 
-    if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $bAbsolute))
+    if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP ||
+        $bAbsolute))
     {
         confess &log(ASSERT, 'temp file not supported on path ' . $strType);
     }
@@ -276,28 +277,39 @@ sub path_get
     }
 
     # Get the backup archive path
-    if ($strType eq PATH_BACKUP_ARCHIVE)
+    if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
     {
-        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
-        my $strArchive;
+        my $strArchivePath = "$self->{strBackupPath}/archive";
 
         if ($bTemp)
         {
-            return "${strArchivePath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '');
+            return "${strArchivePath}/temp/$self->{strStanza}-archive" .
+                   (defined($self->{iThreadIdx}) ? "-$self->{iThreadIdx}" : '') . ".tmp";
         }
 
-        if (defined($strFile))
+        $strArchivePath .= "/$self->{strStanza}";
+
+        if ($strType eq PATH_BACKUP_ARCHIVE)
         {
-            $strArchive = substr(basename($strFile), 0, 24);
+            my $strArchive;
 
-            if ($strArchive !~ /^([0-F]){24}$/)
+            if (defined($strFile))
             {
-                return "${strArchivePath}/${strFile}";
-            }
-        }
+                $strArchive = substr(basename($strFile), 0, 24);
 
-        return $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
-               (defined($strFile) ? '/' . $strFile : '');
+                if ($strArchive !~ /^([0-F]){24}$/)
+                {
+                    return "${strArchivePath}/${strFile}";
+                }
+            }
+
+            return $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
+                   (defined($strFile) ? '/' . $strFile : '');
+        }
+        else
+        {
+            return "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
+        }
     }
 
     if ($strType eq PATH_BACKUP_CLUSTER)

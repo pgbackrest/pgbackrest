@@ -10,9 +10,17 @@ use Carp qw(confess);
 use Net::OpenSSH;
 use File::Basename;
 use IPC::System::Simple qw(capture);
+use Exporter qw(import);
 
 use lib dirname($0);
 use BackRest::Utility;
+
+####################################################################################################################################
+# Postmaster process Id file
+####################################################################################################################################
+use constant FILE_POSTMASTER_PID => 'postmaster.pid';
+
+our @EXPORT = qw(FILE_POSTMASTER_PID);
 
 ####################################################################################################################################
 # CONSTRUCTOR

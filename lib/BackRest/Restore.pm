@@ -17,10 +17,15 @@ use lib dirname($0);
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::ThreadGroup;
-use BackRest::Param;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
+use BackRest::Db;
+
+####################################################################################################################################
+# Recovery.conf file
+####################################################################################################################################
+use constant FILE_RECOVERY_CONF  => 'recovery.conf';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -479,7 +484,7 @@ sub recovery
             my $strPgKey = $strKey;
             $strPgKey =~ s/\-/\_/g;
 
-            if ($strKey eq CONFIG_KEY_RESTORE_COMMAND)
+            if ($strPgKey eq 'restore_command')
             {
                 $bRestoreCommandOverride = true;
             }

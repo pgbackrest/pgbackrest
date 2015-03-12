@@ -97,9 +97,9 @@ sub BackRestTestFile_Test
         $strHost,                               # Host
         $strUser,                               # User
         BackRestTestCommon_CommandRemoteGet(),  # Command
-        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
-        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     my $oLocal = new BackRest::Remote
@@ -107,9 +107,9 @@ sub BackRestTestFile_Test
         undef,                                  # Host
         undef,                                  # User
         undef,                                  # Command
-        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
-        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------

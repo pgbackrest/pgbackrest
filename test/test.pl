@@ -65,7 +65,7 @@ my $strLogLevel = 'info';   # Log level for tests
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
-my $iThreadMax = 4;
+my $iThreadMax = 1;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;

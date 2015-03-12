@@ -430,22 +430,22 @@ sub log_level_set
 
     if (defined($strLevelFileParam))
     {
-        if (!defined($oLogLevelRank{"${strLevelFileParam}"}{rank}))
+        if (!defined($oLogLevelRank{uc($strLevelFileParam)}{rank}))
         {
             confess &log(ERROR, "file log level ${strLevelFileParam} does not exist");
         }
 
-        $strLogLevelFile = $strLevelFileParam;
+        $strLogLevelFile = uc($strLevelFileParam);
     }
 
     if (defined($strLevelConsoleParam))
     {
-        if (!defined($oLogLevelRank{"${strLevelConsoleParam}"}{rank}))
+        if (!defined($oLogLevelRank{uc($strLevelConsoleParam)}{rank}))
         {
             confess &log(ERROR, "console log level ${strLevelConsoleParam} does not exist");
         }
 
-        $strLogLevelConsole = $strLevelConsoleParam;
+        $strLogLevelConsole = uc($strLevelConsoleParam);
     }
 }
 
@@ -626,6 +626,8 @@ sub ini_load
     }
 
     close($hFile);
+
+    return($oConfig);
 }
 
 ####################################################################################################################################

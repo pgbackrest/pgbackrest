@@ -21,7 +21,6 @@ use DBI;
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
-use BackRest::Param;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
@@ -192,15 +191,11 @@ sub BackRestTestBackup_ClusterStop
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
     $bImmediate = defined($bImmediate) ? $bImmediate : false;
 
-    # If postmaster process is running then stop the cluster
-    if (-e $strPath . '/postmaster.pid')
-    {
-        # Disconnect user session
-        BackRestTestBackup_PgDisconnect();
+    # Disconnect user session
+    BackRestTestBackup_PgDisconnect();
 
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl stop -D ${strPath} -w -s -m " .
-                                   ($bImmediate ? 'immediate' : 'fast'));
-    }
+    # Drop the cluster
+    BackRestTestCommon_ClusterStop
 }
 
 ####################################################################################################################################
@@ -285,16 +280,19 @@ sub BackRestTestBackup_Drop
     # Stop the cluster if one is running
     BackRestTestBackup_ClusterStop(BackRestTestCommon_DbCommonPathGet(), $bImmediate);
 
-    # Remove the backrest private directory
-    while (-e BackRestTestCommon_BackupPathGet())
-    {
-        BackRestTestCommon_PathRemove(BackRestTestCommon_BackupPathGet(), true, true);
-        BackRestTestCommon_PathRemove(BackRestTestCommon_BackupPathGet(), false, true);
-        hsleep(.1);
-    }
+    # Drop the test path
+    BackRestTestCommon_Drop();
 
-    # Remove the test directory
-    BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
+    # # Remove the backrest private directory
+    # while (-e BackRestTestCommon_RepoPathGet())
+    # {
+    #     BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
+    #     BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
+    #     hsleep(.1);
+    # }
+    #
+    # # Remove the test directory
+    # BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
 }
 
 ####################################################################################################################################
@@ -313,7 +311,7 @@ sub BackRestTestBackup_Create
     BackRestTestBackup_Drop(true);
 
     # Create the test directory
-    BackRestTestCommon_PathCreate(BackRestTestCommon_TestPathGet(), '0770');
+    BackRestTestCommon_Create();
 
     # Create the db paths
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbPathGet());
@@ -328,16 +326,19 @@ sub BackRestTestBackup_Create
     BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet(2, 2));
 
     # Create the archive directory
-    BackRestTestCommon_PathCreate(BackRestTestCommon_ArchivePathGet());
+    if ($bRemote)
+    {
+        BackRestTestCommon_PathCreate(BackRestTestCommon_LocalPathGet());
+    }
 
     # Create the backup directory
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_RepoPathGet(), true);
     }
     else
     {
-        BackRestTestCommon_PathCreate(BackRestTestCommon_BackupPathGet());
+        BackRestTestCommon_PathCreate(BackRestTestCommon_RepoPathGet());
     }
 
     # Create the cluster
@@ -812,7 +813,7 @@ sub BackRestTestBackup_BackupBegin
     &log(INFO, "    ${strType} backup" . (defined($strComment) ? " (${strComment})" : ''));
 
     BackRestTestCommon_ExecuteBegin(BackRestTestCommon_CommandMainGet() . ' --config=' .
-                                    ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
+                                    ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
                                     "/pg_backrest.conf" . ($bSynthetic ? " --no-start-stop" : '') .
                                     ($strType ne 'incr' ? " --type=${strType}" : '') .
                                     " --stanza=${strStanza} backup" . ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''),
@@ -951,7 +952,7 @@ sub BackRestTestBackup_BackupCompare
     # Change permissions on the backup path so it can be read
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
     }
 
     my %oActualManifest;
@@ -973,7 +974,7 @@ sub BackRestTestBackup_BackupCompare
     # Change permissions on the backup path back before unit tests continue
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
     }
 
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
@@ -1005,7 +1006,7 @@ sub BackRestTestBackup_ManifestMunge
     # Change permissions on the backup path so it can be read/written
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
         BackRestTestCommon_Execute('chmod 770 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
     }
 
@@ -1089,7 +1090,7 @@ sub BackRestTestBackup_ManifestMunge
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 750 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
-        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
     }
 }
 
@@ -1139,10 +1140,10 @@ sub BackRestTestBackup_Restore
         # Change permissions on the backup path so it can be read
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
         }
 
-        my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
+        my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
                                                        "/backup/${strStanza}/${strBackup}/backup.manifest", true);
 
         $oExpectedManifestRef = $oExpectedManifest->{oManifest};
@@ -1150,7 +1151,7 @@ sub BackRestTestBackup_Restore
         # Change permissions on the backup path back before unit tests continue
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
         }
     }
 
@@ -1205,20 +1206,20 @@ sub BackRestTestBackup_RestoreCompare
         # Change permissions on the backup path so it can be read
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_BackupPathGet(), true);
+            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
         }
 
-        my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
+        my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
                                                        "/backup/${strStanza}/${strBackup}/backup.manifest", true);
 
-        $oLastManifest = new BackRest::Manifest(BackRestTestCommon_BackupPathGet() .
+        $oLastManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
                                                 "/backup/${strStanza}/" . ${$oExpectedManifestRef}{'backup'}{'prior'} .
                                                 '/backup.manifest', true);
 
         # Change permissions on the backup path back before unit tests continue
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_BackupPathGet(), true);
+            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
         }
 
     }
@@ -1326,16 +1327,16 @@ sub BackRestTestBackup_Test
     &log(INFO, 'BACKUP MODULE ******************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Create remote
+    # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = BackRest::Remote->new
     (
         $strHost,                               # Host
         $strUserBackRest,                       # User
         BackRestTestCommon_CommandRemoteGet(),  # Command
-        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
-        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     my $oLocal = new BackRest::Remote
@@ -1343,9 +1344,9 @@ sub BackRestTestBackup_Test
         undef,                                  # Host
         undef,                                  # User
         undef,                                  # Command
-        CONFIG_DEFAULT_BUFFER_SIZE,             # Buffer size
-        CONFIG_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        CONFIG_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -1379,7 +1380,7 @@ sub BackRestTestBackup_Test
                     $oFile = (new BackRest::File
                     (
                         $strStanza,
-                        BackRestTestCommon_BackupPathGet(),
+                        BackRestTestCommon_RepoPathGet(),
                         $bRemote ? 'backup' : undef,
                         $bRemote ? $oRemote : $oLocal
                     ))->clone();
@@ -1497,7 +1498,7 @@ sub BackRestTestBackup_Test
                     $oFile = (BackRest::File->new
                     (
                         $strStanza,
-                        BackRestTestCommon_BackupPathGet(),
+                        BackRestTestCommon_RepoPathGet(),
                         $bRemote ? 'backup' : undef,
                         $bRemote ? $oRemote : $oLocal
                     ))->clone();
@@ -1635,7 +1636,7 @@ sub BackRestTestBackup_Test
             my $oFile = new BackRest::File
             (
                 $strStanza,
-                BackRestTestCommon_BackupPathGet(),
+                BackRestTestCommon_RepoPathGet(),
                 $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
@@ -1673,7 +1674,7 @@ sub BackRestTestBackup_Test
 
             # Create the backup command
             my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
-                                       ($bRemote ? BackRestTestCommon_BackupPathGet() : BackRestTestCommon_DbPathGet()) .
+                                       ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
                                        "/pg_backrest.conf --no-start-stop --stanza=${strStanza} backup";
 
             # Full backup
@@ -1689,9 +1690,9 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'full';
 
-            my $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
+            my $strTmpPath = BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp";
 
-            BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strFullBackup}",
+            BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strFullBackup}",
                                         $strTmpPath, $bRemote);
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
@@ -1742,9 +1743,9 @@ sub BackRestTestBackup_Test
             $strType = 'incr';
 
             # Move database from backup to temp
-            $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
+            $strTmpPath = BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp";
 
-            BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
+            BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
             # Add tablespace 2
@@ -1760,9 +1761,9 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'diff';
 
-            $strTmpPath = BackRestTestCommon_BackupPathGet() . "/temp/${strStanza}.tmp";
+            $strTmpPath = BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp";
 
-            BackRestTestCommon_PathMove(BackRestTestCommon_BackupPathGet() . "/backup/${strStanza}/${strBackup}",
+            BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
@@ -1927,7 +1928,7 @@ sub BackRestTestBackup_Test
             my $oFile = new BackRest::File
             (
                 $strStanza,
-                BackRestTestCommon_BackupPathGet(),
+                BackRestTestCommon_RepoPathGet(),
                 $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
@@ -2242,7 +2243,7 @@ sub BackRestTestBackup_Test
             $bTargetExclusive = undef;
             $bTargetResume = undef;
             $strTargetTimeline = 3;
-            $oRecoveryHashRef = {&CONFIG_KEY_STANDBY_MODE => 'on'};
+            $oRecoveryHashRef = {'standy-mode' => 'on'};
             $oRecoveryHashRef = undef;
             $strComment = undef;
             $iExpectedExitStatus = undef;
@@ -2286,7 +2287,7 @@ sub BackRestTestBackup_Test
         my $oFile = (BackRest::File->new
         (
             $strStanza,
-            BackRestTestCommon_BackupPathGet(),
+            BackRestTestCommon_RepoPathGet(),
             undef,
             undef
         ))->clone();
@@ -2413,7 +2414,7 @@ sub BackRestTestBackup_Test
         my $oFile = (BackRest::File->new
         (
             $strStanza,
-            BackRestTestCommon_BackupPathGet(),
+            BackRestTestCommon_RepoPathGet(),
             undef,
             undef
         ))->clone();
