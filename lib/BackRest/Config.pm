@@ -18,14 +18,14 @@ use BackRest::Utility;
 ####################################################################################################################################
 # Export functions
 ####################################################################################################################################
-our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet operationGet operationTest operationSet);
+our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault operationGet operationTest
+                 operationSet);
 
 ####################################################################################################################################
 # Operation constants - basic operations that are allowed in backrest
 ####################################################################################################################################
 use constant
 {
-    OP_ARCHIVE       => 'archive',
     OP_ARCHIVE_GET   => 'archive-get',
     OP_ARCHIVE_PUSH  => 'archive-push',
     OP_BACKUP        => 'backup',
@@ -483,7 +483,8 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_COMMAND,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
             &OP_RESTORE => true
         }
@@ -522,7 +523,7 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true
+            &OP_ARCHIVE_PUSH => true
         }
     },
 
@@ -559,7 +560,8 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_RESTORE => true
         },
     },
@@ -570,7 +572,8 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_RESTORE => true
         },
         &OPTION_RULE_REQUIRED => false,
@@ -587,7 +590,8 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
             &OP_RESTORE => true
         },
@@ -600,7 +604,8 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_RESTORE => true
         },
     },
@@ -611,11 +616,15 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_BACKUP => true,
-            &OP_ARCHIVE =>
+            &OP_ARCHIVE_GET =>
             {
                 &OPTION_RULE_REQUIRED => false
-            }
+            },
+            &OP_ARCHIVE_PUSH =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
+            &OP_BACKUP => true
         },
     },
 
@@ -635,7 +644,7 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true
+            &OP_ARCHIVE_PUSH => true
         }
     },
 
@@ -658,7 +667,8 @@ my %oOptionRule =
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
             &OP_RESTORE => true
         }
@@ -673,7 +683,8 @@ my %oOptionRule =
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_COMPRESS_LEVEL_MIN, OPTION_DEFAULT_COMPRESS_LEVEL_MAX],
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
             &OP_RESTORE => true
         }
@@ -688,7 +699,8 @@ my %oOptionRule =
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN, OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX],
         &OPTION_RULE_OPERATION =>
         {
-            &OP_ARCHIVE => true,
+            &OP_ARCHIVE_GET => true,
+            &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
             &OP_RESTORE => true
         }
@@ -1170,10 +1182,7 @@ sub optionValid
             }
 
             # If the operation has rules store them for later evaluation
-            my $oOperationRule = defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) &&
-                                 defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperationSection}) &&
-                                 ref($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperationSection}) eq 'HASH' ?
-                                 $oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperationSection} : undef;
+            my $oOperationRule = optionOperationRule($strOption, $strOperation);
 
             # Check dependency for the operation then for the option
             my $bDependResolved = true;
@@ -1324,40 +1333,88 @@ sub optionValid
                     $oOption{$strOption} = $strValue;
                 }
             }
-            # Else set the default if required
-            elsif (!defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) ||
-                    defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperationSection}))
+            # Else try to set a default
+            elsif ($bDependResolved &&
+                   (!defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) ||
+                    defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation})))
             {
                 # Check for default in operation then option
-                my $strDefault = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEFAULT} :
-                                                            $oOptionRule{$strOption}{&OPTION_RULE_DEFAULT};
+                my $strDefault = optionDefault($strOption, $strOperation);
 
                 # If default is defined
                 if (defined($strDefault))
                 {
                     # Only set default if dependency is resolved
-                    $oOption{$strOption} = $strDefault if $bDependResolved && !$bNegate;
+                    $oOption{$strOption} = $strDefault if !$bNegate;
                 }
-                # Else error
-                else
+                # Else check required
+                elsif (optionRequired($strOption, $strOperation))
                 {
-                    # Check for required in operation then option
-                    my $bRequired = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_REQUIRED} :
-                                                               $oOptionRule{$strOption}{&OPTION_RULE_REQUIRED};
-
-                    if (!defined($bRequired) || $bRequired)
-                    {
-                        if ($bDependResolved)
-                        {
-                            confess &log(ERROR, "${strOperation} operation requires option: ${strOption}", ERROR_OPTION_REQUIRED);
-                        }
-                    }
+                    confess &log(ERROR, "${strOperation} operation requires option: ${strOption}", ERROR_OPTION_REQUIRED);
                 }
             }
 
             $oOptionResolved{$strOption} = true;
         }
     }
+}
+
+####################################################################################################################################
+# optionOperationRule
+#
+# Returns the option rules based on the operation.
+####################################################################################################################################
+sub optionOperationRule
+{
+    my $strOption = shift;
+    my $strOperation = shift;
+
+    return defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) &&
+           defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) &&
+           ref($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) eq 'HASH' ?
+           $oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation} : undef;
+}
+
+####################################################################################################################################
+# optionRequired
+#
+# Is the option required for this operation?
+####################################################################################################################################
+sub optionRequired
+{
+    my $strOption = shift;
+    my $strOperation = shift;
+
+    # Get the operation rule
+    my $oOperationRule = optionOperationRule($strOption, $strOperation);
+
+    # Check for required in operation then option
+    my $bRequired = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_REQUIRED} :
+                                               $oOptionRule{$strOption}{&OPTION_RULE_REQUIRED};
+
+    # Return required
+    return !defined($bRequired) || $bRequired;
+}
+
+
+####################################################################################################################################
+# optionDefault
+#
+# Does the option have a default for this operation?
+####################################################################################################################################
+sub optionDefault
+{
+    my $strOption = shift;
+    my $strOperation = shift;
+
+    # Get the operation rule
+    my $oOperationRule = optionOperationRule($strOption, $strOperation);
+
+    # Check for default in operation
+    my $strDefault = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEFAULT} : undef;
+    
+    # If defined return, else try to grab the global default
+    return defined($strDefault) ? $strDefault : $oOptionRule{$strOption}{&OPTION_RULE_DEFAULT};
 }
 
 ####################################################################################################################################

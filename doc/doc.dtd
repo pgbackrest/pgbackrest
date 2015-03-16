@@ -1,4 +1,4 @@
-<!ELEMENT doc (intro, install, config, release, recognition)>
+<!ELEMENT doc (intro, install, operation, config, release, recognition)>
 	<!ATTLIST doc title CDATA #REQUIRED>
 	<!ATTLIST doc subtitle CDATA #REQUIRED>
 
@@ -11,6 +11,29 @@
 
 <!ELEMENT install-system (text)>
 	<!ATTLIST install-system title CDATA #REQUIRED>
+
+<!ELEMENT operation (text, operation-general, command-list)>
+	<!ATTLIST operation title CDATA #REQUIRED>
+
+<!ELEMENT operation-general (text, option-list)>
+	<!ATTLIST operation-general title CDATA #REQUIRED>
+
+<!ELEMENT command-list (text?, command+)>
+	<!ATTLIST command-list title CDATA #REQUIRED>
+
+<!ELEMENT command (text, option-list?, command-example-list)>
+	<!ATTLIST command id CDATA #REQUIRED>
+
+<!ELEMENT command-example-list (text?, command-example+)>
+	<!ATTLIST command-example-list title CDATA "Examples">
+
+<!ELEMENT command-example (text)>
+	<!ATTLIST command-example title CDATA "Example">
+
+<!ELEMENT option-list (option+)>
+
+<!ELEMENT option (text, example?)>
+	<!ATTLIST option id CDATA #REQUIRED>
 
 <!ELEMENT config (text, config-example-list, config-section-list)>
 	<!ATTLIST config title CDATA #REQUIRED>
@@ -54,13 +77,13 @@
 <!ELEMENT recognition (text)>
 	<!ATTLIST recognition title CDATA #REQUIRED>
 
-<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest)*>
+<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest|postgres)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>
 <!ELEMENT bi (#PCDATA)>
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
-<!ELEMENT li (#PCDATA|id)*>
+<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest|postgres)*>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA)>
@@ -70,3 +93,4 @@
 <!ELEMENT param (#PCDATA)>
 <!ELEMENT setting (#PCDATA)>
 <!ELEMENT backrest EMPTY>
+<!ELEMENT postgres EMPTY>

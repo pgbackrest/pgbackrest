@@ -17,6 +17,7 @@ use XML::Checker::Parser;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::Config;
 
 ####################################################################################################################################
 # Usage
@@ -57,6 +58,7 @@ my $oRenderTag =
         'code' => ['`', '`'],
         'code-block' => ['```', '```'],
         'backrest' => ['PgBackRest', ''],
+        'postgres' => ['PostgreSQL', '']
     },
 
     'html' =>
@@ -404,154 +406,8 @@ if ($@)
 }
 
 ####################################################################################################################################
-# Parse the doc
+# Build the document from xml
 ####################################################################################################################################
-# my %oDocOut;
-
-# Doc Build
-#-----------------------------------------------------------------------------------------------------------------------------------
-# $oDocOut{title} = $$oDocIn{param}{title};
-# $oDocOut{subtitle} = $$oDocIn{param}{subtitle};
-# $oDocOut{children} = [];
-
-# my $strReadMe = "# ${strTitle} -  ${strSubTitle}";
-
-# Intro Build
-#-----------------------------------------------------------------------------------------------------------------------------------
-# my $oIntroOut = {name => 'intro'};
-#
-# $$oIntroOut{text} = doc_get(doc_get($oDocIn, $$oIntroOut{name}), 'text');
-# push($oDocOut{children}, $oIntroOut);
-
-# Config Build
-#-----------------------------------------------------------------------------------------------------------------------------------
-# my $oConfigOut = {name => 'config', children => []};
-# my $oConfig = doc_get($oDocIn, $$oConfigOut{name});
-#
-# $$oConfigOut{title} = $$oConfig{param}{title};
-# $$oConfigOut{text} = doc_get($oConfig, 'text');
-# push($oDocOut{children}, $oConfigOut);
-#
-# # Config Example List
-# my $oConfigExampleOut = {name => 'config-example-list', children => []};
-# my $oConfigExampleList = doc_get($oConfig, $$oConfigExampleOut{name});
-#
-# $$oConfigExampleOut{title} = $$oConfigExampleList{param}{title};
-# $$oConfigExampleOut{text} = doc_get($oConfigExampleList, 'text', false);
-# push($$oConfigExampleOut{children}, $oConfigExampleOut);
-
-#
-# #$strReadMe .= "\n\n## " . $$oConfigExampleList{param}{title};
-#
-# $oDocOut{config}{exampleListText} = doc_get($oConfigExampleList, 'text', false);
-# my @oExampleList;
-#
-# # if (doc_exists($oConfigExampleList, 'text', false))
-# # {
-# #     $strReadMe .= "\n\n" . doc_render_text(doc_get($oConfigExampleList, 'text'), 'markdown');
-# # }
-#
-# foreach my $oConfigExample (@{doc_list($oConfigExampleList, 'config-example')})
-# {
-#     my %oExampleOut;
-#
-#     $oExampleOut{title} = $$oConfigExample{param}{title};
-#     $oExampleOut{text} = doc_get($oConfigExample, 'text', false);
-#     # $strReadMe .= "\n\n### " . $$oConfigExample{param}{title} .
-#     #               "\n\n" . doc_render_text(doc_get($oConfigExample, 'text'), 'markdown');
-#
-#     push(@oExampleList, \%oExampleOut);
-# }
-#
-# $oDocOut{config}{exampleList} = \@oExampleList;
-
-# # Config Section List
-# my $oConfigSectionList = doc_get($oConfig, 'config-section-list');
-#
-# $strReadMe .= "\n\n## " . $$oConfigSectionList{param}{title};
-#
-# if (doc_exists($oConfigSectionList, 'text', false))
-# {
-#     $strReadMe .= "\n\n" . doc_render_text(doc_get($oConfigSectionList, 'text'), 'markdown');
-# }
-#
-# foreach my $oConfigSection (@{doc_list($oConfigSectionList, 'config-section')})
-# {
-#     my $strConfigSectionId = $$oConfigSection{param}{id};
-#
-#     $strReadMe .= "\n\n#### `" . $strConfigSectionId . "` section" .
-#                   "\n\n" . doc_render_text(doc_get($oConfigSection, 'text'), 'markdown');
-#
-#     foreach my $oConfigKey (@{doc_list($oConfigSection, 'config-key', false)})
-#     {
-#         my $strConfigKeyId = $$oConfigKey{param}{id};
-#         my $strError = "config section ${strConfigSectionId}, key ${strConfigKeyId} requires";
-#
-#         my $bRequired = doc_exists($oConfigKey, 'required');
-#         my $strDefault = !$bRequired ? doc_value(doc_get($oConfigKey, 'default', false)) : undef;
-#         my $strAllow = doc_value(doc_get($oConfigKey, 'allow', false));
-#         my $strOverride = doc_value(doc_get($oConfigKey, 'override', false));
-#         my $strExample = doc_value(doc_get($oConfigKey, 'example', false));
-#
-#         defined($strExample) or die "${strError} example";
-#
-#         $strReadMe .= "\n\n##### `" . $strConfigKeyId . "` key" .
-#                       "\n\n" . doc_render_text(doc_get($oConfigKey, 'text'), 'markdown') .
-#                       "\n```\n" .
-#                       "required: " . ($bRequired ? 'y' : 'n') . "\n" .
-#                       (defined($strDefault) ? "default: ${strDefault}\n" : '') .
-#                       (defined($strAllow) ? "allow: ${strAllow}\n" : '') .
-#                       (defined($strOverride) ? "override: ${strOverride}\n" : '') .
-#                       "example: ${strConfigKeyId}=${strExample}\n" .
-#                       "```";
-#     }
-# }
-
-# Release Build
-#-----------------------------------------------------------------------------------------------------------------------------------
-# my $oReleaseOut = {name => 'release'};
-# my $oRelease = doc_get($oDocIn, 'release');
-#
-# $$oReleaseOut{title} = $$oRelease{param}{title};
-# $$oReleaseOut{text} = doc_get($oRelease, 'text', false);
-# $$oReleaseOut{children} = [];
-#
-# my $oReleaseList = doc_get($oRelease, 'release-list');
-#
-# foreach my $oReleaseVersion (@{doc_list($oReleaseList, 'release-version')})
-# {
-#     my %oVersionOut;
-#     my @oFeatureList;
-#
-#     $oVersionOut{version} = $$oReleaseVersion{param}{version};
-#     $oVersionOut{title} = $$oReleaseVersion{param}{title};
-#     $oVersionOut{text} = doc_get($oReleaseVersion, 'text', false);
-#     $oVersionOut{list} = true;
-#     $oVersionOut{children} = [];
-#
-#     foreach my $oReleaseFeature (@{doc_list($oReleaseVersion, 'release-feature')})
-#     {
-#         my %oFeatureOut;
-#         $oFeatureOut{text} = doc_get($oReleaseFeature, 'text');
-#         push ($oVersionOut{children}, \%oFeatureOut);
-#     }
-#
-#     push($$oReleaseOut{children}, \%oVersionOut);
-# }
-#
-# push($oDocOut{children}, $oReleaseOut);
-
-# Recognition Build
-#-----------------------------------------------------------------------------------------------------------------------------------
-# my $oRecognitionOut = {name => 'recognition'};
-# my $oRecognition = doc_get($oDocIn, $$oRecognitionOut{name});
-#
-# $$oRecognitionOut{title} = $$oRecognition{param}{title};
-# $$oRecognitionOut{text} = doc_get($oRecognition, 'text');
-# push($oDocOut{children}, $oRecognitionOut);
-
-# Build
-#-----------------------------------------------------------------------------------------------------------------------------------
 my $oDocIn = doc_parse(${$oTree}[0], ${$oTree}[1]);
 
 sub doc_build
@@ -602,8 +458,101 @@ sub doc_build
 
 my $oDocOut = doc_build($oDocIn);
 
-# Render
-#-----------------------------------------------------------------------------------------------------------------------------------
+####################################################################################################################################
+# Build commands pulled from the code
+####################################################################################################################################
+sub doc_out_get
+{
+    my $oNode = shift;
+    my $strName = shift;
+    my $bRequired = shift;
+
+    foreach my $oChild (@{$$oNode{children}})
+    {
+        if ($$oChild{name} eq $strName)
+        {
+            return $oChild;
+        }
+    }
+
+    if (!defined($bRequired) || $bRequired)
+    {
+        confess "unable to find child node '${strName}' in node '$$oNode{name}'";
+    }
+    
+    return undef;
+}
+
+# Get the option rules
+my $oOptionRule = optionRuleGet();
+
+# Ouput commands
+my $oCommandListOut = doc_out_get(doc_out_get($oDocOut, 'operation'), 'command-list');
+
+foreach my $oCommandOut (@{$$oCommandListOut{children}})
+{
+    my $strOperation = $$oCommandOut{param}{id};
+
+    my $oOptionListOut = doc_out_get($oCommandOut, 'option-list', false);
+
+    if (defined($oOptionListOut))
+    {
+        foreach my $oOptionOut (@{$$oOptionListOut{children}})
+        {
+            my $strOption = $$oOptionOut{param}{id};
+
+            $$oOptionOut{field}{default} = optionDefault($strOption, $strOperation);
+
+            if (defined($$oOptionOut{field}{default}))
+            {
+                $$oOptionOut{field}{required} = false;
+
+                if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+                {
+                    $$oOptionOut{field}{default} = $$oOptionOut{field}{default} ? 'y' : 'n';
+                }
+            }
+            else
+            {
+                $$oOptionOut{field}{required} = optionRequired($strOption, $strOperation);
+            }
+
+            &log(INFO, "operation ${strOperation}, option ${strOption}, required $$oOptionOut{field}{required}" .
+                       ", default " . (defined($$oOptionOut{field}{default}) ? $$oOptionOut{field}{default} : 'undef'));
+        }
+    }
+
+    my $oExampleListOut = doc_out_get($oCommandOut, 'command-example-list');
+    
+    foreach my $oExampleOut (@{$$oExampleListOut{children}})
+    {
+        if (defined($$oExampleOut{param}{title}))
+        {
+            $$oExampleOut{param}{title} = 'Example: ' . $$oExampleOut{param}{title};
+        }
+        else
+        {
+            $$oExampleOut{param}{title} = 'Example';
+        }
+    }
+    
+    # $$oExampleListOut{param}{title} = 'Examples';
+}
+
+my $oSectionListOut = doc_out_get(doc_out_get($oDocOut, 'config'), 'config-section-list');
+
+foreach my $oSectionOut (@{$$oSectionListOut{children}})
+{
+    my $oOptionListOut = doc_out_get($oSectionOut, 'config-key-list');
+
+    foreach my $oOptionOut (@{$$oOptionListOut{children}})
+    {
+    }
+}
+
+####################################################################################################################################
+# Render the document
+####################################################################################################################################
 sub doc_render
 {
     my $oDoc = shift;
@@ -668,24 +617,24 @@ sub doc_render
             $strBuffer .= doc_render_text($$oDoc{field}{text}, $strType);
         }
 
-        if ($$oDoc{name} eq 'config-key')
+        if ($$oDoc{name} eq 'config-key' || $$oDoc{name} eq 'option')
         {
             my $strError = "config section ?, key $$oDoc{param}{id} requires";
 
-            my $bRequired = defined($$oDoc{field}{required});
-            my $strDefault = !$bRequired ? $$oDoc{field}{default} : undef;
+            my $bRequired = defined($$oDoc{field}{required}) && $$oDoc{field}{required};
+            my $strDefault = $$oDoc{field}{default};
             my $strAllow = $$oDoc{field}{allow};
             my $strOverride = $$oDoc{field}{override};
             my $strExample = $$oDoc{field}{example};
 
-            defined($strExample) or die "${strError} example";
+#            defined($strExample) or die "${strError} example";
 
             $strBuffer .= "\n```\n" .
                           "required: " . ($bRequired ? 'y' : 'n') . "\n" .
                           (defined($strDefault) ? "default: ${strDefault}\n" : '') .
                           (defined($strAllow) ? "allow: ${strAllow}\n" : '') .
                           (defined($strOverride) ? "override: ${strOverride}\n" : '') .
-                         "example: $$oDoc{param}{id}=${strExample}\n" .
+                          (defined($strExample) ? "example: $$oDoc{param}{id}=${strExample}\n" : '') .
                           "```";
         }
 

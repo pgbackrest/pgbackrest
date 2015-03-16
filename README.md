@@ -75,6 +75,219 @@ Setup trusted ssh between test user account and backrest_dev
 Backrest user and test user must be in the same group
 ```
 
+## Operations
+
+PgBackRest is intended to be run from a scheduler like cron as there is no built-in scheduler.
+
+### General Options
+
+These options are either global or used by all operations.
+
+#### `type` option
+
+By default PgBackRest expects the its configuration file to be located at `/etc/pg_backrest.conf`.  Use this option to specify another location.
+```
+required: n
+example: type=/path/to/backrest/pg_backrest.conf
+```
+
+#### `stanza` option
+
+Defines the stanza for the operation.  A stanza is the configuration for a database that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres cluster and therefore one stanza, whereas backup servers will have a stanza for every database that needs to be backed up.
+
+Examples of how to configure a stanza can be found in the `configuration examples` section.
+```
+required: n
+example: stanza=main
+```
+
+#### `help` option
+
+Displays the PgBackRest help.
+```
+required: n
+```
+
+#### `version` option
+
+Displays the PgBackRest version.
+```
+required: n
+```
+
+### Commands
+
+Sample text for the commands, which I'm sure will be very, very interesting.
+
+#### `backup` command
+
+Perform a database backup.
+
+##### `type` option
+
+The following backup types are supported:
+
+- `full` - all database files will be copied and there will be no dependencies on previous backups.
+- `incr` - incremental from the last successful backup.
+- `warn` - like an incremental backup but always based on the last full backup.
+
+```
+required: n
+default: incr
+example: type=full
+```
+
+##### `no-start-stop` option
+
+This option prevents PgBackRest from running `pg_start_backup()` and `pg_stop_backup()` on the database.  In order for this to work Postgres should be shut down and PgBackRest will generate an error if it is not.
+
+The purpose of this option is to allow cold backups.  The `pg_xlog` directory is copied as-is and `archive-required` is automatically disabled for the backup.
+```
+required: n
+default: n
+```
+
+##### `force` option
+
+When used with  `--no-start-stop` a backup will be run even if PgBackRest thinks that Postgres is running.  **This option should be used with extreme care as it will likely result in a bad backup.**
+
+There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and database volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.
+```
+required: n
+default: n
+```
+
+##### Example: Full Backup
+
+```
+/path/to/pg_backrest.pl --stanza=db --type=full backup
+```
+Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if no `full` backup exists then a `full` backup will be forced even if `incr` or `diff` is requested.
+
+#### `archive-push` command
+
+Archive a WAL segment to the repository.
+
+##### Example
+
+```
+/path/to/pg_backrest.pl --stanza=db archive-push %p
+```
+Accepts a WAL segment from PostgreSQL and archives it in the repository.  `%p` is how PostgreSQL specifies the location of the WAL segment to be archived.
+
+#### `archive-get` command
+
+Get a WAL segment from the repository.
+
+##### Example
+
+```
+/path/to/pg_backrest.pl --stanza=db archive-get %f %p
+```
+Retrieves a WAL segment from the repository.  This command is used in `restore.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs, and `%p` is the location where it should be copied.
+
+#### `expire` command
+
+PgBackRest does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured in rentention, PgBackRest will keep two full backup no matter whether they occur 2 hours apart or two weeks apart.
+
+##### Example
+
+```
+/path/to/pg_backrest.pl --stanza=db expire
+```
+Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there's no need to run this command on its own unless you have reduced rentention, usually to free up some space.
+
+#### `restore` command
+
+Perform a database restore.
+PITR should start after the stop time in the .backup file.
+
+[reference this when writing about tablespace remapping]
+
+http://www.databasesoup.com/2013/11/moving-tablespaces.html
+
+##### `set` option
+
+The backup set to be restored.  `latest` will restore the latest backup, otherwise provide the name of the backup to restore.
+```
+required: n
+default: default
+example: set=20150131-153358F_20150131-153401I
+```
+
+##### `delta` option
+
+By default the PostgreSQL data and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.
+```
+required: n
+default: n
+```
+
+##### `force` option
+
+By itself this option forces the PostgreSQL data and tablespace paths to be completely overwritten.  In combination with `--delta` a timestamp/size delta will be performed instead of using checksums.
+```
+required: n
+default: n
+```
+
+##### `type` option
+
+The following recovery types are supported:
+
+- `default` - recover to the end of the archive stream.
+- `name` - recover the restore point specified in `--target`.
+- `xid` - recover to the transaction id specified in `--target`.
+- `time` - recover to the time specified in `--target`.
+- `preserve` - preserve the existing `recovery.conf` file.
+- `none` - no recovery past database becoming consistent
+
+Note that the `none` option may produce duplicate archive log (WAL) if the database is started with archive logging enabled.  It is recommended that a new stanza be created for production databases restored in this way.
+```
+required: n
+default: default
+example: type=xid
+```
+
+##### `target` option
+
+Defines the recovery target when `--type` is `name`, `xid`, or `time`.
+```
+required: y
+example: target=--target=2015-01-30 14:15:11 EST
+```
+
+##### `target-exclusive` option
+
+Defines whether recovery to the target whould be exclusive (the default is inclusive) and is only valid when `--type` is `time` or `xid`.  For example, using `--target-exclusive` would exclude the contents of transaction `1007` when `--type=xid` and `--target=1007`.  See `recovery_target_inclusive` option in the PostgreSQL docs for more information.
+```
+required: n
+default: n
+```
+
+##### `target-resume` option
+
+Specifies whether recovery should resume when the recovery target is reached.  See `pause_at_recovery_target` in the PostgreSQL docs for more information.
+```
+required: n
+default: n
+```
+
+##### `target-timeline` option
+
+Recovers along the specified timeline.  See `recovery_target_timeline` in the PostgreSQL docs for more information.
+```
+required: n
+```
+
+##### Example: Restore Latest
+
+
+```
+/path/to/pg_backrest.pl --stanza=db --set=latest --type=name --target=release
+```
+Restores the latest database backup and then recovers to the `release` restore point.
+
 ## Configuration
 
 PgBackRest takes some command-line parameters, but depends on a configuration file for most of the settings. The default location for the configuration file is `/etc/pg_backrest.conf`.
@@ -234,6 +447,15 @@ allow: 4096 - 8388608
 example: buffer-size=16384
 ```
 
+##### `compress` key
+
+Enable gzip compression.  Backup files are compatible with command-line gzip tools.
+```
+required: n
+default: y
+example: compress=n
+```
+
 ##### `compress-level` key
 
 Sets the zlib level to be used for file compression when `compress=y`.
@@ -284,15 +506,6 @@ Path where backups are stored on the local or remote host.
 ```
 required: y
 example: path=/var/lib/backrest
-```
-
-##### `compress` key
-
-Enable gzip compression.  Backup files are compatible with command-line gzip tools.
-```
-required: n
-default: y
-example: compress=n
 ```
 
 ##### `start-fast` key
@@ -398,14 +611,6 @@ required: n
 example: differential-retention=3
 ```
 
-##### `differential-retention` key
-
-Number of differential backups to keep.  When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept.
-```
-required: n
-example: differential-retention=3
-```
-
 ##### `archive-retention-type` key
 
 Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by `archive-retention`.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by `archive-retention`.
@@ -423,20 +628,6 @@ Number of backups worth of archive log to keep.  If not defined, then `full-rete
 required: n
 example: archive-retention=2
 ```
-
-#### `restore` section
-
-[Not much to put here, but think of something]
-
-#### `restore-option` section
-
-Archive Recovery and Standby Server restore.conf options can be specified here.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).
-
-Note: `restore_command` will automatically be generated unless overridden in this section.  Be careful about specifying your own `restore_command` as PgBackRest is designed to handle this for you.
-
-Target Recovery options are specified on the command-line since they end to change from restore to restore (or not be needed at all in the case of a standby server).
-
-Since PgBackRest does not start PostgreSQL after writing the `recovery.conf` file, it is always possible to edit/check the file before manually restarting.
 
 #### `stanza` section
 
