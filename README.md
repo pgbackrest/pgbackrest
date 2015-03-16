@@ -141,7 +141,7 @@ example: type=full
 
 This option prevents PgBackRest from running `pg_start_backup()` and `pg_stop_backup()` on the database.  In order for this to work Postgres should be shut down and PgBackRest will generate an error if it is not.
 
-The purpose of this option is to allow cold backups.  The `pg_xlog` directory is copied as-is and `archive-required` is automatically disabled for the backup.
+The purpose of this option is to allow cold backups.  The `pg_xlog` directory is copied as-is and `backup-wal-check` is automatically disabled for the backup.
 ```
 required: n
 default: n
@@ -543,13 +543,22 @@ required: n
 example: thread-timeout=3600
 ```
 
-##### `archive-required` key
+##### `archive-wal-check` key
 
-Are archive logs required to to complete the backup?  It's a good idea to leave this as the default unless you are using another method for archiving.
+Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.
 ```
 required: n
 default: y
-example: archive-required=n
+example: archive-wal-check=n
+```
+
+##### `archive-wal-store` key
+
+Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
+```
+required: n
+default: n
+example: archive-wal-store=y
 ```
 
 #### `archive` section

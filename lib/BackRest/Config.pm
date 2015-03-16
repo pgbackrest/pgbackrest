@@ -121,7 +121,8 @@ use constant
     OPTION_ARCHIVE_ASYNC            => 'archive-async',
 
     # BACKUP Section
-    OPTION_ARCHIVE_REQUIRED         => 'archive-required',
+    OPTION_BACKUP_WAL_CHECK         => 'backup-wal-check',
+    OPTION_BACKUP_WAL_STORE         => 'backup-wal-store',
     OPTION_HARDLINK                 => 'hardlink',
     OPTION_BACKUP_HOST              => 'backup-host',
     OPTION_BACKUP_USER              => 'backup-user',
@@ -164,7 +165,8 @@ use constant
 push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OPTION_SET OPTION_STANZA OPTION_TARGET
                  OPTION_TARGET_EXCLUSIVE OPTION_TARGET_RESUME OPTION_TARGET_TIMELINE OPTION_TYPE
 
-                 OPTION_DB_HOST OPTION_BACKUP_HOST OPTION_ARCHIVE_MAX_MB OPTION_ARCHIVE_REQUIRED OPTION_ARCHIVE_ASYNC
+                 OPTION_DB_HOST OPTION_BACKUP_HOST OPTION_ARCHIVE_MAX_MB OPTION_BACKUP_WAL_CHECK OPTION_BACKUP_WAL_STORE
+                 OPTION_ARCHIVE_ASYNC
                  OPTION_BUFFER_SIZE OPTION_COMPRESS OPTION_COMPRESS_LEVEL OPTION_COMPRESS_LEVEL_NETWORK OPTION_HARDLINK
                  OPTION_PATH_ARCHIVE OPTION_REPO_PATH OPTION_REPO_REMOTE_PATH OPTION_DB_PATH OPTION_LOG_LEVEL_CONSOLE
                  OPTION_LOG_LEVEL_FILE
@@ -202,7 +204,8 @@ use constant
     OPTION_DEFAULT_COMMAND_PSQL                 => '/usr/bin/psql',
     OPTION_DEFAULT_COMMAND_REMOTE               => dirname(abs_path($0)) . '/pg_backrest_remote.pl',
 
-    OPTION_DEFAULT_BACKUP_ARCHIVE_REQUIRED      => true,
+    OPTION_DEFAULT_BACKUP_WAL_CHECK             => true,
+    OPTION_DEFAULT_BACKUP_WAL_STORE             => false,
     OPTION_DEFAULT_BACKUP_FORCE                 => false,
     OPTION_DEFAULT_BACKUP_HARDLINK              => false,
     OPTION_DEFAULT_BACKUP_NO_START_STOP         => false,
@@ -435,7 +438,7 @@ my %oOptionRule =
                         &RECOVERY_TYPE_DEFAULT  => true,
                         &RECOVERY_TYPE_NAME     => true,
                         &RECOVERY_TYPE_TIME     => true,
-                        &RECOVERY_TYPE_XID  => true
+                        &RECOVERY_TYPE_XID      => true
                     }
                 }
             }
@@ -648,14 +651,32 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_ARCHIVE_REQUIRED =>
+    &OPTION_BACKUP_WAL_CHECK =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_REQUIRED,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_WAL_CHECK,
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_OPERATION =>
         {
             &OP_BACKUP => true
+        }
+    },
+
+    &OPTION_BACKUP_WAL_STORE =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_WAL_STORE,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_BACKUP =>
+            {
+                &OPTION_RULE_DEPEND =>
+                {
+                    &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_WAL_CHECK,
+                    &OPTION_RULE_DEPEND_VALUE   => true
+                }
+            }
         }
     },
 
@@ -1412,7 +1433,7 @@ sub optionDefault
 
     # Check for default in operation
     my $strDefault = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEFAULT} : undef;
-    
+
     # If defined return, else try to grab the global default
     return defined($strDefault) ? $strDefault : $oOptionRule{$strOption}{&OPTION_RULE_DEFAULT};
 }

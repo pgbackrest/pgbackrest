@@ -484,7 +484,6 @@ backup_init
     optionGet(OPTION_COMPRESS),
     optionGet(OPTION_HARDLINK),
     optionGet(OPTION_THREAD_MAX),
-    optionGet(OPTION_ARCHIVE_REQUIRED),
     optionGet(OPTION_THREAD_TIMEOUT, false),
     optionGet(OPTION_NO_START_STOP),
     optionTest(OPTION_FORCE)

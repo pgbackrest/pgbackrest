@@ -479,7 +479,7 @@ sub doc_out_get
     {
         confess "unable to find child node '${strName}' in node '$$oNode{name}'";
     }
-    
+
     return undef;
 }
 
@@ -523,7 +523,7 @@ foreach my $oCommandOut (@{$$oCommandListOut{children}})
     }
 
     my $oExampleListOut = doc_out_get($oCommandOut, 'command-example-list');
-    
+
     foreach my $oExampleOut (@{$$oExampleListOut{children}})
     {
         if (defined($$oExampleOut{param}{title}))
@@ -535,7 +535,7 @@ foreach my $oCommandOut (@{$$oCommandListOut{children}})
             $$oExampleOut{param}{title} = 'Example';
         }
     }
-    
+
     # $$oExampleListOut{param}{title} = 'Examples';
 }
 

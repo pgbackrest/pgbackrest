@@ -35,7 +35,6 @@ my $iThreadMax;
 my $iThreadLocalMax;
 #my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
-my $bArchiveRequired;
 my $bNoStartStop;
 my $bForce;
 my $iThreadTimeout;
@@ -57,7 +56,6 @@ sub backup_init
     my $bCompressParam = shift;
     my $bHardLinkParam = shift;
     my $iThreadMaxParam = shift;
-    my $bArchiveRequiredParam = shift;
     my $iThreadTimeoutParam = shift;
     my $bNoStartStopParam = shift;
     my $bForceParam = shift;
@@ -67,17 +65,10 @@ sub backup_init
     $strType = $strTypeParam;
     $bCompress = $bCompressParam;
     $bHardLink = $bHardLinkParam;
-    $bArchiveRequired = $bArchiveRequiredParam;
     $iThreadMax = $iThreadMaxParam;
     $iThreadTimeout = $iThreadTimeoutParam;
     $bNoStartStop = $bNoStartStopParam;
     $bForce = $bForceParam;
-
-    # If no-start-stop is specified then archive-required must be false
-    if ($bNoStartStop)
-    {
-        $bArchiveRequired = false;
-    }
 
     if (!defined($iThreadMax))
     {
@@ -1308,7 +1299,7 @@ sub backup
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
     # consistent - at least not in this routine.
-    if ($bArchiveRequired)
+    if (!optionGet(OPTION_NO_START_STOP) && optionGet(OPTION_BACKUP_WAL_CHECK))
     {
         # Save the backup manifest a second time - before getting archive logs in case that fails
         $oBackupManifest->save();
@@ -1334,39 +1325,42 @@ sub backup
                 confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}");
             }
 
-            &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
-
-            # Copy the log file from the archive repo to the backup
-            my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : '');
-
-            my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-                $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
-                             PATH_BACKUP_TMP, $strDestinationFile,
-                             $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
-                             $bCompress, undef, $lModificationTime);
-
-            # Add the archive file to the manifest so it can be part of the restore and checked in validation
-            my $strPathSection = 'base:path';
-            my $strPathLog = 'pg_xlog';
-            my $strFileSection = 'base:file';
-            my $strFileLog = "pg_xlog/${strArchive}";
-
-            # Compare the checksum against the one already in the archive log name
-            if ($stryArchiveFile[0] !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+            if (optionGet(OPTION_BACKUP_WAL_STORE))
             {
-                confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recorded with file does " .
-                                    "not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
-            }
+                &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
-            # Set manifest values
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_USER,
-                                  $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_USER));
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_GROUP,
-                                  $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_GROUP));
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODIFICATION_TIME, $lModificationTime);
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_SIZE, $lCopySize);
-            $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
+                # Copy the log file from the archive repo to the backup
+                my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : '');
+
+                my ($bCopyResult, $strCopyChecksum, $lCopySize) =
+                    $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
+                                 PATH_BACKUP_TMP, $strDestinationFile,
+                                 $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
+                                 $bCompress, undef, $lModificationTime);
+
+                # Add the archive file to the manifest so it can be part of the restore and checked in validation
+                my $strPathSection = 'base:path';
+                my $strPathLog = 'pg_xlog';
+                my $strFileSection = 'base:file';
+                my $strFileLog = "pg_xlog/${strArchive}";
+
+                # Compare the checksum against the one already in the archive log name
+                if ($stryArchiveFile[0] !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+                {
+                    confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recorded with file does " .
+                                        "not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
+                }
+
+                # Set manifest values
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_USER,
+                                      $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_USER));
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_GROUP,
+                                      $oBackupManifest->get($strPathSection, $strPathLog, MANIFEST_SUBKEY_GROUP));
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_MODIFICATION_TIME, $lModificationTime);
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_SIZE, $lCopySize);
+                $oBackupManifest->set($strFileSection, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
+            }
         }
     }
 

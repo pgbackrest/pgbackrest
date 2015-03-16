@@ -136,14 +136,14 @@ Examples of how to configure a stanza can be found in the `configuration example
 					<option id="no-start-stop">
 						<text>This option prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database.  In order for this to work Postgres should be shut down and <backrest/> will generate an error if it is not.
 
-The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-required</setting> is automatically disabled for the backup.</text>
+							The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>backup-wal-check</setting> is automatically disabled for the backup.</text>
 					</option>
 
 					<!-- OPERATION - BACKUP COMMAND - FORCE OPTION -->
 					<option id="force">
 						<text>When used with  <param>--no-start-stop</param> a backup will be run even if <backrest/> thinks that Postgres is running.  <b>This option should be used with extreme care as it will likely result in a bad backup.</b>
 
-There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and database volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.</text>
+							There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and database volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.</text>
 					</option>
 				</option-list>
 
@@ -524,15 +524,23 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<example>3600</example>
 					</config-key>
 
-					<!-- CONFIG - BACKUP SECTION - ARCHIVE-REQUIRED -->
-					<config-key id="archive-required">
-						<text>Are archive logs required to to complete the backup?  It's a good idea to leave this as the default unless you are using another method for archiving.</text>
+					<!-- CONFIG - BACKUP SECTION - BACKUP-WAL-CHECK -->
+					<config-key id="archive-wal-check">
+						<text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.</text>
 
 						<default>y</default>
 						<example>n</example>
 					</config-key>
-				</config-key-list>
-			</config-section>
+
+			<!-- CONFIG - BACKUP SECTION - BACKUP-WAL-STORE -->
+			<config-key id="archive-wal-store">
+				<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
+
+				<default>n</default>
+				<example>y</example>
+			</config-key>
+		</config-key-list>
+	</config-section>
 
 			<!-- CONFIG - ARCHIVE -->
 			<config-section id="archive">
