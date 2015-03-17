@@ -1509,7 +1509,8 @@ sub backup_expire
             # be consistent if the process dies
             foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, '^' . $stryPath[$iIndex] . '.*', 'reverse'))
             {
-                system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
+                system("rm -rf ${strBackupClusterPath}/${strPath}") == 0
+                    or confess &log(ERROR, "unable to delete backup ${strPath}");
             }
 
             &log(INFO, 'removed expired full backup: ' . $stryPath[$iIndex]);
@@ -1541,7 +1542,8 @@ sub backup_expire
                 # Remove all differential and incremental backups before the oldest valid differential
                 if ($strPath lt $stryPath[$iDifferentialRetention - 1])
                 {
-                    system("rm -rf ${strBackupClusterPath}/${strPath}") == 0 or confess &log(ERROR, "unable to delete backup ${strPath}");
+                    system("rm -rf ${strBackupClusterPath}/${strPath}") == 0
+                        or confess &log(ERROR, "unable to delete backup ${strPath}");
                     &log(INFO, "removed expired diff/incr backup ${strPath}");
                 }
             }
@@ -1659,7 +1661,8 @@ sub backup_expire
                 # Delete if the first 24 characters less than the current archive file
                 if ($strSubPath lt substr($strArchiveLast, 0, 24))
                 {
-                    unlink($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSubPath)) or confess &log(ERROR, 'unable to remove ' . $strSubPath);
+                    unlink($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSubPath))
+                        or confess &log(ERROR, 'unable to remove ' . $strSubPath);
                     &log(DEBUG, 'removed expired archive file ' . $strSubPath);
                 }
             }

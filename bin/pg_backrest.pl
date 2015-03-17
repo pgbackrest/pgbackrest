@@ -391,8 +391,8 @@ my $oFile = new BackRest::File
     $strRemote eq BACKUP ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
     $strRemote,
     remote_get(false,
-               optionGet(OPTION_COMPRESS_LEVEL),
-               optionGet(OPTION_COMPRESS_LEVEL_NETWORK))
+               operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
+               operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK))
 );
 
 ####################################################################################################################################
@@ -449,9 +449,6 @@ if ($strRemote eq BACKUP)
     confess &log(ERROR, 'backup and expire operations must run on the backup host');
 }
 
-# Get the operational flags
-my $bCompress = optionGet(OPTION_COMPRESS);
-
 # Set the lock path
 my $strLockPath = optionGet(OPTION_REPO_PATH) .  '/lock/' . optionGet(OPTION_STANZA) . '-' . operationGet() . '.lock';
 
@@ -465,29 +462,32 @@ if (!lock_file_create($strLockPath))
 use BackRest::Db;
 my $oDb;
 
-if (!optionGet(OPTION_NO_START_STOP))
+if (operationTest(OP_BACKUP))
 {
-    $oDb = new BackRest::Db
+    if (!optionGet(OPTION_NO_START_STOP))
+    {
+        $oDb = new BackRest::Db
+        (
+            optionGet(OPTION_COMMAND_PSQL),
+            optionGet(OPTION_DB_HOST, false),
+            optionGet(OPTION_DB_USER, optionTest(OPTION_DB_HOST))
+        );
+    }
+
+    # Run backup_init - parameters required for backup and restore operations
+    backup_init
     (
-        optionGet(OPTION_COMMAND_PSQL),
-        optionGet(OPTION_DB_HOST, false),
-        optionGet(OPTION_DB_USER, optionTest(OPTION_DB_HOST))
+        $oDb,
+        $oFile,
+        optionGet(OPTION_TYPE),
+        optionGet(OPTION_COMPRESS),
+        optionGet(OPTION_HARDLINK),
+        optionGet(OPTION_THREAD_MAX),
+        optionGet(OPTION_THREAD_TIMEOUT, false),
+        optionGet(OPTION_NO_START_STOP),
+        optionTest(OPTION_FORCE)
     );
 }
-
-# Run backup_init - parameters required for backup and restore operations
-backup_init
-(
-    $oDb,
-    $oFile,
-    optionGet(OPTION_TYPE),
-    optionGet(OPTION_COMPRESS),
-    optionGet(OPTION_HARDLINK),
-    optionGet(OPTION_THREAD_MAX),
-    optionGet(OPTION_THREAD_TIMEOUT, false),
-    optionGet(OPTION_NO_START_STOP),
-    optionTest(OPTION_FORCE)
-);
 
 ####################################################################################################################################
 # BACKUP
@@ -505,6 +505,15 @@ if (operationTest(OP_BACKUP))
 ####################################################################################################################################
 if (operationTest(OP_EXPIRE))
 {
+    if (!defined($oDb))
+    {
+        backup_init
+        (
+            undef,
+            $oFile
+        );
+    }
+
     backup_expire
     (
         $oFile->path_get(PATH_BACKUP_CLUSTER),

@@ -19,7 +19,7 @@ Primary PgBackRest features:
 - Restore using timestamp/size or checksum
 - Restore remapping base/tablespaces
 
-Instead of relying on traditional backup tools like tar and rsync, PgBackRest implements all backup features internally and features a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.  Each thread requires only one SSH connection for remote backups.
+Instead of relying on traditional backup tools like tar and rsync, PgBackRest implements all backup features internally and implements a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.  Each thread requires only one SSH connection for remote backups.
 
 ## Install
 
@@ -671,6 +671,8 @@ example: path=/data/db
 ### v0.50: [under development]
 
 - Added restore functionality.
+
+- All options can now be set on the command-line making pg_backrest.conf optional.
 
 - De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.
 

@@ -1293,6 +1293,60 @@ sub BackRestTestBackup_RestoreCompare
 }
 
 ####################################################################################################################################
+# BackRestTestBackup_Expire
+####################################################################################################################################
+sub BackRestTestBackup_Expire
+{
+    my $strStanza = shift;
+    my $oFile = shift;
+    my $stryBackupExpectedRef = shift;
+    my $stryArchiveExpectedRef = shift;
+    my $iExpireFull = shift;
+    my $iExpireDiff = shift;
+    my $strExpireArchiveType = shift;
+    my $iExpireArchive = shift;
+
+    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                               "/pg_backrest.conf --stanza=${strStanza} expire";
+
+    if (defined($iExpireFull))
+    {
+        $strCommand .= ' --retention-full=' . $iExpireFull;
+    }
+
+    if (defined($iExpireDiff))
+    {
+        $strCommand .= ' --retention-diff=' . $iExpireDiff;
+    }
+
+    if (defined($strExpireArchiveType))
+    {
+        $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType .
+                       ' --retention-archive=' . $iExpireArchive;
+    }
+
+    BackRestTestCommon_Execute($strCommand);
+
+    # Check that the correct backups were expired
+    my @stryBackupActual = $oFile->list(PATH_BACKUP_CLUSTER);
+
+    if (join(",", @stryBackupActual) ne join(",", @{$stryBackupExpectedRef}))
+    {
+        confess "expected backup list:\n    " . join("\n    ", @{$stryBackupExpectedRef}) .
+                "\n\nbut actual was:\n    " . join("\n    ", @stryBackupActual) . "\n";
+    }
+
+    # Check that the correct archive logs were expired
+    my @stryArchiveActual = $oFile->list(PATH_BACKUP_ARCHIVE, '0000000100000000');
+
+    if (join(",", @stryArchiveActual) ne join(",", @{$stryArchiveExpectedRef}))
+    {
+        confess "expected archive list:\n    " . join("\n    ", @{$stryArchiveExpectedRef}) .
+                "\n\nbut actual was:\n    " . join("\n    ", @stryArchiveActual) . "\n";
+    }
+}
+
+####################################################################################################################################
 # BackRestTestBackup_Test
 ####################################################################################################################################
 sub BackRestTestBackup_Test
@@ -1595,6 +1649,121 @@ sub BackRestTestBackup_Test
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------
+    # Test expire
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'all' || $strTest eq 'expire')
+    {
+        $iRun = 0;
+        my $oFile;
+
+        &log(INFO, "Test expire\n");
+
+        # Create the file object
+        $oFile = (BackRest::File->new
+        (
+            $strStanza,
+            BackRestTestCommon_RepoPathGet(),
+            'db',
+            $oLocal
+        ))->clone();
+
+        # Create the database
+        BackRestTestBackup_Create(false);
+
+        # Create db config
+        BackRestTestCommon_ConfigCreate('db',           # local
+                                        undef,          # remote
+                                        false,          # compress
+                                        undef,          # checksum
+                                        undef,          # hardlink
+                                        $iThreadMax,    # thread-max
+                                        undef,          # archive-async
+                                        undef);         # compress-async
+
+        # Create backup config
+        BackRestTestCommon_ConfigCreate('backup',       # local
+                                        undef,          # remote
+                                        false,          # compress
+                                        undef,          # checksum
+                                        undef,          # hardlink
+                                        $iThreadMax,    # thread-max
+                                        undef,          # archive-async
+                                        undef);         # compress-async
+
+        # Backups
+        my @stryBackupExpected;
+
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_FULL, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_FULL, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_FULL, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
+        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, 'latest';
+
+        # Create an archive log path that will be removed as old on the first archive expire call
+        $oFile->path_create(PATH_BACKUP_ARCHIVE, '0000000000000000');
+
+        # Get the expected archive list
+        my @stryArchiveExpected = $oFile->list(PATH_BACKUP_ARCHIVE, '0000000100000000');
+
+        # Expire all but the last two fulls
+        splice(@stryBackupExpected, 0, 3);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2);
+
+        # Expire all but the last three diffs
+        splice(@stryBackupExpected, 1, 3);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, undef, 3);
+
+        # Expire all but the last three diffs and last two fulls (should be no change)
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3);
+
+        # Expire archive based on the last two fulls
+        splice(@stryArchiveExpected, 0, 10);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3, 'full', 2);
+
+        if ($oFile->exists(PATH_BACKUP_ARCHIVE, '0000000000000000'))
+        {
+            confess 'archive log path 0000000000000000 should have been removed';
+        }
+
+        # Expire archive based on the last two diffs
+        splice(@stryArchiveExpected, 0, 18);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3, 'diff', 2);
+
+        # Expire archive based on the last two incrs
+        splice(@stryBackupExpected, 0, 2);
+        splice(@stryArchiveExpected, 0, 9);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 2, 'incr', 2);
+
+        # Expire archive based on the last two incrs (no change in archive)
+        splice(@stryBackupExpected, 1, 4);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'incr', 2);
+
+        # Expire archive based on the last two diffs (no change in archive)
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'diff', 2);
+
+        # Expire archive based on the last diff
+        splice(@stryArchiveExpected, 0, 3);
+        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'diff', 1);
+
+        # Cleanup
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop(true);
+        }
+    }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
     # Test backup
     #
     # Check the backup and restore functionality using synthetic data.
@@ -1671,11 +1840,6 @@ sub BackRestTestBackup_Test
                                                 $bHardlink,                 # hardlink
                                                 $iThreadMax);               # thread-max
             }
-
-            # Create the backup command
-            my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' .
-                                       ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
-                                       "/pg_backrest.conf --no-start-stop --stanza=${strStanza} backup";
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
