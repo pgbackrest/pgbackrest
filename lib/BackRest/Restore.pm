@@ -334,7 +334,7 @@ sub clean
                 {
                     my $strMode = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE);
 
-                    if ($strType ne MANIFEST_LINK && $strMode ne $oPathManifest{name}{$strName}{permission})
+                    if ($strType ne MANIFEST_LINK && $strMode ne $oPathManifest{name}{$strName}{mode})
                     {
                         &log(DEBUG, "setting ${strFile} mode to ${strMode}");
 
@@ -651,7 +651,7 @@ sub restore_thread
     # When a KILL signal is received, immediately abort
     $SIG{'KILL'} = sub {threads->exit();};
 
-    # Get the current user and group to compare with stored permissions
+    # Get the current user and group to compare with stored mode
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
 

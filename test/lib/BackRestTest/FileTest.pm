@@ -136,14 +136,14 @@ sub BackRestTestFile_Test
             # Loop through error
             for (my $bError = 0; $bError <= 1; $bError++)
             {
-            # Loop through permission (permission will be set on true)
-            for (my $bPermission = 0; $bPermission <= 1; $bPermission++)
+            # Loop through mode (mode will be set on true)
+            for (my $bMode = 0; $bMode <= 1; $bMode++)
             {
                 my $strPathType = PATH_BACKUP_CLUSTER;
 
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, err ${bError}, prm ${bPermission}")) {next}
+                                            "rmt ${bRemote}, err ${bError}, mode ${bMode}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -152,12 +152,12 @@ sub BackRestTestFile_Test
                 mkdir("${strTestPath}/backup/db") or confess 'Unable to create test/backup/db directory';
 
                 my $strPath = 'path';
-                my $strPermission;
+                my $strMode;
 
-                # If permission then set one (other than the default)
-                if ($bPermission)
+                # If mode then set one (other than the default)
+                if ($bMode)
                 {
-                    $strPermission = '0700';
+                    $strMode = '0700';
                 }
 
                 # If not exists then set the path to something bogus
@@ -172,7 +172,7 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $oFile->path_create($strPathType, $strPath, $strPermission);
+                    $oFile->path_create($strPathType, $strPath, $strMode);
                 };
 
                 # Check for errors
@@ -200,7 +200,7 @@ sub BackRestTestFile_Test
                     confess 'path was not created';
                 }
 
-                # Check that the permissions were set correctly
+                # Check that the mode was set correctly
                 my $oStat = lstat($strPathCheck);
 
                 if (!defined($oStat))
@@ -208,11 +208,11 @@ sub BackRestTestFile_Test
                     confess "unable to stat ${strPathCheck}";
                 }
 
-                if ($bPermission)
+                if ($bMode)
                 {
-                    if ($strPermission ne sprintf('%04o', S_IMODE($oStat->mode)))
+                    if ($strMode ne sprintf('%04o', S_IMODE($oStat->mode)))
                     {
-                        confess "permissions were not set to {$strPermission}";
+                        confess "mode were not set to {$strMode}";
                     }
                 }
             }
@@ -601,8 +601,8 @@ sub BackRestTestFile_Test
                             $oManifestHash{name}{"${strName}"}{user} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{group}) ?
                             $oManifestHash{name}{"${strName}"}{group} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{permission}) ?
-                            $oManifestHash{name}{"${strName}"}{permission} : '') . ',' .
+                        (defined($oManifestHash{name}{"${strName}"}{mode}) ?
+                            $oManifestHash{name}{"${strName}"}{mode} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
                             $oManifestHash{name}{"${strName}"}{modification_time} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{inode}) ?

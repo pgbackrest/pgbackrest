@@ -104,8 +104,8 @@ sub new
     my $strBackupPath = shift;
     my $strRemote = shift;
     my $oRemote = shift;
-    my $strDefaultPathPermission = shift;
-    my $strDefaultFilePermission = shift;
+    my $strDefaultPathMode = shift;
+    my $strDefaultFileMode = shift;
     my $iThreadIdx = shift;
 
     # Create the class hash
@@ -115,9 +115,9 @@ sub new
     # Default compression extension to gz
     $self->{strCompressExtension} = 'gz';
 
-    # Default file and path permissions
-    $self->{strDefaultPathPermission} = defined($strDefaultPathPermission) ? $strDefaultPathPermission : '0750';
-    $self->{strDefaultFilePermission} = defined($strDefaultFilePermission) ? $strDefaultFilePermission : '0640';
+    # Default file and path mode
+    $self->{strDefaultPathMode} = defined($strDefaultPathMode) ? $strDefaultPathMode : '0750';
+    $self->{strDefaultFileMode} = defined($strDefaultFileMode) ? $strDefaultFileMode : '0640';
 
     # Initialize other variables
     $self->{strStanza} = $strStanza;
@@ -173,8 +173,8 @@ sub clone
         $self->{strBackupPath},
         $self->{strRemote},
         defined($self->{oRemote}) ? $self->{oRemote}->clone() : undef,
-        $self->{strDefaultPathPermission},
-        $self->{strDefaultFilePermission},
+        $self->{strDefaultPathMode},
+        $self->{strDefaultFileMode},
         $iThreadIdx
     );
 }
@@ -558,7 +558,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strMode) ? $strMode : '[undef]');
+    my $strDebug = " ${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -570,7 +570,7 @@ sub path_create
 
         if (defined($strMode))
         {
-            $oParamHash{permission} = ${strMode};
+            $oParamHash{mode} = ${strMode};
         }
 
         # Add remote info to debug string
@@ -1257,10 +1257,10 @@ sub manifest_recurse
         # Get group name
         ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
 
-        # Get permissions
+        # Get mode
         if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne 'l')
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+            ${$oManifestHashRef}{name}{"${strFile}"}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
         }
 
         # Recurse into directories
@@ -1458,7 +1458,7 @@ sub copy
 
                 if (defined($strMode))
                 {
-                    $oParamHash{permission} = $strMode;
+                    $oParamHash{mode} = $strMode;
                 }
 
                 if (defined($strUser))
@@ -1492,7 +1492,7 @@ sub copy
 
             if (defined($strMode))
             {
-                $oParamHash{permission} = $strMode;
+                $oParamHash{mode} = $strMode;
             }
 
             if (defined($strUser))
@@ -1657,14 +1657,14 @@ sub copy
         confess &log(ASSERT, "${strDebug}: checksum or file size not set");
     }
 
-    # Where the destination is local, set permissions, modification time, and perform move to final location
+    # Where the destination is local, set mode, modification time, and perform move to final location
     if ($bResult && !$bDestinationRemote)
     {
-        # Set the file permission if required
+        # Set the file Mode if required
         if (defined($strMode))
         {
             chmod(oct($strMode), $strDestinationTmpOp)
-                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
+                or confess &log(ERROR, "unable to set mode for local ${strDestinationTmpOp}");
         }
 
         # Set the file modification time if required

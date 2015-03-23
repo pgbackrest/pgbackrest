@@ -296,7 +296,7 @@ sub BackRestTestCommon_PathCreate
     mkdir($strPath)
         or confess "unable to create ${strPath} path";
 
-    # Set the permissions
+    # Set the mode
     chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)
         or confess 'unable to set mode ${strMode} for ${strPath}';
 }
@@ -311,7 +311,7 @@ sub BackRestTestCommon_PathMode
     my $strPath = shift;
     my $strMode = shift;
 
-    # Set the permissions
+    # Set the mode
     chmod(oct($strMode), $strPath)
         or confess 'unable to set mode ${strMode} for ${strPath}';
 }
@@ -405,7 +405,7 @@ sub BackRestTestCommon_FileCreate
             or confess 'unable to set time ${lTime} for ${strPath}';
     }
 
-    # Set the permissions
+    # Set the mode
     chmod(oct(defined($strMode) ? $strMode : '0600'), $strFile)
         or confess 'unable to set mode ${strMode} for ${strFile}';
 }

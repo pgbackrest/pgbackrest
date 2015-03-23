@@ -74,7 +74,7 @@ use constant
     MANIFEST_SUBKEY_FUTURE              => 'future',
     MANIFEST_SUBKEY_GROUP               => 'group',
     MANIFEST_SUBKEY_LINK                => 'link',
-    MANIFEST_SUBKEY_MODE                => 'permission',
+    MANIFEST_SUBKEY_MODE                => 'mode',
     MANIFEST_SUBKEY_MODIFICATION_TIME   => 'modification_time',
     MANIFEST_SUBKEY_PATH                => 'path',
     MANIFEST_SUBKEY_REFERENCE           => 'reference',
@@ -620,7 +620,7 @@ sub build
         # Mode for required file and path type only
         if ($cType eq 'f' || $cType eq 'd')
         {
-            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{"${strName}"}{permission});
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{"${strName}"}{mode});
         }
 
         # Modification time and size required for file type only

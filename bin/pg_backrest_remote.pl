@@ -101,7 +101,7 @@ while ($strCommand ne OP_EXIT)
                                  param_get(\%oParamHash, 'destination_compress'),
                                  param_get(\%oParamHash, 'ignore_missing_source', false),
                                  undef,
-                                 param_get(\%oParamHash, 'permission', false),
+                                 param_get(\%oParamHash, 'mode', false),
                                  param_get(\%oParamHash, 'destination_path_create') ? 'Y' : 'N',
                                  param_get(\%oParamHash, 'user', false),
                                  param_get(\%oParamHash, 'group', false),
@@ -116,7 +116,7 @@ while ($strCommand ne OP_EXIT)
                                  param_get(\%oParamHash, 'source_compressed'),
                                  param_get(\%oParamHash, 'destination_compress'),
                                  undef, undef,
-                                 param_get(\%oParamHash, 'permission', false),
+                                 param_get(\%oParamHash, 'mode', false),
                                  param_get(\%oParamHash, 'destination_path_create'),
                                  param_get(\%oParamHash, 'user', false),
                                  param_get(\%oParamHash, 'group', false),
@@ -158,7 +158,7 @@ while ($strCommand ne OP_EXIT)
         # Create a path
         elsif ($strCommand eq OP_FILE_PATH_CREATE)
         {
-            $oFile->path_create(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), param_get(\%oParamHash, 'permission', false));
+            $oFile->path_create(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), param_get(\%oParamHash, 'mode', false));
             $oRemote->output_write();
         }
         # Check if a file/path exists
@@ -178,7 +178,7 @@ while ($strCommand ne OP_EXIT)
 
             $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash);
 
-            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination";
+            my $strOutput = "name\ttype\tuser\tgroup\tmode\tmodification_time\tinode\tsize\tlink_destination";
 
             foreach my $strName (sort(keys $oManifestHash{name}))
             {
@@ -186,7 +186,7 @@ while ($strCommand ne OP_EXIT)
                     $oManifestHash{name}{"${strName}"}{type} . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
-                    (defined($oManifestHash{name}{"${strName}"}{permission}) ? $oManifestHash{name}{"${strName}"}{permission} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{mode}) ? $oManifestHash{name}{"${strName}"}{mode} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
                         $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .

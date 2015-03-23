@@ -421,7 +421,7 @@ sub BackRestTestBackup_ManifestPathCreate
     # Load file into manifest
     ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{group} = getgrgid($oStat->gid);
     ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
 }
 
 ####################################################################################################################################
@@ -476,7 +476,7 @@ sub BackRestTestBackup_ManifestTablespaceCreate
     # Load path into manifest
     ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{group} = getgrgid($oStat->gid);
     ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
 
     # Create the link in pg_tblspc
     my $strLink = BackRestTestCommon_DbCommonPathGet() . "/pg_tblspc/${iOid}";
@@ -584,7 +584,7 @@ sub BackRestTestBackup_ManifestFileCreate
     # Load file into manifest
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{group} = getgrgid($oStat->gid);
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+    ${$oManifestRef}{"${strPath}:file"}{$strFile}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{modification_time} = $oStat->mtime;
     ${$oManifestRef}{"${strPath}:file"}{$strFile}{size} = $oStat->size;
     delete(${$oManifestRef}{"${strPath}:file"}{$strFile}{reference});
@@ -949,7 +949,7 @@ sub BackRestTestBackup_BackupCompare
         }
     }
 
-    # Change permissions on the backup path so it can be read
+    # Change mode on the backup path so it can be read
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -971,7 +971,7 @@ sub BackRestTestBackup_BackupCompare
 
     BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
-    # Change permissions on the backup path back before unit tests continue
+    # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -1003,7 +1003,7 @@ sub BackRestTestBackup_ManifestMunge
         confess &log(ASSERT, 'strSection and strKey must be defined');
     }
 
-    # Change permissions on the backup path so it can be read/written
+    # Change mode on the backup path so it can be read/written
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -1086,7 +1086,7 @@ sub BackRestTestBackup_ManifestMunge
     # Resave the manifest
     ini_save($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oManifest);
 
-    # Change permissions on the backup path back before unit tests continue
+    # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 750 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
@@ -1137,7 +1137,7 @@ sub BackRestTestBackup_Restore
 
     if (!defined($oExpectedManifestRef))
     {
-        # Change permissions on the backup path so it can be read
+        # Change mode on the backup path so it can be read
         if ($bRemote)
         {
             BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -1148,7 +1148,7 @@ sub BackRestTestBackup_Restore
 
         $oExpectedManifestRef = $oExpectedManifest->{oManifest};
 
-        # Change permissions on the backup path back before unit tests continue
+        # Change mode on the backup path back before unit tests continue
         if ($bRemote)
         {
             BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -1203,7 +1203,7 @@ sub BackRestTestBackup_RestoreCompare
 
     if (defined(${$oExpectedManifestRef}{'backup'}{'prior'}))
     {
-        # Change permissions on the backup path so it can be read
+        # Change mode on the backup path so it can be read
         if ($bRemote)
         {
             BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -1216,7 +1216,7 @@ sub BackRestTestBackup_RestoreCompare
                                                 "/backup/${strStanza}/" . ${$oExpectedManifestRef}{'backup'}{'prior'} .
                                                 '/backup.manifest', true);
 
-        # Change permissions on the backup path back before unit tests continue
+        # Change mode on the backup path back before unit tests continue
         if ($bRemote)
         {
             BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
@@ -1862,7 +1862,7 @@ sub BackRestTestBackup_Test
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                                 'resume', TEST_BACKUP_RESUME);
 
-            # Restore - tests various permissions, extra files/paths, missing files/paths
+            # Restore - tests various mode, extra files/paths, missing files/paths
             #-----------------------------------------------------------------------------------------------------------------------
             my $bDelta = true;
             my $bForce = false;

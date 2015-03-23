@@ -1011,7 +1011,7 @@ sub backup_file_thread
                                    $bCompress,   # Destination should be compressed based on backup settings
                                    true,         # Ignore missing files
                                    $oFileCopyMap{$strFile}{modification_time}, # Set modification time
-                                   undef,        # Do not set original permissions
+                                   undef,        # Do not set original mode
                                    true);        # Create the destination directory if it does not exist
 
             if (!$bCopyResult)
