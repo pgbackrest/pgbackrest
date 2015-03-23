@@ -670,7 +670,7 @@ sub BackRestTestCommon_ConfigCreate
 
     if (defined($bCompress) && !$bCompress)
     {
-        $oParamHash{'global:backup'}{'compress'} = 'n';
+        $oParamHash{'global:general'}{'compress'} = 'n';
     }
 
     # if (defined($bChecksum) && $bChecksum)
