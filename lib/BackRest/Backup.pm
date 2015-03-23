@@ -1299,7 +1299,7 @@ sub backup
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
     # consistent - at least not in this routine.
-    if (!optionGet(OPTION_NO_START_STOP) && optionGet(OPTION_BACKUP_WAL_CHECK))
+    if (!optionGet(OPTION_NO_START_STOP) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
         # Save the backup manifest a second time - before getting archive logs in case that fails
         $oBackupManifest->save();
@@ -1325,7 +1325,7 @@ sub backup
                 confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}");
             }
 
-            if (optionGet(OPTION_BACKUP_WAL_STORE))
+            if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {
                 &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
 
