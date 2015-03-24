@@ -598,10 +598,10 @@ sub BackRestTestCommon_ConfigCreate
 
     if (defined($strRemote))
     {
-        $oParamHash{'global:command'}{'command-remote'} = $strCommonCommandRemote;
+        $oParamHash{'global:command'}{'cmd-remote'} = $strCommonCommandRemote;
     }
 
-    $oParamHash{'global:command'}{'command-psql'} = $strCommonCommandPsql;
+    $oParamHash{'global:command'}{'cmd-psql'} = $strCommonCommandPsql;
 
     if (defined($strRemote) && $strRemote eq BACKUP)
     {
@@ -623,19 +623,18 @@ sub BackRestTestCommon_ConfigCreate
     }
     elsif ($strLocal eq DB)
     {
+        $oParamHash{'global:general'}{'repo-path'} = $strCommonLocalPath;
+
         if (defined($strRemote))
         {
-            $oParamHash{'global:log'}{'level-console'} = 'trace';
+            $oParamHash{'global:log'}{'log-level-console'} = 'trace';
 
-            if ($bArchiveAsync)
-            {
-                $oParamHash{'global:archive'}{path} = BackRestTestCommon_LocalPathGet();
-            }
-
-            $oParamHash{'global:restore'}{'thread-max'} = $iThreadMax;
+            # if ($bArchiveAsync)
+            # {
+            #     $oParamHash{'global:archive'}{path} = BackRestTestCommon_LocalPathGet();
+            # }
 
             $oParamHash{'global:general'}{'repo-remote-path'} = $strCommonRepoPath;
-            $oParamHash{'global:general'}{'repo-path'} = $strCommonLocalPath;
         }
         else
         {
@@ -645,11 +644,11 @@ sub BackRestTestCommon_ConfigCreate
         if ($bArchiveAsync)
         {
             $oParamHash{'global:archive'}{'archive-async'} = 'y';
-
-            if (!$bCompressAsync)
-            {
-                $oParamHash{'global:archive'}{'compress_async'} = 'n';
-            }
+            #
+            # if (!$bCompressAsync)
+            # {
+            #     $oParamHash{'global:archive'}{'compress_async'} = 'n';
+            # }
         }
     }
     else
@@ -657,9 +656,14 @@ sub BackRestTestCommon_ConfigCreate
         confess "invalid local type ${strLocal}";
     }
 
+    if (defined($iThreadMax) && $iThreadMax > 1)
+    {
+        $oParamHash{'global:general'}{'thread-max'} = $iThreadMax;
+    }
+
     if (($strLocal eq BACKUP) || ($strLocal eq DB && !defined($strRemote)))
     {
-        $oParamHash{'db:command'}{'command-psql-option'} = "--port=${iCommonDbPort}";
+        $oParamHash{'db:command'}{'cmd-psql-option'} = "--port=${iCommonDbPort}";
         $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
 
         if (defined($bHardlink) && $bHardlink)

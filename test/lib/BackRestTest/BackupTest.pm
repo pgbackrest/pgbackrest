@@ -1420,12 +1420,10 @@ sub BackRestTestBackup_Test
             {
             for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
             {
-            for (my $bCompressAsync = false; $bCompressAsync <= true; $bCompressAsync++)
-            {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
                                             "rmt ${bRemote}, cmp ${bCompress}, " .
-                                            "arc_async ${bArchiveAsync}, cmp_async ${bCompressAsync}")) {next}
+                                            "arc_async ${bArchiveAsync}")) {next}
 
                 # Create the test directory
                 if ($bCreate)
@@ -1451,7 +1449,7 @@ sub BackRestTestBackup_Test
                                                 undef,       # hardlink
                                                 undef,       # thread-max
                                                 $bArchiveAsync,
-                                                $bCompressAsync);
+                                                undef);
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --stanza=db archive-push';
@@ -1510,7 +1508,6 @@ sub BackRestTestBackup_Test
 
                     # !!! Need to put in tests for .backup files here
                 }
-            }
             }
             }
 

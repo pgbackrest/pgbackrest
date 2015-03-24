@@ -121,21 +121,21 @@ use constant
     OPTION_ARCHIVE_ASYNC            => 'archive-async',
 
     # BACKUP Section
-    OPTION_BACKUP_ARCHIVE_CHECK     => 'backup-archive-check',
-    OPTION_BACKUP_ARCHIVE_COPY      => 'backup-archive-copy',
+    OPTION_BACKUP_ARCHIVE_CHECK     => 'archive-check',
+    OPTION_BACKUP_ARCHIVE_COPY      => 'archive-copy',
     OPTION_HARDLINK                 => 'hardlink',
     OPTION_BACKUP_HOST              => 'backup-host',
     OPTION_BACKUP_USER              => 'backup-user',
     OPTION_START_FAST               => 'start-fast',
 
     # COMMAND Section
-    OPTION_COMMAND_REMOTE           => 'command-remote',
-    OPTION_COMMAND_PSQL             => 'command-psql',
-    OPTION_COMMAND_PSQL_OPTION      => 'command-psql-option',
+    OPTION_COMMAND_REMOTE           => 'cmd-remote',
+    OPTION_COMMAND_PSQL             => 'cmd-psql',
+    OPTION_COMMAND_PSQL_OPTION      => 'cmd-psql-option',
 
     # LOG Section
-    OPTION_LOG_LEVEL_CONSOLE            => 'log-level-console',
-    OPTION_LOG_LEVEL_FILE               => 'log-level-file',
+    OPTION_LOG_LEVEL_CONSOLE        => 'log-level-console',
+    OPTION_LOG_LEVEL_FILE           => 'log-level-file',
 
     # EXPIRE Section
     OPTION_RETENTION_ARCHIVE        => 'retention-archive',
@@ -201,7 +201,7 @@ use constant
 
     OPTION_DEFAULT_ARCHIVE_ASYNC                => false,
 
-    OPTION_DEFAULT_COMMAND_PSQL                 => '/usr/bin/psql',
+    OPTION_DEFAULT_COMMAND_PSQL                 => '/usr/bin/psql -X',
     OPTION_DEFAULT_COMMAND_REMOTE               => dirname(abs_path($0)) . '/pg_backrest_remote.pl',
 
     OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK         => true,
@@ -596,7 +596,8 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
-            &OP_RESTORE => true
+            &OP_RESTORE => true,
+            &OP_EXPIRE => true
         },
     },
 
@@ -1018,6 +1019,12 @@ sub configLoad
     {
         $oOption{&OPTION_COMMAND_PSQL} =~ s/\%option\%/$oOption{&OPTION_COMMAND_PSQL_OPTION}/g;
     }
+
+    # Set repo-remote-path to repo-path if it is not set
+    if (optionTest(OPTION_REPO_PATH) && !optionTest(OPTION_REPO_REMOTE_PATH))
+    {
+        $oOption{&OPTION_REPO_REMOTE_PATH} = optionGet(OPTION_REPO_PATH);
+    }
 }
 
 ####################################################################################################################################
@@ -1390,10 +1397,15 @@ sub optionOperationRule
     my $strOption = shift;
     my $strOperation = shift;
 
-    return defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) &&
-           defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) &&
-           ref($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) eq 'HASH' ?
-           $oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation} : undef;
+    if (defined($strOperation))
+    {
+        return defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) &&
+               defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) &&
+               ref($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) eq 'HASH' ?
+               $oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation} : undef;
+    }
+
+    return undef;
 }
 
 ####################################################################################################################################

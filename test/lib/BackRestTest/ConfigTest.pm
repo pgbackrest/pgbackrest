@@ -712,7 +712,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, OP_EXPIRE . ' ' . OPTION_RETENTION_FULL))
         {
             $oConfig = {};
-            $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_RETENTION}{&OPTION_RETENTION_FULL} = 2;
+            $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_EXPIRE}{&OPTION_RETENTION_FULL} = 2;
             ini_save($strConfigFile, $oConfig);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
