@@ -21,11 +21,11 @@
 			<li>Restore using timestamp/size or checksum</li>
 			<li>Restore remapping base/tablespaces</li>
 		</ul>
-		Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and implements a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.  Each thread requires only one SSH connection for remote backups.</text>
+		Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</text>
 	</intro>
 
 	<install title="Install">
-		<text>!!! Perl-based blah, blah, blah</text>
+		<text><backrest/> is written entirely in Perl, but does use some non-standard modules that must be installed from CPAN.</text>
 
 		<install-system-list>
 			<install-system title="Ubuntu 12.04">
@@ -58,39 +58,30 @@
 					<code-block>
 						cpanm JSON
 						cpanm Net::OpenSSH
-						cpanm DBI
-						cpanm DBD::Pg
 						cpanm IPC::System::Simple
 						cpanm Digest::SHA
 						cpanm Compress::ZLib
 					</code-block>
 					* Install PgBackRest
 
-					Backrest can be installed by downloading the most recent release:
+					<backrest/> can be installed by downloading the most recent release:
 
 					https://github.com/pgmasters/backrest/releases
 
-					* To run unit tests:
-					<code-block>
-						Create backrest_dev user
-						Setup trusted ssh between test user account and backrest_dev
-						Backrest user and test user must be in the same group
-					</code-block></text>
+					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.</text>
 			</install-system>
 		</install-system-list>
 	</install>
 
 	<operation title="Operations">
-		<text><backrest/> is intended to be run from a scheduler like cron as there is no built-in scheduler.</text>
-
 		<operation-general title="General Options">
 			<text>These options are either global or used by all operations.</text>
 
 			<option-list>
 				<!-- OPERATION - GENERAL - CONFIG OPTION -->
-				<option id="type">
-					<text>By default PgBackRest expects the its configuration file to be located at `/etc/pg_backrest.conf`.  Use this option to specify another location.</text>
-					<example>/path/to/backrest/pg_backrest.conf</example>
+				<option id="config">
+					<text>By default <backrest/> expects the its configuration file to be located at `/etc/pg_backrest.conf`.  Use this option to specify another location.</text>
+					<example>/var/lib/backrest/pg_backrest.conf</example>
 				</option>
 
 				<!-- OPERATION - GENERAL - STANZA OPTION -->
@@ -114,11 +105,9 @@ Examples of how to configure a stanza can be found in the `configuration example
 		</operation-general>
 
 		<command-list title="Commands">
-			<text>Sample text for the commands, which I'm sure will be very, very interesting.</text>
-
 			<!-- OPERATION - BACKUP COMMAND -->
 			<command id="backup">
-				<text>Perform a database backup.</text>
+				<text>Perform a database backup.  <backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</text>
 
 				<option-list>
 					<!-- OPERATION - BACKUP COMMAND - TYPE OPTION -->
@@ -127,23 +116,23 @@ Examples of how to configure a stanza can be found in the `configuration example
 							<ul>
 								<li><id>full</id> - all database files will be copied and there will be no dependencies on previous backups.</li>
 								<li><id>incr</id> - incremental from the last successful backup.</li>
-								<li><id>warn</id> - like an incremental backup but always based on the last full backup.</li>
+								<li><id>diff</id> - like an incremental backup but always based on the last full backup.</li>
 							</ul></text>
 						<example>full</example>
 					</option>
 
 					<!-- OPERATION - BACKUP COMMAND - NO-START-STOP OPTION -->
 					<option id="no-start-stop">
-						<text>This option prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database.  In order for this to work Postgres should be shut down and <backrest/> will generate an error if it is not.
+						<text>This option prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
 
-							The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>backup-wal-check</setting> is automatically disabled for the backup.</text>
+							The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
 					</option>
 
 					<!-- OPERATION - BACKUP COMMAND - FORCE OPTION -->
 					<option id="force">
-						<text>When used with  <param>--no-start-stop</param> a backup will be run even if <backrest/> thinks that Postgres is running.  <b>This option should be used with extreme care as it will likely result in a bad backup.</b>
+						<text>When used with  <param>--no-start-stop</param> a backup will be run even if <backrest/> thinks that <postgres/> is running.  <b>This option should be used with extreme care as it will likely result in a bad backup.</b>
 
-							There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and database volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.</text>
+							There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.</text>
 					</option>
 				</option-list>
 
@@ -187,7 +176,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 			<!-- OPERATION - EXPIRE COMMAND -->
 			<command id="expire">
-				<text><backrest/> does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured in rentention, <backrest/> will keep two full backup no matter whether they occur 2 hours apart or two weeks apart.</text>
+				<text><backrest/> does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured for rentention, <backrest/> will keep two full backups no matter whether they occur 2 hours apart or two weeks apart.</text>
 
 				<command-example-list>
 					<command-example>
@@ -201,13 +190,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 			<!-- OPERATION - RESTORE COMMAND -->
 			<command id="restore">
-				<text>Perform a database restore.
-					PITR should start after the stop time in the .backup file.
-
-					[reference this when writing about tablespace remapping]
-
-					http://www.databasesoup.com/2013/11/moving-tablespaces.html</text>
-
+				<text>Perform a database restore.  This command is generall run manually, but there are instances where it might be automated.</text>
 				<option-list>
 					<!-- OPERATION - RESTORE COMMAND - SET OPTION -->
 					<option id="set">
@@ -234,21 +217,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 								<li><id>xid</id> - recover to the transaction id specified in <param>--target</param>.</li>
 								<li><id>time</id> - recover to the time specified in <param>--target</param>.</li>
 								<li><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</li>
-								<li><id>none</id> - no recovery past database becoming consistent</li>
-							</ul>
-							Note that the <id>none</id> option may produce duplicate archive log (WAL) if the database is started with archive logging enabled.  It is recommended that a new stanza be created for production databases restored in this way.</text>
+							</ul></text>
 						<example>xid</example>
 					</option>
 
 					<!-- OPERATION - RESTORE COMMAND - TARGET OPTION -->
 					<option id="target">
 						<text>Defines the recovery target when <param>--type</param> is <id>name</id>, <id>xid</id>, or <id>time</id>.</text>
-						<example>--target=2015-01-30 14:15:11 EST</example>
+						<example>2015-01-30 14:15:11 EST</example>
 					</option>
 
 					<!-- OPERATION - RESTORE COMMAND - TARGET-EXCLUSIVE OPTION -->
 					<option id="target-exclusive">
-						<text>Defines whether recovery to the target whould be exclusive (the default is inclusive) and is only valid when <param>--type</param> is <id>time</id> or <id>xid</id>.  For example, using <param>--target-exclusive</param> would exclude the contents of transaction <id>1007</id> when <param>--type=xid</param> and <param>--target=1007</param>.  See <param>recovery_target_inclusive</param> option in the <postgres/> docs for more information.</text>
+						<text>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <param>--type</param> is <id>time</id> or <id>xid</id>.  For example, using <param>--target-exclusive</param> would exclude the contents of transaction <id>1007</id> when <param>--type=xid</param> and <param>--target=1007</param>.  See <param>recovery_target_inclusive</param> option in the <postgres/> docs for more information.</text>
 					</option>
 
 					<!-- OPERATION - RESTORE COMMAND - TARGET-RESUME OPTION -->
@@ -260,15 +241,38 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<option id="target-timeline">
 						<text>Recovers along the specified timeline.  See <setting>recovery_target_timeline</setting> in the <postgres/> docs for more information.</text>
 					</option>
+
+					<!-- OPERATION - RESTORE COMMAND - RECOVERY-SETTING OPTION -->
+					<option id="recovery-setting">
+						<text>Recovery settings in restore.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).  This option can be used multiple times.
+
+							Note: <setting>restore_command</setting> will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.
+
+							Recovery settings can also be set in the <setting>restore:recovery-setting</setting> section of pg_backrest.conf.  For example:
+							<code-block>
+								[restore:recovery-setting]
+								primary_conn_info=db.mydomain.com
+								standby_mode=on
+							</code-block>
+							Since <backrest/> does not start <postgres/> after writing the <file>recovery.conf</file> file, it is always possible to edit/check <file>recovery.conf</file> before manually restarting.</text>
+						<example>primary_conninfo=db.mydomain.com</example>
+					</option>
+
+					<!-- OPERATION - RESTORE COMMAND - TABLESPACE-MAP OPTION -->
+					<option id="tablespace-map">
+						<text>Moves a tablespace to a new location during the restore.  This is useful when tablespace locations are not the same on a replica, or an upgraded system has different mount points.
+
+							Since <postgres/> 9.2 tablespace locations are not stored in pg_tablespace so moving tablespaces can be done with impunity.  However, moving a tablespace to the <setting>data_directory</setting> is not recommended and may cause problems.  For more information on moving tablespaces http://www.databasesoup.com/2013/11/moving-tablespaces.html is a good resource.</text>
+						<example>ts_01=/db/ts_01</example>
+					</option>
 				</option-list>
 
 				<command-example-list>
 					<command-example title="Restore Latest">
-						<text>
-								<code-block>
-									/path/to/pg_backrest.pl --stanza=db --set=latest --type=name --target=release
-								</code-block>
-								Restores the latest database backup and then recovers to the <id>release</id> restore point.</text>
+						<text><code-block>
+									/path/to/pg_backrest.pl --stanza=db --type=name --target=release restore
+							</code-block>
+							Restores the latest database backup and then recovers to the <id>release</id> restore point.</text>
 					</command-example>
 				</command-example-list>
 			</command>
@@ -276,7 +280,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 	</operation>
 
 	<config title="Configuration">
-		<text><backrest/> takes some command-line parameters, but depends on a configuration file for most of the settings. The default location for the configuration file is <file>/etc/pg_backrest.conf</file>.</text>
+		<text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pg_backrest.conf</file>.</text>
 
 		<config-example-list title="Examples">
 			<config-example title="Confguring Postgres for Archiving">
@@ -286,105 +290,120 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						archive_mode = on
 						archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
 					</code-block>
-					Replace the path with the actual location where <backrest/> was installed.  The stanza parameter should be changed to the actual stanza name for your database in <file>pg_backrest.conf</file>.
+					Replace the path with the actual location where <backrest/> was installed.  The stanza parameter should be changed to the actual stanza name for your database.
 				</text>
 			</config-example>
 
-			<config-example title="Simple Single Host Install">
-				<text>This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.
+			<config-example title="Minimal Configuration">
+				<text>The absolute minimum required to run <backrest/> (if all defaults are accepted) is the database path.
 
 					<file>/etc/pg_backrest.conf</file>:
 					<code-block>
+						[main]
+						db-path=/data/db
+					</code-block>
+						The <setting>db-path</setting> option could also be provided on the command line, but it's best to use a configuration file as options tend to pile up quickly.</text>
+			</config-example>
+
+			<config-example title="Simple Single Host Configuration">
+				<text>This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.  A number of additional options are set:
+					<ul>
+						<li><setting>cmd-psql</setting> - Custom location and parameters for psql.</li>
+						<li><setting>cmd-psql-option</setting> - Options for psql can be set per stanza.</li>
+						<li><setting>compress</setting> - Disable compression (handy if the file system is already compressed).</li>
+						<li><setting>repo-path</setting> - Path to the <backrest/> repository where backups and WAL archive are stored.</li>
+						<li><setting>log-level-file</setting> - Set the file log level to debug (Lots of extra info if something is not working as expected).</li>
+						<li><setting>hardlink</setting> - Create hardlinks between backups (but never between full backups).</li>
+						<li><setting>thread-max</setting> - Use 2 threads for backup/restore operations.</li>
+					</ul>
+					<file>/etc/pg_backrest.conf</file>:
+					<code-block>
 						[global:command]
-						psql=/usr/bin/psql
+						cmd-psql=/usr/local/bin/psql -X %option%
+
+						[global:general]
+						compress=n
+						repo-path=/Users/dsteele/Documents/Code/backrest/test/test/backrest
+
+						[global:log]
+						log-level-file=debug
 
 						[global:backup]
-						path=/var/lib/postgresql/backup
+						hardlink=y
+						thread-max=2
 
-						[global:retention]
-						full-retention=2
-						differential-retention=2
-						archive-retention-type=diff
-						archive-retention=2
+						[main]
+						db-path=/data/db
 
-						[db]
-						path=/var/lib/postgresql/9.3/main
+						[main:command]
+						cmd-psql-option=--port=5433
 					</code-block>
 				</text>
 			</config-example>
 
-				<config-example title="Simple Multiple Host Install">
+				<config-example title="Simple Multiple Host Configuration">
 					<text>This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest_remote.pl and pg_backrest.pl in the same path on both servers.
 
 						<file>/etc/pg_backrest.conf</file> on the db host:
 						<code-block>
-							[global:command]
-							psql=/usr/bin/psql
+							[global:general]
+							repo-path=/path/to/db/repo
+							repo-remote-path=/path/to/backup/repo
 
 							[global:backup]
-							host=backup-host@mydomain.com
-							user=postgres
-							path=/var/lib/postgresql/backup
+							backup-host=backup.mydomain.com
+							backup-user=backrest
 
-							[db]
-							path=/var/lib/postgresql/9.3/main
+							[global:archive]
+							archive-async=y
+
+							[main]
+							db-path=/data/db
 						</code-block>
 						<file>/etc/pg_backrest.conf</file> on the backup host:
 						<code-block>
-							[global:command]
-							psql=/usr/bin/psql
+							[global:general]
+							repo-path=/path/to/backup/repo
 
-							[global:backup]
-							path=/var/lib/postgresql/backup
-
-							[global:retention]
-							full-retention=2
-							archive-retention-type=full
-
-							[db]
-							host=db-host@mydomain.com
-							user=postgres
-							path=/var/lib/postgresql/9.3/main
+							[main]
+							db-host=db.mydomain.com
+							db-path=/data/db
+							db-user=postgres
 						</code-block>
 				</text>
 			</config-example>
 		</config-example-list>
 
 		<config-section-list title="Options">
+			<!-- CONFIG - COMMAND SECTION -->
 			<config-section id="command">
 				<text>The <setting>command</setting> section defines the location of external commands that are used by <backrest/>.</text>
 
 				<config-key-list>
-					<config-key id="psql">
+					<!-- CONFIG - COMMAND SECTION - CMD-PSQL KEY -->
+					<config-key id="cmd-psql">
 						<text>Defines the full path to <cmd>psql</cmd>.  <cmd>psql</cmd> is used to call <code>pg_start_backup()</code> and <code>pg_stop_backup()</code>.
 
 		If addtional parameters need to be passed to <cmd>psql</cmd> (such as <param>--port</param> or <param>--cluster</param>) then add <param>%option%</param> to the command line and use <setting>command-option::psql</setting> to set options.</text>
 
-						<required/>
 						<example>/usr/bin/psql -X %option%</example>
 					</config-key>
 
-					<config-key id="remote">
+					<!-- CONFIG - COMMAND SECTION - CMD-PSQL-OPTION KEY -->
+					<config-key id="cmd-psql-option">
+						<text>Allows command line parameters to be passed to <cmd>psql</cmd>.</text>
+
+						<example>--port=5433</example>
+					</config-key>
+
+					<!-- CONFIG - COMMAND SECTION - CMD-REMOTE KEY -->
+					<config-key id="cmd-remote">
 						<text>Defines the location of <cmd>pg_backrest_remote.pl</cmd>.
 
 							Required only if the path to <cmd>pg_backrest_remote.pl</cmd> is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.</text>
 
 						<default>same as local</default>
 						<example>/usr/lib/backrest/bin/pg_backrest_remote.pl</example>
-					</config-key>
-				</config-key-list>
-			</config-section>
-
-			<!-- CONFIG - COMMAND-OPTION SECTION -->
-			<config-section id="command-option">
-				<text>The <setting>command-option</setting> section allows abitrary options to be passed to any command in the <setting>command</setting> section.</text>
-
-				<!-- CONFIG - COMMAND-OPTION SECTION - PSQL KEY -->
-				<config-key-list>
-					<config-key id="psql">
-						<text>Allows command line parameters to be passed to <cmd>psql</cmd>.</text>
-
-						<example>--port=5433</example>
 					</config-key>
 				</config-key-list>
 			</config-section>
@@ -403,18 +422,16 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 				<!-- CONFIG - LOG SECTION - LEVEL-FILE KEY -->
 				<config-key-list>
-					<config-key id="level-file">
+					<config-key id="log-level-file">
 						<text>Sets file log level.</text>
 
-						<default>info</default>
 						<example>debug</example>
 					</config-key>
 
 					<!-- CONFIG - LOG SECTION - LEVEL-CONSOLE KEY -->
-					<config-key id="level-console">
+					<config-key id="log-level-console">
 						<text>Sets console log level.</text>
 
-						<default>warning</default>
 						<example>error</example>
 					</config-key>
 				</config-key-list>
@@ -429,7 +446,6 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="buffer-size">
 						<text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.</text>
 
-						<default>1048576</default>
 						<allow>4096 - 8388608</allow>
 						<example>16384</example>
 					</config-key>
@@ -438,7 +454,6 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="compress">
 						<text>Enable gzip compression.  Backup files are compatible with command-line gzip tools.</text>
 
-						<default>y</default>
 						<example>n</example>
 					</config-key>
 
@@ -446,9 +461,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="compress-level">
 						<text>Sets the zlib level to be used for file compression when <setting>compress=y</setting>.</text>
 
-						<default>6</default>
 						<allow>0-9</allow>
-						<override>backup, archive</override>
 						<example>9</example>
 					</config-key>
 
@@ -456,10 +469,22 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="compress-level-network">
 						<text>Sets the zlib level to be used for protocol compression when <setting>compress=n</setting> and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>.  When <setting>compress=y</setting> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.  SSH compression is always disabled.</text>
 
-						<default>3</default>
 						<allow>0-9</allow>
-						<override>backup, archive, restore</override>
 						<example>1</example>
+					</config-key>
+
+					<!-- CONFIG - GENERAL SECTION - REPO-PATH KEY -->
+					<config-key id="repo-path">
+						<text>Path to the backrest repository where WAL segments, backups, logs, etc are stored.</text>
+
+						<example>/data/db/backrest</example>
+					</config-key>
+
+					<!-- CONFIG - GENERAL SECTION - REPO-REMOTE-PATH KEY -->
+					<config-key id="repo-remote-path">
+						<text>Path to the remote backrest repository where WAL segments, backups, logs, etc are stored.</text>
+
+						<example>/backup/backrest</example>
 					</config-key>
 				</config-key-list>
 			</config-section>
@@ -470,7 +495,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 				<!-- CONFIG - BACKUP SECTION - HOST KEY -->
 				<config-key-list>
-					<config-key id="host">
+					<config-key id="backup-host">
 						<text>Sets the backup host when backup up remotely via SSH.  Make sure that trusted SSH authentication is configured between the db host and the backup host.
 
 						When backing up to a locally mounted network filesystem this setting is not required.</text>
@@ -479,41 +504,29 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					</config-key>
 
 					<!-- CONFIG - BACKUP SECTION - USER KEY -->
-					<config-key id="user">
+					<config-key id="backup-user">
 						<text>Sets user account on the backup host.</text>
 
 						<example>backrest</example>
-					</config-key>
-
-					<!-- CONFIG - BACKUP SECTION - PATH KEY -->
-					<config-key id="path">
-						<text>Path where backups are stored on the local or remote host.</text>
-
-						<required/>
-						<example>/var/lib/backrest</example>
 					</config-key>
 
 					<!-- CONFIG - BACKUP SECTION - START-FAST -->
 					<config-key id="start-fast">
 						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.</text>
 
-						<default>n</default>
 						<example>y</example>
 					</config-key>
 
 					<!-- CONFIG - BACKUP SECTION - HARDLINK -->
 					<config-key id="hardlink">
-						<text>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup.  Be care though, because modifying files that are hard-linked can affect all the backups in the set.</text>
+						<text>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup.  Be careful, though, because modifying files that are hard-linked can affect all the backups in the set.</text>
 
-						<default>n</default>
 						<example>y</example>
 					</config-key>
 
 					<!-- CONFIG - BACKUP SECTION - THEAD-MAX -->
 					<config-key id="thread-max">
-						<text>Defines the number of threads to use for backup.  Each thread will perform compression and transfer to make the backup run faster, but don't set <setting>thread-max</setting> so high that it impacts database performance.</text>
-
-						<default>1</default>
+						<text>Defines the number of threads to use for backup or restore.  Each thread will perform compression and transfer to make the backup run faster, but don't set <setting>thread-max</setting> so high that it impacts database performance during backup.</text>
 						<example>4</example>
 					</config-key>
 
@@ -524,19 +537,17 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<example>3600</example>
 					</config-key>
 
-					<!-- CONFIG - BACKUP SECTION - BACKUP-WAL-CHECK -->
-					<config-key id="archive-wal-check">
+					<!-- CONFIG - BACKUP SECTION - ARCHIVE-CHECK -->
+					<config-key id="archive-check">
 						<text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.</text>
 
-						<default>y</default>
 						<example>n</example>
 					</config-key>
 
-			<!-- CONFIG - BACKUP SECTION - BACKUP-WAL-STORE -->
-			<config-key id="archive-wal-store">
+			<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
+			<config-key id="archive-copy">
 				<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
 
-				<default>n</default>
 				<example>y</example>
 			</config-key>
 		</config-key-list>
@@ -548,17 +559,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 				<!-- CONFIG - ARCHIVE SECTION - PATH KEY -->
 				<config-key-list>
-					<config-key id="path">
-						<text>Path where archive logs are stored before being asynchronously transferred to the backup.  Make sure this is not the same path as the backup is using if the backup is local.</text>
-
-						<example>/var/lib/backrest</example>
-					</config-key>
-
-					<!-- CONFIG - ARCHIVE SECTION - COMPRESS-ASYNC KEY -->
-					<config-key id="compress-async">
-						<text>When set archive logs are not compressed immediately, but are instead compressed when copied to the backup host.  This means that more space will be used on local storage, but the initial archive process will complete more quickly allowing greater throughput from Postgres.</text>
-
-						<default>n</default>
+					<!-- CONFIG - ARCHIVE SECTION - ARCHIVE-ASYNC KEY -->
+					<config-key id="archive-async">
+						<text>Archive WAL segments asynchronously.  WAL segments will be copied to the local repo, then a process will be forked to compress the segment and transfer it to the remote repo if configured.  Control will be returned to <postgres/> as soon as the WAL segment is copied locally.</text>
 						<example>y</example>
 					</config-key>
 
@@ -581,58 +584,42 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</config-key-list>
 			</config-section>
 
-			<!-- CONFIG - RETENTION -->
-			<config-section id="retention">
-				<text>The <setting>rentention</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.</text>
+			<!-- CONFIG - EXPIRE -->
+			<config-section id="expire">
+				<text>The <setting>expire</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.</text>
 
 				<!-- CONFIG - RETENTION SECTION - FULL-RETENTION KEY -->
 				<config-key-list>
-					<config-key id="full-retention">
+					<config-key id="retention-full">
 						<text>Number of full backups to keep.  When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When not defined then all full backups will be kept.</text>
 
 						<example>2</example>
 					</config-key>
 
 					<!-- CONFIG - RETENTION SECTION - DIFFERENTIAL-RETENTION KEY -->
-					<config-key id="differential-retention">
+					<config-key id="retention-diff">
 						<text>Number of differential backups to keep.  When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept.</text>
 
 						<example>3</example>
 					</config-key>
 
 					<!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION-TYPE KEY -->
-					<config-key id="archive-retention-type">
+					<config-key id="retention-archive-type">
 						<text>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <setting>archive-retention</setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <setting>archive-retention</setting>.
 
 						If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.</text>
 
-						<example>full</example>
+						<example>diff</example>
 					</config-key>
 
 					<!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION KEY -->
-					<config-key id="archive-retention">
-						<text>Number of backups worth of archive log to keep.  If not defined, then <setting>full-retention</setting> will be used when <setting>archive-retention-type=full</setting> and <setting>differential-retention</setting> will be used when <setting>archive-retention-type=differential</setting>.</text>
+					<config-key id="retention-archive">
+						<text>Number of backups worth of archive log to keep.</text>
 
 						<example>2</example>
 					</config-key>
 				</config-key-list>
 			</config-section>
-
-			<!-- CONFIG - RESTORE -->
-<!--			<config-section id="restore">
-				<text>[Not much to put here, but think of something]</text>
-			</config-section> -->
-
-			<!-- CONFIG - RESTORE-OPTION -->
-<!--			<config-section id="restore-option">
-				<text>Archive Recovery and Standby Server restore.conf options can be specified here.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).
-
-Note: <setting>restore_command</setting> will automatically be generated unless overridden in this section.  Be careful about specifying your own <setting>restore_command</setting> as PgBackRest is designed to handle this for you.
-
-Target Recovery options are specified on the command-line since they end to change from restore to restore (or not be needed at all in the case of a standby server).
-
-Since <backrest/> does not start PostgreSQL after writing the <file>recovery.conf</file> file, it is always possible to edit/check the file before manually restarting.</text>
-			</config-section>-->
 
 			<!-- CONFIG - STANZA -->
 			<config-section id="stanza">
@@ -640,24 +627,23 @@ Since <backrest/> does not start PostgreSQL after writing the <file>recovery.con
 
 				<!-- CONFIG - RETENTION SECTION - HOST KEY -->
 				<config-key-list>
-					<config-key id="host">
+					<config-key id="db-host">
 						<text>Define the database host.  Used for backups where the database host is different from the backup host.</text>
 
 						<example>db.domain.com</example>
 					</config-key>
 
 					<!-- CONFIG - RETENTION SECTION - USER KEY -->
-					<config-key id="user">
-						<text>Defines user account on the db host when <setting>stanza::host</setting> is defined.</text>
+					<config-key id="db-user">
+						<text>Defines user account on the db host when <setting>db-host</setting> is defined.</text>
 
 						<example>postgres</example>
 					</config-key>
 
 					<!-- CONFIG - RETENTION SECTION - PATH KEY -->
-					<config-key id="path">
+					<config-key id="db-path">
 						<text>Path to the db data directory (data_directory setting in postgresql.conf).</text>
 
-						<required/>
 						<example>/data/db</example>
 					</config-key>
 				</config-key-list>
@@ -667,7 +653,7 @@ Since <backrest/> does not start PostgreSQL after writing the <file>recovery.con
 
 	<release title="Release Notes">
 		<release-version-list>
-			<release-version version="0.50" title="[under development]">
+			<release-version version="0.50" title="restore and much more">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Added restore functionality.</text>
@@ -697,7 +683,7 @@ Since <backrest/> does not start PostgreSQL after writing the <file>recovery.con
 						<text>Link <path>latest</path> always points to the last backup.  This has been added for convenience and to make restore simpler.</text>
 					</release-feature>
 					<release-feature>
-						<text>More comprehensive backup unit tests.</text>
+						<text>More comprehensive unit tests in all areas.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

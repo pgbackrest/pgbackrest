@@ -359,7 +359,7 @@ GetOptions ('help' => \$bHelp,
 # Display version and exit if requested
 if ($bHelp || $bVersion)
 {
-    print 'pg_backrest ' . version_get() . " documentation\n";
+    print 'pg_backrest ' . version_get() . " doc builder\n";
 
     if ($bHelp)
     {
@@ -461,6 +461,10 @@ my $oDocOut = doc_build($oDocIn);
 ####################################################################################################################################
 # Build commands pulled from the code
 ####################################################################################################################################
+# Get the option rules
+my $oOptionRule = optionRuleGet();
+my %oOptionFound;
+
 sub doc_out_get
 {
     my $oNode = shift;
@@ -483,8 +487,67 @@ sub doc_out_get
     return undef;
 }
 
-# Get the option rules
-my $oOptionRule = optionRuleGet();
+sub doc_option_list_process
+{
+    my $oOptionListOut = shift;
+    my $strOperation = shift;
+
+    foreach my $oOptionOut (@{$$oOptionListOut{children}})
+    {
+        my $strOption = $$oOptionOut{param}{id};
+
+        # if (defined($oOptionFound{$strOption}))
+        # {
+        #     confess "option ${strOption} has already been found";
+        # }
+
+        if ($strOption eq 'help' || $strOption eq 'version')
+        {
+            next;
+        }
+
+        $oOptionFound{$strOption} = true;
+
+        if (!defined($$oOptionRule{$strOption}{&OPTION_RULE_TYPE}))
+        {
+            confess "unable to find option $strOption";
+        }
+
+        $$oOptionOut{field}{default} = optionDefault($strOption, $strOperation);
+
+        if (defined($$oOptionOut{field}{default}))
+        {
+            $$oOptionOut{field}{required} = false;
+
+            if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+            {
+                $$oOptionOut{field}{default} = $$oOptionOut{field}{default} ? 'y' : 'n';
+            }
+        }
+        else
+        {
+            $$oOptionOut{field}{required} = optionRequired($strOption, $strOperation);
+        }
+
+        if (defined($strOperation))
+        {
+            $$oOptionOut{field}{cmd} = true;
+        }
+
+        if ($strOption eq 'cmd-remote')
+        {
+            $$oOptionOut{field}{default} = 'same as local';
+        }
+
+        # &log(INFO, "operation " . (defined($strOperation) ? $strOperation : '[undef]') .
+        #            ", option ${strOption}, required $$oOptionOut{field}{required}" .
+        #            ", default " . (defined($$oOptionOut{field}{default}) ? $$oOptionOut{field}{default} : 'undef'));
+    }
+}
+
+# Ouput general options
+my $oOperationGeneralOptionListOut = doc_out_get(doc_out_get(doc_out_get($oDocOut, 'operation'), 'operation-general'), 'option-list');
+doc_option_list_process($oOperationGeneralOptionListOut);
 
 # Ouput commands
 my $oCommandListOut = doc_out_get(doc_out_get($oDocOut, 'operation'), 'command-list');
@@ -497,29 +560,7 @@ foreach my $oCommandOut (@{$$oCommandListOut{children}})
 
     if (defined($oOptionListOut))
     {
-        foreach my $oOptionOut (@{$$oOptionListOut{children}})
-        {
-            my $strOption = $$oOptionOut{param}{id};
-
-            $$oOptionOut{field}{default} = optionDefault($strOption, $strOperation);
-
-            if (defined($$oOptionOut{field}{default}))
-            {
-                $$oOptionOut{field}{required} = false;
-
-                if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-                {
-                    $$oOptionOut{field}{default} = $$oOptionOut{field}{default} ? 'y' : 'n';
-                }
-            }
-            else
-            {
-                $$oOptionOut{field}{required} = optionRequired($strOption, $strOperation);
-            }
-
-            &log(INFO, "operation ${strOperation}, option ${strOption}, required $$oOptionOut{field}{required}" .
-                       ", default " . (defined($$oOptionOut{field}{default}) ? $$oOptionOut{field}{default} : 'undef'));
-        }
+        doc_option_list_process($oOptionListOut, $strOperation);
     }
 
     my $oExampleListOut = doc_out_get($oCommandOut, 'command-example-list');
@@ -539,14 +580,30 @@ foreach my $oCommandOut (@{$$oCommandListOut{children}})
     # $$oExampleListOut{param}{title} = 'Examples';
 }
 
-my $oSectionListOut = doc_out_get(doc_out_get($oDocOut, 'config'), 'config-section-list');
+# Ouput config section
+my $oConfigSectionListOut = doc_out_get(doc_out_get($oDocOut, 'config'), 'config-section-list');
 
-foreach my $oSectionOut (@{$$oSectionListOut{children}})
+foreach my $oConfigSectionOut (@{$$oConfigSectionListOut{children}})
 {
-    my $oOptionListOut = doc_out_get($oSectionOut, 'config-key-list');
+    my $oOptionListOut = doc_out_get($oConfigSectionOut, 'config-key-list', false);
 
-    foreach my $oOptionOut (@{$$oOptionListOut{children}})
+    if (defined($oOptionListOut))
     {
+        doc_option_list_process($oOptionListOut);
+    }
+}
+
+# Mark undocumented features as processed
+$oOptionFound{'no-fork'} = true;
+$oOptionFound{'test'} = true;
+$oOptionFound{'test-delay'} = true;
+
+# Make sure all options were processed
+foreach my $strOption (sort(keys($oOptionRule)))
+{
+    if (!defined($oOptionFound{$strOption}))
+    {
+        confess "option ${strOption} was not found";
     }
 }
 
@@ -627,14 +684,36 @@ sub doc_render
             my $strOverride = $$oDoc{field}{override};
             my $strExample = $$oDoc{field}{example};
 
-#            defined($strExample) or die "${strError} example";
+            if (defined($strExample))
+            {
+                if (index($strExample, '=') == -1)
+                {
+                    $strExample = "=${strExample}";
+                }
+                else
+                {
+                    $strExample = " ${strExample}";
+                }
+
+                $strExample = "$$oDoc{param}{id}${strExample}";
+
+                if (defined($$oDoc{field}{cmd}) && $$oDoc{field}{cmd})
+                {
+                    $strExample = '--' . $strExample;
+
+                    if (index($$oDoc{field}{example}, ' ') != -1)
+                    {
+                        $strExample = "\"${strExample}\"";
+                    }
+                }
+            }
 
             $strBuffer .= "\n```\n" .
                           "required: " . ($bRequired ? 'y' : 'n') . "\n" .
                           (defined($strDefault) ? "default: ${strDefault}\n" : '') .
                           (defined($strAllow) ? "allow: ${strAllow}\n" : '') .
                           (defined($strOverride) ? "override: ${strOverride}\n" : '') .
-                          (defined($strExample) ? "example: $$oDoc{param}{id}=${strExample}\n" : '') .
+                          (defined($strExample) ? "example: ${strExample}\n" : '') .
                           "```";
         }
 
@@ -661,7 +740,6 @@ sub doc_render
         }
 
          $strBuffer .= doc_render($oChild, $strType, $iChildDepth, $bList);
-
     }
 
     if ($iDepth == 1)

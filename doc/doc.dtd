@@ -12,7 +12,7 @@
 <!ELEMENT install-system (text)>
 	<!ATTLIST install-system title CDATA #REQUIRED>
 
-<!ELEMENT operation (text, operation-general, command-list)>
+<!ELEMENT operation (text?, operation-general, command-list)>
 	<!ATTLIST operation title CDATA #REQUIRED>
 
 <!ELEMENT operation-general (text, option-list)>
@@ -52,13 +52,11 @@
 
 <!ELEMENT config-key-list (config-key+)>
 
-<!ELEMENT config-key (text, (required|default?), allow?, override?, example)>
+<!ELEMENT config-key (text, default?, allow?, example)>
 	<!ATTLIST config-key id CDATA #REQUIRED>
 
-<!ELEMENT required EMPTY>
 <!ELEMENT default (#PCDATA)>
 <!ELEMENT allow (#PCDATA)>
-<!ELEMENT override (#PCDATA)>
 <!ELEMENT example (#PCDATA)>
 
 <!ELEMENT release (text?, release-version-list)>
