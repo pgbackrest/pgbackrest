@@ -2,72 +2,780 @@
 
 PgBackRest aims to be a simple backup and restore system that can seamlessly scale up to the largest databases and workloads.
 
-## release notes
+Primary PgBackRest features:
 
-### v0.30: core restructuring and unit tests
+- Local or remote backup
+- Multi-threaded backup/restore for performance
+- Checksums
+- Safe backups (checks that logs required for consistency are present before backup completes)
+- Full, differential, and incremental backups
+- Backup rotation (and minimum retention rules with optional separate retention for archive)
+- In-stream compression/decompression
+- Archiving and retrieval of logs for replicas/restores built in
+- Async archiving for very busy systems (including space limits)
+- Backup directories are consistent Postgres clusters (when hardlinks are on and compression is off)
+- Tablespace support
+- Restore delta option
+- Restore using timestamp/size or checksum
+- Restore remapping base/tablespaces
 
-* Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
+Instead of relying on traditional backup tools like tar and rsync, PgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
 
-* Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.
+## Install
 
-* Removed dependency on Storable and replaced with a custom ini file implementation.
+PgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.
 
-* Added much needed documentation (see INSTALL.md).
+### Ubuntu 12.04
 
-* Numerous other changes that can only be identified with a diff.
+* Starting from a clean install, update the OS:
+```
+apt-get update
+apt-get upgrade (reboot if required)
+```
+* Install ssh, git and cpanminus:
+```
+apt-get install ssh
+apt-get install git
+apt-get install cpanminus
+```
+* Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
 
-### v0.19: improved error reporting/handling
+Create the file /etc/apt/sources.list.d/pgdg.list, and add a line for the repository:
+```
+deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main
+```
+* Then run the following:
+```
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
 
-* Working on improving error handling in the file object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).
+apt-get install postgresql-9.3
+apt-get install postgresql-server-dev-9.3
+```
+* Install required Perl modules:
+```
+cpanm JSON
+cpanm Net::OpenSSH
+cpanm IPC::System::Simple
+cpanm Digest::SHA
+cpanm Compress::ZLib
+```
+* Install PgBackRest
 
-* Found and squashed a nasty bug where file_copy was defaulted to ignore errors.  There was also an issue in file_exists that was causing the test to fail when the file actually did exist.  Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.
+PgBackRest can be installed by downloading the most recent release:
 
-### v0.18: return soft error from archive-get when file is missing
+https://github.com/pgmasters/backrest/releases
 
-* The archive-get function returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets Postgres know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.
+PgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
 
-### v0.17: warn when archive directories cannot be deleted
+## Operation
 
-* If an archive directory which should be empty could not be deleted backrest was throwing an error.  There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue.  This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).
+### General Options
 
-### v0.16: RequestTTY=yes for SSH sessions
+These options are either global or used by all commands.
 
-* Added RequestTTY=yes to ssh sesssions.  Hoping this will prevent random lockups.
+#### `config` option
 
-### v0.15: added archive-get
+By default PgBackRest expects the its configuration file to be located at `/etc/pg_backrest.conf`.  Use this option to specify another location.
+```
+required: n
+default: /etc/pg_backrest.conf
+example: config=/var/lib/backrest/pg_backrest.conf
+```
 
-* Added archive-get functionality to aid in restores.
+#### `stanza` option
 
-* Added option to force a checkpoint when starting the backup (start_fast=y).
+Defines the stanza for the command.  A stanza is the configuration for a database that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres cluster and therefore one stanza, whereas backup servers will have a stanza for every database that needs to be backed up.
 
-### v0.11: minor fixes
+Examples of how to configure a stanza can be found in the `configuration examples` section.
+```
+required: y
+example: stanza=main
+```
 
-Tweaking a few settings after running backups for about a month.
+#### `help` option
 
-* Removed master_stderr_discard option on database SSH connections.  There have been occasional lockups and they could be related issues originally seen in the file code.
+Displays the PgBackRest help.
+```
+required: n
+```
 
-* Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
+#### `version` option
 
-### v0.10: backup and archiving are functional
+Displays the PgBackRest version.
+```
+required: n
+```
 
-This version has been put into production at Resonate, so it does work, but there are a number of major caveats.
+### Commands
 
-* No restore functionality, but the backup directories are consistent Postgres data directories.  You'll need to either uncompress the files or turn off compression in the backup.  Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.
+#### `backup` command
 
-* Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.
+Perform a database backup.  PgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.
 
-* Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% threadsafe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.
+##### `type` option
 
-* Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.
+The following backup types are supported:
 
-* The backup.manifest is being written as Storable because Config::IniFile does not seem to handle large files well.  Would definitely like to save these as human-readable text.
+- `full` - all database files will be copied and there will be no dependencies on previous backups.
+- `incr` - incremental from the last successful backup.
+- `diff` - like an incremental backup but always based on the last full backup.
 
-* Absolutely no documentation (outside the code).  Well, excepting these release notes.
+```
+required: n
+default: incr
+example: --type=full
+```
 
-* Lots of other little things and not so little things.  Much refactoring to follow.
+##### `no-start-stop` option
 
-## recognition
+This option prevents PgBackRest from running `pg_start_backup()` and `pg_stop_backup()` on the database.  In order for this to work PostgreSQL should be shut down and PgBackRest will generate an error if it is not.
 
-Primary recognition goes to Stephen Frost for all his valuable advice a criticism during the development of PgBackRest.  It's a far better piece of software than it would have been without him.  Any mistakes should be blamed on me alone.
+The purpose of this option is to allow cold backups.  The `pg_xlog` directory is copied as-is and `archive-check` is automatically disabled for the backup.
+```
+required: n
+default: n
+```
 
-Resonate (http://www.resonateinsights.com) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.  Works so far!
+##### `force` option
+
+When used with  `--no-start-stop` a backup will be run even if PgBackRest thinks that PostgreSQL is running.  **This option should be used with extreme care as it will likely result in a bad backup.**
+
+There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.
+```
+required: n
+default: n
+```
+
+##### Example: Full Backup
+
+```
+/path/to/pg_backrest.pl --stanza=db --type=full backup
+```
+Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if no `full` backup exists then a `full` backup will be forced even if `incr` or `diff` is requested.
+
+#### `archive-push` command
+
+Archive a WAL segment to the repository.
+
+##### Example
+
+```
+/path/to/pg_backrest.pl --stanza=db archive-push %p
+```
+Accepts a WAL segment from PostgreSQL and archives it in the repository.  `%p` is how PostgreSQL specifies the location of the WAL segment to be archived.
+
+#### `archive-get` command
+
+Get a WAL segment from the repository.
+
+##### Example
+
+```
+/path/to/pg_backrest.pl --stanza=db archive-get %f %p
+```
+Retrieves a WAL segment from the repository.  This command is used in `restore.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs and `%p` is the location where it should be copied.
+
+#### `expire` command
+
+PgBackRest does backup rotation, but is not concerned with when the backups were created.  So if two full backups are configured for rentention, PgBackRest will keep two full backups no matter whether they occur, two hours apart or two weeks apart.
+
+##### Example
+
+```
+/path/to/pg_backrest.pl --stanza=db expire
+```
+Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced rentention, usually to free up some space.
+
+#### `restore` command
+
+Perform a database restore.  This command is generall run manually, but there are instances where it might be automated.
+
+##### `set` option
+
+The backup set to be restored.  `latest` will restore the latest backup, otherwise provide the name of the backup to restore.
+```
+required: n
+default: default
+example: --set=20150131-153358F_20150131-153401I
+```
+
+##### `delta` option
+
+By default the PostgreSQL data and tablespace directories are expected to be present but empty.  This option performs a delta restore using checksums.
+```
+required: n
+default: n
+```
+
+##### `force` option
+
+By itself this option forces the PostgreSQL data and tablespace paths to be completely overwritten.  In combination with `--delta` a timestamp/size delta will be performed instead of using checksums.
+```
+required: n
+default: n
+```
+
+##### `type` option
+
+The following recovery types are supported:
+
+- `default` - recover to the end of the archive stream.
+- `name` - recover the restore point specified in `--target`.
+- `xid` - recover to the transaction id specified in `--target`.
+- `time` - recover to the time specified in `--target`.
+- `preserve` - preserve the existing `recovery.conf` file.
+
+```
+required: n
+default: default
+example: --type=xid
+```
+
+##### `target` option
+
+Defines the recovery target when `--type` is `name`, `xid`, or `time`.
+```
+required: y
+example: "--target=2015-01-30 14:15:11 EST"
+```
+
+##### `target-exclusive` option
+
+Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when `--type` is `time` or `xid`.  For example, using `--target-exclusive` would exclude the contents of transaction `1007` when `--type=xid` and `--target=1007`.  See `recovery_target_inclusive` option in the PostgreSQL docs for more information.
+```
+required: n
+default: n
+```
+
+##### `target-resume` option
+
+Specifies whether recovery should resume when the recovery target is reached.  See `pause_at_recovery_target` in the PostgreSQL docs for more information.
+```
+required: n
+default: n
+```
+
+##### `target-timeline` option
+
+Recovers along the specified timeline.  See `recovery_target_timeline` in the PostgreSQL docs for more information.
+```
+required: n
+example: --target-timeline=3
+```
+
+##### `recovery-setting` option
+
+Recovery settings in restore.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).  This option can be used multiple times.
+
+Note: `restore_command` will be automatically generated but can be overridden with this option.  Be careful about specifying your own `restore_command` as PgBackRest is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by PgBackRest and should not be set with this option.
+
+Recovery settings can also be set in the `restore:recovery-setting` section of pg_backrest.conf.  For example:
+```
+[restore:recovery-setting]
+primary_conn_info=db.mydomain.com
+standby_mode=on
+```
+Since PgBackRest does not start PostgreSQL after writing the `recovery.conf` file, it is always possible to edit/check `recovery.conf` before manually restarting.
+```
+required: n
+example: --recovery-setting primary_conninfo=db.mydomain.com
+```
+
+##### `tablespace-map` option
+
+Moves a tablespace to a new location during the restore.  This is useful when tablespace locations are not the same on a replica, or an upgraded system has different mount points.
+
+Since PostgreSQL 9.2 tablespace locations are not stored in pg_tablespace so moving tablespaces can be done with impunity.  However, moving a tablespace to the `data_directory` is not recommended and may cause problems.  For more information on moving tablespaces http://www.databasesoup.com/2013/11/moving-tablespaces.html is a good resource.
+```
+required: n
+example: --tablespace-map ts_01=/db/ts_01
+```
+
+##### Example: Restore Latest
+
+```
+/path/to/pg_backrest.pl --stanza=db --type=name --target=release restore
+```
+Restores the latest database backup and then recovers to the `release` restore point.
+
+## Configuration
+
+PgBackRest can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is `/etc/pg_backrest.conf`.
+
+### Examples
+
+#### Confguring Postgres for Archiving
+
+Modify the following settings in `postgresql.conf`:
+```
+wal_level = archive
+archive_mode = on
+archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
+```
+Replace the path with the actual location where PgBackRest was installed.  The stanza parameter should be changed to the actual stanza name for your database.
+
+
+#### Minimal Configuration
+
+The absolute minimum required to run PgBackRest (if all defaults are accepted) is the database path.
+
+`/etc/pg_backrest.conf`:
+```
+[main]
+db-path=/data/db
+```
+The `db-path` option could also be provided on the command line, but it's best to use a configuration file as options tend to pile up quickly.
+
+#### Simple Single Host Configuration
+
+This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.  A number of additional options are set:
+
+- `cmd-psql` - Custom location and parameters for psql.
+- `cmd-psql-option` - Options for psql can be set per stanza.
+- `compress` - Disable compression (handy if the file system is already compressed).
+- `repo-path` - Path to the PgBackRest repository where backups and WAL archive are stored.
+- `log-level-file` - Set the file log level to debug (Lots of extra info if something is not working as expected).
+- `hardlink` - Create hardlinks between backups (but never between full backups).
+- `thread-max` - Use 2 threads for backup/restore operations.
+
+`/etc/pg_backrest.conf`:
+```
+[global:command]
+cmd-psql=/usr/local/bin/psql -X %option%
+
+[global:general]
+compress=n
+repo-path=/Users/dsteele/Documents/Code/backrest/test/test/backrest
+
+[global:log]
+log-level-file=debug
+
+[global:backup]
+hardlink=y
+thread-max=2
+
+[main]
+db-path=/data/db
+
+[main:command]
+cmd-psql-option=--port=5433
+```
+
+
+#### Simple Multiple Host Configuration
+
+This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest_remote.pl and pg_backrest.pl in the same path on both servers.
+
+`/etc/pg_backrest.conf` on the db host:
+```
+[global:general]
+repo-path=/path/to/db/repo
+repo-remote-path=/path/to/backup/repo
+
+[global:backup]
+backup-host=backup.mydomain.com
+backup-user=backrest
+
+[global:archive]
+archive-async=y
+
+[main]
+db-path=/data/db
+```
+`/etc/pg_backrest.conf` on the backup host:
+```
+[global:general]
+repo-path=/path/to/backup/repo
+
+[main]
+db-host=db.mydomain.com
+db-path=/data/db
+db-user=postgres
+```
+
+
+### Options
+
+#### `command` section
+
+The `command` section defines the location of external commands that are used by PgBackRest.
+
+##### `cmd-psql` key
+
+Defines the full path to `psql`.  `psql` is used to call `pg_start_backup()` and `pg_stop_backup()`.
+
+If addtional per stanza parameters need to be passed to `psql` (such as `--port` or `--cluster`) then add `%option%` to the command line and use `command-option::psql` to set options.
+```
+required: n
+default: /usr/bin/psql -X
+example: cmd-psql=/usr/bin/psql -X %option%
+```
+
+##### `cmd-psql-option` key
+
+Allows per stanza command line parameters to be passed to `psql`.
+```
+required: n
+example: cmd-psql-option --port=5433
+```
+
+##### `cmd-remote` key
+
+Defines the location of `pg_backrest_remote.pl`.
+
+Required only if the path to `pg_backrest_remote.pl` is different on the local and remote systems.  If not defined, the remote path will be assumed to be the same as the local path.
+```
+required: n
+default: same as local
+example: cmd-remote=/usr/lib/backrest/bin/pg_backrest_remote.pl
+```
+
+#### `log` section
+
+The `log` section defines logging-related settings.  The following log levels are supported:
+
+- `off` - No logging at all (not recommended)
+- `error` - Log only errors
+- `warn` - Log warnings and errors
+- `info` - Log info, warnings, and errors
+- `debug` - Log debug, info, warnings, and errors
+- `trace` - Log trace (very verbose debugging), debug, info, warnings, and errors
+
+
+##### `log-level-file` key
+
+Sets file log level.
+```
+required: n
+default: info
+example: log-level-file=debug
+```
+
+##### `log-level-console` key
+
+Sets console log level.
+```
+required: n
+default: warn
+example: log-level-console=error
+```
+
+#### `general` section
+
+The `general` section defines settings that are shared between multiple operations.
+
+##### `buffer-size` key
+
+Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.
+```
+required: n
+default: 1048576
+allow: 4096 - 8388608
+example: buffer-size=16384
+```
+
+##### `compress` key
+
+Enable gzip compression.  Backup files are compatible with command-line gzip tools.
+```
+required: n
+default: y
+example: compress=n
+```
+
+##### `compress-level` key
+
+Sets the zlib level to be used for file compression when `compress=y`.
+```
+required: n
+default: 6
+allow: 0-9
+example: compress-level=9
+```
+
+##### `compress-level-network` key
+
+Sets the zlib level to be used for protocol compression when `compress=n` and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting `compress-level-network=0`.  When `compress=y` the `compress-level-network` setting is ignored and `compress-level` is used instead so that the file is only compressed once.  SSH compression is always disabled.
+```
+required: n
+default: 3
+allow: 0-9
+example: compress-level-network=1
+```
+
+##### `repo-path` key
+
+Path to the backrest repository where WAL segments, backups, logs, etc are stored.
+```
+required: n
+default: /var/lib/backup
+example: repo-path=/data/db/backrest
+```
+
+##### `repo-remote-path` key
+
+Path to the remote backrest repository where WAL segments, backups, logs, etc are stored.
+```
+required: n
+example: repo-remote-path=/backup/backrest
+```
+
+#### `backup` section
+
+The `backup` section defines settings related to backup.
+
+##### `backup-host` key
+
+Sets the backup host when backup up remotely via SSH.  Make sure that trusted SSH authentication is configured between the db host and the backup host.
+
+When backing up to a locally mounted network filesystem this setting is not required.
+```
+required: n
+example: backup-host=backup.domain.com
+```
+
+##### `backup-user` key
+
+Sets user account on the backup host.
+```
+required: n
+example: backup-user=backrest
+```
+
+##### `start-fast` key
+
+Forces a checkpoint (by passing `true` to the `fast` parameter of `pg_start_backup()`) so the backup begins immediately.
+```
+required: n
+default: n
+example: start-fast=y
+```
+
+##### `hardlink` key
+
+Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup.  Be careful, though, because modifying files that are hard-linked can affect all the backups in the set.
+```
+required: n
+default: n
+example: hardlink=y
+```
+
+##### `thread-max` key
+
+Defines the number of threads to use for backup or restore.  Each thread will perform compression and transfer to make the backup run faster, but don't set `thread-max` so high that it impacts database performance during backup.
+```
+required: n
+default: 1
+example: thread-max=4
+```
+
+##### `thread-timeout` key
+
+Maximum amount of time (in seconds) that a backup thread should run.  This limits the amount of time that a thread might be stuck due to unforeseen issues during the backup.  Has no affect when `thread-max=1`.
+```
+required: n
+example: thread-timeout=3600
+```
+
+##### `archive-check` key
+
+Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.
+```
+required: n
+default: y
+example: archive-check=n
+```
+
+##### `archive-copy` key
+
+Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
+```
+required: n
+default: n
+example: archive-copy=y
+```
+
+#### `archive` section
+
+The `archive` section defines parameters when doing async archiving.  This means that the archive files will be stored locally, then a background process will pick them and move them to the backup.
+
+##### `archive-async` key
+
+Archive WAL segments asynchronously.  WAL segments will be copied to the local repo, then a process will be forked to compress the segment and transfer it to the remote repo if configured.  Control will be returned to PostgreSQL as soon as the WAL segment is copied locally.
+```
+required: n
+default: n
+example: archive-async=y
+```
+
+##### `archive-max-mb` key
+
+Limits the amount of archive log that will be written locally when `compress-async=y`.  After the limit is reached, the following will happen:
+
+- PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
+- An error will be logged to the console and also to the Postgres log.
+- A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.
+
+If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.
+
+The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.
+
+To start normal archiving again you'll need to remove the stop file which will be located at `${archive-path}/lock/${stanza}-archive.stop` where `${archive-path}` is the path set in the `archive` section, and `${stanza}` is the backup stanza.
+```
+required: n
+example: archive-max-mb=1024
+```
+
+#### `expire` section
+
+The `expire` section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.
+
+##### `retention-full` key
+
+Number of full backups to keep.  When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When not defined then all full backups will be kept.
+```
+required: n
+example: retention-full=2
+```
+
+##### `retention-diff` key
+
+Number of differential backups to keep.  When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept.
+```
+required: n
+example: retention-diff=3
+```
+
+##### `retention-archive-type` key
+
+Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by `archive-retention`.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by `archive-retention`.
+
+If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.
+```
+required: n
+default: full
+example: retention-archive-type=diff
+```
+
+##### `retention-archive` key
+
+Number of backups worth of archive log to keep.
+```
+required: n
+example: retention-archive=2
+```
+
+#### `stanza` section
+
+A stanza defines a backup for a specific database.  The stanza section must define the base database path and host/user if the database is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
+
+##### `db-host` key
+
+Define the database host.  Used for backups where the database host is different from the backup host.
+```
+required: n
+example: db-host=db.domain.com
+```
+
+##### `db-user` key
+
+Defines user account on the db host when `db-host` is defined.
+```
+required: n
+example: db-user=postgres
+```
+
+##### `db-path` key
+
+Path to the db data directory (data_directory setting in postgresql.conf).
+```
+required: y
+example: db-path=/data/db
+```
+
+## Release Notes
+
+### v0.50: restore and much more
+
+- Added restore functionality.
+
+- All options can now be set on the command-line making pg_backrest.conf optional.
+
+- De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.
+
+- Added option `--no-start-stop` to allow backups when Postgres is shut down.  If `postmaster.pid` is present then `--force` is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
+
+- Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
+
+- Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.
+
+- Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
+
+- Checksum for backup.manifest to detect corrupted/modified manifest.
+
+- Link `latest` always points to the last backup.  This has been added for convenience and to make restores simpler.
+
+- More comprehensive unit tests in all areas.
+
+### v0.30: Core Restructuring and Unit Tests
+
+- Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
+
+- Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.
+
+- Removed dependency on Storable and replaced with a custom ini file implementation.
+
+- Added much needed documentation
+
+- Numerous other changes that can only be identified with a diff.
+
+### v0.19: Improved Error Reporting/Handling
+
+- Working on improving error handling in the file object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).
+
+- Found and squashed a nasty bug where `file_copy()` was defaulted to ignore errors.  There was also an issue in file_exists that was causing the test to fail when the file actually did exist.  Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.
+
+### v0.18: Return Soft Error When Archive Missing
+
+- The `archive-get` operation returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets Postgres know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.
+
+### v0.17: Warn When Archive Directories Cannot Be Deleted
+
+- If an archive directory which should be empty could not be deleted backrest was throwing an error.  There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue.  This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).
+
+### v0.16: RequestTTY=yes for SSH Sessions
+
+- Added `RequestTTY=yes` to ssh sesssions.  Hoping this will prevent random lockups.
+
+### v0.15: RequestTTY=yes for SSH Sessions
+
+- Added archive-get functionality to aid in restores.
+
+- Added option to force a checkpoint when starting the backup `start-fast=y`.
+
+### v0.11: Minor Fixes
+
+- Removed `master_stderr_discard` option on database SSH connections.  There have been occasional lockups and they could be related to issues originally seen in the file code.
+
+- Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
+
+### v0.10: Backup and Archiving are Functional
+
+- No restore functionality, but the backup directories are consistent Postgres data directories.  You'll need to either uncompress the files or turn off compression in the backup.  Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.
+
+- Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.
+
+- Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% threadsafe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.
+
+- Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.
+
+- The backup.manifest is being written as Storable because Config::IniFile does not seem to handle large files well.  Would definitely like to save these as human-readable text.
+
+- Absolutely no documentation (outside the code).  Well, excepting these release notes.
+
+## Recognition
+
+Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of PgBackRest.
+
+Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.

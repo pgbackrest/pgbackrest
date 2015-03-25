@@ -8,17 +8,20 @@ package BackRestTest::FileTest;
 # Perl includes
 ####################################################################################################################################
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use File::Basename;
 use Cwd 'abs_path';
 use File::stat;
 use Fcntl ':mode';
 use Scalar::Util 'blessed';
+use Time::HiRes qw(gettimeofday usleep);
+use POSIX qw(ceil);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::Config;
 use BackRest::File;
 use BackRest::Remote;
 
@@ -87,13 +90,26 @@ sub BackRestTestFile_Test
     &log(INFO, 'FILE MODULE ********************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Create remote
+    # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = BackRest::Remote->new
     (
-        strHost => $strHost,
-        strUser => $strUser,
-        strCommand => BackRestTestCommon_CommandRemoteGet()
+        $strHost,                               # Host
+        $strUser,                               # User
+        BackRestTestCommon_CommandRemoteGet(),  # Command
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+    );
+
+    my $oLocal = new BackRest::Remote
+    (
+        undef,                                  # Host
+        undef,                                  # User
+        undef,                                  # Command
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -109,25 +125,25 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
             # Create the file object
-            my $oFile = (BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
-            ))->clone();
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
+            );
 
             # Loop through error
             for (my $bError = 0; $bError <= 1; $bError++)
             {
-            # Loop through permission (permission will be set on true)
-            for (my $bPermission = 0; $bPermission <= 1; $bPermission++)
+            # Loop through mode (mode will be set on true)
+            for (my $bMode = 0; $bMode <= 1; $bMode++)
             {
                 my $strPathType = PATH_BACKUP_CLUSTER;
 
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, err ${bError}, prm ${bPermission}")) {next}
+                                            "rmt ${bRemote}, err ${bError}, mode ${bMode}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -136,12 +152,12 @@ sub BackRestTestFile_Test
                 mkdir("${strTestPath}/backup/db") or confess 'Unable to create test/backup/db directory';
 
                 my $strPath = 'path';
-                my $strPermission;
+                my $strMode;
 
-                # If permission then set one (other than the default)
-                if ($bPermission)
+                # If mode then set one (other than the default)
+                if ($bMode)
                 {
-                    $strPermission = '0700';
+                    $strMode = '0700';
                 }
 
                 # If not exists then set the path to something bogus
@@ -156,7 +172,7 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $oFile->path_create($strPathType, $strPath, $strPermission);
+                    $oFile->path_create($strPathType, $strPath, $strMode);
                 };
 
                 # Check for errors
@@ -184,7 +200,7 @@ sub BackRestTestFile_Test
                     confess 'path was not created';
                 }
 
-                # Check that the permissions were set correctly
+                # Check that the mode was set correctly
                 my $oStat = lstat($strPathCheck);
 
                 if (!defined($oStat))
@@ -192,11 +208,11 @@ sub BackRestTestFile_Test
                     confess "unable to stat ${strPathCheck}";
                 }
 
-                if ($bPermission)
+                if ($bMode)
                 {
-                    if ($strPermission ne sprintf('%04o', S_IMODE($oStat->mode)))
+                    if ($strMode ne sprintf('%04o', S_IMODE($oStat->mode)))
                     {
-                        confess "permissions were not set to {$strPermission}";
+                        confess "mode were not set to {$strMode}";
                     }
                 }
             }
@@ -217,13 +233,13 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = (new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
-            );
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
+            ))->clone(1);
 
             # Loop through source exists
             for (my $bSourceExists = 0; $bSourceExists <= 1; $bSourceExists++)
@@ -316,12 +332,12 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through exists
@@ -337,6 +353,7 @@ sub BackRestTestFile_Test
 
                 my $strFile = "${strTestPath}/test.txt";
                 my $strSourceHash;
+                my $iSourceSize;
 
                 if ($bError)
                 {
@@ -345,7 +362,7 @@ sub BackRestTestFile_Test
                 elsif ($bExists)
                 {
                     system("echo 'TESTDATA' > ${strFile}");
-                    $strSourceHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile);
+                    ($strSourceHash, $iSourceSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile);
                 }
 
                 # Execute in eval in case of error
@@ -383,13 +400,70 @@ sub BackRestTestFile_Test
 
                 system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
 
-                my $strDestinationHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile);
+                my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile);
 
                 if ($strSourceHash ne $strDestinationHash)
                 {
                     confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
                 }
             }
+            }
+        }
+    }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test wait()
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if ($strTest eq 'all' || $strTest eq 'wait')
+    {
+        $iRun = 0;
+
+        &log(INFO, '--------------------------------------------------------------------------------');
+        &log(INFO, "Test File->wait()\n");
+
+        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        {
+            # Create the file object
+            my $oFile = new BackRest::File
+            (
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'db' : undef,
+                $bRemote ? $oRemote : $oLocal
+            );
+
+            my $lTimeBegin = gettimeofday();
+
+            if (!BackRestTestCommon_Run(++$iRun,
+                                        "rmt ${bRemote}, begin ${lTimeBegin}")) {next}
+
+            # If there is not enough time to complete the test then sleep
+            if (ceil($lTimeBegin) - $lTimeBegin < .250)
+            {
+                my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+
+                usleep($lSleepMs * 1000);
+
+                &log(DEBUG, "slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+
+                $lTimeBegin = gettimeofday();
+            }
+
+            # Run the test
+            my $lTimeBeginCheck = $oFile->wait(PATH_DB_ABSOLUTE);
+
+            &log(DEBUG, "begin ${lTimeBegin}, check ${lTimeBeginCheck}, end " . time());
+
+            # Current time should have advanced by 1 second
+            if (time() == int($lTimeBegin))
+            {
+                confess "time was not advanced by 1 second";
+            }
+
+            # lTimeBegin and lTimeBeginCheck should be equal
+            if (int($lTimeBegin) != $lTimeBeginCheck)
+            {
+                confess 'time begin ' || int($lTimeBegin) || "and check ${lTimeBeginCheck} should be equal";
             }
         }
     }
@@ -419,12 +493,12 @@ sub BackRestTestFile_Test
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
             );
 
             for (my $bError = 0; $bError <= 1; $bError++)
@@ -527,8 +601,8 @@ sub BackRestTestFile_Test
                             $oManifestHash{name}{"${strName}"}{user} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{group}) ?
                             $oManifestHash{name}{"${strName}"}{group} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{permission}) ?
-                            $oManifestHash{name}{"${strName}"}{permission} : '') . ',' .
+                        (defined($oManifestHash{name}{"${strName}"}{mode}) ?
+                            $oManifestHash{name}{"${strName}"}{mode} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
                             $oManifestHash{name}{"${strName}"}{modification_time} : '') . ',' .
                         (defined($oManifestHash{name}{"${strName}"}{inode}) ?
@@ -561,12 +635,12 @@ sub BackRestTestFile_Test
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
             );
 
             for (my $bSort = false; $bSort <= true; $bSort++)
@@ -687,12 +761,12 @@ sub BackRestTestFile_Test
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through exists
@@ -788,24 +862,27 @@ sub BackRestTestFile_Test
         &log(INFO, '--------------------------------------------------------------------------------');
         &log(INFO, "test File->hash()\n");
 
-        for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through error
-            for (my $bError = 0; $bError <= 1; $bError++)
+            for (my $bError = false; $bError <= true; $bError++)
             {
             # Loop through exists
-            for (my $bExists = 0; $bExists <= 1; $bExists++)
+            for (my $bExists = false; $bExists <= true; $bExists++)
+            {
+            # Loop through exists
+            for (my $bCompressed = false; $bCompressed <= true; $bCompressed++)
             {
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, err ${bError}, exists ${bExists}")) {next}
+                                            "rmt ${bRemote}, err ${bError}, exists ${bExists}, cmp ${bCompressed}")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup($bError);
@@ -823,15 +900,22 @@ sub BackRestTestFile_Test
                 else
                 {
                     system("echo 'TESTDATA' > ${strFile}");
+
+                    if ($bCompressed && !$bRemote)
+                    {
+                        $oFile->compress(PATH_BACKUP_ABSOLUTE, $strFile);
+                        $strFile = $strFile . '.gz';
+                    }
                 }
 
                 # Execute in eval in case of error
                 my $strHash;
+                my $iSize;
                 my $bErrorExpected = !$bExists || $bError || $bRemote;
 
                 eval
                 {
-                    $strHash = $oFile->hash(PATH_BACKUP_ABSOLUTE, $strFile)
+                    ($strHash, $iSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
                 };
 
                 if ($@)
@@ -855,6 +939,7 @@ sub BackRestTestFile_Test
                 }
             }
             }
+            }
         }
     }
 
@@ -870,12 +955,12 @@ sub BackRestTestFile_Test
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $bRemote ? 'backup' : undef,
-                oRemote => $bRemote ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $bRemote ? 'backup' : undef,
+                $bRemote ? $oRemote : $oLocal
             );
 
             # Loop through exists
@@ -952,6 +1037,9 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
+        # Loop through small/large
+        for (my $bLarge = false; $bLarge <= 2; $bLarge++)
+        {
         # Loop through backup local vs remote
         for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
         {
@@ -968,34 +1056,34 @@ sub BackRestTestFile_Test
             my $strRemote = $bBackupRemote ? 'backup' : $bDbRemote ? 'db' : undef;
 
             # Create the file object
-            my $oFile = BackRest::File->new
+            my $oFile = new BackRest::File
             (
-                strStanza => $strStanza,
-                strBackupPath => $strTestPath,
-                strRemote => $strRemote,
-                oRemote => defined($strRemote) ? $oRemote : undef
+                $strStanza,
+                $strTestPath,
+                $strRemote,
+                defined($strRemote) ? $oRemote : $oLocal
             );
 
-            # Loop through source compression
-            for (my $bSourceCompressed = 0; $bSourceCompressed <= 1; $bSourceCompressed++)
-            {
-            # Loop through destination compression
-            for (my $bDestinationCompress = 0; $bDestinationCompress <= 1; $bDestinationCompress++)
-            {
             # Loop through source path types
             for (my $bSourcePathType = 0; $bSourcePathType <= 1; $bSourcePathType++)
             {
             # Loop through destination path types
             for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
             {
-            # Loop through source ignore/require
-            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= 1; $bSourceIgnoreMissing++)
-            {
             # Loop through source missing/present
-            for (my $bSourceMissing = 0; $bSourceMissing <= 1; $bSourceMissing++)
+            for (my $bSourceMissing = 0; $bSourceMissing <= !$bLarge; $bSourceMissing++)
             {
-            # Loop through small/large
-            for (my $bLarge = false; $bLarge <= defined($strRemote) && !$bSourceMissing; $bLarge++)
+            # Loop through source ignore/require
+            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= !$bLarge; $bSourceIgnoreMissing++)
+            {
+            # Loop through checksum append
+            for (my $bChecksumAppend = 0; $bChecksumAppend <= !$bLarge; $bChecksumAppend++)
+            {
+            # Loop through source compression
+            for (my $bSourceCompressed = 0; $bSourceCompressed <= !$bSourceMissing; $bSourceCompressed++)
+            {
+            # Loop through destination compression
+            for (my $bDestinationCompress = 0; $bDestinationCompress <= !$bSourceMissing; $bDestinationCompress++)
             {
                 my $strSourcePathType = $bSourcePathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                 my $strSourcePath = $bSourcePathType ? 'db' : 'backup';
@@ -1004,16 +1092,16 @@ sub BackRestTestFile_Test
                 my $strDestinationPath = $bDestinationPathType ? 'db' : 'backup';
 
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            'rmt ' .
+                                            "lrg ${bLarge}, rmt " .
                                                 (defined($strRemote) && ($strRemote eq $strSourcePath ||
                                                  $strRemote eq $strDestinationPath) ? 1 : 0) .
-                                            ", lrg ${bLarge}, " .
-                                            'srcpth ' . (defined($strRemote) && $strRemote eq $strSourcePath ? 'rmt' : 'lcl') .
-                                                ":${strSourcePath}, srccmp $bSourceCompressed, srcmiss ${bSourceMissing}, " .
-                                                "srcignmiss ${bSourceIgnoreMissing}, " .
+                                            ', srcpth ' . (defined($strRemote) && $strRemote eq $strSourcePath ? 'rmt' : 'lcl') .
+                                                ":${strSourcePath}, srcmiss ${bSourceMissing}, " .
+                                                "srcignmiss ${bSourceIgnoreMissing}, srccmp $bSourceCompressed, " .
                                             'dstpth ' .
                                                 (defined($strRemote) && $strRemote eq $strDestinationPath ? 'rmt' : 'lcl') .
-                                                ":${strDestinationPath}, dstcmp $bDestinationCompress")) {next}
+                                                ":${strDestinationPath}, chkapp ${bChecksumAppend}, " .
+                                                "dstcmp $bDestinationCompress")) {next}
 
                 # Setup test directory
                 BackRestTestFile_Setup(false);
@@ -1023,8 +1111,12 @@ sub BackRestTestFile_Test
                 my $strSourceFile = "${strTestPath}/${strSourcePath}/test-source";
                 my $strDestinationFile = "${strTestPath}/${strDestinationPath}/test-destination";
 
+                my $strCopyHash;
+                my $iCopySize;
+
                 # Create the compressed or uncompressed test file
                 my $strSourceHash;
+                my $iSourceSize;
 
                 if (!$bSourceMissing)
                 {
@@ -1033,7 +1125,7 @@ sub BackRestTestFile_Test
                         $strSourceFile .= '.bin';
                         $strDestinationFile .= '.bin';
 
-                        BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive.bin ${strSourceFile}");
+                        BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive${bLarge}.bin ${strSourceFile}");
                     }
                     else
                     {
@@ -1043,7 +1135,21 @@ sub BackRestTestFile_Test
                         system("echo 'TESTDATA' > ${strSourceFile}");
                     }
 
-                    $strSourceHash = $oFile->hash(PATH_ABSOLUTE, $strSourceFile);
+                    if ($bLarge == 1)
+                    {
+                        $strSourceHash = 'c2e63b6a49d53a53d6df1aa6b70c7c16747ca099';
+                        $iSourceSize = 16777216;
+                    }
+                    elsif ($bLarge == 2)
+                    {
+                        $strSourceHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+                        $iSourceSize = 16777216;
+                    }
+                    else
+                    {
+                        $strSourceHash = '06364afe79d801433188262478a76d19777ef351';
+                        $iSourceSize = 9;
+                    }
 
                     if ($bSourceCompressed)
                     {
@@ -1062,11 +1168,12 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $bReturn = $oFile->copy($strSourcePathType, $strSourceFile,
-                                            $strDestinationPathType, $strDestinationFile,
-                                            $bSourceCompressed, $bDestinationCompress,
-                                            $bSourceIgnoreMissing, undef,
-                                            '0700');
+                    ($bReturn, $strCopyHash, $iCopySize) =
+                        $oFile->copy($strSourcePathType, $strSourceFile,
+                                     $strDestinationPathType, $strDestinationFile,
+                                     $bSourceCompressed, $bDestinationCompress,
+                                     $bSourceIgnoreMissing, undef, '0700', false, undef, undef,
+                                     $bChecksumAppend);
                 };
 
                 # Check for errors after copy
@@ -1109,6 +1216,24 @@ sub BackRestTestFile_Test
                     confess 'expected source file missing error';
                 }
 
+                if (!defined($strCopyHash))
+                {
+                    confess 'copy hash must be defined';
+                }
+
+                if ($bChecksumAppend)
+                {
+                    if ($bDestinationCompress)
+                    {
+                        $strDestinationFile =
+                            substr($strDestinationFile, 0, length($strDestinationFile) -3) . "-${strSourceHash}.gz";
+                    }
+                    else
+                    {
+                        $strDestinationFile .= '-' . $strSourceHash;
+                    }
+                }
+
                 unless (-e $strDestinationFile)
                 {
                     confess "could not find destination file ${strDestinationFile}";
@@ -1124,12 +1249,18 @@ sub BackRestTestFile_Test
                         or die "could not decompress ${strDestinationFile}";
                 }
 
-                my $strDestinationHash = $oFile->hash(PATH_ABSOLUTE, $strDestinationTest);
+                my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_ABSOLUTE, $strDestinationTest);
 
-                if ($strSourceHash ne $strDestinationHash)
+                if ($strSourceHash ne $strDestinationHash || $strSourceHash ne $strCopyHash)
                 {
-                    confess "source ${strSourceHash} and destination ${strDestinationHash} file hashes do not match";
+                    confess "source ${strSourceHash}, copy ${strCopyHash} and destination ${strDestinationHash} file hashes do not match";
                 }
+
+                if ($iSourceSize != $iDestinationSize || $iSourceSize != $iCopySize)
+                {
+                    confess "source ${iSourceSize}, copy ${iCopySize} and destination ${iDestinationSize} sizes do not match";
+                }
+            }
             }
             }
             }

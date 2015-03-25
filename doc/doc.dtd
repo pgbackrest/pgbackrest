@@ -1,0 +1,94 @@
+<!ELEMENT doc (intro, install, operation, config, release, recognition)>
+	<!ATTLIST doc title CDATA #REQUIRED>
+	<!ATTLIST doc subtitle CDATA #REQUIRED>
+
+<!ELEMENT intro (text)>
+
+<!ELEMENT install (text, install-system-list)>
+	<!ATTLIST install title CDATA #REQUIRED>
+
+<!ELEMENT install-system-list (text?, install-system+)>
+
+<!ELEMENT install-system (text)>
+	<!ATTLIST install-system title CDATA #REQUIRED>
+
+<!ELEMENT operation (text?, operation-general, command-list)>
+	<!ATTLIST operation title CDATA #REQUIRED>
+
+<!ELEMENT operation-general (text, option-list)>
+	<!ATTLIST operation-general title CDATA #REQUIRED>
+
+<!ELEMENT command-list (text?, command+)>
+	<!ATTLIST command-list title CDATA #REQUIRED>
+
+<!ELEMENT command (text, option-list?, command-example-list)>
+	<!ATTLIST command id CDATA #REQUIRED>
+
+<!ELEMENT command-example-list (text?, command-example+)>
+	<!ATTLIST command-example-list title CDATA "Examples">
+
+<!ELEMENT command-example (text)>
+	<!ATTLIST command-example title CDATA "Example">
+
+<!ELEMENT option-list (option+)>
+
+<!ELEMENT option (text, example?)>
+	<!ATTLIST option id CDATA #REQUIRED>
+
+<!ELEMENT config (text, config-example-list, config-section-list)>
+	<!ATTLIST config title CDATA #REQUIRED>
+
+<!ELEMENT config-example-list (text?, config-example+)>
+	<!ATTLIST config-example-list title CDATA #REQUIRED>
+
+<!ELEMENT config-example (text)>
+	<!ATTLIST config-example title CDATA #REQUIRED>
+
+<!ELEMENT config-section-list (text?, config-section+)>
+	<!ATTLIST config-section-list title CDATA #REQUIRED>
+
+<!ELEMENT config-section (text, config-key-list?)>
+	<!ATTLIST config-section id CDATA #REQUIRED>
+
+<!ELEMENT config-key-list (config-key+)>
+
+<!ELEMENT config-key (text, default?, allow?, example)>
+	<!ATTLIST config-key id CDATA #REQUIRED>
+
+<!ELEMENT default (#PCDATA)>
+<!ELEMENT allow (#PCDATA)>
+<!ELEMENT example (#PCDATA)>
+
+<!ELEMENT release (text?, release-version-list)>
+	<!ATTLIST release title CDATA #REQUIRED>
+
+<!ELEMENT release-version-list (release-version+)>
+
+<!ELEMENT release-version (text?, release-feature-bullet-list)>
+	<!ATTLIST release-version version CDATA #REQUIRED>
+	<!ATTLIST release-version title CDATA #REQUIRED>
+
+<!ELEMENT release-feature-bullet-list (release-feature+)>
+
+<!ELEMENT release-feature (text)>
+
+<!ELEMENT recognition (text)>
+	<!ATTLIST recognition title CDATA #REQUIRED>
+
+<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest|postgres)*>
+<!ELEMENT i (#PCDATA)>
+<!ELEMENT b (#PCDATA)>
+<!ELEMENT bi (#PCDATA)>
+<!ELEMENT ul (li+)>
+<!ELEMENT ol (li+)>
+<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest|postgres)*>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT code (#PCDATA)>
+<!ELEMENT code-block (#PCDATA)>
+<!ELEMENT file (#PCDATA)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT cmd (#PCDATA)>
+<!ELEMENT param (#PCDATA)>
+<!ELEMENT setting (#PCDATA)>
+<!ELEMENT backrest EMPTY>
+<!ELEMENT postgres EMPTY>

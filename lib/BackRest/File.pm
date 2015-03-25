@@ -3,60 +3,23 @@
 ####################################################################################################################################
 package BackRest::File;
 
-use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
-use Moose;
 use Net::OpenSSH;
-use File::Basename;
+use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use Digest::SHA;
 use File::stat;
 use Fcntl ':mode';
-use IO::Compress::Gzip qw(gzip $GzipError);
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
-use IO::String;
+use Exporter qw(import);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::Remote;
-
-# Exports
-use Exporter qw(import);
-our @EXPORT = qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE
-                 PATH_BACKUP_CLUSTER PATH_BACKUP_TMP PATH_BACKUP_ARCHIVE
-
-                 COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE
-                 COMMAND_ERR_LINK_READ COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM
-
-                 PIPE_STDIN PIPE_STDOUT PIPE_STDERR
-
-                 REMOTE_DB REMOTE_BACKUP REMOTE_NONE
-
-                 OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST OP_FILE_COMPRESS
-                 OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
-
-# Extension and permissions
-has strCompressExtension => (is => 'ro', default => 'gz');
-has strDefaultPathPermission => (is => 'bare', default => '0750');
-has strDefaultFilePermission => (is => 'ro', default => '0640');
-
-# Command strings
-has strCommand => (is => 'bare');
-
-# Module variables
-has strRemote => (is => 'bare');                # Remote type (db or backup)
-has oRemote   => (is => 'bare');                # Remote object
-
-has strBackupPath => (is => 'bare');            # Backup base path
-
-# Process flags
-has strStanza => (is => 'bare');
-has iThreadIdx => (is => 'bare');
 
 ####################################################################################################################################
 # COMMAND Error Constants
@@ -73,20 +36,27 @@ use constant
     COMMAND_ERR_PATH_READ              => 8
 };
 
+our @EXPORT = qw(COMMAND_ERR_FILE_MISSING COMMAND_ERR_FILE_READ COMMAND_ERR_FILE_MOVE COMMAND_ERR_FILE_TYPE COMMAND_ERR_LINK_READ
+                 COMMAND_ERR_PATH_MISSING COMMAND_ERR_PATH_CREATE COMMAND_ERR_PARAM);
+
 ####################################################################################################################################
 # PATH_GET Constants
 ####################################################################################################################################
 use constant
 {
-    PATH_ABSOLUTE        => 'absolute',
-    PATH_DB              => 'db',
-    PATH_DB_ABSOLUTE     => 'db:absolute',
-    PATH_BACKUP          => 'backup',
-    PATH_BACKUP_ABSOLUTE => 'backup:absolute',
-    PATH_BACKUP_CLUSTER  => 'backup:cluster',
-    PATH_BACKUP_TMP      => 'backup:tmp',
-    PATH_BACKUP_ARCHIVE  => 'backup:archive'
+    PATH_ABSOLUTE           => 'absolute',
+    PATH_DB                 => 'db',
+    PATH_DB_ABSOLUTE        => 'db:absolute',
+    PATH_BACKUP             => 'backup',
+    PATH_BACKUP_ABSOLUTE    => 'backup:absolute',
+    PATH_BACKUP_CLUSTER     => 'backup:cluster',
+    PATH_BACKUP_TMP         => 'backup:tmp',
+    PATH_BACKUP_ARCHIVE     => 'backup:archive',
+    PATH_BACKUP_ARCHIVE_OUT => 'backup:archive:out'
 };
+
+push @EXPORT, qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP
+                 PATH_BACKUP_ARCHIVE PATH_BACKUP_ARCHIVE_OUT);
 
 ####################################################################################################################################
 # STD Pipe Constants
@@ -98,21 +68,15 @@ use constant
     PIPE_STDERR  => '<STDERR>'
 };
 
-####################################################################################################################################
-# Remote Types
-####################################################################################################################################
-use constant
-{
-    REMOTE_DB     => PATH_DB,
-    REMOTE_BACKUP => PATH_BACKUP,
-    REMOTE_NONE   => 'none'
-};
+push @EXPORT, qw(PIPE_STDIN PIPE_STDOUT PIPE_STDERR);
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
 use constant
 {
+    OP_FILE_OWNER       => 'File->owner',
+    OP_FILE_WAIT        => 'File->wait',
     OP_FILE_LIST        => 'File->list',
     OP_FILE_EXISTS      => 'File->exists',
     OP_FILE_HASH        => 'File->hash',
@@ -123,31 +87,63 @@ use constant
     OP_FILE_COPY        => 'File->copy',
     OP_FILE_COPY_OUT    => 'File->copy_out',
     OP_FILE_COPY_IN     => 'File->copy_in',
-    OP_FILE_PATH_CREATE => 'File->path_create'
+    OP_FILE_PATH_CREATE => 'File->path_create',
+    OP_FILE_LINK_CREATE => 'File->link_create'
 };
+
+push @EXPORT, qw(OP_FILE_OWNER OP_FILE_WAIT OP_FILE_LIST OP_FILE_EXISTS OP_FILE_HASH OP_FILE_REMOVE OP_FILE_MANIFEST
+                 OP_FILE_COMPRESS OP_FILE_MOVE OP_FILE_COPY OP_FILE_COPY_OUT OP_FILE_COPY_IN OP_FILE_PATH_CREATE);
 
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-sub BUILD
+sub new
 {
-    my $self = shift;
+    my $class = shift;
+    my $strStanza = shift;
+    my $strBackupPath = shift;
+    my $strRemote = shift;
+    my $oRemote = shift;
+    my $strDefaultPathMode = shift;
+    my $strDefaultFileMode = shift;
+    my $iThreadIdx = shift;
+
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
+    # Default compression extension to gz
+    $self->{strCompressExtension} = 'gz';
+
+    # Default file and path mode
+    $self->{strDefaultPathMode} = defined($strDefaultPathMode) ? $strDefaultPathMode : '0750';
+    $self->{strDefaultFileMode} = defined($strDefaultFileMode) ? $strDefaultFileMode : '0640';
+
+    # Initialize other variables
+    $self->{strStanza} = $strStanza;
+    $self->{strBackupPath} = $strBackupPath;
+    $self->{strRemote} = $strRemote;
+    $self->{oRemote} = $oRemote;
+    $self->{iThreadIdx} = $iThreadIdx;
+
+    # Remote object must be set
+    if (!defined($self->{oRemote}))
+    {
+        confess &log(ASSERT, 'oRemote must be defined');
+    }
 
     # If remote is defined check parameters and open session
-    if (defined($self->{strRemote}) && $self->{strRemote} ne REMOTE_NONE)
+    if (defined($self->{strRemote}) && $self->{strRemote} ne NONE)
     {
         # Make sure remote is valid
-        if ($self->{strRemote} ne REMOTE_DB && $self->{strRemote} ne REMOTE_BACKUP)
+        if ($self->{strRemote} ne DB && $self->{strRemote} ne BACKUP)
         {
-            confess &log(ASSERT, 'strRemote must be "' . REMOTE_DB . '" or "' . REMOTE_BACKUP . '"');
-        }
-
-        # Remote object must be set
-        if (!defined($self->{oRemote}))
-        {
-            confess &log(ASSERT, 'oRemote must be defined');
+            confess &log(ASSERT, 'strRemote must be "' . DB . '" or "' . BACKUP .
+                                 "\", $self->{strRemote} was passed");
         }
     }
+
+    return $self;
 }
 
 ####################################################################################################################################
@@ -173,12 +169,13 @@ sub clone
 
     return BackRest::File->new
     (
-        strCommand => $self->{strCommand},
-        strRemote => $self->{strRemote},
-        oRemote => defined($self->{oRemote}) ? $self->{oRemote}->clone($iThreadIdx) : undef,
-        strBackupPath => $self->{strBackupPath},
-        strStanza => $self->{strStanza},
-        iThreadIdx => $iThreadIdx
+        $self->{strStanza},
+        $self->{strBackupPath},
+        $self->{strRemote},
+        defined($self->{oRemote}) ? $self->{oRemote}->clone() : undef,
+        $self->{strDefaultPathMode},
+        $self->{strDefaultFileMode},
+        $iThreadIdx
     );
 }
 
@@ -228,10 +225,11 @@ sub path_get
         confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
     }
 
-    # Only allow temp files for PATH_BACKUP_ARCHIVE and PATH_BACKUP_TMP and any absolute path
+    # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, PATH_BACKUP_TMP and any absolute path
     $bTemp = defined($bTemp) ? $bTemp : false;
 
-    if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_TMP || $bAbsolute))
+    if ($bTemp && !($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP ||
+        $bAbsolute))
     {
         confess &log(ASSERT, 'temp file not supported on path ' . $strType);
     }
@@ -279,28 +277,39 @@ sub path_get
     }
 
     # Get the backup archive path
-    if ($strType eq PATH_BACKUP_ARCHIVE)
+    if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
     {
-        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
-        my $strArchive;
+        my $strArchivePath = "$self->{strBackupPath}/archive";
 
         if ($bTemp)
         {
-            return "${strArchivePath}/file.tmp" . (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '');
+            return "${strArchivePath}/temp/$self->{strStanza}-archive" .
+                   (defined($self->{iThreadIdx}) ? "-$self->{iThreadIdx}" : '') . ".tmp";
         }
 
-        if (defined($strFile))
+        $strArchivePath .= "/$self->{strStanza}";
+
+        if ($strType eq PATH_BACKUP_ARCHIVE)
         {
-            $strArchive = substr(basename($strFile), 0, 24);
+            my $strArchive;
 
-            if ($strArchive !~ /^([0-F]){24}$/)
+            if (defined($strFile))
             {
-                return "${strArchivePath}/${strFile}";
-            }
-        }
+                $strArchive = substr(basename($strFile), 0, 24);
 
-        return $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
-               (defined($strFile) ? '/' . $strFile : '');
+                if ($strArchive !~ /^([0-F]){24}$/)
+                {
+                    return "${strArchivePath}/${strFile}";
+                }
+            }
+
+            return $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
+                   (defined($strFile) ? '/' . $strFile : '');
+        }
+        else
+        {
+            return "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
+        }
     }
 
     if ($strType eq PATH_BACKUP_CLUSTER)
@@ -348,7 +357,7 @@ sub link_create
     # if bPathCreate is not defined, default to true
     $bPathCreate = defined($bPathCreate) ? $bPathCreate : true;
 
-    # Source and destination path types must be the same (both PATH_DB or both PATH_BACKUP)
+    # Source and destination path types must be the same (e.g. both PATH_DB or both PATH_BACKUP, etc.)
     if ($self->path_type_get($strSourcePathType) ne $self->path_type_get($strDestinationPathType))
     {
         confess &log(ASSERT, 'path types must be equal in link create');
@@ -357,6 +366,15 @@ sub link_create
     # Generate source and destination files
     my $strSource = $self->path_get($strSourcePathType, $strSourceFile);
     my $strDestination = $self->path_get($strDestinationPathType, $strDestinationFile);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_LINK_CREATE;
+
+    my $strDebug = "${strSourcePathType}" . (defined($strSource) ? ":${strSource}" : '') .
+                   " to ${strDestinationPathType}" . (defined($strDestination) ? ":${strDestination}" : '') .
+                   ', hard = ' . ($bHard ? 'true' : 'false') . ", relative = " . ($bRelative ? 'true' : 'false') .
+                   ', destination_path_create = ' . ($bPathCreate ? 'true' : 'false');
+    &log(DEBUG, "${strOperation}: ${strDebug}");
 
     # If the destination path is backup and does not exist, create it
     if ($bPathCreate && $self->path_type_get($strDestinationPathType) eq PATH_BACKUP)
@@ -392,22 +410,24 @@ sub link_create
         }
     }
 
-    # Create the command
-    my $strCommand = 'ln' . (!$bHard ? ' -s' : '') . " ${strSource} ${strDestination}";
-
     # Run remotely
     if ($self->is_remote($strSourcePathType))
     {
-        &log(TRACE, "link_create: remote ${strSourcePathType} '${strCommand}'");
-
-        my $oSSH = $self->remote_get($strSourcePathType);
-        $oSSH->system($strCommand) or confess &log("unable to create link from ${strSource} to ${strDestination}");
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
     }
     # Run locally
     else
     {
-        &log(TRACE, "link_create: local '${strCommand}'");
-        system($strCommand) == 0 or confess &log("unable to create link from ${strSource} to ${strDestination}");
+        if ($bHard)
+        {
+            link($strSource, $strDestination)
+                or confess &log(ERROR, "unable to create hardlink from ${strSource} to ${strDestination}");
+        }
+        else
+        {
+            symlink($strSource, $strDestination)
+                or confess &log(ERROR, "unable to create symlink from ${strSource} to ${strDestination}");
+        }
     }
 }
 
@@ -511,25 +531,8 @@ sub compress
     # Run locally
     else
     {
-        # Compress the file
-        if (!gzip($strPathOp => "${strPathOp}.gz"))
-        {
-            my $strError = "${strPathOp} could not be compressed:" . $!;
-            my $iErrorCode = COMMAND_ERR_FILE_READ;
-
-            if (!$self->exists($strPathType, $strFile))
-            {
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = COMMAND_ERR_FILE_MISSING;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
-
-            confess &log(ERROR, "${strDebug}: " . $strError);
-        }
+        # Use copy to compress the file
+        $self->copy($strPathType, $strFile, $strPathType, "${strFile}.gz", false, true);
 
         # Remove the old file
         unlink($strPathOp)
@@ -547,7 +550,7 @@ sub path_create
     my $self = shift;
     my $strPathType = shift;
     my $strPath = shift;
-    my $strPermission = shift;
+    my $strMode = shift;
     my $bIgnoreExists = shift;
 
     # Set operation variables
@@ -555,7 +558,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPathOp}, permission " . (defined($strPermission) ? $strPermission : '[undef]');
+    my $strDebug = " ${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -565,9 +568,9 @@ sub path_create
 
         $oParamHash{path} = ${strPathOp};
 
-        if (defined($strPermission))
+        if (defined($strMode))
         {
-            $oParamHash{permission} = ${strPermission};
+            $oParamHash{mode} = ${strMode};
         }
 
         # Add remote info to debug string
@@ -585,9 +588,9 @@ sub path_create
             # Attempt the create the directory
             my $stryError;
 
-            if (defined($strPermission))
+            if (defined($strMode))
             {
-                make_path($strPathOp, {mode => oct($strPermission), error => \$stryError});
+                make_path($strPathOp, {mode => oct($strMode), error => \$stryError});
             }
             else
             {
@@ -695,7 +698,7 @@ sub remove
     my $bRemoved = true;
 
     # Set operation and debug strings
-    my $strOperation = OP_FILE_EXISTS;
+    my $strOperation = OP_FILE_REMOVE;
     my $strDebug = "${strPathType}:${strPathOp}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
@@ -743,15 +746,39 @@ sub hash
     my $self = shift;
     my $strPathType = shift;
     my $strFile = shift;
+    my $bCompressed = shift;
     my $strHashType = shift;
+
+    my ($strHash, $iSize) = $self->hash_size($strPathType, $strFile, $bCompressed, $strHashType);
+
+    return $strHash;
+}
+
+####################################################################################################################################
+# HASH_SIZE
+####################################################################################################################################
+sub hash_size
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+    my $bCompressed = shift;
+    my $strHashType = shift;
+
+    # Set defaults
+    $bCompressed = defined($bCompressed) ? $bCompressed : false;
+    $strHashType = defined($strHashType) ? $strHashType : 'sha1';
 
     # Set operation variables
     my $strFileOp = $self->path_get($strPathType, $strFile);
     my $strHash;
+    my $iSize = 0;
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_HASH;
-    my $strDebug = "${strPathType}:${strFileOp}";
+    my $strDebug = "${strPathType}:${strFileOp}, " .
+                   'compressed = ' . ($bCompressed ? 'true' : 'false') . ', ' .
+                   "hash_type = ${strHashType}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -781,16 +808,104 @@ sub hash
             confess &log(ERROR, "${strDebug}: " . $strError);
         }
 
-        my $oSHA = Digest::SHA->new(defined($strHashType) ? $strHashType : 'sha1');
+        my $oSHA = Digest::SHA->new($strHashType);
 
-        $oSHA->addfile($hFile);
+        if ($bCompressed)
+        {
+            ($strHash, $iSize) =
+                $self->{oRemote}->binary_xfer($hFile, undef, 'in', true, false, false);
+        }
+        else
+        {
+            my $iBlockSize;
+            my $tBuffer;
+
+            do
+            {
+                # Read a block from the file
+                $iBlockSize = sysread($hFile, $tBuffer, 4194304);
+
+                if (!defined($iBlockSize))
+                {
+                    confess &log(ERROR, "${strFileOp} could not be read: " . $!);
+                }
+
+                $iSize += $iBlockSize;
+                $oSHA->add($tBuffer);
+            }
+            while ($iBlockSize > 0);
+
+            $strHash = $oSHA->hexdigest();
+        }
 
         close($hFile);
-
-        $strHash = $oSHA->hexdigest();
     }
 
-    return $strHash;
+    return $strHash, $iSize;
+}
+
+####################################################################################################################################
+# OWNER
+####################################################################################################################################
+sub owner
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strFile = shift;
+    my $strUser = shift;
+    my $strGroup = shift;
+
+    # Set operation variables
+    my $strFileOp = $self->path_get($strPathType, $strFile);
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_OWNER;
+    my $strDebug = "${strPathType}:${strFileOp}, " .
+                   'user = ' . (defined($strUser) ? $strUser : '[undef]') .
+                   'group = ' . (defined($strGroup) ? $strGroup : '[undef]');
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    if ($self->is_remote($strPathType))
+    {
+        confess &log(ASSERT, "${strDebug}: remote operation not supported");
+    }
+    else
+    {
+        my $iUserId;
+        my $iGroupId;
+        my $oStat;
+
+        if (!defined($strUser) || !defined($strGroup))
+        {
+            $oStat = stat($strFileOp);
+
+            if (!defined($oStat))
+            {
+                confess &log(ERROR, 'unable to stat ${strFileOp}');
+            }
+        }
+
+        if (defined($strUser))
+        {
+            $iUserId = getpwnam($strUser);
+        }
+        else
+        {
+            $iUserId = $oStat->uid;
+        }
+
+        if (defined($strGroup))
+        {
+            $iGroupId = getgrnam($strGroup);
+        }
+        else
+        {
+            $iGroupId = $oStat->gid;
+        }
+
+        chown($iUserId, $iGroupId, $strFileOp)
+            or confess &log(ERROR, "unable to set ownership for ${strFileOp}");
+    }
 }
 
 ####################################################################################################################################
@@ -901,6 +1016,47 @@ sub list
 
     # Return file list
     return @stryFileList;
+}
+
+####################################################################################################################################
+# WAIT
+#
+# Wait until the next second.  This is done in the file object because it must be performed on whichever side the db is on, local or
+# remote.  This function is used to make sure that no files are copied in the same second as the manifest is created.  The reason is
+# that the db might modify they file again in the same second as the copy and that change will not be visible to a subsequent
+# incremental backup using timestamp/size to determine deltas.
+####################################################################################################################################
+sub wait
+{
+    my $self = shift;
+    my $strPathType = shift;
+
+    # Set operation and debug strings
+    my $strOperation = OP_FILE_WAIT;
+    my $strDebug = "${strPathType}";
+    &log(DEBUG, "${strOperation}: ${strDebug}");
+
+    # Second when the function was called
+    my $lTimeBegin;
+
+    # Run remotely
+    if ($self->is_remote($strPathType))
+    {
+        # Add remote info to debug string
+        $strDebug = "${strOperation}: remote: ${strDebug}";
+        &log(TRACE, "${strOperation}: remote");
+
+        # Execute the command
+        $lTimeBegin = $self->{oRemote}->command_execute($strOperation, undef, true, $strDebug);
+    }
+    # Run locally
+    else
+    {
+        # Wait the remainder of the current second
+        $lTimeBegin = wait_remainder();
+    }
+
+    return $lTimeBegin;
 }
 
 ####################################################################################################################################
@@ -1101,10 +1257,10 @@ sub manifest_recurse
         # Get group name
         ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
 
-        # Get permissions
+        # Get mode
         if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne 'l')
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{permission} = sprintf('%04o', S_IMODE($oStat->mode));
+            ${$oManifestHashRef}{name}{"${strFile}"}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
         }
 
         # Recurse into directories
@@ -1123,7 +1279,7 @@ sub manifest_recurse
 # * source and destination can be local or remote
 # * wire and output compression/decompression are supported
 # * intermediate temp files are used to prevent partial copies
-# * modification time and permissions can be set on destination file
+# * modification time, mode, and ownership can be set on destination file
 # * destination path can optionally be created
 ####################################################################################################################################
 sub copy
@@ -1137,14 +1293,18 @@ sub copy
     my $bDestinationCompress = shift;
     my $bIgnoreMissingSource = shift;
     my $lModificationTime = shift;
-    my $strPermission = shift;
+    my $strMode = shift;
     my $bDestinationPathCreate = shift;
+    my $strUser = shift;
+    my $strGroup = shift;
+    my $bAppendChecksum = shift;
 
     # Set defaults
     $bSourceCompressed = defined($bSourceCompressed) ? $bSourceCompressed : false;
     $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : false;
+    $bAppendChecksum = defined($bAppendChecksum) ? $bAppendChecksum : false;
 
     # Set working variables
     my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
@@ -1156,6 +1316,11 @@ sub copy
     my $strDestinationTmpOp = $strDestinationPathType eq PIPE_STDOUT ?
         undef : $self->path_get($strDestinationPathType, $strDestinationFile, true);
 
+    # Checksum and size variables
+    my $strChecksum = undef;
+    my $iFileSize = undef;
+    my $bResult = true;
+
     # Set debug string and log
     my $strDebug = ($bSourceRemote ? ' remote' : ' local') . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceOp}" : '') .
@@ -1164,7 +1329,11 @@ sub copy
                    ', source_compressed = ' . ($bSourceCompressed ? 'true' : 'false') .
                    ', destination_compress = ' . ($bDestinationCompress ? 'true' : 'false') .
                    ', ignore_missing_source = ' . ($bIgnoreMissingSource ? 'true' : 'false') .
-                   ', destination_path_create = ' . ($bDestinationPathCreate ? 'true' : 'false');
+                   ', destination_path_create = ' . ($bDestinationPathCreate ? 'true' : 'false') .
+                   ', modification_time = ' . (defined($lModificationTime) ? $lModificationTime : '[undef]') .
+                   ', mode = ' . (defined($strMode) ? $strMode : '[undef]') .
+                   ', user = ' . (defined($strUser) ? $strUser : '[undef]') .
+                   ', group = ' . (defined($strGroup) ? $strGroup : '[undef]');
     &log(DEBUG, OP_FILE_COPY . ": ${strDebug}");
 
     # Open the source and destination files (if needed)
@@ -1185,7 +1354,7 @@ sub copy
 
                 if ($bIgnoreMissingSource && $strDestinationPathType ne PIPE_STDOUT)
                 {
-                    return false;
+                    return false, undef, undef;
                 }
             }
 
@@ -1195,7 +1364,7 @@ sub copy
             {
                 if ($strDestinationPathType eq PIPE_STDOUT)
                 {
-                    $self->{oRemote}->write_line(*STDOUT, 'block 0');
+                    $self->{oRemote}->write_line(*STDOUT, 'block -1');
                 }
 
                 confess &log(ERROR, $strError, $iErrorCode);
@@ -1264,6 +1433,7 @@ sub copy
             {
                 $oParamHash{source_file} = $strSourceOp;
                 $oParamHash{source_compressed} = $bSourceCompressed;
+                $oParamHash{destination_compress} = $bDestinationCompress;
 
                 $hIn = $self->{oRemote}->{hOut};
             }
@@ -1282,12 +1452,28 @@ sub copy
             else
             {
                 $oParamHash{destination_file} = $strDestinationOp;
+                $oParamHash{source_compressed} = $bSourceCompressed;
                 $oParamHash{destination_compress} = $bDestinationCompress;
                 $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
-                if (defined($strPermission))
+                if (defined($strMode))
                 {
-                    $oParamHash{permission} = $strPermission;
+                    $oParamHash{mode} = $strMode;
+                }
+
+                if (defined($strUser))
+                {
+                    $oParamHash{user} = $strUser;
+                }
+
+                if (defined($strGroup))
+                {
+                    $oParamHash{group} = $strGroup;
+                }
+
+                if ($bAppendChecksum)
+                {
+                    $oParamHash{append_checksum} = true;
                 }
 
                 $hOut = $self->{oRemote}->{hIn};
@@ -1304,14 +1490,29 @@ sub copy
             $oParamHash{destination_compress} = $bDestinationCompress;
             $oParamHash{destination_path_create} = $bDestinationPathCreate;
 
-            if (defined($strPermission))
+            if (defined($strMode))
             {
-                $oParamHash{permission} = $strPermission;
+                $oParamHash{mode} = $strMode;
+            }
+
+            if (defined($strUser))
+            {
+                $oParamHash{user} = $strUser;
+            }
+
+            if (defined($strGroup))
+            {
+                $oParamHash{group} = $strGroup;
             }
 
             if ($bIgnoreMissingSource)
             {
                 $oParamHash{ignore_missing_source} = $bIgnoreMissingSource;
+            }
+
+            if ($bAppendChecksum)
+            {
+                $oParamHash{append_checksum} = true;
             }
         }
 
@@ -1333,7 +1534,8 @@ sub copy
         # Transfer the file (skip this for copies where both sides are remote)
         if ($strOperation ne OP_FILE_COPY)
         {
-            $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
         }
 
         # If this is the controlling process then wait for OK from remote
@@ -1344,7 +1546,47 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oRemote}->output_read($strOperation eq OP_FILE_COPY, $strDebug, true);
+                $strOutput = $self->{oRemote}->output_read(true, $strDebug, true);
+
+                # Check the result of the remote call
+                if (substr($strOutput, 0, 1) eq 'Y')
+                {
+                    # If the operation was purely remote, get checksum/size
+                    if ($strOperation eq OP_FILE_COPY ||
+                        $strOperation eq OP_FILE_COPY_IN && $bSourceCompressed && !$bDestinationCompress)
+                    {
+                        # Checksum shouldn't already be set
+                        if (defined($strChecksum) || defined($iFileSize))
+                        {
+                            confess &log(ASSERT, "checksum and size are already defined, but shouldn't be");
+                        }
+
+                        # Parse output and check to make sure tokens are defined
+                        my @stryToken = split(/ /, $strOutput);
+
+                        if (!defined($stryToken[1]) || !defined($stryToken[2]) ||
+                            $stryToken[1] eq '?' && $stryToken[2] eq '?')
+                        {
+                            confess &log(ERROR, "invalid return from copy" . (defined($strOutput) ? ": ${strOutput}" : ''));
+                        }
+
+                        # Read the checksum and size
+                        if ($stryToken[1] ne '?')
+                        {
+                            $strChecksum = $stryToken[1];
+                        }
+
+                        if ($stryToken[2] ne '?')
+                        {
+                            $iFileSize = $stryToken[2];
+                        }
+                    }
+                }
+                # Remote called returned false
+                else
+                {
+                    $bResult = false;
+                }
             };
 
             # If there is an error then evaluate
@@ -1360,38 +1602,38 @@ sub copy
                     close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
                     unlink($strDestinationTmpOp) or confess &log(ERROR, "cannot remove file ${strDestinationTmpOp}");
 
-                    return false;
+                    return false, undef, undef;
                 }
 
-                # Otherwise report the error
                 confess $oMessage;
-            }
-
-            # If this was a remote copy, then return the result
-            if ($strOperation eq OP_FILE_COPY)
-            {
-                return false; #$strOutput eq 'N' ? true : false;
             }
         }
     }
     # Else this is a local operation
     else
     {
-        # If the source is compressed and the destination is not then decompress
-        if ($bSourceCompressed && !$bDestinationCompress)
+        # If the source is not compressed and the destination is then compress
+        if (!$bSourceCompressed && $bDestinationCompress)
         {
-            gunzip($hSourceFile => $hDestinationFile)
-                or die confess &log(ERROR, "${strDebug}: unable to uncompress: " . $GunzipError);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, true, false);
         }
-        elsif (!$bSourceCompressed && $bDestinationCompress)
+        # If the source is compressed and the destination is not then decompress
+        elsif ($bSourceCompressed && !$bDestinationCompress)
         {
-            gzip($hSourceFile => $hDestinationFile)
-                or die confess &log(ERROR, "${strDebug}: unable to compress: " . $GzipError);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', true, false, false);
+        }
+        # Else both side are compressed, so copy capturing checksum
+        elsif ($bSourceCompressed)
+        {
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', true, true, false);
         }
         else
         {
-           cp($hSourceFile, $hDestinationFile)
-               or die confess &log(ERROR, "${strDebug}: unable to copy: " . $!);
+            ($strChecksum, $iFileSize) =
+                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', false, true, false);
         }
     }
 
@@ -1407,14 +1649,22 @@ sub copy
         close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
     }
 
-    # Where the destination is local, set permissions, modification time, and perform move to final location
-    if (!$bDestinationRemote)
+    # Checksum and file size should be set if the destination is not remote
+    if ($bResult &&
+        !(!$bSourceRemote && $bDestinationRemote && $bSourceCompressed) &&
+        (!defined($strChecksum) || !defined($iFileSize)))
     {
-        # Set the file permission if required
-        if (defined($strPermission))
+        confess &log(ASSERT, "${strDebug}: checksum or file size not set");
+    }
+
+    # Where the destination is local, set mode, modification time, and perform move to final location
+    if ($bResult && !$bDestinationRemote)
+    {
+        # Set the file Mode if required
+        if (defined($strMode))
         {
-            chmod(oct($strPermission), $strDestinationTmpOp)
-                or confess &log(ERROR, "unable to set permissions for local ${strDestinationTmpOp}");
+            chmod(oct($strMode), $strDestinationTmpOp)
+                or confess &log(ERROR, "unable to set mode for local ${strDestinationTmpOp}");
         }
 
         # Set the file modification time if required
@@ -1424,12 +1674,33 @@ sub copy
                 or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
         }
 
+        # set user and/or group if required
+        if (defined($strUser) || defined($strGroup))
+        {
+            $self->owner(PATH_ABSOLUTE, $strDestinationTmpOp, $strUser, $strGroup);
+        }
+
+        # Replace checksum in destination filename (if exists)
+        if ($bAppendChecksum)
+        {
+            # Replace destination filename
+            if ($bDestinationCompress)
+            {
+                $strDestinationOp =
+                    substr($strDestinationOp, 0, length($strDestinationOp) - length($self->{strCompressExtension}) - 1) .
+                    '-' . $strChecksum . '.' . $self->{strCompressExtension};
+            }
+            else
+            {
+                $strDestinationOp .= '-' . $strChecksum;
+            }
+        }
+
         # Move the file from tmp to final destination
         $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, true);
     }
 
-    return true;
+    return $bResult, $strChecksum, $iFileSize;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+1;

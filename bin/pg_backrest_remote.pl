@@ -7,11 +7,11 @@
 # Perl includes
 ####################################################################################################################################
 use strict;
-use warnings;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use File::Basename;
 use Getopt::Long;
-use Carp;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
@@ -54,16 +54,21 @@ sub param_get
 log_level_set(OFF, OFF);
 
 # Create the remote object
-my $oRemote = BackRest::Remote->new();
-
-# Create the file object
-my $oFile = BackRest::File->new
+my $oRemote = new BackRest::Remote
 (
-    oRemote => $oRemote
+    undef,      # Host
+    undef,      # User
+    'remote'    # Command
 );
 
-# Write the greeting so remote process knows who we are
-$oRemote->greeting_write();
+# Create the file object
+my $oFile = new BackRest::File
+(
+    undef,
+    undef,
+    undef,
+    $oRemote,
+);
 
 # Command string
 my $strCommand = OP_NOOP;
@@ -77,26 +82,58 @@ while ($strCommand ne OP_EXIT)
 
     eval
     {
-        # Copy a file to STDOUT
-        if ($strCommand eq OP_FILE_COPY_OUT)
+        # Copy file
+        if ($strCommand eq OP_FILE_COPY ||
+            $strCommand eq OP_FILE_COPY_IN ||
+            $strCommand eq OP_FILE_COPY_OUT)
         {
-            $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
-                         PIPE_STDOUT, undef,
-                         param_get(\%oParamHash, 'source_compressed'), undef);
+            my $bResult;
+            my $strChecksum;
+            my $iFileSize;
 
-            $oRemote->output_write();
-        }
-        # Copy a file from STDIN
-        elsif ($strCommand eq OP_FILE_COPY_IN)
-        {
-            $oFile->copy(PIPE_STDIN, undef,
-                         PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                         undef, param_get(\%oParamHash, 'destination_compress'),
-                         undef, undef,
-                         param_get(\%oParamHash, 'permission', false),
-                         param_get(\%oParamHash, 'destination_path_create'));
+            # Copy a file locally
+            if ($strCommand eq OP_FILE_COPY)
+            {
+                ($bResult, $strChecksum, $iFileSize) =
+                    $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                                 PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                                 param_get(\%oParamHash, 'source_compressed'),
+                                 param_get(\%oParamHash, 'destination_compress'),
+                                 param_get(\%oParamHash, 'ignore_missing_source', false),
+                                 undef,
+                                 param_get(\%oParamHash, 'mode', false),
+                                 param_get(\%oParamHash, 'destination_path_create') ? 'Y' : 'N',
+                                 param_get(\%oParamHash, 'user', false),
+                                 param_get(\%oParamHash, 'group', false),
+                                 param_get(\%oParamHash, 'append_checksum', false));
+            }
+            # Copy a file from STDIN
+            elsif ($strCommand eq OP_FILE_COPY_IN)
+            {
+                ($bResult, $strChecksum, $iFileSize) =
+                    $oFile->copy(PIPE_STDIN, undef,
+                                 PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
+                                 param_get(\%oParamHash, 'source_compressed'),
+                                 param_get(\%oParamHash, 'destination_compress'),
+                                 undef, undef,
+                                 param_get(\%oParamHash, 'mode', false),
+                                 param_get(\%oParamHash, 'destination_path_create'),
+                                 param_get(\%oParamHash, 'user', false),
+                                 param_get(\%oParamHash, 'group', false),
+                                 param_get(\%oParamHash, 'append_checksum', false));
+            }
+            # Copy a file to STDOUT
+            elsif ($strCommand eq OP_FILE_COPY_OUT)
+            {
+                ($bResult, $strChecksum, $iFileSize) =
+                    $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
+                                 PIPE_STDOUT, undef,
+                                 param_get(\%oParamHash, 'source_compressed'),
+                                 param_get(\%oParamHash, 'destination_compress'));
+            }
 
-            $oRemote->output_write();
+            $oRemote->output_write(($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
+                                   (defined($iFileSize) ? $iFileSize : '?'));
         }
         # List files in a path
         elsif ($strCommand eq OP_FILE_LIST)
@@ -121,7 +158,7 @@ while ($strCommand ne OP_EXIT)
         # Create a path
         elsif ($strCommand eq OP_FILE_PATH_CREATE)
         {
-            $oFile->path_create(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), param_get(\%oParamHash, 'permission', false));
+            $oFile->path_create(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), param_get(\%oParamHash, 'mode', false));
             $oRemote->output_write();
         }
         # Check if a file/path exists
@@ -129,18 +166,10 @@ while ($strCommand ne OP_EXIT)
         {
             $oRemote->output_write($oFile->exists(PATH_ABSOLUTE, param_get(\%oParamHash, 'path')) ? 'Y' : 'N');
         }
-        # Copy a file locally
-        elsif ($strCommand eq OP_FILE_COPY)
+        # Wait
+        elsif ($strCommand eq OP_FILE_WAIT)
         {
-            $oRemote->output_write(
-                $oFile->copy(PATH_ABSOLUTE, param_get(\%oParamHash, 'source_file'),
-                             PATH_ABSOLUTE, param_get(\%oParamHash, 'destination_file'),
-                             param_get(\%oParamHash, 'source_compressed'),
-                             param_get(\%oParamHash, 'destination_compress'),
-                             param_get(\%oParamHash, 'ignore_missing_source', false),
-                             undef,
-                             param_get(\%oParamHash, 'permission', false),
-                             param_get(\%oParamHash, 'destination_path_create')) ? 'Y' : 'N');
+            $oRemote->output_write($oFile->wait(PATH_ABSOLUTE));
         }
         # Generate a manifest
         elsif ($strCommand eq OP_FILE_MANIFEST)
@@ -149,7 +178,7 @@ while ($strCommand ne OP_EXIT)
 
             $oFile->manifest(PATH_ABSOLUTE, param_get(\%oParamHash, 'path'), \%oManifestHash);
 
-            my $strOutput = "name\ttype\tuser\tgroup\tpermission\tmodification_time\tinode\tsize\tlink_destination";
+            my $strOutput = "name\ttype\tuser\tgroup\tmode\tmodification_time\tinode\tsize\tlink_destination";
 
             foreach my $strName (sort(keys $oManifestHash{name}))
             {
@@ -157,7 +186,7 @@ while ($strCommand ne OP_EXIT)
                     $oManifestHash{name}{"${strName}"}{type} . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
-                    (defined($oManifestHash{name}{"${strName}"}{permission}) ? $oManifestHash{name}{"${strName}"}{permission} : "") . "\t" .
+                    (defined($oManifestHash{name}{"${strName}"}{mode}) ? $oManifestHash{name}{"${strName}"}{mode} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
                         $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
                     (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .

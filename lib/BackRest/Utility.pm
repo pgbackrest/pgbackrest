@@ -5,11 +5,13 @@ package BackRest::Utility;
 
 use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess longmess);
 
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(remove_tree);
+use Time::HiRes qw(gettimeofday usleep);
+use POSIX qw(ceil);
 use File::Basename;
 use JSON;
 
@@ -20,11 +22,11 @@ use Exporter qw(import);
 
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix wait_for_file file_size_format execute
-                 log log_file_set log_level_set test_set test_check
-                 lock_file_create lock_file_remove
-                 config_save config_load timestamp_string_get timestamp_file_string_get
+                 log log_file_set log_level_set test_set test_get test_check
+                 lock_file_create lock_file_remove hsleep wait_remainder
+                 ini_save ini_load timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
-                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD);
+                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME FORMAT);
 
 # Global constants
 use constant
@@ -61,18 +63,28 @@ $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
 
 ####################################################################################################################################
+# FORMAT Constant
+#
+# Identified the format of the manifest and file structure.  The format is used to determine compatability between versions.
+####################################################################################################################################
+use constant FORMAT => 3;
+
+####################################################################################################################################
 # TEST Constants and Variables
 ####################################################################################################################################
 use constant
 {
-    TEST                => 'TEST',
-    TEST_ENCLOSE        => 'PgBaCkReStTeSt',
-    TEST_MANIFEST_BUILD => 'MANIFEST_BUILD'
+    TEST                    => 'TEST',
+    TEST_ENCLOSE            => 'PgBaCkReStTeSt',
+
+    TEST_MANIFEST_BUILD     => 'MANIFEST_BUILD',
+    TEST_BACKUP_RESUME      => 'BACKUP_RESUME',
+    TEST_BACKUP_NORESUME    => 'BACKUP_NORESUME',
 };
 
 # Test global variables
 my $bTest = false;
-my $iTestDelay;
+my $fTestDelay;
 
 ####################################################################################################################################
 # VERSION_GET
@@ -156,6 +168,21 @@ sub lock_file_remove
 }
 
 ####################################################################################################################################
+# WAIT_REMAINDER - Wait the remainder of the current second
+####################################################################################################################################
+sub wait_remainder
+{
+    my $lTimeBegin = gettimeofday();
+    my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+
+    usleep($lSleepMs * 1000);
+
+    &log(TRACE, "WAIT_REMAINDER: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+
+    return int($lTimeBegin);
+}
+
+####################################################################################################################################
 # DATA_HASH_BUILD - Hash a delimited file with header
 ####################################################################################################################################
 sub data_hash_build
@@ -210,6 +237,16 @@ sub trim
 }
 
 ####################################################################################################################################
+# hsleep - wrapper for usleep that takes seconds in fractions and returns time slept in ms
+####################################################################################################################################
+sub hsleep
+{
+    my $fSecond = shift;
+
+    return usleep($fSecond * 1000000);
+}
+
+####################################################################################################################################
 # WAIT_FOR_FILE
 ####################################################################################################################################
 sub wait_for_file
@@ -223,18 +260,18 @@ sub wait_for_file
 
     while ($lTime > time() - $iSeconds)
     {
-        opendir $hDir, $strDir
-            or confess &log(ERROR, "Could not open path ${strDir}: $!\n");
-
-        my @stryFile = grep(/$strRegEx/i, readdir $hDir);
-        close $hDir;
-
-        if (scalar @stryFile == 1)
+        if (opendir($hDir, $strDir))
         {
-            return;
+            my @stryFile = grep(/$strRegEx/i, readdir $hDir);
+            close $hDir;
+
+            if (scalar @stryFile == 1)
+            {
+                return;
+            }
         }
 
-        sleep(1);
+        hsleep(.1);
     }
 
     confess &log(ERROR, "could not find $strDir/$strRegEx after ${iSeconds} second(s)");
@@ -295,13 +332,19 @@ sub file_size_format
 sub timestamp_string_get
 {
     my $strFormat = shift;
+    my $lTime = shift;
 
     if (!defined($strFormat))
     {
         $strFormat = '%4d-%02d-%02d %02d:%02d:%02d';
     }
 
-    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime(time);
+    if (!defined($lTime))
+    {
+        $lTime = time();
+    }
+
+    my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime($lTime);
 
     return sprintf($strFormat, $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
 }
@@ -350,23 +393,31 @@ sub log_file_set
 sub test_set
 {
     my $bTestParam = shift;
-    my $iTestDelayParam = shift;
+    my $fTestDelayParam = shift;
 
     # Set defaults
     $bTest = defined($bTestParam) ? $bTestParam : false;
-    $iTestDelay = defined($bTestParam) ? $iTestDelayParam : $iTestDelay;
+    $fTestDelay = defined($bTestParam) ? $fTestDelayParam : $fTestDelay;
 
     # Make sure that a delay is specified in test mode
-    if ($bTest && !defined($iTestDelay))
+    if ($bTest && !defined($fTestDelay))
     {
         confess &log(ASSERT, 'iTestDelay must be provided when bTest is true');
     }
 
     # Test delay should be between 1 and 600 seconds
-    if (!($iTestDelay >= 1 && $iTestDelay <= 600))
+    if (!($fTestDelay >= 0 && $fTestDelay <= 600))
     {
         confess &log(ERROR, 'test-delay must be between 1 and 600 seconds');
     }
+}
+
+####################################################################################################################################
+# TEST_GET - are we in test mode?
+####################################################################################################################################
+sub test_get
+{
+    return $bTest;
 }
 
 ####################################################################################################################################
@@ -379,22 +430,22 @@ sub log_level_set
 
     if (defined($strLevelFileParam))
     {
-        if (!defined($oLogLevelRank{"${strLevelFileParam}"}{rank}))
+        if (!defined($oLogLevelRank{uc($strLevelFileParam)}{rank}))
         {
             confess &log(ERROR, "file log level ${strLevelFileParam} does not exist");
         }
 
-        $strLogLevelFile = $strLevelFileParam;
+        $strLogLevelFile = uc($strLevelFileParam);
     }
 
     if (defined($strLevelConsoleParam))
     {
-        if (!defined($oLogLevelRank{"${strLevelConsoleParam}"}{rank}))
+        if (!defined($oLogLevelRank{uc($strLevelConsoleParam)}{rank}))
         {
             confess &log(ERROR, "console log level ${strLevelConsoleParam} does not exist");
         }
 
-        $strLogLevelConsole = $strLevelConsoleParam;
+        $strLogLevelConsole = uc($strLevelConsoleParam);
     }
 }
 
@@ -444,6 +495,8 @@ sub log
         $strMessageFormat = '(undefined)';
     }
 
+    $strMessageFormat = (defined($iCode) ? "[${iCode}] " : '') . $strMessageFormat;
+
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
@@ -464,8 +517,7 @@ sub log
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
     $strMessageFormat = timestamp_string_get() . sprintf(' T%02d', threads->tid()) .
-                        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}" .
-                        (defined($iCode) ? " (code ${iCode})" : '') . "\n";
+                        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to console depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
@@ -479,7 +531,11 @@ sub log
         if ($bTest && $strLevel eq TEST)
         {
             *STDOUT->flush();
-            sleep($iTestDelay);
+
+            if ($fTestDelay > 0)
+            {
+                hsleep($fTestDelay);
+            }
         }
     }
 
@@ -491,6 +547,14 @@ sub log
             if (!$bSuppressLog)
             {
                 print $hLogFile $strMessageFormat;
+
+                if ($strLevel eq ERROR || $strLevel eq ASSERT)
+                {
+                    my $strStackTrace = longmess() . "\n";
+                    $strStackTrace =~ s/\n/\n                                   /g;
+
+                    print $hLogFile $strStackTrace;
+                }
             }
         }
     }
@@ -498,7 +562,7 @@ sub log
     # Throw a typed exception if code is defined
     if (defined($iCode))
     {
-        return BackRest::Exception->new(iCode => $iCode, strMessage => $strMessage);
+        return new BackRest::Exception($iCode, $strMessage);
     }
 
     # Return the message test so it can be used in a confess
@@ -506,16 +570,16 @@ sub log
 }
 
 ####################################################################################################################################
-# CONFIG_LOAD
+# INI_LOAD
 #
-# Load configuration file from standard INI format to a hash.
+# Load file from standard INI format to a hash.
 ####################################################################################################################################
-sub config_load
+sub ini_load
 {
-    my $strFile = shift;    # Full path to config file to load from
-    my $oConfig = shift;    # Reference to the hash where config data will be stored
+    my $strFile = shift;    # Full path to ini file to load from
+    my $oConfig = shift;    # Reference to the hash where ini data will be stored
 
-    # Open the config file for reading
+    # Open the ini file for reading
     my $hFile;
     my $strSection;
 
@@ -562,19 +626,21 @@ sub config_load
     }
 
     close($hFile);
+
+    return($oConfig);
 }
 
 ####################################################################################################################################
-# CONFIG_SAVE
+# INI_SAVE
 #
-# Save configuration file from a hash to standard INI format.
+# Save from a hash to standard INI format.
 ####################################################################################################################################
-sub config_save
+sub ini_save
 {
-    my $strFile = shift;    # Full path to config file to save to
-    my $oConfig = shift;    # Reference to the hash where config data is stored
+    my $strFile = shift;    # Full path to ini file to save to
+    my $oConfig = shift;    # Reference to the hash where ini data is stored
 
-    # Open the config file for writing
+    # Open the ini file for writing
     my $hFile;
     my $bFirst = true;
 
@@ -600,7 +666,7 @@ sub config_save
             {
                 if (ref($strValue) eq "HASH")
                 {
-                    syswrite($hFile, "${strKey}=" . encode_json($strValue) . "\n")
+                    syswrite($hFile, "${strKey}=" . to_json($strValue, {canonical => true}) . "\n")
                         or confess "unable to write key ${strKey}: $!";
                 }
                 else

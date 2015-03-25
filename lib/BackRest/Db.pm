@@ -3,34 +3,43 @@
 ####################################################################################################################################
 package BackRest::Db;
 
-use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
-use Moose;
 use Net::OpenSSH;
 use File::Basename;
 use IPC::System::Simple qw(capture);
+use Exporter qw(import);
 
 use lib dirname($0);
 use BackRest::Utility;
 
-# Command strings
-has strCommandPsql => (is => 'bare');   # PSQL command
+####################################################################################################################################
+# Postmaster process Id file
+####################################################################################################################################
+use constant FILE_POSTMASTER_PID => 'postmaster.pid';
 
-# Module variables
-has strDbUser => (is => 'ro');          # Database user
-has strDbHost => (is => 'ro');          # Database host
-has oDbSSH => (is => 'bare');           # Database SSH object
-has fVersion => (is => 'ro');           # Database version
+our @EXPORT = qw(FILE_POSTMASTER_PID);
 
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-sub BUILD
+sub new
 {
-    my $self = shift;
+    my $class = shift;       # Class name
+    my $strCommandPsql = shift; # PSQL command
+    my $strDbHost = shift;      # Database host name
+    my $strDbUser = shift;      # Database user name (generally postgres)
+
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
+    # Initialize variables
+    $self->{strCommandPsql} = $strCommandPsql;
+    $self->{strDbHost} = $strDbHost;
+    $self->{strDbUser} = $strDbUser;
 
     # Connect SSH object if db host is defined
     if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
@@ -44,6 +53,8 @@ sub BUILD
                               master_opts => [-o => $strOptionSSHRequestTTY]);
         $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
     }
+
+    return $self;
 }
 
 ####################################################################################################################################
@@ -132,9 +143,11 @@ sub backup_start
     my $strLabel = shift;
     my $bStartFast = shift;
 
-    return trim($self->psql_execute("set client_min_messages = 'warning';" .
-                                    "copy (select pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
-                                    ($bStartFast ? ', true' : '') . ') as xlog) to stdout'));
+    my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
+                                    "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
+                                    ($bStartFast ? ', true' : '') . ') as xlog) to stdout')));
+
+    return $stryField[1], $stryField[0];
 }
 
 ####################################################################################################################################
@@ -144,9 +157,10 @@ sub backup_stop
 {
     my $self = shift;
 
-    return trim($self->psql_execute("set client_min_messages = 'warning';" .
-                                    "copy (select pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout"))
+    my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
+                                    "copy (select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout")));
+
+    return $stryField[1], $stryField[0];
 }
 
-no Moose;
-  __PACKAGE__->meta->make_immutable;
+1;

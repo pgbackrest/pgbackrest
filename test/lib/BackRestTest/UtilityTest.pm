@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# BackupTest.pl - Unit Tests for BackRest::File
+# UtilityTest.pl - Unit Tests for BackRest::Utility
 ####################################################################################################################################
 package BackRestTest::UtilityTest;
 
@@ -8,42 +8,20 @@ package BackRestTest::UtilityTest;
 # Perl includes
 ####################################################################################################################################
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
 use File::Basename;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::Config;
 use BackRest::File;
 
 use BackRestTest::CommonTest;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestUtility_Test);
-
-####################################################################################################################################
-# BackRestTestUtility_Drop
-####################################################################################################################################
-sub BackRestTestUtility_Drop
-{
-    # Remove the test directory
-    system('rm -rf ' . BackRestTestCommon_TestPathGet()) == 0
-        or die 'unable to remove ' . BackRestTestCommon_TestPathGet() .  'path';
-}
-
-####################################################################################################################################
-# BackRestTestUtility_Create
-####################################################################################################################################
-sub BackRestTestUtility_Create
-{
-    # Drop the old test directory
-    BackRestTestUtility_Drop();
-
-    # Create the test directory
-    mkdir(BackRestTestCommon_TestPathGet(), oct('0770'))
-        or confess 'Unable to create ' . BackRestTestCommon_TestPathGet() . ' path';
-}
 
 ####################################################################################################################################
 # BackRestTestUtility_Test
@@ -61,13 +39,33 @@ sub BackRestTestUtility_Test
     &log(INFO, 'UTILITY MODULE ******************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
+    # Create remote
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $oLocal = new BackRest::Remote
+    (
+        undef,                                  # Host
+        undef,                                  # User
+        undef,                                  # Command
+        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+    );
+
+    #-------------------------------------------------------------------------------------------------------------------------------
     # Test config
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'config')
     {
         $iRun = 0;
         $bCreate = true;
-        my $oFile = BackRest::File->new();
+
+        my $oFile = new BackRest::File
+        (
+            undef,
+            undef,
+            undef,
+            $oLocal
+        );
 
         &log(INFO, "Test config\n");
 
@@ -77,7 +75,8 @@ sub BackRestTestUtility_Test
             # Create the test directory
             if ($bCreate)
             {
-                BackRestTestUtility_Create();
+                BackRestTestCommon_Drop();
+                BackRestTestCommon_Create();
 
                 $bCreate = false;
             }
@@ -96,18 +95,18 @@ sub BackRestTestUtility_Test
 
             # Save the test config
             my $strFile = "${strTestPath}/config.cfg";
-            config_save($strFile, \%oConfig);
+            ini_save($strFile, \%oConfig);
 
             my $strConfigHash = $oFile->hash(PATH_ABSOLUTE, $strFile);
 
             # Reload the test config
             my %oConfigTest;
 
-            config_load($strFile, \%oConfigTest);
+            ini_load($strFile, \%oConfigTest);
 
             # Resave the test config and compare hashes
             my $strFileTest = "${strTestPath}/config-test.cfg";
-            config_save($strFileTest, \%oConfigTest);
+            ini_save($strFileTest, \%oConfigTest);
 
             my $strConfigTestHash = $oFile->hash(PATH_ABSOLUTE, $strFileTest);
 
@@ -119,7 +118,7 @@ sub BackRestTestUtility_Test
             if (BackRestTestCommon_Cleanup())
             {
                 &log(INFO, 'cleanup');
-                BackRestTestUtility_Drop();
+                BackRestTestCommon_Drop();
             }
         }
     }

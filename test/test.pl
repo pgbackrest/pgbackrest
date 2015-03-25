@@ -13,7 +13,8 @@ use Carp;
 use File::Basename;
 use Getopt::Long;
 use Cwd 'abs_path';
-use Cwd;
+use Pod::Usage;
+#use Test::More;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
@@ -21,30 +22,89 @@ use BackRest::Utility;
 use lib dirname($0) . '/lib';
 use BackRestTest::CommonTest;
 use BackRestTest::UtilityTest;
+use BackRestTest::ConfigTest;
 use BackRestTest::FileTest;
 use BackRestTest::BackupTest;
 
 ####################################################################################################################################
+# Usage
+####################################################################################################################################
+
+=head1 NAME
+
+test.pl - Simple Postgres Backup and Restore Unit Tests
+
+=head1 SYNOPSIS
+
+test.pl [options]
+
+ Test Options:
+   --module             test module to execute:
+   --module-test        execute the specified test in a module
+   --module-test-run    execute only the specified test run
+   --thread-max         max threads to run for backup/restore (default 4)
+   --dry-run            show only the tests that would be executed but don't execute them
+   --no-cleanup         don't cleaup after the last test is complete - useful for debugging
+   --infinite           repeat selected tests forever
+
+ Configuration Options:
+   --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
+   --test-path          path where tests are executed (defaults to ./test)
+   --log-level          log level to use for tests (defaults to INFO)
+   --quiet, -q          equivalent to --log-level=off
+
+ General Options:
+   --version            display version and exit
+   --help               display usage and exit
+=cut
+
+####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
-my $strLogLevel = 'off';   # Log level for tests
+my $strLogLevel = 'info';   # Log level for tests
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
+my $iThreadMax = 1;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
+my $bVersion = false;
+my $bHelp = false;
+my $bQuiet = false;
+my $bInfinite = false;
 
-GetOptions ('pgsql-bin=s' => \$strPgSqlBin,
+GetOptions ('q|quiet' => \$bQuiet,
+            'version' => \$bVersion,
+            'help' => \$bHelp,
+            'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'module=s' => \$strModule,
             'module-test=s' => \$strModuleTest,
             'module-test-run=s' => \$iModuleTestRun,
+            'thread-max=s' => \$iThreadMax,
             'dry-run' => \$bDryRun,
-            'no-cleanup' => \$bNoCleanup)
-    or die 'error in command line arguments';
+            'no-cleanup' => \$bNoCleanup,
+            'infinite' => \$bInfinite)
+    or pod2usage(2);
+
+# Display version and exit if requested
+if ($bVersion || $bHelp)
+{
+    print 'pg_backrest ' . version_get() . " unit test\n";
+
+    if ($bHelp)
+    {
+        print "\n";
+        pod2usage();
+    }
+
+    exit 0;
+}
+
+# Test::More->builder->output('/dev/null');
 
 ####################################################################################################################################
 # Setup
@@ -52,7 +112,12 @@ GetOptions ('pgsql-bin=s' => \$strPgSqlBin,
 # Set a neutral umask so tests work as expected
 umask(0);
 
-# Set console log level to trace for testing
+# Set console log level
+if ($bQuiet)
+{
+    $strLogLevel = 'off';
+}
+
 log_level_set(undef, uc($strLogLevel));
 
 if ($strModuleTest ne 'all' && $strModule eq 'all')
@@ -65,10 +130,36 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
     confess "--module-test must be provided for run \"${iModuleTestRun}\"";
 }
 
-# Make sure PG bin has been defined
+# Search for psql bin
 if (!defined($strPgSqlBin))
 {
-    confess 'pgsql-bin was not defined';
+    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
+
+    foreach my $strSearchPath (@strySearchPath)
+    {
+        for (my $fVersion = 9; $fVersion >= 0; $fVersion -= 1)
+        {
+            my $strVersionPath = $strSearchPath;
+            $strVersionPath =~ s/VERSION/9\.$fVersion/g;
+
+            if (-e "${strVersionPath}/initdb")
+            {
+                &log(INFO, "found pgsql-bin at ${strVersionPath}\n");
+                $strPgSqlBin = ${strVersionPath};
+            }
+        }
+    }
+
+    if (!defined($strPgSqlBin))
+    {
+        confess 'pgsql-bin was not defined and could not be located';
+    }
+}
+
+# Check thread total
+if ($iThreadMax < 1 || $iThreadMax > 32)
+{
+    confess 'thread-max must be between 1 and 32';
 }
 
 ####################################################################################################################################
@@ -127,22 +218,39 @@ BackRestTestCommon_Setup($strTestPath, $strPgSqlBin, $iModuleTestRun, $bDryRun, 
 # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
 #            "group = {strGroup}");
 
-if ($strModule eq 'all' || $strModule eq 'utility')
-{
-    BackRestTestUtility_Test($strModuleTest);
-}
+my $iRun = 0;
 
-if ($strModule eq 'all' || $strModule eq 'file')
+do
 {
-    BackRestTestFile_Test($strModuleTest);
-}
+    if ($bInfinite)
+    {
+        $iRun++;
+        &log(INFO, "INFINITE - RUN ${iRun}\n");
+    }
 
-if ($strModule eq 'all' || $strModule eq 'backup')
-{
-    BackRestTestBackup_Test($strModuleTest);
+    if ($strModule eq 'all' || $strModule eq 'utility')
+    {
+        BackRestTestUtility_Test($strModuleTest);
+    }
+
+    if ($strModule eq 'all' || $strModule eq 'config')
+    {
+        BackRestTestConfig_Test($strModuleTest);
+    }
+
+    if ($strModule eq 'all' || $strModule eq 'file')
+    {
+        BackRestTestFile_Test($strModuleTest);
+    }
+
+    if ($strModule eq 'all' || $strModule eq 'backup')
+    {
+        BackRestTestBackup_Test($strModuleTest, $iThreadMax);
+    }
 }
+while ($bInfinite);
 
 if (!$bDryRun)
 {
-    &log(ASSERT, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
+    &log(INFO, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
 }

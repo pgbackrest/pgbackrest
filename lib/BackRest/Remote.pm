@@ -3,83 +3,82 @@
 ####################################################################################################################################
 package BackRest::Remote;
 
-use threads;
 use strict;
-use warnings;
-use Carp;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
 
-use Moose;
-use Thread::Queue;
-use Net::OpenSSH;
-use File::Basename;
-use IO::Handle;
-use POSIX ':sys_wait_h';
-use IO::Compress::Gzip qw(gzip $GzipError);
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use Net::OpenSSH qw();
+use File::Basename qw(dirname);
+use POSIX qw(:sys_wait_h);
+use Scalar::Util qw(blessed);
+use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
+use IO::String qw();
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
+use BackRest::Exception qw(ERROR_PROTOCOL);
+use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false);
 
 ####################################################################################################################################
-# Remote xfer default block size constant
+# Exports
+####################################################################################################################################
+use Exporter qw(import);
+our @EXPORT = qw(DB BACKUP NONE);
+
+####################################################################################################################################
+# DB/BACKUP Constants
 ####################################################################################################################################
 use constant
 {
-    DEFAULT_BLOCK_SIZE  => 1048576
+    DB              => 'db',
+    BACKUP          => 'backup',
+    NONE            => 'none'
 };
-
-####################################################################################################################################
-# Module variables
-####################################################################################################################################
-# Protocol strings
-has strGreeting => (is => 'ro', default => 'PG_BACKREST_REMOTE');
-
-# Command strings
-has strCommand => (is => 'bare');
-
-# Module variables
-has strHost => (is => 'bare');            # Host host
-has strUser => (is => 'bare');            # User user
-has oSSH => (is => 'bare');               # SSH object
-
-# Process variables
-has pId => (is => 'bare');                # Process Id
-has hIn => (is => 'bare');                # Input stream
-has hOut => (is => 'bare');               # Output stream
-has hErr => (is => 'bare');               # Error stream
-
-# Thread variables
-has iThreadIdx => (is => 'bare');         # Thread index
-has oThread => (is => 'bare');            # Thread object
-has oThreadQueue => (is => 'bare');       # Thread queue object
-has oThreadResult => (is => 'bare');      # Thread result object
-
-# Block size
-has iBlockSize => (is => 'bare', default => DEFAULT_BLOCK_SIZE);  # Set block size to default
 
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-sub BUILD
+sub new
 {
-    my $self = shift;
+    my $class = shift;                  # Class name
+    my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
+    my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
+    my $strCommand = shift;             # Command to execute on remote ('remote' if this is the remote)
+    my $iBlockSize = shift;             # Buffer size
+    my $iCompressLevel = shift;         # Set compression level
+    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
-    $self->{strGreeting} .= ' ' . version_get();
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
 
-    if (defined($self->{strHost}))
+    # Create the greeting that will be used to check versions with the remote
+    $self->{strGreeting} = 'PG_BACKREST_REMOTE ' . version_get();
+
+    # Set default block size
+    $self->{iBlockSize} = $iBlockSize;
+
+    # Set compress levels
+    $self->{iCompressLevel} = $iCompressLevel;
+    $self->{iCompressLevelNetwork} = $iCompressLevelNetwork;
+
+    # If host is defined then make a connnection
+    if (defined($strHost))
     {
         # User must be defined
-        if (!defined($self->{strUser}))
+        if (!defined($strUser))
         {
             confess &log(ASSERT, 'strUser must be defined');
         }
 
-        # User must be defined
-        if (!defined($self->{strCommand}))
+        # Command must be defined
+        if (!defined($strCommand))
         {
             confess &log(ASSERT, 'strCommand must be defined');
         }
+
+        $self->{strHost} = $strHost;
+        $self->{strUser} = $strUser;
+        $self->{strCommand} = $strCommand;
 
         # Set SSH Options
         my $strOptionSSHRequestTTY = 'RequestTTY=yes';
@@ -88,8 +87,8 @@ sub BUILD
         &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
         # Make SSH connection
-        $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 300, user => $self->{strUser},
-                                  master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
+        $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
+                                          master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
 
         $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error);
 
@@ -97,26 +96,43 @@ sub BUILD
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
 
         $self->greeting_read();
+        $self->setting_write($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork});
+    }
+    elsif (defined($strCommand) && $strCommand eq 'remote')
+    {
+        # Write the greeting so master process knows who we are
+        $self->greeting_write();
+
+        # Read settings from master
+        ($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork}) =  $self->setting_read();
     }
 
-    $self->{oThreadQueue} = Thread::Queue->new();
-    $self->{oThreadResult} = Thread::Queue->new();
-    $self->{oThread} = threads->create(\&binary_xfer_thread, $self);
+    # Check block size
+    if (!defined($self->{iBlockSize}))
+    {
+        confess &log(ASSERT, 'iBlockSize must be set');
+    }
+
+    # Check compress levels
+    if (!defined($self->{iCompressLevel}))
+    {
+        confess &log(ASSERT, 'iCompressLevel must be set');
+    }
+
+    if (!defined($self->{iCompressLevelNetwork}))
+    {
+        confess &log(ASSERT, 'iCompressLevelNetwork must be set');
+    }
+
+    return $self;
 }
 
 ####################################################################################################################################
-# thread_kill
+# THREAD_KILL
 ####################################################################################################################################
 sub thread_kill
 {
     my $self = shift;
-
-    if (defined($self->{oThread}))
-    {
-        $self->{oThreadQueue}->enqueue(undef);
-        $self->{oThread}->join();
-        $self->{oThread} = undef;
-    }
 }
 
 ####################################################################################################################################
@@ -135,15 +151,15 @@ sub DEMOLISH
 sub clone
 {
     my $self = shift;
-    my $iThreadIdx = shift;
 
     return BackRest::Remote->new
     (
-        strCommand => $self->{strCommand},
-        strHost => $self->{strHost},
-        strUser => $self->{strUser},
-        iBlockSize => $self->{iBlockSize},
-        iThreadIdx => $iThreadIdx
+        $self->{strHost},
+        $self->{strUser},
+        $self->{strCommand},
+        $self->{iBlockSize},
+        $self->{iCompressLevel},
+        $self->{iCompressLevelNetwork}
     );
 }
 
@@ -172,10 +188,50 @@ sub greeting_write
 {
     my $self = shift;
 
-    if (!syswrite(*STDOUT, "$self->{strGreeting}\n"))
+    $self->write_line(*STDOUT, $self->{strGreeting});
+}
+
+####################################################################################################################################
+# SETTING_READ
+#
+# Read the settings from the master process.
+####################################################################################################################################
+sub setting_read
+{
+    my $self = shift;
+
+    # Tokenize the settings
+    my @stryToken = split(/ /, $self->read_line(*STDIN));
+
+    # Make sure there are the correct number of tokens
+    if (@stryToken != 4)
     {
-        confess 'unable to write greeting';
+        confess &log(ASSERT, 'settings token count is invalid', ERROR_PROTOCOL);
     }
+
+    # Check for the setting token just to be sure
+    if ($stryToken[0] ne 'setting')
+    {
+        confess &log(ASSERT, 'settings token 0 must be \'setting\'');
+    }
+
+    # Return the settings
+    return $stryToken[1], $stryToken[2], $stryToken[3];
+}
+
+####################################################################################################################################
+# SETTING_WRITE
+#
+# Send settings to the remote process.
+####################################################################################################################################
+sub setting_write
+{
+    my $self = shift;
+    my $iBlockSize = shift;             # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
+    my $iCompressLevel = shift;         # Set compression level
+    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
+
+    $self->write_line($self->{hIn}, "setting ${iBlockSize} ${iCompressLevel} ${iCompressLevelNetwork}");
 }
 
 ####################################################################################################################################
@@ -310,13 +366,11 @@ sub write_line
     my $hOut = shift;
     my $strBuffer = shift;
 
-    $strBuffer = $strBuffer . "\n";
+    my $iLineOut = syswrite($hOut, $strBuffer . "\n");
 
-    my $iLineOut = syswrite($hOut, $strBuffer, length($strBuffer));
-
-    if (!defined($iLineOut) || $iLineOut != length($strBuffer))
+    if (!defined($iLineOut) || $iLineOut != length($strBuffer) + 1)
     {
-        confess 'unable to write ' . length($strBuffer) . ' byte(s)';
+        confess &log(ERROR, "unable to write ${strBuffer}: $!", ERROR_PROTOCOL);
     }
 }
 
@@ -352,45 +406,167 @@ sub wait_pid
 }
 
 ####################################################################################################################################
-# BINARY_XFER_THREAD
+# BLOCK_READ
 #
-# De/Compresses data on a thread.
+# Read a block from the protocol layer.
 ####################################################################################################################################
-sub binary_xfer_thread
+sub block_read
 {
     my $self = shift;
+    my $hIn = shift;
+    my $strBlockRef = shift;
+    my $bProtocol = shift;
 
-    while (my $strMessage = $self->{oThreadQueue}->dequeue())
+    my $iBlockSize;
+    my $strMessage;
+
+    if ($bProtocol)
     {
-        my @stryMessage = split(':', $strMessage);
-        my @strHandle = split(',', $stryMessage[1]);
+        # Read the block header and make sure it's valid
+        my $strBlockHeader = $self->read_line($hIn);
 
-        my $hIn = IO::Handle->new_from_fd($strHandle[0], '<');
-        my $hOut = IO::Handle->new_from_fd($strHandle[1], '>');
-
-        $self->{oThreadResult}->enqueue('running');
-
-        if ($stryMessage[0] eq 'compress')
+        if ($strBlockHeader !~ /^block -{0,1}[0-9]+( .*){0,1}$/)
         {
-            gzip($hIn => $hOut)
-                or confess &log(ERROR, 'unable to compress: ' . $GzipError);
+            $self->wait_pid();
+            confess "unable to read block header ${strBlockHeader}";
         }
+
+        # Get block size from the header
+        my @stryToken = split(/ /, $strBlockHeader);
+        $iBlockSize = $stryToken[1];
+        $strMessage = $stryToken[2];
+
+        # If block size is 0 or an error code then undef the buffer
+        if ($iBlockSize <= 0)
+        {
+            undef($$strBlockRef);
+        }
+        # Else read the block
         else
         {
-            gunzip($hIn => $hOut)
-                or die confess &log(ERROR, 'unable to uncompress: ' . $GunzipError);
+            my $iBlockRead = 0;
+            my $iBlockIn = 0;
+            my $iOffset = defined($$strBlockRef) ? length($$strBlockRef) : 0;
+
+            # !!! Would be nice to modify this with a non-blocking read
+            # http://docstore.mik.ua/orelly/perl/cookbook/ch07_15.htm
+
+            # Read as many chunks as it takes to get the full block
+            while ($iBlockRead != $iBlockSize)
+            {
+                $iBlockIn = sysread($hIn, $$strBlockRef, $iBlockSize - $iBlockRead, $iBlockRead + $iOffset);
+
+                if (!defined($iBlockIn))
+                {
+                    my $strError = $!;
+
+                    $self->wait_pid();
+                    confess "only read ${iBlockRead}/${iBlockSize} block bytes from remote" .
+                            (defined($strError) ? ": ${strError}" : '');
+                }
+
+                $iBlockRead += $iBlockIn;
+            }
         }
+    }
+    else
+    {
+        $iBlockSize = $self->stream_read($hIn, $strBlockRef, $self->{iBlockSize},
+                                         defined($$strBlockRef) ? length($$strBlockRef) : 0);
+    }
 
-        close($hOut);
+    # Return the block size
+    return $iBlockSize, $strMessage;
+}
 
-        $self->{oThreadResult}->enqueue('complete');
+####################################################################################################################################
+# BLOCK_WRITE
+#
+# Write a block to the protocol layer.
+####################################################################################################################################
+sub block_write
+{
+    my $self = shift;
+    my $hOut = shift;
+    my $tBlockRef = shift;
+    my $iBlockSize = shift;
+    my $bProtocol = shift;
+    my $strMessage = shift;
+
+    # If block size is not defined, get it from buffer length
+    $iBlockSize = defined($iBlockSize) ? $iBlockSize : length($$tBlockRef);
+
+    # Write block header to the protocol stream
+    if ($bProtocol)
+    {
+        $self->write_line($hOut, "block ${iBlockSize}" . (defined($strMessage) ? " ${strMessage}" : ''));
+    }
+
+    # Write block if size > 0
+    if ($iBlockSize > 0)
+    {
+        $self->stream_write($hOut, $tBlockRef, $iBlockSize);
+    }
+}
+
+####################################################################################################################################
+# STREAM_READ
+#
+# Read data from a stream.
+####################################################################################################################################
+sub stream_read
+{
+    my $self = shift;
+    my $hIn = shift;
+    my $tBlockRef = shift;
+    my $iBlockSize = shift;
+    my $bOffset = shift;
+
+    # Read a block from the stream
+    my $iBlockIn = sysread($hIn, $$tBlockRef, $iBlockSize, $bOffset ? length($$tBlockRef) : false);
+
+    if (!defined($iBlockIn))
+    {
+        $self->wait_pid();
+        confess &log(ERROR, 'unable to read');
+    }
+
+    return $iBlockIn;
+}
+
+####################################################################################################################################
+# STREAM_WRITE
+#
+# Write data to a stream.
+####################################################################################################################################
+sub stream_write
+{
+    my $self = shift;
+    my $hOut = shift;
+    my $tBlockRef = shift;
+    my $iBlockSize = shift;
+
+    # If block size is not defined, get it from buffer length
+    $iBlockSize = defined($iBlockSize) ? $iBlockSize : length($$tBlockRef);
+
+    # Write the block
+    my $iBlockOut = syswrite($hOut, $$tBlockRef, $iBlockSize);
+
+    # Report any errors
+    if (!defined($iBlockOut) || $iBlockOut != $iBlockSize)
+    {
+        my $strError = $!;
+
+        $self->wait_pid();
+        confess "unable to write ${iBlockSize} bytes" . (defined($strError) ? ': ' . $strError : '');
     }
 }
 
 ####################################################################################################################################
 # BINARY_XFER
 #
-# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.
+# Copies data from one file handle to another, optionally compressing or decompressing the data in stream.  If $strRemote != none
+# then one side is a protocol stream, though this can be controlled with the bProtocol param.
 ####################################################################################################################################
 sub binary_xfer
 {
@@ -400,6 +576,13 @@ sub binary_xfer
     my $strRemote = shift;
     my $bSourceCompressed = shift;
     my $bDestinationCompress = shift;
+    my $bProtocol = shift;
+
+    # The input stream must be defined (output is optional)
+    if (!defined($hIn))
+    {
+        confess &log(ASSERT, 'hIn is not defined');
+    }
 
     # If no remote is defined then set to none
     if (!defined($strRemote))
@@ -413,186 +596,383 @@ sub binary_xfer
         $bDestinationCompress = defined($bDestinationCompress) ? $bDestinationCompress : false;
     }
 
-    # Working variables
-    my $iBlockSize = $self->{iBlockSize};
-    my $iBlockIn;
-    my $iBlockInTotal = $iBlockSize;
-    my $iBlockOut;
-    my $iBlockTotal = 0;
-    my $strBlockHeader;
-    my $strBlock;
-    my $oGzip;
-    my $hPipeIn;
-    my $hPipeOut;
-    my $pId;
-    my $bThreadRunning = false;
+    # Default protocol to true
+    $bProtocol = defined($bProtocol) ? $bProtocol : true;
+    my $strMessage = undef;
 
-    # Both the in and out streams must be defined
-    if (!defined($hIn) || !defined($hOut))
+    # Checksum and size
+    my $strChecksum = undef;
+    my $iFileSize = undef;
+
+    # Read from the protocol stream
+    if ($strRemote eq 'in')
     {
-        confess &log(ASSERT, 'hIn or hOut is not defined');
-    }
-
-    # If this is output and the source is not already compressed
-    if ($strRemote eq 'out' && !$bSourceCompressed)
-    {
-        # Increase the blocksize since we are compressing
-        $iBlockSize *= 4;
-
-        # Open the in/out pipes
-        pipe $hPipeOut, $hPipeIn;
-
-        # Queue the compression job with the thread
-        $self->{oThreadQueue}->enqueue('compress:' . fileno($hIn) . ',' . fileno($hPipeIn));
-
-        # Wait for the thread to acknowledge that it has duplicated the file handles
-        my $strMessage = $self->{oThreadResult}->dequeue();
-
-        # Close input pipe so that thread has the only copy, reset hIn to hPipeOut
-        if ($strMessage eq 'running')
+        # If the destination should not be compressed then decompress
+        if (!$bDestinationCompress)
         {
-            close($hPipeIn);
-            $hIn = $hPipeOut;
-        }
-        # If any other message is returned then error
-        else
-        {
-            confess "unknown thread message while waiting for running: ${strMessage}";
-        }
+            my $iBlockSize;
+            my $tCompressedBuffer;
+            my $tUncompressedBuffer;
+            my $iUncompressedBufferSize;
 
-        $bThreadRunning = true;
-    }
-    # Spawn a child process to do decompression
-    elsif ($strRemote eq 'in' && !$bDestinationCompress)
-    {
-        # Open the in/out pipes
-        pipe $hPipeOut, $hPipeIn;
+            # Initialize SHA
+            my $oSHA;
 
-        # Queue the decompression job with the thread
-        $self->{oThreadQueue}->enqueue('decompress:' . fileno($hPipeOut) . ',' . fileno($hOut));
-
-        # Wait for the thread to acknowledge that it has duplicated the file handles
-        my $strMessage = $self->{oThreadResult}->dequeue();
-
-        # Close output pipe so that thread has the only copy, reset hOut to hPipeIn
-        if ($strMessage eq 'running')
-        {
-            close($hPipeOut);
-            $hOut = $hPipeIn;
-        }
-        # If any other message is returned then error
-        else
-        {
-            confess "unknown thread message while waiting for running: ${strMessage}";
-        }
-
-        $bThreadRunning = true;
-    }
-
-    while (1)
-    {
-        if ($strRemote eq 'in')
-        {
-            if ($iBlockInTotal == $iBlockSize)
+            if (!$bProtocol)
             {
-                $strBlockHeader = $self->read_line($hIn);
+                $oSHA = Digest::SHA->new('sha1');
+            }
 
-                if ($strBlockHeader !~ /^block [0-9]+$/)
+            # Initialize inflate object and check for errors
+            my ($oZLib, $iZLibStatus) =
+                new Compress::Raw::Zlib::Inflate(WindowBits => 15 & $bSourceCompressed ? WANT_GZIP : 0,
+                                                 Bufsize => $self->{iBlockSize}, LimitOutput => 1);
+
+            if ($iZLibStatus != Z_OK)
+            {
+                confess &log(ERROR, "unable create a inflate object: ${iZLibStatus}");
+            }
+
+            # Read all input
+            do
+            {
+                # Read a block from the input stream
+                ($iBlockSize, $strMessage) = $self->block_read($hIn, \$tCompressedBuffer, $bProtocol);
+
+                # Process protocol messages
+                if (defined($strMessage) && $strMessage eq 'nochecksum')
                 {
-                    $self->wait_pid();
-                    confess "unable to read block header ${strBlockHeader}";
+                    $oSHA = Digest::SHA->new('sha1');
+                    undef($strMessage);
                 }
 
-                $iBlockInTotal = 0;
-                $iBlockTotal += 1;
-            }
-
-            $iBlockSize = trim(substr($strBlockHeader, index($strBlockHeader, ' ') + 1));
-
-            if ($iBlockSize != 0)
-            {
-                $iBlockIn = sysread($hIn, $strBlock, $iBlockSize - $iBlockInTotal);
-
-                if (!defined($iBlockIn))
+                # If the block contains data, decompress it
+                if ($iBlockSize > 0)
                 {
-                    my $strError = $!;
+                    # Keep looping while there is more to decompress
+                    do
+                    {
+                        # Decompress data
+                        $iZLibStatus = $oZLib->inflate($tCompressedBuffer, $tUncompressedBuffer);
+                        $iUncompressedBufferSize = length($tUncompressedBuffer);
 
-                    $self->wait_pid();
-                    confess "unable to read block #${iBlockTotal}/${iBlockSize} bytes from remote" .
-                            (defined($strError) ? ": ${strError}" : '');
+                        # If status is ok, write the data
+                        if ($iZLibStatus == Z_OK || $iZLibStatus == Z_BUF_ERROR || $iZLibStatus == Z_STREAM_END)
+                        {
+                            if ($iUncompressedBufferSize > 0)
+                            {
+                                # Add data to checksum
+                                if (defined($oSHA))
+                                {
+                                    $oSHA->add($tUncompressedBuffer);
+                                }
+
+                                # Write data if hOut is defined
+                                if (defined($hOut))
+                                {
+                                    $self->stream_write($hOut, \$tUncompressedBuffer, $iUncompressedBufferSize);
+                                }
+                            }
+                        }
+                        # Else error, exit so it can be handled
+                        else
+                        {
+                            $iBlockSize = 0;
+                            last;
+                        }
+                    }
+                    while ($iZLibStatus == Z_OK && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
                 }
+            }
+            while ($iBlockSize > 0);
 
-                $iBlockInTotal += $iBlockIn;
-            }
-            else
+            # Make sure the decompression succeeded (iBlockSize < 0 indicates remote error, handled later)
+            if ($iBlockSize == 0 && $iZLibStatus != Z_STREAM_END)
             {
-                $iBlockIn = 0;
+                confess &log(ERROR, "unable to inflate stream: ${iZLibStatus}");
             }
+
+            # Get checksum and total uncompressed bytes written
+            if (defined($oSHA))
+            {
+                $strChecksum = $oSHA->hexdigest();
+                $iFileSize = $oZLib->total_out();
+            };
         }
+        # If the destination should be compressed then just write out the already compressed stream
         else
         {
-            $iBlockIn = sysread($hIn, $strBlock, $iBlockSize);
+            my $iBlockSize;
+            my $tBuffer;
 
-            if (!defined($iBlockIn))
+            # Initialize checksum and size
+            my $oSHA;
+
+            if (!$bProtocol)
             {
-                $self->wait_pid();
-                confess &log(ERROR, 'unable to read');
+                $oSHA = Digest::SHA->new('sha1');
+                $iFileSize = 0;
             }
-        }
 
-        if ($strRemote eq 'out')
-        {
-            $strBlockHeader = "block ${iBlockIn}\n";
-
-            $iBlockOut = syswrite($hOut, $strBlockHeader);
-
-            if (!defined($iBlockOut) || $iBlockOut != length($strBlockHeader))
+            do
             {
-                $self->wait_pid();
-                confess 'unable to write block header';
+                # Read a block from the protocol stream
+                ($iBlockSize, $strMessage) = $self->block_read($hIn, \$tBuffer, $bProtocol);
+
+                # If the block contains data, write it
+                if ($iBlockSize > 0)
+                {
+                    # Add data to checksum and size
+                    if (!$bProtocol)
+                    {
+                        $oSHA->add($tBuffer);
+                        $iFileSize += $iBlockSize;
+                    }
+
+                    $self->stream_write($hOut, \$tBuffer, $iBlockSize);
+                    undef($tBuffer);
+                }
             }
-        }
+            while ($iBlockSize > 0);
 
-        if ($iBlockIn > 0)
-        {
-            $iBlockOut = syswrite($hOut, $strBlock, $iBlockIn);
-
-            if (!defined($iBlockOut) || $iBlockOut != $iBlockIn)
+            # Get checksum
+            if (!$bProtocol)
             {
-                $self->wait_pid();
-                confess "unable to write ${iBlockIn} bytes" . (defined($!) ? ': ' . $! : '');
-            }
-        }
-        else
-        {
-            last;
+                $strChecksum = $oSHA->hexdigest();
+            };
         }
     }
-
-    if ($bThreadRunning)
+    # Read from file input stream
+    else
     {
-        # Make sure the de/compress pipes are closed
+        # If source is not already compressed then compress it
         if ($strRemote eq 'out' && !$bSourceCompressed)
         {
-            close($hPipeOut);
-        }
-        elsif ($strRemote eq 'in' && !$bDestinationCompress)
-        {
-            close($hPipeIn);
-        }
+            my $iBlockSize;
+            my $tCompressedBuffer;
+            my $iCompressedBufferSize;
+            my $tUncompressedBuffer;
 
-        # Wait for the thread to acknowledge that it has completed
-        my $strMessage = $self->{oThreadResult}->dequeue();
+            # Initialize message to indicate that a checksum will be sent
+            if ($bProtocol && defined($hOut))
+            {
+                $strMessage = 'checksum';
+            }
 
-        if ($strMessage eq 'complete')
-        {
+            # Initialize checksum
+            my $oSHA = Digest::SHA->new('sha1');
+
+            # Initialize inflate object and check for errors
+            my ($oZLib, $iZLibStatus) =
+                new Compress::Raw::Zlib::Deflate(WindowBits => 15 & $bDestinationCompress ? WANT_GZIP : 0,
+                                                 Level => $bDestinationCompress ? $self->{iCompressLevel} :
+                                                                                  $self->{iCompressLevelNetwork},
+                                                 Bufsize => $self->{iBlockSize}, AppendOutput => 1);
+
+            if ($iZLibStatus != Z_OK)
+            {
+                confess &log(ERROR, "unable create a deflate object: ${iZLibStatus}");
+            }
+
+            do
+            {
+                # Read a block from the stream
+                $iBlockSize = $self->stream_read($hIn, \$tUncompressedBuffer, $self->{iBlockSize});
+
+                # If block size > 0 then compress
+                if ($iBlockSize > 0)
+                {
+                    # Update checksum and filesize
+                    $oSHA->add($tUncompressedBuffer);
+
+                    # Compress the data
+                    $iZLibStatus = $oZLib->deflate($tUncompressedBuffer, $tCompressedBuffer);
+                    $iCompressedBufferSize = length($tCompressedBuffer);
+
+                    # If compression was successful
+                    if ($iZLibStatus == Z_OK)
+                    {
+                        # The compressed data is larger than block size, then write
+                        if ($iCompressedBufferSize > $self->{iBlockSize})
+                        {
+                            $self->block_write($hOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
+                            undef($tCompressedBuffer);
+                            undef($strMessage);
+                        }
+                    }
+                    # Else if error
+                    else
+                    {
+                        $iBlockSize = 0;
+                    }
+                }
+
+            }
+            while ($iBlockSize > 0);
+
+            # If good so far flush out the last bytes
+            if ($iZLibStatus == Z_OK)
+            {
+                $iZLibStatus = $oZLib->flush($tCompressedBuffer);
+            }
+
+            # Make sure the compression succeeded
+            if ($iZLibStatus != Z_OK)
+            {
+                confess &log(ERROR, "unable to deflate stream: ${iZLibStatus}");
+            }
+
+            # Get checksum and total uncompressed bytes written
+            $strChecksum = $oSHA->hexdigest();
+            $iFileSize = $oZLib->total_in();
+
+            # Write out the last block
+            if (defined($hOut))
+            {
+                $iCompressedBufferSize = length($tCompressedBuffer);
+
+                if ($iCompressedBufferSize > 0)
+                {
+                    $self->block_write($hOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
+                    undef($strMessage);
+                }
+
+                $self->block_write($hOut, undef, 0, $bProtocol, "${strChecksum}-${iFileSize}");
+            }
         }
-        # If any other message is returned then error
+        # If source is already compressed or transfer is not compressed then just read the stream
         else
         {
-            confess "unknown thread message while waiting for complete: ${strMessage}";
+            my $iBlockSize;
+            my $tBuffer;
+            my $tCompressedBuffer;
+            my $tUncompressedBuffer;
+            my $iUncompressedBufferSize;
+            my $oSHA;
+            my $oZLib;
+            my $iZLibStatus;
+
+            # If the destination will be compressed setup deflate
+            if ($bDestinationCompress)
+            {
+                if ($bProtocol)
+                {
+                    $strMessage = 'checksum';
+                }
+
+                # Initialize checksum and size
+                $oSHA = Digest::SHA->new('sha1');
+                $iFileSize = 0;
+
+                # Initialize inflate object and check for errors
+                ($oZLib, $iZLibStatus) =
+                    new Compress::Raw::Zlib::Inflate(WindowBits => WANT_GZIP, Bufsize => $self->{iBlockSize}, LimitOutput => 1);
+
+                if ($iZLibStatus != Z_OK)
+                {
+                    confess &log(ERROR, "unable create a inflate object: ${iZLibStatus}");
+                }
+            }
+            # Initialize message to indicate that a checksum will not be sent
+            elsif ($bProtocol)
+            {
+                $strMessage = 'nochecksum';
+            }
+
+            # Read input
+            do
+            {
+                $iBlockSize = $self->stream_read($hIn, \$tBuffer, $self->{iBlockSize});
+
+                # Write a block if size > 0
+                if ($iBlockSize > 0)
+                {
+                    $self->block_write($hOut, \$tBuffer, $iBlockSize, $bProtocol, $strMessage);
+                    undef($strMessage);
+                }
+
+                # Decompress the buffer to calculate checksum/size
+                if ($bDestinationCompress)
+                {
+                    # If the block contains data, decompress it
+                    if ($iBlockSize > 0)
+                    {
+                        # Copy file buffer to compressed buffer
+                        if (defined($tCompressedBuffer))
+                        {
+                            $tCompressedBuffer .= $tBuffer;
+                        }
+                        else
+                        {
+                            $tCompressedBuffer = $tBuffer;
+                        }
+
+                        # Keep looping while there is more to decompress
+                        do
+                        {
+                            # Decompress data
+                            $iZLibStatus = $oZLib->inflate($tCompressedBuffer, $tUncompressedBuffer);
+                            $iUncompressedBufferSize = length($tUncompressedBuffer);
+
+                            # If status is ok, write the data
+                            if ($iZLibStatus == Z_OK || $iZLibStatus == Z_BUF_ERROR || $iZLibStatus == Z_STREAM_END)
+                            {
+                                if ($iUncompressedBufferSize > 0)
+                                {
+                                    $oSHA->add($tUncompressedBuffer);
+                                    $iFileSize += $iUncompressedBufferSize;
+                                }
+                            }
+                            # Else error, exit so it can be handled
+                            else
+                            {
+                                $iBlockSize = 0;
+                            }
+                        }
+                        while ($iZLibStatus == Z_OK && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
+                    }
+                }
+            }
+            while ($iBlockSize > 0);
+
+            # Check decompression get checksum
+            if ($bDestinationCompress)
+            {
+                # Make sure the decompression succeeded (iBlockSize < 0 indicates remote error, handled later)
+                if ($iBlockSize == 0 && $iZLibStatus != Z_STREAM_END)
+                {
+                    confess &log(ERROR, "unable to inflate stream: ${iZLibStatus}");
+                }
+
+                # Get checksum
+                $strChecksum = $oSHA->hexdigest();
+
+                # Set protocol message
+                if ($bProtocol)
+                {
+                    $strMessage = "${strChecksum}-${iFileSize}";
+                }
+            }
+
+            # If protocol write
+            if ($bProtocol)
+            {
+                # Write 0 block to indicate end of stream
+                $self->block_write($hOut, undef, 0, $bProtocol, $strMessage);
+            }
         }
     }
+
+    # If message is defined the the checksum and size should be in it
+    if (defined($strMessage))
+    {
+        my @stryToken = split(/-/, $strMessage);
+        $strChecksum = $stryToken[0];
+        $iFileSize = $stryToken[1];
+    }
+
+    # Return the checksum and size if they are available
+    return $strChecksum, $iFileSize;
 }
 
 ####################################################################################################################################
@@ -691,10 +1071,13 @@ sub command_param_string
 
     my $strParamList;
 
-    foreach my $strParam (sort(keys $oParamHashRef))
+    if (defined($oParamHashRef))
     {
-        $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
-                         (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
+        foreach my $strParam (sort(keys $oParamHashRef))
+        {
+            $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
+                             (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
+        }
     }
 
     return $strParamList;
@@ -817,5 +1200,4 @@ sub command_execute
     return $self->output_read($bOutputRequired, $strErrorPrefix);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+1;
