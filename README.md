@@ -23,7 +23,7 @@ Instead of relying on traditional backup tools like tar and rsync, PgBackRest im
 
 ## Install
 
-PgBackRest is written entirely in Perl, but does use some non-standard modules that must be installed from CPAN.
+PgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.
 
 ### Ubuntu 12.04
 
@@ -68,11 +68,11 @@ https://github.com/pgmasters/backrest/releases
 
 PgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
 
-## Operations
+## Operation
 
 ### General Options
 
-These options are either global or used by all operations.
+These options are either global or used by all commands.
 
 #### `config` option
 
@@ -85,7 +85,7 @@ example: config=/var/lib/backrest/pg_backrest.conf
 
 #### `stanza` option
 
-Defines the stanza for the operation.  A stanza is the configuration for a database that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres cluster and therefore one stanza, whereas backup servers will have a stanza for every database that needs to be backed up.
+Defines the stanza for the command.  A stanza is the configuration for a database that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres cluster and therefore one stanza, whereas backup servers will have a stanza for every database that needs to be backed up.
 
 Examples of how to configure a stanza can be found in the `configuration examples` section.
 ```
@@ -141,7 +141,7 @@ default: n
 
 When used with  `--no-start-stop` a backup will be run even if PgBackRest thinks that PostgreSQL is running.  **This option should be used with extreme care as it will likely result in a bad backup.**
 
-There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL log that did not get archived.
+There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.
 ```
 required: n
 default: n
@@ -174,18 +174,18 @@ Get a WAL segment from the repository.
 ```
 /path/to/pg_backrest.pl --stanza=db archive-get %f %p
 ```
-Retrieves a WAL segment from the repository.  This command is used in `restore.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs, and `%p` is the location where it should be copied.
+Retrieves a WAL segment from the repository.  This command is used in `restore.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs and `%p` is the location where it should be copied.
 
 #### `expire` command
 
-PgBackRest does backup rotation, but it is not concerned with when the backups were created.  So if two full backups are configured for rentention, PgBackRest will keep two full backups no matter whether they occur 2 hours apart or two weeks apart.
+PgBackRest does backup rotation, but is not concerned with when the backups were created.  So if two full backups are configured for rentention, PgBackRest will keep two full backups no matter whether they occur, two hours apart or two weeks apart.
 
 ##### Example
 
 ```
 /path/to/pg_backrest.pl --stanza=db expire
 ```
-Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there's no need to run this command on its own unless you have reduced rentention, usually to free up some space.
+Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced rentention, usually to free up some space.
 
 #### `restore` command
 
@@ -261,6 +261,7 @@ default: n
 Recovers along the specified timeline.  See `recovery_target_timeline` in the PostgreSQL docs for more information.
 ```
 required: n
+example: --target-timeline=3
 ```
 
 ##### `recovery-setting` option
@@ -404,7 +405,7 @@ The `command` section defines the location of external commands that are used by
 
 Defines the full path to `psql`.  `psql` is used to call `pg_start_backup()` and `pg_stop_backup()`.
 
-If addtional parameters need to be passed to `psql` (such as `--port` or `--cluster`) then add `%option%` to the command line and use `command-option::psql` to set options.
+If addtional per stanza parameters need to be passed to `psql` (such as `--port` or `--cluster`) then add `%option%` to the command line and use `command-option::psql` to set options.
 ```
 required: n
 default: /usr/bin/psql -X
@@ -413,7 +414,7 @@ example: cmd-psql=/usr/bin/psql -X %option%
 
 ##### `cmd-psql-option` key
 
-Allows command line parameters to be passed to `psql`.
+Allows per stanza command line parameters to be passed to `psql`.
 ```
 required: n
 example: cmd-psql-option --port=5433
@@ -713,7 +714,7 @@ example: db-path=/data/db
 
 - Checksum for backup.manifest to detect corrupted/modified manifest.
 
-- Link `latest` always points to the last backup.  This has been added for convenience and to make restore simpler.
+- Link `latest` always points to the last backup.  This has been added for convenience and to make restores simpler.
 
 - More comprehensive unit tests in all areas.
 
@@ -775,6 +776,6 @@ example: db-path=/data/db
 
 ## Recognition
 
-Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of PgBackRest.  It's a far better piece of software than it would have been without him.
+Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of PgBackRest.
 
 Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.
