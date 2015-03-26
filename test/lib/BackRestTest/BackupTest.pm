@@ -2449,8 +2449,8 @@ sub BackRestTestBackup_Test
         (
             $strStanza,
             BackRestTestCommon_RepoPathGet(),
-            undef,
-            undef
+            NONE,
+            $oLocal
         ))->clone();
 
         # Create the test database
@@ -2576,8 +2576,8 @@ sub BackRestTestBackup_Test
         (
             $strStanza,
             BackRestTestCommon_RepoPathGet(),
-            undef,
-            undef
+            NONE,
+            $oLocal
         ))->clone();
 
         # Create the test database
