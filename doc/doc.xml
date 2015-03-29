@@ -578,7 +578,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 						The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.
 
-						To start normal archiving again you'll need to remove the stop file which will be located at <file>${archive-path}/lock/${stanza}-archive.stop</file> where <code>${archive-path}</code> is the path set in the <setting>archive</setting> section, and <code>${stanza}</code> is the backup stanza.</text>
+						To start normal archiving again you'll need to remove the stop file which will be located at <file>${repo-path}/lock/${stanza}-archive.stop</file> where <code>${repo-path}</code> is the path set in the <setting>general</setting> section, and <code>${stanza}</code> is the backup stanza.</text>
 
 						<example>1024</example>
 					</config-key>

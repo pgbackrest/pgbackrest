@@ -621,7 +621,7 @@ If this occurs then the archive log stream will be interrupted and PITR will not
 
 The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.
 
-To start normal archiving again you'll need to remove the stop file which will be located at `${archive-path}/lock/${stanza}-archive.stop` where `${archive-path}` is the path set in the `archive` section, and `${stanza}` is the backup stanza.
+To start normal archiving again you'll need to remove the stop file which will be located at `${repo-path}/lock/${stanza}-archive.stop` where `${repo-path}` is the path set in the `archive` section, and `${stanza}` is the backup stanza.
 ```
 required: n
 example: archive-max-mb=1024
