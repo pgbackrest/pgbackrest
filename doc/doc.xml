@@ -654,6 +654,20 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
+			<release-version version="0.60" title="**************TBD***************">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.</text>
+					</release-feature>
+					<release-feature>
+						<text>Database System IDs are used to make sure that all WAL in an archive matches up.  This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.</text>
+					</release-feature>
+					<release-feature>
+						<text>Regression tests working back to <postgres/> 8.3.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.50" title="restore and much more">
 				<release-feature-bullet-list>
 					<release-feature>

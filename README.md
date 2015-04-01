@@ -621,7 +621,7 @@ If this occurs then the archive log stream will be interrupted and PITR will not
 
 The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.
 
-To start normal archiving again you'll need to remove the stop file which will be located at `${repo-path}/lock/${stanza}-archive.stop` where `${repo-path}` is the path set in the `archive` section, and `${stanza}` is the backup stanza.
+To start normal archiving again you'll need to remove the stop file which will be located at `${repo-path}/lock/${stanza}-archive.stop` where `${repo-path}` is the path set in the `general` section, and `${stanza}` is the backup stanza.
 ```
 required: n
 example: archive-max-mb=1024
@@ -696,83 +696,89 @@ example: db-path=/data/db
 
 ## Release Notes
 
+### v0.60: TBD
+
+* Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.
+
+* Database System IDs are used to make sure that all WAL in an archive matches up.  This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.
+
 ### v0.50: restore and much more
 
-- Added restore functionality.
+* Added restore functionality.
 
-- All options can now be set on the command-line making pg_backrest.conf optional.
+* All options can now be set on the command-line making pg_backrest.conf optional.
 
-- De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.
+* De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.
 
-- Added option `--no-start-stop` to allow backups when Postgres is shut down.  If `postmaster.pid` is present then `--force` is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
+* Added option `--no-start-stop` to allow backups when Postgres is shut down.  If `postmaster.pid` is present then `--force` is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
 
-- Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
+* Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
 
-- Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.
+* Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.
 
-- Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
+* Removed dependency on Moose.  It wasn't being used extensively and makes for longer startup times.
 
-- Checksum for backup.manifest to detect corrupted/modified manifest.
+* Checksum for backup.manifest to detect corrupted/modified manifest.
 
-- Link `latest` always points to the last backup.  This has been added for convenience and to make restores simpler.
+* Link `latest` always points to the last backup.  This has been added for convenience and to make restores simpler.
 
-- More comprehensive unit tests in all areas.
+* More comprehensive unit tests in all areas.
 
 ### v0.30: Core Restructuring and Unit Tests
 
-- Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
+* Complete rewrite of BackRest::File module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.
 
-- Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.
+* Fairly comprehensive unit tests for all the basic operations.  More work to be done here for sure, but then there is always more work to be done on unit tests.
 
-- Removed dependency on Storable and replaced with a custom ini file implementation.
+* Removed dependency on Storable and replaced with a custom ini file implementation.
 
-- Added much needed documentation
+* Added much needed documentation
 
-- Numerous other changes that can only be identified with a diff.
+* Numerous other changes that can only be identified with a diff.
 
 ### v0.19: Improved Error Reporting/Handling
 
-- Working on improving error handling in the file object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).
+* Working on improving error handling in the file object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).
 
-- Found and squashed a nasty bug where `file_copy()` was defaulted to ignore errors.  There was also an issue in file_exists that was causing the test to fail when the file actually did exist.  Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.
+* Found and squashed a nasty bug where `file_copy()` was defaulted to ignore errors.  There was also an issue in file_exists that was causing the test to fail when the file actually did exist.  Together they could have resulted in a corrupt backup with no errors, though it is very unlikely.
 
 ### v0.18: Return Soft Error When Archive Missing
 
-- The `archive-get` operation returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets Postgres know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.
+* The `archive-get` operation returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets Postgres know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.
 
 ### v0.17: Warn When Archive Directories Cannot Be Deleted
 
-- If an archive directory which should be empty could not be deleted backrest was throwing an error.  There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue.  This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).
+* If an archive directory which should be empty could not be deleted backrest was throwing an error.  There's a good fix for that coming, but for the time being it has been changed to a warning so processing can continue.  This was impacting backups as sometimes the final archive file would not get pushed if the first archive file had been in a different directory (plus some bad luck).
 
 ### v0.16: RequestTTY=yes for SSH Sessions
 
-- Added `RequestTTY=yes` to ssh sesssions.  Hoping this will prevent random lockups.
+* Added `RequestTTY=yes` to ssh sesssions.  Hoping this will prevent random lockups.
 
 ### v0.15: RequestTTY=yes for SSH Sessions
 
-- Added archive-get functionality to aid in restores.
+* Added archive-get functionality to aid in restores.
 
-- Added option to force a checkpoint when starting the backup `start-fast=y`.
+* Added option to force a checkpoint when starting the backup `start-fast=y`.
 
 ### v0.11: Minor Fixes
 
-- Removed `master_stderr_discard` option on database SSH connections.  There have been occasional lockups and they could be related to issues originally seen in the file code.
+* Removed `master_stderr_discard` option on database SSH connections.  There have been occasional lockups and they could be related to issues originally seen in the file code.
 
-- Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
+* Changed lock file conflicts on backup and expire commands to ERROR.  They were set to DEBUG due to a copy-and-paste from the archive locks.
 
 ### v0.10: Backup and Archiving are Functional
 
-- No restore functionality, but the backup directories are consistent Postgres data directories.  You'll need to either uncompress the files or turn off compression in the backup.  Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.
+* No restore functionality, but the backup directories are consistent Postgres data directories.  You'll need to either uncompress the files or turn off compression in the backup.  Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.
 
-- Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.
+* Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.
 
-- Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% threadsafe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.
+* Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% threadsafe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.
 
-- Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.
+* Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.
 
-- The backup.manifest is being written as Storable because Config::IniFile does not seem to handle large files well.  Would definitely like to save these as human-readable text.
+* The backup.manifest is being written as Storable because Config::IniFile does not seem to handle large files well.  Would definitely like to save these as human-readable text.
 
-- Absolutely no documentation (outside the code).  Well, excepting these release notes.
+* Absolutely no documentation (outside the code).  Well, excepting these release notes.
 
 ## Recognition
 
