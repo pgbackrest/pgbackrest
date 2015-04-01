@@ -510,20 +510,20 @@ sub recovery
         # Write recovery_target_inclusive
         if ($self->{bTargetExclusive})
         {
-            $strRecovery .= "recovery_target_inclusive = false\n";
+            $strRecovery .= "recovery_target_inclusive = 'false'\n";
         }
     }
 
     # Write pause_at_recovery_target
     if ($self->{bTargetResume})
     {
-        $strRecovery .= "pause_at_recovery_target = false\n";
+        $strRecovery .= "pause_at_recovery_target = 'false'\n";
     }
 
     # Write recovery_target_timeline
     if (defined($self->{strTargetTimeline}))
     {
-        $strRecovery .= "recovery_target_timeline = $self->{strTargetTimeline}\n";
+        $strRecovery .= "recovery_target_timeline = '$self->{strTargetTimeline}'\n";
     }
 
     # Write recovery.conf

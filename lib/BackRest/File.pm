@@ -13,12 +13,13 @@ use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use Digest::SHA;
 use File::stat;
-use Fcntl ':mode';
+use Fcntl qw(:mode O_RDONLY O_WRONLY O_CREAT O_EXCL);
 use Exporter qw(import);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Utility;
+use BackRest::Config;
 use BackRest::Remote;
 
 ####################################################################################################################################
@@ -180,6 +181,16 @@ sub clone
 }
 
 ####################################################################################################################################
+# stanza
+####################################################################################################################################
+sub stanza
+{
+    my $self = shift;
+
+    return $self->{strStanza};
+}
+
+####################################################################################################################################
 # PATH_TYPE_GET
 ####################################################################################################################################
 sub path_type_get
@@ -279,15 +290,7 @@ sub path_get
     # Get the backup archive path
     if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
     {
-        my $strArchivePath = "$self->{strBackupPath}/archive";
-
-        if ($bTemp)
-        {
-            return "${strArchivePath}/temp/$self->{strStanza}-archive" .
-                   (defined($self->{iThreadIdx}) ? "-$self->{iThreadIdx}" : '') . ".tmp";
-        }
-
-        $strArchivePath .= "/$self->{strStanza}";
+        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
 
         if ($strType eq PATH_BACKUP_ARCHIVE)
         {
@@ -303,13 +306,25 @@ sub path_get
                 }
             }
 
-            return $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
-                   (defined($strFile) ? '/' . $strFile : '');
+            $strArchivePath = $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
+                              (defined($strFile) ? '/' . $strFile : '');
         }
         else
         {
-            return "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
+            $strArchivePath = "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
         }
+
+        if ($bTemp)
+        {
+            if (!defined($strFile))
+            {
+                confess &log(ASSERT, 'archive temp must have strFile defined');
+            }
+
+            return "${strArchivePath}.tmp";
+        }
+
+        return $strArchivePath;
     }
 
     if ($strType eq PATH_BACKUP_CLUSTER)
@@ -789,7 +804,7 @@ sub hash_size
     {
         my $hFile;
 
-        if (!open($hFile, '<', $strFileOp))
+        if (!sysopen($hFile, $strFileOp, O_RDONLY))
         {
             my $strError = "${strFileOp} could not be read: " . $!;
             my $iErrorCode = 2;
@@ -1342,7 +1357,7 @@ sub copy
 
     if (!$bSourceRemote)
     {
-        if (!open($hSourceFile, '<', $strSourceOp))
+        if (!sysopen($hSourceFile, $strSourceOp, O_RDONLY))
         {
             my $strError = $!;
             my $iErrorCode = COMMAND_ERR_FILE_READ;
@@ -1377,7 +1392,7 @@ sub copy
     if (!$bDestinationRemote)
     {
         # Open the destination temp file
-        if (!open($hDestinationFile, '>', $strDestinationTmpOp))
+        if (!sysopen($hDestinationFile, $strDestinationTmpOp, O_WRONLY | O_CREAT))
         {
             my $strError = "${strDestinationTmpOp} could not be opened: " . $!;
             my $iErrorCode = COMMAND_ERR_FILE_READ;
@@ -1400,7 +1415,7 @@ sub copy
 
             $self->path_create(PATH_ABSOLUTE, dirname($strDestinationTmpOp));
 
-            if (!open($hDestinationFile, '>', $strDestinationTmpOp))
+            if (!sysopen($hDestinationFile, $strDestinationTmpOp, O_WRONLY | O_CREAT | O_EXCL))
             {
                 confess &log(ERROR, "unable to open destination file ${strDestinationOp}: " . $!);
             }

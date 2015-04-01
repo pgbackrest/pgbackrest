@@ -17,22 +17,7 @@ use IO::String qw();
 use lib dirname($0) . '/../lib';
 use BackRest::Exception qw(ERROR_PROTOCOL);
 use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false);
-
-####################################################################################################################################
-# Exports
-####################################################################################################################################
-use Exporter qw(import);
-our @EXPORT = qw(DB BACKUP NONE);
-
-####################################################################################################################################
-# DB/BACKUP Constants
-####################################################################################################################################
-use constant
-{
-    DB              => 'db',
-    BACKUP          => 'backup',
-    NONE            => 'none'
-};
+use BackRest::Config qw(optionGet OPTION_STANZA OPTION_REPO_REMOTE_PATH);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -43,6 +28,8 @@ sub new
     my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
     my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
     my $strCommand = shift;             # Command to execute on remote ('remote' if this is the remote)
+    my $strStanza = shift;              # Stanza
+    my $strRepoPath = shift;            # Remote Repository Path
     my $iBlockSize = shift;             # Buffer size
     my $iCompressLevel = shift;         # Set compression level
     my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
@@ -53,6 +40,10 @@ sub new
 
     # Create the greeting that will be used to check versions with the remote
     $self->{strGreeting} = 'PG_BACKREST_REMOTE ' . version_get();
+
+    # Set stanza and repo path
+    $self->{strStanza} = $strStanza;
+    $self->{strRepoPath} = $strRepoPath;
 
     # Set default block size
     $self->{iBlockSize} = $iBlockSize;
@@ -96,7 +87,8 @@ sub new
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
 
         $self->greeting_read();
-        $self->setting_write($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork});
+        $self->setting_write($self->{strStanza}, $self->{strRepoPath},
+                             $self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork});
     }
     elsif (defined($strCommand) && $strCommand eq 'remote')
     {
@@ -104,7 +96,8 @@ sub new
         $self->greeting_write();
 
         # Read settings from master
-        ($self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork}) =  $self->setting_read();
+        ($self->{strStanza}, $self->{strRepoPath}, $self->{iBlockSize}, $self->{iCompressLevel},
+         $self->{iCompressLevelNetwork}) = $self->setting_read();
     }
 
     # Check block size
@@ -128,21 +121,23 @@ sub new
 }
 
 ####################################################################################################################################
-# THREAD_KILL
+# repoPath
 ####################################################################################################################################
-sub thread_kill
+sub repoPath
 {
     my $self = shift;
+
+    return $self->{strRepoPath};
 }
 
 ####################################################################################################################################
-# DESTRUCTOR
+# stanza
 ####################################################################################################################################
-sub DEMOLISH
+sub stanza
 {
     my $self = shift;
 
-    $self->thread_kill();
+    return $self->{strStanza};
 }
 
 ####################################################################################################################################
@@ -157,6 +152,8 @@ sub clone
         $self->{strHost},
         $self->{strUser},
         $self->{strCommand},
+        $self->{strStanza},
+        $self->{strRepoPath},
         $self->{iBlockSize},
         $self->{iCompressLevel},
         $self->{iCompressLevelNetwork}
@@ -200,6 +197,12 @@ sub setting_read
 {
     my $self = shift;
 
+    # Get Stanza
+    my $strStanza = $self->read_line(*STDIN);
+
+    # Get Repo Path
+    my $strRepoPath = $self->read_line(*STDIN);
+
     # Tokenize the settings
     my @stryToken = split(/ /, $self->read_line(*STDIN));
 
@@ -216,7 +219,7 @@ sub setting_read
     }
 
     # Return the settings
-    return $stryToken[1], $stryToken[2], $stryToken[3];
+    return $strStanza, $strRepoPath, $stryToken[1], $stryToken[2], $stryToken[3];
 }
 
 ####################################################################################################################################
@@ -227,10 +230,14 @@ sub setting_read
 sub setting_write
 {
     my $self = shift;
+    my $strStanza = shift;              # Database stanza
+    my $strRepoPath = shift;            # Path to the repository on the remote
     my $iBlockSize = shift;             # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
     my $iCompressLevel = shift;         # Set compression level
     my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
+    $self->write_line($self->{hIn}, $strStanza);
+    $self->write_line($self->{hIn}, $strRepoPath);
     $self->write_line($self->{hIn}, "setting ${iBlockSize} ${iCompressLevel} ${iCompressLevelNetwork}");
 }
 
@@ -1024,7 +1031,7 @@ sub output_read
     }
 
     # If output is required and there is no output, raise exception
-    if ($bOutputRequired && !defined($strOutput))
+    if (defined($bOutputRequired) && $bOutputRequired && !defined($strOutput))
     {
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') . 'output is not defined');
     }

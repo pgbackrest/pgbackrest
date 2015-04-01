@@ -749,6 +749,18 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RESTORE_RECOVERY_SETTING, '/path/to/pg_backrest.pl', 'archive-command');
         }
 
+        if (BackRestTestCommon_Run(++$iRun, OP_RESTORE . ' option ' . OPTION_RESTORE_RECOVERY_SETTING))
+        {
+            $oConfig = {};
+            $$oConfig{$strStanza . ':' . &CONFIG_SECTION_RESTORE_RECOVERY_SETTING}{'standby-mode'} = 'on';
+            ini_save($strConfigFile, $oConfig);
+
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
+
+            configLoadExpect($oOption, OP_ARCHIVE_GET);
+        }
+
         if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' option ' . OPTION_DB_PATH))
         {
             $oConfig = {};

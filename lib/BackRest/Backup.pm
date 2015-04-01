@@ -11,6 +11,7 @@ use Carp qw(confess);
 use File::Basename;
 use File::Path qw(remove_tree);
 use Scalar::Util qw(looks_like_number);
+use Fcntl 'SEEK_CUR';
 use Thread::Queue;
 
 use lib dirname($0);
@@ -20,11 +21,11 @@ use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
 use BackRest::Db;
+use BackRest::Archive;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_cleanup backup_thread_kill archive_push archive_xfer archive_get archive_compress
-                 backup backup_expire archive_list_get);
+our @EXPORT = qw(backup_init backup_cleanup backup_thread_kill backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
@@ -33,7 +34,6 @@ my $bCompress;
 my $bHardLink;
 my $iThreadMax;
 my $iThreadLocalMax;
-#my $iThreadThreshold = 10;
 my $iSmallFileThreshold = 65536;
 my $bNoStartStop;
 my $bForce;
@@ -223,208 +223,6 @@ sub backup_thread_complete
     &log(DEBUG, 'all threads exited');
 
     return true;
-}
-
-####################################################################################################################################
-# ARCHIVE_GET
-####################################################################################################################################
-sub archive_get
-{
-    my $strDbClusterPath = shift;
-    my $strSourceArchive = shift;
-    my $strDestinationFile = shift;
-
-    # If the destination file path is not absolute then it is relative to the data path
-    if (index($strDestinationFile, '/',) != 0)
-    {
-        if (!defined($strDbClusterPath))
-        {
-            confess &log(ERROR, 'database path must be set if relative xlog paths are used');
-        }
-
-        $strDestinationFile = "${strDbClusterPath}/${strDestinationFile}";
-    }
-
-    # Determine the path where the requested archive file is located
-    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strSourceArchive));
-
-    # Get the name of the requested archive file (may have hash info and compression extension)
-    my @stryArchiveFile = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
-        "^${strSourceArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", undef, true);
-
-    # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
-    if (scalar @stryArchiveFile > 1)
-    {
-        confess &log(ASSERT, (scalar @stryArchiveFile) . " archive files found for ${strSourceArchive}.");
-    }
-
-    # If there are no matching archive files then there are two possibilities:
-    # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
-    # 2) There is a hole in the archive stream so return a hard error (!!! However if turns out that due to race conditions this
-    #    is harder than it looks.  Postponed and added to the backlog.  For now treated as case #1.)
-    elsif (scalar @stryArchiveFile == 0)
-    {
-        &log(INFO, "${strSourceArchive} was not found in the archive repository");
-
-        return 1;
-    }
-
-    &log(DEBUG, "archive_get: cp ${stryArchiveFile[0]} ${strDestinationFile}");
-
-    # Determine if the source file is already compressed
-    my $bSourceCompressed = $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
-
-    # Copy the archive file to the requested location
-    $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0], # Source file
-                 PATH_DB_ABSOLUTE, $strDestinationFile,    # Destination file
-                 $bSourceCompressed,                       # Source compression based on detection
-                 false);                                   # Destination is not compressed
-
-    return 0;
-}
-
-####################################################################################################################################
-# ARCHIVE_PUSH
-####################################################################################################################################
-sub archive_push
-{
-    my $strDbClusterPath = shift;
-    my $strSourceFile = shift;
-    my $bAsync = shift;
-
-    # If the source file path is not absolute then it is relative to the data path
-    if (index($strSourceFile, '/',) != 0)
-    {
-        if (!defined($strDbClusterPath))
-        {
-            confess &log(ERROR, 'database path must be set if relative xlog paths are used');
-        }
-
-        $strSourceFile = "${strDbClusterPath}/${strSourceFile}";
-    }
-
-    # Get the destination file
-    my $strDestinationFile = basename($strSourceFile);
-
-    # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
-
-    # Append compression extension
-    if ($bArchiveFile && $bCompress)
-    {
-        $strDestinationFile .= ".$oFile->{strCompressExtension}";
-    }
-
-    # Copy the archive file
-    $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,                          # Source type/file
-                 $bAsync ? PATH_BACKUP_ARCHIVE_OUT : PATH_BACKUP_ARCHIVE,   # Destination type
-                 $strDestinationFile,                                       # Destination file
-                 false,                                                     # Source is not compressed
-                 $bArchiveFile && $bCompress,                               # Destination compress is configurable
-                 undef, undef, undef,                                       # Unused params
-                 true,                                                      # Create path if it does not exist
-                 undef, undef,                                              # User and group
-                 $bArchiveFile);                                            # Append checksum if archive file
-}
-
-####################################################################################################################################
-# ARCHIVE_XFER
-####################################################################################################################################
-sub archive_xfer
-{
-    my $strArchivePath = shift;
-    my $strStopFile = shift;
-    my $strCommand = shift;
-    my $iArchiveMaxMB = shift;
-
-    # Load the archive manifest - all the files that need to be pushed
-    my %oManifestHash;
-    $oFile->manifest(PATH_DB_ABSOLUTE, $strArchivePath, \%oManifestHash);
-
-    # Get all the files to be transferred and calculate the total size
-    my @stryFile;
-    my $lFileSize = 0;
-    my $lFileTotal = 0;
-
-    foreach my $strFile (sort(keys $oManifestHash{name}))
-    {
-        if ($strFile =~ /^[0-F]{24}.*/ || $strFile =~ /^[0-F]{8}\.history$/)
-        {
-            push @stryFile, $strFile;
-
-            $lFileSize += $oManifestHash{name}{"${strFile}"}{size};
-            $lFileTotal++;
-        }
-    }
-
-    if (defined($iArchiveMaxMB))
-    {
-        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
-        {
-            &log(ERROR, "local archive store has exceeded limit of ${iArchiveMaxMB}MB, archive logs will be discarded");
-
-            my $hStopFile;
-            open($hStopFile, '>', $strStopFile) or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
-            close($hStopFile);
-        }
-    }
-
-    if ($lFileTotal == 0)
-    {
-        &log(DEBUG, 'no archive logs to be copied to backup');
-
-        return 0;
-    }
-
-    # Modify process name to indicate async archiving
-    $0 = "${strCommand} archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
-
-    # Output files to be moved to backup
-    &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
-
-    # Transfer each file
-    foreach my $strFile (sort @stryFile)
-    {
-        # Construct the archive filename to backup
-        my $strArchiveFile = "${strArchivePath}/${strFile}";
-
-        # Determine if the source file is already compressed
-        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
-
-        # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-        my $bArchiveFile = basename($strFile) =~
-            "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
-
-        # Figure out whether the compression extension needs to be added or removed
-        my $bDestinationCompress = $bArchiveFile && $bCompress;
-        my $strDestinationFile = basename($strFile);
-
-        if (!$bSourceCompressed && $bDestinationCompress)
-        {
-            $strDestinationFile .= ".$oFile->{strCompressExtension}";
-        }
-        elsif ($bSourceCompressed && !$bDestinationCompress)
-        {
-            $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
-        }
-
-        &log(DEBUG, "backup archive file ${strFile}, archive ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
-                    "destination_compress ${bDestinationCompress}, default_compress = ${bCompress}");
-
-        # Copy the archive file
-        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
-                     PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
-                     $bSourceCompressed,                        # Source is not compressed
-                     $bDestinationCompress,                     # Destination compress is configurable
-                     undef, undef, undef,                       # Unused params
-                     true);                                     # Create path if it does not exist
-
-        #  Remove the source archive file
-        unlink($strArchiveFile) or confess &log(ERROR, "unable to remove ${strArchiveFile}");
-    }
-
-    # Return number of files indicating that processing should continue
-    return $lFileTotal;
 }
 
 ####################################################################################################################################
@@ -1309,33 +1107,24 @@ sub backup
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
-        my @stryArchive = archive_list_get($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
+        my $oArchive = new BackRest::Archive();
+        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchive));
-
-            wait_for_file($strArchivePath, "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 600);
-
-            my @stryArchiveFile = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
-                "^${strArchive}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$");
-
-            if (scalar @stryArchiveFile != 1)
-            {
-                confess &log(ERROR, "Zero or more than one file found for glob: ${strArchivePath}");
-            }
+            my $strArchiveFile = $oArchive->walFileName($oFile, $strArchive, 600);
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {
-                &log(DEBUG, "archiving: ${strArchive} (${stryArchiveFile[0]})");
+                &log(DEBUG, "archiving: ${strArchive} (${strArchiveFile})");
 
                 # Copy the log file from the archive repo to the backup
                 my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : '');
 
                 my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-                    $oFile->copy(PATH_BACKUP_ARCHIVE, $stryArchiveFile[0],
+                    $oFile->copy(PATH_BACKUP_ARCHIVE, $strArchiveFile,
                                  PATH_BACKUP_TMP, $strDestinationFile,
-                                 $stryArchiveFile[0] =~ "^.*\.$oFile->{strCompressExtension}\$",
+                                 $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$",
                                  $bCompress, undef, $lModificationTime);
 
                 # Add the archive file to the manifest so it can be part of the restore and checked in validation
@@ -1345,10 +1134,10 @@ sub backup
                 my $strFileLog = "pg_xlog/${strArchive}";
 
                 # Compare the checksum against the one already in the archive log name
-                if ($stryArchiveFile[0] !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+                if ($strArchiveFile !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
                 {
-                    confess &log(ERROR, "error copying log '$stryArchiveFile[0]' to backup - checksum recorded with file does " .
-                                        "not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
+                    confess &log(ERROR, "error copying WAL segment '${strArchiveFile}' to backup - checksum recorded with " .
+                                        "file does not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
                 }
 
                 # Set manifest values
@@ -1404,69 +1193,6 @@ sub backup
     # Create a link to the most recent backup
     $oFile->remove(PATH_BACKUP_CLUSTER, "latest");
     $oFile->link_create(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
-}
-
-####################################################################################################################################
-# ARCHIVE_LIST_GET
-#
-# Generates a range of archive log file names given the start and end log file name.  For pre-9.3 databases, use bSkipFF to exclude
-# the FF that prior versions did not generate.
-####################################################################################################################################
-sub archive_list_get
-{
-    my $strArchiveStart = shift;
-    my $strArchiveStop = shift;
-    my $bSkipFF = shift;
-
-    # strSkipFF default to false
-    $bSkipFF = defined($bSkipFF) ? $bSkipFF : false;
-
-    if ($bSkipFF)
-    {
-        &log(TRACE, 'archive_list_get: pre-9.3 database, skipping log FF');
-    }
-    else
-    {
-        &log(TRACE, 'archive_list_get: post-9.3 database, including log FF');
-    }
-
-    # Get the timelines and make sure they match
-    my $strTimeline = substr($strArchiveStart, 0, 8);
-    my @stryArchive;
-    my $iArchiveIdx = 0;
-
-    if ($strTimeline ne substr($strArchiveStop, 0, 8))
-    {
-        confess &log(ERROR, "Timelines between ${strArchiveStart} and ${strArchiveStop} differ");
-    }
-
-    # Iterate through all archive logs between start and stop
-    my $iStartMajor = hex substr($strArchiveStart, 8, 8);
-    my $iStartMinor = hex substr($strArchiveStart, 16, 8);
-
-    my $iStopMajor = hex substr($strArchiveStop, 8, 8);
-    my $iStopMinor = hex substr($strArchiveStop, 16, 8);
-
-    $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
-    $iArchiveIdx += 1;
-
-    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
-    {
-        $iStartMinor += 1;
-
-        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
-        {
-            $iStartMajor += 1;
-            $iStartMinor = 0;
-        }
-
-        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
-        $iArchiveIdx += 1;
-    }
-
-    &log(TRACE, "    archive_list_get: $strArchiveStart:$strArchiveStop (@stryArchive)");
-
-    return @stryArchive;
 }
 
 ####################################################################################################################################

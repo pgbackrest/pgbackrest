@@ -19,7 +19,19 @@ use BackRest::Utility;
 # Export functions
 ####################################################################################################################################
 our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault operationGet operationTest
-                 operationSet);
+                 operationSet optionRemoteType optionRemoteTypeTest optionRemote optionRemoteTest);
+
+####################################################################################################################################
+# DB/BACKUP Constants
+####################################################################################################################################
+use constant
+{
+    DB              => 'db',
+    BACKUP          => 'backup',
+    NONE            => 'none'
+};
+
+push @EXPORT, qw(DB BACKUP NONE);
 
 ####################################################################################################################################
 # Operation constants - basic operations that are allowed in backrest
@@ -938,6 +950,8 @@ my %oOptionRule =
 ####################################################################################################################################
 my %oOption;            # Option hash
 my $strOperation;       # Operation (backup, archive-get, ...)
+my $strRemoteType;      # Remote type (DB, BACKUP, NONE)
+my $oRemote;            # Global remote object that is created on first request (NOT THREADSAFE!)
 
 ####################################################################################################################################
 # configLoad
@@ -1025,6 +1039,27 @@ sub configLoad
     {
         $oOption{&OPTION_REPO_REMOTE_PATH} = optionGet(OPTION_REPO_PATH);
     }
+
+    # Check if the backup host is remote
+    if (optionTest(OPTION_BACKUP_HOST))
+    {
+        $strRemoteType = BACKUP;
+    }
+    # Else check if db is remote
+    elsif (optionTest(OPTION_DB_HOST))
+    {
+        # Don't allow both sides to be remote
+        if (defined($strRemoteType))
+        {
+            confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
+        }
+
+        $strRemoteType = DB;
+    }
+    else
+    {
+        $strRemoteType = NONE;
+    }
 }
 
 ####################################################################################################################################
@@ -1104,11 +1139,58 @@ sub optionValid
                 }
             }
 
+
+            # If the operation has rules store them for later evaluation
+            my $oOperationRule = optionOperationRule($strOption, $strOperation);
+
+            # Check dependency for the operation then for the option
+            my $bDependResolved = true;
+            my $oDepend = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEPEND} :
+                                                     $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
+            my $strDependOption;
+            my $strDependValue;
+            my $strDependType;
+
+            if (defined($oDepend))
+            {
+                # Check if the depend option has a value
+                $strDependOption = $$oDepend{&OPTION_RULE_DEPEND_OPTION};
+                $strDependValue = $oOption{$strDependOption};
+
+                # Make sure the depend option has been resolved, otherwise skip this option for now
+                if (!defined($oOptionResolved{$strDependOption}))
+                {
+                    $bDependUnresolved = true;
+                    next;
+                }
+
+                if (!defined($strDependValue))
+                {
+                    $bDependResolved = false;
+                    $strDependType = 'source';
+                }
+
+                # If a depend value exists, make sure the option value matches
+                if ($bDependResolved && defined($$oDepend{&OPTION_RULE_DEPEND_VALUE}) &&
+                    $$oDepend{&OPTION_RULE_DEPEND_VALUE} ne $strDependValue)
+                {
+                    $bDependResolved = false;
+                    $strDependType = 'value';
+                }
+
+                # If a depend list exists, make sure the value is in the list
+                if ($bDependResolved && defined($$oDepend{&OPTION_RULE_DEPEND_LIST}) &&
+                    !defined($$oDepend{&OPTION_RULE_DEPEND_LIST}{$strDependValue}))
+                {
+                    $bDependResolved = false;
+                    $strDependType = 'list';
+                }
+            }
+
             # If the option value is undefined and not negated, see if it can be loaded from pg_backrest.conf
             if (!defined($strValue) && !$bNegate && $strOption ne OPTION_CONFIG &&
-                $oOptionRule{$strOption}{&OPTION_RULE_SECTION})
+                $oOptionRule{$strOption}{&OPTION_RULE_SECTION} && $bDependResolved)
             {
-
                 # If the config option has not been resolved yet then continue processing
                 if (!defined($oOptionResolved{&OPTION_CONFIG}) || !defined($oOptionResolved{&OPTION_STANZA}))
                 {
@@ -1209,78 +1291,45 @@ sub optionValid
                 }
             }
 
-            # If the operation has rules store them for later evaluation
-            my $oOperationRule = optionOperationRule($strOption, $strOperation);
-
-            # Check dependency for the operation then for the option
-            my $bDependResolved = true;
-            my $oDepend = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEPEND} :
-                                                     $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
-
-            if (defined($oDepend))
+            if (defined($oDepend) && !$bDependResolved && defined($strValue))
             {
-                # Make sure the depend option has been resolved, otherwise skip this option for now
-                my $strDependOption = $$oDepend{&OPTION_RULE_DEPEND_OPTION};
-
-                if (!defined($oOptionResolved{$strDependOption}))
-                {
-                    $bDependUnresolved = true;
-                    next;
-                }
-
-                # Check if the depend option has a value
-                my $strDependValue = $oOption{$strDependOption};
                 my $strError = "option '${strOption}' not valid without option '${strDependOption}'";
 
-                $bDependResolved = defined($strDependValue) ? true : false;
-
-                if (!$bDependResolved && defined($strValue))
+                if ($strDependType eq 'source')
                 {
                     confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
                 }
 
                 # If a depend value exists, make sure the option value matches
-                if ($bDependResolved && defined($$oDepend{&OPTION_RULE_DEPEND_VALUE}) &&
-                    $$oDepend{&OPTION_RULE_DEPEND_VALUE} ne $strDependValue)
+                if ($strDependType eq 'value')
                 {
-                    $bDependResolved = false;
-
-                    if (defined($strValue))
+                    if ($oOptionRule{$strDependOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
                     {
-                        if ($oOptionRule{$strDependOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+                        if (!$$oDepend{&OPTION_RULE_DEPEND_VALUE})
                         {
-                            if (!$$oDepend{&OPTION_RULE_DEPEND_VALUE})
-                            {
-                                confess &log(ASSERT, "no error has been created for unused case where depend value = false");
-                            }
+                            confess &log(ASSERT, "no error has been created for unused case where depend value = false");
                         }
-                        else
-                        {
-                            $strError .= " = '$$oDepend{&OPTION_RULE_DEPEND_VALUE}'";
-                        }
-
-                        confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
                     }
+                    else
+                    {
+                        $strError .= " = '$$oDepend{&OPTION_RULE_DEPEND_VALUE}'";
+                    }
+
+                    confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
                 }
 
                 # If a depend list exists, make sure the value is in the list
-                if ($bDependResolved && defined($$oDepend{&OPTION_RULE_DEPEND_LIST}) &&
-                    !defined($$oDepend{&OPTION_RULE_DEPEND_LIST}{$strDependValue}))
+                if ($strDependType eq 'list')
                 {
-                    $bDependResolved = false;
+                    my @oyValue;
 
-                    if (defined($strValue))
+                    foreach my $strValue (sort(keys($$oDepend{&OPTION_RULE_DEPEND_LIST})))
                     {
-                        my @oyValue;
-
-                        foreach my $strValue (sort(keys($$oDepend{&OPTION_RULE_DEPEND_LIST})))
-                        {
-                            push(@oyValue, "'${strValue}'");
-                        }
-
-                        $strError .= @oyValue == 1 ? " = $oyValue[0]" : " in (" . join(", ", @oyValue) . ")";
-                        confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
+                        push(@oyValue, "'${strValue}'");
                     }
+
+                    $strError .= @oyValue == 1 ? " = $oyValue[0]" : " in (" . join(", ", @oyValue) . ")";
+                    confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
                 }
             }
 
@@ -1518,6 +1567,83 @@ sub optionTest
     }
 
     return defined($oOption{$strOption});
+}
+
+####################################################################################################################################
+# optionRemoteType
+#
+# Returns the remote type.
+####################################################################################################################################
+sub optionRemoteType
+{
+    return $strRemoteType;
+}
+
+####################################################################################################################################
+# optionRemoteTypeTest
+#
+# Test the remote type.
+####################################################################################################################################
+sub optionRemoteTypeTest
+{
+    my $strTest = shift;
+
+    return $strRemoteType eq $strTest ? true : false;
+}
+
+####################################################################################################################################
+# optionRemote
+#
+# Get the remote object or create it if does not exist.  Shared remotes are used because they create an SSH connection to the remote
+# host and the number of these connections should be minimized.  A remote can be shared without a single thread - for new threads
+# clone() should be called on the shared remote.
+####################################################################################################################################
+sub optionRemote
+{
+    my $bForceLocal = shift;
+
+    # If force local or remote = NONE then create a local remote and return it
+    if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
+    {
+        return new BackRest::Remote
+        (
+            undef, undef, undef, undef, undef,
+            optionGet(OPTION_BUFFER_SIZE),
+            operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
+            operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+        );
+    }
+
+    # Return the remote if is already defined
+    if (defined($oRemote))
+    {
+        return $oRemote;
+    }
+
+    # Return the remote when required
+    $oRemote = new BackRest::Remote
+    (
+        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
+        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
+        optionGet(OPTION_COMMAND_REMOTE),
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_REMOTE_PATH),
+        optionGet(OPTION_BUFFER_SIZE),
+        operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
+        operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+    );
+
+    return $oRemote;
+}
+
+####################################################################################################################################
+# optionRemoteTest
+#
+# Test if the remote DB or BACKUP.
+####################################################################################################################################
+sub optionRemoteTest
+{
+    return $strRemoteType ne NONE ? true : false;
 }
 
 ####################################################################################################################################

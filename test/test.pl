@@ -146,6 +146,7 @@ if (!defined($strPgSqlBin))
             {
                 &log(INFO, "found pgsql-bin at ${strVersionPath}\n");
                 $strPgSqlBin = ${strVersionPath};
+                last;
             }
         }
     }

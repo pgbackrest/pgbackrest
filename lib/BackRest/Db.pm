@@ -27,7 +27,8 @@ our @EXPORT = qw(FILE_POSTMASTER_PID);
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;       # Class name
+    my $class = shift;          # Class name
+    my $strDbPath = shift;      # Database path
     my $strCommandPsql = shift; # PSQL command
     my $strDbHost = shift;      # Database host name
     my $strDbUser = shift;      # Database user name (generally postgres)
@@ -142,6 +143,14 @@ sub backup_start
     my $self = shift;
     my $strLabel = shift;
     my $bStartFast = shift;
+
+    $self->db_version_get();
+
+    if ($self->{fVersion} < 8.4 && $bStartFast)
+    {
+        &log(WARN, 'start-fast option is only available in PostgreSQL >= 8.4');
+        $bStartFast = false;
+    }
 
     my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
                                     "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
