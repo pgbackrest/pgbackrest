@@ -118,6 +118,7 @@ sub walFileName
 
     # Record the start time
     my $lTime = time();
+    my $fSleep = .1;
 
     # Determine the path where the requested WAL segment is located
     my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strWalSegment));
@@ -143,15 +144,16 @@ sub walFileName
         # If waiting then sleep before trying again
         if (defined($iWaitSeconds))
         {
-            hsleep(.5);
+            hsleep($fSleep);
+            $fSleep = $fSleep * 2 < $iWaitSeconds - (time() - $lTime) ? $fSleep * 2 : ($iWaitSeconds - (time() - $lTime)) + .1;
         }
     }
-    while (defined($iWaitSeconds) && $lTime > time() - $iWaitSeconds);
+    while (defined($iWaitSeconds) && (time() - $lTime) < $iWaitSeconds);
 
     # If waiting and no WAL segment was found then throw an error
     if (defined($iWaitSeconds))
     {
-        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after ${iWaitSeconds} second(s)");
+        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . (time() - $lTime)  . ' second(s)');
     }
 
     return undef;
@@ -235,7 +237,7 @@ sub walInfo
     # }
     else
     {
-        confess &log(ERROR, "unexpected xlog magic 0x" . sprintf("%X", $iMagic) . ' (unsupported PostgreSQL version)',
+        confess &log(ERROR, "unexpected xlog magic 0x" . sprintf("%X", $iMagic) . ' (unsupported PostgreSQL version?)',
                      ERROR_VERSION_NOT_SUPPORTED);
     }
 
@@ -595,7 +597,8 @@ sub xfer
 
     foreach my $strFile (sort(keys $oManifestHash{name}))
     {
-        if ($strFile =~ /^[0-F]{24}.*/ || $strFile =~ /^[0-F]{8}\.history$/)
+        if ($strFile =~ "^[0-F]{24}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
+            $strFile =~ /^[0-F]{8}\.history$/ || $strFile =~ /^[0-F]{24}\.[0-F]{8}\.backup$/)
         {
             CORE::push(@stryFile, $strFile);
 

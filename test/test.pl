@@ -17,6 +17,7 @@ use Pod::Usage;
 #use Test::More;
 
 use lib dirname($0) . '/../lib';
+use BackRest::Db;
 use BackRest::Utility;
 
 use lib dirname($0) . '/lib';
@@ -46,6 +47,7 @@ test.pl [options]
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --infinite           repeat selected tests forever
+   --db-version         version of postgres to test (or all)
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -61,7 +63,7 @@ test.pl [options]
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
-my $strLogLevel = 'info';   # Log level for tests
+my $strLogLevel = 'info';
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
@@ -74,6 +76,7 @@ my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
 my $bInfinite = false;
+my $strDbVersion = 'max';
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -87,7 +90,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'thread-max=s' => \$iThreadMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
-            'infinite' => \$bInfinite)
+            'infinite' => \$bInfinite,
+            'db-version=s' => \$strDbVersion)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -104,7 +108,11 @@ if ($bVersion || $bHelp)
     exit 0;
 }
 
-# Test::More->builder->output('/dev/null');
+if (@ARGV > 0)
+{
+    print "invalid parameter\n\n";
+    pod2usage();
+}
 
 ####################################################################################################################################
 # Setup
@@ -131,30 +139,39 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 }
 
 # Search for psql bin
+my @stryTestVersion;
+my $strVersionSupport = versionSupport();
+
 if (!defined($strPgSqlBin))
 {
     my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
 
     foreach my $strSearchPath (@strySearchPath)
     {
-        for (my $fVersion = 9; $fVersion >= 0; $fVersion -= 1)
+        for (my $iVersionIdx = @{$strVersionSupport} - 1; $iVersionIdx >= 0; $iVersionIdx--)
         {
-            my $strVersionPath = $strSearchPath;
-            $strVersionPath =~ s/VERSION/9\.$fVersion/g;
-
-            if (-e "${strVersionPath}/initdb")
+            if ($strDbVersion eq 'all' || $strDbVersion eq 'max' && @stryTestVersion == 0 ||
+                $strDbVersion eq ${$strVersionSupport}[$iVersionIdx])
             {
-                &log(INFO, "found pgsql-bin at ${strVersionPath}\n");
-                $strPgSqlBin = ${strVersionPath};
-                last;
+                my $strVersionPath = $strSearchPath;
+                $strVersionPath =~ s/VERSION/${$strVersionSupport}[$iVersionIdx]/g;
+
+                if (-e "${strVersionPath}/initdb")
+                {
+                    &log(INFO, "FOUND pgsql-bin at ${strVersionPath}");
+                    push @stryTestVersion, $strVersionPath;
+                }
             }
         }
     }
 
-    if (!defined($strPgSqlBin))
-    {
-        confess 'pgsql-bin was not defined and could not be located';
-    }
+    # Make sure at least one version of postgres was found
+    @{$strVersionSupport} > 0
+        or confess 'pgsql-bin was not defined and postgres could not be located automatically';
+}
+else
+{
+    push @stryTestVersion, $strPgSqlBin;
 }
 
 # Check thread total
@@ -214,8 +231,6 @@ if (-e './test.pl' && -e '../bin/pg_backrest.pl' && open($hVersion, '<', '../VER
 ####################################################################################################################################
 # Runs tests
 ####################################################################################################################################
-BackRestTestCommon_Setup($strTestPath, $strPgSqlBin, $iModuleTestRun, $bDryRun, $bNoCleanup);
-
 # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
 #            "group = {strGroup}");
 
@@ -223,6 +238,10 @@ my $iRun = 0;
 
 do
 {
+    BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup);
+
+    &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
+
     if ($bInfinite)
     {
         $iRun++;
@@ -247,6 +266,16 @@ do
     if ($strModule eq 'all' || $strModule eq 'backup')
     {
         BackRestTestBackup_Test($strModuleTest, $iThreadMax);
+
+        if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
+        {
+            for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
+            {
+                BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx], $iModuleTestRun, $bDryRun, $bNoCleanup);
+                &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
+                BackRestTestBackup_Test('full', $iThreadMax);
+            }
+        }
     }
 }
 while ($bInfinite);

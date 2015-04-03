@@ -13,6 +13,7 @@ use IPC::System::Simple qw(capture);
 use Exporter qw(import);
 
 use lib dirname($0);
+use BackRest::Exception;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -70,6 +71,20 @@ sub is_remote
     # If the SSH object is defined then db is remote
     return defined($self->{oDbSSH}) ? true : false;
 }
+
+####################################################################################################################################
+# versionSupport
+#
+# Returns an array of the supported Postgres versions.
+####################################################################################################################################
+sub versionSupport
+{
+    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4');
+
+    return \@strySupportVersion;
+}
+
+push @EXPORT, qw(versionSupport);
 
 ####################################################################################################################################
 # PSQL_EXECUTE
@@ -131,6 +146,13 @@ sub db_version_get
         trim($self->psql_execute("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
 
     &log(DEBUG, "database version is $self->{fVersion}");
+
+    my $strVersionSupport = versionSupport();
+
+    if ($self->{fVersion} < ${$strVersionSupport}[0])
+    {
+        confess &log(ERROR, "unsupported Postgres version ${$strVersionSupport}[0]", ERROR_VERSION_NOT_SUPPORTED);
+    }
 
     return $self->{fVersion};
 }

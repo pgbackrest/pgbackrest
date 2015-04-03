@@ -321,7 +321,7 @@ sub path_get
                 confess &log(ASSERT, 'archive temp must have strFile defined');
             }
 
-            return "${strArchivePath}.tmp";
+            $strArchivePath = "${strArchivePath}.tmp";
         }
 
         return $strArchivePath;

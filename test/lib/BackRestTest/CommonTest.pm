@@ -25,6 +25,7 @@ use BackRest::Config;
 use BackRest::Remote;
 use BackRest::File;
 use BackRest::Manifest;
+use BackRest::Db;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
@@ -477,10 +478,12 @@ sub BackRestTestCommon_Setup
     @stryVersionToken = split(/\./, $stryVersionToken[2]);
     $strCommonDbVersion = $stryVersionToken[0] . '.' . $stryVersionToken[1];
 
-    # Don't run unit tests for versions below 8.3
-    if ($strCommonDbVersion < 8.3)
+    # Don't run unit tests for unsupported versions
+    my $strVersionSupport = versionSupport();
+
+    if ($strCommonDbVersion < ${$strVersionSupport}[0])
     {
-        confess "currently only version 8.3 and up are supported";
+        confess "currently only version ${$strVersionSupport}[0] and up are supported";
     }
 }
 
