@@ -2516,7 +2516,7 @@ sub BackRestTestBackup_Test
 
             # Restore (restore type = default, timeline = 3)
             #-----------------------------------------------------------------------------------------------------------------------
-            if (BackRestTestCommon_DbVersion() >= 8.4 && BackRestTestCommon_DbVersion() != 9.3)
+            if (BackRestTestCommon_DbVersion() >= 8.4)
             {
                 $bDelta = true;
                 $bForce = false;
