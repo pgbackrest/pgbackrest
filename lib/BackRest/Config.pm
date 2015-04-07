@@ -666,7 +666,6 @@ my %oOptionRule =
 
     &OPTION_BACKUP_ARCHIVE_CHECK =>
     {
-        &OPTION_RULE_NEGATE => true,
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
         &OPTION_RULE_SECTION => true,
@@ -696,7 +695,6 @@ my %oOptionRule =
 
     &OPTION_COMPRESS =>
     {
-        &OPTION_RULE_NEGATE => true,
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMPRESS,
         &OPTION_RULE_SECTION => true,
@@ -988,10 +986,14 @@ sub configLoad
         $oOptionAllow{$strOption} = $strOption;
 
         # Check if the option can be negated
-        if (defined($oOptionRule{$strKey}{&OPTION_RULE_NEGATE})  && $oOptionRule{$strKey}{&OPTION_RULE_NEGATE})
+        if ((defined($oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) &&
+             $oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) ||
+            ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN &&
+             defined($oOptionRule{$strKey}{&OPTION_RULE_SECTION})))
         {
             $strOption = "no-${strKey}";
             $oOptionAllow{$strOption} = $strOption;
+            $oOptionRule{$strKey}{&OPTION_RULE_NEGATE} = true;
         }
     }
 
@@ -1140,12 +1142,11 @@ sub optionValid
                     confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
                 }
 
-                if ($bNegate)
+                if ($bNegate && $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
                 {
                     $strValue = false;
                 }
             }
-
 
             # If the operation has rules store them for later evaluation
             my $oOperationRule = optionOperationRule($strOption, $strOperation);

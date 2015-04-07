@@ -394,7 +394,7 @@ sub BackRestTestBackup_Create
         BackRestTestCommon_PathCreate(BackRestTestCommon_LocalPathGet());
     }
 
-    BackRestTestCommon_CreateRepo();
+    BackRestTestCommon_CreateRepo($bRemote);
 
     # Create the cluster
     if ($bCluster)

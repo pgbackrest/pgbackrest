@@ -48,7 +48,8 @@ sub BackRestTestCompare_BuildDb
 
         do
         {
-            BackRestTestBackup_PgExecute("do \$\$ declare iIndex int; begin for iIndex in 1..289000 loop insert into ${strTableName} values (1); end loop; end \$\$;");
+            BackRestTestBackup_PgExecute("do \$\$ declare iIndex int; begin for iIndex in 1..289000 loop " .
+                                         "insert into ${strTableName} values (1); end loop; end \$\$;");
             BackRestTestBackup_PgExecute("checkpoint");
             my $oStat = stat($strTableFile);
 
