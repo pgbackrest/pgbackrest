@@ -26,6 +26,7 @@ use BackRestTest::UtilityTest;
 use BackRestTest::ConfigTest;
 use BackRestTest::FileTest;
 use BackRestTest::BackupTest;
+use BackRestTest::CompareTest;
 
 ####################################################################################################################################
 # Usage
@@ -276,6 +277,11 @@ do
                 BackRestTestBackup_Test('full', $iThreadMax);
             }
         }
+    }
+
+    if ($strModule eq 'compare')
+    {
+        BackRestTestCompare_Test($strModuleTest);
     }
 }
 while ($bInfinite);

@@ -30,7 +30,8 @@ use BackRest::Archive;
 use BackRestTest::CommonTest;
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestBackup_Test);
+our @EXPORT = qw(BackRestTestBackup_Test BackRestTestBackup_Create BackRestTestBackup_Drop BackRestTestBackup_ClusterStop
+                 BackRestTestBackup_PgSelectOne BackRestTestBackup_PgExecute);
 
 my $strTestPath;
 my $strHost;
@@ -276,6 +277,10 @@ sub BackRestTestBackup_ClusterStart
             }
         }
     }
+    else
+    {
+        $strCommand .= " -c archive_mode=on -c wal_level=archive -c archive_command=true";
+    }
 
     $strCommand .= " -c unix_socket_director" . (BackRestTestCommon_DbVersion() < '9.3' ? "y='" : "ies='") .
                    BackRestTestCommon_DbPathGet() . "'\" " .
@@ -359,6 +364,7 @@ sub BackRestTestBackup_Create
 {
     my $bRemote = shift;
     my $bCluster = shift;
+    my $bArchive = shift;
 
     # Set defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
@@ -388,20 +394,12 @@ sub BackRestTestBackup_Create
         BackRestTestCommon_PathCreate(BackRestTestCommon_LocalPathGet());
     }
 
-    # Create the backup directory
-    if ($bRemote)
-    {
-        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_RepoPathGet(), true);
-    }
-    else
-    {
-        BackRestTestCommon_PathCreate(BackRestTestCommon_RepoPathGet());
-    }
+    BackRestTestCommon_CreateRepo();
 
     # Create the cluster
     if ($bCluster)
     {
-        BackRestTestBackup_ClusterCreate();
+        BackRestTestBackup_ClusterCreate(undef, undef, $bArchive);
     }
 }
 

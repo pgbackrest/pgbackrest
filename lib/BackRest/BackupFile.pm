@@ -115,10 +115,10 @@ sub backupFile
         # Output information about the file to be checksummed
         if (!defined($strLog))
         {
-            $strLog = "checksum-only ${strLogProgress}";
+            $strLog = "checksum-only";
         }
 
-        &log(INFO, $strLog . " checksum ${strCopyChecksum}");
+        &log(INFO, $strLog . "  ${strLogProgress} checksum ${strCopyChecksum}");
     }
     else
     {

@@ -194,8 +194,8 @@ push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OP
 ####################################################################################################################################
 use constant
 {
-    OPTION_DEFAULT_BUFFER_SIZE                  => 1048576,
-    OPTION_DEFAULT_BUFFER_SIZE_MIN              => 4096,
+    OPTION_DEFAULT_BUFFER_SIZE                  => 4194304,
+    OPTION_DEFAULT_BUFFER_SIZE_MIN              => 16384,
     OPTION_DEFAULT_BUFFER_SIZE_MAX              => 8388608,
 
     OPTION_DEFAULT_COMPRESS                     => true,
@@ -666,6 +666,7 @@ my %oOptionRule =
 
     &OPTION_BACKUP_ARCHIVE_CHECK =>
     {
+        &OPTION_RULE_NEGATE => true,
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
         &OPTION_RULE_SECTION => true,
@@ -695,6 +696,7 @@ my %oOptionRule =
 
     &OPTION_COMPRESS =>
     {
+        &OPTION_RULE_NEGATE => true,
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMPRESS,
         &OPTION_RULE_SECTION => true,
@@ -1136,6 +1138,11 @@ sub optionValid
                 if ($bNegate && defined($strValue))
                 {
                     confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
+                }
+
+                if ($bNegate)
+                {
+                    $strValue = false;
                 }
             }
 

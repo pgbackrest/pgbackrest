@@ -39,7 +39,8 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
                  BackRestTestCommon_RepoPathGet BackRestTestCommon_LocalPathGet BackRestTestCommon_DbPathGet
                  BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
-                 BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion);
+                 BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
+                 BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -92,6 +93,41 @@ sub BackRestTestCommon_ClusterStop
 }
 
 ####################################################################################################################################
+# BackRestTestCommon_DropRepo
+####################################################################################################################################
+sub BackRestTestCommon_DropRepo
+{
+    # Remove the backrest private directory
+    while (-e BackRestTestCommon_RepoPathGet())
+    {
+        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
+        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
+        hsleep(.1);
+    }
+}
+
+
+####################################################################################################################################
+# BackRestTestCommon_CreateRepo
+####################################################################################################################################
+sub BackRestTestCommon_CreateRepo
+{
+    my $bRemote = shift;
+
+    BackRestTestCommon_DropRepo();
+
+    # Create the backup directory
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_RepoPathGet(), true);
+    }
+    else
+    {
+        BackRestTestCommon_PathCreate(BackRestTestCommon_RepoPathGet());
+    }
+}
+
+####################################################################################################################################
 # BackRestTestCommon_Drop
 ####################################################################################################################################
 sub BackRestTestCommon_Drop
@@ -100,12 +136,7 @@ sub BackRestTestCommon_Drop
     BackRestTestCommon_ClusterStop(BackRestTestCommon_DbCommonPathGet(), true);
 
     # Remove the backrest private directory
-    while (-e BackRestTestCommon_RepoPathGet())
-    {
-        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
-        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
-        hsleep(.1);
-    }
+    BackRestTestCommon_DropRepo();
 
     # Remove the test directory
     BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
@@ -785,6 +816,11 @@ sub BackRestTestCommon_PgSqlBinPathGet
 sub BackRestTestCommon_StanzaGet
 {
     return $strCommonStanza;
+}
+
+sub BackRestTestCommon_CommandPsqlGet
+{
+    return $strCommonCommandPsql;
 }
 
 sub BackRestTestCommon_CommandMainGet
