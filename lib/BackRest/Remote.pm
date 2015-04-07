@@ -82,6 +82,7 @@ sub new
                                           master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
 
         $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error);
+        &log(TRACE, 'connected to remote ssh host ' . $self->{strHost});
 
         # Execute remote command
         ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
@@ -118,6 +119,29 @@ sub new
     }
 
     return $self;
+}
+
+
+####################################################################################################################################
+# DESTROY
+####################################################################################################################################
+sub DESTROY
+{
+    my $self = shift;
+
+    # Only send the exit command if the process is running
+    if (defined($self->{pId}))
+    {
+        &log(TRACE, "sending exit command to process");
+        $self->command_write('exit');
+
+        # &log(TRACE, "waiting for remote process");
+        # if (!$self->wait_pid(5, false))
+        # {
+        #     &log(TRACE, "killed remote process");
+        #     kill('KILL', $self->{pId});
+        # }
+    }
 }
 
 ####################################################################################################################################
@@ -389,27 +413,70 @@ sub write_line
 sub wait_pid
 {
     my $self = shift;
+    my $fWaitTime = shift;
+    my $bReportError = shift;
 
-    if (defined($self->{pId}) && waitpid($self->{pId}, WNOHANG) != 0)
+    # Record the start time and set initial sleep interval
+    my $fStartTime = defined($fWaitTime) ? gettimeofday() : undef;
+    my $fSleep = defined($fWaitTime) ? .1 : undef;
+
+    if (defined($self->{pId}))
     {
-        my $strError = 'no error on stderr';
-
-        if (!defined($self->{hErr}))
+        do
         {
-            $strError = 'no error captured because stderr is already closed';
-        }
-        else
-        {
-            $strError = $self->pipe_to_string($self->{hErr});
-        }
+            my $iResult = waitpid($self->{pId}, WNOHANG);
 
-        $self->{pId} = undef;
-        $self->{hIn} = undef;
-        $self->{hOut} = undef;
-        $self->{hErr} = undef;
+            if (defined($fWaitTime))
+            {
+                confess &log(TRACE, "waitpid result = $iResult");
+            }
 
-        confess &log(ERROR, "remote process terminated: ${strError}");
+            # If there is no such process
+            if ($iResult == -1)
+            {
+                return true;
+            }
+
+            if ($iResult > 0)
+            {
+                if (!defined($bReportError) || $bReportError)
+                {
+                    my $strError = 'no error on stderr';
+
+                    if (!defined($self->{hErr}))
+                    {
+                        $strError = 'no error captured because stderr is already closed';
+                    }
+                    else
+                    {
+                        $strError = $self->pipe_to_string($self->{hErr});
+                    }
+
+                    $self->{pId} = undef;
+                    $self->{hIn} = undef;
+                    $self->{hOut} = undef;
+                    $self->{hErr} = undef;
+
+                    confess &log(ERROR, "remote process terminated: ${strError}");
+                }
+
+                return true;
+            }
+
+            &log(TRACE, "waiting for pid");
+
+            # If waiting then sleep before trying again
+            if (defined($fWaitTime))
+            {
+                hsleep($fSleep);
+                $fSleep = $fSleep * 2 < $fWaitTime - (gettimeofday() - $fStartTime) ?
+                              $fSleep * 2 : ($fWaitTime - (gettimeofday() - $fStartTime)) + .001;
+            }
+        }
+        while (defined($fWaitTime) && (gettimeofday() - $fStartTime) < $fWaitTime);
     }
+
+    return false;
 }
 
 ####################################################################################################################################

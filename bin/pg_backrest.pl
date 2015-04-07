@@ -22,6 +22,7 @@ use BackRest::File;
 use BackRest::Archive;
 use BackRest::Backup;
 use BackRest::Restore;
+use BackRest::ThreadGroup;
 
 ####################################################################################################################################
 # Usage
@@ -76,24 +77,19 @@ pg_backrest.pl [options] [operation]
 =cut
 
 ####################################################################################################################################
-# Global variables
-####################################################################################################################################
-my $oRemote;            # Remote protocol object
-my $oLocal;             # Local protocol object
-
-####################################################################################################################################
 # SAFE_EXIT - terminate all SSH sessions when the script is terminated
 ####################################################################################################################################
 sub safe_exit
 {
     my $iExitCode = shift;
 
+    my $iTotal = threadGroupDestroy();
+    remoteDestroy();
+
     if (defined($iExitCode))
     {
         exit $iExitCode;
     }
-
-    my $iTotal = backup_thread_kill();
 
     &log(ERROR, "process terminated on signal or exception, ${iTotal} threads stopped");
 }
@@ -127,6 +123,16 @@ if (operationTest(OP_ARCHIVE_PUSH) || operationTest(OP_ARCHIVE_GET))
 }
 
 ####################################################################################################################################
+# Open the log file
+####################################################################################################################################
+log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(operationGet()));
+
+####################################################################################################################################
+# Create the thread group that will be used for parallel processing
+####################################################################################################################################
+threadGroupCreate();
+
+####################################################################################################################################
 # Initialize the default file object
 ####################################################################################################################################
 my $oFile = new BackRest::File
@@ -146,9 +152,6 @@ if (operationTest(OP_RESTORE))
     {
         confess &log(ASSERT, 'restore operation must be performed locally on the db server');
     }
-
-    # Open the log file
-    log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-restore');
 
     # Set the lock path
     my $strLockPath = optionGet(OPTION_REPO_PATH) .  '/lock/' .
@@ -181,9 +184,6 @@ if (operationTest(OP_RESTORE))
 ####################################################################################################################################
 # GET MORE CONFIG INFO
 ####################################################################################################################################
-# Open the log file
-log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA));
-
 # Make sure backup and expire operations happen on the backup side
 if (optionRemoteTypeTest(BACKUP))
 {

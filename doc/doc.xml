@@ -61,6 +61,8 @@
 						cpanm IPC::System::Simple
 						cpanm Digest::SHA
 						cpanm Compress::ZLib
+						cpanm threads (update this package)
+						cpanm Thread::Queue (update this package)
 					</code-block>
 					* Install PgBackRest
 

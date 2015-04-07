@@ -17,6 +17,7 @@ use lib dirname($0);
 use BackRest::Exception;
 use BackRest::Utility;
 use BackRest::ThreadGroup;
+use BackRest::RestoreFile;
 use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
@@ -566,8 +567,23 @@ sub restore
     # Build paths/links in the restore paths
     $self->build($oManifest);
 
-    # Create thread queues
+    # Get variables required for restore
+    my $lCopyTimeBegin = $oManifest->epoch(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
+    my $bSourceCompression = $oManifest->get(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) eq 'y' ? true : false;
+    my $strCurrentUser = getpwuid($<);
+    my $strCurrentGroup = getgrgid($();
+
+    # Create thread queues (or do restore if single-threaded)
     my @oyRestoreQueue;
+
+    if ($self->{iThreadTotal} > 1)
+    {
+        &log(TRACE, "building thread queues");
+    }
+    else
+    {
+        &log(TRACE, "starting restore in main process");
+    }
 
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
@@ -575,11 +591,22 @@ sub restore
 
         if ($oManifest->test($strSection))
         {
-            $oyRestoreQueue[@oyRestoreQueue] = Thread::Queue->new();
+            if ($self->{iThreadTotal} > 1)
+            {
+                $oyRestoreQueue[@oyRestoreQueue] = Thread::Queue->new();
+            }
 
             foreach my $strName ($oManifest->keys($strSection))
             {
-                $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue("${strPathKey}|${strName}");
+                if ($self->{iThreadTotal} > 1)
+                {
+                    $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue("${strPathKey}|${strName}");
+                }
+                else
+                {
+                    restoreFile($strPathKey, $strName, $lCopyTimeBegin, $self->{bDelta}, $self->{bForce}, $self->{strBackupPath},
+                                $bSourceCompression, $strCurrentUser, $strCurrentGroup, $oManifest, $self->{oFile});
+                }
             }
         }
     }
@@ -587,179 +614,29 @@ sub restore
     # If multi-threaded then create threads to copy files
     if ($self->{iThreadTotal} > 1)
     {
-        # Create threads to process the thread queues
-        my $oThreadGroup = thread_group_create();
-
         for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
         {
-            &log(DEBUG, "starting restore thread ${iThreadIdx}");
-            thread_group_add($oThreadGroup, threads->create(\&restore_thread, $self, true,
-                                                            $iThreadIdx, \@oyRestoreQueue, $oManifest));
+            my %oParam;
+
+            $oParam{copy_time_begin} = $lCopyTimeBegin;
+            $oParam{delta} = $self->{bDelta};
+            $oParam{force} = $self->{bForce};
+            $oParam{backup_path} = $self->{strBackupPath};
+            $oParam{source_compression} = $bSourceCompression;
+            $oParam{current_user} = $strCurrentUser;
+            $oParam{current_group} = $strCurrentGroup;
+            $oParam{queue} = \@oyRestoreQueue;
+            $oParam{manifest} = $oManifest;
+
+            threadGroupRun($iThreadIdx, 'restore', \%oParam);
         }
 
         # Complete thread queues
-        thread_group_complete($oThreadGroup);
-    }
-    # Else copy in the main process
-    else
-    {
-        &log(DEBUG, "starting restore in main process");
-        $self->restore_thread(false, 0, \@oyRestoreQueue, $oManifest);
+        threadGroupComplete();
     }
 
     # Create recovery.conf file
     $self->recovery();
-}
-
-####################################################################################################################################
-# RESTORE_THREAD
-#
-# Worker threads for the restore process.
-####################################################################################################################################
-sub restore_thread
-{
-    my $self = shift;               # Class hash
-    my $bMulti = shift;             # Is this thread one of many?
-    my $iThreadIdx = shift;         # Defines the index of this thread
-    my $oyRestoreQueueRef = shift;  # Restore queues
-    my $oManifest = shift;          # Backup manifest
-
-    my $iDirection = $iThreadIdx % 2 == 0 ? 1 : -1;     # Size of files currently copied by this thread
-    my $oFileThread;                                    # Thread local file object
-
-    # If multi-threaded, then clone the file object
-    if ($bMulti)
-    {
-        $oFileThread = $self->{oFile}->clone($iThreadIdx);
-    }
-    # Else use the master file object
-    else
-    {
-        $oFileThread = $self->{oFile};
-    }
-
-    # Initialize the starting and current queue index based in the total number of threads in relation to this thread
-    my $iQueueStartIdx = int((@{$oyRestoreQueueRef} / $self->{iThreadTotal}) * $iThreadIdx);
-    my $iQueueIdx = $iQueueStartIdx;
-
-    # Time when the backup copying began - used for size/timestamp deltas
-    my $lCopyTimeBegin = $oManifest->epoch(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
-
-    # Set source compression
-    my $bSourceCompression = $oManifest->get(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) eq 'y' ? true : false;
-
-    # When a KILL signal is received, immediately abort
-    $SIG{'KILL'} = sub {threads->exit();};
-
-    # Get the current user and group to compare with stored mode
-    my $strCurrentUser = getpwuid($<);
-    my $strCurrentGroup = getgrgid($();
-
-    # Loop through all the queues to restore files (exit when the original queue is reached
-    do
-    {
-        while (my $strMessage = ${$oyRestoreQueueRef}[$iQueueIdx]->dequeue_nb())
-        {
-            my $strSourcePath = (split(/\|/, $strMessage))[0];                        # Source path from backup
-            my $strSection = "${strSourcePath}:file";                                 # Backup section with file info
-            my $strDestinationPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH,    # Destination path stored in manifest
-                                                     $strSourcePath);
-            $strSourcePath =~ s/\:/\//g;                                              # Replace : with / in source path
-            my $strName = (split(/\|/, $strMessage))[1];                              # Name of file to be restored
-
-            # If the file is a reference to a previous backup and hardlinks are off, then fetch it from that backup
-            my $strReference = $oManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, 'y') ? undef :
-                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE, false);
-
-            # Generate destination file name
-            my $strDestinationFile = $oFileThread->path_get(PATH_DB_ABSOLUTE, "${strDestinationPath}/${strName}");
-
-            if ($oFileThread->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
-            {
-                # Perform delta if requested
-                if ($self->{bDelta})
-                {
-                    # If force then use size/timestamp delta
-                    if ($self->{bForce})
-                    {
-                        my $oStat = lstat($strDestinationFile);
-
-                        # Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
-                        if (defined($oStat) &&
-                            $oStat->size == $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
-                            $oStat->mtime == $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) &&
-                            $oStat->mtime < $lCopyTimeBegin)
-                        {
-                            &log(DEBUG, "${strDestinationFile} exists and matches size " . $oStat->size .
-                                        " and modification time " . $oStat->mtime);
-                            next;
-                        }
-                    }
-                    else
-                    {
-                        my ($strChecksum, $lSize) = $oFileThread->hash_size(PATH_DB_ABSOLUTE, $strDestinationFile);
-
-                        if (($lSize == $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) && $lSize == 0) ||
-                            ($strChecksum eq $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM)))
-                        {
-                            &log(DEBUG, "${strDestinationFile} exists and is zero size or matches backup checksum");
-
-                            # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
-                            # presents a pristine version of the database.
-                            utime($oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                                  $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                                  $strDestinationFile)
-                                or confess &log(ERROR, "unable to set time for ${strDestinationFile}");
-
-                            next;
-                        }
-                    }
-                }
-
-                $oFileThread->remove(PATH_DB_ABSOLUTE, $strDestinationFile);
-            }
-
-            # Set user and group if running as root (otherwise current user and group will be used for restore)
-            # Copy the file from the backup to the database
-            my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-                $oFileThread->copy(PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $self->{strBackupPath}) .
-                                   "/${strSourcePath}/${strName}" .
-                                   ($bSourceCompression ? '.' . $oFileThread->{strCompressExtension} : ''),
-                                   PATH_DB_ABSOLUTE, $strDestinationFile,
-                                   $bSourceCompression,   # Source is compressed based on backup settings
-                                   undef, undef,
-                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE),
-                                   undef,
-                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER),
-                                   $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP));
-
-            if ($lCopySize != 0 && $strCopyChecksum ne $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM))
-            {
-                confess &log(ERROR, "error restoring ${strDestinationFile}: actual checksum ${strCopyChecksum} " .
-                                    "does not match expected checksum " .
-                                    $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM), ERROR_CHECKSUM);
-            }
-        }
-
-        # Even number threads move up when they have finished a queue, odd numbered threads move down
-        $iQueueIdx += $iDirection;
-
-        # Reset the queue index when it goes over or under the number of queues
-        if ($iQueueIdx < 0)
-        {
-            $iQueueIdx = @{$oyRestoreQueueRef} - 1;
-        }
-        elsif ($iQueueIdx >= @{$oyRestoreQueueRef})
-        {
-            $iQueueIdx = 0;
-        }
-
-        &log(TRACE, "thread waiting for new file from queue: queue ${iQueueIdx}, start queue ${iQueueStartIdx}");
-    }
-    while ($iQueueIdx != $iQueueStartIdx);
-
-    &log(DEBUG, "thread ${iThreadIdx} exiting");
 }
 
 1;

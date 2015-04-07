@@ -21,29 +21,23 @@ use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
 use BackRest::Db;
+use BackRest::ThreadGroup;
 use BackRest::Archive;
+use BackRest::BackupFile;
 
 use Exporter qw(import);
 
-our @EXPORT = qw(backup_init backup_cleanup backup_thread_kill backup backup_expire archive_list_get);
+our @EXPORT = qw(backup_init backup_cleanup backup backup_expire archive_list_get);
 
 my $oDb;
 my $oFile;
 my $strType;        # Type of backup: full, differential (diff), incremental (incr)
 my $bCompress;
 my $bHardLink;
-my $iThreadMax;
-my $iThreadLocalMax;
-my $iSmallFileThreshold = 65536;
 my $bNoStartStop;
 my $bForce;
+my $iThreadMax;
 my $iThreadTimeout;
-
-# Thread variables
-my @oThread;
-my @oThreadQueue;
-my @oMasterQueue;
-my %oFileCopyMap;
 
 ####################################################################################################################################
 # BACKUP_INIT
@@ -69,16 +63,6 @@ sub backup_init
     $iThreadTimeout = $iThreadTimeoutParam;
     $bNoStartStop = $bNoStartStopParam;
     $bForce = $bForceParam;
-
-    if (!defined($iThreadMax))
-    {
-        $iThreadMax = 1;
-    }
-
-    if ($iThreadMax < 1 || $iThreadMax > 32)
-    {
-        confess &log(ERROR, 'thread_max must be between 1 and 32');
-    }
 }
 
 ####################################################################################################################################
@@ -87,142 +71,6 @@ sub backup_init
 sub backup_cleanup
 {
     undef($oFile);
-}
-
-####################################################################################################################################
-# THREAD_INIT
-####################################################################################################################################
-sub thread_init
-{
-    my $iThreadRequestTotal = shift;  # Number of threads that were requested
-
-    my $iThreadActualTotal;           # Number of actual threads assigned
-
-    if (!defined($iThreadRequestTotal))
-    {
-        $iThreadActualTotal = $iThreadMax;
-    }
-    else
-    {
-        $iThreadActualTotal = $iThreadRequestTotal < $iThreadMax ? $iThreadRequestTotal : $iThreadMax;
-
-        if ($iThreadActualTotal < 1)
-        {
-            $iThreadActualTotal = 1;
-        }
-    }
-
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadActualTotal; $iThreadIdx++)
-    {
-        $oThreadQueue[$iThreadIdx] = Thread::Queue->new();
-        $oMasterQueue[$iThreadIdx] = Thread::Queue->new();
-    }
-
-    return $iThreadActualTotal;
-}
-
-####################################################################################################################################
-# BACKUP_THREAD_KILL
-####################################################################################################################################
-sub backup_thread_kill
-{
-    my $iTotal = 0;
-
-    for (my $iThreadIdx = 0; $iThreadIdx < scalar @oThread; $iThreadIdx++)
-    {
-        if (defined($oThread[$iThreadIdx]))
-        {
-            if ($oThread[$iThreadIdx]->is_running())
-            {
-                $oThread[$iThreadIdx]->kill('KILL')->join();
-            }
-            elsif ($oThread[$iThreadIdx]->is_joinable())
-            {
-                $oThread[$iThreadIdx]->join();
-            }
-
-            undef($oThread[$iThreadIdx]);
-            $iTotal++;
-        }
-    }
-
-    return($iTotal);
-}
-
-####################################################################################################################################
-# BACKUP_THREAD_COMPLETE
-####################################################################################################################################
-sub backup_thread_complete
-{
-    my $iTimeout = shift;
-    my $bConfessOnError = shift;
-
-    if (!defined($bConfessOnError))
-    {
-        $bConfessOnError = true;
-    }
-
-#    if (!defined($iTimeout))
-#    {
-#        &log(WARN, "no thread timeout was set");
-#    }
-
-    # Wait for all threads to complete and handle errors
-    my $iThreadComplete = 0;
-    my $lTimeBegin = time();
-
-    # Rejoin the threads
-    while ($iThreadComplete < $iThreadLocalMax)
-    {
-        # If a timeout has been defined, make sure we have not been running longer than that
-        if (defined($iTimeout))
-        {
-            if (time() - $lTimeBegin >= $iTimeout)
-            {
-                confess &log(ERROR, "threads have been running more than ${iTimeout} seconds, exiting...");
-
-                #backup_thread_kill();
-
-                #confess &log(WARN, "all threads have exited, aborting...");
-            }
-        }
-
-        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
-        {
-            if (defined($oThread[$iThreadIdx]))
-            {
-                if (defined($oThread[$iThreadIdx]->error()))
-                {
-                    backup_thread_kill();
-
-                    if ($bConfessOnError)
-                    {
-                        confess &log(ERROR, 'error in thread ' . (${iThreadIdx} + 1) . ': check log for details');
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-
-                if ($oThread[$iThreadIdx]->is_joinable())
-                {
-                    &log(DEBUG, "thread ${iThreadIdx} exited");
-                    $oThread[$iThreadIdx]->join();
-                    &log(TRACE, "thread ${iThreadIdx} object undef");
-                    undef($oThread[$iThreadIdx]);
-                    $iThreadComplete++;
-                }
-            }
-        }
-
-        # Sleep before trying again
-        hsleep(.1);
-    }
-
-    &log(DEBUG, 'all threads exited');
-
-    return true;
 }
 
 ####################################################################################################################################
@@ -466,78 +314,54 @@ sub backup_file
     my $oBackupManifest = shift;    # Manifest for the current backup
 
     # Variables used for parallel copy
-    my $lTablespaceIdx = 0;
+    my %oFileCopyMap;
     my $lFileTotal = 0;
-    my $lFileLargeSize = 0;
-    my $lFileLargeTotal = 0;
-    my $lFileSmallSize = 0;
-    my $lFileSmallTotal = 0;
-
-    # Decide if all the paths will be created in advance
-    my $bPathCreate = $bHardLink || $strType eq BACKUP_TYPE_FULL;
+    my $lSizeTotal = 0;
 
     # Iterate through the path sections of the manifest to backup
-    foreach my $strSectionPath ($oBackupManifest->keys())
+    foreach my $strPathKey ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        # Skip non-path sections
-        if ($strSectionPath !~ /\:path$/ || $strSectionPath =~ /^backup\:path$/)
-        {
-            next;
-        }
-
         # Determine the source and destination backup paths
         my $strBackupSourcePath;        # Absolute path to the database base directory or tablespace to backup
         my $strBackupDestinationPath;   # Relative path to the backup directory where the data will be stored
         my $strSectionFile;             # Manifest section that contains the file data
 
         # Process the base database directory
-        if ($strSectionPath =~ /^base\:/)
+        if ($strPathKey =~ /^base$/)
         {
-            $lTablespaceIdx++;
             $strBackupSourcePath = $strDbClusterPath;
             $strBackupDestinationPath = 'base';
-            $strSectionFile = 'base:file';
 
             # Create the archive log directory
             $oFile->path_create(PATH_BACKUP_TMP, 'base/pg_xlog');
         }
         # Process each tablespace
-        elsif ($strSectionPath =~ /^tablespace\:/)
+        elsif ($strPathKey =~ /^tablespace\:/)
         {
-            $lTablespaceIdx++;
-            my $strTablespaceName = (split(':', $strSectionPath))[1];
+            my $strTablespaceName = (split(':', $strPathKey))[1];
             $strBackupSourcePath = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
                                                          MANIFEST_SUBKEY_PATH);
             $strBackupDestinationPath = "tablespace/${strTablespaceName}";
             $strSectionFile = "tablespace:${strTablespaceName}:file";
 
             # Create the tablespace directory and link
-            if ($bPathCreate)
+            if ($bHardLink || $strType eq BACKUP_TYPE_FULL)
             {
-                $oFile->path_create(PATH_BACKUP_TMP, $strBackupDestinationPath);
-
-                $oFile->link_create(PATH_BACKUP_TMP, ${strBackupDestinationPath},
-                                   PATH_BACKUP_TMP,
-                                   'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
-                                                                             MANIFEST_SUBKEY_LINK),
-                                   false, true);
+                $oFile->link_create(PATH_BACKUP_TMP, $strBackupDestinationPath,
+                                    PATH_BACKUP_TMP,
+                                    'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                                                                              MANIFEST_SUBKEY_LINK),
+                                    false, true, true);
             }
         }
         else
         {
-            confess &log(ASSERT, "cannot find type for section ${strSectionPath}");
+            confess &log(ASSERT, "cannot find type for path ${strPathKey}");
         }
 
-        # Create all the sub paths if this is a full backup or hardlinks are requested
-        if ($bPathCreate)
-        {
-            foreach my $strPath ($oBackupManifest->keys($strSectionPath))
-            {
-                $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}", undef, true);
-            }
-        }
+        # Possible for the file section to exist with no files (i.e. empty tablespace)
+        $strSectionFile = "$strPathKey:file";
 
-        # Possible for the path section to exist with no files (i.e. empty tablespace)
         if (!$oBackupManifest->test($strSectionFile))
         {
             next;
@@ -573,7 +397,7 @@ sub backup_file
                         &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
                         $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
-                                            PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, !$bPathCreate);
+                                            PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, true);
                     }
                 }
                 # Else copy/compress the file and generate a checksum
@@ -589,291 +413,164 @@ sub backup_file
 
                 # Setup variables needed for threaded copy
                 $lFileTotal++;
-                $lFileLargeSize += $lFileSize > $iSmallFileThreshold ? $lFileSize : 0;
-                $lFileLargeTotal += $lFileSize > $iSmallFileThreshold ? 1 : 0;
-                $lFileSmallSize += $lFileSize <= $iSmallFileThreshold ? $lFileSize : 0;
-                $lFileSmallTotal += $lFileSize <= $iSmallFileThreshold ? 1 : 0;
+                $lSizeTotal += $lFileSize;
 
-                # Load the hash used by threaded copy
-                my $strKey = sprintf('ts%012x-fs%012x-fn%012x', $lTablespaceIdx,
-                                     $lFileSize, $lFileTotal);
-
-                $oFileCopyMap{"${strKey}"}{db_file} = $strBackupSourceFile;
-                $oFileCopyMap{"${strKey}"}{file_section} = $strSectionFile;
-                $oFileCopyMap{"${strKey}"}{file} = ${strFile};
-                $oFileCopyMap{"${strKey}"}{backup_file} = "${strBackupDestinationPath}/${strFile}";
-                $oFileCopyMap{"${strKey}"}{size} = $lFileSize;
-                $oFileCopyMap{"${strKey}"}{modification_time} =
-                    $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_MODIFICATION_TIME);
-                $oFileCopyMap{"${strKey}"}{checksum_only} = $bProcessChecksumOnly;
-                $oFileCopyMap{"${strKey}"}{checksum} =
+                $oFileCopyMap{$strPathKey}{$strFile}{db_file} = $strBackupSourceFile;
+                $oFileCopyMap{$strPathKey}{$strFile}{file_section} = $strSectionFile;
+                $oFileCopyMap{$strPathKey}{$strFile}{file} = ${strFile};
+                $oFileCopyMap{$strPathKey}{$strFile}{backup_file} = "${strBackupDestinationPath}/${strFile}";
+                $oFileCopyMap{$strPathKey}{$strFile}{size} = $lFileSize;
+                $oFileCopyMap{$strPathKey}{$strFile}{checksum_only} = $bProcessChecksumOnly;
+                $oFileCopyMap{$strPathKey}{$strFile}{checksum} =
                     $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
             }
         }
     }
 
-    # Build the thread queues
-    $iThreadLocalMax = thread_init($iThreadMax);
-    &log(DEBUG, "actual threads ${iThreadLocalMax}/${iThreadMax}");
-
-    # Initialize the thread size array
-    my @oyThreadData;
-
-    for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+    # If there are no files to backup then we'll exit with a warning unless in test mode.  The other way this could happen is if
+    # the database is down and backup is called with --no-start-stop twice in a row.
+    if ($lFileTotal == 0)
     {
-        $oyThreadData[$iThreadIdx]{size} = 0;
-        $oyThreadData[$iThreadIdx]{total} = 0;
-        $oyThreadData[$iThreadIdx]{large_size} = 0;
-        $oyThreadData[$iThreadIdx]{large_total} = 0;
-        $oyThreadData[$iThreadIdx]{small_size} = 0;
-        $oyThreadData[$iThreadIdx]{small_total} = 0;
+        if (!optionGet(OPTION_TEST))
+        {
+            confess &log(WARN, "no files have changed since the last backup - this seems unlikely");
+        }
+
+        return;
     }
 
-    # Assign files to each thread queue
-    my $iThreadFileSmallIdx = 0;
-    my $iThreadFileSmallTotalMax = int($lFileSmallTotal / $iThreadLocalMax);
+    # Create backup and result queues
+    my $oResultQueue = Thread::Queue->new();
+    my @oyBackupQueue;
 
-    my $iThreadFileLargeIdx = 0;
-    my $fThreadFileLargeSizeMax = $lFileLargeSize / $iThreadLocalMax;
+    # Variables used for local copy
+    my $lSizeCurrent = 0;   # Running total of bytes copied
+    my $bCopied;            # Was the file copied?
+    my $lCopySize;          # Size reported by copy
+    my $strCopyChecksum;    # Checksum reported by copy
 
-    &log(INFO, "file total ${lFileTotal}");
-    &log(DEBUG, "file small total ${lFileSmallTotal}, small size: " . file_size_format($lFileSmallSize) .
-                ', small thread avg total ' . file_size_format(int($iThreadFileSmallTotalMax)));
-    &log(DEBUG, "file large total ${lFileLargeTotal}, large size: " . file_size_format($lFileLargeSize) .
-                ', large thread avg size ' . file_size_format(int($fThreadFileLargeSizeMax)));
-
-    foreach my $strFile (sort (keys %oFileCopyMap))
+    # Iterate all backup files
+    foreach my $strPathKey (sort (keys %oFileCopyMap))
     {
-        my $lFileSize = $oFileCopyMap{"${strFile}"}{size};
-
-        if ($lFileSize > $iSmallFileThreshold)
+        if ($iThreadMax > 1)
         {
-            $oThreadQueue[$iThreadFileLargeIdx]->enqueue($strFile);
-
-            $oyThreadData[$iThreadFileLargeIdx]{large_size} += $lFileSize;
-            $oyThreadData[$iThreadFileLargeIdx]{large_total}++;
-            $oyThreadData[$iThreadFileLargeIdx]{size} += $lFileSize;
-
-            if ($oyThreadData[$iThreadFileLargeIdx]{large_size} >= $fThreadFileLargeSizeMax &&
-                $iThreadFileLargeIdx < $iThreadLocalMax - 1)
-            {
-                $iThreadFileLargeIdx++;
-            }
+            $oyBackupQueue[@oyBackupQueue] = Thread::Queue->new();
         }
-        else
+
+        foreach my $strFile (sort (keys $oFileCopyMap{$strPathKey}))
         {
-            $oThreadQueue[$iThreadFileSmallIdx]->enqueue($strFile);
+            my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFile};
 
-            $oyThreadData[$iThreadFileSmallIdx]{small_size} += $lFileSize;
-            $oyThreadData[$iThreadFileSmallIdx]{small_total}++;
-            $oyThreadData[$iThreadFileSmallIdx]{size} += $lFileSize;
-
-            if ($oyThreadData[$iThreadFileSmallIdx]{small_total} >= $iThreadFileSmallTotalMax &&
-                $iThreadFileSmallIdx < $iThreadLocalMax - 1)
+            if ($iThreadMax > 1)
             {
-                $iThreadFileSmallIdx++;
+                $oyBackupQueue[@oyBackupQueue - 1]->enqueue($oFileCopy);
+            }
+            else
+            {
+                # Backup the file
+                ($bCopied, $lSizeCurrent, $lCopySize, $strCopyChecksum) =
+                    backupFile($oFile, $$oFileCopy{db_file}, $$oFileCopy{backup_file}, $bCompress,
+                               $$oFileCopy{checksum}, $$oFileCopy{checksum_only},
+                               $$oFileCopy{size}, $lSizeTotal, $lSizeCurrent);
+
+                # If copy was successful store the checksum and size
+                if ($bCopied)
+                {
+                    $oBackupManifest->set($$oFileCopy{file_section}, $$oFileCopy{file},
+                                          MANIFEST_SUBKEY_SIZE, $lCopySize + 0);
+
+                    if ($lCopySize > 0)
+                    {
+                        $oBackupManifest->set($$oFileCopy{file_section}, $$oFileCopy{file},
+                                              MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
+                    }
+                }
+                # Else the file was removed during backup so remove from manifest
+                else
+                {
+                    $oBackupManifest->remove($$oFileCopy{file_section}, $$oFileCopy{file});
+                }
             }
         }
     }
 
-    if ($iThreadLocalMax > 1)
+    # If multi-threaded then create threads to copy files
+    if ($iThreadMax > 1)
     {
-        # End each thread queue and start the backup_file threads
-        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
         {
-            # Output info about how much work each thread is going to do
-            &log(DEBUG, "thread ${iThreadIdx} large total $oyThreadData[$iThreadIdx]{large_total}, " .
-                        "size $oyThreadData[$iThreadIdx]{large_size}");
-            &log(DEBUG, "thread ${iThreadIdx} small total $oyThreadData[$iThreadIdx]{small_total}, " .
-                        "size $oyThreadData[$iThreadIdx]{small_size}");
+            my %oParam;
 
-            # Start the thread
-            $oThread[$iThreadIdx] = threads->create(\&backup_file_thread, true, $iThreadIdx, !$bPathCreate,
-                                                    $oyThreadData[$iThreadIdx]{size}, $oBackupManifest);
+            $oParam{compress} = $bCompress;
+            $oParam{size_total} = $lSizeTotal;
+            $oParam{queue} = \@oyBackupQueue;
+            $oParam{result_queue} = $oResultQueue;
+
+            threadGroupRun($iThreadIdx, 'backup', \%oParam);
         }
 
-        # Wait for the threads to complete
-        backup_thread_complete($iThreadTimeout);
+        # Complete thread queues
+        threadGroupComplete();
 
         # Read the messages that we passed back from the threads.  These should be two types:
         # 1) remove - files that were skipped because they were removed from the database during backup
         # 2) checksum - file checksums calculated by the threads
-        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadLocalMax; $iThreadIdx++)
+        while (my $strMessage = $oResultQueue->dequeue_nb())
         {
-            while (my $strMessage = $oMasterQueue[$iThreadIdx]->dequeue_nb())
+            &log(TRACE, "message received in master queue: ${strMessage}");
+
+            # Split the message.  Currently using | as the split character.  Not ideal, but it will do for now.
+            my @strSplit = split(/\|/, $strMessage);
+
+            my $strCommand = $strSplit[0];      # Command to execute on a file
+            my $strFileSection = $strSplit[1];  # File section where the file is located
+            my $strFile = $strSplit[2];         # The file to act on
+
+            # These three parts are required
+            if (!defined($strCommand) || !defined($strFileSection) || !defined($strFile))
             {
-                &log (DEBUG, "message received in master queue: ${strMessage}");
+                confess &log(ASSERT, 'thread messages must have strCommand, strFileSection and strFile defined');
+            }
 
-                # Split the message.  Currently using | as the split character.  Not ideal, but it will do for now.
-                my @strSplit = split(/\|/, $strMessage);
+            &log (DEBUG, "command = ${strCommand}, file_section = ${strFileSection}, file = ${strFile}");
 
-                my $strCommand = $strSplit[0];      # Command to execute on a file
-                my $strFileSection = $strSplit[1];  # File section where the file is located
-                my $strFile = $strSplit[2];         # The file to act on
+            # If command is 'remove' then mark the skipped file in the manifest
+            if ($strCommand eq 'remove')
+            {
+                $oBackupManifest->remove($strFileSection, $strFile);
 
-                # These three parts are required
-                if (!defined($strCommand) || !defined($strFileSection) || !defined($strFile))
+                &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
+            }
+            # If command is 'checksum' then record the checksum in the manifest
+            elsif ($strCommand eq 'checksum')
+            {
+                my $strChecksum = $strSplit[3]; # File checksum calculated by the thread
+                my $lFileSize = $strSplit[4];   # File size calculated by the thread
+
+                # Checksum must be defined
+                if (!defined($strChecksum))
                 {
-                    confess &log(ASSERT, 'thread messages must have strCommand, strFileSection and strFile defined');
+                    confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
                 }
 
-                &log (DEBUG, "command = ${strCommand}, file_section = ${strFileSection}, file = ${strFile}");
-
-                # If command is 'remove' then mark the skipped file in the manifest
-                if ($strCommand eq 'remove')
+                # Checksum must be defined
+                if (!defined($lFileSize))
                 {
-                    $oBackupManifest->remove($strFileSection, $strFile);
-
-                    &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
+                    confess &log(ASSERT, 'thread checksum messages must have lFileSize defined');
                 }
-                # If command is 'checksum' then record the checksum in the manifest
-                elsif ($strCommand eq 'checksum')
+
+                $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_SIZE, $lFileSize + 0);
+
+                if ($lFileSize > 0)
                 {
-                    my $strChecksum = $strSplit[3]; # File checksum calculated by the thread
-                    my $lFileSize = $strSplit[4];   # File size calculated by the thread
-
-                    # Checksum must be defined
-                    if (!defined($strChecksum))
-                    {
-                        confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
-                    }
-
-                    # Checksum must be defined
-                    if (!defined($lFileSize))
-                    {
-                        confess &log(ASSERT, 'thread checksum messages must have lFileSize defined');
-                    }
-
                     $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-                    $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_SIZE, $lFileSize + 0);
-
-                    # Log the checksum
-                    &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum} (${lFileSize})");
-                }
-            }
-        }
-    }
-    else
-    {
-        &log(DEBUG, "starting backup in main process");
-        backup_file_thread(false, 0, !$bPathCreate, $oyThreadData[0]{size}, $oBackupManifest);
-    }
-}
-
-sub backup_file_thread
-{
-    my $bMulti = shift;             # Is this thread one of many?
-    my $iThreadIdx = shift;         # Defines the index of this thread
-    my $bPathCreate = shift;        # Should paths be created automatically?
-    my $lSizeTotal = shift;         # Total size of the files to be copied by this thread
-    my $oBackupManifest = shift;    # Backup manifest object (only used when single-threaded)
-
-    my $lSize = 0;                  # Size of files currently copied by this thread
-    my $strLog;                     # Store the log message
-    my $strLogProgress;             # Part of the log message that shows progress
-    my $oFileThread;                # Thread local file object
-    my $bCopyResult;                # Copy result
-    my $strCopyChecksum;            # Copy checksum
-    my $lCopySize;                  # Copy Size
-
-    # If multi-threaded, then clone the file object
-    if ($bMulti)
-    {
-        $oFileThread = $oFile->clone($iThreadIdx);
-    }
-    else
-    {
-        $oFileThread = $oFile;
-    }
-
-    # When a KILL signal is received, immediately abort
-    $SIG{'KILL'} = sub {threads->exit();};
-
-    # Iterate through all the files in this thread's queue to be copied from the database to the backup
-    while (my $strFile = $oThreadQueue[$iThreadIdx]->dequeue_nb())
-    {
-        # Add the size of the current file to keep track of percent complete
-        $lSize += $oFileCopyMap{$strFile}{size};
-
-        if (!$oFileCopyMap{$strFile}{checksum_only})
-        {
-            # Output information about the file to be copied
-            $strLog = "thread ${iThreadIdx} backing up file";
-
-            # Copy the file from the database to the backup (will return false if the source file is missing)
-            ($bCopyResult, $strCopyChecksum, $lCopySize) =
-                $oFileThread->copy(PATH_DB_ABSOLUTE, $oFileCopyMap{$strFile}{db_file},
-                                   PATH_BACKUP_TMP, $oFileCopyMap{$strFile}{backup_file} .
-                                       ($bCompress ? '.' . $oFile->{strCompressExtension} : ''),
-                                   false,        # Source is not compressed since it is the db directory
-                                   $bCompress,   # Destination should be compressed based on backup settings
-                                   true,         # Ignore missing files
-                                   $oFileCopyMap{$strFile}{modification_time}, # Set modification time
-                                   undef,        # Do not set original mode
-                                   true);        # Create the destination directory if it does not exist
-
-            if (!$bCopyResult)
-            {
-                # If file is missing assume the database removed it (else corruption and nothing we can do!)
-                &log(INFO, "thread ${iThreadIdx} skipped file removed by database: " . $oFileCopyMap{$strFile}{db_file});
-
-                # Remove file from the manifest
-                if ($bMulti)
-                {
-                    # Write a message into the master queue to have the file removed from the manifest
-                    $oMasterQueue[$iThreadIdx]->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|".
-                                                        "$oFileCopyMap{$strFile}{file}");
-                }
-                else
-                {
-                    # remove it directly
-                    $oBackupManifest->remove($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file});
                 }
 
-                # Move on to the next file
-                next;
+                # Log the checksum
+                &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum} (${lFileSize})");
             }
         }
-
-        $strLogProgress = "$oFileCopyMap{$strFile}{db_file} (" . file_size_format($lCopySize) .
-                          ($lSizeTotal > 0 ? ', ' . int($lSize * 100 / $lSizeTotal) . '%' : '') . ')';
-
-        # Generate checksum for file if configured
-        if ($lCopySize != 0)
-        {
-            # Store checksum in the manifest
-            if ($bMulti)
-            {
-                # Write the checksum message into the master queue
-                $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|" .
-                                                    "$oFileCopyMap{$strFile}{file}|${strCopyChecksum}|${lCopySize}");
-            }
-            else
-            {
-                # Write it directly
-                $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
-                                      MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
-                $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
-                                      MANIFEST_SUBKEY_SIZE, $lCopySize + 0);
-            }
-
-            # Output information about the file to be checksummed
-            if (!defined($strLog))
-            {
-                $strLog = "thread ${iThreadIdx} checksum-only ${strLogProgress}";
-            }
-
-            &log(INFO, $strLog . " checksum ${strCopyChecksum}");
-        }
-        else
-        {
-            &log(INFO, $strLog . ' ' . $strLogProgress);
-        }
-
-        &log(TRACE, "thread waiting for new file from queue");
     }
-
-    &log(DEBUG, "thread ${iThreadIdx} exiting");
 }
 
 ####################################################################################################################################
@@ -1096,7 +793,7 @@ sub backup
 
     # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
-    # consistent - at least not in this routine.
+    # consistent - at least not here.
     if (!optionGet(OPTION_NO_START_STOP) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
         # Save the backup manifest a second time - before getting archive logs in case that fails

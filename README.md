@@ -59,6 +59,8 @@ cpanm Net::OpenSSH
 cpanm IPC::System::Simple
 cpanm Digest::SHA
 cpanm Compress::ZLib
+cpanm threads (update this package)
+cpanm Thread::Queue (update this package)
 ```
 * Install PgBackRest
 
@@ -696,11 +698,13 @@ example: db-path=/data/db
 
 ## Release Notes
 
-### v0.60: TBD
+### v0.60: **************TBD***************
 
 * Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.
 
 * Database System IDs are used to make sure that all WAL in an archive matches up.  This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.
+
+* Regression tests working back to PostgreSQL 8.3.
 
 ### v0.50: restore and much more
 

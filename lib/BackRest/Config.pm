@@ -19,7 +19,7 @@ use BackRest::Utility;
 # Export functions
 ####################################################################################################################################
 our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault operationGet operationTest
-                 operationSet optionRemoteType optionRemoteTypeTest optionRemote optionRemoteTest);
+                 operationSet optionRemoteType optionRemoteTypeTest optionRemote optionRemoteTest remoteDestroy);
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -1601,6 +1601,7 @@ sub optionRemoteTypeTest
 sub optionRemote
 {
     my $bForceLocal = shift;
+    my $bStore = shift;
 
     # If force local or remote = NONE then create a local remote and return it
     if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
@@ -1621,7 +1622,7 @@ sub optionRemote
     }
 
     # Return the remote when required
-    $oRemote = new BackRest::Remote
+    my $oRemoteTemp = new BackRest::Remote
     (
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
@@ -1633,7 +1634,25 @@ sub optionRemote
         operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
     );
 
-    return $oRemote;
+    if ($bStore)
+    {
+        $oRemote = $oRemoteTemp;
+    }
+
+    return $oRemoteTemp;
+}
+
+####################################################################################################################################
+# remoteDestroy
+#
+# Undefined the remote if it is stored locally.
+####################################################################################################################################
+sub remoteDestroy
+{
+    if (defined($oRemote))
+    {
+        undef($oRemote);
+    }
 }
 
 ####################################################################################################################################
