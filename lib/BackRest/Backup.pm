@@ -473,23 +473,8 @@ sub backup_file
                                $$oFileCopy{checksum}, $$oFileCopy{checksum_only},
                                $$oFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
-                # If copy was successful store the checksum and size
-                if ($bCopied)
-                {
-                    $oBackupManifest->set($$oFileCopy{file_section}, $$oFileCopy{file},
-                                          MANIFEST_SUBKEY_SIZE, $lCopySize + 0);
-
-                    if ($lCopySize > 0)
-                    {
-                        $oBackupManifest->set($$oFileCopy{file_section}, $$oFileCopy{file},
-                                              MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
-                    }
-                }
-                # Else the file was removed during backup so remove from manifest
-                else
-                {
-                    $oBackupManifest->remove($$oFileCopy{file_section}, $$oFileCopy{file});
-                }
+                backupManifestUpdate($oBackupManifest, $$oFileCopy{file_section}, $$oFileCopy{file},
+                                     $bCopied, $lCopySize, $strCopyChecksum);
             }
         }
     }
@@ -512,63 +497,15 @@ sub backup_file
         # Complete thread queues
         threadGroupComplete();
 
-        # Read the messages that we passed back from the threads.  These should be two types:
-        # 1) remove - files that were skipped because they were removed from the database during backup
-        # 2) checksum - file checksums calculated by the threads
-        while (my $strMessage = $oResultQueue->dequeue_nb())
+        # Read the messages that are passed back from the backup threads
+        while (my $oMessage = $oResultQueue->dequeue_nb())
         {
-            &log(TRACE, "message received in master queue: ${strMessage}");
+            &log(TRACE, "message received in master queue: section = $$oMessage{file_section}, file = $$oMessage{file}" .
+                        ", copied = $$oMessage{copied}"); #, size = $$oMessage{size}, checksum = " .
+#                        (defined($$oMessage{checksum}) ? $$oMessage{checksum} : '[undef]'));
 
-            # Split the message.  Currently using | as the split character.  Not ideal, but it will do for now.
-            my @strSplit = split(/\|/, $strMessage);
-
-            my $strCommand = $strSplit[0];      # Command to execute on a file
-            my $strFileSection = $strSplit[1];  # File section where the file is located
-            my $strFile = $strSplit[2];         # The file to act on
-
-            # These three parts are required
-            if (!defined($strCommand) || !defined($strFileSection) || !defined($strFile))
-            {
-                confess &log(ASSERT, 'thread messages must have strCommand, strFileSection and strFile defined');
-            }
-
-            &log (DEBUG, "command = ${strCommand}, file_section = ${strFileSection}, file = ${strFile}");
-
-            # If command is 'remove' then mark the skipped file in the manifest
-            if ($strCommand eq 'remove')
-            {
-                $oBackupManifest->remove($strFileSection, $strFile);
-
-                &log (INFO, "removed file ${strFileSection}:${strFile} from the manifest (it was removed by db during backup)");
-            }
-            # If command is 'checksum' then record the checksum in the manifest
-            elsif ($strCommand eq 'checksum')
-            {
-                my $strChecksum = $strSplit[3]; # File checksum calculated by the thread
-                my $lFileSize = $strSplit[4];   # File size calculated by the thread
-
-                # Checksum must be defined
-                if (!defined($strChecksum))
-                {
-                    confess &log(ASSERT, 'thread checksum messages must have strChecksum defined');
-                }
-
-                # Checksum must be defined
-                if (!defined($lFileSize))
-                {
-                    confess &log(ASSERT, 'thread checksum messages must have lFileSize defined');
-                }
-
-                $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_SIZE, $lFileSize + 0);
-
-                if ($lFileSize > 0)
-                {
-                    $oBackupManifest->set($strFileSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-                }
-
-                # Log the checksum
-                &log (DEBUG, "write checksum ${strFileSection}:${strFile} into manifest: ${strChecksum} (${lFileSize})");
-            }
+            backupManifestUpdate($oBackupManifest, $$oMessage{file_section}, $$oMessage{file},
+                                 $$oMessage{copied}, $$oMessage{size}, $$oMessage{checksum});
         }
     }
 }

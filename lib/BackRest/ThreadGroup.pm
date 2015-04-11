@@ -120,28 +120,20 @@ sub threadGroupThread
                 }
                 elsif ($$oCommand{function} eq 'backup')
                 {
-                    my $bCopied;            # Was the file copied?
-                    my $lCopySize;          # Size reported by copy
-                    my $strCopyChecksum;    # Checksum reported by copy
+                    # Result hash that can be passed back to the master process
+                    my $oResult = {};
 
                     # Backup the file
-                    ($bCopied, $lSizeCurrent, $lCopySize, $strCopyChecksum) =
+                    ($$oResult{copied}, $lSizeCurrent, $$oResult{size}, $$oResult{checksum}) =
                         backupFile($oFile, $$oMessage{db_file}, $$oMessage{backup_file}, $$oCommand{param}{compress},
                                    $$oMessage{checksum}, $$oMessage{checksum_only},
                                    $$oMessage{size}, $$oCommand{param}{size_total}, $lSizeCurrent);
 
-                    # If copy was successful store the checksum and size
-                    if ($bCopied)
-                    {
-                        $$oCommand{param}{result_queue}->enqueue("checksum|$$oMessage{file_section}|" .
-                                                                 "$$oMessage{file}|${strCopyChecksum}|${lCopySize}");
-                    }
-                    # Else the file was removed during backup so remove from manifest
-                    else
-                    {
-                        $$oCommand{param}{result_queue}->enqueue("remove|$$oMessage{file_section}|".
-                                                                 "$$oMessage{file}");
-                    }
+                    # Send a message to update the manifest
+                    $$oResult{file_section} = $$oMessage{file_section};
+                    $$oResult{file} = $$oMessage{file};
+
+                    $$oCommand{param}{result_queue}->enqueue($oResult);
                 }
                 else
                 {

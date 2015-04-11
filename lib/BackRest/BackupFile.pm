@@ -22,7 +22,7 @@ use BackRest::Manifest;
 use BackRest::File;
 
 ####################################################################################################################################
-# backupThread
+# backupFile
 ####################################################################################################################################
 sub backupFile
 {
@@ -73,19 +73,6 @@ sub backupFile
             # If file is missing assume the database removed it (else corruption and nothing we can do!)
             &log(INFO, "skipped file removed by database: " . $strSourceFile);
 
-            # # Remove file from the manifest
-            # if ($bMulti)
-            # {
-            #     # Write a message into the master queue to have the file removed from the manifest
-            #     $oMasterQueue[$iThreadIdx]->enqueue("remove|$oFileCopyMap{$strFile}{file_section}|".
-            #                                         "$oFileCopyMap{$strFile}{file}");
-            # }
-            # else
-            # {
-            #     # remove it directly
-            #     $oBackupManifest->remove($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file});
-            # }
-
             return false, $lSizeCurrent, undef, undef;
         }
     }
@@ -96,22 +83,6 @@ sub backupFile
     # Generate checksum for file if configured
     if ($lCopySize != 0)
     {
-        # # Store checksum in the manifest
-        # if ($bMulti)
-        # {
-        #     # Write the checksum message into the master queue
-        #     $oMasterQueue[$iThreadIdx]->enqueue("checksum|$oFileCopyMap{$strFile}{file_section}|" .
-        #                                         "$oFileCopyMap{$strFile}{file}|${strCopyChecksum}|${lCopySize}");
-        # }
-        # else
-        # {
-        #     # Write it directly
-        #     $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
-        #                           MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
-        #     $oBackupManifest->set($oFileCopyMap{$strFile}{file_section}, $oFileCopyMap{$strFile}{file},
-        #                           MANIFEST_SUBKEY_SIZE, $lCopySize + 0);
-        # }
-
         # Output information about the file to be checksummed
         if (!defined($strLog))
         {
@@ -129,5 +100,36 @@ sub backupFile
 }
 
 our @EXPORT = qw(backupFile);
+
+####################################################################################################################################
+# backupManifestUpdate
+####################################################################################################################################
+sub backupManifestUpdate
+{
+    my $oManifest = shift;
+    my $strSection = shift;
+    my $strFile = shift;
+    my $bCopied = shift;
+    my $lSize = shift;
+    my $strChecksum = shift;
+
+    # If copy was successful store the checksum and size
+    if ($bCopied)
+    {
+        $oManifest->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $lSize + 0);
+
+        if ($lSize > 0)
+        {
+            $oManifest->set($strSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+        }
+    }
+    # Else the file was removed during backup so remove from manifest
+    else
+    {
+        $oManifest->remove($strSection, $strFile);
+    }
+}
+
+push @EXPORT, qw(backupManifestUpdate);
 
 1;

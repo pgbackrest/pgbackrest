@@ -472,9 +472,9 @@ The `general` section defines settings that are shared between multiple operatio
 Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.
 ```
 required: n
-default: 1048576
-allow: 4096 - 8388608
-example: buffer-size=16384
+default: 4194304
+allow: 16384 - 8388608
+example: buffer-size=32768
 ```
 
 ##### `compress` key
@@ -698,13 +698,15 @@ example: db-path=/data/db
 
 ## Release Notes
 
-### v0.60: **************TBD***************
+### v0.60: better version support and WAL improvements
 
 * Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.
 
 * Database System IDs are used to make sure that all WAL in an archive matches up.  This should help prevent misconfigurations that send WAL from multiple clusters to the same archive.
 
 * Regression tests working back to PostgreSQL 8.3.
+
+* Improved threading model by starting threads early and terminating them late.
 
 ### v0.50: restore and much more
 

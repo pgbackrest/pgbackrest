@@ -449,8 +449,8 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="buffer-size">
 						<text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.</text>
 
-						<allow>4096 - 8388608</allow>
-						<example>16384</example>
+						<allow>16384 - 8388608</allow>
+						<example>32768</example>
 					</config-key>
 
 					<!-- CONFIG - BACKUP SECTION - COMPRESS -->
@@ -656,7 +656,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
-			<release-version version="0.60" title="**************TBD***************">
+			<release-version version="0.60" title="better version support and WAL improvements">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.</text>
@@ -666,6 +666,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					</release-feature>
 					<release-feature>
 						<text>Regression tests working back to <postgres/> 8.3.</text>
+					</release-feature>
+					<release-feature>
+						<text>Improved threading model by starting threads early and terminating them late.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
