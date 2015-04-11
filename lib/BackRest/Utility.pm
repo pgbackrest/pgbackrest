@@ -329,15 +329,15 @@ sub file_size_format
 
     if ($lFileSize < (1024 * 1024))
     {
-        return int($lFileSize / 1024) . 'KB';
+        return (int($lFileSize / 102.4) / 10) . 'KB';
     }
 
     if ($lFileSize < (1024 * 1024 * 1024))
     {
-        return int($lFileSize / 1024 / 1024) . 'MB';
+        return (int($lFileSize / 1024 / 102.4) / 10) . 'MB';
     }
 
-    return int($lFileSize / 1024 / 1024 / 1024) . 'GB';
+    return (int($lFileSize / 1024 / 1024 / 102.4) / 10) . 'GB';
 }
 
 ####################################################################################################################################

@@ -34,34 +34,17 @@ sub BackRestTestCompare_BuildDb
     my $iTableTotal = shift;
     my $iTableSize = shift;
 
-    my $iDbOid = BackRestTestBackup_PgSelectOne("select oid from pg_database where datname = 'postgres'");
+    &log(INFO, "build database: " . file_size_format($iTableTotal * $iTableSize * 1024 * 1024));
 
     for (my $iTableIdx = 0; $iTableIdx < $iTableTotal; $iTableIdx++)
     {
-        my $strTableName = "test_${iTableIdx}";
+        my $strSourceFile = BackRestTestCommon_DataPathGet() . "/test.table.bin";
+        my $strTableFile = BackRestTestCommon_DbCommonPathGet() . "/test-${iTableIdx}";
 
-        BackRestTestBackup_PgExecute("create table ${strTableName} (id int)");
-        my $iTableOid = BackRestTestBackup_PgSelectOne("select oid from pg_class where relname = '${strTableName}'");
-        my $strTableFile = BackRestTestCommon_DbCommonPathGet() . "/base/${iDbOid}/${iTableOid}";
-
-        my $lSize;
-
-        do
+        for (my $iTableSizeIdx = 0; $iTableSizeIdx < $iTableSize; $iTableSizeIdx++)
         {
-            BackRestTestBackup_PgExecute("do \$\$ declare iIndex int; begin for iIndex in 1..289000 loop " .
-                                         "insert into ${strTableName} values (1); end loop; end \$\$;");
-            BackRestTestBackup_PgExecute("checkpoint");
-            my $oStat = stat($strTableFile);
-
-            # Evaluate error
-            if (!defined($oStat))
-            {
-                confess "cannot stat ${strTableFile}";
-            }
-
-            $lSize = $oStat->size;
+            BackRestTestCommon_Execute("cat ${strSourceFile} >> ${strTableFile}");
         }
-        while ($lSize < $iTableSize * 1024 * 1024);
     }
 }
 
@@ -87,9 +70,11 @@ sub BackRestTestCompare_Test
                                     "rmt ${bRemote}")) {next}
 
         # Create the cluster and paths
-        BackRestTestBackup_Create($bRemote, undef, false);
+        BackRestTestBackup_Create($bRemote, false);
+        BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc');
+
         BackRestTestCompare_BuildDb(48, 10);
-        BackRestTestBackup_ClusterStop();
+        BackRestTestCommon_Execute('sync');
 
         for (my $bRemote = true; $bRemote <= true; $bRemote++)
         {
@@ -98,41 +83,43 @@ sub BackRestTestCompare_Test
             my $strCommand;
             BackRestTestCommon_CreateRepo($bRemote);
 
+            &log(INFO, ($bRsync ? 'rsync' : 'backrest') . " test");
+
             if ($bRsync)
             {
-                $strCommand = 'rsync -zvlhprtogHS --delete ' . BackRestTestCommon_DbCommonPathGet() . '/ ' .
-                              ($bRemote ? BackRestTestCommon_UserBackRestGet . '@' . BackRestTestCommon_HostGet . ':' : '') .
-                                          BackRestTestCommon_RepoPathGet();
+                $strCommand = 'rsync --compress-level=6 -zvlhprtogHS --delete ' .
+                              ($bRemote ? BackRestTestCommon_UserGet . '@' . BackRestTestCommon_HostGet . ':' : '') .
+                              BackRestTestCommon_DbCommonPathGet() . '/ ' . BackRestTestCommon_RepoPathGet() . ';' .
+                              'gzip -r "' . BackRestTestCommon_RepoPathGet() . '"';
             }
             else
             {
                 $strCommand = BackRestTestCommon_CommandMainGet() .
                                  ' --stanza=main' .
-                                 # ' "--cmd-psql=' . BackRestTestCommon_CommandPsqlGet() . '"' .
-                                 # ' "--cmd-psql-option= -p ' . BackRestTestCommon_DbPortGet . '"' .
                                  ($bRemote ? ' "--db-host=' . BackRestTestCommon_HostGet . '"' .
                                              ' "--db-user=' . BackRestTestCommon_UserGet . '"' : '') .
-                                 ' --log-level-file=debug' .
+#                                 ' --log-level-file=debug' .
                                  ' --no-start-stop' .
 #                                ' --no-compress' .
-                                 ' --thread-max=4' .
+                                ' --thread-max=4' .
                                  ' "--db-path=' . BackRestTestCommon_DbCommonPathGet() . '"' .
                                  ' "--repo-path=' . BackRestTestCommon_RepoPathGet() . '"' .
                                  ' --type=full backup';
             }
 
             my $fTimeBegin = gettimeofday();
-            BackRestTestCommon_Execute($strCommand, !$bRsync && $bRemote);
+            BackRestTestCommon_Execute($strCommand, $bRemote);
+            BackRestTestCommon_Execute('sync');
             my $fTimeEnd = gettimeofday();
 
-            &log(INFO, ($bRsync ? 'rsync' : 'backrest') . " time = " . (int(($fTimeEnd - $fTimeBegin) * 100) / 100));
+            &log(INFO, "    time = " . (int(($fTimeEnd - $fTimeBegin) * 100) / 100));
         }
         }
 
         if (BackRestTestCommon_Cleanup())
         {
             &log(INFO, 'cleanup');
-            BackRestTestBackup_Drop(true);
+            BackRestTestBackup_Drop();
         }
     }
 }
