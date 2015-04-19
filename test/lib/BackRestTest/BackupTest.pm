@@ -2347,7 +2347,7 @@ sub BackRestTestBackup_Test
             $strComment = 'postmaster running';
             $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2357,7 +2357,7 @@ sub BackRestTestBackup_Test
             $strComment = 'path not empty';
             $iExpectedExitStatus = ERROR_RESTORE_PATH_NOT_EMPTY;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2369,7 +2369,7 @@ sub BackRestTestBackup_Test
             $strComment = undef;
             $iExpectedExitStatus = undef;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2393,7 +2393,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2427,7 +2427,7 @@ sub BackRestTestBackup_Test
             $oFile->move(PATH_ABSOLUTE, BackRestTestCommon_TestPathGet() . '/recovery.conf',
                          PATH_ABSOLUTE, BackRestTestCommon_DbCommonPathGet() . '/recovery.conf');
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2478,7 +2478,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2504,7 +2504,7 @@ sub BackRestTestBackup_Test
 
                 BackRestTestBackup_ClusterStop();
 
-                BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                            $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                            $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2531,7 +2531,7 @@ sub BackRestTestBackup_Test
 
                 BackRestTestBackup_ClusterStop();
 
-                BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                            $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                            $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 

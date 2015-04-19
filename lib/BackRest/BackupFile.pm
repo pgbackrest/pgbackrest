@@ -10,9 +10,6 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use File::Basename qw(dirname);
-# use File::Path qw(remove_tree);
-# use Scalar::Util qw(looks_like_number);
-# use Fcntl 'SEEK_CUR';
 use Exporter qw(import);
 
 use lib dirname($0);
