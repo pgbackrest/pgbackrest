@@ -198,7 +198,7 @@ Perform a database restore.  This command is generall run manually, but there ar
 The backup set to be restored.  `latest` will restore the latest backup, otherwise provide the name of the backup to restore.
 ```
 required: n
-default: default
+default: latest
 example: --set=20150131-153358F_20150131-153401I
 ```
 

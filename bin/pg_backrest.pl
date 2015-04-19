@@ -83,7 +83,7 @@ sub safe_exit
 {
     my $iExitCode = shift;
 
-    &log(ERROR, "safe exit called, terminating threads");
+    &log(DEBUG, "safe exit called, terminating threads");
 
     my $iTotal = threadGroupDestroy();
     remoteDestroy();
