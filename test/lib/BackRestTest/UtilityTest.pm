@@ -46,6 +46,8 @@ sub BackRestTestUtility_Test
         undef,                                  # Host
         undef,                                  # User
         undef,                                  # Command
+        undef,                                  # Stanza
+        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level

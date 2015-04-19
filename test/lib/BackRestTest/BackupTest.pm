@@ -25,11 +25,13 @@ use BackRest::Config;
 use BackRest::Manifest;
 use BackRest::File;
 use BackRest::Remote;
+use BackRest::Archive;
 
 use BackRestTest::CommonTest;
 
 use Exporter qw(import);
-our @EXPORT = qw(BackRestTestBackup_Test);
+our @EXPORT = qw(BackRestTestBackup_Test BackRestTestBackup_Create BackRestTestBackup_Drop BackRestTestBackup_ClusterStop
+                 BackRestTestBackup_PgSelectOne BackRestTestBackup_PgExecute);
 
 my $strTestPath;
 my $strHost;
@@ -43,15 +45,43 @@ my $hDb;
 ####################################################################################################################################
 sub BackRestTestBackup_PgConnect
 {
+    my $iWaitSeconds = shift;
+
     # Disconnect user session
     BackRestTestBackup_PgDisconnect();
 
-    # Connect to the db (whether it is local or remote)
-    $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
-                        ';host=' . BackRestTestCommon_DbPathGet(),
-                        BackRestTestCommon_UserGet(),
-                        undef,
-                        {AutoCommit => 0, RaiseError => 1});
+    # Default
+    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 30;
+
+    # Record the start time
+    my $lTime = time();
+
+    do
+    {
+        # Connect to the db (whether it is local or remote)
+        eval
+        {
+            $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+                                ';host=' . BackRestTestCommon_DbPathGet(),
+                                BackRestTestCommon_UserGet(),
+                                undef,
+                                {AutoCommit => 0, RaiseError => 1});
+        };
+
+        if (!$@)
+        {
+            return;
+        }
+
+        # If waiting then sleep before trying again
+        if (defined($iWaitSeconds))
+        {
+            hsleep(.1);
+        }
+    }
+    while ($lTime > time() - $iWaitSeconds);
+
+    confess &log(ERROR, "unable to connect to Postgres after ${iWaitSeconds} second(s)");
 }
 
 ####################################################################################################################################
@@ -195,7 +225,7 @@ sub BackRestTestBackup_ClusterStop
     BackRestTestBackup_PgDisconnect();
 
     # Drop the cluster
-    BackRestTestCommon_ClusterStop
+    BackRestTestCommon_ClusterStop($strPath, $bImmediate);
 }
 
 ####################################################################################################################################
@@ -206,11 +236,13 @@ sub BackRestTestBackup_ClusterStart
     my $strPath = shift;
     my $iPort = shift;
     my $bHotStandby = shift;
+    my $bArchive = shift;
 
     # Set default
     $iPort = defined($iPort) ? $iPort : BackRestTestCommon_DbPortGet();
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
     $bHotStandby = defined($bHotStandby) ? $bHotStandby : false;
+    $bArchive = defined($bArchive) ? $bArchive : true;
 
     # Make sure postgres is not running
     if (-e $strPath . '/postmaster.pid')
@@ -223,12 +255,38 @@ sub BackRestTestBackup_ClusterStart
                      ' --config=' . BackRestTestCommon_DbPathGet() . '/pg_backrest.conf archive-push %p';
 
     # Start the cluster
-    BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}" .
-                               ' -c checkpoint_segments=1' .
-                               " -c wal_level=hot_standby -c archive_mode=on -c archive_command='${strArchive}'" .
-                               ($bHotStandby ? ' -c hot_standby=on' : '') .
-                               " -c unix_socket_directories='" . BackRestTestCommon_DbPathGet() . "'\" " .
-                               "-D ${strPath} -l ${strPath}/postgresql.log -w -s");
+    my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}" .
+                     ' -c checkpoint_segments=1';
+
+    if ($bArchive)
+    {
+        if (BackRestTestCommon_DbVersion() >= '8.3')
+        {
+            $strCommand .= " -c archive_mode=on";
+        }
+
+        $strCommand .= " -c archive_command='${strArchive}'";
+
+        if (BackRestTestCommon_DbVersion() >= '9.0')
+        {
+            $strCommand .= " -c wal_level=hot_standby";
+
+            if ($bHotStandby)
+            {
+                $strCommand .= ' -c hot_standby=on';
+            }
+        }
+    }
+    else
+    {
+        $strCommand .= " -c archive_mode=on -c wal_level=archive -c archive_command=true";
+    }
+
+    $strCommand .= " -c unix_socket_director" . (BackRestTestCommon_DbVersion() < '9.3' ? "y='" : "ies='") .
+                   BackRestTestCommon_DbPathGet() . "'\" " .
+                   "-D ${strPath} -l ${strPath}/postgresql.log -s";
+
+    BackRestTestCommon_Execute($strCommand);
 
     # Connect user session
     BackRestTestBackup_PgConnect();
@@ -261,10 +319,14 @@ sub BackRestTestBackup_ClusterCreate
 {
     my $strPath = shift;
     my $iPort = shift;
+    my $bArchive = shift;
+
+    # Defaults
+    $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
 
     BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/initdb -D ${strPath} -A trust");
 
-    BackRestTestBackup_ClusterStart($strPath, $iPort);
+    BackRestTestBackup_ClusterStart($strPath, $iPort, undef, $bArchive);
 
     # Connect user session
     BackRestTestBackup_PgConnect();
@@ -302,6 +364,7 @@ sub BackRestTestBackup_Create
 {
     my $bRemote = shift;
     my $bCluster = shift;
+    my $bArchive = shift;
 
     # Set defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
@@ -331,20 +394,12 @@ sub BackRestTestBackup_Create
         BackRestTestCommon_PathCreate(BackRestTestCommon_LocalPathGet());
     }
 
-    # Create the backup directory
-    if ($bRemote)
-    {
-        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_RepoPathGet(), true);
-    }
-    else
-    {
-        BackRestTestCommon_PathCreate(BackRestTestCommon_RepoPathGet());
-    }
+    BackRestTestCommon_CreateRepo($bRemote);
 
     # Create the cluster
     if ($bCluster)
     {
-        BackRestTestBackup_ClusterCreate(BackRestTestCommon_DbCommonPathGet(), BackRestTestCommon_DbPortGet());
+        BackRestTestBackup_ClusterCreate(undef, undef, $bArchive);
     }
 }
 
@@ -1388,6 +1443,8 @@ sub BackRestTestBackup_Test
         $strHost,                               # Host
         $strUserBackRest,                       # User
         BackRestTestCommon_CommandRemoteGet(),  # Command
+        $strStanza,                             # Stanza
+        '',                                     # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
@@ -1398,6 +1455,8 @@ sub BackRestTestBackup_Test
         undef,                                  # Host
         undef,                                  # User
         undef,                                  # Command
+        undef,                                  # Stanza
+        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
@@ -1425,10 +1484,9 @@ sub BackRestTestBackup_Test
                                             "rmt ${bRemote}, cmp ${bCompress}, " .
                                             "arc_async ${bArchiveAsync}")) {next}
 
-                # Create the test directory
+                # Create the file object
                 if ($bCreate)
                 {
-                    # Create the file object
                     $oFile = (new BackRest::File
                     (
                         $strStanza,
@@ -1437,10 +1495,11 @@ sub BackRestTestBackup_Test
                         $bRemote ? $oRemote : $oLocal
                     ))->clone();
 
-                    BackRestTestBackup_Create($bRemote, false);
-
                     $bCreate = false;
                 }
+
+                # Create the test directory
+                BackRestTestBackup_Create($bRemote, false);
 
                 BackRestTestCommon_ConfigCreate('db',
                                                 ($bRemote ? BACKUP : undef),
@@ -1452,7 +1511,7 @@ sub BackRestTestBackup_Test
                                                 undef);
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                                 '/pg_backrest.conf --stanza=db archive-push';
+                                 '/pg_backrest.conf --no-fork --stanza=db archive-push';
 
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
@@ -1486,6 +1545,54 @@ sub BackRestTestBackup_Test
                                      true);                                 # Create path if it does not exist
 
                         BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+
+                        if ($iArchive == $iBackup)
+                        {
+                            # load the archive info file so it can be munged for testing
+                            my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
+                            my %oInfo;
+                            BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
+                            my $strDbVersion = $oInfo{database}{version};
+                            my $ullDbSysId = $oInfo{database}{'system-id'};
+
+                            # Break the database version
+                            $oInfo{database}{version} = '8.0';
+                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+
+                            &log(INFO, '        test db version mismatch error');
+
+                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
+                                                       ERROR_ARCHIVE_MISMATCH);
+
+                            # Break the database version
+                            $oInfo{database}{version} = $strDbVersion;
+                            $oInfo{database}{'system-id'} = '5000900090001855000';
+                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+
+                            &log(INFO, '        test db system-id mismatch error');
+
+                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
+                                                       ERROR_ARCHIVE_MISMATCH);
+
+                            # Move settings back to original
+                            $oInfo{database}{'system-id'} = $ullDbSysId;
+                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+
+                            # Now it should break on archive duplication
+                            &log(INFO, '        test archive duplicate error');
+
+                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
+                                                       ERROR_ARCHIVE_DUPLICATE);
+
+                            if ($bArchiveAsync && $bRemote)
+                            {
+                                my $strDuplicateWal = BackRestTestCommon_LocalPathGet() . "/archive/${strStanza}/out/" .
+                                                      "${strArchiveFile}-1c7e00fd09b9dd11fc2966590b3e3274645dd031";
+
+                                unlink ($strDuplicateWal)
+                                        or confess "unable to remove duplicate WAL segment created for testing: ${strDuplicateWal}";
+                            }
+                        }
 
                         # Build the archive name to check for at the destination
                         my $strArchiveCheck = "${strArchiveFile}-${strArchiveChecksum}";
@@ -1626,11 +1733,8 @@ sub BackRestTestBackup_Test
                 }
                 else
                 {
-                    if (BackRestTestCommon_Execute($strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
-                                                   false, true) != 1)
-                    {
-                        confess 'archive-get should return 1 when archive log is not present';
-                    }
+                    BackRestTestCommon_Execute($strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
+                                               undef, undef, undef, 1);
                 }
 
                 $bCreate = true;
@@ -2097,8 +2201,7 @@ sub BackRestTestBackup_Test
             # Create the test directory
             if ($bCreate)
             {
-                BackRestTestBackup_Create($bRemote);
-                $bCreate = false;
+                BackRestTestBackup_Create($bRemote, false);
             }
 
             # Create db config
@@ -2122,6 +2225,13 @@ sub BackRestTestBackup_Test
                                                 $iThreadMax,                   # thread-max
                                                 undef,                         # archive-async
                                                 undef);                        # compress-async
+            }
+
+            # Create the cluster
+            if ($bCreate)
+            {
+                BackRestTestBackup_ClusterCreate();
+                $bCreate = false;
             }
 
             # Static backup parameters
@@ -2210,7 +2320,11 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_PgExecute("update test set message = '$strNameMessage'", false, true);
             BackRestTestBackup_PgSwitchXlog();
-            BackRestTestBackup_PgExecute("select pg_create_restore_point('${strNameTarget}')", false, false);
+
+            if (BackRestTestCommon_DbVersion() >= 9.1)
+            {
+                BackRestTestBackup_PgExecute("select pg_create_restore_point('${strNameTarget}')", false, false);
+            }
 
             &log(INFO, "        name target is ${strNameTarget}");
 
@@ -2233,7 +2347,7 @@ sub BackRestTestBackup_Test
             $strComment = 'postmaster running';
             $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2243,7 +2357,7 @@ sub BackRestTestBackup_Test
             $strComment = 'path not empty';
             $iExpectedExitStatus = ERROR_RESTORE_PATH_NOT_EMPTY;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2255,7 +2369,7 @@ sub BackRestTestBackup_Test
             $strComment = undef;
             $iExpectedExitStatus = undef;
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2269,7 +2383,7 @@ sub BackRestTestBackup_Test
             $strType = RECOVERY_TYPE_XID;
             $strTarget = $strXidTarget;
             $bTargetExclusive = undef;
-            $bTargetResume = true;
+            $bTargetResume = BackRestTestCommon_DbVersion() >= 9.1 ? true : undef;
             $strTargetTimeline = undef;
             $oRecoveryHashRef = undef;
             $strComment = undef;
@@ -2279,7 +2393,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2313,7 +2427,7 @@ sub BackRestTestBackup_Test
             $oFile->move(PATH_ABSOLUTE, BackRestTestCommon_TestPathGet() . '/recovery.conf',
                          PATH_ABSOLUTE, BackRestTestCommon_DbCommonPathGet() . '/recovery.conf');
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2364,7 +2478,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+            BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
                                        $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
@@ -2373,52 +2487,57 @@ sub BackRestTestBackup_Test
 
             # Restore (restore type = name)
             #-----------------------------------------------------------------------------------------------------------------------
-            $bDelta = true;
-            $bForce = true;
-            $strType = RECOVERY_TYPE_NAME;
-            $strTarget = $strNameTarget;
-            $bTargetExclusive = undef;
-            $bTargetResume = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
+            if (BackRestTestCommon_DbVersion() >= 9.1)
+            {
+                $bDelta = true;
+                $bForce = true;
+                $strType = RECOVERY_TYPE_NAME;
+                $strTarget = $strNameTarget;
+                $bTargetExclusive = undef;
+                $bTargetResume = undef;
+                $strTargetTimeline = undef;
+                $oRecoveryHashRef = undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
 
-            &log(INFO, "    testing recovery type = ${strType}");
+                &log(INFO, "    testing recovery type = ${strType}");
 
-            BackRestTestBackup_ClusterStop();
+                BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
-                                       $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
-                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                BackRestTestBackup_Restore($oFile, 'latest', $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                           $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
+                                           $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
-            BackRestTestBackup_ClusterStart();
-            BackRestTestBackup_PgSelectOneTest('select message from test', $strNameMessage);
+                BackRestTestBackup_ClusterStart();
+                BackRestTestBackup_PgSelectOneTest('select message from test', $strNameMessage);
+            }
 
             # Restore (restore type = default, timeline = 3)
             #-----------------------------------------------------------------------------------------------------------------------
-            $bDelta = true;
-            $bForce = false;
-            $strType = RECOVERY_TYPE_DEFAULT;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $bTargetResume = undef;
-            $strTargetTimeline = 3;
-            $oRecoveryHashRef = {'standy-mode' => 'on'};
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
+            if (BackRestTestCommon_DbVersion() >= 8.4)
+            {
+                $bDelta = true;
+                $bForce = false;
+                $strType = RECOVERY_TYPE_DEFAULT;
+                $strTarget = undef;
+                $bTargetExclusive = undef;
+                $bTargetResume = undef;
+                $strTargetTimeline = 3;
+                $oRecoveryHashRef = BackRestTestCommon_DbVersion() >= 9.0 ? {'standby-mode' => 'on'} : undef;
+                $strComment = undef;
+                $iExpectedExitStatus = undef;
 
-            &log(INFO, "    testing recovery type = ${strType}");
+                &log(INFO, "    testing recovery type = ${strType}");
 
-            BackRestTestBackup_ClusterStop();
+                BackRestTestBackup_ClusterStop();
 
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
-                                       $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
-                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                           $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
+                                           $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
-            BackRestTestBackup_ClusterStart(undef, undef, true);
-            BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 120);
+                BackRestTestBackup_ClusterStart(undef, undef, true);
+                BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 120);
+            }
 
             $bCreate = true;
         }
@@ -2449,8 +2568,8 @@ sub BackRestTestBackup_Test
         (
             $strStanza,
             BackRestTestCommon_RepoPathGet(),
-            undef,
-            undef
+            NONE,
+            $oLocal
         ))->clone();
 
         # Create the test database
@@ -2576,8 +2695,8 @@ sub BackRestTestBackup_Test
         (
             $strStanza,
             BackRestTestCommon_RepoPathGet(),
-            undef,
-            undef
+            NONE,
+            $oLocal
         ))->clone();
 
         # Create the test database

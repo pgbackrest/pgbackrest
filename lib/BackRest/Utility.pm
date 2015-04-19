@@ -13,6 +13,7 @@ use File::Path qw(remove_tree);
 use Time::HiRes qw(gettimeofday usleep);
 use POSIX qw(ceil);
 use File::Basename;
+use Cwd qw(abs_path);
 use JSON;
 
 use lib dirname($0) . '/../lib';
@@ -21,7 +22,7 @@ use BackRest::Exception;
 use Exporter qw(import);
 
 our @EXPORT = qw(version_get
-                 data_hash_build trim common_prefix wait_for_file file_size_format execute
+                 data_hash_build trim common_prefix file_size_format execute
                  log log_file_set log_level_set test_set test_get test_check
                  lock_file_create lock_file_remove hsleep wait_remainder
                  ini_save ini_load timestamp_string_get timestamp_file_string_get
@@ -94,21 +95,34 @@ my $strVersion;
 sub version_get
 {
     my $hVersion;
-    my $strVersion;
 
-    if (!open($hVersion, '<', dirname($0) . '/../VERSION'))
+    # If version is already stored then return it (should never change during execution)
+    if (defined($strVersion))
     {
-        confess &log(ASSERT, 'unable to open VERSION file');
+        return $strVersion;
     }
 
+    # Construct the version file name
+    my $strVersionFile = abs_path(dirname($0) . '/../VERSION');
+
+    # Open the file
+    if (!open($hVersion, '<', $strVersionFile))
+    {
+        confess &log(ASSERT, "unable to open VERSION file: ${strVersionFile}");
+    }
+
+    # Read version and trim
     if (!($strVersion = readline($hVersion)))
     {
-        confess &log(ASSERT, 'unable to read VERSION file');
+        confess &log(ASSERT, "unable to read VERSION file: ${strVersionFile}");
     }
 
+    $strVersion = trim($strVersion);
+
+    # Close file
     close($hVersion);
 
-    return trim($strVersion);
+    return $strVersion;
 }
 
 ####################################################################################################################################
@@ -173,7 +187,7 @@ sub lock_file_remove
 sub wait_remainder
 {
     my $lTimeBegin = gettimeofday();
-    my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+    my $lSleepMs = ceil(((int($lTimeBegin) + 1.05) - $lTimeBegin) * 1000);
 
     usleep($lSleepMs * 1000);
 
@@ -315,15 +329,15 @@ sub file_size_format
 
     if ($lFileSize < (1024 * 1024))
     {
-        return int($lFileSize / 1024) . 'KB';
+        return (int($lFileSize / 102.4) / 10) . 'KB';
     }
 
     if ($lFileSize < (1024 * 1024 * 1024))
     {
-        return int($lFileSize / 1024 / 1024) . 'MB';
+        return (int($lFileSize / 1024 / 102.4) / 10) . 'MB';
     }
 
-    return int($lFileSize / 1024 / 1024 / 1024) . 'GB';
+    return (int($lFileSize / 1024 / 1024 / 102.4) / 10) . 'GB';
 }
 
 ####################################################################################################################################
@@ -516,7 +530,8 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
-    $strMessageFormat = timestamp_string_get() . sprintf(' T%02d', threads->tid()) .
+    $strMessageFormat = timestamp_string_get() . sprintf('.%03d T%02d', (gettimeofday() - int(gettimeofday())) * 1000,
+                        threads->tid()) .
                         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to console depending on log level and test flag

@@ -97,6 +97,8 @@ sub BackRestTestFile_Test
         $strHost,                               # Host
         $strUser,                               # User
         BackRestTestCommon_CommandRemoteGet(),  # Command
+        $strStanza,                             # Stanza
+        '',                                     # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
@@ -107,6 +109,8 @@ sub BackRestTestFile_Test
         undef,                                  # Host
         undef,                                  # User
         undef,                                  # Command
+        undef,                                  # Stanza
+        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
@@ -455,7 +459,7 @@ sub BackRestTestFile_Test
             &log(DEBUG, "begin ${lTimeBegin}, check ${lTimeBeginCheck}, end " . time());
 
             # Current time should have advanced by 1 second
-            if (time() == int($lTimeBegin))
+            if (int(time()) == int($lTimeBegin))
             {
                 confess "time was not advanced by 1 second";
             }

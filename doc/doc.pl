@@ -668,7 +668,7 @@ sub doc_render
 
             if ($bChildList)
             {
-                $strBuffer .= '- ';
+                $strBuffer .= '* ';
             }
 
             $strBuffer .= doc_render_text($$oDoc{field}{text}, $strType);

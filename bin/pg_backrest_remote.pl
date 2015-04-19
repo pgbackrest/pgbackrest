@@ -18,6 +18,7 @@ use BackRest::Utility;
 use BackRest::File;
 use BackRest::Remote;
 use BackRest::Exception;
+use BackRest::Archive;
 
 ####################################################################################################################################
 # Operation constants
@@ -64,11 +65,15 @@ my $oRemote = new BackRest::Remote
 # Create the file object
 my $oFile = new BackRest::File
 (
-    undef,
-    undef,
+    $oRemote->stanza(),
+    $oRemote->repoPath(),
     undef,
     $oRemote,
 );
+
+
+# Create the archive object
+my $oArchive = new BackRest::Archive();
 
 # Command string
 my $strCommand = OP_NOOP;
@@ -196,6 +201,16 @@ while ($strCommand ne OP_EXIT)
             }
 
             $oRemote->output_write($strOutput);
+        }
+        # Archive push checks
+        elsif ($strCommand eq OP_ARCHIVE_PUSH_CHECK)
+        {
+            $oArchive->pushCheck($oFile,
+                                 param_get(\%oParamHash, 'wal-segment'),
+                                 param_get(\%oParamHash, 'db-version'),
+                                 param_get(\%oParamHash, 'db-sys-id'));
+
+            $oRemote->output_write('Y');
         }
         # Continue if noop or exit
         elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)

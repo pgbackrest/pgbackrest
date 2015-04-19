@@ -21,9 +21,11 @@ use File::Copy qw(move);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
+use BackRest::Config;
 use BackRest::Remote;
 use BackRest::File;
 use BackRest::Manifest;
+use BackRest::Db;
 
 use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
@@ -37,7 +39,8 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_UserBackRestGet BackRestTestCommon_TestPathGet BackRestTestCommon_DataPathGet
                  BackRestTestCommon_RepoPathGet BackRestTestCommon_LocalPathGet BackRestTestCommon_DbPathGet
                  BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
-                 BackRestTestCommon_DbPortGet);
+                 BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
+                 BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -56,6 +59,7 @@ my $strCommonDbPath;
 my $strCommonDbCommonPath;
 my $strCommonDbTablespacePath;
 my $iCommonDbPort;
+my $strCommonDbVersion;
 my $iModuleTestRun;
 my $bDryRun;
 my $bNoCleanup;
@@ -67,7 +71,6 @@ my $strOutLog;
 my $hOut;
 my $pId;
 my $strCommand;
-
 
 ####################################################################################################################################
 # BackRestTestCommon_ClusterStop
@@ -90,6 +93,41 @@ sub BackRestTestCommon_ClusterStop
 }
 
 ####################################################################################################################################
+# BackRestTestCommon_DropRepo
+####################################################################################################################################
+sub BackRestTestCommon_DropRepo
+{
+    # Remove the backrest private directory
+    while (-e BackRestTestCommon_RepoPathGet())
+    {
+        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
+        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
+        hsleep(.1);
+    }
+}
+
+
+####################################################################################################################################
+# BackRestTestCommon_CreateRepo
+####################################################################################################################################
+sub BackRestTestCommon_CreateRepo
+{
+    my $bRemote = shift;
+
+    BackRestTestCommon_DropRepo();
+
+    # Create the backup directory
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute('mkdir -m 700 ' . BackRestTestCommon_RepoPathGet(), true);
+    }
+    else
+    {
+        BackRestTestCommon_PathCreate(BackRestTestCommon_RepoPathGet());
+    }
+}
+
+####################################################################################################################################
 # BackRestTestCommon_Drop
 ####################################################################################################################################
 sub BackRestTestCommon_Drop
@@ -98,12 +136,7 @@ sub BackRestTestCommon_Drop
     BackRestTestCommon_ClusterStop(BackRestTestCommon_DbCommonPathGet(), true);
 
     # Remove the backrest private directory
-    while (-e BackRestTestCommon_RepoPathGet())
-    {
-        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
-        BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
-        hsleep(.1);
-    }
+    BackRestTestCommon_DropRepo();
 
     # Remove the test directory
     BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
@@ -468,6 +501,73 @@ sub BackRestTestCommon_Setup
     $iModuleTestRun = $iModuleTestRunParam;
     $bDryRun = $bDryRunParam;
     $bNoCleanup = $bNoCleanupParam;
+
+    BackRestTestCommon_Execute($strPgSqlBin . '/postgres --version');
+
+    # Get the Postgres version
+    my @stryVersionToken = split(/ /, $strOutLog);
+    @stryVersionToken = split(/\./, $stryVersionToken[2]);
+    $strCommonDbVersion = $stryVersionToken[0] . '.' . $stryVersionToken[1];
+
+    # Don't run unit tests for unsupported versions
+    my $strVersionSupport = versionSupport();
+
+    if ($strCommonDbVersion < ${$strVersionSupport}[0])
+    {
+        confess "currently only version ${$strVersionSupport}[0] and up are supported";
+    }
+}
+
+####################################################################################################################################
+# BackRestTestCommon_iniLoad
+####################################################################################################################################
+sub BackRestTestCommon_iniLoad
+{
+    my $strFileName = shift;
+    my $oIniRef = shift;
+    my $bRemote = shift;
+
+    # Defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
+
+    ini_load($strFileName, $oIniRef);
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
+}
+
+####################################################################################################################################
+# BackRestTestCommon_iniSave
+####################################################################################################################################
+sub BackRestTestCommon_iniSave
+{
+    my $strFileName = shift;
+    my $oIniRef = shift;
+    my $bRemote = shift;
+
+    # Defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+        BackRestTestCommon_Execute("chmod g+w " . $strFileName, $bRemote);
+    }
+
+    ini_save($strFileName, $oIniRef);
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g-w " . $strFileName, $bRemote);
+        BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
 }
 
 ####################################################################################################################################
@@ -562,11 +662,11 @@ sub BackRestTestCommon_ConfigRecovery
     }
 
     # Rewrite remap section
-    delete($oConfig{"${strStanza}:recovery:option"});
+    delete($oConfig{"${strStanza}:restore:recovery-setting"});
 
     foreach my $strOption (sort(keys $oRecoveryHashRef))
     {
-        $oConfig{"${strStanza}:recovery:option"}{$strOption} = ${$oRecoveryHashRef}{$strOption};
+        $oConfig{"${strStanza}:restore:recovery-setting"}{$strOption} = ${$oRecoveryHashRef}{$strOption};
     }
 
     # Resave the config file
@@ -614,7 +714,7 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{$strCommonStanza}{'db-user'} = $strCommonUser;
     }
 
-    $oParamHash{'global:log'}{'log-level-console'} = 'error';
+    $oParamHash{'global:log'}{'log-level-console'} = 'debug';
     $oParamHash{'global:log'}{'log-level-file'} = 'trace';
 
     if ($strLocal eq BACKUP)
@@ -627,7 +727,7 @@ sub BackRestTestCommon_ConfigCreate
 
         if (defined($strRemote))
         {
-            $oParamHash{'global:log'}{'log-level-console'} = 'trace';
+#            $oParamHash{'global:log'}{'log-level-console'} = 'trace';
 
             # if ($bArchiveAsync)
             # {
@@ -718,6 +818,11 @@ sub BackRestTestCommon_StanzaGet
     return $strCommonStanza;
 }
 
+sub BackRestTestCommon_CommandPsqlGet
+{
+    return $strCommonCommandPsql;
+}
+
 sub BackRestTestCommon_CommandMainGet
 {
     return $strCommonCommandMain;
@@ -791,6 +896,11 @@ sub BackRestTestCommon_DbTablespacePathGet
 sub BackRestTestCommon_DbPortGet
 {
     return $iCommonDbPort;
+}
+
+sub BackRestTestCommon_DbVersion
+{
+    return $strCommonDbVersion;
 }
 
 1;

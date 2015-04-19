@@ -13,6 +13,7 @@ use IPC::System::Simple qw(capture);
 use Exporter qw(import);
 
 use lib dirname($0);
+use BackRest::Exception;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -27,7 +28,8 @@ our @EXPORT = qw(FILE_POSTMASTER_PID);
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;       # Class name
+    my $class = shift;          # Class name
+    my $strDbPath = shift;      # Database path
     my $strCommandPsql = shift; # PSQL command
     my $strDbHost = shift;      # Database host name
     my $strDbUser = shift;      # Database user name (generally postgres)
@@ -69,6 +71,20 @@ sub is_remote
     # If the SSH object is defined then db is remote
     return defined($self->{oDbSSH}) ? true : false;
 }
+
+####################################################################################################################################
+# versionSupport
+#
+# Returns an array of the supported Postgres versions.
+####################################################################################################################################
+sub versionSupport
+{
+    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4');
+
+    return \@strySupportVersion;
+}
+
+push @EXPORT, qw(versionSupport);
 
 ####################################################################################################################################
 # PSQL_EXECUTE
@@ -131,6 +147,13 @@ sub db_version_get
 
     &log(DEBUG, "database version is $self->{fVersion}");
 
+    my $strVersionSupport = versionSupport();
+
+    if ($self->{fVersion} < ${$strVersionSupport}[0])
+    {
+        confess &log(ERROR, "unsupported Postgres version ${$strVersionSupport}[0]", ERROR_VERSION_NOT_SUPPORTED);
+    }
+
     return $self->{fVersion};
 }
 
@@ -142,6 +165,14 @@ sub backup_start
     my $self = shift;
     my $strLabel = shift;
     my $bStartFast = shift;
+
+    $self->db_version_get();
+
+    if ($self->{fVersion} < 8.4 && $bStartFast)
+    {
+        &log(WARN, 'start-fast option is only available in PostgreSQL >= 8.4');
+        $bStartFast = false;
+    }
 
     my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
                                     "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
