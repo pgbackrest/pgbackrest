@@ -76,9 +76,10 @@ sub restoreFile
             else
             {
                 my ($strChecksum, $lSize) = $oFile->hash_size(PATH_DB_ABSOLUTE, $strDestinationFile);
+                my $strManifestChecksum = $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_CHECKSUM, false, 'INVALID');
 
                 if (($lSize == $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_SIZE) && $lSize == 0) ||
-                    ($strChecksum eq $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_CHECKSUM)))
+                    ($strChecksum eq $strManifestChecksum))
                 {
                     &log(DEBUG, "${strDestinationFile} exists and is zero size or matches backup checksum");
 

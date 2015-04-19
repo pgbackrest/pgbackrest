@@ -497,9 +497,7 @@ sub recovery
     # Write the restore command
     if (!$bRestoreCommandOverride)
     {
-        $strRecovery .=  "restore_command = '$self->{strBackRestBin} --stanza=$self->{strStanza}" .
-                         (defined($self->{strConfigFile}) ? " --config=$self->{strConfigFile}" : '') .
-                         " archive-get %f \"%p\"'\n";
+        $strRecovery .=  "restore_command = '" . operationWrite(OP_ARCHIVE_GET) . " %f \"%p\"'\n";
     }
 
     # If RECOVERY_TYPE_DEFAULT do not write target options

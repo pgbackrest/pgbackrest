@@ -507,6 +507,25 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RESTORE_RECOVERY_SETTING, 'db.domain.net', 'primary-conn-info');
         }
 
+        if (BackRestTestCommon_Run(++$iRun, OP_RESTORE . ' values passed to ' . OP_ARCHIVE_GET))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db path/main');
+            optionSetTest($oOption, OPTION_REPO_PATH, '/repo');
+            optionSetTest($oOption, OPTION_BACKUP_HOST, 'db.mydomain.com');
+
+            configLoadExpect($oOption, OP_RESTORE);
+
+            my $strCommand = operationWrite(OP_ARCHIVE_GET);
+            my $strExpectedCommand = "$0 --backup-host=db.mydomain.com \"--db-path=/db path/main\"" .
+                                     " --repo-path=/repo --stanza=main " . OP_ARCHIVE_GET;
+
+            if ($strCommand ne $strExpectedCommand)
+            {
+                confess "expected command '${strExpectedCommand}' but got '${strCommand}'";
+            }
+        }
+
         if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' valid value ' . OPTION_COMMAND_PSQL))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
