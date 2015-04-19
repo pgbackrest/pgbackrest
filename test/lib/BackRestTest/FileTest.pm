@@ -459,7 +459,7 @@ sub BackRestTestFile_Test
             &log(DEBUG, "begin ${lTimeBegin}, check ${lTimeBeginCheck}, end " . time());
 
             # Current time should have advanced by 1 second
-            if (time() == int($lTimeBegin))
+            if (int(time()) == int($lTimeBegin))
             {
                 confess "time was not advanced by 1 second";
             }

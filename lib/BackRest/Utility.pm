@@ -187,7 +187,7 @@ sub lock_file_remove
 sub wait_remainder
 {
     my $lTimeBegin = gettimeofday();
-    my $lSleepMs = ceil(((int($lTimeBegin) + 1) - $lTimeBegin) * 1000);
+    my $lSleepMs = ceil(((int($lTimeBegin) + 1.05) - $lTimeBegin) * 1000);
 
     usleep($lSleepMs * 1000);
 
