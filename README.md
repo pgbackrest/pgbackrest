@@ -698,6 +698,10 @@ example: db-path=/data/db
 
 ## Release Notes
 
+### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
+
+* Asynchronous archive-get.  This will make recovery much faster when restoring old backups with a lot of WAL replay or when a replica gets very far behind.
+
 ### v0.61: bug fix for uncompressed remote destination
 
 * Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.

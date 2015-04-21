@@ -656,6 +656,14 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
+			<release-version version="0.75" title="IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Asynchronous archive-get.  This will make recovery much faster when restoring old backups with a lot of WAL replay or when a replica gets very far behind.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.61" title="bug fix for uncompressed remote destination">
 				<release-feature-bullet-list>
 					<release-feature>

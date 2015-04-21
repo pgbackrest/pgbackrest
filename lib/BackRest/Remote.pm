@@ -880,7 +880,6 @@ sub binary_xfer
                         $iBlockSize = 0;
                     }
                 }
-
             }
             while ($iBlockSize > 0);
 
