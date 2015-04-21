@@ -755,7 +755,7 @@ sub binary_xfer
                             last;
                         }
                     }
-                    while ($iZLibStatus == Z_OK && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
+                    while ($iZLibStatus != Z_STREAM_END && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
                 }
             }
             while ($iBlockSize > 0);
@@ -1003,7 +1003,7 @@ sub binary_xfer
                                 $iBlockSize = 0;
                             }
                         }
-                        while ($iZLibStatus == Z_OK && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
+                        while ($iZLibStatus != Z_STREAM_END && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
                     }
                 }
             }

@@ -698,6 +698,10 @@ example: db-path=/data/db
 
 ## Release Notes
 
+### v0.61: bug fix for uncompressed remote destination
+
+* Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.
+
 ### v0.60: better version support and WAL improvements
 
 * Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.
