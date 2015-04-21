@@ -1042,7 +1042,7 @@ sub BackRestTestFile_Test
         $iRun = 0;
 
         # Loop through small/large
-        for (my $bLarge = false; $bLarge <= 2; $bLarge++)
+        for (my $iLarge = 0; $iLarge <= 3; $iLarge++)
         {
         # Loop through backup local vs remote
         for (my $bBackupRemote = 0; $bBackupRemote <= 1; $bBackupRemote++)
@@ -1075,13 +1075,13 @@ sub BackRestTestFile_Test
             for (my $bDestinationPathType = 0; $bDestinationPathType <= 1; $bDestinationPathType++)
             {
             # Loop through source missing/present
-            for (my $bSourceMissing = 0; $bSourceMissing <= !$bLarge; $bSourceMissing++)
+            for (my $bSourceMissing = 0; $bSourceMissing <= !$iLarge; $bSourceMissing++)
             {
             # Loop through source ignore/require
-            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= !$bLarge; $bSourceIgnoreMissing++)
+            for (my $bSourceIgnoreMissing = 0; $bSourceIgnoreMissing <= !$iLarge; $bSourceIgnoreMissing++)
             {
             # Loop through checksum append
-            for (my $bChecksumAppend = 0; $bChecksumAppend <= !$bLarge; $bChecksumAppend++)
+            for (my $bChecksumAppend = 0; $bChecksumAppend <= !$iLarge; $bChecksumAppend++)
             {
             # Loop through source compression
             for (my $bSourceCompressed = 0; $bSourceCompressed <= !$bSourceMissing; $bSourceCompressed++)
@@ -1096,7 +1096,7 @@ sub BackRestTestFile_Test
                 my $strDestinationPath = $bDestinationPathType ? 'db' : 'backup';
 
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "lrg ${bLarge}, rmt " .
+                                            "lrg ${iLarge}, rmt " .
                                                 (defined($strRemote) && ($strRemote eq $strSourcePath ||
                                                  $strRemote eq $strDestinationPath) ? 1 : 0) .
                                             ', srcpth ' . (defined($strRemote) && $strRemote eq $strSourcePath ? 'rmt' : 'lcl') .
@@ -1124,12 +1124,24 @@ sub BackRestTestFile_Test
 
                 if (!$bSourceMissing)
                 {
-                    if ($bLarge)
+                    if ($iLarge)
                     {
                         $strSourceFile .= '.bin';
                         $strDestinationFile .= '.bin';
 
-                        BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive${bLarge}.bin ${strSourceFile}");
+                        if ($iLarge < 3)
+                        {
+                            BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() .
+                                                       "/test.archive${iLarge}.bin ${strSourceFile}");
+                        }
+                        else
+                        {
+                            for (my $iTableSizeIdx = 0; $iTableSizeIdx < 100; $iTableSizeIdx++)
+                            {
+                                BackRestTestCommon_Execute('cat ' . BackRestTestCommon_DataPathGet() .
+                                                           "/test.table.bin >> ${strSourceFile}");
+                            }
+                        }
                     }
                     else
                     {
@@ -1139,15 +1151,20 @@ sub BackRestTestFile_Test
                         system("echo 'TESTDATA' > ${strSourceFile}");
                     }
 
-                    if ($bLarge == 1)
+                    if ($iLarge == 1)
                     {
                         $strSourceHash = 'c2e63b6a49d53a53d6df1aa6b70c7c16747ca099';
                         $iSourceSize = 16777216;
                     }
-                    elsif ($bLarge == 2)
+                    elsif ($iLarge == 2)
                     {
                         $strSourceHash = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
                         $iSourceSize = 16777216;
+                    }
+                    elsif ($iLarge == 3)
+                    {
+                        $strSourceHash = 'c23a89d47c7a006fcda51da0cc95993dc9aad995';
+                        $iSourceSize = 104857600;
                     }
                     else
                     {

@@ -656,6 +656,14 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
+			<release-version version="0.61" title="bug fix for uncompressed remote destination">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.60" title="better version support and WAL improvements">
 				<release-feature-bullet-list>
 					<release-feature>
