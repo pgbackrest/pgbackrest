@@ -15,6 +15,7 @@ use lib dirname($0);
 use BackRest::Utility;
 use BackRest::Exception;
 use BackRest::Config;
+use BackRest::Lock;
 use BackRest::File;
 use BackRest::Remote;
 
@@ -397,13 +398,7 @@ sub pushProcess
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    my $strLockPath = "${strArchivePath}/lock/" . optionGet(OPTION_STANZA) . "-archive.lock";
-
-    if (!lock_file_create($strLockPath))
-    {
-        &log(DEBUG, 'archive-push process is already running - exiting');
-        return 0;
-    }
+    lockAcquire(operationGet());
 
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
@@ -428,7 +423,7 @@ sub pushProcess
         }
     }
 
-    lock_file_remove();
+    lockRelease();
     return 0;
 }
 
