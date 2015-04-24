@@ -642,4 +642,112 @@ sub ini_save
     close($hFile);
 }
 
+####################################################################################################################################
+####################################################################################################################################
+# Wait Functions
+####################################################################################################################################
+####################################################################################################################################
+push @EXPORT, qw(waitInit waitMore waitInterval);
+
+####################################################################################################################################
+# waitInit
+####################################################################################################################################
+sub waitInit
+{
+    my $fWaitTime = shift;
+    my $fSleep = shift;
+
+    # Declare oWait hash
+    my $oWait = {};
+
+    # If wait seconds is not defined or 0 then return undef
+    if (!defined($fWaitTime) || $fWaitTime == 0)
+    {
+        return undef;
+    }
+
+    # Wait seconds can be a minimum of .1
+    if ($fWaitTime < .1)
+    {
+        confess &log(ASSERT, 'fWaitTime cannot be < .1');
+    }
+
+    # If fSleep is not defined set it
+    if (!defined($fSleep))
+    {
+        if ($fWaitTime >= 1)
+        {
+            $$oWait{sleep} = .1;
+        }
+        else
+        {
+            $$oWait{sleep} = $fWaitTime / 10;
+        }
+    }
+    # Else make sure it's not greater than fWaitTime
+    else
+    {
+        # Make sure fsleep is less than fWaitTime
+        if ($fSleep >= $fWaitTime)
+        {
+            confess &log(ASSERT, 'fSleep > fWaitTime - this is useless');
+        }
+    }
+
+    # Set variables
+    $$oWait{wait_time} = $fWaitTime;
+    $$oWait{time_begin} = gettimeofday();
+    $$oWait{time_end} = $$oWait{time_begin};
+
+    return $oWait;
+}
+
+####################################################################################################################################
+# waitMore
+####################################################################################################################################
+sub waitMore
+{
+    my $oWait = shift;
+
+    # Return if oWait is not defined
+    if (!defined($oWait))
+    {
+        return false;
+    }
+
+    # Sleep for fSleep time
+    hsleep($$oWait{sleep});
+
+    # Capture the end time
+    $$oWait{time_end} = gettimeofday();
+
+    # Calculate the new sleep time
+    $$oWait{sleep} = $$oWait{sleep} * 2 < $$oWait{wait_time} - ($$oWait{time_end} - $$oWait{time_begin}) ?
+                         $$oWait{sleep} * 2 : ($$oWait{wait_time} - ($$oWait{time_end} - $$oWait{time_begin})) + .001;
+
+    if ((gettimeofday() - $$oWait{time_begin}) < $$oWait{wait_time})
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+####################################################################################################################################
+# waitInterval
+####################################################################################################################################
+sub waitInterval
+{
+    my $oWait = shift;
+
+    # Error if oWait is not defined
+    if (!defined($oWait))
+    {
+        confess &log("fWaitTime was not defined in waitInit");
+    }
+
+    return int(($$oWait{time_end} - $$oWait{time_begin}) * 1000) / 1000;
+}
+
 1;

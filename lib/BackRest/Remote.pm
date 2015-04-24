@@ -16,7 +16,7 @@ use IO::String qw();
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception qw(ERROR_PROTOCOL);
-use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false);
+use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false waitInit waitMore);
 use BackRest::Config qw(optionGet OPTION_STANZA OPTION_REPO_REMOTE_PATH);
 
 ####################################################################################################################################
@@ -417,8 +417,7 @@ sub wait_pid
     my $bReportError = shift;
 
     # Record the start time and set initial sleep interval
-    my $fStartTime = defined($fWaitTime) ? gettimeofday() : undef;
-    my $fSleep = defined($fWaitTime) ? .1 : undef;
+    my $oWait = waitInit($fWaitTime);
 
     if (defined($self->{pId}))
     {
@@ -464,16 +463,8 @@ sub wait_pid
             }
 
             &log(TRACE, "waiting for pid");
-
-            # If waiting then sleep before trying again
-            if (defined($fWaitTime))
-            {
-                hsleep($fSleep);
-                $fSleep = $fSleep * 2 < $fWaitTime - (gettimeofday() - $fStartTime) ?
-                              $fSleep * 2 : ($fWaitTime - (gettimeofday() - $fStartTime)) + .001;
-            }
         }
-        while (defined($fWaitTime) && (gettimeofday() - $fStartTime) < $fWaitTime);
+        while (waitMore($oWait));
     }
 
     return false;

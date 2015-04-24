@@ -118,8 +118,7 @@ sub walFileName
     my $iWaitSeconds = shift;
 
     # Record the start time
-    my $lTime = time();
-    my $fSleep = .1;
+    my $oWait = waitInit($iWaitSeconds);
 
     # Determine the path where the requested WAL segment is located
     my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strWalSegment));
@@ -141,20 +140,13 @@ sub walFileName
         {
             confess &log(ASSERT, @stryWalFileName . " duplicate files found for ${strWalSegment}", ERROR_ARCHIVE_DUPLICATE);
         }
-
-        # If waiting then sleep before trying again
-        if (defined($iWaitSeconds))
-        {
-            hsleep($fSleep);
-            $fSleep = $fSleep * 2 < $iWaitSeconds - (time() - $lTime) ? $fSleep * 2 : ($iWaitSeconds - (time() - $lTime)) + .1;
-        }
     }
-    while (defined($iWaitSeconds) && (time() - $lTime) < $iWaitSeconds);
+    while (waitMore($oWait));
 
     # If waiting and no WAL segment was found then throw an error
     if (defined($iWaitSeconds))
     {
-        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . (time() - $lTime)  . ' second(s)');
+        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . waitInterval($oWait)  . ' second(s)');
     }
 
     return undef;
