@@ -58,7 +58,7 @@ cpanm JSON
 cpanm Net::OpenSSH
 cpanm IPC::System::Simple
 cpanm Digest::SHA
-cpanm Compress::ZLib
+cpanm Compress::Zlib
 cpanm threads (update this package)
 cpanm Thread::Queue (update this package)
 ```
