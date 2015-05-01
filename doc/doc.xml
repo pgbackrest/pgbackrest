@@ -570,7 +570,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - ARCHIVE SECTION - ARCHIVE-MAX-MB KEY -->
 					<config-key id="archive-max-mb">
-						<text>Limits the amount of archive log that will be written locally when <setting>compress-async=y</setting>.  After the limit is reached, the following will happen:
+						<text>Limits the amount of archive log that will be written locally when <setting>archive-async=y</setting>.  After the limit is reached, the following will happen:
 						<ol>
 							<li>PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.</li>
 							<li>An error will be logged to the console and also to the Postgres log.</li>

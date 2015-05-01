@@ -613,7 +613,7 @@ example: archive-async=y
 
 ##### `archive-max-mb` key
 
-Limits the amount of archive log that will be written locally when `compress-async=y`.  After the limit is reached, the following will happen:
+Limits the amount of archive log that will be written locally when `archive-async=y`.  After the limit is reached, the following will happen:
 
 - PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
 - An error will be logged to the console and also to the Postgres log.
