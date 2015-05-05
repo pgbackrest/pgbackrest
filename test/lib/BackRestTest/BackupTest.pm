@@ -865,14 +865,15 @@ sub BackRestTestBackup_BackupBegin
     $bTestPoint = defined($bTestPoint) ? $bTestPoint : false;
     $fTestDelay = defined($fTestDelay) ? $fTestDelay : 0;
 
-    &log(INFO, "    ${strType} backup" . (defined($strComment) ? " (${strComment})" : ''));
+    $strComment = "${strType} backup" . (defined($strComment) ? " (${strComment})" : '');
+    &log(INFO, "    $strComment");
 
     BackRestTestCommon_ExecuteBegin(BackRestTestCommon_CommandMainGet() . ' --config=' .
                                     ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
                                     "/pg_backrest.conf" . ($bSynthetic ? " --no-start-stop" : '') .
                                     ($strType ne 'incr' ? " --type=${strType}" : '') .
                                     " --stanza=${strStanza} backup" . ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''),
-                                    $bRemote);
+                                    $bRemote, $strComment);
 }
 
 ####################################################################################################################################
@@ -925,7 +926,8 @@ sub BackRestTestBackup_BackupSynthetic
     my $fTestDelay = shift;
     my $iExpectedExitStatus = shift;
 
-    BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, true, defined($strTestPoint), $fTestDelay);
+    BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, true, defined($strTestPoint), $fTestDelay,
+                                   $strComment);
 
     if (defined($strTestPoint))
     {
@@ -1177,18 +1179,20 @@ sub BackRestTestBackup_Restore
 
     my $bSynthetic = defined($oExpectedManifestRef) ? true : false;
 
-    &log(INFO, '        restore' .
-               ($bDelta ? ' delta' : '') .
-               ($bForce ? ', force' : '') .
-               ($strBackup ne 'latest' ? ", backup '${strBackup}'" : '') .
-               ($strType ? ", type '${strType}'" : '') .
-               ($strTarget ? ", target '${strTarget}'" : '') .
-               ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
-               (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
-               (defined($bTargetResume) && $bTargetResume ? ', resume' : '') .
-               (defined($oRemapHashRef) ? ', remap' : '') .
-               (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
-               (defined($strComment) ? " (${strComment})" : ''));
+    $strComment = 'restore' .
+                  ($bDelta ? ' delta' : '') .
+                  ($bForce ? ', force' : '') .
+                  ($strBackup ne 'latest' ? ", backup '${strBackup}'" : '') .
+                  ($strType ? ", type '${strType}'" : '') .
+                  ($strTarget ? ", target '${strTarget}'" : '') .
+                  ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
+                  (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
+                  (defined($bTargetResume) && $bTargetResume ? ', resume' : '') .
+                  (defined($oRemapHashRef) ? ', remap' : '') .
+                  (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
+                  (defined($strComment) ? " (${strComment})" : '');
+
+    &log(INFO, "        ${strComment}");
 
     if (!defined($oExpectedManifestRef))
     {
@@ -1231,7 +1235,7 @@ sub BackRestTestBackup_Restore
                                (defined($bTargetExclusive) && $bTargetExclusive ? " --target-exclusive" : '') .
                                (defined($bTargetResume) && $bTargetResume ? " --target-resume" : '') .
                                " --stanza=${strStanza} restore",
-                               undef, undef, undef, $iExpectedExitStatus);
+                               undef, undef, undef, $iExpectedExitStatus, $strComment);
 
     if (!defined($iExpectedExitStatus))
     {
@@ -1424,6 +1428,8 @@ sub BackRestTestBackup_Test
 
     # Setup test variables
     my $iRun;
+    my $strModule = 'backup';
+    my $strThisTest;
     my $bCreate;
     my $strStanza = BackRestTestCommon_StanzaGet();
 
@@ -1865,15 +1871,17 @@ sub BackRestTestBackup_Test
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Test backup
+    # Test synthetic
     #
     # Check the backup and restore functionality using synthetic data.
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($strTest eq 'all' || $strTest eq 'backup')
+    $strThisTest = 'synthetic';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
     {
         $iRun = 0;
 
-        &log(INFO, "Test Backup\n");
+        &log(INFO, "Test ${strModule} - ${strThisTest}\n");
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -1883,7 +1891,8 @@ sub BackRestTestBackup_Test
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
-                                        "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardlink}")) {next}
+                                        "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardlink}",
+                                        $strModule, $strThisTest)) {next}
 
             # Get base time
             my $lTime = time() - 100000;

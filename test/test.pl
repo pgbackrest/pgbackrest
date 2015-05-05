@@ -49,6 +49,7 @@ test.pl [options]
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --infinite           repeat selected tests forever
    --db-version         version of postgres to test (or all)
+   --log-force          force overwrite of current test log files
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -78,6 +79,7 @@ my $bHelp = false;
 my $bQuiet = false;
 my $bInfinite = false;
 my $strDbVersion = 'max';
+my $bLogForce = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -92,7 +94,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
             'infinite' => \$bInfinite,
-            'db-version=s' => \$strDbVersion)
+            'db-version=s' => \$strDbVersion,
+            'log-force' => \$bLogForce)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -239,7 +242,7 @@ my $iRun = 0;
 
 do
 {
-    BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup);
+    BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup, $bLogForce);
 
     &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
 
