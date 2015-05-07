@@ -724,6 +724,8 @@ example: db-path=/data/db
 
 * More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.
 
+* Fixed an issue where an absolute path was not written into recovery.conf when the restore was run with a relative path.
+
 ### v0.61: bug fix for uncompressed remote destination
 
 * Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.

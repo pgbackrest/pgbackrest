@@ -680,6 +680,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<release-feature>
 						<text>More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.</text>
 					</release-feature>
+					<release-feature>
+						<text>Fixed an issue where an absolute path was not written into recovery.conf when the restore was run with a relative path.</text>
+					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
 

@@ -41,7 +41,7 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
                  BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
-                 BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave);
+                 BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -276,7 +276,7 @@ sub BackRestTestCommon_ExecuteBegin
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
     $bFullLog = false;
 
-    if ($strCommandParam =~ /^$strBinPath\/pg_backrest\.pl/)
+    if ($strCommandParam =~ /\/bin\/pg_backrest\.pl/)
     {
         my $strTestPath = BackRestTestCommon_TestPathGet();
 
@@ -610,7 +610,7 @@ sub BackRestTestCommon_Setup
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
-    $strCommonCommandMain = "${strCommonBasePath}/bin/pg_backrest.pl";
+    $strCommonCommandMain = "../bin/pg_backrest.pl";
     $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote.pl";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
@@ -997,6 +997,11 @@ sub BackRestTestCommon_CommandPsqlGet
 sub BackRestTestCommon_CommandMainGet
 {
     return $strCommonCommandMain;
+}
+
+sub BackRestTestCommon_CommandMainAbsGet
+{
+    return abs_path($strCommonCommandMain);
 }
 
 sub BackRestTestCommon_CommandRemoteGet

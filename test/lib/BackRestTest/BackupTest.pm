@@ -251,7 +251,7 @@ sub BackRestTestBackup_ClusterStart
     }
 
     # Creat the archive command
-    my $strArchive = BackRestTestCommon_CommandMainGet() . ' --stanza=' . BackRestTestCommon_StanzaGet() .
+    my $strArchive = BackRestTestCommon_CommandMainAbsGet() . ' --stanza=' . BackRestTestCommon_StanzaGet() .
                      ' --config=' . BackRestTestCommon_DbPathGet() . '/pg_backrest.conf archive-push %p';
 
     # Start the cluster
@@ -869,7 +869,8 @@ sub BackRestTestBackup_BackupBegin
     $strComment = "${strType} backup" . (defined($strComment) ? " (${strComment})" : '');
     &log(INFO, "    $strComment");
 
-    BackRestTestCommon_ExecuteBegin(BackRestTestCommon_CommandMainGet() . ' --config=' .
+    BackRestTestCommon_ExecuteBegin(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                                    ' --config=' .
                                     ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
                                     "/pg_backrest.conf" . ($bSynthetic ? " --no-start-stop" : '') .
                                     (defined($strOptionalParam) ? " ${strOptionalParam}" : '') .
@@ -1228,7 +1229,8 @@ sub BackRestTestBackup_Restore
     }
 
     # Create the backup command
-    BackRestTestCommon_Execute(BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+    BackRestTestCommon_Execute(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                               ' --config=' . BackRestTestCommon_DbPathGet() .
                                '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
                                (defined($bForce) && $bForce ? ' --force' : '') .
                                ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .

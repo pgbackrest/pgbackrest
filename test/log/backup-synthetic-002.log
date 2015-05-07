@@ -2,7 +2,7 @@ run 002 - rmt 0, cmp 0, hardlink 1
 ==================================
 
 full backup
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -38,7 +38,7 @@ full backup
  DEBUG:     safe exit called, terminating threads
 
 full backup (resume)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -73,7 +73,7 @@ full backup (resume)
  DEBUG:     safe exit called, terminating threads
 
 restore delta, backup '[BACKUP_LABEL]' (add and delete files)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP_LABEL] --stanza=db restore
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP_LABEL] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
   INFO: Restoring backup set [BACKUP_LABEL]
@@ -109,7 +109,7 @@ restore delta, backup '[BACKUP_LABEL]' (add and delete files)
  DEBUG:     safe exit called, terminating threads
 
 incr backup (add tablespace 1)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -158,7 +158,7 @@ incr backup (add tablespace 1)
  DEBUG:     safe exit called, terminating threads
 
 incr backup (resume and add tablespace 2)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -220,7 +220,7 @@ incr backup (resume and add tablespace 2)
  DEBUG:     safe exit called, terminating threads
 
 diff backup (cannot resume - new diff)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -279,7 +279,7 @@ diff backup (cannot resume - new diff)
  DEBUG:     safe exit called, terminating threads
 
 diff backup (cannot resume - disabled)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -338,7 +338,7 @@ diff backup (cannot resume - disabled)
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', expect exit 115 (fail on used path)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
   INFO: Restoring backup set [BACKUP_LABEL]
@@ -353,7 +353,7 @@ restore, backup '[BACKUP_LABEL]', expect exit 115 (fail on used path)
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on undef format)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
   INFO: Restoring backup set [BACKUP_LABEL]
@@ -364,7 +364,7 @@ restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on undef format)
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on mismatch format)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
   INFO: Restoring backup set [BACKUP_LABEL]
@@ -375,7 +375,7 @@ restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on mismatch format)
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', remap (remap all paths)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
   INFO: Restoring backup set [BACKUP_LABEL]
@@ -437,7 +437,7 @@ restore, backup '[BACKUP_LABEL]', remap (remap all paths)
  DEBUG:     safe exit called, terminating threads
 
 incr backup (add files and remove tablespace 2)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -490,7 +490,7 @@ incr backup (add files and remove tablespace 2)
  DEBUG:     safe exit called, terminating threads
 
 incr backup (update files)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -543,7 +543,7 @@ incr backup (update files)
  DEBUG:     safe exit called, terminating threads
 
 diff backup (no updates)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -598,7 +598,7 @@ diff backup (no updates)
  DEBUG:     safe exit called, terminating threads
 
 incr backup (remove files - but won't affect manifest)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -650,7 +650,7 @@ incr backup (remove files - but won't affect manifest)
  DEBUG:     safe exit called, terminating threads
 
 diff backup (remove files during backup)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -701,7 +701,7 @@ diff backup (remove files during backup)
  DEBUG:     safe exit called, terminating threads
 
 full backup
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -750,7 +750,7 @@ full backup
  DEBUG:     safe exit called, terminating threads
 
 diff backup (add files)
-> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]

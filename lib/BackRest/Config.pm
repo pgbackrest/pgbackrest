@@ -1618,7 +1618,7 @@ sub operationWrite
 {
     my $strNewOperation = shift;
 
-    my $strCommand = "$0";
+    my $strCommand = abs_path($0);
 
     foreach my $strOption (sort(keys(%oOption)))
     {
