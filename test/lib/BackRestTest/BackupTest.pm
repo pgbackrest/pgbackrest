@@ -2058,6 +2058,19 @@ sub BackRestTestBackup_Test
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                             'cannot resume - new diff', TEST_BACKUP_NORESUME);
 
+            # Resume Diff Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'diff';
+
+            $strTmpPath = BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp";
+
+            BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strBackup}",
+                                        $strTmpPath, $bRemote);
+
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                            'cannot resume - disabled', TEST_BACKUP_NORESUME, undef, undef,
+                                                            '--no-resume');
+
             # Restore -
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;

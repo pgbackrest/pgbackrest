@@ -572,6 +572,15 @@ default: 1073741824
 example: manifest-save-threshold=5368709120
 ```
 
+##### `resume` key
+
+Defines whether the resume feature is enabled.  Resume can greatly reduce the amount of time required to run a backup after a previous backup of the same type has failed.  It adds complexity, however, so it may be desirable to disable in environments that do not require the feature.
+```
+required: n
+default: y
+example: resume=false
+```
+
 ##### `thread-max` key
 
 Defines the number of threads to use for backup or restore.  Each thread will perform compression and transfer to make the backup run faster, but don't set `thread-max` so high that it impacts database performance during backup.
@@ -709,7 +718,9 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
 
-* Asynchronous archive-get.  This will make recovery much faster when restoring old backups with a lot of WAL replay or when a replica gets very far behind.
+* Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.
+
+* Resume is now optional.  Use the `resume` setting or `--no-resume` from the command line to disable.
 
 ### v0.61: bug fix for uncompressed remote destination
 

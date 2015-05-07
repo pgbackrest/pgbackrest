@@ -702,7 +702,7 @@ sub backup
         };
 
         # If the aborted backup is usable then clean it
-        if ($bUsable)
+        if ($bUsable && optionGet(OPTION_RESUME))
         {
             &log(WARN, 'aborted backup of same type exists, will be cleaned to remove invalid files and resumed');
             &log(TEST, TEST_BACKUP_RESUME);
@@ -713,17 +713,24 @@ sub backup
         # Else remove it
         else
         {
-            my $strReason = "new version '${strVersion}' does not match aborted version '${strVersion}'";
+            my $strReason = "resume is disabled";
 
-            if ($strVersion eq $strAbortedVersion)
+            if (optionGet(OPTION_RESUME))
             {
-                if ($strType ne $strAbortedType)
+                if ($strVersion eq $strAbortedVersion)
                 {
-                    $strReason = "new type '${strType}' does not match aborted type '${strAbortedType}'";
+                    if ($strType ne $strAbortedType)
+                    {
+                        $strReason = "new type '${strType}' does not match aborted type '${strAbortedType}'";
+                    }
+                    else
+                    {
+                        $strReason = "new prior '${strPrior}' does not match aborted prior '${strAbortedPrior}'";
+                    }
                 }
                 else
                 {
-                    $strReason = "new prior '${strPrior}' does not match aborted prior '${strAbortedPrior}'";
+                    $strReason = "new version '${strVersion}' does not match aborted version '${strVersion}'";
                 }
             }
 
