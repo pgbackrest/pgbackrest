@@ -84,10 +84,10 @@ restore delta, backup '[BACKUP_LABEL]' (add and delete files)
   INFO: checking/cleaning db path [TEST_PATH]/db/common
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common
  DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
- DEBUG:     removing link [TEST_PATH]/db/common/link-test - destination changed
- DEBUG:     removing file/link [TEST_PATH]/db/common/deleteme/deleteme.txt
- DEBUG:     removing path [TEST_PATH]/db/common/deleteme
- DEBUG:     setting [TEST_PATH]/db/common/base mode to 0700
+  INFO: removing link [TEST_PATH]/db/common/link-test - destination changed
+  INFO: removing file/link [TEST_PATH]/db/common/deleteme/deleteme.txt
+  INFO: removing path [TEST_PATH]/db/common/deleteme
+  INFO: setting [TEST_PATH]/db/common/base mode to 0700
   INFO: 1 file(s) removed during cleanup
   INFO: 1 path(s) removed during cleanup
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/base
@@ -96,13 +96,15 @@ restore delta, backup '[BACKUP_LABEL]' (add and delete files)
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/pg_tblspc
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/link-test
  DEBUG:     File->link_create: db:absolute:/test to db:absolute:[TEST_PATH]/db/common/link-test, hard = false, relative = false, destination_path_create = true
+ DEBUG:     starting restore in main process
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/base/base1.txt
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/base/base1.txt, compressed = false, hash_type = sha1
+  INFO: [TEST_PATH]/db/common/base/base1.txt exists and matches backup (4B, 57%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/PG_VERSION
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/PG_VERSION to local db:absolute:[TEST_PATH]/db/common/PG_VERSION, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
  DEBUG:     File->owner: absolute:[TEST_PATH]/db/common/PG_VERSION.backrest.tmp, user = [USER] = staff
  DEBUG:     File->move: absolute:[TEST_PATH]/db/common/PG_VERSION.backrest.tmp to absolute:[TEST_PATH]/db/common/PG_VERSION, destination_path_create = false
- DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/base/base1.txt
- DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/base/base1.txt, compressed = false, hash_type = sha1
- DEBUG:     [TEST_PATH]/db/common/base/base1.txt exists and is zero size or matches backup checksum
+  INFO: [TEST_PATH]/db/common/PG_VERSION restore (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/recovery.conf
  DEBUG:     safe exit called, terminating threads
 
@@ -354,26 +356,32 @@ restore, backup '[BACKUP_LABEL]', remap (remap all paths)
  DEBUG:     File->link_create: db:absolute:[TEST_PATH]/db/tablespace/ts1-2 to db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/1, hard = false, relative = false, destination_path_create = true
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2
  DEBUG:     File->link_create: db:absolute:[TEST_PATH]/db/tablespace/ts2-2 to db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2, hard = false, relative = false, destination_path_create = true
- DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/PG_VERSION
- DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/PG_VERSION to local db:absolute:[TEST_PATH]/db/common-2/PG_VERSION, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
- DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/PG_VERSION.backrest.tmp, user = [USER] = staff
- DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/PG_VERSION.backrest.tmp to absolute:[TEST_PATH]/db/common-2/PG_VERSION, destination_path_create = false
+ DEBUG:     starting restore in main process
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/badchecksum.txt to local db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
  DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/badchecksum.txt.backrest.tmp, user = [USER] = staff
  DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/badchecksum.txt.backrest.tmp to absolute:[TEST_PATH]/db/common-2/badchecksum.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/badchecksum.txt restore (11B, 34%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/base/base1.txt
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/base/base1.txt to local db:absolute:[TEST_PATH]/db/common-2/base/base1.txt, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
  DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/base/base1.txt.backrest.tmp, user = [USER] = staff
  DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/base/base1.txt.backrest.tmp to absolute:[TEST_PATH]/db/common-2/base/base1.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/base/base1.txt restore (4B, 46%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/PG_VERSION
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/PG_VERSION to local db:absolute:[TEST_PATH]/db/common-2/PG_VERSION, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/PG_VERSION.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/PG_VERSION.backrest.tmp to absolute:[TEST_PATH]/db/common-2/PG_VERSION, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/PG_VERSION restore (3B, 56%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/tablespace/1/tablespace1.txt to local db:absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
  DEBUG:     File->owner: absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt.backrest.tmp, user = [USER] = staff
  DEBUG:     File->move: absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt.backrest.tmp to absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt restore (7B, 78%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/tablespace/2/tablespace2.txt to local db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
  DEBUG:     File->owner: absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt.backrest.tmp, user = [USER] = staff
  DEBUG:     File->move: absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt.backrest.tmp to absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt restore (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
  DEBUG:     safe exit called, terminating threads
 

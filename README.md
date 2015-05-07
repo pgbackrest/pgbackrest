@@ -722,6 +722,8 @@ example: db-path=/data/db
 
 * Resume is now optional.  Use the `resume` setting or `--no-resume` from the command line to disable.
 
+* More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.
+
 ### v0.61: bug fix for uncompressed remote destination
 
 * Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.

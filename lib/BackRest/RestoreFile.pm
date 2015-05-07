@@ -28,8 +28,7 @@ use BackRest::File;
 ####################################################################################################################################
 sub restoreFile
 {
-    my $strSourcePath = shift;      # Source path of the file
-    my $strFileName = shift;        # File to restore
+    my $oFileHash = shift;          # File to restore
     my $lCopyTimeBegin = shift;     # Time that the backup begain - used for size/timestamp deltas
     my $bDelta = shift;             # Is restore a delta?
     my $bForce = shift;             # Force flag
@@ -37,20 +36,17 @@ sub restoreFile
     my $bSourceCompression = shift; # Is the source compressed?
     my $strCurrentUser = shift;     # Current OS user
     my $strCurrentGroup = shift;    # Current OS group
-    my $oManifest = shift;          # Backup manifest
-    my $oFile = shift;              # File object (only provided in single-threaded mode)
-
-    my $strSection = "${strSourcePath}:file";                                 # Backup section with file info
-    my $strDestinationPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH,    # Destination path stored in manifest
-                                             $strSourcePath);
-    $strSourcePath =~ s/\:/\//g;                                              # Replace : with / in source path
-
-    # If the file is a reference to a previous backup and hardlinks are off, then fetch it from that backup
-    my $strReference = $oManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, 'y') ? undef :
-                           $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_REFERENCE, false);
+    my $oFile = shift;              # File object
+    my $lSizeTotal = shift;         # Total size of files to be restored
+    my $lSizeCurrent = shift;       # Current size of files restored
 
     # Generate destination file name
-    my $strDestinationFile = $oFile->path_get(PATH_DB_ABSOLUTE, "${strDestinationPath}/${strFileName}");
+    my $strDestinationFile = $oFile->path_get(PATH_DB_ABSOLUTE, "$$oFileHash{destination_path}/$$oFileHash{file}");
+
+    # Copy flag and log message
+    my $bCopy = true;
+    my $strLog;
+    $lSizeCurrent += $$oFileHash{size};
 
     if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
     {
@@ -63,62 +59,63 @@ sub restoreFile
                 my $oStat = lstat($strDestinationFile);
 
                 # Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
-                if (defined($oStat) &&
-                    $oStat->size == $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_SIZE) &&
-                    $oStat->mtime == $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_MODIFICATION_TIME) &&
-                    $oStat->mtime < $lCopyTimeBegin)
+                if (defined($oStat) && $oStat->size == $$oFileHash{size} &&
+                    $oStat->mtime == $$oFileHash{modification_time} && $oStat->mtime < $lCopyTimeBegin)
                 {
-                    &log(DEBUG, "${strDestinationFile} exists and matches size " . $oStat->size .
-                                " and modification time " . $oStat->mtime);
-                    return;
+                    $strLog =  "${strDestinationFile} exists and matches size " . $oStat->size .
+                               " and modification time " . $oStat->mtime;
+                    $bCopy = false;
                 }
             }
             else
             {
                 my ($strChecksum, $lSize) = $oFile->hash_size(PATH_DB_ABSOLUTE, $strDestinationFile);
-                my $strManifestChecksum = $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_CHECKSUM, false, 'INVALID');
 
-                if (($lSize == $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_SIZE) && $lSize == 0) ||
-                    ($strChecksum eq $strManifestChecksum))
+                if ($lSize == $$oFileHash{size} && ($lSize == 0 || $strChecksum eq $$oFileHash{checksum}))
                 {
-                    &log(DEBUG, "${strDestinationFile} exists and is zero size or matches backup checksum");
+                    $strLog =  "exists and " . ($lSize == 0 ? 'is zero size' : "matches backup");
 
                     # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
-                    # presents a pristine version of the database.
-                    utime($oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                          $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                          $strDestinationFile)
+                    # presents a pristine version of the database after restore.
+                    utime($$oFileHash{modification_time}, $$oFileHash{modification_time}, $strDestinationFile)
                         or confess &log(ERROR, "unable to set time for ${strDestinationFile}");
 
-                    return;
+                    $bCopy = false;
                 }
             }
         }
-
-        $oFile->remove(PATH_DB_ABSOLUTE, $strDestinationFile);
     }
 
-    # Set user and group if running as root (otherwise current user and group will be used for restore)
     # Copy the file from the backup to the database
-    my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-        $oFile->copy(PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $strBackupPath) .
-                     "/${strSourcePath}/${strFileName}" .
-                     ($bSourceCompression ? '.' . $oFile->{strCompressExtension} : ''),
-                     PATH_DB_ABSOLUTE, $strDestinationFile,
-                     $bSourceCompression,   # Source is compressed based on backup settings
-                     undef, undef,
-                     $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_MODIFICATION_TIME),
-                     $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_MODE),
-                     undef,
-                     $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_USER),
-                     $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_GROUP));
-
-    if ($lCopySize != 0 && $strCopyChecksum ne $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_CHECKSUM))
+    if ($bCopy)
     {
-        confess &log(ERROR, "error restoring ${strDestinationFile}: actual checksum ${strCopyChecksum} " .
-                            "does not match expected checksum " .
-                            $oManifest->get($strSection, $strFileName, MANIFEST_SUBKEY_CHECKSUM), ERROR_CHECKSUM);
+        my ($bCopyResult, $strCopyChecksum, $lCopySize) =
+            $oFile->copy(PATH_BACKUP_CLUSTER, (defined($$oFileHash{reference}) ? $$oFileHash{reference} : $strBackupPath) .
+                         "/$$oFileHash{source_path}/$$oFileHash{file}" .
+                         ($bSourceCompression ? '.' . $oFile->{strCompressExtension} : ''),
+                         PATH_DB_ABSOLUTE, $strDestinationFile,
+                         $bSourceCompression,   # Source is compressed based on backup settings
+                         undef, undef,
+                         $$oFileHash{modification_time},
+                         $$oFileHash{mode},
+                         undef,
+                         $$oFileHash{user},
+                         $$oFileHash{group});
+
+        if ($lCopySize != 0 && $strCopyChecksum ne $$oFileHash{checksum})
+        {
+            confess &log(ERROR, "error restoring ${strDestinationFile}: actual checksum ${strCopyChecksum} " .
+                                "does not match expected checksum $$oFileHash{checksum}", ERROR_CHECKSUM);
+        }
+
+        $strLog = "restore";
     }
+
+    &log(INFO, "${strDestinationFile} ${strLog} (" . file_size_format($$oFileHash{size}) .
+               ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
+               ($$oFileHash{size} != 0 ? " checksum $$oFileHash{checksum}" : ''));
+
+    return $lSizeCurrent;
 }
 
 our @EXPORT = qw(restoreFile);

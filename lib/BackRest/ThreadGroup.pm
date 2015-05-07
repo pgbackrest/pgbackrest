@@ -110,13 +110,9 @@ sub threadGroupThread
             {
                 if ($$oCommand{function} eq 'restore')
                 {
-                    my $strSourcePath = (split(/\|/, $oMessage))[0];
-                    my $strFileName = (split(/\|/, $oMessage))[1];
-
-                    restoreFile($strSourcePath, $strFileName, $$oCommand{param}{copy_time_begin}, $$oCommand{param}{delta},
-                                $$oCommand{param}{force}, $$oCommand{param}{backup_path}, $$oCommand{param}{source_compression},
-                                $$oCommand{param}{current_user}, $$oCommand{param}{current_group}, $$oCommand{param}{manifest},
-                                $oFile);
+                    restoreFile($oMessage, $$oCommand{param}{copy_time_begin}, $$oCommand{param}{delta}, $$oCommand{param}{force},
+                                $$oCommand{param}{backup_path}, $$oCommand{param}{source_compression},
+                                $$oCommand{param}{current_user}, $$oCommand{param}{current_group}, $oFile, 0, 0);
                 }
                 elsif ($$oCommand{function} eq 'backup')
                 {
@@ -127,7 +123,7 @@ sub threadGroupThread
                     ($$oResult{copied}, $lSizeCurrent, $$oResult{size}, $$oResult{checksum}) =
                         backupFile($oFile, $$oMessage{db_file}, $$oMessage{backup_file}, $$oCommand{param}{compress},
                                    $$oMessage{checksum}, $$oMessage{modification_time},
-                                   $$oMessage{size}, $$oCommand{param}{size_total}, $lSizeCurrent);
+                                   $$oMessage{size}, 0, 0);
 
                     # Send a message to update the manifest
                     $$oResult{file_section} = $$oMessage{file_section};
