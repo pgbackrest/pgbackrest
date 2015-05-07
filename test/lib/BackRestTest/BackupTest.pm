@@ -860,6 +860,7 @@ sub BackRestTestBackup_BackupBegin
     my $bSynthetic = shift;
     my $bTestPoint = shift;
     my $fTestDelay = shift;
+    my $strOptionalParam = shift;
 
     # Set defaults
     $bTestPoint = defined($bTestPoint) ? $bTestPoint : false;
@@ -871,6 +872,7 @@ sub BackRestTestBackup_BackupBegin
     BackRestTestCommon_ExecuteBegin(BackRestTestCommon_CommandMainGet() . ' --config=' .
                                     ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
                                     "/pg_backrest.conf" . ($bSynthetic ? " --no-start-stop" : '') .
+                                    (defined($strOptionalParam) ? " ${strOptionalParam}" : '') .
                                     ($strType ne 'incr' ? " --type=${strType}" : '') .
                                     " --stanza=${strStanza} backup" . ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''),
                                     $bRemote, $strComment);
@@ -925,9 +927,10 @@ sub BackRestTestBackup_BackupSynthetic
     my $strTestPoint = shift;
     my $fTestDelay = shift;
     my $iExpectedExitStatus = shift;
+    my $strOptionalParam = shift;
 
     BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, true, defined($strTestPoint), $fTestDelay,
-                                   $strComment);
+                                   $strOptionalParam);
 
     if (defined($strTestPoint))
     {
@@ -1892,7 +1895,8 @@ sub BackRestTestBackup_Test
             # Increment the run, log, and decide whether this unit test should be run
             if (!BackRestTestCommon_Run(++$iRun,
                                         "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardlink}",
-                                        $strModule, $strThisTest)) {next}
+                                        $iThreadMax == 1 ? $strModule : undef,
+                                        $iThreadMax == 1 ? $strThisTest: undef)) {next}
 
             # Get base time
             my $lTime = time() - 100000;
@@ -1958,7 +1962,8 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestLinkCreate(\%oManifest, 'base', 'link-test', '/test');
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'path-test');
 
-            my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest);
+            my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                                   undef, undef, undef, undef, '--manifest-save-threshold=3');
 
             # Resume Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1968,6 +1973,10 @@ sub BackRestTestBackup_Test
 
             BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strFullBackup}",
                                         $strTmpPath, $bRemote);
+
+            my $oMungeManifest = BackRestTestCommon_manifestLoad("$strTmpPath/backup.manifest", $bRemote);
+            $oMungeManifest->remove('base:file', 'PG_VERSION', 'checksum');
+            BackRestTestCommon_manifestSave("$strTmpPath/backup.manifest", $oMungeManifest, $bRemote);
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                                 'resume', TEST_BACKUP_RESUME);
@@ -2007,6 +2016,8 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:1", 'tablespace1.txt', 'TBLSPC1',
                                                   'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "base", 'badchecksum.txt', 'BADCHECKSUM',
+                                                  'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
 
 
             my $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
@@ -2021,6 +2032,10 @@ sub BackRestTestBackup_Test
 
             BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
+
+            $oMungeManifest = BackRestTestCommon_manifestLoad("$strTmpPath/backup.manifest", $bRemote);
+            $oMungeManifest->set('base:file', 'badchecksum.txt', 'checksum', 'bogus');
+            BackRestTestCommon_manifestSave("$strTmpPath/backup.manifest", $oMungeManifest, $bRemote);
 
             # Add tablespace 2
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 2);

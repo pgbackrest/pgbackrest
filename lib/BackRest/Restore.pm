@@ -630,7 +630,7 @@ sub restore
         }
 
         # Complete thread queues
-        threadGroupComplete();
+        while (!threadGroupComplete()) {};
     }
 
     # Create recovery.conf file

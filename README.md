@@ -563,6 +563,15 @@ default: n
 example: hardlink=y
 ```
 
+##### `manifest-save-threshold` key
+
+Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or `manifest-save-threshold`, whichever is greater.
+```
+required: n
+default: 1073741824
+example: manifest-save-threshold=5368709120
+```
+
 ##### `thread-max` key
 
 Defines the number of threads to use for backup or restore.  Each thread will perform compression and transfer to make the backup run faster, but don't set `thread-max` so high that it impacts database performance during backup.

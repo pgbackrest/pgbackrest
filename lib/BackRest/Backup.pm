@@ -170,7 +170,6 @@ sub backup_file_not_in_manifest
     $oFile->manifest($strPathType, undef, \%oFileHash);
 
     my @stryFile;
-    my $iFileTotal = 0;
 
     foreach my $strName (sort(keys $oFileHash{name}))
     {
@@ -226,31 +225,27 @@ sub backup_file_not_in_manifest
                     next;
                 }
             }
-            else
+            elsif ($cType eq 'f')
             {
-                if ($oManifest->test("${strSection}:file", "${strPath}"))
+                if ($oManifest->test("${strSection}:file", "${strPath}") &&
+                    !$oManifest->test("${strSection}:file", $strPath, MANIFEST_SUBKEY_REFERENCE))
                 {
-                    if ($oManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_SIZE) ==
-                            $oFileHash{name}{"${strName}"}{size} &&
+                    my $strChecksum = $oAbortedManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, false);
+
+                    if (defined($strChecksum) &&
+                        $oManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_SIZE) ==
+                            $oFileHash{name}{$strName}{size} &&
                         $oManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_MODIFICATION_TIME) ==
-                            $oFileHash{name}{"${strName}"}{modification_time})
+                            $oFileHash{name}{$strName}{modification_time})
                     {
-                        my $strChecksum = $oAbortedManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, false);
-
-                        if (defined($strChecksum))
-                        {
-                            $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-                        }
-
-                        $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_EXISTS, true);
+                        $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
                         next;
                     }
                 }
             }
         }
 
-        $stryFile[$iFileTotal] = $strName;
-        $iFileTotal++;
+        push @stryFile, $strName;
     }
 
     return @stryFile;
@@ -318,22 +313,21 @@ sub backup_file
     my $lFileTotal = 0;
     my $lSizeTotal = 0;
 
+    # Determine whether all paths and links will be created
+    my $bFullCreate = $bHardLink || $strType eq BACKUP_TYPE_FULL;
+
     # Iterate through the path sections of the manifest to backup
     foreach my $strPathKey ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
         # Determine the source and destination backup paths
         my $strBackupSourcePath;        # Absolute path to the database base directory or tablespace to backup
         my $strBackupDestinationPath;   # Relative path to the backup directory where the data will be stored
-        my $strSectionFile;             # Manifest section that contains the file data
 
         # Process the base database directory
         if ($strPathKey =~ /^base$/)
         {
             $strBackupSourcePath = $strDbClusterPath;
             $strBackupDestinationPath = 'base';
-
-            # Create the archive log directory
-            $oFile->path_create(PATH_BACKUP_TMP, 'base/pg_xlog');
         }
         # Process each tablespace
         elsif ($strPathKey =~ /^tablespace\:/)
@@ -342,15 +336,14 @@ sub backup_file
             $strBackupSourcePath = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
                                                          MANIFEST_SUBKEY_PATH);
             $strBackupDestinationPath = "tablespace/${strTablespaceName}";
-            $strSectionFile = "tablespace:${strTablespaceName}:file";
 
             # Create the tablespace directory and link
-            if ($bHardLink || $strType eq BACKUP_TYPE_FULL)
+            if ($bFullCreate)
             {
                 $oFile->link_create(PATH_BACKUP_TMP, $strBackupDestinationPath,
                                     PATH_BACKUP_TMP,
-                                    'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
-                                                                              MANIFEST_SUBKEY_LINK),
+                                    'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE,
+                                                                              $strTablespaceName, MANIFEST_SUBKEY_LINK),
                                     false, true, true);
             }
         }
@@ -359,8 +352,45 @@ sub backup_file
             confess &log(ASSERT, "cannot find type for path ${strPathKey}");
         }
 
+        # If this is a full backup or hard-linked then create all paths and links
+        if ($bFullCreate)
+        {
+            # Create paths
+            my $strSectionPath = "$strPathKey:path";
+
+            if ($oBackupManifest->test($strSectionPath))
+            {
+                foreach my $strPath ($oBackupManifest->keys($strSectionPath))
+                {
+                    if ($strPath ne '.')
+                    {
+                        $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}");
+                    }
+                }
+            }
+
+            # Create links
+            my $strSectionLink = "$strPathKey:link";
+
+            if ($oBackupManifest->test($strSectionLink))
+            {
+                foreach my $strLink ($oBackupManifest->keys($strSectionLink))
+                {
+                    # Create links except in pg_tblspc because they have already been created
+                    if (!($strPathKey eq 'base' && $strLink =~ /^pg_tblspc\/.*/))
+                    {
+                        $oFile->link_create(PATH_BACKUP_ABSOLUTE,
+                                            $oBackupManifest->get($strSectionLink, $strLink, MANIFEST_SUBKEY_DESTINATION),
+                                            PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strLink}",
+                                            false, false, false);
+                    }
+                }
+            }
+        }
+
+
         # Possible for the file section to exist with no files (i.e. empty tablespace)
-        $strSectionFile = "$strPathKey:file";
+        my $strSectionFile = "$strPathKey:file";
 
         if (!$oBackupManifest->test($strSectionFile))
         {
@@ -372,39 +402,23 @@ sub backup_file
         {
             my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
 
-            my $bProcess = false;
-            my $bProcessChecksumOnly = false;
+            # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
+            # However, if hard-linking is turned on the link will need to be created
+            my $bProcess = true;
+            my $strReference = $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
 
-            if ($oBackupManifest->test($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS, true))
+            if (defined($strReference))
             {
-                &log(TRACE, "file ${strFile} already exists from previous backup attempt");
-                $oBackupManifest->remove($strSectionFile, $strFile, MANIFEST_SUBKEY_EXISTS);
-
-                $bProcess = !$oBackupManifest->test($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM);
-                $bProcessChecksumOnly = $bProcess;
-            }
-            else
-            {
-                # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
-                # However, if hard-linking is turned on the link will need to be created
-                my $strReference = $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
-
-                if (defined($strReference))
+                # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
+                if ($bHardLink)
                 {
-                    # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
-                    if ($bHardLink)
-                    {
-                        &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
+                    &log(DEBUG, "hard-linking ${strBackupSourceFile} from ${strReference}");
 
-                        $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
-                                            PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, true);
-                    }
+                    $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
+                                        PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, true);
                 }
-                # Else copy/compress the file and generate a checksum
-                else
-                {
-                    $bProcess = true;
-                }
+
+                $bProcess = false;
             }
 
             if ($bProcess)
@@ -420,7 +434,8 @@ sub backup_file
                 $oFileCopyMap{$strPathKey}{$strFile}{file} = ${strFile};
                 $oFileCopyMap{$strPathKey}{$strFile}{backup_file} = "${strBackupDestinationPath}/${strFile}";
                 $oFileCopyMap{$strPathKey}{$strFile}{size} = $lFileSize;
-                $oFileCopyMap{$strPathKey}{$strFile}{checksum_only} = $bProcessChecksumOnly;
+                $oFileCopyMap{$strPathKey}{$strFile}{modification_time} =
+                    $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_MODIFICATION_TIME, false);
                 $oFileCopyMap{$strPathKey}{$strFile}{checksum} =
                     $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
             }
@@ -433,7 +448,7 @@ sub backup_file
     {
         if (!optionGet(OPTION_TEST))
         {
-            confess &log(WARN, "no files have changed since the last backup - this seems unlikely");
+            confess &log(ERROR, "no files have changed since the last backup - this seems unlikely");
         }
 
         return;
@@ -444,10 +459,19 @@ sub backup_file
     my @oyBackupQueue;
 
     # Variables used for local copy
-    my $lSizeCurrent = 0;   # Running total of bytes copied
-    my $bCopied;            # Was the file copied?
-    my $lCopySize;          # Size reported by copy
-    my $strCopyChecksum;    # Checksum reported by copy
+    my $lSizeCurrent = 0;       # Running total of bytes copied
+    my $bCopied;                # Was the file copied?
+    my $lCopySize;              # Size reported by copy
+    my $strCopyChecksum;        # Checksum reported by copy
+
+    # Determine how often the manifest will be saved
+    my $lManifestSaveCurrent = 0;
+    my $lManifestSaveSize = int($lSizeTotal / 100);
+
+    if ($lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
+    {
+        $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
+    }
 
     # Iterate all backup files
     foreach my $strPathKey (sort (keys %oFileCopyMap))
@@ -470,11 +494,12 @@ sub backup_file
                 # Backup the file
                 ($bCopied, $lSizeCurrent, $lCopySize, $strCopyChecksum) =
                     backupFile($oFile, $$oFileCopy{db_file}, $$oFileCopy{backup_file}, $bCompress,
-                               $$oFileCopy{checksum}, $$oFileCopy{checksum_only},
+                               $$oFileCopy{checksum}, $$oFileCopy{modification_time},
                                $$oFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
-                backupManifestUpdate($oBackupManifest, $$oFileCopy{file_section}, $$oFileCopy{file},
-                                     $bCopied, $lCopySize, $strCopyChecksum);
+                $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oFileCopy{file_section}, $$oFileCopy{file},
+                                                             $bCopied, $lCopySize, $strCopyChecksum, $lManifestSaveSize,
+                                                             $lManifestSaveCurrent);
             }
         }
     }
@@ -495,19 +520,27 @@ sub backup_file
         }
 
         # Complete thread queues
-        threadGroupComplete();
+        my $bDone = false;
 
-        # Read the messages that are passed back from the backup threads
-        while (my $oMessage = $oResultQueue->dequeue_nb())
+        do
         {
-            &log(TRACE, "message received in master queue: section = $$oMessage{file_section}, file = $$oMessage{file}" .
-                        ", copied = $$oMessage{copied}"); #, size = $$oMessage{size}, checksum = " .
-#                        (defined($$oMessage{checksum}) ? $$oMessage{checksum} : '[undef]'));
+            $bDone = threadGroupComplete();
 
-            backupManifestUpdate($oBackupManifest, $$oMessage{file_section}, $$oMessage{file},
-                                 $$oMessage{copied}, $$oMessage{size}, $$oMessage{checksum});
+            # Read the messages that are passed back from the backup threads
+            while (my $oMessage = $oResultQueue->dequeue_nb())
+            {
+                &log(TRACE, "message received in master queue: section = $$oMessage{file_section}, file = $$oMessage{file}" .
+                            ", copied = $$oMessage{copied}");
+
+                $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oMessage{file_section}, $$oMessage{file},
+                                                      $$oMessage{copied}, $$oMessage{size}, $$oMessage{checksum},
+                                                      $lManifestSaveSize, $lManifestSaveCurrent);
+            }
         }
+        while (!$bDone);
     }
+
+    &log(INFO, file_size_format($lSizeTotal) . ' total backup');
 }
 
 ####################################################################################################################################
@@ -728,7 +761,7 @@ sub backup
         &log(INFO, 'archive stop: ' . $strArchiveStop);
     }
 
-    # If archive logs are required to complete the backup, then fetch them.  This is the default, but can be overridden if the
+    # If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful here because there is no way to verify that the backup will be
     # consistent - at least not here.
     if (!optionGet(OPTION_NO_START_STOP) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))

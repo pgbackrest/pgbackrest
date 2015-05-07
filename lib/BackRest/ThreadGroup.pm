@@ -126,7 +126,7 @@ sub threadGroupThread
                     # Backup the file
                     ($$oResult{copied}, $lSizeCurrent, $$oResult{size}, $$oResult{checksum}) =
                         backupFile($oFile, $$oMessage{db_file}, $$oMessage{backup_file}, $$oCommand{param}{compress},
-                                   $$oMessage{checksum}, $$oMessage{checksum_only},
+                                   $$oMessage{checksum}, $$oMessage{modification_time},
                                    $$oMessage{size}, $$oCommand{param}{size_total}, $lSizeCurrent);
 
                     # Send a message to update the manifest
@@ -272,8 +272,8 @@ sub threadGroupComplete
     &log(DEBUG, "waiting for " . @oyThread . " threads to complete");
 
     # Rejoin the threads
-    while ($iThreadComplete < @oyThread)
-    {
+    # while ($iThreadComplete < @oyThread)
+    # {
         hsleep(.1);
 
         # If a timeout has been defined, make sure we have not been running longer than that
@@ -322,15 +322,27 @@ sub threadGroupComplete
                     $iThreadComplete++;
                 }
             }
+            else
+            {
+                $iThreadComplete++;
+            }
         }
-    }
+    # }
 
-    &log(DEBUG, 'all threads exited');
-
+    # If there were errors then confess them
     if (defined($strFirstError) && $bConfessOnError)
     {
         confess &log(ERROR, 'error in thread' . ($iFirstErrorThreadIdx + 1) . ": $strFirstError");
     }
+
+    # Return true if all threads have completed
+    if ($iThreadComplete == @oyThread)
+    {
+        &log(DEBUG, 'all threads exited');
+        return true;
+    }
+
+    return false;
 }
 
 ####################################################################################################################################

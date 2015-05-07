@@ -40,7 +40,8 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_RepoPathGet BackRestTestCommon_LocalPathGet BackRestTestCommon_DbPathGet
                  BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
-                 BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo);
+                 BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
+                 BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -504,7 +505,7 @@ sub BackRestTestCommon_PathCopy
     my $bRemote = shift;
     my $bSuppressError = shift;
 
-    BackRestTestCommon_Execute("cp -rp ${strSourcePath} ${strDestinationPath}", $bRemote, $bSuppressError);
+    BackRestTestCommon_Execute("cp -RpP ${strSourcePath} ${strDestinationPath}", $bRemote, $bSuppressError);
 }
 
 ####################################################################################################################################
@@ -632,6 +633,59 @@ sub BackRestTestCommon_Setup
     if ($strCommonDbVersion < ${$strVersionSupport}[0])
     {
         confess "currently only version ${$strVersionSupport}[0] and up are supported";
+    }
+}
+
+####################################################################################################################################
+# BackRestTestCommon_manifestLoad
+####################################################################################################################################
+sub BackRestTestCommon_manifestLoad
+{
+    my $strFileName = shift;
+    my $bRemote = shift;
+
+    # Defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
+
+    my $oManifest = new BackRest::Manifest($strFileName);
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
+
+    return $oManifest;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_manifestSave
+####################################################################################################################################
+sub BackRestTestCommon_manifestSave
+{
+    my $strFileName = shift;
+    my $oManifest = shift;
+    my $bRemote = shift;
+
+    # Defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+        BackRestTestCommon_Execute("chmod g+w " . $strFileName, $bRemote);
+    }
+
+    $oManifest->save();
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g-w " . $strFileName, $bRemote);
+        BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
     }
 }
 
