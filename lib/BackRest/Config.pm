@@ -169,6 +169,7 @@ use constant
     OPTION_RETENTION_FULL           => 'retention-' . BACKUP_TYPE_FULL,
 
     # RESTORE Section
+    OPTION_TABLESPACE               => 'tablespace',
     OPTION_RESTORE_TABLESPACE_MAP   => 'tablespace-map',
     OPTION_RESTORE_RECOVERY_SETTING => 'recovery-setting',
 
@@ -199,7 +200,7 @@ push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OP
                  OPTION_RESTORE_RECOVERY_SETTING OPTION_RETENTION_ARCHIVE OPTION_RETENTION_ARCHIVE_TYPE OPTION_RETENTION_FULL
                  OPTION_RETENTION_DIFF OPTION_START_FAST OPTION_THREAD_MAX OPTION_THREAD_TIMEOUT
                  OPTION_DB_USER OPTION_BACKUP_USER OPTION_COMMAND_PSQL OPTION_COMMAND_PSQL_OPTION OPTION_COMMAND_REMOTE
-                 OPTION_RESTORE_TABLESPACE_MAP
+                 OPTION_TABLESPACE OPTION_RESTORE_TABLESPACE_MAP
 
                  OPTION_TEST OPTION_TEST_DELAY OPTION_TEST_NO_FORK);
 
@@ -245,6 +246,7 @@ use constant
     OPTION_DEFAULT_RESTORE_DELTA                    => false,
     OPTION_DEFAULT_RESTORE_FORCE                    => false,
     OPTION_DEFAULT_RESTORE_SET                      => 'latest',
+    OPTION_DEFAULT_RESTORE_TABLESPACE               => true,
     OPTION_DEFAULT_RESTORE_TYPE                     => RECOVERY_TYPE_DEFAULT,
     OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE         => false,
     OPTION_DEFAULT_RESTORE_TARGET_RESUME            => false,
@@ -796,6 +798,17 @@ my %oOptionRule =
             lc(INFO)   => true,
             lc(DEBUG)  => true,
             lc(TRACE)  => true
+        }
+    },
+
+    &OPTION_TABLESPACE =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TABLESPACE,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_RESTORE => true
         }
     },
 

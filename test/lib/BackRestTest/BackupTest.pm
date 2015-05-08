@@ -92,9 +92,36 @@ sub BackRestTestBackup_PgDisconnect
     # Connect to the db (whether it is local or remote)
     if (defined($hDb))
     {
-        $hDb->disconnect;
+        $hDb->disconnect();
         undef($hDb);
     }
+}
+
+####################################################################################################################################
+# BackRestTestBackup_PgExecuteNoTrans
+####################################################################################################################################
+sub BackRestTestBackup_PgExecuteNoTrans
+{
+    my $strSql = shift;
+
+    # Connect to the db with autocommit on so we can runs statements that can't run in transaction blocks
+    my $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+                           ';host=' . BackRestTestCommon_DbPathGet(),
+                           BackRestTestCommon_UserGet(),
+                           undef,
+                           {AutoCommit => 1, RaiseError => 1});
+
+    # Log and execute the statement
+    &log(DEBUG, "SQL: ${strSql}");
+    my $hStatement = $hDb->prepare($strSql);
+
+    $hStatement->execute() or
+        confess &log(ERROR, "Unable to execute: ${strSql}");
+
+    $hStatement->finish();
+
+    # Close the connection
+    $hDb->disconnect();
 }
 
 ####################################################################################################################################
@@ -1176,6 +1203,8 @@ sub BackRestTestBackup_Restore
     my $oRecoveryHashRef = shift;
     my $strComment = shift;
     my $iExpectedExitStatus = shift;
+    my $strOptionalParam = shift;
+    my $bCompare = shift;
 
     # Set defaults
     $bDelta = defined($bDelta) ? $bDelta : false;
@@ -1234,6 +1263,7 @@ sub BackRestTestBackup_Restore
                                '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
                                (defined($bForce) && $bForce ? ' --force' : '') .
                                ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .
+                               (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
                                (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
                                (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
                                (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
@@ -1242,7 +1272,7 @@ sub BackRestTestBackup_Restore
                                " --stanza=${strStanza} restore",
                                undef, undef, undef, $iExpectedExitStatus, $strComment);
 
-    if (!defined($iExpectedExitStatus))
+    if (!defined($iExpectedExitStatus) && (!defined($bCompare) || $bCompare))
     {
         BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $bSynthetic, $oExpectedManifestRef);
     }
@@ -1288,11 +1318,27 @@ sub BackRestTestBackup_RestoreCompare
 
     }
 
+    # Generate the tablespace map for real backups
+    my %oTablespaceMap;
+    # ${$oTablespaceMapRef}{oid}{$strName}{name} = $strName;
+
+    if (!$bSynthetic && defined(${$oExpectedManifestRef}{'backup:tablespace'}))
+    {
+        foreach my $strTablespaceName (keys(${$oExpectedManifestRef}{'backup:tablespace'}))
+        {
+            my $strTablespaceOid = ${$oExpectedManifestRef}{'backup:tablespace'}{$strTablespaceName}{link};
+            #
+            # confess "GOT HERE - $strTablespaceOid, $strTablespaceName";
+
+            $oTablespaceMap{oid}{$strTablespaceOid}{name} = $strTablespaceName;
+        }
+    }
+
     # Generate the actual manifest
     my $oActualManifest = new BackRest::Manifest("${strTestPath}/actual.manifest", false);
 
     my $oTablespaceMapRef = undef;
-    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, true, undef);
+    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, $bSynthetic, \%oTablespaceMap);
 
     # Generate checksums for all files if required
     # Also fudge size if this is a synthetic test - sizes may change during backup.
@@ -1303,17 +1349,20 @@ sub BackRestTestBackup_RestoreCompare
         # Create all paths in the manifest that do not already exist
         my $strSection = "${strSectionPathKey}:file";
 
-        foreach my $strName ($oActualManifest->keys($strSection))
+        if ($oActualManifest->test($strSection))
         {
-            if (!$bSynthetic)
+            foreach my $strName ($oActualManifest->keys($strSection))
             {
-                $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
-            }
+                if (!$bSynthetic)
+                {
+                    $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
+                }
 
-            if ($oActualManifest->get($strSection, $strName, 'size') != 0)
-            {
-                $oActualManifest->set($strSection, $strName, 'checksum',
-                                      $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
+                if ($oActualManifest->get($strSection, $strName, 'size') != 0)
+                {
+                    $oActualManifest->set($strSection, $strName, 'checksum',
+                                          $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
+                }
             }
         }
     }
@@ -2008,7 +2057,7 @@ sub BackRestTestBackup_Test
                                        undef, undef, undef, undef, undef, undef,
                                        'add and delete files');
 
-            # Incr backup - add a tablespace
+            # Incr backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
@@ -2073,7 +2122,7 @@ sub BackRestTestBackup_Test
                                                             'cannot resume - disabled', TEST_BACKUP_NORESUME, undef, undef,
                                                             '--no-resume');
 
-            # Restore -
+            # Restore
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
 
@@ -2194,6 +2243,15 @@ sub BackRestTestBackup_Test
                                                   'cafac3c59553f2cfde41ce2e62e7662295f108c0', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add files');
+
+            # Restore
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = true;
+
+            BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
+                                       'no tablespace remap', undef, '--no-tablespace', false);
+
         }
         }
         }
@@ -2330,6 +2388,10 @@ sub BackRestTestBackup_Test
             $strTestPoint = TEST_MANIFEST_BUILD;
             $strComment = 'update during backup';
 
+            BackRestTestBackup_PgExecuteNoTrans("create tablespace ts1 location '" .
+                                                BackRestTestCommon_DbTablespacePathGet(1) . "'");
+            BackRestTestBackup_PgExecute("alter table test set tablespace ts1", true);
+
             BackRestTestBackup_PgExecute("create table test_remove (id int)", false);
             BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("update test set message = '$strDefaultMessage'", false);
@@ -2403,6 +2465,8 @@ sub BackRestTestBackup_Test
             # Drop and recreate db path
             BackRestTestCommon_PathRemove(BackRestTestCommon_DbCommonPathGet());
             BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet());
+            BackRestTestCommon_PathRemove(BackRestTestCommon_DbTablespacePathGet(1));
+            BackRestTestCommon_PathCreate(BackRestTestCommon_DbTablespacePathGet(1));
 
             # Now the restore should work
             $strComment = undef;
@@ -2434,7 +2498,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $bTargetResume, $strTargetTimeline,
-                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus, '--no-tablespace', false);
 
             # Save recovery file to test so we can use it in the next test
             $oFile->copy(PATH_ABSOLUTE, BackRestTestCommon_DbCommonPathGet() . '/recovery.conf',

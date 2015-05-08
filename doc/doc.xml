@@ -560,20 +560,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<example>n</example>
 					</config-key>
 
-			<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
-			<config-key id="archive-copy">
-				<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
+					<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
+					<config-key id="archive-copy">
+						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
 
-				<example>y</example>
-			</config-key>
-		</config-key-list>
-	</config-section>
+						<example>y</example>
+					</config-key>
+				</config-key-list>
+			</config-section>
 
 			<!-- CONFIG - ARCHIVE -->
 			<config-section id="archive">
 				<text>The <setting>archive</setting> section defines parameters when doing async archiving.  This means that the archive files will be stored locally, then a background process will pick them and move them to the backup.</text>
 
-				<!-- CONFIG - ARCHIVE SECTION - PATH KEY -->
 				<config-key-list>
 					<!-- CONFIG - ARCHIVE SECTION - ARCHIVE-ASYNC KEY -->
 					<config-key id="archive-async">
@@ -596,6 +595,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						To start normal archiving again you'll need to remove the stop file which will be located at <file>${repo-path}/lock/${stanza}-archive.stop</file> where <code>${repo-path}</code> is the path set in the <setting>general</setting> section, and <code>${stanza}</code> is the backup stanza.</text>
 
 						<example>1024</example>
+					</config-key>
+				</config-key-list>
+			</config-section>
+
+			<!-- CONFIG - RESTORE -->
+			<config-section id="restore">
+				<text>The <setting>restore</setting> section defines settings used for restoring backups.</text>
+
+				<config-key-list>
+					<!-- CONFIG - RESTORE SECTION - TABLESPACE KEY -->
+					<config-key id="tablespace">
+						<text>Defines whether tablespaces will be be restored into their original (or remapped) locations or stored directly under the <path>pg_tblspc</path> path.  Disabling this setting produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path. If no tablespaces are present this this setting has no effect.</text>
+						<example>n</example>
 					</config-key>
 				</config-key-list>
 			</config-section>
@@ -682,6 +694,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					</release-feature>
 					<release-feature>
 						<text>Fixed an issue where an absolute path was not written into recovery.conf when the restore was run with a relative path.</text>
+					</release-feature>
+					<release-feature>
+						<text>Added <setting>tablespace</setting> setting to allow tablespaces to be restored into the <path>pg_tblspc</path> path.  This produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

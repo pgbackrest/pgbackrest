@@ -647,6 +647,19 @@ required: n
 example: archive-max-mb=1024
 ```
 
+#### `restore` section
+
+The `restore` section defines settings used for restoring backups.
+
+##### `tablespace` key
+
+Defines whether tablespaces will be be restored into their original (or remapped) locations or stored directly under the `pg_tblspc` path.  Disabling this setting produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as PgBackRest expects only links in the `pg_tblspc` path. If no tablespaces are present this this setting has no effect.
+```
+required: n
+default: y
+example: tablespace=n
+```
+
 #### `expire` section
 
 The `expire` section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.
@@ -725,6 +738,8 @@ example: db-path=/data/db
 * More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.
 
 * Fixed an issue where an absolute path was not written into recovery.conf when the restore was run with a relative path.
+
+* Added `tablespace` setting to allow tablespaces to be restored into the `pg_tblspc` path.  This produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as PgBackRest expects only links in the `pg_tblspc` path.
 
 ### v0.61: bug fix for uncompressed remote destination
 

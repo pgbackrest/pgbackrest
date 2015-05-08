@@ -210,8 +210,33 @@ sub manifest_load
             $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, undef, $self->{strDbClusterPath});
         }
 
+        # If no tablespaces are requested
+        if (!optionGet(OPTION_TABLESPACE))
+        {
+            foreach my $strTablespaceName ($oManifest->keys(MANIFEST_SECTION_BACKUP_TABLESPACE))
+            {
+                my $strTablespaceKey =
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName, MANIFEST_SUBKEY_LINK);
+                my $strTablespaceLink = "pg_tblspc/${strTablespaceKey}";
+                my $strTablespacePath =
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE) . "/${strTablespaceLink}";
+
+                $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strTablespaceName}", undef, $strTablespacePath);
+                $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName, MANIFEST_SUBKEY_PATH, $strTablespacePath);
+
+                $oManifest->remove('base:link', $strTablespaceLink);
+                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_GROUP,
+                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_GROUP));
+                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_USER,
+                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_USER));
+                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_MODE,
+                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_MODE));
+
+                &log(INFO, "remapping tablespace ${strTablespaceKey} to ${strTablespacePath}");
+            }
+        }
         # If tablespaces have been remapped, update the manifest
-        if (defined($self->{oRemapRef}))
+        elsif (defined($self->{oRemapRef}))
         {
             foreach my $strPathKey (sort(keys $self->{oRemapRef}))
             {
@@ -266,7 +291,7 @@ sub clean
 
         if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
         {
-            confess &log(ERROR, "required db path '${strPath}' does not exist");
+            next;
         }
 
         # Load path manifest so it can be compared to deleted files/paths/links that are not in the backup
@@ -434,6 +459,17 @@ sub build
             }
         }
     }
+
+    # Make sure that all paths required for the restore now exist
+    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    {
+        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+
+        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
+        {
+            confess &log(ERROR, "required db path '${strPath}' does not exist");
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -451,12 +487,12 @@ sub recovery
     # See if recovery.conf already exists
     my $bRecoveryConfExists = $self->{oFile}->exists(PATH_DB_ABSOLUTE, $strRecoveryConf);
 
-    # If RECOVERY_TYPE_PRESERVE then make sure recovery.conf exists and return
+    # If RECOVERY_TYPE_PRESERVE then warn if recovery.conf does not exist and return
     if ($self->{strType} eq RECOVERY_TYPE_PRESERVE)
     {
         if (!$bRecoveryConfExists)
         {
-            confess &log(ERROR, "recovery type is $self->{strType} but recovery file does not exist at ${strRecoveryConf}");
+            &log(WARN, "recovery type is $self->{strType} but recovery file does not exist at ${strRecoveryConf}");
         }
 
         return;
@@ -536,6 +572,8 @@ sub recovery
 
     close($hFile)
         or confess "unable to close ${strRecoveryConf}: $!";
+
+    &log(INFO, "wrote $strRecoveryConf");
 }
 
 ####################################################################################################################################
@@ -677,6 +715,8 @@ sub restore
 
     # Create recovery.conf file
     $self->recovery();
+
+    &log(INFO, "restore complete");
 }
 
 1;
