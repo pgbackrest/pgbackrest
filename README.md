@@ -731,6 +731,10 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
 
+* 
+
+### v0.65: Improved resume and restore logging, compact restores
+
 * Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.
 
 * Resume is now optional.  Use the `resume` setting or `--no-resume` from the command line to disable.
@@ -741,11 +745,11 @@ example: db-path=/data/db
 
 * Added `tablespace` setting to allow tablespaces to be restored into the `pg_tblspc` path.  This produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as PgBackRest expects only links in the `pg_tblspc` path.
 
-### v0.61: bug fix for uncompressed remote destination
+### v0.61: Bug fix for uncompressed remote destination
 
 * Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.
 
-### v0.60: better version support and WAL improvements
+### v0.60: Better version support and WAL improvements
 
 * Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.
 
@@ -755,7 +759,7 @@ example: db-path=/data/db
 
 * Improved threading model by starting threads early and terminating them late.
 
-### v0.50: restore and much more
+### v0.50: Restore and much more
 
 * Added restore functionality.
 

@@ -684,6 +684,14 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.75" title="IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period">
 				<release-feature-bullet-list>
 					<release-feature>
+						<text></text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
+			<release-version version="0.65" title="Improved resume and restore logging, compact restores">
+				<release-feature-bullet-list>
+					<release-feature>
 						<text>Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.</text>
 					</release-feature>
 					<release-feature>
@@ -701,7 +709,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</release-feature-bullet-list>
 			</release-version>
 
-			<release-version version="0.61" title="bug fix for uncompressed remote destination">
+			<release-version version="0.61" title="Bug fix for uncompressed remote destination">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.</text>
@@ -709,7 +717,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</release-feature-bullet-list>
 			</release-version>
 
-			<release-version version="0.60" title="better version support and WAL improvements">
+			<release-version version="0.60" title="Better version support and WAL improvements">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.</text>
@@ -726,7 +734,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</release-feature-bullet-list>
 			</release-version>
 
-			<release-version version="0.50" title="restore and much more">
+			<release-version version="0.50" title="Restore and much more">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Added restore functionality.</text>
