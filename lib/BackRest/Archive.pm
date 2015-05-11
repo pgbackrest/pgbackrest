@@ -15,6 +15,7 @@ use lib dirname($0);
 use BackRest::Utility;
 use BackRest::Exception;
 use BackRest::Config;
+use BackRest::Lock;
 use BackRest::File;
 use BackRest::Remote;
 
@@ -117,8 +118,7 @@ sub walFileName
     my $iWaitSeconds = shift;
 
     # Record the start time
-    my $lTime = time();
-    my $fSleep = .1;
+    my $oWait = waitInit($iWaitSeconds);
 
     # Determine the path where the requested WAL segment is located
     my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strWalSegment));
@@ -140,20 +140,13 @@ sub walFileName
         {
             confess &log(ASSERT, @stryWalFileName . " duplicate files found for ${strWalSegment}", ERROR_ARCHIVE_DUPLICATE);
         }
-
-        # If waiting then sleep before trying again
-        if (defined($iWaitSeconds))
-        {
-            hsleep($fSleep);
-            $fSleep = $fSleep * 2 < $iWaitSeconds - (time() - $lTime) ? $fSleep * 2 : ($iWaitSeconds - (time() - $lTime)) + .1;
-        }
     }
-    while (defined($iWaitSeconds) && (time() - $lTime) < $iWaitSeconds);
+    while (waitMore($oWait));
 
     # If waiting and no WAL segment was found then throw an error
     if (defined($iWaitSeconds))
     {
-        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . (time() - $lTime)  . ' second(s)');
+        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . waitInterval($oWait)  . ' second(s)');
     }
 
     return undef;
@@ -397,13 +390,7 @@ sub pushProcess
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    my $strLockPath = "${strArchivePath}/lock/" . optionGet(OPTION_STANZA) . "-archive.lock";
-
-    if (!lock_file_create($strLockPath))
-    {
-        &log(DEBUG, 'archive-push process is already running - exiting');
-        return 0;
-    }
+    lockAcquire(operationGet());
 
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
@@ -428,7 +415,7 @@ sub pushProcess
         }
     }
 
-    lock_file_remove();
+    lockRelease();
     return 0;
 }
 

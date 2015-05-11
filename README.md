@@ -58,7 +58,7 @@ cpanm JSON
 cpanm Net::OpenSSH
 cpanm IPC::System::Simple
 cpanm Digest::SHA
-cpanm Compress::ZLib
+cpanm Compress::Zlib
 cpanm threads (update this package)
 cpanm Thread::Queue (update this package)
 ```
@@ -563,6 +563,24 @@ default: n
 example: hardlink=y
 ```
 
+##### `manifest-save-threshold` key
+
+Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or `manifest-save-threshold`, whichever is greater.
+```
+required: n
+default: 1073741824
+example: manifest-save-threshold=5368709120
+```
+
+##### `resume` key
+
+Defines whether the resume feature is enabled.  Resume can greatly reduce the amount of time required to run a backup after a previous backup of the same type has failed.  It adds complexity, however, so it may be desirable to disable in environments that do not require the feature.
+```
+required: n
+default: y
+example: resume=false
+```
+
 ##### `thread-max` key
 
 Defines the number of threads to use for backup or restore.  Each thread will perform compression and transfer to make the backup run faster, but don't set `thread-max` so high that it impacts database performance during backup.
@@ -613,7 +631,7 @@ example: archive-async=y
 
 ##### `archive-max-mb` key
 
-Limits the amount of archive log that will be written locally when `compress-async=y`.  After the limit is reached, the following will happen:
+Limits the amount of archive log that will be written locally when `archive-async=y`.  After the limit is reached, the following will happen:
 
 - PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
 - An error will be logged to the console and also to the Postgres log.
@@ -627,6 +645,19 @@ To start normal archiving again you'll need to remove the stop file which will b
 ```
 required: n
 example: archive-max-mb=1024
+```
+
+#### `restore` section
+
+The `restore` section defines settings used for restoring backups.
+
+##### `tablespace` key
+
+Defines whether tablespaces will be be restored into their original (or remapped) locations or stored directly under the `pg_tblspc` path.  Disabling this setting produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as PgBackRest expects only links in the `pg_tblspc` path. If no tablespaces are present this this setting has no effect.
+```
+required: n
+default: y
+example: tablespace=n
 ```
 
 #### `expire` section
@@ -698,11 +729,23 @@ example: db-path=/data/db
 
 ## Release Notes
 
-### v0.61: bug fix for uncompressed remote destination
+### v0.65: Improved resume and restore logging, compact restores
+
+* Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.
+
+* Resume is now optional.  Use the `resume` setting or `--no-resume` from the command line to disable.
+
+* More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.
+
+* Fixed an issue where an absolute path was not written into recovery.conf when the restore was run with a relative path.
+
+* Added `tablespace` setting to allow tablespaces to be restored into the `pg_tblspc` path.  This produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as PgBackRest expects only links in the `pg_tblspc` path.
+
+### v0.61: Bug fix for uncompressed remote destination
 
 * Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.
 
-### v0.60: better version support and WAL improvements
+### v0.60: Better version support and WAL improvements
 
 * Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.
 
@@ -712,7 +755,7 @@ example: db-path=/data/db
 
 * Improved threading model by starting threads early and terminating them late.
 
-### v0.50: restore and much more
+### v0.50: Restore and much more
 
 * Added restore functionality.
 

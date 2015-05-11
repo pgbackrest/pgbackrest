@@ -27,9 +27,9 @@ our @EXPORT = qw(MANIFEST_PATH MANIFEST_FILE MANIFEST_LINK
                  MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_PRIOR MANIFEST_KEY_REFERENCE MANIFEST_KEY_TIMESTAMP_COPY_START
                  MANIFEST_KEY_TIMESTAMP_START MANIFEST_KEY_TIMESTAMP_STOP MANIFEST_KEY_TYPE MANIFEST_KEY_VERSION
 
-                 MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_EXISTS MANIFEST_SUBKEY_FUTURE
-                 MANIFEST_SUBKEY_GROUP MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME
-                 MANIFEST_SUBKEY_PATH MANIFEST_SUBKEY_REFERENCE MANIFEST_SUBKEY_SIZE MANIFEST_SUBKEY_USER);
+                 MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
+                 MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
+                 MANIFEST_SUBKEY_REFERENCE MANIFEST_SUBKEY_SIZE MANIFEST_SUBKEY_USER);
 
 ####################################################################################################################################
 # File/path constants
@@ -70,7 +70,6 @@ use constant
 
     MANIFEST_SUBKEY_CHECKSUM            => 'checksum',
     MANIFEST_SUBKEY_DESTINATION         => 'link_destination',
-    MANIFEST_SUBKEY_EXISTS              => 'exists',
     MANIFEST_SUBKEY_FUTURE              => 'future',
     MANIFEST_SUBKEY_GROUP               => 'group',
     MANIFEST_SUBKEY_LINK                => 'link',
@@ -392,7 +391,6 @@ sub valid
         }
         elsif ($strType eq 'file' &&
                ($strSubKey eq MANIFEST_SUBKEY_CHECKSUM ||
-                $strSubKey eq MANIFEST_SUBKEY_EXISTS ||
                 $strSubKey eq MANIFEST_SUBKEY_FUTURE ||
                 $strSubKey eq MANIFEST_SUBKEY_MODIFICATION_TIME ||
                 $strSubKey eq MANIFEST_SUBKEY_REFERENCE ||
@@ -745,7 +743,6 @@ sub build
         $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
                    timestamp_string_get(undef, $lTimeBegin + 1));
     }
-
 }
 
 1;

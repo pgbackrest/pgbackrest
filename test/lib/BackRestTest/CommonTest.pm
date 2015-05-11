@@ -40,7 +40,8 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_RepoPathGet BackRestTestCommon_LocalPathGet BackRestTestCommon_DbPathGet
                  BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
-                 BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo);
+                 BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
+                 BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -51,6 +52,7 @@ my $strCommonHost;
 my $strCommonUser;
 my $strCommonGroup;
 my $strCommonUserBackRest;
+my $strCommonBasePath;
 my $strCommonTestPath;
 my $strCommonDataPath;
 my $strCommonRepoPath;
@@ -60,17 +62,26 @@ my $strCommonDbCommonPath;
 my $strCommonDbTablespacePath;
 my $iCommonDbPort;
 my $strCommonDbVersion;
-my $iModuleTestRun;
+my $iModuleTestRunOnly;
 my $bDryRun;
 my $bNoCleanup;
+my $bLogForce;
 
 # Execution globals
 my $strErrorLog;
 my $hError;
 my $strOutLog;
+my $strFullLog;
+my $bFullLog = false;
 my $hOut;
 my $pId;
 my $strCommand;
+
+# Test globals
+my $strTestLog;
+my $strModule;
+my $strModuleTest;
+my $iModuleTestRun;
 
 ####################################################################################################################################
 # BackRestTestCommon_ClusterStop
@@ -158,18 +169,31 @@ sub BackRestTestCommon_Run
 {
     my $iRun = shift;
     my $strLog = shift;
+    my $strModuleParam = shift;
+    my $strModuleTestParam = shift;
 
-    if (defined($iModuleTestRun) && $iModuleTestRun != $iRun)
+    # &log(INFO, "module " . (defined($strModule) ? $strModule : ''));
+    BackRestTestCommon_TestLog();
+
+    if (defined($iModuleTestRunOnly) && $iModuleTestRunOnly != $iRun)
     {
         return false;
     }
 
-    &log(INFO, 'run ' . sprintf('%03d', $iRun) . ' - ' . $strLog);
+    $strTestLog = 'run ' . sprintf('%03d', $iRun) . ' - ' . $strLog;
+
+    &log(INFO, $strTestLog);
 
     if ($bDryRun)
     {
         return false;
     }
+
+    $strFullLog = "${strTestLog}\n" . ('=' x length($strTestLog)) . "\n";
+
+    $strModule = $strModuleParam;
+    $strModuleTest = $strModuleTestParam;
+    $iModuleTestRun = $iRun;
 
     return true;
 }
@@ -179,7 +203,48 @@ sub BackRestTestCommon_Run
 ####################################################################################################################################
 sub BackRestTestCommon_Cleanup
 {
+    BackRestTestCommon_TestLog();
+
     return !$bNoCleanup && !$bDryRun;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_TestLog
+####################################################################################################################################
+sub BackRestTestCommon_TestLog
+{
+    if (defined($strModule))
+    {
+        my $hFile;
+        my $strLogFile = BackRestTestCommon_BasePathGet() .
+                         sprintf("/test/log/${strModule}-${strModuleTest}-%03d.log", $iModuleTestRun);
+
+        if (!$bLogForce && -e $strLogFile)
+        {
+            mkdir(BackRestTestCommon_TestPathGet() . '/log');
+
+            my $strTestLogFile = BackRestTestCommon_TestPathGet() .
+                                 sprintf("/log/${strModule}-${strModuleTest}-%03d.log", $iModuleTestRun);
+
+            open($hFile, '>', $strTestLogFile)
+                or die "Could not open file '${strTestLogFile}': $!";
+
+            print $hFile $strFullLog;
+            close $hFile;
+
+            BackRestTestCommon_Execute("diff ${strLogFile} ${strTestLogFile}");
+        }
+        else
+        {
+            open($hFile, '>', $strLogFile)
+                or die "Could not open file '${strLogFile}': $!";
+
+            print $hFile $strFullLog;
+            close $hFile;
+        }
+
+        undef($strModule);
+    }
 }
 
 ####################################################################################################################################
@@ -189,6 +254,7 @@ sub BackRestTestCommon_ExecuteBegin
 {
     my $strCommandParam = shift;
     my $bRemote = shift;
+    my $strComment = shift;
 
     # Set defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
@@ -206,6 +272,31 @@ sub BackRestTestCommon_ExecuteBegin
     $hError = undef;
     $strOutLog = '';
     $hOut = undef;
+
+    my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
+    $bFullLog = false;
+
+    if ($strCommandParam =~ /\/bin\/pg_backrest\.pl/)
+    {
+        my $strTestPath = BackRestTestCommon_TestPathGet();
+
+        $strCommandParam =~ s/$strBinPath/[BACKREST_BIN_PATH]/g;
+        $strCommandParam =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/;
+
+        if (defined($strTestPath))
+        {
+            $strCommandParam =~ s/$strTestPath/[TEST_PATH]/g;
+        }
+
+        if (defined($strComment))
+        {
+            $strComment =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/;
+            $strFullLog .= "\n${strComment}";
+        }
+
+        $strFullLog .= "\n> ${strCommandParam}\n" . ('-' x '132') . "\n";
+        $bFullLog = true;
+    }
 
     &log(DEBUG, "executing command: ${strCommand}");
 
@@ -226,6 +317,10 @@ sub BackRestTestCommon_ExecuteEnd
     # Set defaults
     $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
     $bShowOutput = defined($bShowOutput) ? $bShowOutput : false;
+
+    # Get test path
+    my $strTestPath = BackRestTestCommon_TestPathGet();
+    my $strVersion = version_get();
 
     # Create select objects
     my $oErrorSelect = IO::Select->new();
@@ -256,6 +351,26 @@ sub BackRestTestCommon_ExecuteEnd
                 {
                     &log(DEBUG, "Found test ${strTest}");
                     return true;
+                }
+
+                if ($bFullLog)
+                {
+                    $strLine =~ s/^[^ ]* [^ ]* [^ ]* //;
+                    $strLine =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/g;
+                    $strLine =~ s/version = $strVersion/version = [VERSION]/g;
+                    $strLine =~ s/modification_time = [0-9]+/modification_time = [MODIFICATION_TIME]/g;
+                    $strLine =~ s/user = [^ \n,\[\]]+/user = [USER]/g;
+                    $strLine =~ s/group = [^ \n,\[\]]+/group = [GROUP]/g;
+
+                    if (defined($strTestPath))
+                    {
+                        $strLine =~ s/$strTestPath/[TEST_PATH]/g;
+                    }
+
+                    if ($strLine !~ /^  TEST/)
+                    {
+                        $strFullLog .= $strLine;
+                    }
                 }
             }
         }
@@ -310,8 +425,9 @@ sub BackRestTestCommon_Execute
     my $bSuppressError = shift;
     my $bShowOutput = shift;
     my $iExpectedExitStatus = shift;
+    my $strComment = shift;
 
-    BackRestTestCommon_ExecuteBegin($strCommand, $bRemote);
+    BackRestTestCommon_ExecuteBegin($strCommand, $bRemote, $strComment);
     return BackRestTestCommon_ExecuteEnd(undef, $bSuppressError, $bShowOutput, $iExpectedExitStatus);
 }
 
@@ -389,7 +505,7 @@ sub BackRestTestCommon_PathCopy
     my $bRemote = shift;
     my $bSuppressError = shift;
 
-    BackRestTestCommon_Execute("cp -rp ${strSourcePath} ${strDestinationPath}", $bRemote, $bSuppressError);
+    BackRestTestCommon_Execute("cp -RpP ${strSourcePath} ${strDestinationPath}", $bRemote, $bSuppressError);
 }
 
 ####################################################################################################################################
@@ -463,11 +579,12 @@ sub BackRestTestCommon_Setup
 {
     my $strTestPathParam = shift;
     my $strPgSqlBinParam = shift;
-    my $iModuleTestRunParam = shift;
+    my $iModuleTestRunOnlyParam = shift;
     my $bDryRunParam = shift;
     my $bNoCleanupParam = shift;
+    my $bLogForceParam = shift;
 
-    my $strBasePath = dirname(dirname(abs_path($0)));
+    $strCommonBasePath = dirname(dirname(abs_path($0)));
 
     $strPgSqlBin = $strPgSqlBinParam;
 
@@ -483,24 +600,25 @@ sub BackRestTestCommon_Setup
     }
     else
     {
-        $strCommonTestPath = "${strBasePath}/test/test";
+        $strCommonTestPath = "${strCommonBasePath}/test/test";
     }
 
-    $strCommonDataPath = "${strBasePath}/test/data";
+    $strCommonDataPath = "${strCommonBasePath}/test/data";
     $strCommonRepoPath = "${strCommonTestPath}/backrest";
     $strCommonLocalPath = "${strCommonTestPath}/local";
     $strCommonDbPath = "${strCommonTestPath}/db";
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
-    $strCommonCommandMain = "${strBasePath}/bin/pg_backrest.pl";
-    $strCommonCommandRemote = "${strBasePath}/bin/pg_backrest_remote.pl";
+    $strCommonCommandMain = "../bin/pg_backrest.pl";
+    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote.pl";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;
-    $iModuleTestRun = $iModuleTestRunParam;
+    $iModuleTestRunOnly = $iModuleTestRunOnlyParam;
     $bDryRun = $bDryRunParam;
     $bNoCleanup = $bNoCleanupParam;
+    $bLogForce = $bLogForceParam;
 
     BackRestTestCommon_Execute($strPgSqlBin . '/postgres --version');
 
@@ -515,6 +633,59 @@ sub BackRestTestCommon_Setup
     if ($strCommonDbVersion < ${$strVersionSupport}[0])
     {
         confess "currently only version ${$strVersionSupport}[0] and up are supported";
+    }
+}
+
+####################################################################################################################################
+# BackRestTestCommon_manifestLoad
+####################################################################################################################################
+sub BackRestTestCommon_manifestLoad
+{
+    my $strFileName = shift;
+    my $bRemote = shift;
+
+    # Defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
+
+    my $oManifest = new BackRest::Manifest($strFileName);
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+    }
+
+    return $oManifest;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_manifestSave
+####################################################################################################################################
+sub BackRestTestCommon_manifestSave
+{
+    my $strFileName = shift;
+    my $oManifest = shift;
+    my $bRemote = shift;
+
+    # Defaults
+    $bRemote = defined($bRemote) ? $bRemote : false;
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+        BackRestTestCommon_Execute("chmod g+w " . $strFileName, $bRemote);
+    }
+
+    $oManifest->save();
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_Execute("chmod g-w " . $strFileName, $bRemote);
+        BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
     }
 }
 
@@ -828,6 +999,11 @@ sub BackRestTestCommon_CommandMainGet
     return $strCommonCommandMain;
 }
 
+sub BackRestTestCommon_CommandMainAbsGet
+{
+    return abs_path($strCommonCommandMain);
+}
+
 sub BackRestTestCommon_CommandRemoteGet
 {
     return $strCommonCommandRemote;
@@ -851,6 +1027,11 @@ sub BackRestTestCommon_GroupGet
 sub BackRestTestCommon_UserBackRestGet
 {
     return $strCommonUserBackRest;
+}
+
+sub BackRestTestCommon_BasePathGet
+{
+    return $strCommonBasePath;
 }
 
 sub BackRestTestCommon_TestPathGet

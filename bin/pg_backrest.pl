@@ -19,6 +19,7 @@ use BackRest::Config;
 use BackRest::Remote qw(DB BACKUP NONE);
 use BackRest::Db;
 use BackRest::File;
+use BackRest::Lock;
 use BackRest::Archive;
 use BackRest::Backup;
 use BackRest::Restore;
@@ -77,7 +78,7 @@ pg_backrest.pl [options] [operation]
 =cut
 
 ####################################################################################################################################
-# SAFE_EXIT - terminate all SSH sessions when the script is terminated
+# SAFE_EXIT - terminate all threads and SSH connections when the script is terminated
 ####################################################################################################################################
 sub safe_exit
 {
@@ -125,6 +126,11 @@ if (operationTest(OP_ARCHIVE_PUSH) || operationTest(OP_ARCHIVE_GET))
 }
 
 ####################################################################################################################################
+# Acquire the operation lock
+####################################################################################################################################
+lockAcquire(operationGet());
+
+####################################################################################################################################
 # Open the log file
 ####################################################################################################################################
 log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(operationGet()));
@@ -154,10 +160,6 @@ if (operationTest(OP_RESTORE))
     {
         confess &log(ASSERT, 'restore operation must be performed locally on the db server');
     }
-
-    # Set the lock path
-    my $strLockPath = optionGet(OPTION_REPO_PATH) .  '/lock/' .
-                                      optionGet(OPTION_STANZA) . '-' . operationGet() . '.lock';
 
     # Do the restore
     new BackRest::Restore
@@ -190,15 +192,6 @@ if (operationTest(OP_RESTORE))
 if (optionRemoteTypeTest(BACKUP))
 {
     confess &log(ERROR, 'backup and expire operations must run on the backup host');
-}
-
-# Set the lock path
-my $strLockPath = optionGet(OPTION_REPO_PATH) .  '/lock/' . optionGet(OPTION_STANZA) . '-' . operationGet() . '.lock';
-
-if (!lock_file_create($strLockPath))
-{
-    &log(ERROR, 'backup process is already running for stanza ' . optionGet(OPTION_STANZA) . ' - exiting');
-    safe_exit(0);
 }
 
 # Initialize the db object
@@ -264,11 +257,14 @@ if (operationTest(OP_EXPIRE))
         optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false),
         optionGet(OPTION_RETENTION_ARCHIVE, false)
     );
-
-    lock_file_remove();
 }
 
+# Cleanup backup (should be removed when backup becomes an object)
 backup_cleanup();
+
+# Release the operation lock
+lockRelease();
+
 safe_exit(0);
 };
 

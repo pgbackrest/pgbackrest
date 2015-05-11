@@ -60,7 +60,7 @@
 						cpanm Net::OpenSSH
 						cpanm IPC::System::Simple
 						cpanm Digest::SHA
-						cpanm Compress::ZLib
+						cpanm Compress::Zlib
 						cpanm threads (update this package)
 						cpanm Thread::Queue (update this package)
 					</code-block>
@@ -527,6 +527,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<example>y</example>
 					</config-key>
 
+					<!-- CONFIG - BACKUP SECTION - MANIFEST-SAVE-THRESHOLD -->
+					<config-key id="manifest-save-threshold">
+						<text>Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently.  The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.</text>
+
+						<example>5368709120</example>
+					</config-key>
+
+					<!-- CONFIG - BACKUP SECTION - RESUME -->
+					<config-key id="resume">
+						<text>Defines whether the resume feature is enabled.  Resume can greatly reduce the amount of time required to run a backup after a previous backup of the same type has failed.  It adds complexity, however, so it may be desirable to disable in environments that do not require the feature.</text>
+						<example>false</example>
+					</config-key>
+
 					<!-- CONFIG - BACKUP SECTION - THEAD-MAX -->
 					<config-key id="thread-max">
 						<text>Defines the number of threads to use for backup or restore.  Each thread will perform compression and transfer to make the backup run faster, but don't set <setting>thread-max</setting> so high that it impacts database performance during backup.</text>
@@ -547,20 +560,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<example>n</example>
 					</config-key>
 
-			<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
-			<config-key id="archive-copy">
-				<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
+					<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
+					<config-key id="archive-copy">
+						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
 
-				<example>y</example>
-			</config-key>
-		</config-key-list>
-	</config-section>
+						<example>y</example>
+					</config-key>
+				</config-key-list>
+			</config-section>
 
 			<!-- CONFIG - ARCHIVE -->
 			<config-section id="archive">
 				<text>The <setting>archive</setting> section defines parameters when doing async archiving.  This means that the archive files will be stored locally, then a background process will pick them and move them to the backup.</text>
 
-				<!-- CONFIG - ARCHIVE SECTION - PATH KEY -->
 				<config-key-list>
 					<!-- CONFIG - ARCHIVE SECTION - ARCHIVE-ASYNC KEY -->
 					<config-key id="archive-async">
@@ -570,7 +582,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - ARCHIVE SECTION - ARCHIVE-MAX-MB KEY -->
 					<config-key id="archive-max-mb">
-						<text>Limits the amount of archive log that will be written locally when <setting>compress-async=y</setting>.  After the limit is reached, the following will happen:
+						<text>Limits the amount of archive log that will be written locally when <setting>archive-async=y</setting>.  After the limit is reached, the following will happen:
 						<ol>
 							<li>PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.</li>
 							<li>An error will be logged to the console and also to the Postgres log.</li>
@@ -583,6 +595,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						To start normal archiving again you'll need to remove the stop file which will be located at <file>${repo-path}/lock/${stanza}-archive.stop</file> where <code>${repo-path}</code> is the path set in the <setting>general</setting> section, and <code>${stanza}</code> is the backup stanza.</text>
 
 						<example>1024</example>
+					</config-key>
+				</config-key-list>
+			</config-section>
+
+			<!-- CONFIG - RESTORE -->
+			<config-section id="restore">
+				<text>The <setting>restore</setting> section defines settings used for restoring backups.</text>
+
+				<config-key-list>
+					<!-- CONFIG - RESTORE SECTION - TABLESPACE KEY -->
+					<config-key id="tablespace">
+						<text>Defines whether tablespaces will be be restored into their original (or remapped) locations or stored directly under the <path>pg_tblspc</path> path.  Disabling this setting produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path. If no tablespaces are present this this setting has no effect.</text>
+						<example>n</example>
 					</config-key>
 				</config-key-list>
 			</config-section>
@@ -656,7 +681,27 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
-			<release-version version="0.61" title="bug fix for uncompressed remote destination">
+			<release-version version="0.65" title="Improved resume and restore logging, compact restores">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.</text>
+					</release-feature>
+					<release-feature>
+						<text>Resume is now optional.  Use the <setting>resume</setting> setting or <param>--no-resume</param> from the command line to disable.</text>
+					</release-feature>
+					<release-feature>
+						<text>More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.</text>
+					</release-feature>
+					<release-feature>
+						<text>Fixed an issue where an absolute path was not written into recovery.conf when the restore was run with a relative path.</text>
+					</release-feature>
+					<release-feature>
+						<text>Added <setting>tablespace</setting> setting to allow tablespaces to be restored into the <path>pg_tblspc</path> path.  This produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
+			<release-version version="0.61" title="Bug fix for uncompressed remote destination">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Fixed a buffering error that could occur on large, highly-compressible files when copying to an uncompressed remote destination.  The error was detected in the decompression code and resulted in a failed backup rather than corruption so it should not affect successful backups made with previous versions.</text>
@@ -664,7 +709,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</release-feature-bullet-list>
 			</release-version>
 
-			<release-version version="0.60" title="better version support and WAL improvements">
+			<release-version version="0.60" title="Better version support and WAL improvements">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Pushing duplicate WAL now generates an error.  This worked before only if checksums were disabled.</text>
@@ -681,7 +726,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</release-feature-bullet-list>
 			</release-version>
 
-			<release-version version="0.50" title="restore and much more">
+			<release-version version="0.50" title="Restore and much more">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Added restore functionality.</text>

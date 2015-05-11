@@ -110,13 +110,9 @@ sub threadGroupThread
             {
                 if ($$oCommand{function} eq 'restore')
                 {
-                    my $strSourcePath = (split(/\|/, $oMessage))[0];
-                    my $strFileName = (split(/\|/, $oMessage))[1];
-
-                    restoreFile($strSourcePath, $strFileName, $$oCommand{param}{copy_time_begin}, $$oCommand{param}{delta},
-                                $$oCommand{param}{force}, $$oCommand{param}{backup_path}, $$oCommand{param}{source_compression},
-                                $$oCommand{param}{current_user}, $$oCommand{param}{current_group}, $$oCommand{param}{manifest},
-                                $oFile);
+                    restoreFile($oMessage, $$oCommand{param}{copy_time_begin}, $$oCommand{param}{delta}, $$oCommand{param}{force},
+                                $$oCommand{param}{backup_path}, $$oCommand{param}{source_compression},
+                                $$oCommand{param}{current_user}, $$oCommand{param}{current_group}, $oFile, 0, 0);
                 }
                 elsif ($$oCommand{function} eq 'backup')
                 {
@@ -126,8 +122,8 @@ sub threadGroupThread
                     # Backup the file
                     ($$oResult{copied}, $lSizeCurrent, $$oResult{size}, $$oResult{checksum}) =
                         backupFile($oFile, $$oMessage{db_file}, $$oMessage{backup_file}, $$oCommand{param}{compress},
-                                   $$oMessage{checksum}, $$oMessage{checksum_only},
-                                   $$oMessage{size}, $$oCommand{param}{size_total}, $lSizeCurrent);
+                                   $$oMessage{checksum}, $$oMessage{modification_time},
+                                   $$oMessage{size}, 0, 0);
 
                     # Send a message to update the manifest
                     $$oResult{file_section} = $$oMessage{file_section};
@@ -272,8 +268,8 @@ sub threadGroupComplete
     &log(DEBUG, "waiting for " . @oyThread . " threads to complete");
 
     # Rejoin the threads
-    while ($iThreadComplete < @oyThread)
-    {
+    # while ($iThreadComplete < @oyThread)
+    # {
         hsleep(.1);
 
         # If a timeout has been defined, make sure we have not been running longer than that
@@ -322,15 +318,27 @@ sub threadGroupComplete
                     $iThreadComplete++;
                 }
             }
+            else
+            {
+                $iThreadComplete++;
+            }
         }
-    }
+    # }
 
-    &log(DEBUG, 'all threads exited');
-
+    # If there were errors then confess them
     if (defined($strFirstError) && $bConfessOnError)
     {
         confess &log(ERROR, 'error in thread' . ($iFirstErrorThreadIdx + 1) . ": $strFirstError");
     }
+
+    # Return true if all threads have completed
+    if ($iThreadComplete == @oyThread)
+    {
+        &log(DEBUG, 'all threads exited');
+        return true;
+    }
+
+    return false;
 }
 
 ####################################################################################################################################

@@ -60,7 +60,6 @@ use constant
 
 push @EXPORT, qw(BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR);
 
-
 ####################################################################################################################################
 # SOURCE Constants
 ####################################################################################################################################
@@ -147,9 +146,11 @@ use constant
     # BACKUP Section
     OPTION_BACKUP_ARCHIVE_CHECK     => 'archive-check',
     OPTION_BACKUP_ARCHIVE_COPY      => 'archive-copy',
-    OPTION_HARDLINK                 => 'hardlink',
     OPTION_BACKUP_HOST              => 'backup-host',
     OPTION_BACKUP_USER              => 'backup-user',
+    OPTION_HARDLINK                 => 'hardlink',
+    OPTION_MANIFEST_SAVE_THRESHOLD  => 'manifest-save-threshold',
+    OPTION_RESUME                   => 'resume',
     OPTION_START_FAST               => 'start-fast',
 
     # COMMAND Section
@@ -168,6 +169,7 @@ use constant
     OPTION_RETENTION_FULL           => 'retention-' . BACKUP_TYPE_FULL,
 
     # RESTORE Section
+    OPTION_TABLESPACE               => 'tablespace',
     OPTION_RESTORE_TABLESPACE_MAP   => 'tablespace-map',
     OPTION_RESTORE_RECOVERY_SETTING => 'recovery-setting',
 
@@ -192,12 +194,13 @@ push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OP
                  OPTION_DB_HOST OPTION_BACKUP_HOST OPTION_ARCHIVE_MAX_MB OPTION_BACKUP_ARCHIVE_CHECK OPTION_BACKUP_ARCHIVE_COPY
                  OPTION_ARCHIVE_ASYNC
                  OPTION_BUFFER_SIZE OPTION_COMPRESS OPTION_COMPRESS_LEVEL OPTION_COMPRESS_LEVEL_NETWORK OPTION_HARDLINK
-                 OPTION_PATH_ARCHIVE OPTION_REPO_PATH OPTION_REPO_REMOTE_PATH OPTION_DB_PATH OPTION_LOG_LEVEL_CONSOLE
-                 OPTION_LOG_LEVEL_FILE
+                 OPTION_MANIFEST_SAVE_THRESHOLD OPTION_RESUME OPTION_PATH_ARCHIVE OPTION_REPO_PATH OPTION_REPO_REMOTE_PATH
+                 OPTION_DB_PATH
+                 OPTION_LOG_LEVEL_CONSOLE OPTION_LOG_LEVEL_FILE
                  OPTION_RESTORE_RECOVERY_SETTING OPTION_RETENTION_ARCHIVE OPTION_RETENTION_ARCHIVE_TYPE OPTION_RETENTION_FULL
                  OPTION_RETENTION_DIFF OPTION_START_FAST OPTION_THREAD_MAX OPTION_THREAD_TIMEOUT
                  OPTION_DB_USER OPTION_BACKUP_USER OPTION_COMMAND_PSQL OPTION_COMMAND_PSQL_OPTION OPTION_COMMAND_REMOTE
-                 OPTION_RESTORE_TABLESPACE_MAP
+                 OPTION_TABLESPACE OPTION_RESTORE_TABLESPACE_MAP
 
                  OPTION_TEST OPTION_TEST_DELAY OPTION_TEST_NO_FORK);
 
@@ -206,52 +209,55 @@ push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OP
 ####################################################################################################################################
 use constant
 {
-    OPTION_DEFAULT_BUFFER_SIZE                  => 4194304,
-    OPTION_DEFAULT_BUFFER_SIZE_MIN              => 16384,
-    OPTION_DEFAULT_BUFFER_SIZE_MAX              => 8388608,
+    OPTION_DEFAULT_BUFFER_SIZE                      => 4194304,
+    OPTION_DEFAULT_BUFFER_SIZE_MIN                  => 16384,
+    OPTION_DEFAULT_BUFFER_SIZE_MAX                  => 8388608,
 
-    OPTION_DEFAULT_COMPRESS                     => true,
-    OPTION_DEFAULT_COMPRESS_LEVEL               => 6,
-    OPTION_DEFAULT_COMPRESS_LEVEL_MIN           => 0,
-    OPTION_DEFAULT_COMPRESS_LEVEL_MAX           => 9,
-    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK       => 3,
-    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN   => 0,
-    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX   => 9,
+    OPTION_DEFAULT_COMPRESS                         => true,
+    OPTION_DEFAULT_COMPRESS_LEVEL                   => 6,
+    OPTION_DEFAULT_COMPRESS_LEVEL_MIN               => 0,
+    OPTION_DEFAULT_COMPRESS_LEVEL_MAX               => 9,
+    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK           => 3,
+    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN       => 0,
+    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX       => 9,
 
-    OPTION_DEFAULT_CONFIG                       => '/etc/pg_backrest.conf',
-    OPTION_DEFAULT_LOG_LEVEL_CONSOLE            => lc(WARN),
-    OPTION_DEFAULT_LOG_LEVEL_FILE               => lc(INFO),
-    OPTION_DEFAULT_THREAD_MAX                   => 1,
+    OPTION_DEFAULT_CONFIG                           => '/etc/pg_backrest.conf',
+    OPTION_DEFAULT_LOG_LEVEL_CONSOLE                => lc(WARN),
+    OPTION_DEFAULT_LOG_LEVEL_FILE                   => lc(INFO),
+    OPTION_DEFAULT_THREAD_MAX                       => 1,
 
-    OPTION_DEFAULT_ARCHIVE_ASYNC                => false,
+    OPTION_DEFAULT_ARCHIVE_ASYNC                    => false,
 
-    OPTION_DEFAULT_COMMAND_PSQL                 => '/usr/bin/psql -X',
-    OPTION_DEFAULT_COMMAND_REMOTE               => dirname(abs_path($0)) . '/pg_backrest_remote.pl',
+    OPTION_DEFAULT_COMMAND_PSQL                     => '/usr/bin/psql -X',
+    OPTION_DEFAULT_COMMAND_REMOTE                   => dirname(abs_path($0)) . '/pg_backrest_remote.pl',
 
-    OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK         => true,
-    OPTION_DEFAULT_BACKUP_ARCHIVE_COPY          => false,
-    OPTION_DEFAULT_BACKUP_FORCE                 => false,
-    OPTION_DEFAULT_BACKUP_HARDLINK              => false,
-    OPTION_DEFAULT_BACKUP_NO_START_STOP         => false,
-    OPTION_DEFAULT_BACKUP_START_FAST            => false,
-    OPTION_DEFAULT_BACKUP_TYPE                  => BACKUP_TYPE_INCR,
+    OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK             => true,
+    OPTION_DEFAULT_BACKUP_ARCHIVE_COPY              => false,
+    OPTION_DEFAULT_BACKUP_FORCE                     => false,
+    OPTION_DEFAULT_BACKUP_HARDLINK                  => false,
+    OPTION_DEFAULT_BACKUP_NO_START_STOP             => false,
+    OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD   => 1073741824,
+    OPTION_DEFAULT_BACKUP_RESUME                    => true,
+    OPTION_DEFAULT_BACKUP_START_FAST                => false,
+    OPTION_DEFAULT_BACKUP_TYPE                      => BACKUP_TYPE_INCR,
 
-    OPTION_DEFAULT_REPO_PATH                    => '/var/lib/backup',
+    OPTION_DEFAULT_REPO_PATH                        => '/var/lib/backup',
 
-    OPTION_DEFAULT_RESTORE_DELTA                => false,
-    OPTION_DEFAULT_RESTORE_FORCE                => false,
-    OPTION_DEFAULT_RESTORE_SET                  => 'latest',
-    OPTION_DEFAULT_RESTORE_TYPE                 => RECOVERY_TYPE_DEFAULT,
-    OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE     => false,
-    OPTION_DEFAULT_RESTORE_TARGET_RESUME        => false,
+    OPTION_DEFAULT_RESTORE_DELTA                    => false,
+    OPTION_DEFAULT_RESTORE_FORCE                    => false,
+    OPTION_DEFAULT_RESTORE_SET                      => 'latest',
+    OPTION_DEFAULT_RESTORE_TABLESPACE               => true,
+    OPTION_DEFAULT_RESTORE_TYPE                     => RECOVERY_TYPE_DEFAULT,
+    OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE         => false,
+    OPTION_DEFAULT_RESTORE_TARGET_RESUME            => false,
 
-    OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE       => BACKUP_TYPE_FULL,
-    OPTION_DEFAULT_RETENTION_MIN                => 1,
-    OPTION_DEFAULT_RETENTION_MAX                => 999999999,
+    OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE           => BACKUP_TYPE_FULL,
+    OPTION_DEFAULT_RETENTION_MIN                    => 1,
+    OPTION_DEFAULT_RETENTION_MAX                    => 999999999,
 
-    OPTION_DEFAULT_TEST                         => false,
-    OPTION_DEFAULT_TEST_DELAY                   => 5,
-    OPTION_DEFAULT_TEST_NO_FORK                 => false
+    OPTION_DEFAULT_TEST                             => false,
+    OPTION_DEFAULT_TEST_DELAY                       => 5,
+    OPTION_DEFAULT_TEST_NO_FORK                     => false
 };
 
 push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE OPTION_DEFAULT_COMPRESS OPTION_DEFAULT_CONFIG OPTION_LEVEL_CONSOLE OPTION_LEVEL_FILE
@@ -795,6 +801,17 @@ my %oOptionRule =
         }
     },
 
+    &OPTION_TABLESPACE =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TABLESPACE,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_RESTORE => true
+        }
+    },
+
     &OPTION_RESTORE_TABLESPACE_MAP =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
@@ -887,6 +904,28 @@ my %oOptionRule =
         {
             &OP_BACKUP => true,
             &OP_EXPIRE => true
+        }
+    },
+
+    &OPTION_MANIFEST_SAVE_THRESHOLD =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_BACKUP => true
+        }
+    },
+
+    &OPTION_RESUME =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_RESUME,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_BACKUP => true
         }
     },
 
@@ -1592,7 +1631,7 @@ sub operationWrite
 {
     my $strNewOperation = shift;
 
-    my $strCommand = "$0";
+    my $strCommand = abs_path($0);
 
     foreach my $strOption (sort(keys(%oOption)))
     {
@@ -1710,7 +1749,7 @@ sub optionRemote
 ####################################################################################################################################
 # remoteDestroy
 #
-# Undefined the remote if it is stored locally.
+# Undefine the remote if it is stored locally.
 ####################################################################################################################################
 sub remoteDestroy
 {

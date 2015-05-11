@@ -517,7 +517,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, OP_RESTORE);
 
             my $strCommand = operationWrite(OP_ARCHIVE_GET);
-            my $strExpectedCommand = "$0 --backup-host=db.mydomain.com \"--db-path=/db path/main\"" .
+            my $strExpectedCommand = abs_path($0) . " --backup-host=db.mydomain.com \"--db-path=/db path/main\"" .
                                      " --repo-path=/repo --stanza=main " . OP_ARCHIVE_GET;
 
             if ($strCommand ne $strExpectedCommand)

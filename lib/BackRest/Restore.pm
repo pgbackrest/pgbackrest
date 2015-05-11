@@ -210,8 +210,33 @@ sub manifest_load
             $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, undef, $self->{strDbClusterPath});
         }
 
+        # If no tablespaces are requested
+        if (!optionGet(OPTION_TABLESPACE))
+        {
+            foreach my $strTablespaceName ($oManifest->keys(MANIFEST_SECTION_BACKUP_TABLESPACE))
+            {
+                my $strTablespaceKey =
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName, MANIFEST_SUBKEY_LINK);
+                my $strTablespaceLink = "pg_tblspc/${strTablespaceKey}";
+                my $strTablespacePath =
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE) . "/${strTablespaceLink}";
+
+                $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strTablespaceName}", undef, $strTablespacePath);
+                $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName, MANIFEST_SUBKEY_PATH, $strTablespacePath);
+
+                $oManifest->remove('base:link', $strTablespaceLink);
+                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_GROUP,
+                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_GROUP));
+                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_USER,
+                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_USER));
+                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_MODE,
+                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_MODE));
+
+                &log(INFO, "remapping tablespace ${strTablespaceKey} to ${strTablespacePath}");
+            }
+        }
         # If tablespaces have been remapped, update the manifest
-        if (defined($self->{oRemapRef}))
+        elsif (defined($self->{oRemapRef}))
         {
             foreach my $strPathKey (sort(keys $self->{oRemapRef}))
             {
@@ -266,7 +291,7 @@ sub clean
 
         if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
         {
-            confess &log(ERROR, "required db path '${strPath}' does not exist");
+            next;
         }
 
         # Load path manifest so it can be compared to deleted files/paths/links that are not in the backup
@@ -315,7 +340,7 @@ sub clean
                 if ($strUser ne $oPathManifest{name}{$strName}{user} ||
                     $strGroup ne $oPathManifest{name}{$strName}{group})
                 {
-                    &log(DEBUG, "setting ${strFile} ownership to ${strUser}:${strGroup}");
+                    &log(INFO, "setting ${strFile} ownership to ${strUser}:${strGroup}");
 
                     $self->{oFile}->owner(PATH_DB_ABSOLUTE, $strFile, $strUser, $strGroup);
                 }
@@ -326,7 +351,7 @@ sub clean
                     if ($strType eq MANIFEST_LINK && $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION) ne
                         $oPathManifest{name}{$strName}{link_destination})
                     {
-                        &log(DEBUG, "removing link ${strFile} - destination changed");
+                        &log(INFO, "removing link ${strFile} - destination changed");
                         unlink($strFile) or confess &log(ERROR, "unable to delete file ${strFile}");
                     }
                 }
@@ -337,7 +362,7 @@ sub clean
 
                     if ($strType ne MANIFEST_LINK && $strMode ne $oPathManifest{name}{$strName}{mode})
                     {
-                        &log(DEBUG, "setting ${strFile} mode to ${strMode}");
+                        &log(INFO, "setting ${strFile} mode to ${strMode}");
 
                         chmod(oct($strMode), $strFile)
                             or confess 'unable to set mode ${strMode} for ${strFile}';
@@ -350,17 +375,17 @@ sub clean
                 # If a path then remove it, all the files should have already been deleted since we are going in reverse order
                 if ($strType eq MANIFEST_PATH)
                 {
-                    &log(DEBUG, "removing path ${strFile}");
+                    &log(INFO, "removing path ${strFile}");
                     rmdir($strFile) or confess &log(ERROR, "unable to delete path ${strFile}, is it empty?");
                 }
                 # Else delete a file/link
                 else
                 {
-                    # Delete only if this is not the recovery.conf file.  This is in case the use wants the recovery.conf file
+                    # Delete only if this is not the recovery.conf file.  This is in case the user wants the recovery.conf file
                     # preserved.  It will be written/deleted/preserved as needed in recovery().
                     if (!($strName eq FILE_RECOVERY_CONF && $strType eq MANIFEST_FILE))
                     {
-                        &log(DEBUG, "removing file/link ${strFile}");
+                        &log(INFO, "removing file/link ${strFile}");
                         unlink($strFile) or confess &log(ERROR, "unable to delete file/link ${strFile}");
                     }
                 }
@@ -434,6 +459,17 @@ sub build
             }
         }
     }
+
+    # Make sure that all paths required for the restore now exist
+    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    {
+        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+
+        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
+        {
+            confess &log(ERROR, "required db path '${strPath}' does not exist");
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -451,12 +487,12 @@ sub recovery
     # See if recovery.conf already exists
     my $bRecoveryConfExists = $self->{oFile}->exists(PATH_DB_ABSOLUTE, $strRecoveryConf);
 
-    # If RECOVERY_TYPE_PRESERVE then make sure recovery.conf exists and return
+    # If RECOVERY_TYPE_PRESERVE then warn if recovery.conf does not exist and return
     if ($self->{strType} eq RECOVERY_TYPE_PRESERVE)
     {
         if (!$bRecoveryConfExists)
         {
-            confess &log(ERROR, "recovery type is $self->{strType} but recovery file does not exist at ${strRecoveryConf}");
+            &log(WARN, "recovery type is $self->{strType} but recovery file does not exist at ${strRecoveryConf}");
         }
 
         return;
@@ -536,6 +572,8 @@ sub recovery
 
     close($hFile)
         or confess "unable to close ${strRecoveryConf}: $!";
+
+    &log(INFO, "wrote $strRecoveryConf");
 }
 
 ####################################################################################################################################
@@ -571,17 +609,10 @@ sub restore
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
 
-    # Create thread queues (or do restore if single-threaded)
-    my @oyRestoreQueue;
-
-    if ($self->{iThreadTotal} > 1)
-    {
-        &log(TRACE, "building thread queues");
-    }
-    else
-    {
-        &log(TRACE, "starting restore in main process");
-    }
+    # Create hash containing files to restore
+    my %oRestoreHash;
+    my $lSizeTotal = 0;
+    my $lSizeCurrent = 0;
 
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
@@ -589,21 +620,38 @@ sub restore
 
         if ($oManifest->test($strSection))
         {
-            if ($self->{iThreadTotal} > 1)
+            foreach my $strFile ($oManifest->keys($strSection))
             {
-                $oyRestoreQueue[@oyRestoreQueue] = Thread::Queue->new();
-            }
+                my $lSize = $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_SIZE);
+                $lSizeTotal += $lSize;
 
-            foreach my $strName ($oManifest->keys($strSection))
-            {
-                if ($self->{iThreadTotal} > 1)
+                # Preface the file key with the size. This allows for sorting the files to restore by size
+                my $strFileKey = sprintf("%016d-${strFile}", $lSize);
+
+                # Get restore information
+                $oRestoreHash{$strPathKey}{$strFileKey}{file} = $strFile;
+                $oRestoreHash{$strPathKey}{$strFileKey}{size} = $lSize;
+                $oRestoreHash{$strPathKey}{$strFileKey}{source_path} = $strPathKey;
+                $oRestoreHash{$strPathKey}{$strFileKey}{source_path} =~ s/\:/\//g;
+                $oRestoreHash{$strPathKey}{$strFileKey}{destination_path} =
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+                $oRestoreHash{$strPathKey}{$strFileKey}{reference} =
+                    $oManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, 'y') ? undef :
+                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
+                $oRestoreHash{$strPathKey}{$strFileKey}{modification_time} =
+                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_MODIFICATION_TIME);
+                $oRestoreHash{$strPathKey}{$strFileKey}{mode} =
+                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_MODE);
+                $oRestoreHash{$strPathKey}{$strFileKey}{user} =
+                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_USER);
+                $oRestoreHash{$strPathKey}{$strFileKey}{group} =
+                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_GROUP);
+
+                # Checksum is only stored if size > 0
+                if ($lSize > 0)
                 {
-                    $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue("${strPathKey}|${strName}");
-                }
-                else
-                {
-                    restoreFile($strPathKey, $strName, $lCopyTimeBegin, $self->{bDelta}, $self->{bForce}, $self->{strBackupPath},
-                                $bSourceCompression, $strCurrentUser, $strCurrentGroup, $oManifest, $self->{oFile});
+                    $oRestoreHash{$strPathKey}{$strFileKey}{checksum} =
+                        $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_CHECKSUM);
                 }
             }
         }
@@ -612,29 +660,63 @@ sub restore
     # If multi-threaded then create threads to copy files
     if ($self->{iThreadTotal} > 1)
     {
+        &log(DEBUG, "starting restore with $self->{iThreadTotal} threads");
+
+        # Initialize the thread queues
+        my @oyRestoreQueue;
+
+        foreach my $strPathKey (sort (keys %oRestoreHash))
+        {
+            push(@oyRestoreQueue, Thread::Queue->new());
+
+            foreach my $strFileKey (sort {$b cmp $a} (keys $oRestoreHash{$strPathKey}))
+            {
+                $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strPathKey}{$strFileKey});
+            }
+        }
+
+        # Initialize the param hash
+        my %oParam;
+
+        $oParam{copy_time_begin} = $lCopyTimeBegin;
+        $oParam{size_total} = $lSizeTotal;
+        $oParam{delta} = $self->{bDelta};
+        $oParam{force} = $self->{bForce};
+        $oParam{backup_path} = $self->{strBackupPath};
+        $oParam{source_compression} = $bSourceCompression;
+        $oParam{current_user} = $strCurrentUser;
+        $oParam{current_group} = $strCurrentGroup;
+        $oParam{queue} = \@oyRestoreQueue;
+
+        # Run the threads
         for (my $iThreadIdx = 0; $iThreadIdx < $self->{iThreadTotal}; $iThreadIdx++)
         {
-            my %oParam;
-
-            $oParam{copy_time_begin} = $lCopyTimeBegin;
-            $oParam{delta} = $self->{bDelta};
-            $oParam{force} = $self->{bForce};
-            $oParam{backup_path} = $self->{strBackupPath};
-            $oParam{source_compression} = $bSourceCompression;
-            $oParam{current_user} = $strCurrentUser;
-            $oParam{current_group} = $strCurrentGroup;
-            $oParam{queue} = \@oyRestoreQueue;
-            $oParam{manifest} = $oManifest;
-
             threadGroupRun($iThreadIdx, 'restore', \%oParam);
         }
 
         # Complete thread queues
-        threadGroupComplete();
+        while (!threadGroupComplete()) {};
+    }
+    else
+    {
+        &log(DEBUG, "starting restore in main process");
+
+        # Restore file in main process
+        foreach my $strPathKey (sort (keys %oRestoreHash))
+        {
+            foreach my $strFileKey (sort {$b cmp $a} (keys $oRestoreHash{$strPathKey}))
+            {
+                $lSizeCurrent = restoreFile($oRestoreHash{$strPathKey}{$strFileKey}, $lCopyTimeBegin, $self->{bDelta},
+                                            $self->{bForce}, $self->{strBackupPath}, $bSourceCompression, $strCurrentUser,
+                                            $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
+            }
+        }
     }
 
     # Create recovery.conf file
     $self->recovery();
+
+    &log(INFO, "restore complete");
 }
 
 1;

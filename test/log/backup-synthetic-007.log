@@ -1,0 +1,730 @@
+run 007 - rmt 1, cmp 1, hardlink 0
+==================================
+
+full backup
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/path-test, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/pg_tblspc, mode [undef]
+ DEBUG:     File->link_create: backup:absolute:/test to backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/link-test, hard = false, relative = false, destination_path_create = false
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/PG_VERSION to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common/PG_VERSION (3B, 42%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     manifest saved
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/base/base1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common/base/base1.txt (4B, 100%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     manifest saved
+  INFO: 7B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+full backup (resume)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     File->wait: db:absolute
+  WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
+  INFO: cleaning backup tmp path
+ DEBUG:     File->manifest: backup:tmp:[TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     remove file [TEST_PATH]/backrest/temp/db.tmp/base/link-test
+ DEBUG:     remove file [TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz
+ DEBUG:     remove file [TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/path-test, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/pg_tblspc, mode [undef]
+ DEBUG:     File->link_create: backup:absolute:/test to backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/link-test, hard = false, relative = false, destination_path_create = false
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/PG_VERSION to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common/PG_VERSION (3B, 42%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/base/base1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common/base/base1.txt (4B, 100%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: 7B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+restore delta, backup '[BACKUP_LABEL]' (add and delete files)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP_LABEL] --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+  INFO: Restoring backup set [BACKUP_LABEL]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
+ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common/backup.manifest
+  INFO: checking/cleaning db path [TEST_PATH]/db/common
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+  INFO: removing link [TEST_PATH]/db/common/link-test - destination changed
+  INFO: removing file/link [TEST_PATH]/db/common/deleteme/deleteme.txt
+  INFO: removing path [TEST_PATH]/db/common/deleteme
+  INFO: setting [TEST_PATH]/db/common/base mode to 0700
+  INFO: 1 file(s) removed during cleanup
+  INFO: 1 path(s) removed during cleanup
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/base
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/path-test
+ DEBUG:     File->path_create:  db:absolute:[TEST_PATH]/db/common/path-test, mode 0700
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/link-test
+ DEBUG:     File->link_create: db:absolute:/test to db:absolute:[TEST_PATH]/db/common/link-test, hard = false, relative = false, destination_path_create = true
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     starting restore in main process
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/base/base1.txt
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/base/base1.txt, compressed = false, hash_type = sha1
+  INFO: [TEST_PATH]/db/common/base/base1.txt exists and matches backup (4B, 57%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/PG_VERSION
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/PG_VERSION.gz to local db:absolute:[TEST_PATH]/db/common/PG_VERSION, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common/PG_VERSION.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common/PG_VERSION.backrest.tmp to absolute:[TEST_PATH]/db/common/PG_VERSION, destination_path_create = false
+  INFO: [TEST_PATH]/db/common/PG_VERSION restore (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/recovery.conf
+  INFO: wrote [TEST_PATH]/db/common/recovery.conf
+  INFO: restore complete
+ DEBUG:     safe exit called, terminating threads
+
+incr backup (add tablespace 1)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     Found tablespace 1
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts1
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base
+  INFO: backup file [TEST_PATH]/db/common/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts1/tablespace1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1
+  INFO: backup file [TEST_PATH]/db/tablespace/ts1/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: 18B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+incr backup (resume and add tablespace 2)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     Found tablespace 1
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts1
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2
+ DEBUG:     File->wait: db:absolute
+  WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
+  INFO: cleaning backup tmp path
+ DEBUG:     File->manifest: backup:tmp:[TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     remove file [TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz
+ DEBUG:     remove file [TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts1/tablespace1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/tablespace/ts1/tablespace1.txt (7B, 72%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2/tablespace2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: 25B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+diff backup (cannot resume - new diff)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     Found tablespace 1
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts1
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2
+ DEBUG:     File->wait: db:absolute
+  WARN: aborted backup exists, but cannot be resumed (new type 'diff' does not match aborted type 'incr') - will be dropped and recreated
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base
+  INFO: backup file [TEST_PATH]/db/common/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts1/tablespace1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1
+  INFO: backup file [TEST_PATH]/db/tablespace/ts1/tablespace1.txt (7B, 72%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2/tablespace2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: 25B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+diff backup (cannot resume - disabled)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
+ DEBUG:     Found tablespace 1
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts1
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2
+ DEBUG:     File->wait: db:absolute
+  WARN: aborted backup exists, but cannot be resumed (resume is disabled) - will be dropped and recreated
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base
+  INFO: backup file [TEST_PATH]/db/common/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts1/tablespace1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1/tablespace1.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1
+  INFO: backup file [TEST_PATH]/db/tablespace/ts1/tablespace1.txt (7B, 72%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2/tablespace2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: 25B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+restore, backup '[BACKUP_LABEL]', expect exit 115 (fail on used path)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+  INFO: Restoring backup set [BACKUP_LABEL]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
+ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common/backup.manifest
+  INFO: checking/cleaning db path [TEST_PATH]/db/common
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
+ ERROR: [115] cannot restore to path '[TEST_PATH]/db/common' that contains files - try using --delta if this is what you intended
+ DEBUG:     safe exit called, terminating threads
+
+restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on undef format)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+  INFO: Restoring backup set [BACKUP_LABEL]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
+ ERROR: [104] backup format of [TEST_PATH]/db/common/backup.manifest is 0 but 3 is required by this version of PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  If you are trying to restore, you''ll need to use a version that supports format 0.
+ DEBUG:     safe exit called, terminating threads
+
+restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on mismatch format)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
+  INFO: Restoring backup set [BACKUP_LABEL]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
+ ERROR: [104] backup format of [TEST_PATH]/db/common/backup.manifest is 0 but 3 is required by this version of PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  If you are trying to restore, you''ll need to use a version that supports format 0.
+ DEBUG:     safe exit called, terminating threads
+
+restore, backup '[BACKUP_LABEL]', remap (remap all paths)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP_LABEL] --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+  INFO: Restoring backup set [BACKUP_LABEL]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common-2/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common-2/backup.manifest, destination_path_create = false
+ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common-2/backup.manifest
+  INFO: base path remapped to [TEST_PATH]/db/common-2
+  INFO: remapping tablespace 1 to [TEST_PATH]/db/tablespace/ts1-2
+  INFO: remapping tablespace 2 to [TEST_PATH]/db/tablespace/ts2-2
+  INFO: checking/cleaning db path [TEST_PATH]/db/common-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+  INFO: checking/cleaning db path [TEST_PATH]/db/tablespace/ts1-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts1-2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts1-2
+  INFO: checking/cleaning db path [TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/base
+ DEBUG:     File->path_create:  db:absolute:[TEST_PATH]/db/common-2/base, mode 0700
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/path-test
+ DEBUG:     File->path_create:  db:absolute:[TEST_PATH]/db/common-2/path-test, mode 0700
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     File->path_create:  db:absolute:[TEST_PATH]/db/common-2/pg_tblspc, mode 0700
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/link-test
+ DEBUG:     File->link_create: db:absolute:/test to db:absolute:[TEST_PATH]/db/common-2/link-test, hard = false, relative = false, destination_path_create = true
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/1
+ DEBUG:     File->link_create: db:absolute:[TEST_PATH]/db/tablespace/ts1-2 to db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/1, hard = false, relative = false, destination_path_create = true
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2
+ DEBUG:     File->link_create: db:absolute:[TEST_PATH]/db/tablespace/ts2-2 to db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2, hard = false, relative = false, destination_path_create = true
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts1-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     starting restore in main process
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/badchecksum.txt.gz to local db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/badchecksum.txt.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/badchecksum.txt.backrest.tmp to absolute:[TEST_PATH]/db/common-2/badchecksum.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/badchecksum.txt restore (11B, 34%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/base/base1.txt
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/base/base1.txt.gz to local db:absolute:[TEST_PATH]/db/common-2/base/base1.txt, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/base/base1.txt.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/base/base1.txt.backrest.tmp to absolute:[TEST_PATH]/db/common-2/base/base1.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/base/base1.txt restore (4B, 46%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/PG_VERSION
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/base/PG_VERSION.gz to local db:absolute:[TEST_PATH]/db/common-2/PG_VERSION, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/PG_VERSION.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/PG_VERSION.backrest.tmp to absolute:[TEST_PATH]/db/common-2/PG_VERSION, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/PG_VERSION restore (3B, 56%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/tablespace/1/tablespace1.txt.gz to local db:absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt.backrest.tmp to absolute:[TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/tablespace/ts1-2/tablespace1.txt restore (7B, 78%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/tablespace/2/tablespace2.txt.gz to local db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt.backrest.tmp to absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt restore (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
+  INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
+  INFO: restore complete
+ DEBUG:     safe exit called, terminating threads
+
+incr backup (add files and remove tablespace 2)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base
+  INFO: backup file [TEST_PATH]/db/common-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: 13B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+incr backup (update files)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base
+  INFO: backup file [TEST_PATH]/db/common-2/base/base1.txt (8B, 100%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+  INFO: 8B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+diff backup (no updates)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base
+  INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 28%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base
+  INFO: backup file [TEST_PATH]/db/common-2/base/base1.txt (8B, 48%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common-2/base/base2.txt (5B, 61%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt (7B, 79%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: 39B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+incr backup (remove files - but won't affect manifest)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+diff backup (remove files during backup)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base
+  INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 35%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+  INFO: skipped file removed by database: [TEST_PATH]/db/common-2/base/base2.txt
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt (7B, 74%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt (12B, 100%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: 31B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+full backup
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/path-test, mode [undef]
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/pg_tblspc, mode [undef]
+ DEBUG:     File->link_create: backup:absolute:/test to backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/link-test, hard = false, relative = false, destination_path_create = false
+ DEBUG:     File->link_create: backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2 to backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/pg_tblspc/2, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/temp/db.tmp/base/pg_tblspc, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/PG_VERSION to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common-2/PG_VERSION (3B, 7%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/badchecksum.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 33%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/common-2/base/base1.txt (9B, 54%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2.txt (7B, 71%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt.gz, destination_path_create = true
+  INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt (12B, 100%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: 42B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+diff backup (add files)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     cluster path is [TEST_PATH]/db/common-2
+ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
+ DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
+ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
+  INFO: last backup label = [BACKUP_LABEL], version = [VERSION]
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     Found tablespace 2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     Manifest->build
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/tablespace/ts2-2
+ DEBUG:     File->wait: db:absolute
+ DEBUG:     creating backup path [TEST_PATH]/backrest/temp/db.tmp
+ DEBUG:     File->path_create:  backup:tmp:[TEST_PATH]/backrest/temp/db.tmp, mode [undef]
+ DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, source_compressed = false, destination_compress = true, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt.gz, destination_path_create = true
+ DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base, mode [undef]
+ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base
+  INFO: backup file [TEST_PATH]/db/common-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+  INFO: 9B total backup
+  INFO: new backup label: [BACKUP_LABEL]
+ DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
+ DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
+ DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
+ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: archive rentention type not set - archive logs will not be expired
+ DEBUG:     safe exit called, terminating threads
+
+restore delta, backup '[BACKUP_LABEL]' (no tablespace remap)
+> [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP_LABEL] --no-tablespace  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
+  INFO: Restoring backup set [BACKUP_LABEL]
+ DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common-2/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common-2/backup.manifest, destination_path_create = false
+ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common-2/backup.manifest
+  INFO: remapping tablespace 2 to [TEST_PATH]/db/common-2/pg_tblspc/2
+  INFO: checking/cleaning db path [TEST_PATH]/db/common-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2
+  INFO: removing file/link [TEST_PATH]/db/common-2/pg_tblspc/2
+  INFO: checking/cleaning db path [TEST_PATH]/db/common-2/pg_tblspc/2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2
+  INFO: 1 file(s) removed during cleanup
+  INFO: 1 link(s) removed during cleanup
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/base
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/path-test
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2
+ DEBUG:     File->path_create:  db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2, mode 0700
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/link-test
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2
+ DEBUG:     starting restore in main process
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common-2/badchecksum.txt, compressed = false, hash_type = sha1
+  INFO: [TEST_PATH]/db/common-2/badchecksum.txt exists and matches backup (11B, 21%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/base/base2.txt
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common-2/base/base2.txt, compressed = false, hash_type = sha1
+  INFO: [TEST_PATH]/db/common-2/base/base2.txt exists and matches backup (9B, 39%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/base/base1.txt
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common-2/base/base1.txt, compressed = false, hash_type = sha1
+  INFO: [TEST_PATH]/db/common-2/base/base1.txt exists and matches backup (9B, 56%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/PG_VERSION
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common-2/PG_VERSION, compressed = false, hash_type = sha1
+  INFO: [TEST_PATH]/db/common-2/PG_VERSION exists and matches backup (3B, 62%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2c.txt
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/tablespace/2/tablespace2c.txt.gz to local db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2c.txt, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2c.txt.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2c.txt.backrest.tmp to absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2c.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2c.txt restore (12B, 86%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2.txt
+ DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/tablespace/2/tablespace2.txt.gz to local db:absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2.txt, source_compressed = true, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [MODIFICATION_TIME], mode = 0600, user = [USER], group = [GROUP]
+ DEBUG:     File->owner: absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2.txt.backrest.tmp, user = [USER] = staff
+ DEBUG:     File->move: absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2.txt.backrest.tmp to absolute:[TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2.txt, destination_path_create = false
+  INFO: [TEST_PATH]/db/common-2/pg_tblspc/2/tablespace2.txt restore (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
+ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
+  INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
+  INFO: restore complete
+ DEBUG:     safe exit called, terminating threads
