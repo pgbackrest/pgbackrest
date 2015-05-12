@@ -56,7 +56,7 @@
 					</code-block>
 					* Install required Perl modules:
 					<code-block>
-						cpanm JSON
+						cpanm JSON::PP
 						cpanm Net::OpenSSH
 						cpanm IPC::System::Simple
 						cpanm Digest::SHA

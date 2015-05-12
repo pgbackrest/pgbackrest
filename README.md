@@ -54,7 +54,7 @@ apt-get install postgresql-server-dev-9.3
 ```
 * Install required Perl modules:
 ```
-cpanm JSON
+cpanm JSON::PP
 cpanm Net::OpenSSH
 cpanm IPC::System::Simple
 cpanm Digest::SHA
@@ -731,7 +731,7 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
 
-* 
+*
 
 ### v0.65: Improved resume and restore logging, compact restores
 

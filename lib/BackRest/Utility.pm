@@ -14,7 +14,7 @@ use Time::HiRes qw(gettimeofday usleep);
 use POSIX qw(ceil);
 use File::Basename;
 use Cwd qw(abs_path);
-use JSON;
+use JSON::PP;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -545,6 +545,10 @@ sub ini_load
     open($hFile, '<', $strFile)
         or confess &log(ERROR, "unable to open ${strFile}");
 
+    # Create the JSON object
+    my $oJSON = JSON::PP->new();
+
+    # Read the INI file
     while (my $strLine = readline($hFile))
     {
         $strLine = trim($strLine);
@@ -572,7 +576,7 @@ sub ini_load
                 # Try to store value as JSON
                 eval
                 {
-                    ${$oConfig}{"${strSection}"}{"${strKey}"} = decode_json($strValue);
+                    ${$oConfig}{"${strSection}"}{"${strKey}"} = $oJSON->decode($strValue);
                 };
 
                 # On error store value as a scalar
@@ -606,6 +610,10 @@ sub ini_save
     open($hFile, '>', $strFile)
         or confess &log(ERROR, "unable to open ${strFile}");
 
+    # Create the JSON object canonical so that fields are alpha ordered and pass unit tests
+    my $oJSON = JSON::PP->new()->canonical();
+
+    # Write the INI file
     foreach my $strSection (sort(keys $oConfig))
     {
         if (!$bFirst)
@@ -625,7 +633,7 @@ sub ini_save
             {
                 if (ref($strValue) eq "HASH")
                 {
-                    syswrite($hFile, "${strKey}=" . to_json($strValue, {canonical => true}) . "\n")
+                    syswrite($hFile, "${strKey}=" . $oJSON->encode($strValue) . "\n")
                         or confess "unable to write key ${strKey}: $!";
                 }
                 else
