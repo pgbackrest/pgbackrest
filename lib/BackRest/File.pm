@@ -504,7 +504,7 @@ sub move
 
                 if (!$self->exists(PATH_ABSOLUTE, dirname($strPathOpDestination)))
                 {
-                    $strError = "${strPathOpDestination} does not exist";
+                    $strError = dirname($strPathOpDestination) . " destination path does not exist";
                     $iErrorCode = COMMAND_ERR_FILE_MISSING;
                 }
 
@@ -1408,7 +1408,7 @@ sub copy
 
                 if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationTmpOp)))
                 {
-                    $strError = dirname($strDestinationTmpOp) . ' does not exist';
+                    $strError = dirname($strDestinationTmpOp) . ' destination path does not exist';
                     $iErrorCode = COMMAND_ERR_FILE_MISSING;
                 }
 

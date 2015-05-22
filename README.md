@@ -227,6 +227,7 @@ The following recovery types are supported:
 - `xid` - recover to the transaction id specified in `--target`.
 - `time` - recover to the time specified in `--target`.
 - `preserve` - preserve the existing `recovery.conf` file.
+- `none` - no `recovery.conf` file is written so PostgreSQL will attempt to achieve consistency using WAL segments present in `pg_xlog`.  Provide the required WAL segments or use the `archive-copy` setting to include them with the backup.
 
 ```
 required: n
@@ -610,6 +611,8 @@ example: archive-check=n
 ##### `archive-copy` key
 
 Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
+
+Even though WAL segments will be restored with the backup, PostgreSQL will ignore them if a `recovery.conf` file exists and instead use `archive_command` to fetch WAL segments.  Specifying `type=none` when restoring will not create `recovery.conf` and force PostgreSQL to use the WAL segments in pg_xlog.  This will get the database to a consistent state.
 ```
 required: n
 default: n
@@ -731,7 +734,7 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
 
-*
+* Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created.
 
 ### v0.65: Improved resume and restore logging, compact restores
 

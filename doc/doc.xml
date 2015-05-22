@@ -219,6 +219,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 								<li><id>xid</id> - recover to the transaction id specified in <param>--target</param>.</li>
 								<li><id>time</id> - recover to the time specified in <param>--target</param>.</li>
 								<li><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</li>
+								<li><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>.  Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</li>
 							</ul></text>
 						<example>xid</example>
 					</option>
@@ -562,7 +563,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
 					<config-key id="archive-copy">
-						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
+						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
+
+							Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in pg_xlog.  This will get the database to a consistent state.</text>
 
 						<example>y</example>
 					</config-key>
@@ -684,7 +687,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.75" title="IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text></text>
+						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
