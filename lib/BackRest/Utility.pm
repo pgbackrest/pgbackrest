@@ -553,7 +553,8 @@ sub ini_load
     {
         $strLine = trim($strLine);
 
-        if ($strLine ne '')
+        # Skip lines that are blank or comments
+        if ($strLine ne '' && $strLine !~ '^#.*')
         {
             # Get the section
             if (index($strLine, '[') == 0)
@@ -610,23 +611,40 @@ sub ini_save
     open($hFile, '>', $strFile)
         or confess &log(ERROR, "unable to open ${strFile}");
 
-    # Create the JSON object canonical so that fields are alpha ordered and pass unit tests
+    # Create the JSON object canonical so that fields are alpha ordered to pass unit tests
     my $oJSON = JSON::PP->new()->canonical();
 
     # Write the INI file
     foreach my $strSection (sort(keys $oConfig))
     {
+        # Add a linefeed between sections
         if (!$bFirst)
         {
             syswrite($hFile, "\n")
                 or confess "unable to write lf: $!";
         }
 
+        # Write the section comment if present
+        if (defined(${$oConfig}{$strSection}{'[comment]'}))
+        {
+            syswrite($hFile, "# " . ${$oConfig}{$strSection}{'[comment]'} . "\n")
+                or confess "unable to comment for section ${strSection}: $!";
+        }
+
+        # Write the section
         syswrite($hFile, "[${strSection}]\n")
             or confess "unable to write section ${strSection}: $!";
 
+        # Iterate through all keys in the section
         foreach my $strKey (sort(keys ${$oConfig}{"${strSection}"}))
         {
+            # Skip comments
+            if ($strKey eq '[comment]')
+            {
+                next;
+            }
+
+            # If the value is a hash then convert it to JSON, otherwise store as is
             my $strValue = ${$oConfig}{"${strSection}"}{"${strKey}"};
 
             if (defined($strValue))

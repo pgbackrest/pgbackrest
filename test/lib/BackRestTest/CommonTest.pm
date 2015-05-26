@@ -872,6 +872,7 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{'global:command'}{'cmd-remote'} = $strCommonCommandRemote;
     }
 
+    $oParamHash{'global:command'}{'[comment]'} = 'psql command and options';
     $oParamHash{'global:command'}{'cmd-psql'} = $strCommonCommandPsql;
 
     if (defined($strRemote) && $strRemote eq BACKUP)
@@ -885,8 +886,11 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{$strCommonStanza}{'db-user'} = $strCommonUser;
     }
 
+    $oParamHash{'global:log'}{'[comment]'} = 'file and console log settings';
     $oParamHash{'global:log'}{'log-level-console'} = 'debug';
     $oParamHash{'global:log'}{'log-level-file'} = 'trace';
+
+    $oParamHash{'global:general'}{'[comment]'} = 'general settings for all operations';
 
     if ($strLocal eq BACKUP)
     {
@@ -898,13 +902,6 @@ sub BackRestTestCommon_ConfigCreate
 
         if (defined($strRemote))
         {
-#            $oParamHash{'global:log'}{'log-level-console'} = 'trace';
-
-            # if ($bArchiveAsync)
-            # {
-            #     $oParamHash{'global:archive'}{path} = BackRestTestCommon_LocalPathGet();
-            # }
-
             $oParamHash{'global:general'}{'repo-remote-path'} = $strCommonRepoPath;
         }
         else
@@ -914,12 +911,8 @@ sub BackRestTestCommon_ConfigCreate
 
         if ($bArchiveAsync)
         {
+            $oParamHash{'global:archive'}{'[comment]'} = 'WAL archive settings';
             $oParamHash{'global:archive'}{'archive-async'} = 'y';
-            #
-            # if (!$bCompressAsync)
-            # {
-            #     $oParamHash{'global:archive'}{'compress_async'} = 'n';
-            # }
         }
     }
     else
@@ -934,8 +927,8 @@ sub BackRestTestCommon_ConfigCreate
 
     if (($strLocal eq BACKUP) || ($strLocal eq DB && !defined($strRemote)))
     {
-        $oParamHash{'db:command'}{'cmd-psql-option'} = "--port=${iCommonDbPort}";
-        $oParamHash{'global:backup'}{'thread-max'} = $iThreadMax;
+        $oParamHash{"${strCommonStanza}:command"}{'[comment]'} = 'cluster-specific command options';
+        $oParamHash{"${strCommonStanza}:command"}{'cmd-psql-option'} = "--port=${iCommonDbPort}";
 
         if (defined($bHardlink) && $bHardlink)
         {
@@ -950,12 +943,15 @@ sub BackRestTestCommon_ConfigCreate
         $oParamHash{'global:general'}{'compress'} = 'n';
     }
 
-    # if (defined($bChecksum) && $bChecksum)
-    # {
-    #     $oParamHash{'global:backup'}{'checksum'} = 'y';
-    # }
-
+    # Stanza settings
+    $oParamHash{$strCommonStanza}{'[comment]'} = "cluster-specific settings";
     $oParamHash{$strCommonStanza}{'db-path'} = $strCommonDbCommonPath;
+
+    # Comments
+    if (defined($oParamHash{'global:backup'}))
+    {
+        $oParamHash{'global:backup'}{'[comment]'} = "backup settings";
+    }
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';

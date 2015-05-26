@@ -739,6 +739,8 @@ example: db-path=/data/db
 
 * Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner
 
+* Allow comments/disabling in pg_backrest.conf using #.  Suggested by Michael Renner.
+
 * Replaced JSON module with JSON::PP which ships with core Perl.
 
 ### v0.65: Improved resume and restore logging, compact restores
