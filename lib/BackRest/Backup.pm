@@ -540,7 +540,7 @@ sub backup_file
         while (!$bDone);
     }
 
-    &log(INFO, file_size_format($lSizeTotal) . ' total backup');
+    &log(INFO, 'total backup size: ' . file_size_format($lSizeTotal));
 }
 
 ####################################################################################################################################
@@ -552,6 +552,9 @@ sub backup
 {
     my $strDbClusterPath = shift;
     my $bStartFast = shift;
+
+    # Backup start
+    &log(INFO, "backup start: type = ${strType}");
 
     # Record timestamp start
     my $strTimestampStart = timestamp_string_get();
@@ -863,6 +866,9 @@ sub backup
     # Create a link to the most recent backup
     $oFile->remove(PATH_BACKUP_CLUSTER, "latest");
     $oFile->link_create(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
+
+    # Backup stop
+    &log(INFO, 'backup stop');
 }
 
 ####################################################################################################################################

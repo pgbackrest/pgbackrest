@@ -4,6 +4,7 @@ run 006 - rmt 1, cmp 0, hardlink 1
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = full
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -26,7 +27,7 @@ full backup
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/common/base/base1.txt (4B, 100%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     manifest saved
-  INFO: 7B total backup
+  INFO: total backup size: 7B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
@@ -34,12 +35,14 @@ full backup
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 full backup (resume)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = full
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -62,13 +65,14 @@ full backup (resume)
   INFO: backup file [TEST_PATH]/db/common/PG_VERSION (3B, 42%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->hash: backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt, compressed = false, hash_type = sha1
   INFO: checksum resumed file [TEST_PATH]/db/common/base/base1.txt (4B, 100%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-  INFO: 7B total backup
+  INFO: total backup size: 7B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
@@ -114,6 +118,7 @@ restore delta, backup '[BACKUP_LABEL]' (add and delete files)
 incr backup (add tablespace 1)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = incr
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -150,19 +155,21 @@ incr backup (add tablespace 1)
  DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1, mode [undef]
  DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/1
   INFO: backup file [TEST_PATH]/db/tablespace/ts1/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
-  INFO: 18B total backup
+  INFO: total backup size: 18B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 incr backup (resume and add tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = incr
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -212,19 +219,21 @@ incr backup (resume and add tablespace 2)
  DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
  DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
   INFO: backup file [TEST_PATH]/db/tablespace/ts2/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: 25B total backup
+  INFO: total backup size: 25B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 diff backup (cannot resume - new diff)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = diff
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -271,19 +280,21 @@ diff backup (cannot resume - new diff)
  DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
  DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
   INFO: backup file [TEST_PATH]/db/tablespace/ts2/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: 25B total backup
+  INFO: total backup size: 25B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 diff backup (cannot resume - disabled)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = diff
  DEBUG:     cluster path is [TEST_PATH]/db/common
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -330,13 +341,14 @@ diff backup (cannot resume - disabled)
  DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2, mode [undef]
  DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2
   INFO: backup file [TEST_PATH]/db/tablespace/ts2/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: 25B total backup
+  INFO: total backup size: 25B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
@@ -447,6 +459,7 @@ restore, backup '[BACKUP_LABEL]', remap (remap all paths)
 incr backup (add files and remove tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = incr
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -487,19 +500,21 @@ incr backup (add files and remove tablespace 2)
  DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt, source_compressed = false, destination_compress = false, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
-  INFO: 13B total backup
+  INFO: total backup size: 13B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 incr backup (update files)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = incr
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -540,19 +555,21 @@ incr backup (update files)
  DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base1.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt, source_compressed = false, destination_compress = false, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/common-2/base/base1.txt (8B, 100%) checksum 9a53d532e27785e681766c98516a5e93f096a501
-  INFO: 8B total backup
+  INFO: total backup size: 8B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 diff backup (no updates)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = diff
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -595,19 +612,21 @@ diff backup (no updates)
  DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt, source_compressed = false, destination_compress = false, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2b.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
-  INFO: 39B total backup
+  INFO: total backup size: 39B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 incr backup (remove files - but won't affect manifest)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = incr
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -654,12 +673,14 @@ incr backup (remove files - but won't affect manifest)
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 diff backup (remove files during backup)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = diff
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -698,19 +719,21 @@ diff backup (remove files during backup)
  DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt, source_compressed = false, destination_compress = false, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt (12B, 100%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: 31B total backup
+  INFO: total backup size: 31B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = full
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -747,19 +770,21 @@ full backup
  DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt, source_compressed = false, destination_compress = false, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/tablespace/2/tablespace2c.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/tablespace/ts2-2/tablespace2c.txt (12B, 100%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: 42B total backup
+  INFO: total backup size: 42B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 
 diff backup (add files)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: type = diff
  DEBUG:     cluster path is [TEST_PATH]/db/common-2
  DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
@@ -800,13 +825,14 @@ diff backup (add files)
  DEBUG:     File->copy:  remote db:absolute:[TEST_PATH]/db/common-2/base/base2.txt to local backup:tmp:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt, source_compressed = false, destination_compress = false, ignore_missing_source = true, destination_path_create = true, modification_time = [MODIFICATION_TIME], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/backrest/temp/db.tmp/file.tmp to absolute:[TEST_PATH]/backrest/temp/db.tmp/base/base/base2.txt, destination_path_create = true
   INFO: backup file [TEST_PATH]/db/common-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-  INFO: 9B total backup
+  INFO: total backup size: 9B
   INFO: new backup label: [BACKUP_LABEL]
  DEBUG:     moving [TEST_PATH]/backrest/temp/db.tmp to [TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->move: backup:tmp to backup:cluster:[BACKUP_LABEL], destination_path_create = false
  DEBUG:     File->remove: backup:cluster:[TEST_PATH]/backrest/backup/db/latest
  DEBUG:     File->link_create: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL] to backup:cluster:[TEST_PATH]/backrest/backup/db/latest, hard = false, relative = true, destination_path_create = true
  DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, mode [undef]
+  INFO: backup stop
   INFO: archive rentention type not set - archive logs will not be expired
  DEBUG:     safe exit called, terminating threads
 

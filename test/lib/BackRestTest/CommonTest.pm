@@ -936,6 +936,7 @@ sub BackRestTestCommon_ConfigCreate
         }
 
         $oParamHash{'global:backup'}{'archive-copy'} = 'y';
+        $oParamHash{'global:backup'}{'start-fast'} = 'y';
     }
 
     if (defined($bCompress) && !$bCompress)

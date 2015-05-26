@@ -177,8 +177,12 @@ sub backup_start
         $bStartFast = false;
     }
 
+    &log(INFO, "executing pg_start_backup() with label \"${strLabel}\": backup will begin after " .
+               ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
+
     my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
-                                    "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
+                                    "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), " .
+                                    "pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
                                     ($bStartFast ? ', true' : '') . ') as xlog) to stdout')));
 
     return $stryField[1], $stryField[0];
@@ -190,6 +194,8 @@ sub backup_start
 sub backup_stop
 {
     my $self = shift;
+
+    &log(INFO, 'executing pg_stop_backup() and waiting for all WAL segments to be archived');
 
     my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
                                     "copy (select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout")));
