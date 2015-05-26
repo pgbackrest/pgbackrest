@@ -699,6 +699,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
+						<text>Various command behavior and help fixes.  Reported by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
 						<text>Replaced JSON module with JSON::PP which ships with core Perl.</text>
 					</release-feature>
 				</release-feature-bullet-list>

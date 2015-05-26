@@ -743,6 +743,8 @@ example: db-path=/data/db
 
 * Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.
 
+* Various command behavior and help fixes.  Reported by Michael Renner.
+
 * Replaced JSON module with JSON::PP which ships with core Perl.
 
 ### v0.65: Improved resume and restore logging, compact restores

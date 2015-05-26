@@ -1048,6 +1048,10 @@ sub configLoad
         }
     }
 
+    # Add help and version options
+    $oOptionAllow{'help'} = 'help';
+    $oOptionAllow{'version'} = 'version';
+
     # Get command-line options
     use Getopt::Long qw(GetOptions);
     my %oOptionTest;
@@ -1140,7 +1144,7 @@ sub optionValid
         $strOperation ne OP_RESTORE &&
         $strOperation ne OP_EXPIRE)
     {
-        confess &log(ERROR, "invalid operation ${strOperation}");
+        confess &log(ERROR, "invalid operation ${strOperation}", ERROR_OPERATION_INVALID);
     }
 
     # Set the operation section - because of the various archive commands this is not always the operation
