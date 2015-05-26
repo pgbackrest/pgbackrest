@@ -50,17 +50,13 @@ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-
 sudo apt-get update
 
 apt-get install postgresql-9.3
-apt-get install postgresql-server-dev-9.3
 ```
 * Install required Perl modules:
 ```
-cpanm JSON::PP
 cpanm Net::OpenSSH
 cpanm IPC::System::Simple
-cpanm Digest::SHA
-cpanm Compress::Zlib
-cpanm threads (update this package)
-cpanm Thread::Queue (update this package)
+cpanm threads (update this package when thread-max > 1)
+cpanm Thread::Queue (update this package when thread-max > 1)
 ```
 * Install PgBackRest
 
@@ -69,6 +65,13 @@ PgBackRest can be installed by downloading the most recent release:
 https://github.com/pgmasters/backrest/releases
 
 PgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
+
+* Install PostgreSQL development libraries and additional Perl modules for regression tests:
+```
+apt-get install postgresql-server-dev-9.4
+cpanm DBI
+cpanm DBD:Pg
+```
 
 ## Operation
 
@@ -685,7 +688,7 @@ example: retention-diff=3
 
 ##### `retention-archive-type` key
 
-Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by `archive-retention`.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by `archive-retention`.
+Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by `retention-archive`.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by `retention-archive`.
 
 If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.
 ```
@@ -734,7 +737,9 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
 
-* Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created.
+* Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner
+
+* Replaced JSON module with JSON::PP which ships with core Perl.
 
 ### v0.65: Improved resume and restore logging, compact restores
 

@@ -52,17 +52,13 @@
 						sudo apt-get update
 
 						apt-get install postgresql-9.3
-						apt-get install postgresql-server-dev-9.3
 					</code-block>
 					* Install required Perl modules:
 					<code-block>
-						cpanm JSON::PP
 						cpanm Net::OpenSSH
 						cpanm IPC::System::Simple
-						cpanm Digest::SHA
-						cpanm Compress::Zlib
-						cpanm threads (update this package)
-						cpanm Thread::Queue (update this package)
+						cpanm threads (update this package when thread-max > 1)
+						cpanm Thread::Queue (update this package when thread-max > 1)
 					</code-block>
 					* Install PgBackRest
 
@@ -70,7 +66,14 @@
 
 					https://github.com/pgmasters/backrest/releases
 
-					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.</text>
+					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
+
+					* Install <postgres/> development libraries and additional Perl modules for regression tests:
+					<code-block>
+						apt-get install postgresql-server-dev-9.4
+						cpanm DBI
+						cpanm DBD:Pg
+				</code-block></text>
 			</install-system>
 		</install-system-list>
 	</install>
@@ -636,7 +639,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION-TYPE KEY -->
 					<config-key id="retention-archive-type">
-						<text>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <setting>archive-retention</setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <setting>archive-retention</setting>.
+						<text>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <setting>retention-archive</setting>.
 
 						If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.</text>
 
@@ -687,7 +690,10 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.75" title="IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created.</text>
+						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner</text>
+					</release-feature>
+					<release-feature>
+						<text>Replaced JSON module with JSON::PP which ships with core Perl.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
