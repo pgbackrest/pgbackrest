@@ -453,7 +453,7 @@ sub log
         $strMessageFormat = '(undefined)';
     }
 
-    $strMessageFormat = (defined($iCode) ? "[${iCode}] " : '') . $strMessageFormat;
+    $strMessageFormat = (defined($iCode) ? "[${iCode}]: " : '') . $strMessageFormat;
 
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
     if ($strLevel eq TRACE || $strLevel eq TEST)

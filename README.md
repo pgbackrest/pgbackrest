@@ -745,6 +745,8 @@ example: db-path=/data/db
 
 * Various command behavior and help fixes.  Reported by Michael Renner.
 
+* Fixed an issue in async archiving where archive-push was not properly returning 0 when archive-max-mb was reached.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.
+
 * Replaced JSON module with JSON::PP which ships with core Perl.
 
 ### v0.65: Improved resume and restore logging, compact restores

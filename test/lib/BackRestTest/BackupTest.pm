@@ -1523,13 +1523,15 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test archive-push
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($strTest eq 'all' || $strTest eq 'archive-push')
+    $strThisTest = 'archive-push';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
     {
         $iRun = 0;
         $bCreate = true;
         my $oFile;
 
-        &log(INFO, "Test archive-push\n");
+        &log(INFO, "Test ${strThisTest}\n");
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -1540,7 +1542,9 @@ sub BackRestTestBackup_Test
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
                                             "rmt ${bRemote}, cmp ${bCompress}, " .
-                                            "arc_async ${bArchiveAsync}")) {next}
+                                            "arc_async ${bArchiveAsync}",
+                                            $iThreadMax == 1 ? $strModule : undef,
+                                            $iThreadMax == 1 ? $strThisTest: undef)) {next}
 
                 # Create the file object
                 if ($bCreate)
@@ -1642,10 +1646,11 @@ sub BackRestTestBackup_Test
                             BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
                                                        ERROR_ARCHIVE_DUPLICATE);
 
-                            if ($bArchiveAsync && $bRemote)
+                            if ($bArchiveAsync)
                             {
-                                my $strDuplicateWal = BackRestTestCommon_LocalPathGet() . "/archive/${strStanza}/out/" .
-                                                      "${strArchiveFile}-1c7e00fd09b9dd11fc2966590b3e3274645dd031";
+                                my $strDuplicateWal =
+                                    ($bRemote ? BackRestTestCommon_LocalPathGet() : BackRestTestCommon_RepoPathGet()) .
+                                    "/archive/${strStanza}/out/${strArchiveFile}-1c7e00fd09b9dd11fc2966590b3e3274645dd031";
 
                                 unlink ($strDuplicateWal)
                                         or confess "unable to remove duplicate WAL segment created for testing: ${strDuplicateWal}";
@@ -1686,16 +1691,183 @@ sub BackRestTestBackup_Test
         }
     }
 
+
     #-------------------------------------------------------------------------------------------------------------------------------
-    # Test archive-get
+    # Test archive-stop
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($strTest eq 'all' || $strTest eq 'archive-get')
+    $strThisTest = 'archive-stop';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
     {
         $iRun = 0;
         $bCreate = true;
         my $oFile;
 
-        &log(INFO, "Test archive-get\n");
+        &log(INFO, "Test ${strThisTest}\n");
+
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        {
+            for (my $bCompress = false; $bCompress <= true; $bCompress++)
+            {
+            for (my $iError = 0; $iError <= $bRemote; $iError++)
+            {
+                # Increment the run, log, and decide whether this unit test should be run
+                if (!BackRestTestCommon_Run(++$iRun,
+                                            "rmt ${bRemote}, cmp ${bCompress}" .
+                                            ', error ' . ($iError ? 'connect' : 'version'),
+                                            $iThreadMax == 1 ? $strModule : undef,
+                                            $iThreadMax == 1 ? $strThisTest: undef)) {next}
+
+                # Create the file object
+                if ($bCreate)
+                {
+                    $oFile = (new BackRest::File
+                    (
+                        $strStanza,
+                        BackRestTestCommon_RepoPathGet(),
+                        $bRemote ? 'backup' : undef,
+                        $bRemote ? $oRemote : $oLocal
+                    ))->clone();
+
+                    $bCreate = false;
+                }
+
+                # Create the test directory
+                BackRestTestBackup_Create($bRemote, false);
+
+                BackRestTestCommon_ConfigCreate('db',
+                                                ($bRemote ? BACKUP : undef),
+                                                $bCompress,
+                                                undef,      # checksum
+                                                undef,      # hardlink
+                                                undef,      # thread-max
+                                                true,       # archive-async
+                                                undef);
+
+                my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                                 '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push';
+
+                # &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
+                #            ', archive ' .sprintf('%02x', $iArchive) .
+                #            " - ${strArchiveFile}");
+
+                my $strSourceFile = "${strXlogPath}/000000010000000100000001";
+
+                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                             false,                                 # Source is not compressed
+                             false,                                 # Destination is not compressed
+                             undef, undef, undef,                   # Unused params
+                             true);                                 # Create path if it does not exist
+
+                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+
+                # load the archive info file so it can be munged for testing
+                my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
+                my %oInfo;
+                BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
+                my $strDbVersion = $oInfo{database}{version};
+                my $ullDbSysId = $oInfo{database}{'system-id'};
+
+                # Break the database version
+                if ($iError == 0)
+                {
+                    $oInfo{database}{version} = '8.0';
+                    BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                }
+                else
+                {
+                    $strCommand .= "  --backup-host=bogus";
+                }
+
+                $strSourceFile = "${strXlogPath}/000000010000000100000002";
+
+                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                             false,                                 # Source is not compressed
+                             false,                                 # Destination is not compressed
+                             undef, undef, undef,                   # Unused params
+                             true);                                 # Create path if it does not exist
+
+                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
+                                           $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
+
+                $strSourceFile = "${strXlogPath}/000000010000000100000003";
+
+                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                             false,                                 # Source is not compressed
+                             false,                                 # Destination is not compressed
+                             undef, undef, undef,                   # Unused params
+                             true);                                 # Create path if it does not exist
+
+                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
+                                           $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
+
+                $strSourceFile = "${strXlogPath}/000000010000000100000004";
+
+                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                             false,                                 # Source is not compressed
+                             false,                                 # Destination is not compressed
+                             undef, undef, undef,                   # Unused params
+                             true);                                 # Create path if it does not exist
+
+                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+
+                # Fix the database version and remove stop file
+                if ($iError == 0)
+                {
+                    $oInfo{database}{version} = '9.3';
+                    BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                }
+                else
+                {
+                    $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                                 '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push';
+                }
+
+                my $strStopFile = ($bRemote ? BackRestTestCommon_LocalPathGet() : BackRestTestCommon_RepoPathGet()) .
+                                  '/lock/db-archive.stop';
+
+                unlink($strStopFile)
+                    or die "unable to remove stop file ${strStopFile}";
+
+                $strSourceFile = "${strXlogPath}/000000010000000100000005";
+
+                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                             false,                                 # Source is not compressed
+                             false,                                 # Destination is not compressed
+                             undef, undef, undef,                   # Unused params
+                             true);                                 # Create path if it does not exist
+
+                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+            }
+            }
+
+            $bCreate = true;
+        }
+
+        if (BackRestTestCommon_Cleanup())
+        {
+            &log(INFO, 'cleanup');
+            BackRestTestBackup_Drop(true);
+        }
+    }
+
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # Test archive-get
+    #-------------------------------------------------------------------------------------------------------------------------------
+    $strThisTest = 'archive-get';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
+    {
+        $iRun = 0;
+        $bCreate = true;
+        my $oFile;
+
+        &log(INFO, "Test ${strThisTest}\n");
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -1705,7 +1877,9 @@ sub BackRestTestBackup_Test
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}")) {next}
+                                            "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}",
+                                            $iThreadMax == 1 ? $strModule : undef,
+                                            $iThreadMax == 1 ? $strThisTest: undef)) {next}
 
                 # Create the test directory
                 if ($bCreate)

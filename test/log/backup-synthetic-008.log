@@ -367,7 +367,7 @@ restore, backup '[BACKUP_LABEL]', expect exit 115 (fail on used path)
   INFO: checking/cleaning db path [TEST_PATH]/db/common
  DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common
  DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common
- ERROR: [115] cannot restore to path '[TEST_PATH]/db/common' that contains files - try using --delta if this is what you intended
+ ERROR: [115]: cannot restore to path '[TEST_PATH]/db/common' that contains files - try using --delta if this is what you intended
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on undef format)
@@ -378,7 +378,7 @@ restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on undef format)
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
- ERROR: [104] backup format of [TEST_PATH]/db/common/backup.manifest is 0 but 3 is required by this version of PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  If you are trying to restore, you''ll need to use a version that supports format 0.
+ ERROR: [104]: backup format of [TEST_PATH]/db/common/backup.manifest is 0 but 3 is required by this version of PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  If you are trying to restore, you''ll need to use a version that supports format 0.
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on mismatch format)
@@ -389,7 +389,7 @@ restore, backup '[BACKUP_LABEL]', expect exit 104 (fail on mismatch format)
  DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]
  DEBUG:     File->copy:  remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP_LABEL]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
  DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
- ERROR: [104] backup format of [TEST_PATH]/db/common/backup.manifest is 0 but 3 is required by this version of PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  If you are trying to restore, you''ll need to use a version that supports format 0.
+ ERROR: [104]: backup format of [TEST_PATH]/db/common/backup.manifest is 0 but 3 is required by this version of PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  If you are trying to restore, you''ll need to use a version that supports format 0.
  DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP_LABEL]', remap (remap all paths)

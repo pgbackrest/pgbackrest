@@ -356,8 +356,11 @@ sub pushProcess
         {
             if (-e $strStopFile)
             {
-                &log(ERROR, "archive stop file (${strStopFile}) exists , discarding " . basename($ARGV[1]));
-                remote_exit(0);
+                &log(ERROR, "discarding " . basename($ARGV[1]) .
+                            " due to the archive store max size exceeded" .
+                            " - remove the archive stop file (${strStopFile}) to resume archiving" .
+                            " and be sure to take a new backup as soon as possible");
+                return 0;
             }
         }
 
@@ -458,7 +461,7 @@ sub push
     my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
 
     # Check that there are no issues with pushing this WAL segment
-    if ($bArchiveFile)
+    if ($bArchiveFile && !$bAsync)
     {
         my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
         $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strDbVersion, $ullDbSysId);
@@ -564,13 +567,13 @@ sub xfer
     my $strArchivePath = shift;
     my $strStopFile = shift;
 
-    # Create the file object
+    # Create a local file object to read archive logs in the local store
     my $oFile = new BackRest::File
     (
         optionGet(OPTION_STANZA),
-        optionRemoteTypeTest(NONE) ? optionGet(OPTION_REPO_PATH) : optionGet(OPTION_REPO_REMOTE_PATH),
-        optionRemoteType(),
-        optionRemote()
+        optionGet(OPTION_REPO_PATH),
+        NONE,
+        optionRemote(true)
     );
 
     # Load the archive manifest - all the files that need to be pushed
@@ -600,7 +603,7 @@ sub xfer
 
         if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
         {
-            &log(ERROR, "local archive store has exceeded limit of ${iArchiveMaxMB}MB, archive logs will be discarded");
+            &log(ERROR, "local archive store max size has exceeded limit of ${iArchiveMaxMB}MB, archive logs will be discarded");
 
             my $hStopFile;
             open($hStopFile, '>', $strStopFile) or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
@@ -613,6 +616,18 @@ sub xfer
         &log(DEBUG, 'no archive logs to be copied to backup');
 
         return 0;
+    }
+
+    # If the archive repo is remote create a new file object to do the copies
+    if (!optionRemoteTypeTest(NONE))
+    {
+        $oFile = new BackRest::File
+        (
+            optionGet(OPTION_STANZA),
+            optionGet(OPTION_REPO_REMOTE_PATH),
+            optionRemoteType(),
+            optionRemote()
+        );
     }
 
     # Modify process name to indicate async archiving
