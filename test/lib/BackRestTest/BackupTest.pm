@@ -1757,23 +1757,35 @@ sub BackRestTestBackup_Test
                                                 true,       # archive-async
                                                 undef);
 
-                my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                                 '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push';
+                # Helper function to push archive logs
+                sub archivePush
+                {
+                    my $oFile = shift;
+                    my $strXlogPath = shift;
+                    my $strArchiveTestFile = shift;
+                    my $iArchiveNo = shift;
+                    my $iExpectedError = shift;
 
-                # &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
-                #            ', archive ' .sprintf('%02x', $iArchive) .
-                #            " - ${strArchiveFile}");
+                    my $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
-                my $strSourceFile = "${strXlogPath}/000000010000000100000001";
+                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                                 false,                                 # Source is not compressed
+                                 false,                                 # Destination is not compressed
+                                 undef, undef, undef,                   # Unused params
+                                 true);                                 # Create path if it does not exist
 
-                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                             false,                                 # Source is not compressed
-                             false,                                 # Destination is not compressed
-                             undef, undef, undef,                   # Unused params
-                             true);                                 # Create path if it does not exist
+                    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                                     '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push' .
+                                     (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ?
+                                      "  --backup-host=bogus" : '');
 
-                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+                    BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
+                                               $iExpectedError);
+                }
+
+                # Push a WAL segment
+                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 1);
 
                 # load the archive info file so it can be munged for testing
                 my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
@@ -1788,74 +1800,34 @@ sub BackRestTestBackup_Test
                     $oInfo{database}{version} = '8.0';
                     BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
                 }
-                else
-                {
-                    $strCommand .= "  --backup-host=bogus";
-                }
 
-                $strSourceFile = "${strXlogPath}/000000010000000100000002";
+                # Push two more segments with errors to exceed archive-max-mb
+                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 2,
+                            $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
 
-                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                             false,                                 # Source is not compressed
-                             false,                                 # Destination is not compressed
-                             undef, undef, undef,                   # Unused params
-                             true);                                 # Create path if it does not exist
+                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 3,
+                            $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
 
-                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
-                                           $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
+                # Now this segment will get dropped
+                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 4);
 
-                $strSourceFile = "${strXlogPath}/000000010000000100000003";
-
-                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                             false,                                 # Source is not compressed
-                             false,                                 # Destination is not compressed
-                             undef, undef, undef,                   # Unused params
-                             true);                                 # Create path if it does not exist
-
-                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
-                                           $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
-
-                $strSourceFile = "${strXlogPath}/000000010000000100000004";
-
-                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                             false,                                 # Source is not compressed
-                             false,                                 # Destination is not compressed
-                             undef, undef, undef,                   # Unused params
-                             true);                                 # Create path if it does not exist
-
-                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
-
-                # Fix the database version and remove stop file
+                # Fix the database version
                 if ($iError == 0)
                 {
                     $oInfo{database}{version} = '9.3';
                     BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
                 }
-                else
-                {
-                    $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                                 '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push';
-                }
 
+                # Remove the stop file
                 my $strStopFile = ($bRemote ? BackRestTestCommon_LocalPathGet() : BackRestTestCommon_RepoPathGet()) .
                                   '/lock/db-archive.stop';
 
                 unlink($strStopFile)
                     or die "unable to remove stop file ${strStopFile}";
 
-                $strSourceFile = "${strXlogPath}/000000010000000100000005";
-
-                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                             PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                             false,                                 # Source is not compressed
-                             false,                                 # Destination is not compressed
-                             undef, undef, undef,                   # Unused params
-                             true);                                 # Create path if it does not exist
-
-                BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+                # Push two more segments - only #4 should be missing from the archive at the end
+                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 5);
+                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 6);
             }
             }
 

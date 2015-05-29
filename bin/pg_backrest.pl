@@ -300,5 +300,5 @@ if ($@)
     }
 
     safe_exit();
-    confess $@;
+    confess $oMessage;
 }

@@ -618,22 +618,8 @@ sub xfer
         {
             CORE::push(@stryFile, $strFile);
 
-            $lFileSize += $oManifestHash{name}{"${strFile}"}{size};
+            $lFileSize += $oManifestHash{name}{$strFile}{size};
             $lFileTotal++;
-        }
-    }
-
-    if (optionTest(OPTION_ARCHIVE_MAX_MB))
-    {
-        my $iArchiveMaxMB = optionGet(OPTION_ARCHIVE_MAX_MB);
-
-        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
-        {
-            &log(ERROR, "local archive store max size has exceeded limit of ${iArchiveMaxMB}MB, archive logs will be discarded");
-
-            my $hStopFile;
-            open($hStopFile, '>', $strStopFile) or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
-            close($hStopFile);
         }
     }
 
@@ -644,74 +630,105 @@ sub xfer
         return 0;
     }
 
-    # If the archive repo is remote create a new file object to do the copies
-    if (!optionRemoteTypeTest(NONE))
+    eval
     {
-        $oFile = new BackRest::File
-        (
-            optionGet(OPTION_STANZA),
-            optionGet(OPTION_REPO_REMOTE_PATH),
-            optionRemoteType(),
-            optionRemote()
-        );
+        # If the archive repo is remote create a new file object to do the copies
+        if (!optionRemoteTypeTest(NONE))
+        {
+            $oFile = new BackRest::File
+            (
+                optionGet(OPTION_STANZA),
+                optionGet(OPTION_REPO_REMOTE_PATH),
+                optionRemoteType(),
+                optionRemote()
+            );
+        }
+
+        # Modify process name to indicate async archiving
+        $0 = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA) .
+             "archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
+
+        # Output files to be moved to backup
+        &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
+
+        # Transfer each file
+        foreach my $strFile (sort @stryFile)
+        {
+            # Construct the archive filename to backup
+            my $strArchiveFile = "${strArchivePath}/${strFile}";
+
+            # Determine if the source file is already compressed
+            my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
+
+            # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
+            my $bArchiveFile = basename($strFile) =~
+                "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
+
+            # Figure out whether the compression extension needs to be added or removed
+            my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
+            my $strDestinationFile = basename($strFile);
+
+            if (!$bSourceCompressed && $bDestinationCompress)
+            {
+                $strDestinationFile .= ".$oFile->{strCompressExtension}";
+            }
+            elsif ($bSourceCompressed && !$bDestinationCompress)
+            {
+                $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+            }
+
+            &log(DEBUG, "archive ${strFile}, is WAL ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
+                        "destination_compress ${bDestinationCompress}, default_compress = " . optionGet(OPTION_COMPRESS));
+
+            # Check that there are no issues with pushing this WAL segment
+            if ($bArchiveFile)
+            {
+                my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
+                $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strArchiveFile, $strDbVersion, $ullDbSysId);
+            }
+
+            # Copy the archive file
+            $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
+                         PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
+                         $bSourceCompressed,                        # Source is not compressed
+                         $bDestinationCompress,                     # Destination compress is configurable
+                         undef, undef, undef,                       # Unused params
+                         true);                                     # Create path if it does not exist
+
+            #  Remove the source archive file
+            unlink($strArchiveFile)
+                or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
+                                       'This file will need to be cleaned up manually.  If the problem persists, check if ' .
+                                       OP_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+
+            # Remove the copied segment from the total size
+            $lFileSize -= $oManifestHash{name}{$strFile}{size};
+        }
+    };
+
+    my $oException = $@;
+
+    # Create a stop file if the archive store exceeds the max even after xfer
+    if (optionTest(OPTION_ARCHIVE_MAX_MB))
+    {
+        my $iArchiveMaxMB = optionGet(OPTION_ARCHIVE_MAX_MB);
+
+        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
+        {
+            &log(ERROR, "local archive store max size has exceeded limit of ${iArchiveMaxMB}MB" .
+                        " - WAL segments will be discarded until the stop file (${strStopFile}) is removed");
+
+            my $hStopFile;
+            open($hStopFile, '>', $strStopFile)
+                or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
+            close($hStopFile);
+        }
     }
 
-    # Modify process name to indicate async archiving
-    $0 = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA) .
-         "archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
-
-    # Output files to be moved to backup
-    &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
-
-    # Transfer each file
-    foreach my $strFile (sort @stryFile)
+    # If there was an exception before throw it now
+    if ($oException)
     {
-        # Construct the archive filename to backup
-        my $strArchiveFile = "${strArchivePath}/${strFile}";
-
-        # Determine if the source file is already compressed
-        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
-
-        # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-        my $bArchiveFile = basename($strFile) =~
-            "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
-
-        # Figure out whether the compression extension needs to be added or removed
-        my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
-        my $strDestinationFile = basename($strFile);
-
-        if (!$bSourceCompressed && $bDestinationCompress)
-        {
-            $strDestinationFile .= ".$oFile->{strCompressExtension}";
-        }
-        elsif ($bSourceCompressed && !$bDestinationCompress)
-        {
-            $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
-        }
-
-        &log(DEBUG, "archive ${strFile}, is WAL ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
-                    "destination_compress ${bDestinationCompress}, default_compress = " . optionGet(OPTION_COMPRESS));
-
-        # Check that there are no issues with pushing this WAL segment
-        if ($bArchiveFile)
-        {
-            my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-            $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strArchiveFile, $strDbVersion, $ullDbSysId);
-        }
-
-        # Copy the archive file
-        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
-                     PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
-                     $bSourceCompressed,                        # Source is not compressed
-                     $bDestinationCompress,                     # Destination compress is configurable
-                     undef, undef, undef,                       # Unused params
-                     true);                                     # Create path if it does not exist
-
-        #  Remove the source archive file
-        unlink($strArchiveFile)
-            or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
-                                   'This file will need to be cleaned up manually.  If the problem persists, check if ' .
-                                   OP_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+        confess $oException;
     }
 
     # Return number of files indicating that processing should continue
