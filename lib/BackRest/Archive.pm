@@ -537,16 +537,22 @@ sub pushCheck
         {
             ini_load($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
 
+            my $strError = undef;
+
             if ($oDbConfig{database}{'version'} ne $strDbVersion)
             {
-                confess &log(ERROR, "WAL segment version ${strDbVersion} " .
-                             "does not match archive version $oDbConfig{database}{'version'}", ERROR_ARCHIVE_MISMATCH);
+                $strError = "WAL segment version ${strDbVersion} does not match archive version $oDbConfig{database}{'version'}";
             }
 
             if ($oDbConfig{database}{'system-id'} ne $ullDbSysId)
             {
-                confess &log(ERROR, "WAL segment system-id ${ullDbSysId} " .
-                             "does not match archive system-id $oDbConfig{database}{'system-id'}", ERROR_ARCHIVE_MISMATCH);
+                $strError = "WAL segment system-id ${ullDbSysId} does not match" .
+                            " archive system-id $oDbConfig{database}{'system-id'}";
+            }
+
+            if (defined($strError))
+            {
+                confess &log(ERROR, "${strError}\nHINT: are you archiving to the correct stanza?", ERROR_ARCHIVE_MISMATCH);
             }
         }
         # Else create the info file from the current WAL segment
@@ -575,8 +581,8 @@ sub pushCheck
             confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
         }
 
-        &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum" .
-                   " - this is valid in some recovery scenarios but may also indicate a problem");
+        &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
+                   "HINT: this is valid in some recovery scenarios but may also indicate a problem");
 
         return undef;
     }

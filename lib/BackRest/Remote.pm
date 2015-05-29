@@ -1083,8 +1083,8 @@ sub output_read
     # Raise any errors
     if ($bError)
     {
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : '') .
-                            (defined($strOutput) ? ": ${strOutput}" : ''), $iErrorCode, $bSuppressLog);
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') .
+                            (defined($strOutput) ? "${strOutput}" : ''), $iErrorCode, $bSuppressLog);
     }
 
     # If output is required and there is no output, raise exception

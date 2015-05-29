@@ -879,7 +879,7 @@ sub owner
     my $strOperation = OP_FILE_OWNER;
     my $strDebug = "${strPathType}:${strFileOp}, " .
                    'user = ' . (defined($strUser) ? $strUser : '[undef]') .
-                   'group = ' . (defined($strGroup) ? $strGroup : '[undef]');
+                   ', group = ' . (defined($strGroup) ? $strGroup : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))

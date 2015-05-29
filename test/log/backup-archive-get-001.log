@@ -3,8 +3,8 @@ run 001 - rmt 0, cmp 0, exists 0
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: getting WAL segment 000000090000000900000009
- DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
- DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000900000009
-  INFO: 000000090000000900000009 was not found in the archive repository
- DEBUG:     safe exit called, terminating threads
+ INFO: getting WAL segment 000000090000000900000009
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000900000009
+ INFO: 000000090000000900000009 was not found in the archive repository
+DEBUG:     safe exit called, terminating threads
