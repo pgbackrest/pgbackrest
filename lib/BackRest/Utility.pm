@@ -468,8 +468,13 @@ sub log
         $strMessageFormat =~ s/\n/\n    /g;
         $strMessageFormat = '    ' . $strMessageFormat;
     }
-    elsif ($strLevel eq ERROR && defined($iCode))
+    elsif ($strLevel eq ERROR)
     {
+        if (!defined($iCode))
+        {
+            $iCode = ERROR_UNKNOWN;
+        }
+
         $strMessageFormat =~ s/\n/\n       /g;
     }
 
@@ -509,7 +514,8 @@ sub log
             {
                 print $hLogFile $strMessageFormat;
 
-                if ($strLevel eq ERROR || $strLevel eq ASSERT)
+                if ($strLevel eq ASSERT ||
+                    ($strLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
                 {
                     my $strStackTrace = longmess() . "\n";
                     $strStackTrace =~ s/\n/\n                                   /g;

@@ -745,7 +745,7 @@ example: db-path=/data/db
 
 * Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.
 
-* Various command behavior and help fixes.  Reported by Michael Renner.
+* Various command behavior, help and logging fixes.  Reported by Michael Renner.
 
 * Fixed an issue in async archiving where archive-push was not properly returning 0 when archive-max-mb was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.
 
