@@ -140,7 +140,8 @@ sub configLoadExpect
 
             if ($iExpectedError == ERROR_OPTION_REQUIRED)
             {
-                $strError = "backup operation requires option: ${strErrorParam1}";
+                $strError = "${strOperation} operation requires option: ${strErrorParam1}" .
+                            (defined($strErrorParam2) ? "\nHINT: ${strErrorParam2}" : '');
             }
             elsif ($iExpectedError == ERROR_OPERATION_REQUIRED)
             {
@@ -443,7 +444,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, OP_RESTORE, ERROR_OPTION_INVALID_RANGE, '512', OPTION_BUFFER_SIZE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' invalid option' . OPTION_RETENTION_ARCHIVE_TYPE))
+        if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' invalid option ' . OPTION_RETENTION_ARCHIVE_TYPE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -546,6 +547,13 @@ sub BackRestTestConfig_Test
 
             configLoadExpect($oOption, OP_BACKUP);
             optionTestExpect(OPTION_COMMAND_REMOTE, dirname(abs_path($0)) . '/pg_backrest_remote.pl');
+        }
+
+        if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' missing option ' . OPTION_DB_PATH))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+
+            configLoadExpect($oOption, OP_BACKUP, ERROR_OPTION_REQUIRED, OPTION_DB_PATH, 'Does this stanza exist?');
         }
     }
 

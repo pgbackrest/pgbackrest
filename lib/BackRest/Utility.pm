@@ -456,19 +456,21 @@ sub log
     $strMessageFormat = (defined($iCode) ? "[${iCode}]: " : '') . $strMessageFormat;
 
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
+    $strMessageFormat =~ s/\n/\n                                    /g;
+
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
-        $strMessageFormat =~ s/\n/\n                                           /g;
+        $strMessageFormat =~ s/\n/\n        /g;
         $strMessageFormat = '        ' . $strMessageFormat;
     }
     elsif ($strLevel eq DEBUG)
     {
-        $strMessageFormat =~ s/\n/\n                                       /g;
+        $strMessageFormat =~ s/\n/\n    /g;
         $strMessageFormat = '    ' . $strMessageFormat;
     }
-    else
+    elsif ($strLevel eq ERROR && defined($iCode))
     {
-        $strMessageFormat =~ s/\n/\n                                   /g;
+        $strMessageFormat =~ s/\n/\n       /g;
     }
 
     # Format the message text
