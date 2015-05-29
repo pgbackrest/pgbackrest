@@ -8,8 +8,8 @@ DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/00000001
 DEBUG:     File->path_create:  absolute:[TEST_PATH]/backrest/archive/db/out, mode [undef]
 DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/out
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -33,8 +33,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -50,8 +50,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -67,8 +67,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -92,8 +92,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -110,8 +110,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -132,8 +132,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -154,8 +154,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000004, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000004.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -176,8 +176,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -198,8 +198,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -215,8 +215,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -232,8 +232,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -257,8 +257,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -275,8 +275,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -297,8 +297,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000007, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000007.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -319,8 +319,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000008, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000008.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -341,8 +341,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -363,8 +363,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -380,8 +380,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -397,8 +397,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
@@ -422,8 +422,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
 DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, destination_path_create = true
- INFO: No fork on archive local for TESTING
- INFO: starting async archive-push
+DEBUG:     No fork on archive local for TESTING
+DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0

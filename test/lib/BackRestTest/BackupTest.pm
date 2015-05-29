@@ -243,6 +243,7 @@ sub BackRestTestBackup_ClusterStop
 {
     my $strPath = shift;
     my $bImmediate = shift;
+    my $bNoError = shift;
 
     # Set default
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
@@ -251,8 +252,16 @@ sub BackRestTestBackup_ClusterStop
     # Disconnect user session
     BackRestTestBackup_PgDisconnect();
 
-    # Drop the cluster
+    # Stop the cluster
     BackRestTestCommon_ClusterStop($strPath, $bImmediate);
+
+    # Grep for errors in postgresql.log
+    if ((!defined($bNoError) || !$bNoError) &&
+        -e BackRestTestCommon_DbCommonPathGet() . '/postgresql.log')
+    {
+        BackRestTestCommon_Execute('grep ERROR ' . BackRestTestCommon_DbCommonPathGet() . '/postgresql.log',
+                                   undef, undef, undef, 1);
+    }
 }
 
 ####################################################################################################################################
@@ -365,9 +374,10 @@ sub BackRestTestBackup_ClusterCreate
 sub BackRestTestBackup_Drop
 {
     my $bImmediate = shift;
+    my $bNoError = shift;
 
     # Stop the cluster if one is running
-    BackRestTestBackup_ClusterStop(BackRestTestCommon_DbCommonPathGet(), $bImmediate);
+    BackRestTestBackup_ClusterStop(BackRestTestCommon_DbCommonPathGet(), $bImmediate, $bNoError);
 
     # Drop the test path
     BackRestTestCommon_Drop();
@@ -1493,6 +1503,9 @@ sub BackRestTestBackup_Test
 
     # Print test banner
     &log(INFO, 'BACKUP MODULE ******************************************************************');
+
+    # Drop any existing cluster
+    BackRestTestBackup_Drop(true, true);
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
