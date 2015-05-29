@@ -739,6 +739,8 @@ example: db-path=/data/db
 
 * Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner
 
+* Allow duplicate WAL segments to be archived when the checksum matches.  This is necessary for some recovery scenarios.
+
 * Allow comments/disabling in pg_backrest.conf using #.  Suggested by Michael Renner.
 
 * Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.
