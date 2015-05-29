@@ -1489,6 +1489,7 @@ sub BackRestTestBackup_Test
     my $iArchiveMax = 3;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
     my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive2.bin';
+    my $strArchiveTestFile2 = BackRestTestCommon_DataPathGet() . '/test.archive1.bin';
 
     # Print test banner
     &log(INFO, 'BACKUP MODULE ******************************************************************');
@@ -1640,8 +1641,20 @@ sub BackRestTestBackup_Test
                             $oInfo{database}{'system-id'} = $ullDbSysId;
                             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
 
-                            # Now it should break on archive duplication
+                            # Should succeed because checksum is the same
+                            &log(INFO, '        test archive duplicate ok');
+
+                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+
+                            # Now it should break on archive duplication (because checksum is different
                             &log(INFO, '        test archive duplicate error');
+
+                            $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile2, # Source file
+                                         PATH_DB_ABSOLUTE, $strSourceFile,       # Destination file
+                                         false,                                  # Source is not compressed
+                                         false,                                  # Destination is not compressed
+                                         undef, undef, undef,                    # Unused params
+                                         true);                                  # Create path if it does not exist
 
                             BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
                                                        ERROR_ARCHIVE_DUPLICATE);
@@ -1650,7 +1663,7 @@ sub BackRestTestBackup_Test
                             {
                                 my $strDuplicateWal =
                                     ($bRemote ? BackRestTestCommon_LocalPathGet() : BackRestTestCommon_RepoPathGet()) .
-                                    "/archive/${strStanza}/out/${strArchiveFile}-1c7e00fd09b9dd11fc2966590b3e3274645dd031";
+                                    "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
 
                                 unlink ($strDuplicateWal)
                                         or confess "unable to remove duplicate WAL segment created for testing: ${strDuplicateWal}";

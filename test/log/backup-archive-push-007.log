@@ -26,7 +26,17 @@ run 007 - rmt 1, cmp 1, arc_async 0
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
- ERROR: [120]: : WAL segment 000000010000000100000001 already exists in the archive
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
+  WARN: WAL segment 000000010000000100000001 already exists in the archive with the same checksum - this is valid in some recovery scenarios but may also indicate a problem
+ DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     safe exit called, terminating threads
+
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
+ ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
  DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
@@ -75,7 +85,17 @@ run 007 - rmt 1, cmp 1, arc_async 0
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
- ERROR: [120]: : WAL segment 000000010000000100000005 already exists in the archive
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
+  WARN: WAL segment 000000010000000100000005 already exists in the archive with the same checksum - this is valid in some recovery scenarios but may also indicate a problem
+ DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     safe exit called, terminating threads
+
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
+ ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
  DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
@@ -124,5 +144,15 @@ run 007 - rmt 1, cmp 1, arc_async 0
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
- ERROR: [120]: : WAL segment 000000010000000100000009 already exists in the archive
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
+  WARN: WAL segment 000000010000000100000009 already exists in the archive with the same checksum - this is valid in some recovery scenarios but may also indicate a problem
+ DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+ DEBUG:     safe exit called, terminating threads
+
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
+ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
+ ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
  DEBUG:     safe exit called, terminating threads

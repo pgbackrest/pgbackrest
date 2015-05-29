@@ -464,7 +464,7 @@ sub push
     if ($bArchiveFile && !$bAsync)
     {
         my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
-        $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strDbVersion, $ullDbSysId);
+        $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strSourceFile, $strDbVersion, $ullDbSysId);
     }
 
     # Append compression extension
@@ -493,12 +493,14 @@ sub pushCheck
     my $self = shift;
     my $oFile = shift;
     my $strWalSegment = shift;
+    my $strWalFile = shift;
     my $strDbVersion = shift;
     my $ullDbSysId = shift;
 
     # Set operation and debug strings
     my $strOperation = OP_ARCHIVE_PUSH_CHECK;
     &log(DEBUG, "${strOperation}: " . PATH_BACKUP_ARCHIVE . ":${strWalSegment}");
+    my $strChecksum;
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
     {
@@ -513,7 +515,12 @@ sub pushCheck
         &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
 
         # Execute the command
-        $oFile->{oRemote}->command_execute($strOperation, \%oParamHash);
+        $strChecksum = $oFile->{oRemote}->command_execute($strOperation, \%oParamHash, true);
+
+        if ($strChecksum eq 'Y')
+        {
+            undef($strChecksum);
+        }
     }
     else
     {
@@ -551,11 +558,30 @@ sub pushCheck
         }
 
         # Check if the WAL segment already exists in the archive
-        if (defined($self->walFileName($oFile, $strWalSegment)))
+        $strChecksum = $self->walFileName($oFile, $strWalSegment);
+
+        if (defined($strChecksum))
+        {
+            $strChecksum = substr($strChecksum, 25, 40);
+        }
+    }
+
+    if (defined($strChecksum) && defined($strWalFile))
+    {
+        my $strChecksumNew = $oFile->hash(PATH_DB_ABSOLUTE, $strWalFile);
+
+        if ($strChecksumNew ne $strChecksum)
         {
             confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
         }
+
+        &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum" .
+                   " - this is valid in some recovery scenarios but may also indicate a problem");
+
+        return undef;
     }
+
+    return $strChecksum;
 }
 
 ####################################################################################################################################
@@ -670,7 +696,7 @@ sub xfer
         if ($bArchiveFile)
         {
             my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-            $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strDbVersion, $ullDbSysId);
+            $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strArchiveFile, $strDbVersion, $ullDbSysId);
         }
 
         # Copy the archive file

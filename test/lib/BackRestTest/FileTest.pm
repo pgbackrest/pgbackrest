@@ -1153,7 +1153,7 @@ sub BackRestTestFile_Test
 
                     if ($iLarge == 1)
                     {
-                        $strSourceHash = 'c2e63b6a49d53a53d6df1aa6b70c7c16747ca099';
+                        $strSourceHash = '4518a0fdf41d796760b384a358270d4682589820';
                         $iSourceSize = 16777216;
                     }
                     elsif ($iLarge == 2)
