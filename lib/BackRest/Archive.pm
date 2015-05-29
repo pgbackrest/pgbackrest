@@ -385,15 +385,19 @@ sub pushProcess
         # Else the no-fork flag has been specified for testing
         else
         {
-            &log(INFO, 'No fork on archive local for TESTING');
+            &log(DEBUG, 'No fork on archive local for TESTING');
         }
 
         # Start the async archive push
-        &log(INFO, 'starting async archive-push');
+        &log(DEBUG, 'starting async archive-push');
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    lockAcquire(operationGet());
+    if (!lockAcquire(operationGet(), false))
+    {
+        &log(DEBUG, 'another async archive-push process is already running - exiting');
+        return 0;
+    }
 
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');

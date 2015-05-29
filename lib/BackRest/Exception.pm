@@ -38,6 +38,7 @@ use constant
     ERROR_PATH_CREATE                  => 122,
     ERROR_OPERATION_INVALID            => 123,
     ERROR_HOST_CONNECT                 => 124,
+    ERROR_LOCK_ACQUIRE                 => 125,
 
     ERROR_UNKNOWN                      => 199
 };
@@ -47,7 +48,7 @@ our @EXPORT = qw(ERROR_ASSERT ERROR_CHECKSUM ERROR_CONFIG ERROR_FILE_INVALID ERR
                  ERROR_OPTION_DUPLICATE_KEY ERROR_OPTION_NEGATE ERROR_OPTION_REQUIRED ERROR_POSTMASTER_RUNNING ERROR_PROTOCOL
                  ERROR_RESTORE_PATH_NOT_EMPTY ERROR_FILE_OPEN ERROR_FILE_READ ERROR_PARAM_REQUIRED ERROR_ARCHIVE_MISMATCH
                  ERROR_ARCHIVE_DUPLICATE ERROR_VERSION_NOT_SUPPORTED ERROR_PATH_CREATE ERROR_OPERATION_INVALID ERROR_HOST_CONNECT
-                 ERROR_UNKNOWN);
+                 ERROR_UNKNOWN ERROR_LOCK_ACQUIRE);
 
 ####################################################################################################################################
 # CONSTRUCTOR

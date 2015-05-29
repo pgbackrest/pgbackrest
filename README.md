@@ -751,6 +751,8 @@ example: db-path=/data/db
 
 * Fixed an issue in async archiving where archive-push was not properly returning 0 when archive-max-mb was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.
 
+* Fixed a locking issue that could allow multiple operations of the same type against a single stanza.  This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore. Reported by Michael Renner.
+
 * Replaced JSON module with JSON::PP which ships with core Perl.
 
 ### v0.65: Improved resume and restore logging, compact restores
