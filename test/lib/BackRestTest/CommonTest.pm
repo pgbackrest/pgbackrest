@@ -277,7 +277,7 @@ sub BackRestTestCommon_ExecuteBegin
 
     $bFullLog = false;
 
-    if ($strCommandParam =~ /\/bin\/pg_backrest\.pl/)
+    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest\.pl/)
     {
         $strCommandParam = BackRestTestCommon_ExecuteRegAll($strCommandParam);
 
