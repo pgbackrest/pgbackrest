@@ -575,7 +575,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
+    my $strDebug = "${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -1339,7 +1339,7 @@ sub copy
     my $bResult = true;
 
     # Set debug string and log
-    my $strDebug = ($bSourceRemote ? ' remote' : ' local') . " ${strSourcePathType}" .
+    my $strDebug = ($bSourceRemote ? 'remote' : 'local') . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceOp}" : '') .
                    ' to' . ($bDestinationRemote ? ' remote' : ' local') . " ${strDestinationPathType}" .
                    (defined($strDestinationFile) ? ":${strDestinationOp}" : '') .

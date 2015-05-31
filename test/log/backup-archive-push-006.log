@@ -4,8 +4,8 @@ run 006 - rmt 1, cmp 0, arc_async 1
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->path_create:  absolute:[TEST_PATH]/local/archive/db/out, mode [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->path_create: absolute:[TEST_PATH]/local/archive/db/out, mode [undef]
 DEBUG:     File->exists: absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
@@ -14,17 +14,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -39,7 +39,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -54,7 +54,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -65,17 +65,17 @@ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000001 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -90,7 +90,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000002.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -98,17 +98,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000003.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -116,17 +116,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000004, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000004, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000004.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -134,17 +134,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000004
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -152,17 +152,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -177,7 +177,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -192,7 +192,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -203,17 +203,17 @@ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000005 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -228,7 +228,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000006, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000006, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000006.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -236,17 +236,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000007, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000007, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000007.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -254,17 +254,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000007
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000008, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000008, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000008.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -272,17 +272,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000008
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -290,17 +290,17 @@ DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -315,7 +315,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -330,7 +330,7 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -341,17 +341,17 @@ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000009 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     1 WAL segments were transferred, calling Archive->xfer() again
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
-DEBUG:     no more WAL segments to transfer - exiting
+DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009 asynchronously
-DEBUG:     File->copy:  local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000009, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009.tmp to absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push

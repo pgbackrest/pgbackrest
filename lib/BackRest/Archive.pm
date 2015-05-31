@@ -414,11 +414,11 @@ sub pushProcess
 
         if ($iLogTotal > 0)
         {
-            &log(DEBUG, "${iLogTotal} WAL segments were transferred, calling Archive->xfer() again");
+            &log(DEBUG, "transferred ${iLogTotal} WAL segment(s), calling Archive->xfer() again");
         }
         else
         {
-            &log(DEBUG, 'no more WAL segments to transfer - exiting');
+            &log(DEBUG, 'transfer found 0 WAL segments - exiting');
         }
     }
 
