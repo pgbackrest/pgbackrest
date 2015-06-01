@@ -553,7 +553,7 @@ example: backup-user=backrest
 
 ##### `start-fast` key
 
-Forces a checkpoint (by passing `true` to the `fast` parameter of `pg_start_backup()`) so the backup begins immediately.
+Forces a checkpoint (by passing `true` to the `fast` parameter of `pg_start_backup()`) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.
 ```
 required: n
 default: n
@@ -737,7 +737,11 @@ example: db-path=/data/db
 
 ## Release Notes
 
-### v0.75: IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period
+### v0.75: IN DEVELOPMENT - OTTAWA MILESTONE
+
+* 
+
+### v0.70: Stability improvements for archiving, improved logging and help
 
 * Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner
 

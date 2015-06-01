@@ -521,7 +521,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - BACKUP SECTION - START-FAST -->
 					<config-key id="start-fast">
-						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.</text>
+						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.</text>
 
 						<example>y</example>
 					</config-key>
@@ -689,7 +689,15 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
-			<release-version version="0.75" title="IN DEVELOPMENT: enterprise features: monitoring, throttling, retention period">
+			<release-version version="0.75" title="IN DEVELOPMENT - OTTAWA MILESTONE">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text></text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
+			<release-version version="0.70" title="Stability improvements for archiving, improved logging and help">
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner</text>
