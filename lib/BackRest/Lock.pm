@@ -62,6 +62,7 @@ sub lockFileName
 sub lockAcquire
 {
     my $strLockType = shift;
+    my $bFailOnNoLock = shift;
 
     # Cannot proceed if a lock is currently held
     if (defined($strCurrentLockType))
@@ -80,12 +81,18 @@ sub lockAcquire
     $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA), optionGet(OPTION_REPO_PATH));
 
     sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT)
-        or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}");
+        or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
 
     # Attempt to lock the lock file
     if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
     {
         close($hCurrentLockHandle);
+
+        if (!defined($bFailOnNoLock) || $bFailOnNoLock)
+        {
+            confess &log(ERROR, "unable to acquire ${strLockType} lock", ERROR_LOCK_ACQUIRE);
+        }
+
         return false;
     }
 

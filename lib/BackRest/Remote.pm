@@ -15,7 +15,7 @@ use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use IO::String qw();
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception qw(ERROR_PROTOCOL);
+use BackRest::Exception qw(ERROR_PROTOCOL ERROR_HOST_CONNECT);
 use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false waitInit waitMore);
 use BackRest::Config qw(optionGet OPTION_STANZA OPTION_REPO_REMOTE_PATH);
 
@@ -81,7 +81,7 @@ sub new
         $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
                                           master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
 
-        $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error);
+        $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error, ERROR_HOST_CONNECT);
         &log(TRACE, 'connected to remote ssh host ' . $self->{strHost});
 
         # Execute remote command
@@ -1083,8 +1083,8 @@ sub output_read
     # Raise any errors
     if ($bError)
     {
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}" : '') .
-                            (defined($strOutput) ? ": ${strOutput}" : ''), $iErrorCode, $bSuppressLog);
+        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') .
+                            (defined($strOutput) ? "${strOutput}" : ''), $iErrorCode, $bSuppressLog);
     }
 
     # If output is required and there is no output, raise exception

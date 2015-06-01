@@ -45,16 +45,20 @@ pg_backrest.pl [options] [operation]
    expire           expire old backups (automatically run after backup)
 
  General Options:
-   --stanza         stanza (cluster) to operate on (currently required for all operations)
-   --config         alternate path for pg_backrest.conf (defaults to /etc/pg_backrest.conf)
+   --stanza         stanza (cluster) to operate on
+                    (currently required for all operations)
+   --config         alternate path for pg_backrest.conf
+                    (defaults to /etc/pg_backrest.conf)
    --version        display version and exit
    --help           display usage and exit
 
  Backup Options:
     --type           type of backup to perform (full, diff, incr)
-    --no-start-stop  do not call pg_start/stop_backup().  Postmaster should not be running.
-    --force          force backup when --no-start-stop passed and postmaster.pid exists.
-                     Use with extreme caution as this will probably produce an inconsistent backup!
+    --no-start-stop  do not call pg_start/stop_backup().  Postmaster should not
+                     be running.
+    --force          force backup when --no-start-stop passed and
+                     postmaster.pid exists. Use with extreme caution as this
+                     will probably produce an inconsistent backup!
 
  Restore Options:
     --set            backup set to restore (defaults to latest set).
@@ -71,9 +75,23 @@ pg_backrest.pl [options] [operation]
                              preserve - preserve the existing recovery.conf
                              none - no recovery.conf generated
     --target             recovery target if type is name, time, or xid.
-    --target-exclusive   stop just before the recovery target (default is inclusive).
+    --target-exclusive   stop just before the recovery target
+                         (default is inclusive).
     --target-resume      do not pause after recovery (default is to pause).
-    --target-timeline    recover into specified timeline (default is current timeline).
+    --target-timeline    recover into specified timeline
+                         (default is current timeline).
+
+ Output Options:
+    --log-level-console  console log level (defaults to warn):
+                             off - No logging at all (not recommended)
+                             error - Log only errors
+                             warn - Log warnings and errors
+                             info - Log info, warnings, and errors
+                             debug - Log debug, info, warnings, and errors
+                             trace - Log trace (very verbose debugging), debug,
+                                     info, warnings, and errors
+    --log-level-file     file log level (defaults to info).  Same options as
+                         --log-level-console.
 
 =cut
 
@@ -282,5 +300,5 @@ if ($@)
     }
 
     safe_exit();
-    confess $@;
+    confess $oMessage;
 }

@@ -285,6 +285,7 @@ use constant
     OPTION_RULE_DEPEND_OPTION    => 'depend-option',
     OPTION_RULE_DEPEND_LIST      => 'depend-list',
     OPTION_RULE_DEPEND_VALUE     => 'depend-value',
+    OPTION_RULE_HINT             => 'hint',
     OPTION_RULE_NEGATE           => 'negate',
     OPTION_RULE_OPERATION        => 'operation',
     OPTION_RULE_REQUIRED         => 'required',
@@ -648,6 +649,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_HINT => "Does this stanza exist?",
         &OPTION_RULE_OPERATION =>
         {
             &OP_ARCHIVE_GET =>
@@ -1048,6 +1050,10 @@ sub configLoad
         }
     }
 
+    # Add help and version options
+    $oOptionAllow{'help'} = 'help';
+    $oOptionAllow{'version'} = 'version';
+
     # Get command-line options
     use Getopt::Long qw(GetOptions);
     my %oOptionTest;
@@ -1140,7 +1146,7 @@ sub optionValid
         $strOperation ne OP_RESTORE &&
         $strOperation ne OP_EXPIRE)
     {
-        confess &log(ERROR, "invalid operation ${strOperation}");
+        confess &log(ERROR, "invalid operation ${strOperation}", ERROR_OPERATION_INVALID);
     }
 
     # Set the operation section - because of the various archive commands this is not always the operation
@@ -1497,7 +1503,10 @@ sub optionValid
                 # Else check required
                 elsif (optionRequired($strOption, $strOperation))
                 {
-                    confess &log(ERROR, "${strOperation} operation requires option: ${strOption}", ERROR_OPTION_REQUIRED);
+                    confess &log(ERROR, "${strOperation} operation requires option: ${strOption}" .
+                                        (defined($oOptionRule{$strOption}{&OPTION_RULE_HINT}) ?
+                                         "\nHINT: " . $oOptionRule{$strOption}{&OPTION_RULE_HINT} : ''),
+                                        ERROR_OPTION_REQUIRED);
                 }
             }
 

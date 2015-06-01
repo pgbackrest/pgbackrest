@@ -540,7 +540,7 @@ sub backup_file
         while (!$bDone);
     }
 
-    &log(INFO, file_size_format($lSizeTotal) . ' total backup');
+    &log(INFO, 'total backup size: ' . file_size_format($lSizeTotal));
 }
 
 ####################################################################################################################################
@@ -552,6 +552,9 @@ sub backup
 {
     my $strDbClusterPath = shift;
     my $bStartFast = shift;
+
+    # Backup start
+    &log(INFO, "backup start: type = ${strType}");
 
     # Record timestamp start
     my $strTimestampStart = timestamp_string_get();
@@ -646,14 +649,9 @@ sub backup
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION, undef, version_get());
 
     # Build the backup manifest
-    my %oTablespaceMap;
+    my $oTablespaceMap = $bNoStartStop ? undef : $oDb->tablespace_map_get();
 
-    if (!$bNoStartStop)
-    {
-        $oDb->tablespace_map_get(\%oTablespaceMap);
-    }
-
-    $oBackupManifest->build($oFile, $strDbClusterPath, $oLastManifest, $bNoStartStop, \%oTablespaceMap);
+    $oBackupManifest->build($oFile, $strDbClusterPath, $oLastManifest, $bNoStartStop, $oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # Check if an aborted backup exists for this stanza
@@ -794,12 +792,13 @@ sub backup
 
                 # Copy the log file from the archive repo to the backup
                 my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : '');
+                my $bArchiveCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$";
 
                 my ($bCopyResult, $strCopyChecksum, $lCopySize) =
                     $oFile->copy(PATH_BACKUP_ARCHIVE, $strArchiveFile,
                                  PATH_BACKUP_TMP, $strDestinationFile,
-                                 $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$",
-                                 $bCompress, undef, $lModificationTime);
+                                 $bArchiveCompressed, $bCompress,
+                                 undef, $lModificationTime, undef, true);
 
                 # Add the archive file to the manifest so it can be part of the restore and checked in validation
                 my $strPathSection = 'base:path';
@@ -867,6 +866,9 @@ sub backup
     # Create a link to the most recent backup
     $oFile->remove(PATH_BACKUP_CLUSTER, "latest");
     $oFile->link_create(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
+
+    # Backup stop
+    &log(INFO, 'backup stop');
 }
 
 ####################################################################################################################################

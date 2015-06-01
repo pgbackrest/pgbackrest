@@ -205,12 +205,13 @@ while ($strCommand ne OP_EXIT)
         # Archive push checks
         elsif ($strCommand eq OP_ARCHIVE_PUSH_CHECK)
         {
-            $oArchive->pushCheck($oFile,
-                                 param_get(\%oParamHash, 'wal-segment'),
-                                 param_get(\%oParamHash, 'db-version'),
-                                 param_get(\%oParamHash, 'db-sys-id'));
+            my $strChecksum = $oArchive->pushCheck($oFile,
+                                                   param_get(\%oParamHash, 'wal-segment'),
+                                                   undef,
+                                                   param_get(\%oParamHash, 'db-version'),
+                                                   param_get(\%oParamHash, 'db-sys-id'));
 
-            $oRemote->output_write('Y');
+            $oRemote->output_write(defined($strChecksum) ? $strChecksum : 'Y');
         }
         # Continue if noop or exit
         elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)

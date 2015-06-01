@@ -21,7 +21,9 @@
 			<li>Restore using timestamp/size or checksum</li>
 			<li>Restore remapping base/tablespaces</li>
 		</ul>
-		Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</text>
+		Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
+
+		<backrest/> uses the gitflow model of development.  This means that the master branch contains only the release history, i.e. each commit represents a single release and release tags are always from the master branch.  The dev branch contains a single commit for each feature or fix and more accurately depicts the development history.  Actual development is done on feature (dev_*) branches and squashed into dev after regression tests have passed.  In this model dev is considered stable and can be released at any time.  As such, the dev branch does not have any special version modifiers.</text>
 	</intro>
 
 	<install title="Install">
@@ -52,17 +54,13 @@
 						sudo apt-get update
 
 						apt-get install postgresql-9.3
-						apt-get install postgresql-server-dev-9.3
 					</code-block>
 					* Install required Perl modules:
 					<code-block>
-						cpanm JSON
 						cpanm Net::OpenSSH
 						cpanm IPC::System::Simple
-						cpanm Digest::SHA
-						cpanm Compress::Zlib
-						cpanm threads (update this package)
-						cpanm Thread::Queue (update this package)
+						cpanm threads (update this package when thread-max > 1)
+						cpanm Thread::Queue (update this package when thread-max > 1)
 					</code-block>
 					* Install PgBackRest
 
@@ -70,7 +68,14 @@
 
 					https://github.com/pgmasters/backrest/releases
 
-					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.</text>
+					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
+
+					* Install <postgres/> development libraries and additional Perl modules for regression tests:
+					<code-block>
+						apt-get install postgresql-server-dev-9.4
+						cpanm DBI
+						cpanm DBD:Pg
+				</code-block></text>
 			</install-system>
 		</install-system-list>
 	</install>
@@ -219,6 +224,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 								<li><id>xid</id> - recover to the transaction id specified in <param>--target</param>.</li>
 								<li><id>time</id> - recover to the time specified in <param>--target</param>.</li>
 								<li><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</li>
+								<li><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>.  Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</li>
 							</ul></text>
 						<example>xid</example>
 					</option>
@@ -515,7 +521,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - BACKUP SECTION - START-FAST -->
 					<config-key id="start-fast">
-						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.</text>
+						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.</text>
 
 						<example>y</example>
 					</config-key>
@@ -562,7 +568,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
 					<config-key id="archive-copy">
-						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.</text>
+						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
+
+							Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in pg_xlog.  This will get the database to a consistent state.</text>
 
 						<example>y</example>
 					</config-key>
@@ -633,7 +641,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION-TYPE KEY -->
 					<config-key id="retention-archive-type">
-						<text>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <setting>archive-retention</setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <setting>archive-retention</setting>.
+						<text>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <setting>retention-archive</setting>.
 
 						If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.</text>
 
@@ -681,6 +689,35 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
+			<release-version version="0.70" title="Stability improvements for archiving, improved logging and help">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner</text>
+					</release-feature>
+					<release-feature>
+						<text>Allow duplicate WAL segments to be archived when the checksum matches.  This is necessary for some recovery scenarios.</text>
+					</release-feature>
+					<release-feature>
+						<text>Allow comments/disabling in pg_backrest.conf using #.  Suggested by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Various command behavior, help and logging fixes.  Reported by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Fixed an issue in async archiving where archive-push was not properly returning 0 when archive-max-mb was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Fixed a locking issue that could allow multiple operations of the same type against a single stanza.  This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore. Reported by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Replaced JSON module with JSON::PP which ships with core Perl.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.65" title="Improved resume and restore logging, compact restores">
 				<release-feature-bullet-list>
 					<release-feature>

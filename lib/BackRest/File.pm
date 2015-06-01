@@ -504,7 +504,7 @@ sub move
 
                 if (!$self->exists(PATH_ABSOLUTE, dirname($strPathOpDestination)))
                 {
-                    $strError = "${strPathOpDestination} does not exist";
+                    $strError = dirname($strPathOpDestination) . " destination path does not exist";
                     $iErrorCode = COMMAND_ERR_FILE_MISSING;
                 }
 
@@ -575,7 +575,7 @@ sub path_create
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = " ${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
+    my $strDebug = "${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -879,7 +879,7 @@ sub owner
     my $strOperation = OP_FILE_OWNER;
     my $strDebug = "${strPathType}:${strFileOp}, " .
                    'user = ' . (defined($strUser) ? $strUser : '[undef]') .
-                   'group = ' . (defined($strGroup) ? $strGroup : '[undef]');
+                   ', group = ' . (defined($strGroup) ? $strGroup : '[undef]');
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -1339,7 +1339,7 @@ sub copy
     my $bResult = true;
 
     # Set debug string and log
-    my $strDebug = ($bSourceRemote ? ' remote' : ' local') . " ${strSourcePathType}" .
+    my $strDebug = ($bSourceRemote ? 'remote' : 'local') . " ${strSourcePathType}" .
                    (defined($strSourceFile) ? ":${strSourceOp}" : '') .
                    ' to' . ($bDestinationRemote ? ' remote' : ' local') . " ${strDestinationPathType}" .
                    (defined($strDestinationFile) ? ":${strDestinationOp}" : '') .
@@ -1408,7 +1408,7 @@ sub copy
 
                 if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationTmpOp)))
                 {
-                    $strError = dirname($strDestinationTmpOp) . ' does not exist';
+                    $strError = dirname($strDestinationTmpOp) . ' destination path does not exist';
                     $iErrorCode = COMMAND_ERR_FILE_MISSING;
                 }
 

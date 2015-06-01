@@ -356,8 +356,11 @@ sub pushProcess
         {
             if (-e $strStopFile)
             {
-                &log(ERROR, "archive stop file (${strStopFile}) exists , discarding " . basename($ARGV[1]));
-                remote_exit(0);
+                &log(ERROR, "discarding " . basename($ARGV[1]) .
+                            " due to the archive store max size exceeded" .
+                            " - remove the archive stop file (${strStopFile}) to resume archiving" .
+                            " and be sure to take a new backup as soon as possible");
+                return 0;
             }
         }
 
@@ -382,15 +385,19 @@ sub pushProcess
         # Else the no-fork flag has been specified for testing
         else
         {
-            &log(INFO, 'No fork on archive local for TESTING');
+            &log(DEBUG, 'No fork on archive local for TESTING');
         }
 
         # Start the async archive push
-        &log(INFO, 'starting async archive-push');
+        &log(DEBUG, 'starting async archive-push');
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    lockAcquire(operationGet());
+    if (!lockAcquire(operationGet(), false))
+    {
+        &log(DEBUG, 'another async archive-push process is already running - exiting');
+        return 0;
+    }
 
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
@@ -407,11 +414,11 @@ sub pushProcess
 
         if ($iLogTotal > 0)
         {
-            &log(DEBUG, "${iLogTotal} WAL segments were transferred, calling Archive->xfer() again");
+            &log(DEBUG, "transferred ${iLogTotal} WAL segment(s), calling Archive->xfer() again");
         }
         else
         {
-            &log(DEBUG, 'no more WAL segments to transfer - exiting');
+            &log(DEBUG, 'transfer found 0 WAL segments - exiting');
         }
     }
 
@@ -458,10 +465,10 @@ sub push
     my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
 
     # Check that there are no issues with pushing this WAL segment
-    if ($bArchiveFile)
+    if ($bArchiveFile && !$bAsync)
     {
         my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
-        $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strDbVersion, $ullDbSysId);
+        $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strSourceFile, $strDbVersion, $ullDbSysId);
     }
 
     # Append compression extension
@@ -490,12 +497,14 @@ sub pushCheck
     my $self = shift;
     my $oFile = shift;
     my $strWalSegment = shift;
+    my $strWalFile = shift;
     my $strDbVersion = shift;
     my $ullDbSysId = shift;
 
     # Set operation and debug strings
     my $strOperation = OP_ARCHIVE_PUSH_CHECK;
     &log(DEBUG, "${strOperation}: " . PATH_BACKUP_ARCHIVE . ":${strWalSegment}");
+    my $strChecksum;
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
     {
@@ -510,7 +519,12 @@ sub pushCheck
         &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
 
         # Execute the command
-        $oFile->{oRemote}->command_execute($strOperation, \%oParamHash);
+        $strChecksum = $oFile->{oRemote}->command_execute($strOperation, \%oParamHash, true);
+
+        if ($strChecksum eq 'Y')
+        {
+            undef($strChecksum);
+        }
     }
     else
     {
@@ -527,16 +541,22 @@ sub pushCheck
         {
             ini_load($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
 
+            my $strError = undef;
+
             if ($oDbConfig{database}{'version'} ne $strDbVersion)
             {
-                confess &log(ERROR, "WAL segment version ${strDbVersion} " .
-                             "does not match archive version $oDbConfig{database}{'version'}", ERROR_ARCHIVE_MISMATCH);
+                $strError = "WAL segment version ${strDbVersion} does not match archive version $oDbConfig{database}{'version'}";
             }
 
             if ($oDbConfig{database}{'system-id'} ne $ullDbSysId)
             {
-                confess &log(ERROR, "WAL segment system-id ${ullDbSysId} " .
-                             "does not match archive system-id $oDbConfig{database}{'system-id'}", ERROR_ARCHIVE_MISMATCH);
+                $strError = "WAL segment system-id ${ullDbSysId} does not match" .
+                            " archive system-id $oDbConfig{database}{'system-id'}";
+            }
+
+            if (defined($strError))
+            {
+                confess &log(ERROR, "${strError}\nHINT: are you archiving to the correct stanza?", ERROR_ARCHIVE_MISMATCH);
             }
         }
         # Else create the info file from the current WAL segment
@@ -548,11 +568,30 @@ sub pushCheck
         }
 
         # Check if the WAL segment already exists in the archive
-        if (defined($self->walFileName($oFile, $strWalSegment)))
+        $strChecksum = $self->walFileName($oFile, $strWalSegment);
+
+        if (defined($strChecksum))
+        {
+            $strChecksum = substr($strChecksum, 25, 40);
+        }
+    }
+
+    if (defined($strChecksum) && defined($strWalFile))
+    {
+        my $strChecksumNew = $oFile->hash(PATH_DB_ABSOLUTE, $strWalFile);
+
+        if ($strChecksumNew ne $strChecksum)
         {
             confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
         }
+
+        &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
+                   "HINT: this is valid in some recovery scenarios but may also indicate a problem");
+
+        return undef;
     }
+
+    return $strChecksum;
 }
 
 ####################################################################################################################################
@@ -564,13 +603,13 @@ sub xfer
     my $strArchivePath = shift;
     my $strStopFile = shift;
 
-    # Create the file object
+    # Create a local file object to read archive logs in the local store
     my $oFile = new BackRest::File
     (
         optionGet(OPTION_STANZA),
-        optionRemoteTypeTest(NONE) ? optionGet(OPTION_REPO_PATH) : optionGet(OPTION_REPO_REMOTE_PATH),
-        optionRemoteType(),
-        optionRemote()
+        optionGet(OPTION_REPO_PATH),
+        NONE,
+        optionRemote(true)
     );
 
     # Load the archive manifest - all the files that need to be pushed
@@ -589,22 +628,8 @@ sub xfer
         {
             CORE::push(@stryFile, $strFile);
 
-            $lFileSize += $oManifestHash{name}{"${strFile}"}{size};
+            $lFileSize += $oManifestHash{name}{$strFile}{size};
             $lFileTotal++;
-        }
-    }
-
-    if (optionTest(OPTION_ARCHIVE_MAX_MB))
-    {
-        my $iArchiveMaxMB = optionGet(OPTION_ARCHIVE_MAX_MB);
-
-        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
-        {
-            &log(ERROR, "local archive store has exceeded limit of ${iArchiveMaxMB}MB, archive logs will be discarded");
-
-            my $hStopFile;
-            open($hStopFile, '>', $strStopFile) or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
-            close($hStopFile);
         }
     }
 
@@ -615,62 +640,105 @@ sub xfer
         return 0;
     }
 
-    # Modify process name to indicate async archiving
-    $0 = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA) .
-         "archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
-
-    # Output files to be moved to backup
-    &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
-
-    # Transfer each file
-    foreach my $strFile (sort @stryFile)
+    eval
     {
-        # Construct the archive filename to backup
-        my $strArchiveFile = "${strArchivePath}/${strFile}";
-
-        # Determine if the source file is already compressed
-        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
-
-        # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-        my $bArchiveFile = basename($strFile) =~
-            "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
-
-        # Figure out whether the compression extension needs to be added or removed
-        my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
-        my $strDestinationFile = basename($strFile);
-
-        if (!$bSourceCompressed && $bDestinationCompress)
+        # If the archive repo is remote create a new file object to do the copies
+        if (!optionRemoteTypeTest(NONE))
         {
-            $strDestinationFile .= ".$oFile->{strCompressExtension}";
-        }
-        elsif ($bSourceCompressed && !$bDestinationCompress)
-        {
-            $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+            $oFile = new BackRest::File
+            (
+                optionGet(OPTION_STANZA),
+                optionGet(OPTION_REPO_REMOTE_PATH),
+                optionRemoteType(),
+                optionRemote()
+            );
         }
 
-        &log(DEBUG, "archive ${strFile}, is WAL ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
-                    "destination_compress ${bDestinationCompress}, default_compress = " . optionGet(OPTION_COMPRESS));
+        # Modify process name to indicate async archiving
+        $0 = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA) .
+             "archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
 
-        # Check that there are no issues with pushing this WAL segment
-        if ($bArchiveFile)
+        # Output files to be moved to backup
+        &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
+
+        # Transfer each file
+        foreach my $strFile (sort @stryFile)
         {
-            my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-            $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strDbVersion, $ullDbSysId);
+            # Construct the archive filename to backup
+            my $strArchiveFile = "${strArchivePath}/${strFile}";
+
+            # Determine if the source file is already compressed
+            my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
+
+            # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
+            my $bArchiveFile = basename($strFile) =~
+                "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
+
+            # Figure out whether the compression extension needs to be added or removed
+            my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
+            my $strDestinationFile = basename($strFile);
+
+            if (!$bSourceCompressed && $bDestinationCompress)
+            {
+                $strDestinationFile .= ".$oFile->{strCompressExtension}";
+            }
+            elsif ($bSourceCompressed && !$bDestinationCompress)
+            {
+                $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+            }
+
+            &log(DEBUG, "archive ${strFile}, is WAL ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
+                        "destination_compress ${bDestinationCompress}, default_compress = " . optionGet(OPTION_COMPRESS));
+
+            # Check that there are no issues with pushing this WAL segment
+            if ($bArchiveFile)
+            {
+                my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
+                $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strArchiveFile, $strDbVersion, $ullDbSysId);
+            }
+
+            # Copy the archive file
+            $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
+                         PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
+                         $bSourceCompressed,                        # Source is not compressed
+                         $bDestinationCompress,                     # Destination compress is configurable
+                         undef, undef, undef,                       # Unused params
+                         true);                                     # Create path if it does not exist
+
+            #  Remove the source archive file
+            unlink($strArchiveFile)
+                or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
+                                       'This file will need to be cleaned up manually.  If the problem persists, check if ' .
+                                       OP_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+
+            # Remove the copied segment from the total size
+            $lFileSize -= $oManifestHash{name}{$strFile}{size};
         }
+    };
 
-        # Copy the archive file
-        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
-                     PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
-                     $bSourceCompressed,                        # Source is not compressed
-                     $bDestinationCompress,                     # Destination compress is configurable
-                     undef, undef, undef,                       # Unused params
-                     true);                                     # Create path if it does not exist
+    my $oException = $@;
 
-        #  Remove the source archive file
-        unlink($strArchiveFile)
-            or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
-                                   'This file will need to be cleaned up manually.  If the problem persists, check if ' .
-                                   OP_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+    # Create a stop file if the archive store exceeds the max even after xfer
+    if (optionTest(OPTION_ARCHIVE_MAX_MB))
+    {
+        my $iArchiveMaxMB = optionGet(OPTION_ARCHIVE_MAX_MB);
+
+        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
+        {
+            &log(ERROR, "local archive store max size has exceeded limit of ${iArchiveMaxMB}MB" .
+                        " - WAL segments will be discarded until the stop file (${strStopFile}) is removed");
+
+            my $hStopFile;
+            open($hStopFile, '>', $strStopFile)
+                or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
+            close($hStopFile);
+        }
+    }
+
+    # If there was an exception before throw it now
+    if ($oException)
+    {
+        confess $oException;
     }
 
     # Return number of files indicating that processing should continue

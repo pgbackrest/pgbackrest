@@ -74,7 +74,7 @@ sub backupFile
         if (!$bCopyResult)
         {
             # If file is missing assume the database removed it (else corruption and nothing we can do!)
-            &log(INFO, "skipped file removed by database: " . $strSourceFile);
+            &log(INFO, "skip file removed by database: " . $strSourceFile);
 
             return false, $lSizeCurrent, undef, undef;
         }
