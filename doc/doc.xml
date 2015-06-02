@@ -692,7 +692,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.75" title="IN DEVELOPMENT - OTTAWA MILESTONE">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text></text>
+						<text>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

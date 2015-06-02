@@ -339,10 +339,10 @@ sub log_file_set
 
     if ($bExists)
     {
-        print $hLogFile "\n";
+        syswrite($hLogFile, "\n");
     }
 
-    print $hLogFile "-------------------PROCESS START-------------------\n";
+    syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
 }
 
 ####################################################################################################################################
@@ -491,17 +491,13 @@ sub log
     {
         if (!$bSuppressLog)
         {
-            print $strMessageFormat;
+            syswrite(*STDOUT, $strMessageFormat);
         }
 
-        if ($bTest && $strLevel eq TEST)
+        # If in test mode and this is a test messsage then delay so the calling process has time to read the message
+        if ($bTest && $strLevel eq TEST && $fTestDelay > 0)
         {
-            *STDOUT->flush();
-
-            if ($fTestDelay > 0)
-            {
-                hsleep($fTestDelay);
-            }
+            hsleep($fTestDelay);
         }
     }
 
@@ -512,7 +508,7 @@ sub log
         {
             if (!$bSuppressLog)
             {
-                print $hLogFile $strMessageFormat;
+                syswrite($hLogFile, $strMessageFormat);
 
                 if ($strLevel eq ASSERT ||
                     ($strLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
@@ -520,7 +516,7 @@ sub log
                     my $strStackTrace = longmess() . "\n";
                     $strStackTrace =~ s/\n/\n                                   /g;
 
-                    print $hLogFile $strStackTrace;
+                    syswrite($hLogFile, $strStackTrace);
                 }
             }
         }

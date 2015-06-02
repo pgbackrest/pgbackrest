@@ -739,7 +739,7 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT - OTTAWA MILESTONE
 
-* 
+* Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
 ### v0.70: Stability improvements for archiving, improved logging and help
 
