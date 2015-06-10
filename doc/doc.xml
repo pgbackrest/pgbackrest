@@ -176,28 +176,28 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text><code-block>
 								/path/to/pg_backrest.pl --stanza=db archive-get %f %p
 							</code-block>
-							Retrieves a WAL segment from the repository.  This command is used in <file>restore.conf</file> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  <param>%f</param> is how <postgres/> specifies the WAL segment it needs and <param>%p</param> is the location where it should be copied.</text>
+							Retrieves a WAL segment from the repository.  This command is used in <file>recovery.conf</file> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  <param>%f</param> is how <postgres/> specifies the WAL segment it needs and <param>%p</param> is the location where it should be copied.</text>
 					</command-example>
 				</command-example-list>
 			</command>
 
 			<!-- OPERATION - EXPIRE COMMAND -->
 			<command id="expire">
-				<text><backrest/> does backup rotation, but is not concerned with when the backups were created.  So if two full backups are configured for rentention, <backrest/> will keep two full backups no matter whether they occur, two hours apart or two weeks apart.</text>
+				<text><backrest/> does backup rotation, but is not concerned with when the backups were created.  So if two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur, two hours apart or two weeks apart.</text>
 
 				<command-example-list>
 					<command-example>
 						<text><code-block>
 								/path/to/pg_backrest.pl --stanza=db expire
 							</code-block>
-							Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced rentention, usually to free up some space.</text>
+							Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.</text>
 					</command-example>
 				</command-example-list>
 			</command>
 
 			<!-- OPERATION - RESTORE COMMAND -->
 			<command id="restore">
-				<text>Perform a database restore.  This command is generall run manually, but there are instances where it might be automated.</text>
+				<text>Perform a database restore.  This command is generally run manually, but there are instances where it might be automated.</text>
 				<option-list>
 					<!-- OPERATION - RESTORE COMMAND - SET OPTION -->
 					<option id="set">
@@ -253,7 +253,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- OPERATION - RESTORE COMMAND - RECOVERY-SETTING OPTION -->
 					<option id="recovery-setting">
-						<text>Recovery settings in restore.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).  This option can be used multiple times.
+						<text>Recovery settings in recovery.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your database version).  This option can be used multiple times.
 
 							Note: <setting>restore_command</setting> will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.
 
@@ -332,7 +332,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 						[global:general]
 						compress=n
-						repo-path=/Users/dsteele/Documents/Code/backrest/test/test/backrest
+						repo-path=/path/to/db/repo
 
 						[global:log]
 						log-level-file=debug
@@ -393,7 +393,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="cmd-psql">
 						<text>Defines the full path to <cmd>psql</cmd>.  <cmd>psql</cmd> is used to call <code>pg_start_backup()</code> and <code>pg_stop_backup()</code>.
 
-		If addtional per stanza parameters need to be passed to <cmd>psql</cmd> (such as <param>--port</param> or <param>--cluster</param>) then add <param>%option%</param> to the command line and use <setting>command-option::psql</setting> to set options.</text>
+		If additional per stanza parameters need to be passed to <cmd>psql</cmd> (such as <param>--port</param> or <param>--cluster</param>) then add <param>%option%</param> to the command line and use <setting>command-option::psql</setting> to set options.</text>
 
 						<example>/usr/bin/psql -X %option%</example>
 					</config-key>
@@ -592,7 +592,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="archive-max-mb">
 						<text>Limits the amount of archive log that will be written locally when <setting>archive-async=y</setting>.  After the limit is reached, the following will happen:
 						<ol>
-							<li>PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.</li>
+							<li>PgBackRest will notify Postgres that the archive was successfully backed up, then DROP IT.</li>
 							<li>An error will be logged to the console and also to the Postgres log.</li>
 							<li>A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.</li>
 						</ol>
@@ -622,7 +622,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 			<!-- CONFIG - EXPIRE -->
 			<config-section id="expire">
-				<text>The <setting>expire</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.</text>
+				<text>The <setting>expire</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
 
 				<!-- CONFIG - RETENTION SECTION - FULL-RETENTION KEY -->
 				<config-key-list>
@@ -652,7 +652,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="retention-archive">
 						<text>Number of backups worth of archive log to keep.  If this is set less than your backup retention then be sure you set <setting>archive-copy=y</setting> or you won't be able to restore some older backups.
 
-						For example, if <setting>retention-archive=2</setting> and <setting>retention-full=4</setting>, then any backups older than the most recent two full backups will not have WAL segments in the archive to make them consistent.  To solve this, set <setting>archive-copy=y</setting> and use <setting>type=none</setting> when restoring.  This issue will be addressed in a future release, but for now be careful with this setting.</text>
+						For example, if <setting>retention-archive=2</setting> and <setting>retention-full=4</setting>, then any backups older than the most recent two full backups will not have WAL segments in the archive to make them consistent.  To solve this, set <setting>archive-copy=y</setting> and use <setting>type=none</setting> when restoring.  This issue will be addressed in a future release but for now be careful with this setting.</text>
 
 						<example>2</example>
 					</config-key>
@@ -788,7 +788,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Added option <param>--no-start-stop</param> to allow backups when Postgres is shut down.  If <file>postmaster.pid</file> is present then <param>--force</param> is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.</text>
 					</release-feature>
 					<release-feature>
-						<text>Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.</text>
+						<text>Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplified a number of things.  Issue #28 has been created for checksum deltas.</text>
 					</release-feature>
 					<release-feature>
 						<text>Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.</text>
@@ -858,7 +858,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.16" title="RequestTTY=yes for SSH Sessions">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text>Added <setting>RequestTTY=yes</setting> to ssh sesssions.  Hoping this will prevent random lockups.</text>
+						<text>Added <setting>RequestTTY=yes</setting> to ssh sessions.  Hoping this will prevent random lockups.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
@@ -894,7 +894,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.</text>
 					</release-feature>
 					<release-feature>
-						<text>Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% threadsafe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.</text>
+						<text>Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% thread-safe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.</text>
 					</release-feature>
 					<release-feature>
 						<text>Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.</text>
