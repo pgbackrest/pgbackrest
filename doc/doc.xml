@@ -650,7 +650,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION KEY -->
 					<config-key id="retention-archive">
-						<text>Number of backups worth of archive log to keep.</text>
+						<text>Number of backups worth of archive log to keep.  If this is set less than your backup retention then be sure you set <setting>archive-copy=y</setting> or you won't be able to restore some older backups.
+
+						For example, if <setting>retention-archive=2</setting> and <setting>retention-full=4</setting>, then any backups older than the most recent two full backups will not have WAL segments in the archive to make them consistent.  To solve this, set <setting>archive-copy=y</setting> and use <setting>type=none</setting> when restoring.  This issue will be addressed in a future release, but for now be careful with this setting.</text>
 
 						<example>2</example>
 					</config-key>

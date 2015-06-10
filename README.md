@@ -701,7 +701,9 @@ example: retention-archive-type=diff
 
 ##### `retention-archive` key
 
-Number of backups worth of archive log to keep.
+Number of backups worth of archive log to keep.  If this is set less than your backup retention then be sure you set `archive-copy=y` or you won't be able to restore some older backups.
+
+For example, if `retention-archive=2` and `retention-full=4`, then any backups older than the most recent two full backups will not have WAL segments in the archive to make them consistent.  To solve this, set `archive-copy=y` and use `type=none` when restoring.  This issue will be addressed in a future release but for now be careful with this setting.
 ```
 required: n
 example: retention-archive=2
