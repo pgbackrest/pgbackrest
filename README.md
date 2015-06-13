@@ -768,17 +768,7 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT - OTTAWA MILESTONE
 
-* 
-Info feature TODO:
-* stanza create/upgrade?
-* New regression for expiration now that the path structure is different.
-
-Less Important:
-* running/error state based on lock in tmp/stanza
-* Add last WAL info to archive.info and info function
-* Remote calls are not returning expected code (this is OK because of log testing, but not ideal)
-* Comment blocks for the .info files
-
+* Add info command.
 
 * Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
