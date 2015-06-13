@@ -14,14 +14,14 @@ use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
 use lib dirname($0);
-use BackRest::Exception;
-use BackRest::Utility;
-use BackRest::ThreadGroup;
-use BackRest::RestoreFile;
 use BackRest::Config;
-use BackRest::Manifest;
-use BackRest::File;
 use BackRest::Db;
+use BackRest::Exception;
+use BackRest::File;
+use BackRest::Manifest;
+use BackRest::RestoreFile;
+use BackRest::ThreadGroup;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # Recovery.conf file
@@ -204,57 +204,60 @@ sub manifest_load
                                  ' - this indicates some sort of corruption (at the very least paths have been renamed.');
         }
 
-        if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE))
+        if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH))
         {
             &log(INFO, 'base path remapped to ' . $self->{strDbClusterPath});
-            $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, undef, $self->{strDbClusterPath});
+            $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
         }
 
         # If no tablespaces are requested
         if (!optionGet(OPTION_TABLESPACE))
         {
-            foreach my $strTablespaceName ($oManifest->keys(MANIFEST_SECTION_BACKUP_TABLESPACE))
+            foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
             {
-                my $strTablespaceKey =
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName, MANIFEST_SUBKEY_LINK);
-                my $strTablespaceLink = "pg_tblspc/${strTablespaceKey}";
-                my $strTablespacePath =
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE) . "/${strTablespaceLink}";
+                if ($oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+                {
+                    my $strTablespaceKey =
+                        $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
+                    my $strTablespaceLink = "pg_tblspc/${strTablespaceKey}";
+                    my $strTablespacePath =
+                        $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
+                        "/${strTablespaceLink}";
 
-                $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strTablespaceName}", undef, $strTablespacePath);
-                $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName, MANIFEST_SUBKEY_PATH, $strTablespacePath);
+                    $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH, $strTablespacePath);
 
-                $oManifest->remove('base:link', $strTablespaceLink);
-                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_GROUP,
-                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_GROUP));
-                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_USER,
-                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_USER));
-                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_MODE,
-                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_MODE));
+                    $oManifest->remove('base:link', $strTablespaceLink);
+                    $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_GROUP,
+                        $oManifest->get('base:path', '.', MANIFEST_SUBKEY_GROUP));
+                    $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_USER,
+                        $oManifest->get('base:path', '.', MANIFEST_SUBKEY_USER));
+                    $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_MODE,
+                        $oManifest->get('base:path', '.', MANIFEST_SUBKEY_MODE));
 
-                &log(INFO, "remapping tablespace ${strTablespaceKey} to ${strTablespacePath}");
+                    &log(INFO, "remapping tablespace ${strTablespaceKey} to ${strTablespacePath}");
+                }
             }
         }
         # If tablespaces have been remapped, update the manifest
         elsif (defined($self->{oRemapRef}))
         {
-            foreach my $strPathKey (sort(keys $self->{oRemapRef}))
+            foreach my $strTablespaceKey (sort(keys $self->{oRemapRef}))
             {
-                my $strRemapPath = ${$self->{oRemapRef}}{$strPathKey};
+                my $strRemapPath = ${$self->{oRemapRef}}{$strTablespaceKey};
+                my $strPathKey = "tablespace/${strTablespaceKey}";
 
                 # Make sure that the tablespace exists in the manifest
-                if (!$oManifest->test(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey))
+                if (!$oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
                 {
-                    confess &log(ERROR, "cannot remap invalid tablespace ${strPathKey} to ${strRemapPath}");
+                    confess &log(ERROR, "cannot remap invalid tablespace ${strTablespaceKey} to ${strRemapPath}");
                 }
 
                 # Remap the tablespace in the manifest
-                &log(INFO, "remapping tablespace ${strPathKey} to ${strRemapPath}");
+                &log(INFO, "remapping tablespace ${strTablespaceKey} to ${strRemapPath}");
 
-                my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_LINK);
+                my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
 
-                $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, "tablespace:${strPathKey}", undef, $strRemapPath);
-                $oManifest->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strPathKey, MANIFEST_SUBKEY_PATH, $strRemapPath);
+                $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH, $strRemapPath);
                 $oManifest->set('base:link', "pg_tblspc/${strTablespaceLink}", MANIFEST_SUBKEY_DESTINATION, $strRemapPath);
             }
         }
@@ -285,7 +288,7 @@ sub clean
     # The --force option can be used to override the empty requirement.
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
 
         &log(INFO, "checking/cleaning db path ${strPath}");
 
@@ -418,7 +421,7 @@ sub build
     # Build paths/links in each restore path
     foreach my $strSectionPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        my $strSectionPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey);
+        my $strSectionPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_PATH);
 
         # Create all paths in the manifest that do not already exist
         my $strSection = "${strSectionPathKey}:path";
@@ -463,7 +466,7 @@ sub build
     # Make sure that all paths required for the restore now exist
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
 
         if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
         {
@@ -604,8 +607,8 @@ sub restore
     $self->build($oManifest);
 
     # Get variables required for restore
-    my $lCopyTimeBegin = $oManifest->epoch(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
-    my $bSourceCompression = $oManifest->get(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) eq 'y' ? true : false;
+    my $lCopyTimeBegin = $oManifest->getNumeric(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
+    my $bSourceCompression = $oManifest->getBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
 
@@ -622,7 +625,7 @@ sub restore
         {
             foreach my $strFile ($oManifest->keys($strSection))
             {
-                my $lSize = $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_SIZE);
+                my $lSize = $oManifest->getNumeric($strSection, $strFile, MANIFEST_SUBKEY_SIZE);
                 $lSizeTotal += $lSize;
 
                 # Preface the file key with the size. This allows for sorting the files to restore by size
@@ -632,14 +635,13 @@ sub restore
                 $oRestoreHash{$strPathKey}{$strFileKey}{file} = $strFile;
                 $oRestoreHash{$strPathKey}{$strFileKey}{size} = $lSize;
                 $oRestoreHash{$strPathKey}{$strFileKey}{source_path} = $strPathKey;
-                $oRestoreHash{$strPathKey}{$strFileKey}{source_path} =~ s/\:/\//g;
                 $oRestoreHash{$strPathKey}{$strFileKey}{destination_path} =
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey);
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
                 $oRestoreHash{$strPathKey}{$strFileKey}{reference} =
-                    $oManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, 'y') ? undef :
+                    $oManifest->testBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
                     $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
                 $oRestoreHash{$strPathKey}{$strFileKey}{modification_time} =
-                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_MODIFICATION_TIME);
+                    $oManifest->getNumeric($strSection, $strFile, MANIFEST_SUBKEY_TIMESTAMP);
                 $oRestoreHash{$strPathKey}{$strFileKey}{mode} =
                     $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_MODE);
                 $oRestoreHash{$strPathKey}{$strFileKey}{user} =

@@ -7,17 +7,17 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Net::OpenSSH qw();
+use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
+use IO::String qw();
+use Net::OpenSSH qw();
 use POSIX qw(:sys_wait_h);
 use Scalar::Util qw(blessed);
-use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
-use IO::String qw();
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception qw(ERROR_PROTOCOL ERROR_HOST_CONNECT);
-use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT true false waitInit waitMore);
 use BackRest::Config qw(optionGet OPTION_STANZA OPTION_REPO_REMOTE_PATH);
+use BackRest::Exception qw(ERROR_PROTOCOL ERROR_HOST_CONNECT);
+use BackRest::Utility qw(log version_get trim TRACE ERROR ASSERT DEBUG true false waitInit waitMore);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -33,6 +33,14 @@ sub new
     my $iBlockSize = shift;             # Buffer size
     my $iCompressLevel = shift;         # Set compression level
     my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
+
+    # Debug
+    &log(defined($strHost) ? DEBUG : TRACE, 'Remote->new: ' .
+         'host = ' . (defined($strHost) ? $strHost : '[undef]') .
+         ', user = ' . (defined($strUser) ? $strUser : '[undef]') .
+         ', stanza = ' . (defined($strStanza) ? $strStanza : '[undef]') .
+         ', remote-repo-path = ' . (defined($strRepoPath) ? $strRepoPath : '[undef]') .
+         ', command = ' . (defined($strCommand) ? $strCommand : '[undef]'));
 
     # Create the class hash
     my $self = {};
@@ -397,9 +405,9 @@ sub write_line
     my $hOut = shift;
     my $strBuffer = shift;
 
-    my $iLineOut = syswrite($hOut, $strBuffer . "\n");
+    my $iLineOut = syswrite($hOut, (defined($strBuffer) ? $strBuffer : '') . "\n");
 
-    if (!defined($iLineOut) || $iLineOut != length($strBuffer) + 1)
+    if (!defined($iLineOut) || $iLineOut != (defined($strBuffer) ? length($strBuffer) : 0) + 1)
     {
         confess &log(ERROR, "unable to write ${strBuffer}: $!", ERROR_PROTOCOL);
     }
@@ -1133,7 +1141,7 @@ sub command_param_string
     my $self = shift;
     my $oParamHashRef = shift;
 
-    my $strParamList;
+    my $strParamList = '';
 
     if (defined($oParamHashRef))
     {

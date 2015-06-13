@@ -11,8 +11,9 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname);
 use Cwd qw(abs_path);
+use Exporter qw(import);
+use File::Basename qw(dirname);
 use Scalar::Util 'blessed';
 #use Data::Dumper qw(Dumper);
 #use Scalar::Util qw(blessed);
@@ -20,14 +21,12 @@ use Scalar::Util 'blessed';
 # use Test::Deep;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
 use BackRest::Config;
+use BackRest::Exception;
+use BackRest::Ini;
+use BackRest::Utility;
 
 use BackRestTest::CommonTest;
-
-use Exporter qw(import);
-our @EXPORT = qw(BackRestTestConfig_Test);
 
 sub optionSetTest
 {
@@ -240,6 +239,8 @@ sub optionTestExpect
 ####################################################################################################################################
 # BackRestTestConfig_Test
 ####################################################################################################################################
+our @EXPORT = qw(BackRestTestConfig_Test);
+
 sub BackRestTestConfig_Test
 {
     my $strTest = shift;
@@ -608,8 +609,8 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, 'load from config stanza section - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
-            $$oConfig{"$strStanza:" . &OP_BACKUP}{&OPTION_THREAD_MAX} = 2;
-            ini_save($strConfigFile, $oConfig);
+            $$oConfig{"${strStanza}:" . &OP_BACKUP}{&OPTION_THREAD_MAX} = 2;
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -623,7 +624,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{"$strStanza:" . &CONFIG_SECTION_GENERAL}{&OPTION_THREAD_MAX} = 3;
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -638,7 +639,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &OP_BACKUP}{&OPTION_THREAD_MAX} = 2;
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -652,7 +653,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_GENERAL}{&OPTION_THREAD_MAX} = 5;
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -665,7 +666,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, 'default - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -679,7 +680,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_GENERAL}{&OPTION_THREAD_MAX} = 9;
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -694,7 +695,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &OP_BACKUP}{&OPTION_HARDLINK} = 'Y';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -707,7 +708,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_LOG}{&OPTION_LOG_LEVEL_CONSOLE} = BOGUS;
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -720,7 +721,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_LOG}{&OPTION_LOG_LEVEL_CONSOLE} = lc(INFO);
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -740,7 +741,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_EXPIRE}{&OPTION_RETENTION_FULL} = 2;
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -753,7 +754,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_BACKUP}{&OPTION_COMPRESS} = 'n';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -767,7 +768,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_RESTORE_RECOVERY_SETTING}{'archive-command'} = '/path/to/pg_backrest.pl';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -780,7 +781,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{$strStanza . ':' . &CONFIG_SECTION_RESTORE_RECOVERY_SETTING}{'standby-mode'} = 'on';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -792,7 +793,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_DB_PATH} = '/path/to/db';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -805,7 +806,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_DB_PATH} = '/path/to/db';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -818,7 +819,7 @@ sub BackRestTestConfig_Test
         {
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_GENERAL}{&OPTION_REPO_PATH} = '/repo';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -833,7 +834,7 @@ sub BackRestTestConfig_Test
             $oConfig = {};
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_COMMAND}{&OPTION_COMMAND_PSQL} = '/psql -X %option%';
             $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_COMMAND}{&OPTION_COMMAND_PSQL_OPTION} = '--port=5432';
-            ini_save($strConfigFile, $oConfig);
+            iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');

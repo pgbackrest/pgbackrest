@@ -7,12 +7,15 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname);
 use Cwd qw(abs_path);
 use Exporter qw(import);
+use File::Basename qw(dirname);
+use Getopt::Long qw(GetOptions);
+use Pod::Usage;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
+use BackRest::Ini;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -42,11 +45,12 @@ use constant
     OP_ARCHIVE_GET   => 'archive-get',
     OP_ARCHIVE_PUSH  => 'archive-push',
     OP_BACKUP        => 'backup',
+    OP_INFO          => 'info',
     OP_RESTORE       => 'restore',
     OP_EXPIRE        => 'expire'
 };
 
-push @EXPORT, qw(OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_RESTORE OP_EXPIRE);
+push @EXPORT, qw(OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_INFO OP_RESTORE OP_EXPIRE);
 
 ####################################################################################################################################
 # BACKUP Type Constants
@@ -59,6 +63,12 @@ use constant
 };
 
 push @EXPORT, qw(BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR);
+
+####################################################################################################################################
+# INFO Output Constants
+####################################################################################################################################
+use constant INFO_OUTPUT_TEXT => 'text';    push @EXPORT, qw(INFO_OUTPUT_TEXT);
+use constant INFO_OUTPUT_JSON => 'json';    push @EXPORT, qw(INFO_OUTPUT_JSON);
 
 ####################################################################################################################################
 # SOURCE Constants
@@ -127,6 +137,7 @@ use constant
     OPTION_TARGET_RESUME            => 'target-resume',
     OPTION_TARGET_TIMELINE          => 'target-timeline',
     OPTION_TYPE                     => 'type',
+    OPTION_OUTPUT                   => 'output',
 
     # Command-line/conf file options
     # GENERAL Section
@@ -195,7 +206,7 @@ push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OP
                  OPTION_ARCHIVE_ASYNC
                  OPTION_BUFFER_SIZE OPTION_COMPRESS OPTION_COMPRESS_LEVEL OPTION_COMPRESS_LEVEL_NETWORK OPTION_HARDLINK
                  OPTION_MANIFEST_SAVE_THRESHOLD OPTION_RESUME OPTION_PATH_ARCHIVE OPTION_REPO_PATH OPTION_REPO_REMOTE_PATH
-                 OPTION_DB_PATH
+                 OPTION_DB_PATH OPTION_OUTPUT
                  OPTION_LOG_LEVEL_CONSOLE OPTION_LOG_LEVEL_FILE
                  OPTION_RESTORE_RECOVERY_SETTING OPTION_RETENTION_ARCHIVE OPTION_RETENTION_ARCHIVE_TYPE OPTION_RETENTION_FULL
                  OPTION_RETENTION_DIFF OPTION_START_FAST OPTION_THREAD_MAX OPTION_THREAD_TIMEOUT
@@ -240,6 +251,8 @@ use constant
     OPTION_DEFAULT_BACKUP_RESUME                    => true,
     OPTION_DEFAULT_BACKUP_START_FAST                => false,
     OPTION_DEFAULT_BACKUP_TYPE                      => BACKUP_TYPE_INCR,
+
+    OPTION_DEFAULT_INFO_OUTPUT                      => INFO_OUTPUT_TEXT,
 
     OPTION_DEFAULT_REPO_PATH                        => '/var/lib/backup',
 
@@ -386,7 +399,30 @@ my %oOptionRule =
 
     &OPTION_STANZA =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_ARCHIVE_GET =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_ARCHIVE_PUSH =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_BACKUP =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_EXPIRE =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_RESTORE =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            }
+        }
     },
 
     &OPTION_TARGET =>
@@ -508,6 +544,23 @@ my %oOptionRule =
         }
     },
 
+    &OPTION_OUTPUT =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_INFO =>
+            {
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_INFO_OUTPUT,
+                &OPTION_RULE_ALLOW_LIST =>
+                {
+                    &INFO_OUTPUT_TEXT => true,
+                    &INFO_OUTPUT_JSON => true
+                }
+            }
+        }
+    },
+
     # Command-line/conf option rules
     #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_COMMAND_REMOTE =>
@@ -520,6 +573,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_INFO => true,
             &OP_RESTORE => true
         }
     },
@@ -596,6 +650,7 @@ my %oOptionRule =
         {
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
+            &OP_INFO => true,
             &OP_RESTORE => true
         },
     },
@@ -608,6 +663,7 @@ my %oOptionRule =
         {
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
+            &OP_INFO => true,
             &OP_RESTORE => true
         },
         &OPTION_RULE_REQUIRED => false,
@@ -627,6 +683,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_INFO => true,
             &OP_RESTORE => true,
             &OP_EXPIRE => true
         },
@@ -641,6 +698,7 @@ my %oOptionRule =
         {
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
+            &OP_INFO => true,
             &OP_RESTORE => true
         },
     },
@@ -691,7 +749,14 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_OPERATION =>
         {
-            &OP_BACKUP => true
+            &OP_BACKUP =>
+            {
+                &OPTION_RULE_DEPEND =>
+                {
+                    &OPTION_RULE_DEPEND_OPTION  => OPTION_NO_START_STOP,
+                    &OPTION_RULE_DEPEND_VALUE   => false
+                }
+            }
         }
     },
 
@@ -740,6 +805,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_INFO => true,
             &OP_RESTORE => true
         }
     },
@@ -756,6 +822,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_INFO => true,
             &OP_RESTORE => true
         }
     },
@@ -1055,22 +1122,18 @@ sub configLoad
     $oOptionAllow{'version'} = 'version';
 
     # Get command-line options
-    use Getopt::Long qw(GetOptions);
     my %oOptionTest;
 
     if (!GetOptions(\%oOptionTest, %oOptionAllow))
     {
-        print "\n";
-        print 'pg_backrest ' . version_get() . "\n";
-        print "\n";
-        use Pod::Usage;
+        syswrite(*STDOUT, "\npg_backrest " . version_get() . "\n\n");
         pod2usage(2);
     };
 
     # Display version and exit if requested
     if (defined($oOptionTest{&OPTION_VERSION}) || defined($oOptionTest{&OPTION_HELP}))
     {
-        print 'pg_backrest ' . version_get() . "\n";
+        syswrite(*STDOUT, 'pg_backrest ' . version_get() . "\n");
 
         if (!defined($oOptionTest{&OPTION_HELP}))
         {
@@ -1081,7 +1144,7 @@ sub configLoad
     # Display help and exit if requested
     if (defined($oOptionTest{&OPTION_HELP}))
     {
-        print "\n";
+        syswrite(*STDOUT, "\n");
         pod2usage();
         exit 0;
     }
@@ -1143,6 +1206,7 @@ sub optionValid
     if ($strOperation ne OP_ARCHIVE_GET &&
         $strOperation ne OP_ARCHIVE_PUSH &&
         $strOperation ne OP_BACKUP &&
+        $strOperation ne OP_INFO &&
         $strOperation ne OP_RESTORE &&
         $strOperation ne OP_EXPIRE)
     {
@@ -1279,7 +1343,7 @@ sub optionValid
                                 confess &log(ERROR, "'${strConfigFile}' is not a file", ERROR_FILE_INVALID);
                             }
 
-                            $oConfig = ini_load($strConfigFile);
+                            $oConfig = iniLoad($strConfigFile, undef, true);
                         }
                     }
 
@@ -1291,15 +1355,21 @@ sub optionValid
                     # Only look in the stanza section when $strSection = true
                     if ($strSection eq CONFIG_SECTION_STANZA)
                     {
-                        $strValue = $$oConfig{optionGet(OPTION_STANZA)}{$strOption};
+                        if (optionTest(OPTION_STANZA))
+                        {
+                            $strValue = $$oConfig{optionGet(OPTION_STANZA)}{$strOption};
+                        }
                     }
                     # Else do a full search
                     else
                     {
                         # First check in the stanza section
-                        $strValue = $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH ?
-                                    $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"} :
-                                    $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"}{$strOption};
+                        if (optionTest(OPTION_STANZA))
+                        {
+                            $strValue = $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH ?
+                                        $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"} :
+                                        $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"}{$strOption};
+                        }
 
                         # Else check for an inherited stanza section
                         if (!defined($strValue))
@@ -1310,7 +1380,10 @@ sub optionValid
 
                             if (defined($strInheritedSection))
                             {
-                                $strValue = $$oConfig{optionGet(OPTION_STANZA) . ":${strInheritedSection}"}{$strOption};
+                                if (optionTest(OPTION_STANZA))
+                                {
+                                    $strValue = $$oConfig{optionGet(OPTION_STANZA) . ":${strInheritedSection}"}{$strOption};
+                                }
                             }
 
                             # Else check the global section
@@ -1740,7 +1813,7 @@ sub optionRemote
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
         optionGet(OPTION_COMMAND_REMOTE),
-        optionGet(OPTION_STANZA),
+        optionGet(OPTION_STANZA, false),
         optionGet(OPTION_REPO_REMOTE_PATH),
         optionGet(OPTION_BUFFER_SIZE),
         operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),

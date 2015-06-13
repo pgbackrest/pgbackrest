@@ -7,13 +7,13 @@ run 003 - rmt 0, cmp 1, arc_async 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
 DEBUG:     File->path_create: backup:archive:[TEST_PATH]/backrest/archive/db, mode [undef]
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, mode [undef]
-DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, mode [undef]
+DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
@@ -21,7 +21,7 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
@@ -31,7 +31,7 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
@@ -41,13 +41,11 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000001 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
@@ -55,8 +53,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
 DEBUG:     safe exit called, terminating threads
@@ -66,10 +64,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
@@ -77,10 +75,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
@@ -88,10 +86,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000004
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000004(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000004.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000004.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000004(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
@@ -99,10 +97,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
@@ -110,7 +108,7 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
@@ -120,7 +118,7 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
@@ -130,13 +128,11 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000005 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
@@ -144,8 +140,8 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
 DEBUG:     safe exit called, terminating threads
@@ -155,10 +151,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000006(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000006.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000006.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000006(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
@@ -166,10 +162,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000007
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000007(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000007.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000007.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000007(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
@@ -177,10 +173,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000008
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000008(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000008.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000008.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000008(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
@@ -188,10 +184,10 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
@@ -199,7 +195,7 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
@@ -209,7 +205,7 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
@@ -219,13 +215,11 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000009 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
@@ -233,8 +227,23 @@ DEBUG:     safe exit called, terminating threads
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db/archive.info
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
 DEBUG:     safe exit called, terminating threads
+
++ supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
+-----------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=[FORMAT-1]
+backrest-version="[VERSION-1]"
+
+[db]
+db-id=1
+db-system-id=5947969990501855219
+db-version="9.3"
+
+[db:history]
+1={"db-id":5947969990501855219,"db-version":"9.3"}

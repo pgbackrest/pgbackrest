@@ -10,20 +10,23 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename;
+$SIG{__DIE__} = sub { Carp::confess @_ };
+
+use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
-use BackRest::Config;
-use BackRest::Remote qw(DB BACKUP NONE);
-use BackRest::Db;
-use BackRest::File;
-use BackRest::Lock;
-use BackRest::Archive;
 use BackRest::Backup;
+use BackRest::Archive;
+use BackRest::Config;
+use BackRest::Db;
+use BackRest::Exception;
+use BackRest::File;
+use BackRest::Info;
+use BackRest::Lock;
+use BackRest::Remote qw(DB BACKUP NONE);
 use BackRest::Restore;
 use BackRest::ThreadGroup;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # Usage
@@ -122,168 +125,174 @@ $SIG{INT} = \&safe_exit;
 ####################################################################################################################################
 # START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
 ####################################################################################################################################
-eval {
-
-####################################################################################################################################
-# Load command line parameters and config
-####################################################################################################################################
-configLoad();
-
-# Set the log levels
-log_level_set(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
-# Set test options
-!optionGet(OPTION_TEST) or test_set(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY));
-
-####################################################################################################################################
-# Process archive commands
-####################################################################################################################################
-if (operationTest(OP_ARCHIVE_PUSH) || operationTest(OP_ARCHIVE_GET))
+eval
 {
-    safe_exit(new BackRest::Archive()->process());
-}
+    ################################################################################################################################
+    # Load command line parameters and config
+    ################################################################################################################################
+    configLoad();
 
-####################################################################################################################################
-# Acquire the operation lock
-####################################################################################################################################
-lockAcquire(operationGet());
+    # Set the log levels
+    log_level_set(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
-####################################################################################################################################
-# Open the log file
-####################################################################################################################################
-log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(operationGet()));
+    # Set test options
+    !optionGet(OPTION_TEST) or test_set(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY));
 
-####################################################################################################################################
-# Create the thread group that will be used for parallel processing
-####################################################################################################################################
-threadGroupCreate();
-
-####################################################################################################################################
-# Initialize the default file object
-####################################################################################################################################
-my $oFile = new BackRest::File
-(
-    optionGet(OPTION_STANZA),
-    optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
-    optionRemoteType(),
-    optionRemote()
-);
-
-####################################################################################################################################
-# RESTORE
-####################################################################################################################################
-if (operationTest(OP_RESTORE))
-{
-    if (optionRemoteTypeTest(DB))
+    ################################################################################################################################
+    # Process archive commands
+    ################################################################################################################################
+    if (operationTest(OP_ARCHIVE_PUSH) || operationTest(OP_ARCHIVE_GET))
     {
-        confess &log(ASSERT, 'restore operation must be performed locally on the db server');
+        safe_exit(new BackRest::Archive()->process());
     }
 
-    # Do the restore
-    new BackRest::Restore
+    ################################################################################################################################
+    # Process info command
+    ################################################################################################################################
+    if (operationTest(OP_INFO))
+    {
+        safe_exit(new BackRest::Info()->info());
+    }
+
+    ################################################################################################################################
+    # Acquire the operation lock
+    ################################################################################################################################
+    lockAcquire(operationGet());
+
+    ################################################################################################################################
+    # Open the log file
+    ################################################################################################################################
+    log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(operationGet()));
+
+    ################################################################################################################################
+    # Create the thread group that will be used for parallel processing
+    ################################################################################################################################
+    threadGroupCreate();
+
+    ################################################################################################################################
+    # Initialize the default file object
+    ################################################################################################################################
+    my $oFile = new BackRest::File
     (
-        optionGet(OPTION_DB_PATH),
-        optionGet(OPTION_SET),
-        optionGet(OPTION_RESTORE_TABLESPACE_MAP, false),
-        $oFile,
-        optionGet(OPTION_THREAD_MAX),
-        optionGet(OPTION_DELTA),
-        optionGet(OPTION_FORCE),
-        optionGet(OPTION_TYPE),
-        optionGet(OPTION_TARGET, false),
-        optionGet(OPTION_TARGET_EXCLUSIVE, false),
-        optionGet(OPTION_TARGET_RESUME, false),
-        optionGet(OPTION_TARGET_TIMELINE, false),
-        optionGet(OPTION_RESTORE_RECOVERY_SETTING, false),
         optionGet(OPTION_STANZA),
-        $0,
-        optionGet(OPTION_CONFIG)
-    )->restore;
+        optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
+        optionRemoteType(),
+        optionRemote()
+    );
 
-    safe_exit(0);
-}
+    ################################################################################################################################
+    # RESTORE
+    ################################################################################################################################
+    if (operationTest(OP_RESTORE))
+    {
+        if (optionRemoteTypeTest(DB))
+        {
+            confess &log(ASSERT, 'restore operation must be performed locally on the db server');
+        }
 
-####################################################################################################################################
-# GET MORE CONFIG INFO
-####################################################################################################################################
-# Make sure backup and expire operations happen on the backup side
-if (optionRemoteTypeTest(BACKUP))
-{
-    confess &log(ERROR, 'backup and expire operations must run on the backup host');
-}
+        # Do the restore
+        new BackRest::Restore
+        (
+            optionGet(OPTION_DB_PATH),
+            optionGet(OPTION_SET),
+            optionGet(OPTION_RESTORE_TABLESPACE_MAP, false),
+            $oFile,
+            optionGet(OPTION_THREAD_MAX),
+            optionGet(OPTION_DELTA),
+            optionGet(OPTION_FORCE),
+            optionGet(OPTION_TYPE),
+            optionGet(OPTION_TARGET, false),
+            optionGet(OPTION_TARGET_EXCLUSIVE, false),
+            optionGet(OPTION_TARGET_RESUME, false),
+            optionGet(OPTION_TARGET_TIMELINE, false),
+            optionGet(OPTION_RESTORE_RECOVERY_SETTING, false),
+            optionGet(OPTION_STANZA),
+            $0,
+            optionGet(OPTION_CONFIG)
+        )->restore;
 
-# Initialize the db object
-my $oDb;
+        safe_exit(0);
+    }
 
-if (operationTest(OP_BACKUP))
-{
-    if (!optionGet(OPTION_NO_START_STOP))
+    ################################################################################################################################
+    # GET MORE CONFIG INFO
+    ################################################################################################################################
+    # Make sure backup and expire operations happen on the backup side
+    if (optionRemoteTypeTest(BACKUP))
+    {
+        confess &log(ERROR, 'backup and expire operations must run on the backup host');
+    }
+
+    # Initialize the db object
+    my $oDb;
+
+    if (operationTest(OP_BACKUP))
     {
         $oDb = new BackRest::Db
         (
+            !optionGet(OPTION_NO_START_STOP),
             optionGet(OPTION_DB_PATH),
             optionGet(OPTION_COMMAND_PSQL),
             optionGet(OPTION_DB_HOST, false),
             optionGet(OPTION_DB_USER, optionTest(OPTION_DB_HOST))
         );
-    }
 
-    # Run backup_init - parameters required for backup and restore operations
-    backup_init
-    (
-        $oDb,
-        $oFile,
-        optionGet(OPTION_TYPE),
-        optionGet(OPTION_COMPRESS),
-        optionGet(OPTION_HARDLINK),
-        optionGet(OPTION_THREAD_MAX),
-        optionGet(OPTION_THREAD_TIMEOUT, false),
-        optionGet(OPTION_NO_START_STOP),
-        optionTest(OPTION_FORCE)
-    );
-}
-
-####################################################################################################################################
-# BACKUP
-####################################################################################################################################
-if (operationTest(OP_BACKUP))
-{
-    backup(optionGet(OPTION_DB_PATH), optionGet(OPTION_START_FAST));
-
-    operationSet(OP_EXPIRE);
-}
-
-####################################################################################################################################
-# EXPIRE
-####################################################################################################################################
-if (operationTest(OP_EXPIRE))
-{
-    if (!defined($oDb))
-    {
+        # Run backup_init - parameters required for backup and restore operations
         backup_init
         (
-            undef,
-            $oFile
+            $oDb,
+            $oFile,
+            optionGet(OPTION_TYPE),
+            optionGet(OPTION_COMPRESS),
+            optionGet(OPTION_HARDLINK),
+            optionGet(OPTION_THREAD_MAX),
+            optionGet(OPTION_THREAD_TIMEOUT, false),
+            optionGet(OPTION_NO_START_STOP),
+            optionTest(OPTION_FORCE)
         );
     }
 
-    backup_expire
-    (
-        $oFile->path_get(PATH_BACKUP_CLUSTER),
-        optionGet(OPTION_RETENTION_FULL, false),
-        optionGet(OPTION_RETENTION_DIFF, false),
-        optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false),
-        optionGet(OPTION_RETENTION_ARCHIVE, false)
-    );
-}
+    ################################################################################################################################
+    # BACKUP
+    ################################################################################################################################
+    if (operationTest(OP_BACKUP))
+    {
+        backup(optionGet(OPTION_DB_PATH), optionGet(OPTION_START_FAST));
 
-# Cleanup backup (should be removed when backup becomes an object)
-backup_cleanup();
+        operationSet(OP_EXPIRE);
+    }
 
-# Release the operation lock
-lockRelease();
+    ################################################################################################################################
+    # EXPIRE
+    ################################################################################################################################
+    if (operationTest(OP_EXPIRE))
+    {
+        if (!defined($oDb))
+        {
+            backup_init
+            (
+                undef,
+                $oFile
+            );
+        }
 
-safe_exit(0);
+        backup_expire
+        (
+            $oFile->path_get(PATH_BACKUP_CLUSTER),
+            optionGet(OPTION_RETENTION_FULL, false),
+            optionGet(OPTION_RETENTION_DIFF, false),
+            optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false),
+            optionGet(OPTION_RETENTION_ARCHIVE, false)
+        );
+    }
+
+    # Cleanup backup (should be removed when backup becomes an object)
+    backup_cleanup();
+
+    # Release the operation lock
+    lockRelease();
+
+    safe_exit(0);
 };
 
 ####################################################################################################################################

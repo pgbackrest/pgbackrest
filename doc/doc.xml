@@ -285,6 +285,36 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					</command-example>
 				</command-example-list>
 			</command>
+
+			<!-- OPERATION - INFO COMMAND -->
+			<command id="info">
+				<text>Retrieve information about backups for a single stanza or for all stanzas.  Text output is the default and gives a human-readable summary of backups for the stanza(s) requested.  This format is subject to change with any release.
+
+					For machine-readable output use <setting>--output=json</setting>.  The JSON output contains far more information than the text output, however <b>this feature is currently experimental so the format may change between versions</b>.</text>
+
+				<option-list>
+					<!-- OPERATION - INFO COMMAND - OUTPUT OPTION -->
+					<option id="output">
+						<text>The following output types are supported:
+							<ul>
+								<li><id>text</id> - Human-readable summary of backup information.</li>
+								<li><id>json</id> - Exhaustive machine-readable backup information in JSON format.</li>
+							</ul></text>
+
+						<example>json</example>
+					</option>
+				</option-list>
+
+				<command-example-list>
+					<command-example title="Backup information">
+						<text><code-block>
+								/path/to/pg_backrest.pl --stanza=db --output=json info
+							</code-block>
+
+							Get information about backups in the <id>db</id> stanza.</text>
+					</command-example>
+				</command-example-list>
+			</command>
 		</command-list>
 	</operation>
 
@@ -694,6 +724,19 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.75" title="IN DEVELOPMENT - OTTAWA MILESTONE">
 				<release-feature-bullet-list>
 					<release-feature>
+						<text>
+							Info feature TODO:
+								* stanza create/upgrade?
+								* New regression for expiration now that the path structure is different.
+
+							Less Important:
+								* running/error state based on lock in tmp/stanza
+								* Add last WAL info to archive.info and info function
+								* Remote calls are not returning expected code (this is OK because of log testing, but not ideal)
+								* Comment blocks for the .info files
+						</text>
+					</release-feature>
+					<release-feature>
 						<text>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.</text>
 					</release-feature>
 				</release-feature-bullet-list>
@@ -913,6 +956,6 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 	<recognition title="Recognition">
 		<text>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.
 
-			Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.</text>
+			Crunchy Data Solutions (http://www.crunchydata.com) has contributed time and resources to <backrest/> and continues to support development. Resonate (http://www.resonate.com/) also contributed to the development of <backrest/> and allowed me to install early (but well tested) versions as their primary <postgres/> backup solution.</text>
 	</recognition>
 </doc>

@@ -307,6 +307,33 @@ example: --tablespace-map ts_01=/db/ts_01
 ```
 Restores the latest database backup and then recovers to the `release` restore point.
 
+#### `info` command
+
+Retrieve information about backups for a single stanza or for all stanzas.  Text output is the default and gives a human-readable summary of backups for the stanza(s) requested.  This format is subject to change with any release.
+
+For machine-readable output use `--output=json`.  The JSON output contains far more information than the text output, however **this feature is currently experimental so the format may change between versions**.
+
+##### `output` option
+
+The following output types are supported:
+
+- `text` - Human-readable summary of backup information.
+- `json` - Exhaustive machine-readable backup information in JSON format.
+
+```
+required: n
+default: text
+example: --output=json
+```
+
+##### Example: Backup information
+
+```
+/path/to/pg_backrest.pl --stanza=db --output=json info
+```
+
+Get information about backups in the `db` stanza.
+
 ## Configuration
 
 PgBackRest can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is `/etc/pg_backrest.conf`.
@@ -741,6 +768,18 @@ example: db-path=/data/db
 
 ### v0.75: IN DEVELOPMENT - OTTAWA MILESTONE
 
+* 
+Info feature TODO:
+* stanza create/upgrade?
+* New regression for expiration now that the path structure is different.
+
+Less Important:
+* running/error state based on lock in tmp/stanza
+* Add last WAL info to archive.info and info function
+* Remote calls are not returning expected code (this is OK because of log testing, but not ideal)
+* Comment blocks for the .info files
+
+
 * Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
 ### v0.70: Stability improvements for archiving, improved logging and help
@@ -869,4 +908,4 @@ example: db-path=/data/db
 
 Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of PgBackRest.
 
-Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.
+Crunchy Data Solutions (http://www.crunchydata.com) has contributed time and resources to PgBackRest and continues to support development. Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary PostgreSQL backup solution.

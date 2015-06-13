@@ -8,24 +8,23 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
 
-use Fcntl qw(:DEFAULT :flock);
-use File::Path qw(remove_tree);
-use Time::HiRes qw(gettimeofday usleep);
-use POSIX qw(ceil);
-use File::Basename;
 use Cwd qw(abs_path);
+use Exporter qw(import);
+use Fcntl qw(:DEFAULT :flock);
+use File::Basename;
+use File::Path qw(remove_tree);
 use JSON::PP;
+use POSIX qw(ceil);
+use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
-
-use Exporter qw(import);
 
 our @EXPORT = qw(version_get
                  data_hash_build trim common_prefix file_size_format execute
                  log log_file_set log_level_set test_set test_get test_check
                  hsleep wait_remainder
-                 ini_save ini_load timestamp_string_get timestamp_file_string_get
+                 timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
                  TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME FORMAT);
 
@@ -68,7 +67,7 @@ $oLogLevelRank{OFF}{rank} = 0;
 #
 # Identified the format of the manifest and file structure.  The format is used to determine compatability between versions.
 ####################################################################################################################################
-use constant FORMAT => 3;
+use constant FORMAT => 4;
 
 ####################################################################################################################################
 # TEST Constants and Variables
@@ -525,151 +524,11 @@ sub log
     # Throw a typed exception if code is defined
     if (defined($iCode))
     {
-        return new BackRest::Exception($iCode, $strMessage);
+        return new BackRest::Exception($iCode, $strMessage, longmess());
     }
 
     # Return the message test so it can be used in a confess
     return $strMessage;
-}
-
-####################################################################################################################################
-# INI_LOAD
-#
-# Load file from standard INI format to a hash.
-####################################################################################################################################
-sub ini_load
-{
-    my $strFile = shift;    # Full path to ini file to load from
-    my $oConfig = shift;    # Reference to the hash where ini data will be stored
-
-    # Open the ini file for reading
-    my $hFile;
-    my $strSection;
-
-    open($hFile, '<', $strFile)
-        or confess &log(ERROR, "unable to open ${strFile}");
-
-    # Create the JSON object
-    my $oJSON = JSON::PP->new();
-
-    # Read the INI file
-    while (my $strLine = readline($hFile))
-    {
-        $strLine = trim($strLine);
-
-        # Skip lines that are blank or comments
-        if ($strLine ne '' && $strLine !~ '^#.*')
-        {
-            # Get the section
-            if (index($strLine, '[') == 0)
-            {
-                $strSection = substr($strLine, 1, length($strLine) - 2);
-            }
-            else
-            {
-                # Get key and value
-                my $iIndex = index($strLine, '=');
-
-                if ($iIndex == -1)
-                {
-                    confess &log(ERROR, "unable to read from ${strFile}: ${strLine}");
-                }
-
-                my $strKey = substr($strLine, 0, $iIndex);
-                my $strValue = substr($strLine, $iIndex + 1);
-
-                # Try to store value as JSON
-                eval
-                {
-                    ${$oConfig}{"${strSection}"}{"${strKey}"} = $oJSON->decode($strValue);
-                };
-
-                # On error store value as a scalar
-                if ($@)
-                {
-                    ${$oConfig}{"${strSection}"}{"${strKey}"} = $strValue;
-                }
-            }
-        }
-    }
-
-    close($hFile);
-
-    return($oConfig);
-}
-
-####################################################################################################################################
-# INI_SAVE
-#
-# Save from a hash to standard INI format.
-####################################################################################################################################
-sub ini_save
-{
-    my $strFile = shift;    # Full path to ini file to save to
-    my $oConfig = shift;    # Reference to the hash where ini data is stored
-
-    # Open the ini file for writing
-    my $hFile;
-    my $bFirst = true;
-
-    open($hFile, '>', $strFile)
-        or confess &log(ERROR, "unable to open ${strFile}");
-
-    # Create the JSON object canonical so that fields are alpha ordered to pass unit tests
-    my $oJSON = JSON::PP->new()->canonical();
-
-    # Write the INI file
-    foreach my $strSection (sort(keys $oConfig))
-    {
-        # Add a linefeed between sections
-        if (!$bFirst)
-        {
-            syswrite($hFile, "\n")
-                or confess "unable to write lf: $!";
-        }
-
-        # Write the section comment if present
-        if (defined(${$oConfig}{$strSection}{'[comment]'}))
-        {
-            syswrite($hFile, "# " . ${$oConfig}{$strSection}{'[comment]'} . "\n")
-                or confess "unable to comment for section ${strSection}: $!";
-        }
-
-        # Write the section
-        syswrite($hFile, "[${strSection}]\n")
-            or confess "unable to write section ${strSection}: $!";
-
-        # Iterate through all keys in the section
-        foreach my $strKey (sort(keys ${$oConfig}{"${strSection}"}))
-        {
-            # Skip comments
-            if ($strKey eq '[comment]')
-            {
-                next;
-            }
-
-            # If the value is a hash then convert it to JSON, otherwise store as is
-            my $strValue = ${$oConfig}{"${strSection}"}{"${strKey}"};
-
-            if (defined($strValue))
-            {
-                if (ref($strValue) eq "HASH")
-                {
-                    syswrite($hFile, "${strKey}=" . $oJSON->encode($strValue) . "\n")
-                        or confess "unable to write key ${strKey}: $!";
-                }
-                else
-                {
-                    syswrite($hFile, "${strKey}=${strValue}\n")
-                        or confess "unable to write key ${strKey}: $!";
-                }
-            }
-        }
-
-        $bFirst = false;
-    }
-
-    close($hFile);
 }
 
 ####################################################################################################################################

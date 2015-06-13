@@ -7,20 +7,20 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Net::OpenSSH;
+use Exporter qw(import);
+use Digest::SHA;
+use Fcntl qw(:mode O_RDONLY O_WRONLY O_CREAT O_EXCL);
 use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
-use Digest::SHA;
 use File::stat;
-use Fcntl qw(:mode O_RDONLY O_WRONLY O_CREAT O_EXCL);
-use Exporter qw(import);
+use Net::OpenSSH;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
 use BackRest::Config;
+use BackRest::Exception;
 use BackRest::Remote;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # COMMAND Error Constants
@@ -292,22 +292,29 @@ sub path_get
     {
         my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
 
+        if (!defined($strFile))
+        {
+            return $strArchivePath;
+        }
+
         if ($strType eq PATH_BACKUP_ARCHIVE)
         {
-            my $strArchive;
+            my $strArchiveId = (split('/', $strFile))[0];
+            my $strArchiveFile = (split('/', $strFile))[1];
 
-            if (defined($strFile))
+            if (!defined($strArchiveFile))
             {
-                $strArchive = substr(basename($strFile), 0, 24);
-
-                if ($strArchive !~ /^([0-F]){24}$/)
-                {
-                    return "${strArchivePath}/${strFile}";
-                }
+                return "${strArchivePath}/${strFile}";
             }
 
-            $strArchivePath = $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
-                              (defined($strFile) ? '/' . $strFile : '');
+            my $strArchive = substr(basename($strArchiveFile), 0, 24);
+
+            if ($strArchive !~ /^([0-F]){24}$/)
+            {
+                return "${strArchivePath}/${strFile}";
+            }
+
+            $strArchivePath = "${strArchivePath}/${strArchiveId}/" . substr($strArchive, 0, 16) . "/${strArchiveFile}";
         }
         else
         {

@@ -11,10 +11,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -29,6 +30,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -44,6 +46,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -59,13 +62,13 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000001 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -80,6 +83,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -95,10 +99,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -113,10 +118,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -131,10 +137,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000004
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -149,10 +156,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -167,6 +175,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -182,6 +191,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -197,13 +207,13 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000005 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -218,6 +228,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -233,10 +244,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -251,10 +263,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000007
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -269,10 +282,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000008
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -287,10 +301,11 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -305,6 +320,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
@@ -320,6 +336,7 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
@@ -335,13 +352,13 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000009 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
 DEBUG:     no archive logs to be copied to backup
@@ -356,9 +373,25 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote.pl
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/local/archive/db/out/000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
 DEBUG:     safe exit called, terminating threads
+
++ supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
+-----------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=[FORMAT-1]
+backrest-version="[VERSION-1]"
+
+[db]
+db-id=1
+db-system-id=5947969990501855219
+db-version="9.3"
+
+[db:history]
+1={"db-id":5947969990501855219,"db-version":"9.3"}

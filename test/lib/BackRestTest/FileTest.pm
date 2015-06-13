@@ -11,24 +11,22 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename;
 use Cwd 'abs_path';
-use File::stat;
+use Exporter qw(import);
 use Fcntl ':mode';
+use File::Basename;
+use File::stat;
+use POSIX qw(ceil);
 use Scalar::Util 'blessed';
 use Time::HiRes qw(gettimeofday usleep);
-use POSIX qw(ceil);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
 use BackRest::Config;
 use BackRest::File;
 use BackRest::Remote;
+use BackRest::Utility;
 
 use BackRestTest::CommonTest;
-
-use Exporter qw(import);
-our @EXPORT = qw(BackRestTestFile_Test);
 
 my $strTestPath;
 my $strHost;
@@ -67,6 +65,8 @@ sub BackRestTestFile_Setup
 ####################################################################################################################################
 # BackRestTestFile_Test
 ####################################################################################################################################
+our @EXPORT = qw(BackRestTestFile_Test);
+
 sub BackRestTestFile_Test
 {
     my $strTest = shift;

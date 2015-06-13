@@ -11,25 +11,27 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use DBI;
+use Exporter qw(import);
+use Fcntl ':mode';
 use File::Basename;
 use File::Copy 'cp';
 use File::stat;
-use Fcntl ':mode';
 use Time::HiRes qw(gettimeofday);
-use DBI;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
-use BackRest::Config;
-use BackRest::Manifest;
-use BackRest::File;
-use BackRest::Remote;
 use BackRest::Archive;
+use BackRest::ArchiveInfo;
+use BackRest::Config;
+use BackRest::Exception;
+use BackRest::File;
+use BackRest::Ini;
+use BackRest::Manifest;
+use BackRest::Remote;
+use BackRest::Utility;
 
 use BackRestTest::CommonTest;
 
-use Exporter qw(import);
 our @EXPORT = qw(BackRestTestBackup_Test BackRestTestBackup_Create BackRestTestBackup_Drop BackRestTestBackup_ClusterStop
                  BackRestTestBackup_PgSelectOne BackRestTestBackup_PgExecute);
 
@@ -453,7 +455,8 @@ sub BackRestTestBackup_PathCreate
     my $strMode = shift;
 
     # Create final file location
-    my $strFinalPath = ${$oManifestRef}{'backup:path'}{$strPath} . (defined($strSubPath) ? "/${strSubPath}" : '');
+    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} .
+                       (defined($strSubPath) ? "/${strSubPath}" : '');
 
     # Create the path
     if (!(-e $strFinalPath))
@@ -477,7 +480,8 @@ sub BackRestTestBackup_PathMode
     my $strMode = shift;
 
     # Create final file location
-    my $strFinalPath = ${$oManifestRef}{'backup:path'}{$strPath} . (defined($strSubPath) ? "/${strSubPath}" : '');
+    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} .
+                       (defined($strSubPath) ? "/${strSubPath}" : '');
 
     BackRestTestCommon_PathMode($strFinalPath, $strMode);
 
@@ -511,9 +515,11 @@ sub BackRestTestBackup_ManifestPathCreate
     my $strManifestPath = defined($strSubPath) ? $strSubPath : '.';
 
     # Load file into manifest
-    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{group} = getgrgid($oStat->gid);
-    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"${strPath}:path"}{$strManifestPath}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
+    my $strSection = "${strPath}:" . MANIFEST_PATH;
+
+    ${$oManifestRef}{$strSection}{$strManifestPath}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
+    ${$oManifestRef}{$strSection}{$strManifestPath}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
+    ${$oManifestRef}{$strSection}{$strManifestPath}{&MANIFEST_SUBKEY_MODE} = sprintf('%04o', S_IMODE($oStat->mode));
 }
 
 ####################################################################################################################################
@@ -528,7 +534,8 @@ sub BackRestTestBackup_PathRemove
     my $strSubPath = shift;
 
     # Create final file location
-    my $strFinalPath = ${$oManifestRef}{'backup:path'}{$strPath} . (defined($strSubPath) ? "/${strSubPath}" : '');
+    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} .
+                       (defined($strSubPath) ? "/${strSubPath}" : '');
 
     # Create the path
     BackRestTestCommon_PathRemove($strFinalPath);
@@ -550,12 +557,6 @@ sub BackRestTestBackup_ManifestTablespaceCreate
     # Create final file location
     my $strPath = BackRestTestCommon_DbTablespacePathGet($iOid);
 
-    # Create the path
-    # if (!(-e $strPath))
-    # {
-    #     BackRestTestCommon_PathCreate($strPath, $strMode);
-    # }
-
     # Stat the path
     my $oStat = lstat($strPath);
 
@@ -566,12 +567,14 @@ sub BackRestTestBackup_ManifestTablespaceCreate
     }
 
     # Load path into manifest
-    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{group} = getgrgid($oStat->gid);
-    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"tablespace:${iOid}:path"}{'.'}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
+    my $strSection = MANIFEST_TABLESPACE . "/${iOid}:" . MANIFEST_PATH;
+
+    ${$oManifestRef}{$strSection}{'.'}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
+    ${$oManifestRef}{$strSection}{'.'}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
+    ${$oManifestRef}{$strSection}{'.'}{&MANIFEST_SUBKEY_MODE} = sprintf('%04o', S_IMODE($oStat->mode));
 
     # Create the link in pg_tblspc
-    my $strLink = BackRestTestCommon_DbCommonPathGet() . "/pg_tblspc/${iOid}";
+    my $strLink = BackRestTestCommon_DbCommonPathGet() . '/' . PATH_PG_TBLSPC . "/${iOid}";
 
     symlink($strPath, $strLink)
         or confess "unable to link ${strLink} to ${strPath}";
@@ -586,15 +589,17 @@ sub BackRestTestBackup_ManifestTablespaceCreate
     }
 
     # Load link into the manifest
-    ${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"}{group} = getgrgid($oStat->gid);
-    ${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"}{link_destination} = $strPath;
+    $strSection = MANIFEST_KEY_BASE . ':' . MANIFEST_LINK;
+
+    ${$oManifestRef}{$strSection}{"pg_tblspc/${iOid}"}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
+    ${$oManifestRef}{$strSection}{"pg_tblspc/${iOid}"}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
+    ${$oManifestRef}{$strSection}{"pg_tblspc/${iOid}"}{&MANIFEST_SUBKEY_DESTINATION} = $strPath;
 
     # Load tablespace into the manifest
-    ${$oManifestRef}{"backup:tablespace"}{$iOid}{link} = $iOid;
-    ${$oManifestRef}{"backup:tablespace"}{$iOid}{path} = $strPath;
+    $strSection = MANIFEST_TABLESPACE . "/${iOid}";
 
-    ${$oManifestRef}{"backup:path"}{"tablespace:${iOid}"} = $strPath;
+    ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strSection}{&MANIFEST_SUBKEY_PATH} = $strPath;
+    ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strSection}{&MANIFEST_SUBKEY_LINK} = $iOid;
 }
 
 ####################################################################################################################################
@@ -609,17 +614,16 @@ sub BackRestTestBackup_ManifestTablespaceDrop
     my $iIndex = shift;
 
     # Remove tablespace path/file/link from manifest
-    delete(${$oManifestRef}{"tablespace:${iOid}:path"});
-    delete(${$oManifestRef}{"tablespace:${iOid}:link"});
-    delete(${$oManifestRef}{"tablespace:${iOid}:file"});
+    delete(${$oManifestRef}{MANIFEST_TABLESPACE . "/${iOid}:" . MANIFEST_PATH});
+    delete(${$oManifestRef}{MANIFEST_TABLESPACE . "/${iOid}:" . MANIFEST_LINK});
+    delete(${$oManifestRef}{MANIFEST_TABLESPACE . "/${iOid}:" . MANIFEST_FILE});
 
     # Drop the link in pg_tblspc
-    BackRestTestCommon_FileRemove(BackRestTestCommon_DbCommonPathGet($iIndex) . "/pg_tblspc/${iOid}");
+    BackRestTestCommon_FileRemove(BackRestTestCommon_DbCommonPathGet($iIndex) . '/' . PATH_PG_TBLSPC . "/${iOid}");
 
     # Remove tablespace rom manifest
-    delete(${$oManifestRef}{"base:link"}{"pg_tblspc/${iOid}"});
-    delete(${$oManifestRef}{"backup:tablespace"}{$iOid});
-    delete(${$oManifestRef}{"backup:path"}{"tablespace:${iOid}"});
+    delete(${$oManifestRef}{MANIFEST_KEY_BASE . ':' . MANIFEST_LINK}{PATH_PG_TBLSPC . "/${iOid}"});
+    delete(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{MANIFEST_TABLESPACE . "/${iOid}"});
 }
 
 ####################################################################################################################################
@@ -637,7 +641,7 @@ sub BackRestTestBackup_FileCreate
     my $strMode = shift;
 
     # Create actual file location
-    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
 
     # Create the file
     BackRestTestCommon_FileCreate($strPathFile, $strContent, $lTime, $strMode);
@@ -674,16 +678,18 @@ sub BackRestTestBackup_ManifestFileCreate
     }
 
     # Load file into manifest
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{group} = getgrgid($oStat->gid);
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{modification_time} = $oStat->mtime;
-    ${$oManifestRef}{"${strPath}:file"}{$strFile}{size} = $oStat->size;
-    delete(${$oManifestRef}{"${strPath}:file"}{$strFile}{reference});
+    my $strSection = "${strPath}:" . MANIFEST_FILE;
+
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_MODE} = sprintf('%04o', S_IMODE($oStat->mode));
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
+    delete(${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_REFERENCE});
 
     if (defined($strChecksum))
     {
-        ${$oManifestRef}{"${strPath}:file"}{$strFile}{checksum} = $strChecksum;
+        ${$oManifestRef}{$strSection}{$strFile}{checksum} = $strChecksum;
     }
 }
 
@@ -700,7 +706,7 @@ sub BackRestTestBackup_FileRemove
     my $bIgnoreMissing = shift;
 
     # Create actual file location
-    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
 
     # Remove the file
     if (!(defined($bIgnoreMissing) && $bIgnoreMissing && !(-e $strPathFile)))
@@ -723,13 +729,13 @@ sub BackRestTestBackup_ManifestFileRemove
     my $strFile = shift;
 
     # Create actual file location
-    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
 
     # Remove the file
     BackRestTestBackup_FileRemove($oManifestRef, $strPath, $strFile, true);
 
     # Remove from manifest
-    delete(${$oManifestRef}{"${strPath}:file"}{$strFile});
+    delete(${$oManifestRef}{"${strPath}:" . MANIFEST_FILE}{$strFile});
 }
 
 ####################################################################################################################################
@@ -746,15 +752,12 @@ sub BackRestTestBackup_ManifestReference
     # Set prior backup
     if (defined($strReference))
     {
-        ${$oManifestRef}{backup}{prior} = $strReference;
+        ${$oManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} = $strReference;
     }
     else
     {
-        delete(${$oManifestRef}{backup}{prior});
+        delete(${$oManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR});
     }
-
-    # Clear the reference list
-    delete(${$oManifestRef}{backup}{reference});
 
     # Find all file sections
     foreach my $strSectionFile (sort(keys $oManifestRef))
@@ -769,19 +772,19 @@ sub BackRestTestBackup_ManifestReference
         {
             if (!defined($strReference))
             {
-                delete(${$oManifestRef}{$strSectionFile}{$strFile}{reference});
+                delete(${$oManifestRef}{$strSectionFile}{$strFile}{&MANIFEST_SUBKEY_REFERENCE});
             }
             elsif (defined($bClear) && $bClear)
             {
-                if (defined(${$oManifestRef}{$strSectionFile}{$strFile}{reference}) &&
-                    ${$oManifestRef}{$strSectionFile}{$strFile}{reference} ne $strReference)
+                if (defined(${$oManifestRef}{$strSectionFile}{$strFile}{&MANIFEST_SUBKEY_REFERENCE}) &&
+                    ${$oManifestRef}{$strSectionFile}{$strFile}{&MANIFEST_SUBKEY_REFERENCE} ne $strReference)
                 {
-                    delete(${$oManifestRef}{$strSectionFile}{$strFile}{reference});
+                    delete(${$oManifestRef}{$strSectionFile}{$strFile}{&MANIFEST_SUBKEY_REFERENCE});
                 }
             }
-            elsif (!defined(${$oManifestRef}{$strSectionFile}{$strFile}{reference}))
+            elsif (!defined(${$oManifestRef}{$strSectionFile}{$strFile}{&MANIFEST_SUBKEY_REFERENCE}))
             {
-                ${$oManifestRef}{$strSectionFile}{$strFile}{reference} = $strReference;
+                ${$oManifestRef}{$strSectionFile}{$strFile}{&MANIFEST_SUBKEY_REFERENCE} = $strReference;
             }
         }
     }
@@ -800,7 +803,7 @@ sub BackRestTestBackup_LinkCreate
     my $strDestination = shift;
 
     # Create actual file location
-    my $strPathFile = ${$oManifestRef}{'backup:path'}{$strPath} . "/${strFile}";
+    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
 
     # Create the file
     symlink($strDestination, $strPathFile)
@@ -863,9 +866,11 @@ sub BackRestTestBackup_ManifestLinkCreate
     }
 
     # Load file into manifest
-    ${$oManifestRef}{"${strPath}:link"}{$strFile}{group} = getgrgid($oStat->gid);
-    ${$oManifestRef}{"${strPath}:link"}{$strFile}{user} = getpwuid($oStat->uid);
-    ${$oManifestRef}{"${strPath}:link"}{$strFile}{link_destination} = $strDestination;
+    my $strSection = "${strPath}:" . MANIFEST_LINK;
+
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
+    ${$oManifestRef}{$strSection}{$strFile}{&MANIFEST_SUBKEY_DESTINATION} = $strDestination;
 }
 
 ####################################################################################################################################
@@ -877,12 +882,12 @@ sub BackRestTestBackup_LastBackup
 
     my @stryBackup = $oFile->list(PATH_BACKUP_CLUSTER, undef, undef, 'reverse');
 
-    if (!defined($stryBackup[1]))
+    if (!defined($stryBackup[2]))
     {
         confess 'no backup was found';
     }
 
-    return $stryBackup[1];
+    return $stryBackup[2];
 }
 
 ####################################################################################################################################
@@ -922,6 +927,7 @@ sub BackRestTestBackup_BackupBegin
 sub BackRestTestBackup_BackupEnd
 {
     my $strType = shift;
+    my $strStanza = shift;
     my $oFile = shift;
     my $bRemote = shift;
     my $strBackup = shift;
@@ -936,7 +942,7 @@ sub BackRestTestBackup_BackupEnd
         return undef;
     }
 
-    ${$oExpectedManifestRef}{backup}{type} = $strType;
+    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
 
     if (!defined($strBackup))
     {
@@ -947,6 +953,18 @@ sub BackRestTestBackup_BackupEnd
     {
         BackRestTestBackup_BackupCompare($oFile, $bRemote, $strBackup, $oExpectedManifestRef);
     }
+
+    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_DbPathGet() . "/pg_backrest.conf", $bRemote);
+
+    if ($bRemote)
+    {
+        BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf", $bRemote);
+    }
+
+    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
+                                         "/backup/${strStanza}/${strBackup}/backup.manifest", $bRemote);
+    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
+                                         "/backup/${strStanza}/backup.info", $bRemote);
 
     return $strBackup;
 }
@@ -975,7 +993,8 @@ sub BackRestTestBackup_BackupSynthetic
         BackRestTestCommon_ExecuteEnd($strTestPoint);
     }
 
-    return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, $oExpectedManifestRef, true, $iExpectedExitStatus);
+    return BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, $oExpectedManifestRef, true,
+                                        $iExpectedExitStatus);
 }
 
 ####################################################################################################################################
@@ -999,7 +1018,28 @@ sub BackRestTestBackup_Backup
         BackRestTestCommon_ExecuteEnd($strTestPoint);
     }
 
-    return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, false, $iExpectedExitStatus);
+    return BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, undef, false, $iExpectedExitStatus);
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Info
+####################################################################################################################################
+sub BackRestTestBackup_Info
+{
+    my $strStanza = shift;
+    my $strOutput = shift;
+    my $bRemote = shift;
+    my $strComment = shift;
+
+    $strComment = "info" . (defined($strStanza) ? " ${strStanza}" : '');
+    &log(INFO, "    $strComment");
+
+    BackRestTestCommon_Execute(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                              ' --config=' .
+                              ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
+                              '/pg_backrest.conf' . (defined($strStanza) ? " --stanza=${strStanza}" : '') . ' info' .
+                              (defined($strOutput) ? " --output=${strOutput}" : ''),
+                              $bRemote, undef, undef, undef, $strComment);
 }
 
 ####################################################################################################################################
@@ -1012,40 +1052,7 @@ sub BackRestTestBackup_BackupCompare
     my $strBackup = shift;
     my $oExpectedManifestRef = shift;
 
-    ${$oExpectedManifestRef}{backup}{label} = $strBackup;
-
-    # Remove old reference list
-    delete(${$oExpectedManifestRef}{backup}{reference});
-
-    # Build the new reference list
-    foreach my $strSectionFile (sort(keys $oExpectedManifestRef))
-    {
-        # Skip non-file sections
-        if ($strSectionFile !~ /\:file$/)
-        {
-            next;
-        }
-
-        foreach my $strFile (sort(keys ${$oExpectedManifestRef}{$strSectionFile}))
-        {
-            if (defined(${$oExpectedManifestRef}{$strSectionFile}{$strFile}{reference}))
-            {
-                my $strFileReference = ${$oExpectedManifestRef}{$strSectionFile}{$strFile}{reference};
-
-                if (!defined(${$oExpectedManifestRef}{backup}{reference}))
-                {
-                    ${$oExpectedManifestRef}{backup}{reference} = $strFileReference;
-                }
-                else
-                {
-                    if (${$oExpectedManifestRef}{backup}{reference} !~ /^$strFileReference|,$strFileReference/)
-                    {
-                        ${$oExpectedManifestRef}{backup}{reference} .= ",${strFileReference}";
-                    }
-                }
-            }
-        }
-    }
+    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL} = $strBackup;
 
     # Change mode on the backup path so it can be read
     if ($bRemote)
@@ -1054,18 +1061,22 @@ sub BackRestTestBackup_BackupCompare
     }
 
     my %oActualManifest;
-    ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oActualManifest);
+    iniLoad($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oActualManifest);
 
-    ${$oExpectedManifestRef}{backup}{'timestamp-start'} = $oActualManifest{backup}{'timestamp-start'};
-    ${$oExpectedManifestRef}{backup}{'timestamp-stop'} = $oActualManifest{backup}{'timestamp-stop'};
-    ${$oExpectedManifestRef}{backup}{'timestamp-copy-start'} = $oActualManifest{backup}{'timestamp-copy-start'};
-    ${$oExpectedManifestRef}{backup}{'checksum'} = $oActualManifest{backup}{'checksum'};
-    ${$oExpectedManifestRef}{backup}{format} = FORMAT;
+    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
+        $oActualManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START};
+    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP} =
+        $oActualManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP};
+    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START} =
+        $oActualManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START};
+    ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
+        $oActualManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
+    ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = FORMAT + 0;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
-    ini_save("${strTestPath}/actual.manifest", \%oActualManifest);
-    ini_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);
+    iniSave("${strTestPath}/actual.manifest", \%oActualManifest);
+    iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);
 
     BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
@@ -1105,12 +1116,12 @@ sub BackRestTestBackup_ManifestMunge
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
-        BackRestTestCommon_Execute('chmod 770 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
+        BackRestTestCommon_Execute('chmod 770 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
     }
 
     # Read the manifest
     my %oManifest;
-    ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oManifest);
+    iniLoad($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oManifest);
 
     # Write in the munged value
     if (defined($strSubKey))
@@ -1137,57 +1148,22 @@ sub BackRestTestBackup_ManifestMunge
     }
 
     # Remove the old checksum
-    delete($oManifest{backup}{checksum});
+    delete($oManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
 
     my $oSHA = Digest::SHA->new('sha1');
-
-    # Calculate the checksum from manifest values
-    foreach my $strSection (sort(keys(%oManifest)))
-    {
-        $oSHA->add($strSection);
-
-        foreach my $strKey (sort(keys($oManifest{$strSection})))
-        {
-            $oSHA->add($strKey);
-
-            my $strValue = $oManifest{$strSection}{$strKey};
-
-            if (!defined($strValue))
-            {
-                confess &log(ASSERT, "section ${strSection}, key ${$strKey} has undef value");
-            }
-
-            if (ref($strValue) eq "HASH")
-            {
-                foreach my $strSubKey (sort(keys($oManifest{$strSection}{$strKey})))
-                {
-                    my $strSubValue = $oManifest{$strSection}{$strKey}{$strSubKey};
-
-                    if (!defined($strSubValue))
-                    {
-                        confess &log(ASSERT, "section ${strSection}, key ${strKey}, subkey ${strSubKey} has undef value");
-                    }
-
-                    $oSHA->add($strSubValue);
-                }
-            }
-            else
-            {
-                $oSHA->add($strValue);
-            }
-        }
-    }
+    my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
+    $oSHA->add($oJSON->encode(\%oManifest));
 
     # Set the new checksum
-    $oManifest{backup}{checksum} = $oSHA->hexdigest();
+    $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
 
     # Resave the manifest
-    ini_save($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', \%oManifest);
+    iniSave($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oManifest);
 
     # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/backup.manifest', true);
+        BackRestTestCommon_Execute('chmod 750 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
         BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
     }
 }
@@ -1248,7 +1224,7 @@ sub BackRestTestBackup_Restore
         my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
                                                        "/backup/${strStanza}/${strBackup}/backup.manifest", true);
 
-        $oExpectedManifestRef = $oExpectedManifest->{oManifest};
+        $oExpectedManifestRef = $oExpectedManifest->{oContent};
 
         # Change mode on the backup path back before unit tests continue
         if ($bRemote)
@@ -1305,7 +1281,7 @@ sub BackRestTestBackup_RestoreCompare
     # Load the last manifest if it exists
     my $oLastManifest = undef;
 
-    if (defined(${$oExpectedManifestRef}{'backup'}{'prior'}))
+    if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR}))
     {
         # Change mode on the backup path so it can be read
         if ($bRemote)
@@ -1314,11 +1290,12 @@ sub BackRestTestBackup_RestoreCompare
         }
 
         my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
-                                                       "/backup/${strStanza}/${strBackup}/backup.manifest", true);
+                                                       "/backup/${strStanza}/${strBackup}/" . FILE_MANIFEST, true);
 
         $oLastManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
-                                                "/backup/${strStanza}/" . ${$oExpectedManifestRef}{'backup'}{'prior'} .
-                                                '/backup.manifest', true);
+                                                "/backup/${strStanza}/" .
+                                                ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} .
+                                                '/' . FILE_MANIFEST, true);
 
         # Change mode on the backup path back before unit tests continue
         if ($bRemote)
@@ -1330,32 +1307,37 @@ sub BackRestTestBackup_RestoreCompare
 
     # Generate the tablespace map for real backups
     my $oTablespaceMap = undef;
-    # ${$oTablespaceMapRef}{oid}{$strName}{name} = $strName;
 
-    if (!$bSynthetic && defined(${$oExpectedManifestRef}{'backup:tablespace'}))
+    if (!$bSynthetic)
     {
-        foreach my $strTablespaceName (keys(${$oExpectedManifestRef}{'backup:tablespace'}))
+        foreach my $strTablespaceName (keys(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}))
         {
-            my $strTablespaceOid = ${$oExpectedManifestRef}{'backup:tablespace'}{$strTablespaceName}{link};
+            if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strTablespaceName}{&MANIFEST_SUBKEY_LINK}))
+            {
+                my $strTablespaceOid =
+                    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strTablespaceName}{&MANIFEST_SUBKEY_LINK};
 
-            $$oTablespaceMap{oid}{$strTablespaceOid}{name} = $strTablespaceName;
+                $$oTablespaceMap{oid}{$strTablespaceOid}{name} = (split('/', $strTablespaceName))[1];
+            }
         }
     }
 
     # Generate the actual manifest
-    my $oActualManifest = new BackRest::Manifest("${strTestPath}/actual.manifest", false);
+    my $oActualManifest = new BackRest::Manifest("${strTestPath}/" . FILE_MANIFEST, false);
 
     my $oTablespaceMapRef = undef;
-    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, true, $oTablespaceMap);
+    $oActualManifest->build($oFile,
+        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{&MANIFEST_KEY_BASE}{&MANIFEST_SUBKEY_PATH},
+        $oLastManifest, true, $oTablespaceMap);
 
     # Generate checksums for all files if required
     # Also fudge size if this is a synthetic test - sizes may change during backup.
-    foreach my $strSectionPathKey ($oActualManifest->keys('backup:path'))
+    foreach my $strSectionPathKey ($oActualManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
-        my $strSectionPath = $oActualManifest->get('backup:path', $strSectionPathKey);
+        my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_PATH);
 
         # Create all paths in the manifest that do not already exist
-        my $strSection = "${strSectionPathKey}:file";
+        my $strSection = "${strSectionPathKey}:" . MANIFEST_FILE;
 
         if ($oActualManifest->test($strSection))
         {
@@ -1363,12 +1345,13 @@ sub BackRestTestBackup_RestoreCompare
             {
                 if (!$bSynthetic)
                 {
-                    $oActualManifest->set($strSection, $strName, 'size', ${$oExpectedManifestRef}{$strSection}{$strName}{size});
+                    $oActualManifest->set($strSection, $strName, MANIFEST_SUBKEY_SIZE,
+                                          ${$oExpectedManifestRef}{$strSection}{$strName}{size});
                 }
 
-                if ($oActualManifest->get($strSection, $strName, 'size') != 0)
+                if ($oActualManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) != 0)
                 {
-                    $oActualManifest->set($strSection, $strName, 'checksum',
+                    $oActualManifest->set($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM,
                                           $oFile->hash(PATH_DB_ABSOLUTE, "${strSectionPath}/${strName}"));
                 }
             }
@@ -1376,36 +1359,51 @@ sub BackRestTestBackup_RestoreCompare
     }
 
     # Set actual to expected for settings that always change from backup to backup
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef,
-                          ${$oExpectedManifestRef}{'backup:option'}{compress});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef,
-                          ${$oExpectedManifestRef}{'backup:option'}{hardlink});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_START_STOP, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_START_STOP});
 
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_VERSION, undef,
-                          ${$oExpectedManifestRef}{'backup'}{version});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION});
+    $oActualManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef,
+                                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL});
+    $oActualManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
+                                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
+    $oActualManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef,
+                                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID});
+
+    $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
+                          ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_VERSION});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
-                          ${$oExpectedManifestRef}{'backup'}{'timestamp-copy-start'});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef,
-                          ${$oExpectedManifestRef}{'backup'}{'timestamp-start'});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef,
-                          ${$oExpectedManifestRef}{'backup'}{'timestamp-stop'});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
-                          ${$oExpectedManifestRef}{'backup'}{'label'});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
-                          ${$oExpectedManifestRef}{'backup'}{'type'});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM, undef,
-                          ${$oExpectedManifestRef}{'backup'}{'checksum'});
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE});
+    $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef,
+                          ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
 
     if (!$bSynthetic)
     {
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef,
-                              ${$oExpectedManifestRef}{'backup'}{'archive-start'});
+                              ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_ARCHIVE_START});
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef,
-                              ${$oExpectedManifestRef}{'backup'}{'archive-stop'});
+                              ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_ARCHIVE_STOP});
     }
 
-    ini_save("${strTestPath}/actual.manifest", $oActualManifest->{oManifest});
-    ini_save("${strTestPath}/expected.manifest", $oExpectedManifestRef);
+    iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
+    iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);
 
     BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
@@ -1458,13 +1456,16 @@ sub BackRestTestBackup_Expire
     }
 
     # Check that the correct archive logs were expired
-    my @stryArchiveActual = $oFile->list(PATH_BACKUP_ARCHIVE, '0000000100000000');
+    my @stryArchiveActual = $oFile->list(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000100000000');
 
     if (join(",", @stryArchiveActual) ne join(",", @{$stryArchiveExpectedRef}))
     {
         confess "expected archive list:\n    " . join("\n    ", @{$stryArchiveExpectedRef}) .
                 "\n\nbut actual was:\n    " . join("\n    ", @stryArchiveActual) . "\n";
     }
+
+    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
+                                         "/backup/${strStanza}/backup.info", false);
 }
 
 ####################################################################################################################################
@@ -1628,22 +1629,22 @@ sub BackRestTestBackup_Test
                             my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
                             my %oInfo;
                             BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
-                            my $strDbVersion = $oInfo{database}{version};
-                            my $ullDbSysId = $oInfo{database}{'system-id'};
+                            my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
+                            my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
 
                             # Break the database version
-                            $oInfo{database}{version} = '8.0';
-                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
+                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
                             &log(INFO, '        test db version mismatch error');
 
                             BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
                                                        ERROR_ARCHIVE_MISMATCH);
 
-                            # Break the database version
-                            $oInfo{database}{version} = $strDbVersion;
-                            $oInfo{database}{'system-id'} = '5000900090001855000';
-                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                            # Break the system id
+                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = $strDbVersion;
+                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = '5000900090001855000';
+                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
                             &log(INFO, '        test db system-id mismatch error');
 
@@ -1651,8 +1652,8 @@ sub BackRestTestBackup_Test
                                                        ERROR_ARCHIVE_MISMATCH);
 
                             # Move settings back to original
-                            $oInfo{database}{'system-id'} = $ullDbSysId;
-                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
+                            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
                             # Should succeed because checksum is the same
                             &log(INFO, '        test archive duplicate ok');
@@ -1684,7 +1685,7 @@ sub BackRestTestBackup_Test
                         }
 
                         # Build the archive name to check for at the destination
-                        my $strArchiveCheck = "${strArchiveFile}-${strArchiveChecksum}";
+                        my $strArchiveCheck = "9.3-1/${strArchiveFile}-${strArchiveChecksum}";
 
                         if ($bCompress)
                         {
@@ -1697,15 +1698,18 @@ sub BackRestTestBackup_Test
 
                             if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
                             {
-                                confess 'unable to find ' . $oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+                                confess 'unable to find ' . $strArchiveCheck;
                             }
                         }
                     }
 
                     # !!! Need to put in tests for .backup files here
                 }
+
+                BackRestTestCommon_TestLogAppendFile($oFile->path_get(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
             }
             }
+
 
             $bCreate = true;
         }
@@ -1716,7 +1720,6 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Drop(true);
         }
     }
-
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test archive-stop
@@ -1804,14 +1807,14 @@ sub BackRestTestBackup_Test
                 my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
                 my %oInfo;
                 BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
-                my $strDbVersion = $oInfo{database}{version};
-                my $ullDbSysId = $oInfo{database}{'system-id'};
+                my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
+                my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
 
                 # Break the database version
                 if ($iError == 0)
                 {
-                    $oInfo{database}{version} = '8.0';
-                    BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
+                    BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
                 }
 
                 # Push two more segments with errors to exceed archive-max-mb
@@ -1827,8 +1830,8 @@ sub BackRestTestBackup_Test
                 # Fix the database version
                 if ($iError == 0)
                 {
-                    $oInfo{database}{version} = '9.3';
-                    BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote);
+                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '9.3';
+                    BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
                 }
 
                 # Remove the stop file
@@ -1911,6 +1914,22 @@ sub BackRestTestBackup_Test
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --stanza=db archive-get';
 
+
+                # Create the archive info file
+                if ($bRemote)
+                {
+                    BackRestTestCommon_Execute("chmod g+r,g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+                }
+
+                BackRestTestCommon_Execute('mkdir -p -m 770 ' . $oFile->path_get(PATH_BACKUP_ARCHIVE), $bRemote);
+                (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check('9.3', 6969);
+                BackRestTestCommon_TestLogAppendFile($oFile->path_get(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
+
+                if ($bRemote)
+                {
+                    BackRestTestCommon_Execute("chmod g-r,g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+                }
+
                 if ($bExists)
                 {
                     # Loop through archive files
@@ -1936,12 +1955,12 @@ sub BackRestTestBackup_Test
                             $strSourceFile .= '.gz';
                         }
 
-                        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
-                                     PATH_BACKUP_ARCHIVE, $strSourceFile,    # Destination file
-                                     false,                                  # Source is not compressed
-                                     $bCompress,                             # Destination compress based on test
-                                     undef, undef, undef,                    # Unused params
-                                     true);                                  # Create path if it does not exist
+                        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,         # Source file
+                                     PATH_BACKUP_ARCHIVE, "9.3-1/${strSourceFile}", # Destination file
+                                     false,                                         # Source is not compressed
+                                     $bCompress,                                    # Destination compress based on test
+                                     undef, undef, undef,                           # Unused params
+                                     true);                                         # Create path if it does not exist
 
                         my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
 
@@ -1982,12 +2001,14 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test expire
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($strTest eq 'all' || $strTest eq 'expire')
+    $strThisTest = 'expire';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
     {
         $iRun = 0;
         my $oFile;
 
-        &log(INFO, "Test expire\n");
+        &log(INFO, "Test ${strThisTest}\n");
 
         # Create the file object
         $oFile = (BackRest::File->new
@@ -2038,13 +2059,25 @@ sub BackRestTestBackup_Test
         push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
         push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
         push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
+        push @stryBackupExpected, 'backup.info';
         push @stryBackupExpected, 'latest';
 
+        # Increment the run, log, and decide whether this unit test should be run
+        if (!BackRestTestCommon_Run(++$iRun,
+                                    "local",
+                                    $iThreadMax == 1 ? $strModule : undef,
+                                    $iThreadMax == 1 ? $strThisTest: undef,
+                                    false)) {next}
+
+        # Append backup.info to create a baseline
+        BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
+                                             "/backup/${strStanza}/backup.info", false);
+
         # Create an archive log path that will be removed as old on the first archive expire call
-        $oFile->path_create(PATH_BACKUP_ARCHIVE, '0000000000000000');
+        $oFile->path_create(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000000000000');
 
         # Get the expected archive list
-        my @stryArchiveExpected = $oFile->list(PATH_BACKUP_ARCHIVE, '0000000100000000');
+        my @stryArchiveExpected = $oFile->list(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000100000000');
 
         # Expire all but the last two fulls
         splice(@stryBackupExpected, 0, 3);
@@ -2061,9 +2094,9 @@ sub BackRestTestBackup_Test
         splice(@stryArchiveExpected, 0, 10);
         BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3, 'full', 2);
 
-        if ($oFile->exists(PATH_BACKUP_ARCHIVE, '0000000000000000'))
+        if ($oFile->exists(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000000000000'))
         {
-            confess 'archive log path 0000000000000000 should have been removed';
+            confess 'archive log path ' . BackRestTestCommon_DbVersion() . '-1/0000000000000000 should have been removed';
         }
 
         # Expire archive based on the last two diffs
@@ -2125,14 +2158,22 @@ sub BackRestTestBackup_Test
             # Build the manifest
             my %oManifest;
 
-            $oManifest{backup}{version} = version_get();
-            $oManifest{'backup:option'}{compress} = $bCompress ? 'y' : 'n';
-            $oManifest{'backup:option'}{hardlink} = $bHardlink ? 'y' : 'n';
+            $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = version_get();
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardlink ? JSON::PP::true : JSON::PP::false;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_START_STOP} = JSON::PP::false;
+
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201306121;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 937;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6156904820763115222;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = '9.3';
 
             # Create the test directory
             BackRestTestBackup_Create($bRemote, false);
 
-            $oManifest{'backup:path'}{base} = BackRestTestCommon_DbCommonPathGet();
+            $oManifest{'backup:path'}{base}{&MANIFEST_SUBKEY_PATH} = BackRestTestCommon_DbCommonPathGet();
 
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base');
 
@@ -2153,6 +2194,17 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+
+            # Create global path
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'global');
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'global/pg_control', '[replaceme]',
+                                                  '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
+            BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . '/pg_control ' .
+                                       BackRestTestCommon_DbCommonPathGet() . '/global/pg_control');
+            utime($lTime - 100, $lTime - 100, BackRestTestCommon_DbCommonPathGet() . '/global/pg_control')
+                or confess &log(ERROR, "unable to set time");
+            $oManifest{'base:file'}{'global/pg_control'}{'size'} = 8192;
 
             # Create tablespace path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'pg_tblspc');
@@ -2185,6 +2237,11 @@ sub BackRestTestBackup_Test
 
             my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                                    undef, undef, undef, undef, '--manifest-save-threshold=3');
+
+            # Backup Info
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_Info($strStanza, undef, false);
+            BackRestTestBackup_Info($strStanza, INFO_OUTPUT_JSON, false);
 
             # Resume Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -2227,22 +2284,69 @@ sub BackRestTestBackup_Test
                                        undef, undef, undef, undef, undef, undef,
                                        'add and delete files');
 
-            # Incr backup
+            # Various broken info tests
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup);
 
+            my $strInfoFile = BackRestTestCommon_RepoPathGet . "/backup/${strStanza}/backup.info";
+            my %oInfo;
+            BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
+
+            # Break the database version
+            my $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
+
+            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
+            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
+
+            my $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                               'invalid database version', undef, undef, ERROR_BACKUP_MISMATCH);
+            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
+
+            # Break the database system id
+            my $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
+            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
+            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
+
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                            'invalid system id', undef, undef, ERROR_BACKUP_MISMATCH);
+            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
+
+            # Break the control version
+            my $iControlVersion = $oInfo{'db'}{&MANIFEST_KEY_CONTROL};
+            $oInfo{db}{&MANIFEST_KEY_CONTROL} = 842;
+            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
+
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                            'invalid control version', undef, undef, ERROR_BACKUP_MISMATCH);
+            $oInfo{db}{&MANIFEST_KEY_CONTROL} = $iControlVersion;
+
+            # Break the catalog version
+            my $iCatalogVersion = $oInfo{'db'}{&MANIFEST_KEY_CATALOG};
+            $oInfo{db}{&MANIFEST_KEY_CATALOG} = 197208141;
+            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
+
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                            'invalid catalog version', undef, undef, ERROR_BACKUP_MISMATCH);
+
+            # Fix up info file for next test
+            $oInfo{db}{&MANIFEST_KEY_CATALOG} = $iCatalogVersion;
+            BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
+
+            # Incr backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'incr';
+
             # Add tablespace 1
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 1);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:1", 'tablespace1.txt', 'TBLSPC1',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/1", 'tablespace1.txt', 'TBLSPC1',
                                                   'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "base", 'badchecksum.txt', 'BADCHECKSUM',
                                                   'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
 
-
-            my $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                               'add tablespace 1');
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
+                                                            'add tablespace 1');
 
             # Resume Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -2261,7 +2365,7 @@ sub BackRestTestBackup_Test
             # Add tablespace 2
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 2);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2.txt', 'TBLSPC2',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2.txt', 'TBLSPC2',
                                                   'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
@@ -2301,20 +2405,20 @@ sub BackRestTestBackup_Test
                                        undef, undef, undef, undef, undef, undef,
                                        'fail on used path', ERROR_RESTORE_PATH_NOT_EMPTY);
             # Fail on undef format
-            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, 'backup', 'format', undef, undef);
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, undef);
 
             BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                       undef, undef, undef, undef, undef, undef,
                                       'fail on undef format', ERROR_FORMAT);
 
             # Fail on mismatch format
-            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, 'backup', 'format', undef, 0);
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, 0);
 
             BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                       undef, undef, undef, undef, undef, undef,
                                       'fail on mismatch format', ERROR_FORMAT);
 
-            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, 'backup', 'format', undef, 3);
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, FORMAT);
 
             # Remap the base path
             my %oRemapHash;
@@ -2336,7 +2440,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestTablespaceDrop(\%oManifest, 1, 2);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2b.txt', 'TBLSPC2B',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2b.txt', 'TBLSPC2B',
                                                   'e324463005236d83e6e54795dbddd20a74533bf3', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
@@ -2370,7 +2474,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
 
-            $strBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, \%oManifest, true);
+            $strBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, \%oManifest, true);
 
             # Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -2380,19 +2484,19 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base1.txt');
 
-            BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace:2", 'tablespace2b.txt', true);
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2c.txt', 'TBLSPC2C',
+            BackRestTestBackup_ManifestFileRemove(\%oManifest, "tablespace/2", 'tablespace2b.txt', true);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2c.txt', 'TBLSPC2C',
                                                   'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime);
 
             BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files during backup", true, true, 1);
             BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace:2", 'tablespace2c.txt', 'TBLSPCBIGGER',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2c.txt', 'TBLSPCBIGGER',
                                                   'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime);
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base2.txt', true);
 
-            $strBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, \%oManifest, true);
+            $strBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, \%oManifest, true);
 
             # Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -2422,6 +2526,14 @@ sub BackRestTestBackup_Test
                                        undef, undef, undef, undef, undef, undef,
                                        'no tablespace remap', undef, '--no-tablespace', false);
 
+            # Backup Info
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestCommon_Execute('mkdir ' . BackRestTestCommon_RepoPathGet . '/backup/db_empty', $bRemote);
+
+            BackRestTestBackup_Info(undef, undef, false);
+            BackRestTestBackup_Info(undef, INFO_OUTPUT_JSON, false);
+            BackRestTestBackup_Info('bogus', undef, false);
+            BackRestTestBackup_Info('bogus', INFO_OUTPUT_JSON, false);
         }
         }
         }
@@ -2543,7 +2655,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_PgExecute("update test set message = '$strFullMessage'", false);
 
-            my $strFullBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, $bSynthetic);
+            my $strFullBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, undef, $bSynthetic);
 
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
@@ -2575,7 +2687,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("update test set message = '$strIncrMessage'", false);
 
-            my $strIncrBackup = BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, $bSynthetic);
+            my $strIncrBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, undef, $bSynthetic);
 
             # Setup the xid target
             #-----------------------------------------------------------------------------------------------------------------------
