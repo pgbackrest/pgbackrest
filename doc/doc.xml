@@ -732,6 +732,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<release-feature>
 						<text>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.</text>
 					</release-feature>
+					<release-feature>
+						<text>Experimental support for <postgres/> 9.5.  This may break when the control version or WAL magic changes but will be updated in each release.</text>
+					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
 

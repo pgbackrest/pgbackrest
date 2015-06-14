@@ -90,7 +90,7 @@ sub is_remote
 ####################################################################################################################################
 sub versionSupport
 {
-    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4');
+    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5');
 
     return \@strySupportVersion;
 }
@@ -216,13 +216,14 @@ sub info
         close($hFile);
 
         # Make sure the control version is supported
-        if ($iControlVersion == 942 && $iCatalogVersion == 201505311)
-        {
-            $strDbVersion = '9.5';
-        }
         if ($iControlVersion == 942 && $iCatalogVersion == 201409291)
         {
             $strDbVersion = '9.4';
+        }
+        # Leave 9.5 catalog version out until it stabilizes (then move 9.5 to the top of if list)
+        elsif ($iControlVersion == 942) # && $iCatalogVersion == 201505311)
+        {
+            $strDbVersion = '9.5';
         }
         elsif ($iControlVersion == 937 && $iCatalogVersion == 201306121)
         {

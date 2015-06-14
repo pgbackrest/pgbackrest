@@ -252,49 +252,51 @@ eval
 {
     do
     {
-        BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup, $bLogForce);
-
-        &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
-
-        if ($bInfinite)
+        if (BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup, $bLogForce))
         {
-            $iRun++;
-            &log(INFO, "INFINITE - RUN ${iRun}\n");
-        }
+            &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
 
-        if ($strModule eq 'all' || $strModule eq 'utility')
-        {
-            BackRestTestUtility_Test($strModuleTest);
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'config')
-        {
-            BackRestTestConfig_Test($strModuleTest);
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'file')
-        {
-            BackRestTestFile_Test($strModuleTest);
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'backup')
-        {
-            BackRestTestBackup_Test($strModuleTest, $iThreadMax);
-
-            if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
+            if ($bInfinite)
             {
-                for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
+                $iRun++;
+                &log(INFO, "INFINITE - RUN ${iRun}\n");
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'utility')
+            {
+                BackRestTestUtility_Test($strModuleTest);
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'config')
+            {
+                BackRestTestConfig_Test($strModuleTest);
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'file')
+            {
+                BackRestTestFile_Test($strModuleTest);
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'backup')
+            {
+                BackRestTestBackup_Test($strModuleTest, $iThreadMax);
+
+                if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
                 {
-                    BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx], $iModuleTestRun, $bDryRun, $bNoCleanup);
-                    &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
-                    BackRestTestBackup_Test('full', $iThreadMax);
+                    for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
+                    {
+                        BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx],
+                                                 $iModuleTestRun, $bDryRun, $bNoCleanup);
+                        &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
+                        BackRestTestBackup_Test('full', $iThreadMax);
+                    }
                 }
             }
-        }
 
-        if ($strModule eq 'compare')
-        {
-            BackRestTestCompare_Test($strModuleTest);
+            if ($strModule eq 'compare')
+            {
+                BackRestTestCompare_Test($strModuleTest);
+            }
         }
     }
     while ($bInfinite);

@@ -176,7 +176,12 @@ sub walInfo
     my $strDbVersion;
     my $iSysIdOffset;
 
-    if ($iMagic == hex('0xD07E'))
+    if ($iMagic == hex('0xD085'))
+    {
+        $strDbVersion = '9.5';
+        $iSysIdOffset = 20;
+    }
+    elsif ($iMagic == hex('0xD07E'))
     {
         $strDbVersion = '9.4';
         $iSysIdOffset = 20;

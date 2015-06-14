@@ -774,6 +774,8 @@ example: db-path=/data/db
 
 * Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
+* Experimental support for PostgreSQL 9.5.  This may break when the control version or WAL magic changes but will be kept as up to date as possible in each release.
+
 ### v0.70: Stability improvements for archiving, improved logging and help
 
 * Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner
