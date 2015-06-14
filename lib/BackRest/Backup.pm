@@ -364,14 +364,16 @@ sub backup_file
                 $lFileTotal++;
                 $lSizeTotal += $lFileSize;
 
-                $oFileCopyMap{$strPathKey}{$strFile}{db_file} = $strBackupSourceFile;
-                $oFileCopyMap{$strPathKey}{$strFile}{file_section} = $strSectionFile;
-                $oFileCopyMap{$strPathKey}{$strFile}{file} = ${strFile};
-                $oFileCopyMap{$strPathKey}{$strFile}{backup_file} = "${strBackupDestinationPath}/${strFile}";
-                $oFileCopyMap{$strPathKey}{$strFile}{size} = $lFileSize;
-                $oFileCopyMap{$strPathKey}{$strFile}{modification_time} =
+                my $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
+
+                $oFileCopyMap{$strPathKey}{$strFileKey}{db_file} = $strBackupSourceFile;
+                $oFileCopyMap{$strPathKey}{$strFileKey}{file_section} = $strSectionFile;
+                $oFileCopyMap{$strPathKey}{$strFileKey}{file} = ${strFile};
+                $oFileCopyMap{$strPathKey}{$strFileKey}{backup_file} = "${strBackupDestinationPath}/${strFile}";
+                $oFileCopyMap{$strPathKey}{$strFileKey}{size} = $lFileSize;
+                $oFileCopyMap{$strPathKey}{$strFileKey}{modification_time} =
                     $oBackupManifest->getNumeric($strSectionFile, $strFile, MANIFEST_SUBKEY_TIMESTAMP, false);
-                $oFileCopyMap{$strPathKey}{$strFile}{checksum} =
+                $oFileCopyMap{$strPathKey}{$strFileKey}{checksum} =
                     $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
             }
         }
@@ -416,9 +418,9 @@ sub backup_file
             $oyBackupQueue[@oyBackupQueue] = Thread::Queue->new();
         }
 
-        foreach my $strFile (sort (keys $oFileCopyMap{$strPathKey}))
+        foreach my $strFileKey (sort {$b cmp $a} (keys $oFileCopyMap{$strPathKey}))
         {
-            my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFile};
+            my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFileKey};
 
             if ($iThreadMax > 1)
             {

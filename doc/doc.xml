@@ -727,6 +727,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Add info command.</text>
 					</release-feature>
 					<release-feature>
+						<text>More efficient file ordering for backup.  Files are copied in descending size order so a single thread does end up copying a large file at the end.  This had already been implemented for restore.</text>
+					</release-feature>
+					<release-feature>
 						<text>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.</text>
 					</release-feature>
 				</release-feature-bullet-list>

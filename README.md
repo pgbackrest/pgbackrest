@@ -770,6 +770,8 @@ example: db-path=/data/db
 
 * Add info command.
 
+* More efficient file ordering for backup.  Files are copied in descending size order so a single thread does end up copying a large file at the end.  This had already been implemented for restore.
+
 * Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
 ### v0.70: Stability improvements for archiving, improved logging and help
