@@ -240,7 +240,7 @@ use constant
     OPTION_DEFAULT_ARCHIVE_ASYNC                    => false,
 
     OPTION_DEFAULT_COMMAND_PSQL                     => '/usr/bin/psql -X',
-    OPTION_DEFAULT_COMMAND_REMOTE                   => dirname(abs_path($0)) . '/pg_backrest_remote.pl',
+    OPTION_DEFAULT_COMMAND_REMOTE                   => dirname(abs_path($0)) . '/pg_backrest_remote',
 
     OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK             => true,
     OPTION_DEFAULT_BACKUP_ARCHIVE_COPY              => false,

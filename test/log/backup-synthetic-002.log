@@ -2,7 +2,7 @@ run 002 - rmt 0, cmp 0, hardlink 1
 ==================================
 
 full backup
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -146,7 +146,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 info db
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     Info->listStanza: stanza = db
 DEBUG:     File->list: backup:[TEST_PATH]/backrest/backup, expression [UNDEF], sort forward
@@ -160,7 +160,7 @@ stanza db
 DEBUG:     safe exit called, terminating threads
 
 info db
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     Info->listStanza: stanza = db
 DEBUG:     File->list: backup:[TEST_PATH]/backrest/backup, expression [UNDEF], sort forward
@@ -215,7 +215,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     safe exit called, terminating threads
 
 full backup (resume)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -360,7 +360,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-FULL-2]
@@ -403,7 +403,7 @@ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/recovery.conf
 DEBUG:     safe exit called, terminating threads
 
 incr backup (invalid database version)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -420,7 +420,7 @@ ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not mat
 DEBUG:     safe exit called, terminating threads
 
 incr backup (invalid system id)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -437,7 +437,7 @@ ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not mat
 DEBUG:     safe exit called, terminating threads
 
 incr backup (invalid control version)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -454,7 +454,7 @@ ERROR: [126]: database control-version = 937, catalog-version 201306121 does not
 DEBUG:     safe exit called, terminating threads
 
 incr backup (invalid catalog version)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -471,7 +471,7 @@ ERROR: [126]: database control-version = 937, catalog-version 201306121 does not
 DEBUG:     safe exit called, terminating threads
 
 incr backup (add tablespace 1)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -642,7 +642,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 incr backup (resume and add tablespace 2)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -837,7 +837,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 diff backup (cannot resume - new diff)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -1029,7 +1029,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 diff backup (cannot resume - disabled)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
@@ -1222,7 +1222,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 (fail on used path)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
@@ -1237,7 +1237,7 @@ ERROR: [115]: cannot restore to path '[TEST_PATH]/db/common' that contains files
 DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
@@ -1248,7 +1248,7 @@ ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 4 is requ
 DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
@@ -1259,7 +1259,7 @@ ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 4 is requ
 DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
@@ -1333,7 +1333,7 @@ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
 DEBUG:     safe exit called, terminating threads
 
 incr backup (add files and remove tablespace 2)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -1513,7 +1513,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 incr backup (update files)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -1695,7 +1695,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 diff backup (no updates)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -1881,7 +1881,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 incr backup (remove files - but won't affect manifest)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -2066,7 +2066,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 diff backup (remove files during backup)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -2250,7 +2250,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 full backup
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -2434,7 +2434,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 diff backup (add files)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
@@ -2626,7 +2626,7 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 restore delta, backup '[BACKUP-DIFF-5]' (no tablespace remap)
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-DIFF-5] --no-tablespace  --stanza=db restore
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-DIFF-5] --no-tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-5]
@@ -2685,7 +2685,7 @@ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
 DEBUG:     safe exit called, terminating threads
 
 info
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf info
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     Info->listStanza
 DEBUG:     File->list: backup:[TEST_PATH]/backrest/backup, expression [UNDEF], sort forward
@@ -2703,7 +2703,7 @@ stanza db_empty
 DEBUG:     safe exit called, terminating threads
 
 info
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     Info->listStanza
 DEBUG:     File->list: backup:[TEST_PATH]/backrest/backup, expression [UNDEF], sort forward
@@ -3018,7 +3018,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db_e
 DEBUG:     safe exit called, terminating threads
 
 info bogus
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     Info->listStanza: stanza = bogus
 DEBUG:     File->list: backup:[TEST_PATH]/backrest/backup, expression [UNDEF], sort forward
@@ -3027,7 +3027,7 @@ stanza bogus
 DEBUG:     safe exit called, terminating threads
 
 info bogus
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     Info->listStanza: stanza = bogus
 DEBUG:     File->list: backup:[TEST_PATH]/backrest/backup, expression [UNDEF], sort forward

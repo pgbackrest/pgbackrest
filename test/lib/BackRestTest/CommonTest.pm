@@ -322,7 +322,7 @@ sub BackRestTestCommon_ExecuteBegin
 
     $bFullLog = false;
 
-    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest\.pl/)
+    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest/)
     {
         $strCommandParam = BackRestTestCommon_ExecuteRegAll($strCommandParam);
 
@@ -772,8 +772,8 @@ sub BackRestTestCommon_Setup
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
-    $strCommonCommandMain = "../bin/pg_backrest.pl";
-    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote.pl";
+    $strCommonCommandMain = "../bin/pg_backrest";
+    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;

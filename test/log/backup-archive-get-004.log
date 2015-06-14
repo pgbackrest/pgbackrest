@@ -16,7 +16,7 @@ db-version="9.3"
 [db:history]
 1={"db-id":6969,"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000001
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
@@ -27,7 +27,7 @@ DEBUG:     File->copy: local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, destination_path_create = false
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000002
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
@@ -38,7 +38,7 @@ DEBUG:     File->copy: local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002, destination_path_create = false
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000003
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db

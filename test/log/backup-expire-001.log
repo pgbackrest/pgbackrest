@@ -50,7 +50,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -109,7 +109,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-diff=3
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-diff=3
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 0, differential = 1, incremental = 0: ^[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D$
@@ -178,7 +178,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2 --retention-diff=3
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2 --retention-diff=3
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -240,7 +240,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2 --retention-diff=3 --retention-archive-type=full --retention-archive=2
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2 --retention-diff=3 --retention-archive-type=full --retention-archive=2
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -322,7 +322,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2 --retention-diff=3 --retention-archive-type=diff --retention-archive=2
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=2 --retention-diff=3 --retention-archive-type=diff --retention-archive=2
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -410,7 +410,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=2 --retention-archive-type=incr --retention-archive=2
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=2 --retention-archive-type=incr --retention-archive=2
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -490,7 +490,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=1 --retention-archive-type=incr --retention-archive=2
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=1 --retention-archive-type=incr --retention-archive=2
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -561,7 +561,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=2
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=2
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
@@ -620,7 +620,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":[DB-SYSTEM-ID-1],"db-version":"9.3"}
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$

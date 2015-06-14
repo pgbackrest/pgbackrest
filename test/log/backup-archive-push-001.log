@@ -1,7 +1,7 @@
 run 001 - rmt 0, cmp 0, arc_async 0
 ===================================
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -16,7 +16,7 @@ DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/00000001
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -26,7 +26,7 @@ ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -36,7 +36,7 @@ ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive s
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -48,7 +48,7 @@ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000
        HINT: this is valid in some recovery scenarios but may also indicate a problem
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -59,7 +59,7 @@ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000
 ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
@@ -70,7 +70,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
@@ -81,7 +81,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000004
@@ -92,7 +92,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -103,7 +103,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -113,7 +113,7 @@ ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -123,7 +123,7 @@ ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive s
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -135,7 +135,7 @@ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000
        HINT: this is valid in some recovery scenarios but may also indicate a problem
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
@@ -146,7 +146,7 @@ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000
 ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
@@ -157,7 +157,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000007
@@ -168,7 +168,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000008
@@ -179,7 +179,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
@@ -190,7 +190,7 @@ DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
@@ -200,7 +200,7 @@ ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
@@ -210,7 +210,7 @@ ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive s
               HINT: are you archiving to the correct stanza?
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
@@ -222,7 +222,7 @@ DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000
        HINT: this is valid in some recovery scenarios but may also indicate a problem
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
