@@ -766,15 +766,17 @@ example: db-path=/data/db
 
 ## Release Notes
 
-### v0.75: IN DEVELOPMENT - OTTAWA MILESTONE
+### v0.75: New repository format, info command and experimental 9.5 support
+
+* IMPORTANT NOTE: This flag day release breaks compatibility with older versions of PgBackRest.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of PgBackRest and keep your older repository for a time in case you need to do a restore.  The `pg_backrest.conf` file has not changed but you'll need to change any references to `pg_backrest.pl` in cron (or elsewhere) to `pg_backrest` (without the `.pl` extension).
 
 * Add info command.
 
-* More efficient file ordering for backup.  Files are copied in descending size order so a single thread does end up copying a large file at the end.  This had already been implemented for restore.
+* More efficient file ordering for backup.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for restore.
 
 * Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
-* Experimental support for PostgreSQL 9.5.  This may break when the control version or WAL magic changes but will be kept as up to date as possible in each release.
+* Experimental support for PostgreSQL 9.5.  This may break when the control version or WAL magic changes but will be updated in each release.
 
 ### v0.70: Stability improvements for archiving, improved logging and help
 
