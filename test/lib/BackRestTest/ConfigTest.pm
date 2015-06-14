@@ -547,7 +547,7 @@ sub BackRestTestConfig_Test
             optionSetTest($oOption, OPTION_COMMAND_PSQL_OPTION, '--port 5432');
 
             configLoadExpect($oOption, OP_BACKUP);
-            optionTestExpect(OPTION_COMMAND_REMOTE, dirname(abs_path($0)) . '/pg_backrest_remote.pl');
+            optionTestExpect(OPTION_COMMAND_REMOTE, dirname(abs_path($0)) . '/pg_backrest_remote');
         }
 
         if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' missing option ' . OPTION_DB_PATH))
@@ -767,14 +767,14 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, OP_RESTORE . ' option ' . OPTION_RESTORE_RECOVERY_SETTING))
         {
             $oConfig = {};
-            $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_RESTORE_RECOVERY_SETTING}{'archive-command'} = '/path/to/pg_backrest.pl';
+            $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_RESTORE_RECOVERY_SETTING}{'archive-command'} = '/path/to/pg_backrest';
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, OP_RESTORE);
-            optionTestExpect(OPTION_RESTORE_RECOVERY_SETTING, '/path/to/pg_backrest.pl', 'archive-command');
+            optionTestExpect(OPTION_RESTORE_RECOVERY_SETTING, '/path/to/pg_backrest', 'archive-command');
         }
 
         if (BackRestTestCommon_Run(++$iRun, OP_RESTORE . ' option ' . OPTION_RESTORE_RECOVERY_SETTING))
