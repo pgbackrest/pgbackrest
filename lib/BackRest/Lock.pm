@@ -7,13 +7,13 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Exporter qw(import);
 use Fcntl qw(:DEFAULT :flock);
 use File::Basename qw(dirname);
-use Exporter qw(import);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
 use BackRest::Config;
+use BackRest::Exception;
 use BackRest::Utility;
 
 ####################################################################################################################################

@@ -8,7 +8,9 @@
 ####################################################################################################################################
 use strict;
 use warnings FATAL => qw(all);
-use Carp qw(confess);
+use Carp qw(confess longmess);
+
+$SIG{__DIE__} = sub { Carp::confess @_ };
 
 use File::Basename;
 use Getopt::Long;
@@ -246,54 +248,76 @@ if (-e './test.pl' && -e '../bin/pg_backrest.pl' && open($hVersion, '<', '../VER
 
 my $iRun = 0;
 
-do
+eval
 {
-    BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup, $bLogForce);
-
-    &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
-
-    if ($bInfinite)
+    do
     {
-        $iRun++;
-        &log(INFO, "INFINITE - RUN ${iRun}\n");
-    }
-
-    if ($strModule eq 'all' || $strModule eq 'utility')
-    {
-        BackRestTestUtility_Test($strModuleTest);
-    }
-
-    if ($strModule eq 'all' || $strModule eq 'config')
-    {
-        BackRestTestConfig_Test($strModuleTest);
-    }
-
-    if ($strModule eq 'all' || $strModule eq 'file')
-    {
-        BackRestTestFile_Test($strModuleTest);
-    }
-
-    if ($strModule eq 'all' || $strModule eq 'backup')
-    {
-        BackRestTestBackup_Test($strModuleTest, $iThreadMax);
-
-        if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
+        if (BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup, $bLogForce))
         {
-            for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
+            &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
+
+            if ($bInfinite)
             {
-                BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx], $iModuleTestRun, $bDryRun, $bNoCleanup);
-                &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
-                BackRestTestBackup_Test('full', $iThreadMax);
+                $iRun++;
+                &log(INFO, "INFINITE - RUN ${iRun}\n");
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'utility')
+            {
+                BackRestTestUtility_Test($strModuleTest);
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'config')
+            {
+                BackRestTestConfig_Test($strModuleTest);
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'file')
+            {
+                BackRestTestFile_Test($strModuleTest);
+            }
+
+            if ($strModule eq 'all' || $strModule eq 'backup')
+            {
+                BackRestTestBackup_Test($strModuleTest, $iThreadMax);
+
+                if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
+                {
+                    for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
+                    {
+                        BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx],
+                                                 $iModuleTestRun, $bDryRun, $bNoCleanup);
+                        &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
+                        BackRestTestBackup_Test('full', $iThreadMax);
+                    }
+                }
+            }
+
+            if ($strModule eq 'compare')
+            {
+                BackRestTestCompare_Test($strModuleTest);
             }
         }
     }
+    while ($bInfinite);
+};
 
-    if ($strModule eq 'compare')
+if ($@)
+{
+    my $oMessage = $@;
+
+    # If a backrest exception then return the code - don't confess
+    if ($oMessage->isa('BackRest::Exception'))
     {
-        BackRestTestCompare_Test($strModuleTest);
+        # syswrite(*STDOUT, $oMessage->message() . "\n");
+        syswrite(*STDOUT, $oMessage->trace());
+        exit $oMessage->code();
     }
+
+    syswrite(*STDOUT, $oMessage);
+    exit 255;;
 }
-while ($bInfinite);
+
 
 if (!$bDryRun)
 {

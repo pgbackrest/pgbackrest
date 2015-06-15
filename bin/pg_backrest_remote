@@ -12,13 +12,16 @@ use Carp qw(confess);
 
 use File::Basename;
 use Getopt::Long;
+use JSON::PP;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
-use BackRest::File;
-use BackRest::Remote;
-use BackRest::Exception;
 use BackRest::Archive;
+use BackRest::Db;
+use BackRest::Exception;
+use BackRest::File;
+use BackRest::Info;
+use BackRest::Remote;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
@@ -71,9 +74,11 @@ my $oFile = new BackRest::File
     $oRemote,
 );
 
-
-# Create the archive object
+# Create objects
 my $oArchive = new BackRest::Archive();
+my $oInfo = new BackRest::Info();
+my $oJSON = JSON::PP->new();
+my $oDb = new BackRest::Db(false);
 
 # Command string
 my $strCommand = OP_NOOP;
@@ -205,13 +210,32 @@ while ($strCommand ne OP_EXIT)
         # Archive push checks
         elsif ($strCommand eq OP_ARCHIVE_PUSH_CHECK)
         {
-            my $strChecksum = $oArchive->pushCheck($oFile,
-                                                   param_get(\%oParamHash, 'wal-segment'),
-                                                   undef,
-                                                   param_get(\%oParamHash, 'db-version'),
-                                                   param_get(\%oParamHash, 'db-sys-id'));
+            my ($strArchiveId, $strChecksum) = $oArchive->pushCheck($oFile,
+                                                                    param_get(\%oParamHash, 'wal-segment'),
+                                                                    undef,
+                                                                    param_get(\%oParamHash, 'db-version'),
+                                                                    param_get(\%oParamHash, 'db-sys-id'));
 
-            $oRemote->output_write(defined($strChecksum) ? $strChecksum : 'Y');
+            $oRemote->output_write("${strArchiveId}\t" . (defined($strChecksum) ? $strChecksum : 'Y'));
+        }
+        elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
+        {
+            $oRemote->output_write($oArchive->getCheck($oFile));
+        }
+        # Info list stanza
+        elsif ($strCommand eq OP_INFO_LIST_STANZA)
+        {
+            $oRemote->output_write(
+                $oJSON->encode(
+                    $oInfo->listStanza($oFile,
+                                   param_get(\%oParamHash, 'stanza', false))));
+        }
+        elsif ($strCommand eq OP_DB_INFO)
+        {
+            my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
+                $oDb->info($oFile, param_get(\%oParamHash, 'db-path'));
+
+            $oRemote->output_write("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
         }
         # Continue if noop or exit
         elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)

@@ -11,15 +11,16 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname);
-use Time::HiRes qw(gettimeofday);
-use File::stat;
 use Exporter qw(import);
+use File::Basename qw(dirname);
+use File::stat;
+use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Utility;
-use BackRestTest::CommonTest;
+
 use BackRestTest::BackupTest;
+use BackRestTest::CommonTest;
 
 ####################################################################################################################################
 # Exports

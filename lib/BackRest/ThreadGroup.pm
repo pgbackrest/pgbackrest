@@ -8,19 +8,18 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Exporter qw(import);
 use File::Basename;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
 use BackRest::Config;
-use BackRest::RestoreFile;
 use BackRest::BackupFile;
+use BackRest::RestoreFile;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # MODULE EXPORTS
 ####################################################################################################################################
-use Exporter qw(import);
-
 our @EXPORT = qw(threadGroupCreate threadGroupRun threadGroupComplete threadGroupDestroy);
 
 my @oyThread;

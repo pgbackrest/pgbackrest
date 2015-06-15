@@ -4,19 +4,19 @@
 package BackRest::BackupFile;
 
 use threads;
-use strict;
 use Thread::Queue;
+use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname);
 use Exporter qw(import);
+use File::Basename qw(dirname);
 
 use lib dirname($0);
-use BackRest::Utility;
 use BackRest::Exception;
-use BackRest::Manifest;
 use BackRest::File;
+use BackRest::Manifest;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # backupFile

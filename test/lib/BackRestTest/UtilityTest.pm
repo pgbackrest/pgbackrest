@@ -11,21 +11,22 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename;
+use Exporter qw(import);
+use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
 use BackRest::Config;
 use BackRest::File;
+use BackRest::Ini;
+use BackRest::Utility;
 
 use BackRestTest::CommonTest;
-
-use Exporter qw(import);
-our @EXPORT = qw(BackRestTestUtility_Test);
 
 ####################################################################################################################################
 # BackRestTestUtility_Test
 ####################################################################################################################################
+our @EXPORT = qw(BackRestTestUtility_Test);
+
 sub BackRestTestUtility_Test
 {
     my $strTest = shift;
@@ -97,18 +98,18 @@ sub BackRestTestUtility_Test
 
             # Save the test config
             my $strFile = "${strTestPath}/config.cfg";
-            ini_save($strFile, \%oConfig);
+            iniSave($strFile, \%oConfig);
 
             my $strConfigHash = $oFile->hash(PATH_ABSOLUTE, $strFile);
 
             # Reload the test config
             my %oConfigTest;
 
-            ini_load($strFile, \%oConfigTest);
+            iniLoad($strFile, \%oConfigTest);
 
             # Resave the test config and compare hashes
             my $strFileTest = "${strTestPath}/config-test.cfg";
-            ini_save($strFileTest, \%oConfigTest);
+            iniSave($strFileTest, \%oConfigTest);
 
             my $strConfigTestHash = $oFile->hash(PATH_ABSOLUTE, $strFileTest);
 

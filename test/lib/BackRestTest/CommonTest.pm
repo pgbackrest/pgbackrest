@@ -11,23 +11,24 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename;
-use File::Path qw(remove_tree);
 use Cwd 'abs_path';
+use Exporter qw(import);
+use File::Basename;
+use File::Copy qw(move);
+use File::Path qw(remove_tree);
+use IO::Select;
 use IPC::Open3;
 use POSIX ':sys_wait_h';
-use IO::Select;
-use File::Copy qw(move);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
 use BackRest::Config;
-use BackRest::Remote;
-use BackRest::File;
-use BackRest::Manifest;
 use BackRest::Db;
+use BackRest::File;
+use BackRest::Ini;
+use BackRest::Manifest;
+use BackRest::Remote;
+use BackRest::Utility;
 
-use Exporter qw(import);
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
                  BackRestTestCommon_ExecuteEnd BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
                  BackRestTestCommon_PathCreate BackRestTestCommon_PathMode BackRestTestCommon_PathRemove
@@ -41,7 +42,8 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_DbCommonPathGet BackRestTestCommon_ClusterStop BackRestTestCommon_DbTablespacePathGet
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
                  BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
-                 BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet);
+                 BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet
+                 BackRestTestCommon_TestLogAppendFile);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -68,6 +70,7 @@ my $bNoCleanup;
 my $bLogForce;
 
 # Execution globals
+my $bExecuteRemote;
 my $strErrorLog;
 my $hError;
 my $strOutLog;
@@ -83,6 +86,7 @@ my $strTestLog;
 my $strModule;
 my $strModuleTest;
 my $iModuleTestRun;
+my $bValidWalChecksum;
 
 ####################################################################################################################################
 # BackRestTestCommon_ClusterStop
@@ -172,6 +176,7 @@ sub BackRestTestCommon_Run
     my $strLog = shift;
     my $strModuleParam = shift;
     my $strModuleTestParam = shift;
+    my $bValidWalChecksumParam = shift;
 
     # &log(INFO, "module " . (defined($strModule) ? $strModule : ''));
     BackRestTestCommon_TestLog();
@@ -196,6 +201,7 @@ sub BackRestTestCommon_Run
     $strModule = $strModuleParam;
     $strModuleTest = $strModuleTestParam;
     $iModuleTestRun = $iRun;
+    $bValidWalChecksum = defined($bValidWalChecksumParam) ? $bValidWalChecksumParam : true;
 
     return true;
 }
@@ -208,6 +214,45 @@ sub BackRestTestCommon_Cleanup
     BackRestTestCommon_TestLog();
 
     return !$bNoCleanup && !$bDryRun;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_TestLogAppendFile
+####################################################################################################################################
+sub BackRestTestCommon_TestLogAppendFile
+{
+    my $strFileName = shift;
+    my $bRemote = shift;
+
+    if (defined($strModule))
+    {
+        my $hFile;
+
+        if ($bRemote)
+        {
+            BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+        }
+
+        open($hFile, '<', $strFileName)
+            or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
+
+        my $strHeader = "+ supplemental file: " . BackRestTestCommon_ExecuteRegAll($strFileName);
+
+        $strFullLog .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
+
+        while (my $strLine = readline($hFile))
+        {
+            $strLine = BackRestTestCommon_ExecuteRegAll($strLine);
+            $strFullLog .= $strLine;
+        }
+
+        close($hFile);
+
+        if ($bRemote)
+        {
+            BackRestTestCommon_Execute("chmod g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -259,9 +304,9 @@ sub BackRestTestCommon_ExecuteBegin
     my $strComment = shift;
 
     # Set defaults
-    $bRemote = defined($bRemote) ? $bRemote : false;
+    $bExecuteRemote = defined($bRemote) ? $bRemote : false;
 
-    if ($bRemote)
+    if ($bExecuteRemote)
     {
         $strCommand = "ssh ${strCommonUserBackRest}\@${strCommonHost} '${strCommandParam}'";
     }
@@ -277,7 +322,7 @@ sub BackRestTestCommon_ExecuteBegin
 
     $bFullLog = false;
 
-    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest\.pl/)
+    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest/)
     {
         $strCommandParam = BackRestTestCommon_ExecuteRegAll($strCommandParam);
 
@@ -314,12 +359,29 @@ sub BackRestTestCommon_ExecuteRegExp
     {
         my $iIndex;
         my $strTypeReplacement;
+        my $strReplacement;
 
         if (!defined($bIndex) || $bIndex)
         {
-            if (defined($$oReplaceHash{$strType}{$strReplace}))
+            if (defined($strToken))
             {
-                $iIndex = $$oReplaceHash{$strType}{$strReplace}{index};
+                my @stryReplacement = ($strReplace =~ /$strToken/g);
+
+                if (@stryReplacement != 1)
+                {
+                    confess &log(ASSERT, "'${strToken}' is not a sub-regexp of '${strExpression}' or matches multiple times on '${strReplace}'");
+                }
+
+                $strReplacement = $stryReplacement[0];
+            }
+            else
+            {
+                $strReplacement = $strReplace;
+            }
+
+            if (defined($$oReplaceHash{$strType}{$strReplacement}))
+            {
+                $iIndex = $$oReplaceHash{$strType}{$strReplacement}{index};
             }
             else
             {
@@ -329,13 +391,11 @@ sub BackRestTestCommon_ExecuteRegExp
                 }
 
                 $iIndex = $$oReplaceHash{$strType}{index}++;
-                $$oReplaceHash{$strType}{$strReplace}{index} = $iIndex;
+                $$oReplaceHash{$strType}{$strReplacement}{index} = $iIndex;
             }
         }
 
         $strTypeReplacement = "[${strType}" . (defined($iIndex) ? "-${iIndex}" : '') . ']';
-
-        my $strReplacement;
 
         if (defined($strToken))
         {
@@ -363,6 +423,7 @@ sub BackRestTestCommon_ExecuteRegAll
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
     $strLine =~ s/$strBinPath/[BACKREST_BIN_PATH]/g;
+    $strLine =~ s/$strPgSqlBin/[PGSQL_BIN_PATH]/g;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
@@ -372,27 +433,45 @@ sub BackRestTestCommon_ExecuteRegAll
     }
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'MODIFICATION-TIME', 'modification_time = [0-9]+', '[0-9]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]+$');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-FULL', '[0-9]{8}\-[0-9]{6}F');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', 'version = ' . version_get(), version_get . '$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', '"version" : ' . version_get(), version_get . '$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', 'version[ ]{0,1}=[ ]{0,1}\"' . version_get(), version_get . '$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', '"version"[ ]{0,1}:[ ]{0,1}\"' . version_get(), version_get . '$');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', '"format" : ' . FORMAT, FORMAT . '$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', 'format=' . FORMAT, FORMAT . '$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', '"format"[ ]{0,1}:[ ]{0,1}' . FORMAT, FORMAT . '$');
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', '--port=[0-9]+', '[0-9]+$');
 
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', "\"timestamp-copy-start\" : \"$strTimestampRegExp\"",
-                                                $strTimestampRegExp, false);
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', "\"timestamp-start\" : \"$strTimestampRegExp\"",
-                                                $strTimestampRegExp, false);
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', "\"timestamp-stop\" : \"$strTimestampRegExp\"",
-                                                $strTimestampRegExp, false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
+        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]+$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
+        "start\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
+        "stop\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP-STR', "est backup timestamp: $strTimestampRegExp",
+                                                "${strTimestampRegExp}\$", false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
+
+    if (!$bValidWalChecksum)
+    {
+        $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'CHECKSUM', '[0-F]{24}-[0-f]{40}', '[0-f]{40}$', false);
+        $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'DB-SYSTEM-ID',
+            "db-system-id[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[0-9]+", '[0-9]+$');
+        $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-INFO',
+            "backup-info-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[0-9]+", '[0-9]+$', false);
+    }
 
     return $strLine;
 }
@@ -446,7 +525,7 @@ sub BackRestTestCommon_ExecuteEnd
                 {
                     $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
 
-                    if ($strLine !~ /^  TEST/ && $strLine =~ /^ /)
+                    if ($strLine !~ /^  TEST/ && $strLine !~ /\r$/)
                     {
                         $strLine =~ s/^                            //;
                         $strLine =~ s/^ //;
@@ -462,7 +541,7 @@ sub BackRestTestCommon_ExecuteEnd
     # Check the exit status and output an error if needed
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
-    if (defined($iExpectedExitStatus) && $iExitStatus == $iExpectedExitStatus)
+    if (defined($iExpectedExitStatus) && ($iExitStatus == $iExpectedExitStatus || $bExecuteRemote && $iExitStatus != 0))
     {
         return $iExitStatus;
     }
@@ -693,8 +772,8 @@ sub BackRestTestCommon_Setup
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
-    $strCommonCommandMain = "../bin/pg_backrest.pl";
-    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote.pl";
+    $strCommonCommandMain = "../bin/pg_backrest";
+    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;
@@ -708,7 +787,13 @@ sub BackRestTestCommon_Setup
     # Get the Postgres version
     my @stryVersionToken = split(/ /, $strOutLog);
     @stryVersionToken = split(/\./, $stryVersionToken[2]);
-    $strCommonDbVersion = $stryVersionToken[0] . '.' . $stryVersionToken[1];
+    $strCommonDbVersion = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
+
+    if ($strCommonDbVersion =~ /devel$/)
+    {
+        $strCommonDbVersion =~ s/devel$//;
+        &log(INFO, "Testing against ${strCommonDbVersion} development version");
+    }
 
     # Don't run unit tests for unsupported versions
     my $strVersionSupport = versionSupport();
@@ -717,6 +802,14 @@ sub BackRestTestCommon_Setup
     {
         confess "currently only version ${$strVersionSupport}[0] and up are supported";
     }
+
+    if ($strCommonDbVersion eq '9.5')
+    {
+        &log(WARN, "unit tests do not currently work with version 9.5");
+        return false;
+    }
+    
+    return true;
 }
 
 ####################################################################################################################################
@@ -789,7 +882,7 @@ sub BackRestTestCommon_iniLoad
         BackRestTestCommon_Execute("chmod g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
     }
 
-    ini_load($strFileName, $oIniRef);
+    iniLoad($strFileName, $oIniRef);
 
     if ($bRemote)
     {
@@ -805,6 +898,7 @@ sub BackRestTestCommon_iniSave
     my $strFileName = shift;
     my $oIniRef = shift;
     my $bRemote = shift;
+    my $bChecksum = shift;
 
     # Defaults
     $bRemote = defined($bRemote) ? $bRemote : false;
@@ -815,7 +909,19 @@ sub BackRestTestCommon_iniSave
         BackRestTestCommon_Execute("chmod g+w " . $strFileName, $bRemote);
     }
 
-    ini_save($strFileName, $oIniRef);
+    # Calculate a new checksum if requested
+    if (defined($bChecksum) && $bChecksum)
+    {
+        delete($$oIniRef{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
+
+        my $oSHA = Digest::SHA->new('sha1');
+        my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
+        $oSHA->add($oJSON->encode($oIniRef));
+
+        $$oIniRef{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
+    }
+
+    iniSave($strFileName, $oIniRef);
 
     if ($bRemote)
     {
@@ -839,7 +945,7 @@ sub BackRestTestCommon_ConfigRemap
 
     # Load Config file
     my %oConfig;
-    ini_load($strConfigFile, \%oConfig);
+    iniLoad($strConfigFile, \%oConfig, true);
 
     # Load remote config file
     my %oRemoteConfig;
@@ -848,7 +954,7 @@ sub BackRestTestCommon_ConfigRemap
     if ($bRemote)
     {
         BackRestTestCommon_Execute("mv " . BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
-        ini_load($strRemoteConfigFile, \%oRemoteConfig);
+        iniLoad($strRemoteConfigFile, \%oRemoteConfig, true);
     }
 
     # Rewrite remap section
@@ -861,7 +967,7 @@ sub BackRestTestCommon_ConfigRemap
         if ($strRemap eq 'base')
         {
             $oConfig{$strStanza}{'db-path'} = $strRemapPath;
-            ${$oManifestRef}{'backup:path'}{base} = $strRemapPath;
+            ${$oManifestRef}{'backup:path'}{base}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
             if ($bRemote)
             {
@@ -872,19 +978,18 @@ sub BackRestTestCommon_ConfigRemap
         {
             $oConfig{"${strStanza}:restore:tablespace-map"}{$strRemap} = $strRemapPath;
 
-            ${$oManifestRef}{'backup:path'}{"tablespace:${strRemap}"} = $strRemapPath;
-            ${$oManifestRef}{'backup:tablespace'}{$strRemap}{'path'} = $strRemapPath;
-            ${$oManifestRef}{'base:link'}{"pg_tblspc/${strRemap}"}{'link_destination'} = $strRemapPath;
+            ${$oManifestRef}{'backup:path'}{"tablespace/${strRemap}"}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
+            ${$oManifestRef}{'base:link'}{"pg_tblspc/${strRemap}"}{destination} = $strRemapPath;
         }
     }
 
     # Resave the config file
-    ini_save($strConfigFile, \%oConfig);
+    iniSave($strConfigFile, \%oConfig, true);
 
     # Load remote config file
     if ($bRemote)
     {
-        ini_save($strRemoteConfigFile, \%oRemoteConfig);
+        iniSave($strRemoteConfigFile, \%oRemoteConfig, true);
         BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf', true);
     }
 }
@@ -903,7 +1008,7 @@ sub BackRestTestCommon_ConfigRecovery
 
     # Load Config file
     my %oConfig;
-    ini_load($strConfigFile, \%oConfig);
+    iniLoad($strConfigFile, \%oConfig, true);
 
     # Load remote config file
     my %oRemoteConfig;
@@ -912,7 +1017,7 @@ sub BackRestTestCommon_ConfigRecovery
     if ($bRemote)
     {
         BackRestTestCommon_Execute("mv " . BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf ${strRemoteConfigFile}", true);
-        ini_load($strRemoteConfigFile, \%oRemoteConfig);
+        iniLoad($strRemoteConfigFile, \%oRemoteConfig, true);
     }
 
     # Rewrite remap section
@@ -924,12 +1029,12 @@ sub BackRestTestCommon_ConfigRecovery
     }
 
     # Resave the config file
-    ini_save($strConfigFile, \%oConfig);
+    iniSave($strConfigFile, \%oConfig, true);
 
     # Load remote config file
     if ($bRemote)
     {
-        ini_save($strRemoteConfigFile, \%oRemoteConfig);
+        iniSave($strRemoteConfigFile, \%oRemoteConfig, true);
         BackRestTestCommon_Execute("mv ${strRemoteConfigFile} " . BackRestTestCommon_RepoPathGet() . '/pg_backrest.conf', true);
     }
 }
@@ -1039,7 +1144,7 @@ sub BackRestTestCommon_ConfigCreate
 
     # Write out the configuration file
     my $strFile = BackRestTestCommon_TestPathGet() . '/pg_backrest.conf';
-    ini_save($strFile, \%oParamHash);
+    iniSave($strFile, \%oParamHash, true);
 
     # Move the configuration file based on local
     if ($strLocal eq 'db')

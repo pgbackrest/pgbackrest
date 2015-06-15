@@ -1,9 +1,26 @@
 run 007 - rmt 1, cmp 1, exists 0
 ================================
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
++ supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
+-----------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=[FORMAT-1]
+backrest-version="[VERSION-1]"
+
+[db]
+db-id=1
+db-system-id=6969
+db-version="9.3"
+
+[db:history]
+1={"db-id":6969,"db-version":"9.3"}
+
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000090000000900000009
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
  INFO: 000000090000000900000009 was not found in the archive repository
 DEBUG:     safe exit called, terminating threads

@@ -7,21 +7,29 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Net::OpenSSH;
+use Exporter qw(import);
+use Fcntl qw(O_RDONLY);
 use File::Basename;
 use IPC::System::Simple qw(capture);
-use Exporter qw(import);
+use Net::OpenSSH;
 
 use lib dirname($0);
+use BackRest::Config;
 use BackRest::Exception;
+use BackRest::File;
 use BackRest::Utility;
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_DB                 => 'Db';
+
+use constant OP_DB_INFO             => OP_DB . "->info";            our @EXPORT = qw(OP_DB_INFO);
 
 ####################################################################################################################################
 # Postmaster process Id file
 ####################################################################################################################################
-use constant FILE_POSTMASTER_PID => 'postmaster.pid';
-
-our @EXPORT = qw(FILE_POSTMASTER_PID);
+use constant FILE_POSTMASTER_PID => 'postmaster.pid';               push @EXPORT, qw(FILE_POSTMASTER_PID);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -29,6 +37,7 @@ our @EXPORT = qw(FILE_POSTMASTER_PID);
 sub new
 {
     my $class = shift;          # Class name
+    my $bStartStop = shift;     # Will start/stop be called?
     my $strDbPath = shift;      # Database path
     my $strCommandPsql = shift; # PSQL command
     my $strDbHost = shift;      # Database host name
@@ -39,12 +48,14 @@ sub new
     bless $self, $class;
 
     # Initialize variables
+    $self->{bStartStop} = $bStartStop;
+    $self->{strDbPath} = $strDbPath;
     $self->{strCommandPsql} = $strCommandPsql;
     $self->{strDbHost} = $strDbHost;
     $self->{strDbUser} = $strDbUser;
 
     # Connect SSH object if db host is defined
-    if (defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
+    if ($self->{bStartStop} && defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
     {
         my $strOptionSSHRequestTTY = 'RequestTTY=yes';
 
@@ -79,7 +90,7 @@ sub is_remote
 ####################################################################################################################################
 sub versionSupport
 {
-    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4');
+    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5');
 
     return \@strySupportVersion;
 }
@@ -131,6 +142,137 @@ sub tablespace_map_get
                     'copy (select oid, spcname from pg_tablespace) to stdout'), "\t");
 
     return $oHashRef;
+}
+
+####################################################################################################################################
+# info
+####################################################################################################################################
+sub info
+{
+    my $self = shift;
+    my $oFile = shift;
+    my $strDbPath = shift;
+
+    # Set operation and debug strings
+    &log(DEBUG, OP_DB_INFO . "(): isRemote = " . ($oFile->is_remote(PATH_DB_ABSOLUTE) ? 'true' : 'false') .
+                ", dbPath = ${strDbPath}");
+
+    # Database info
+    my $iCatalogVersion;
+    my $iControlVersion;
+    my $ullDbSysId;
+    my $strDbVersion;
+
+    if ($oFile->is_remote(PATH_DB_ABSOLUTE))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{'db-path'} = ${strDbPath};
+
+        # Output remote trace info
+        &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
+
+        # Execute the command
+        my $strResult = $oFile->{oRemote}->command_execute(OP_DB_INFO, \%oParamHash, true);
+
+        # Split the result into return values
+        my @stryToken = split(/\t/, $strResult);
+
+        $strDbVersion = $stryToken[0];
+        $iControlVersion = $stryToken[1];
+        $iCatalogVersion = $stryToken[2];
+        $ullDbSysId = $stryToken[3];
+    }
+    else
+    {
+        # Open the control file
+        my $strControlFile = "${strDbPath}/global/pg_control";
+        my $hFile;
+        my $tBlock;
+
+        sysopen($hFile, $strControlFile, O_RDONLY)
+            or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+        # Read system identifier
+        sysread($hFile, $tBlock, 8) == 8
+            or confess &log(ERROR, "unable to read database system identifier");
+
+        $ullDbSysId = unpack('Q', $tBlock);
+
+        # Read control version
+        sysread($hFile, $tBlock, 4) == 4
+            or confess &log(ERROR, "unable to read control version");
+
+        $iControlVersion = unpack('L', $tBlock);
+
+        # Read catalog version
+        sysread($hFile, $tBlock, 4) == 4
+            or confess &log(ERROR, "unable to read catalog version");
+
+        $iCatalogVersion = unpack('L', $tBlock);
+
+        # Close the control file
+        close($hFile);
+
+        # Make sure the control version is supported
+        if ($iControlVersion == 942 && $iCatalogVersion == 201409291)
+        {
+            $strDbVersion = '9.4';
+        }
+        # Leave 9.5 catalog version out until it stabilizes (then move 9.5 to the top of if list)
+        elsif ($iControlVersion == 942) # && $iCatalogVersion == 201505311)
+        {
+            $strDbVersion = '9.5';
+        }
+        elsif ($iControlVersion == 937 && $iCatalogVersion == 201306121)
+        {
+            $strDbVersion = '9.3';
+        }
+        elsif ($iControlVersion == 922 && $iCatalogVersion == 201204301)
+        {
+            $strDbVersion = '9.2';
+        }
+        elsif ($iControlVersion == 903 && $iCatalogVersion == 201105231)
+        {
+            $strDbVersion = '9.1';
+        }
+        elsif ($iControlVersion == 903 && $iCatalogVersion == 201008051)
+        {
+            $strDbVersion = '9.0';
+        }
+        elsif ($iControlVersion == 843 && $iCatalogVersion == 200904091)
+        {
+            $strDbVersion = '8.4';
+        }
+        elsif ($iControlVersion == 833 && $iCatalogVersion == 200711281)
+        {
+            $strDbVersion = '8.3';
+        }
+        elsif ($iControlVersion == 822 && $iCatalogVersion == 200611241)
+        {
+            $strDbVersion = '8.2';
+        }
+        elsif ($iControlVersion == 812 && $iCatalogVersion == 200510211)
+        {
+            $strDbVersion = '8.1';
+        }
+        elsif ($iControlVersion == 74 && $iCatalogVersion == 200411041)
+        {
+            $strDbVersion = '8.0';
+        }
+        else
+        {
+            confess &log(ERROR, "unexpected control version = ${iControlVersion} and catalog version = ${iCatalogVersion}" .
+                                ' (unsupported PostgreSQL version?)',
+                         ERROR_VERSION_NOT_SUPPORTED);
+        }
+    }
+
+    &log(DEBUG, OP_DB_INFO . "=>: dbVersion = ${strDbVersion}, controlVersion = ${iControlVersion}" .
+                ", catalogVersion = ${iCatalogVersion}, dbSysId = ${ullDbSysId}");
+
+    return $strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId;
 }
 
 ####################################################################################################################################

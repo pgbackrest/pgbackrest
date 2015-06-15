@@ -2,87 +2,132 @@
 # MANIFEST MODULE
 ####################################################################################################################################
 package BackRest::Manifest;
+use parent 'BackRest::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Exporter qw(import);
 use File::Basename qw(dirname basename);
-use Time::Local qw(timelocal);
 use Digest::SHA;
+use Time::Local qw(timelocal);
 
 use lib dirname($0);
 use BackRest::Exception qw(ERROR_CHECKSUM ERROR_FORMAT);
-use BackRest::Utility;
 use BackRest::File;
+use BackRest::Ini;
+use BackRest::Utility;
 
-# Exports
-use Exporter qw(import);
-our @EXPORT = qw(MANIFEST_PATH MANIFEST_FILE MANIFEST_LINK
-
-                 MANIFEST_SECTION_BACKUP MANIFEST_SECTION_BACKUP_OPTION MANIFEST_SECTION_BACKUP_PATH
-                 MANIFEST_SECTION_BACKUP_TABLESPACE
-
-                 MANIFEST_KEY_ARCHIVE_START MANIFEST_KEY_ARCHIVE_STOP MANIFEST_KEY_BASE MANIFEST_KEY_CHECKSUM MANIFEST_KEY_COMPRESS
-                 MANIFEST_KEY_HARDLINK MANIFEST_KEY_LABEL MANIFEST_KEY_PRIOR MANIFEST_KEY_REFERENCE MANIFEST_KEY_TIMESTAMP_COPY_START
-                 MANIFEST_KEY_TIMESTAMP_START MANIFEST_KEY_TIMESTAMP_STOP MANIFEST_KEY_TYPE MANIFEST_KEY_VERSION
-
-                 MANIFEST_SUBKEY_CHECKSUM MANIFEST_SUBKEY_DESTINATION MANIFEST_SUBKEY_FUTURE MANIFEST_SUBKEY_GROUP
-                 MANIFEST_SUBKEY_LINK MANIFEST_SUBKEY_MODE MANIFEST_SUBKEY_MODIFICATION_TIME MANIFEST_SUBKEY_PATH
-                 MANIFEST_SUBKEY_REFERENCE MANIFEST_SUBKEY_SIZE MANIFEST_SUBKEY_USER);
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_MANIFEST                                            => 'Manifest';
+    our @EXPORT = qw(OP_MANIFEST);
+use constant OP_MANIFEST_SAVE                                       => OP_MANIFEST . '->save';
+    push @EXPORT, qw(OP_MANIFEST_SAVE);
 
 ####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
-use constant FILE_MANIFEST => 'backup.manifest';
-
-push @EXPORT, qw(FILE_MANIFEST);
+use constant FILE_MANIFEST                                          => 'backup.manifest';
+    push @EXPORT, qw(FILE_MANIFEST);
+use constant PATH_PG_TBLSPC                                         => 'pg_tblspc';
+    push @EXPORT, qw(PATH_PG_TBLSPC);
 
 ####################################################################################################################################
 # MANIFEST Constants
 ####################################################################################################################################
-use constant
-{
-    MANIFEST_PATH                       => 'path',
-    MANIFEST_FILE                       => 'file',
-    MANIFEST_LINK                       => 'link',
+use constant MANIFEST_PATH                                          => 'path';
+    push @EXPORT, qw(MANIFEST_PATH);
+use constant MANIFEST_FILE                                          => 'file';
+    push @EXPORT, qw(MANIFEST_FILE);
+use constant MANIFEST_LINK                                          => 'link';
+    push @EXPORT, qw(MANIFEST_LINK);
+use constant MANIFEST_TABLESPACE                                    => 'tablespace';
+    push @EXPORT, qw(MANIFEST_TABLESPACE);
 
-    MANIFEST_SECTION_BACKUP             => 'backup',
-    MANIFEST_SECTION_BACKUP_OPTION      => 'backup:option',
-    MANIFEST_SECTION_BACKUP_PATH        => 'backup:path',
-    MANIFEST_SECTION_BACKUP_TABLESPACE  => 'backup:tablespace',
+use constant MANIFEST_KEY_BASE                                      => 'base';
+    push @EXPORT, qw(MANIFEST_KEY_BASE);
 
-    MANIFEST_KEY_ARCHIVE_START          => 'archive-start',
-    MANIFEST_KEY_ARCHIVE_STOP           => 'archive-stop',
-    MANIFEST_KEY_BASE                   => 'base',
-    MANIFEST_KEY_CHECKSUM               => 'checksum',
-    MANIFEST_KEY_COMPRESS               => 'compress',
-    MANIFEST_KEY_FORMAT                 => 'format',
-    MANIFEST_KEY_HARDLINK               => 'hardlink',
-    MANIFEST_KEY_LABEL                  => 'label',
-    MANIFEST_KEY_PRIOR                  => 'prior',
-    MANIFEST_KEY_REFERENCE              => 'reference',
-    MANIFEST_KEY_TIMESTAMP_COPY_START   => 'timestamp-copy-start',
-    MANIFEST_KEY_TIMESTAMP_START        => 'timestamp-start',
-    MANIFEST_KEY_TIMESTAMP_STOP         => 'timestamp-stop',
-    MANIFEST_KEY_TYPE                   => 'type',
-    MANIFEST_KEY_VERSION                => 'version',
+# Manifest sections
+use constant MANIFEST_SECTION_BACKUP                                => 'backup';
+    push @EXPORT, qw(MANIFEST_SECTION_BACKUP);
+use constant MANIFEST_SECTION_BACKUP_DB                             => 'backup:db';
+    push @EXPORT, qw(MANIFEST_SECTION_BACKUP_DB);
+use constant MANIFEST_SECTION_BACKUP_INFO                           => 'backup:info';
+    push @EXPORT, qw(MANIFEST_SECTION_BACKUP_INFO);
+use constant MANIFEST_SECTION_BACKUP_OPTION                         => 'backup:option';
+    push @EXPORT, qw(MANIFEST_SECTION_BACKUP_OPTION);
+use constant MANIFEST_SECTION_BACKUP_PATH                           => 'backup:path';
+    push @EXPORT, qw(MANIFEST_SECTION_BACKUP_PATH);
 
-    MANIFEST_SUBKEY_CHECKSUM            => 'checksum',
-    MANIFEST_SUBKEY_DESTINATION         => 'link_destination',
-    MANIFEST_SUBKEY_FUTURE              => 'future',
-    MANIFEST_SUBKEY_GROUP               => 'group',
-    MANIFEST_SUBKEY_LINK                => 'link',
-    MANIFEST_SUBKEY_MODE                => 'mode',
-    MANIFEST_SUBKEY_MODIFICATION_TIME   => 'modification_time',
-    MANIFEST_SUBKEY_PATH                => 'path',
-    MANIFEST_SUBKEY_REFERENCE           => 'reference',
-    MANIFEST_SUBKEY_SIZE                => 'size',
-    MANIFEST_SUBKEY_USER                => 'user'
-};
+# Backup metadata required for restores
+use constant MANIFEST_KEY_ARCHIVE_START                             => 'backup-archive-start';
+    push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_START);
+use constant MANIFEST_KEY_ARCHIVE_STOP                              => 'backup-archive-stop';
+    push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_STOP);
+use constant MANIFEST_KEY_LABEL                                     => 'backup-label';
+    push @EXPORT, qw(MANIFEST_KEY_LABEL);
+use constant MANIFEST_KEY_PRIOR                                     => 'backup-prior';
+    push @EXPORT, qw(MANIFEST_KEY_PRIOR);
+use constant MANIFEST_KEY_TIMESTAMP_COPY_START                      => 'backup-timestamp-copy-start';
+    push @EXPORT, qw(MANIFEST_KEY_TIMESTAMP_COPY_START);
+use constant MANIFEST_KEY_TIMESTAMP_START                           => 'backup-timestamp-start';
+    push @EXPORT, qw(MANIFEST_KEY_TIMESTAMP_START);
+use constant MANIFEST_KEY_TIMESTAMP_STOP                            => 'backup-timestamp-stop';
+    push @EXPORT, qw(MANIFEST_KEY_TIMESTAMP_STOP);
+use constant MANIFEST_KEY_TYPE                                      => 'backup-type';
+    push @EXPORT, qw(MANIFEST_KEY_TYPE);
+
+# Options that were set when the backup was made
+use constant MANIFEST_KEY_HARDLINK                                  => 'option-hardlink';
+    push @EXPORT, qw(MANIFEST_KEY_HARDLINK);
+use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-archive-check';
+    push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_CHECK);
+use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-archive-copy';
+    push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_COPY);
+use constant MANIFEST_KEY_COMPRESS                                  => 'option-compress';
+    push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
+use constant MANIFEST_KEY_START_STOP                                => 'option-start-stop';
+    push @EXPORT, qw(MANIFEST_KEY_START_STOP);
+
+# Information about the database that was backed up
+use constant MANIFEST_KEY_SYSTEM_ID                                 => 'db-system-id';
+    push @EXPORT, qw(MANIFEST_KEY_SYSTEM_ID);
+use constant MANIFEST_KEY_CATALOG                                   => 'db-catalog-version';
+    push @EXPORT, qw(MANIFEST_KEY_CATALOG);
+use constant MANIFEST_KEY_CONTROL                                   => 'db-control-version';
+    push @EXPORT, qw(MANIFEST_KEY_CONTROL);
+use constant MANIFEST_KEY_DB_VERSION                                => 'db-version';
+    push @EXPORT, qw(MANIFEST_KEY_DB_VERSION);
+
+# Subkeys used for path/file/link info
+use constant MANIFEST_SUBKEY_CHECKSUM                               => 'checksum';
+    push @EXPORT, qw(MANIFEST_SUBKEY_CHECKSUM);
+use constant MANIFEST_SUBKEY_DESTINATION                            => 'destination';
+    push @EXPORT, qw(MANIFEST_SUBKEY_DESTINATION);
+use constant MANIFEST_SUBKEY_FUTURE                                 => 'future';
+    push @EXPORT, qw(MANIFEST_SUBKEY_FUTURE);
+use constant MANIFEST_SUBKEY_GROUP                                  => 'group';
+    push @EXPORT, qw(MANIFEST_SUBKEY_GROUP);
+use constant MANIFEST_SUBKEY_LINK                                   => 'link';
+    push @EXPORT, qw(MANIFEST_SUBKEY_LINK);
+use constant MANIFEST_SUBKEY_MODE                                   => 'mode';
+    push @EXPORT, qw(MANIFEST_SUBKEY_MODE);
+use constant MANIFEST_SUBKEY_TIMESTAMP                              => 'timestamp';
+    push @EXPORT, qw(MANIFEST_SUBKEY_TIMESTAMP);
+use constant MANIFEST_SUBKEY_PATH                                   => 'path';
+    push @EXPORT, qw(MANIFEST_SUBKEY_PATH);
+use constant MANIFEST_SUBKEY_REFERENCE                              => 'reference';
+    push @EXPORT, qw(MANIFEST_SUBKEY_REFERENCE);
+use constant MANIFEST_SUBKEY_SIZE                                   => 'size';
+    push @EXPORT, qw(MANIFEST_SUBKEY_SIZE);
+use constant MANIFEST_SUBKEY_USER                                   => 'user';
+    push @EXPORT, qw(MANIFEST_SUBKEY_USER);
 
 ####################################################################################################################################
-# CONSTRUCTOR
+# new
 ####################################################################################################################################
 sub new
 {
@@ -90,56 +135,17 @@ sub new
     my $strFileName = shift; # Manifest filename
     my $bLoad = shift;       # Load the manifest?
 
-    # Create the class hash
-    my $self = {};
-    bless $self, $class;
+    # Set defaults
+    $bLoad = defined($bLoad) ? $bLoad : true;
 
-    # Filename must be specified
-    if (!defined($strFileName))
-    {
-        confess &log(ASSERT, 'filename must be provided');
-    }
-
-    # Set variables
-    my $oManifest = {};
-    $self->{oManifest} = $oManifest;
-    $self->{strFileName} = $strFileName;
-
-    # Load the manifest if specified
-    if (!(defined($bLoad) && $bLoad == false))
-    {
-        ini_load($strFileName, $oManifest);
-
-        # Make sure the manifest is valid by testing checksum
-        my $strChecksum = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM);
-        my $strTestChecksum = $self->hash();
-
-        if ($strChecksum ne $strTestChecksum)
-        {
-            confess &log(ERROR, "backup.manifest checksum is invalid, should be ${strTestChecksum}", ERROR_CHECKSUM);
-        }
-
-        # Make sure that the format is current, otherwise error
-        my $iFormat = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_FORMAT, undef, false, 0);
-
-        if ($iFormat != FORMAT)
-        {
-            confess &log(ERROR, "backup format of ${strFileName} is ${iFormat} but " . FORMAT . ' is required by this version of ' .
-                                'PgBackRest.  If you are attempting an incr/diff backup you will need to take a new full backup.  ' .
-                                "If you are trying to restore, you''ll need to use a version that supports format ${iFormat}." ,
-                                ERROR_FORMAT);
-        }
-    }
-    else
-    {
-        $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_FORMAT, undef, FORMAT);
-    }
+    # Init object and store variables
+    my $self = $class->SUPER::new($strFileName, $bLoad);
 
     return $self;
 }
 
 ####################################################################################################################################
-# SAVE
+# save
 #
 # Save the manifest.
 ####################################################################################################################################
@@ -147,144 +153,29 @@ sub save
 {
     my $self = shift;
 
-    # Create the checksum
-    $self->hash();
+    # !!! Add section comments here
+    # $self->setComment(MANIFEST_SECTION_BACKUP_INFO,
+    #     #################################################################################
+    #     "Information about the backup:\n" .
+    #     "    backup-size       = total size of original files.\n" .
+    #     "    backup-size-delta = difference in total file size from the prior backup.\n".
+    #     "                        backup-size-delta will be equal to backup-size when\n" .
+    #     "                        backup-type = full, otherwise this is not possible\n" .
+    #     "                        unless option-start-stop = true.\n" .
+    #     "\n" .
+    #     "Human-readable output:\n" .
+    #     "    backup-repo-size       = " . file_size_format($lBackupRepoSize) . "\n" .
+    #     "    backup-repo-size-delta = " . file_size_format($lBackupRepoSizeDelta) . "\n" .
+    #     "    backup-size            = " . file_size_format($lBackupSize) . "\n" .
+    #     "    backup-size-delta      = " . file_size_format($lBackupSizeDelta)
+    #     );
 
-    # Save the config file
-    ini_save($self->{strFileName}, $self->{oManifest});
+    # Call inherited save
+    $self->SUPER::save();
 }
 
 ####################################################################################################################################
-# HASH
-#
-# Generate hash for the manifest.
-####################################################################################################################################
-sub hash
-{
-    my $self = shift;
-
-    my $oManifest = $self->{oManifest};
-
-    # Remove the old checksum
-    $self->remove(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM);
-
-    my $oSHA = Digest::SHA->new('sha1');
-
-    # Calculate the checksum from section values
-    foreach my $strSection ($self->keys())
-    {
-        $oSHA->add($strSection);
-
-        # Calculate the checksum from key values
-        foreach my $strKey ($self->keys($strSection))
-        {
-            $oSHA->add($strKey);
-
-            my $strValue = $self->get($strSection, $strKey);
-
-            if (!defined($strValue))
-            {
-                confess &log(ASSERT, "section ${strSection}, key ${$strKey} has undef value");
-            }
-
-            # Calculate the checksum from subkey values
-            if (ref($strValue) eq "HASH")
-            {
-                foreach my $strSubKey ($self->keys($strSection, $strKey))
-                {
-                    my $strSubValue = $self->get($strSection, $strKey, $strSubKey);
-
-                    if (!defined($strSubValue))
-                    {
-                        confess &log(ASSERT, "section ${strSection}, key ${strKey}, subkey ${strSubKey} has undef value");
-                    }
-
-                    $oSHA->add($strSubValue);
-                }
-            }
-            else
-            {
-                $oSHA->add($strValue);
-            }
-        }
-    }
-
-    # Set the new checksum
-    my $strHash = $oSHA->hexdigest();
-
-    $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_CHECKSUM, undef, $strHash);
-
-    return $strHash;
-}
-
-####################################################################################################################################
-# GET
-#
-# Get a value.
-####################################################################################################################################
-sub get
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bRequired = shift;
-    my $oDefault = shift;
-
-    my $oManifest = $self->{oManifest};
-
-    # Section must always be defined
-    if (!defined($strSection))
-    {
-        confess &log(ASSERT, 'section is not defined');
-    }
-
-    # Set default for required
-    $bRequired = defined($bRequired) ? $bRequired : true;
-
-    # Store the result
-    my $oResult = undef;
-
-    if (defined($strSubValue))
-    {
-        if (!defined($strValue))
-        {
-            confess &log(ASSERT, 'subvalue requested bu value is not defined');
-        }
-
-        if (defined(${$oManifest}{$strSection}{$strValue}))
-        {
-            $oResult = ${$oManifest}{$strSection}{$strValue}{$strSubValue};
-        }
-    }
-    elsif (defined($strValue))
-    {
-        if (defined(${$oManifest}{$strSection}))
-        {
-            $oResult = ${$oManifest}{$strSection}{$strValue};
-        }
-    }
-    else
-    {
-        $oResult = ${$oManifest}{$strSection};
-    }
-
-    if (!defined($oResult) && $bRequired)
-    {
-        confess &log(ASSERT, "manifest section '$strSection'" . (defined($strValue) ? ", value '$strValue'" : '') .
-                              (defined($strSubValue) ? ", subvalue '$strSubValue'" : '') . ' is required but not defined');
-    }
-
-    if (!defined($oResult) && defined($oDefault))
-    {
-        $oResult = $oDefault;
-    }
-
-    return $oResult
-}
-
-####################################################################################################################################
-# SET
+# set
 #
 # Set a value.
 ####################################################################################################################################
@@ -296,23 +187,15 @@ sub set
     my $strSubKey = shift;
     my $strValue = shift;
 
-    my $oManifest = $self->{oManifest};
-
     # Make sure the keys are valid
     $self->valid($strSection, $strKey, $strSubKey);
 
-    if (defined($strSubKey))
-    {
-        ${$oManifest}{$strSection}{$strKey}{$strSubKey} = $strValue;
-    }
-    else
-    {
-        ${$oManifest}{$strSection}{$strKey} = $strValue;
-    }
+    # Call inherited set
+    $self->SUPER::set($strSection, $strKey, $strSubKey, $strValue);
 }
 
 ####################################################################################################################################
-# REMOVE
+# remove
 #
 # Remove a value.
 ####################################################################################################################################
@@ -324,23 +207,15 @@ sub remove
     my $strSubKey = shift;
     my $strValue = shift;
 
-    my $oManifest = $self->{oManifest};
-
     # Make sure the keys are valid
     $self->valid($strSection, $strKey, $strSubKey, undef, true);
 
-    if (defined($strSubKey))
-    {
-        delete(${$oManifest}{$strSection}{$strKey}{$strSubKey});
-    }
-    else
-    {
-        delete(${$oManifest}{$strSection}{$strKey});
-    }
+    # Call inherited remove
+    $self->SUPER::remove($strSection, $strKey, $strSubKey, $strValue);
 }
 
 ####################################################################################################################################
-# VALID
+# valid
 #
 # Determine if section, key, subkey combination is valid.
 ####################################################################################################################################
@@ -372,7 +247,7 @@ sub valid
         my $strPath = (split(':', $strSection))[0];
         my $strType = (split(':', $strSection))[1];
 
-        if ($strPath eq 'tablespace')
+        if ($strPath eq MANIFEST_TABLESPACE)
         {
             $strPath = (split(':', $strSection))[1];
             $strType = (split(':', $strSection))[2];
@@ -392,7 +267,7 @@ sub valid
         elsif ($strType eq 'file' &&
                ($strSubKey eq MANIFEST_SUBKEY_CHECKSUM ||
                 $strSubKey eq MANIFEST_SUBKEY_FUTURE ||
-                $strSubKey eq MANIFEST_SUBKEY_MODIFICATION_TIME ||
+                $strSubKey eq MANIFEST_SUBKEY_TIMESTAMP ||
                 $strSubKey eq MANIFEST_SUBKEY_REFERENCE ||
                 $strSubKey eq MANIFEST_SUBKEY_SIZE))
         {
@@ -404,47 +279,60 @@ sub valid
             return true;
         }
     }
-    if ($strSection eq MANIFEST_SECTION_BACKUP)
+    elsif ($strSection eq INI_SECTION_BACKREST)
+    {
+        return true;
+    }
+    elsif ($strSection eq MANIFEST_SECTION_BACKUP)
     {
         if ($strKey eq MANIFEST_KEY_ARCHIVE_START ||
             $strKey eq MANIFEST_KEY_ARCHIVE_STOP ||
-            $strKey eq MANIFEST_KEY_CHECKSUM ||
-            $strKey eq MANIFEST_KEY_FORMAT ||
             $strKey eq MANIFEST_KEY_LABEL ||
             $strKey eq MANIFEST_KEY_PRIOR ||
-            $strKey eq MANIFEST_KEY_REFERENCE ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_COPY_START ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_START ||
             $strKey eq MANIFEST_KEY_TIMESTAMP_STOP ||
-            $strKey eq MANIFEST_KEY_TYPE ||
-            $strKey eq MANIFEST_KEY_VERSION)
+            $strKey eq MANIFEST_KEY_TYPE)
+        {
+            return true;
+        }
+    }
+    elsif ($strSection eq MANIFEST_SECTION_BACKUP_DB)
+    {
+        if ($strKey eq MANIFEST_KEY_CATALOG ||
+            $strKey eq MANIFEST_KEY_CONTROL ||
+            $strKey eq MANIFEST_KEY_SYSTEM_ID ||
+            $strKey eq MANIFEST_KEY_DB_VERSION)
         {
             return true;
         }
     }
     elsif ($strSection eq MANIFEST_SECTION_BACKUP_OPTION)
     {
-        if ($strKey eq MANIFEST_KEY_CHECKSUM ||
+        if ($strKey eq MANIFEST_KEY_ARCHIVE_CHECK ||
+            $strKey eq MANIFEST_KEY_ARCHIVE_COPY ||
             $strKey eq MANIFEST_KEY_COMPRESS ||
-            $strKey eq MANIFEST_KEY_HARDLINK)
-        {
-            return true;
-        }
-    }
-    elsif ($strSection eq MANIFEST_SECTION_BACKUP_TABLESPACE)
-    {
-        if ($strSubKey eq 'link' ||
-            $strSubKey eq 'path')
+            $strKey eq MANIFEST_KEY_HARDLINK ||
+            $strKey eq MANIFEST_KEY_START_STOP)
         {
             return true;
         }
     }
     elsif ($strSection eq MANIFEST_SECTION_BACKUP_PATH)
     {
-        if ($strKey eq 'base' || $strKey =~ /^tablespace\:.*$/)
+        if ($strKey eq MANIFEST_KEY_BASE &&
+            $strSubKey eq MANIFEST_SUBKEY_PATH)
         {
             return true;
         }
+
+        if ($strKey =~ /^tablespace\// &&
+            ($strSubKey eq MANIFEST_SUBKEY_LINK ||
+             $strSubKey eq MANIFEST_SUBKEY_PATH))
+        {
+            return true;
+        }
+
     }
 
     confess &log(ASSERT, "manifest section '${strSection}', key '${strKey}'" .
@@ -452,78 +340,7 @@ sub valid
 }
 
 ####################################################################################################################################
-# epoch
-#
-# Retrieves a value in the format YYYY-MM-DD HH24:MI:SS and converts to epoch time.
-####################################################################################################################################
-sub epoch
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strKey = shift;
-    my $strSubKey = shift;
-
-    my $strValue = $self->get($strSection, $strKey, $strSubKey);
-
-    my ($iYear, $iMonth, $iDay, $iHour, $iMinute, $iSecond) = split(/[\s\-\:]+/, $strValue);
-
-    return timelocal($iSecond, $iMinute, $iHour, $iDay , $iMonth - 1, $iYear);
-}
-
-####################################################################################################################################
-# KEYS
-#
-# Get a list of keys.
-####################################################################################################################################
-sub keys
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strKey = shift;
-
-    if (defined($strSection))
-    {
-        if ($self->test($strSection, $strKey))
-        {
-            return sort(keys $self->get($strSection, $strKey));
-        }
-
-        return [];
-    }
-
-    return sort(keys $self->{oManifest});
-}
-
-####################################################################################################################################
-# TEST
-#
-# Test a value to see if it equals the supplied test value.  If no test value is given, tests that it is defined.
-####################################################################################################################################
-sub test
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $strTest = shift;
-
-    my $strResult = $self->get($strSection, $strValue, $strSubValue, false);
-
-    if (defined($strResult))
-    {
-        if (defined($strTest))
-        {
-            return $strResult eq $strTest ? true : false;
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-####################################################################################################################################
-# BUILD
+# build
 #
 # Build the manifest object.
 ####################################################################################################################################
@@ -542,7 +359,7 @@ sub build
     # If no level is defined then it must be base
     if (!defined($strLevel))
     {
-        $strLevel = 'base';
+        $strLevel = MANIFEST_KEY_BASE;
 
         if (defined($oLastManifest))
         {
@@ -556,7 +373,7 @@ sub build
             $oTablespaceMapRef = {};
 
             my %oTablespaceManifestHash;
-            $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/pg_tblspc', \%oTablespaceManifestHash);
+            $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/' . PATH_PG_TBLSPC, \%oTablespaceManifestHash);
 
             foreach my $strName (sort(CORE::keys $oTablespaceManifestHash{name}))
             {
@@ -567,7 +384,7 @@ sub build
 
                 if ($oTablespaceManifestHash{name}{$strName}{type} ne 'l')
                 {
-                    confess &log(ERROR, "pg_tblspc/${strName} is not a link");
+                    confess &log(ERROR, PATH_PG_TBLSPC . "/${strName} is not a link");
                 }
 
                 &log(DEBUG, "Found tablespace ${strName}");
@@ -581,7 +398,7 @@ sub build
     my %oManifestHash;
     $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash);
 
-    $self->set(MANIFEST_SECTION_BACKUP_PATH, $strLevel, undef, $strDbClusterPath);
+    $self->set(MANIFEST_SECTION_BACKUP_PATH, $strLevel, MANIFEST_SUBKEY_PATH, $strDbClusterPath);
 
     # Loop though all paths/files/links in the manifest
     foreach my $strName (sort(CORE::keys $oManifestHash{name}))
@@ -624,7 +441,7 @@ sub build
         # Modification time and size required for file type only
         if ($cType eq 'f')
         {
-            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME,
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP,
                        $oManifestHash{name}{"${strName}"}{modification_time} + 0);
             $self->set($strSection, $strName, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{"${strName}"}{size} + 0);
         }
@@ -636,24 +453,24 @@ sub build
                        $oManifestHash{name}{"${strName}"}{link_destination});
 
             # If this is a tablespace then follow the link
-            if (index($strName, 'pg_tblspc/') == 0 && $strLevel eq 'base')
+            if (index($strName, PATH_PG_TBLSPC . '/') == 0 && $strLevel eq MANIFEST_KEY_BASE)
             {
                 my $strTablespaceOid = basename($strName);
-                my $strTablespaceName = ${$oTablespaceMapRef}{oid}{$strTablespaceOid}{name};
+                my $strTablespaceName = MANIFEST_TABLESPACE . '/' . ${$oTablespaceMapRef}{oid}{$strTablespaceOid}{name};
 
-                $self->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                $self->set(MANIFEST_SECTION_BACKUP_PATH, $strTablespaceName,
                            MANIFEST_SUBKEY_LINK, $strTablespaceOid);
-                $self->set(MANIFEST_SECTION_BACKUP_TABLESPACE, $strTablespaceName,
+                $self->set(MANIFEST_SECTION_BACKUP_PATH, $strTablespaceName,
                            MANIFEST_SUBKEY_PATH, $strLinkDestination);
 
                 $self->build($oFile, $strLinkDestination, $oLastManifest, $bNoStartStop, $oTablespaceMapRef,
-                             "tablespace:${strTablespaceName}");
+                             $strTablespaceName);
             }
         }
     }
 
     # If this is the base level then do post-processing
-    if ($strLevel eq 'base')
+    if ($strLevel eq MANIFEST_KEY_BASE)
     {
         my $bTimeInFuture = false;
 
@@ -672,23 +489,23 @@ sub build
                 {
                     # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
                     # allow a reference
-                    if ($self->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) > $lTimeBegin ||
+                    if ($self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
                         (defined($oLastManifest) && $oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y')))
                     {
                         $bTimeInFuture = true;
 
                         # Only mark as future if still in the future in the current backup
-                        if ($self->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) > $lTimeBegin)
+                        if ($self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin)
                         {
                             $self->set($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y');
                         }
                     }
                     # Else check if modification time and size are unchanged since last backup
                     elsif (defined($oLastManifest) && $oLastManifest->test($strSection, $strName) &&
-                           $self->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) ==
+                           $self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_SIZE) ==
                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
-                           $self->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME) ==
-                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODIFICATION_TIME))
+                           $self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
+                               $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP))
                     {
                         # Copy reference from previous backup if possible
                         if ($oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_REFERENCE))
@@ -709,25 +526,6 @@ sub build
                             $self->set($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM,
                                        $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_CHECKSUM));
                         }
-
-                        # Build the manifest reference list - not used for processing but is useful for debugging
-                        my $strFileReference = $self->get($strSection, $strName, MANIFEST_SUBKEY_REFERENCE);
-
-                        my $strManifestReference = $self->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE,
-                                                              undef, false);
-
-                        if (!defined($strManifestReference))
-                        {
-                            $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE, undef, $strFileReference);
-                        }
-                        else
-                        {
-                            if ($strManifestReference !~ /^$strFileReference|,$strFileReference/)
-                            {
-                                $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_REFERENCE, undef,
-                                           $strManifestReference . ",${strFileReference}");
-                            }
-                        }
                     }
                 }
             }
@@ -740,8 +538,7 @@ sub build
         }
 
         # Record the time when copying will start
-        $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
-                   timestamp_string_get(undef, $lTimeBegin + 1));
+        $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef, $lTimeBegin + 1);
     }
 }
 

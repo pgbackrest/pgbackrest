@@ -1,29 +1,50 @@
 run 006 - rmt 1, cmp 0, exists 1
 ================================
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
++ supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
+-----------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=[FORMAT-1]
+backrest-version="[VERSION-1]"
+
+[db]
+db-id=1
+db-system-id=6969
+db-version="9.3"
+
+[db:history]
+1={"db-id":6969,"db-version":"9.3"}
+
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000001
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, destination_path_create = false
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000002
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
-DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002, destination_path_create = false
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000003
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
+DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
+DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
-DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003, destination_path_create = false
 DEBUG:     safe exit called, terminating threads

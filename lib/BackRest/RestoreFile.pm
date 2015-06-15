@@ -10,16 +10,16 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Exporter qw(import);
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
-use Exporter qw(import);
 
 use lib dirname($0);
-use BackRest::Exception;
-use BackRest::Utility;
 use BackRest::Config;
-use BackRest::Manifest;
+use BackRest::Exception;
 use BackRest::File;
+use BackRest::Manifest;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # restoreFile

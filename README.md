@@ -181,22 +181,22 @@ Get a WAL segment from the repository.
 ```
 /path/to/pg_backrest.pl --stanza=db archive-get %f %p
 ```
-Retrieves a WAL segment from the repository.  This command is used in `restore.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs and `%p` is the location where it should be copied.
+Retrieves a WAL segment from the repository.  This command is used in `recovery.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs and `%p` is the location where it should be copied.
 
 #### `expire` command
 
-PgBackRest does backup rotation, but is not concerned with when the backups were created.  So if two full backups are configured for rentention, PgBackRest will keep two full backups no matter whether they occur, two hours apart or two weeks apart.
+PgBackRest does backup rotation, but is not concerned with when the backups were created.  So if two full backups are configured for retention, PgBackRest will keep two full backups no matter whether they occur, two hours apart or two weeks apart.
 
 ##### Example
 
 ```
 /path/to/pg_backrest.pl --stanza=db expire
 ```
-Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced rentention, usually to free up some space.
+Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.
 
 #### `restore` command
 
-Perform a database restore.  This command is generall run manually, but there are instances where it might be automated.
+Perform a database restore.  This command is generally run manually, but there are instances where it might be automated.
 
 ##### `set` option
 
@@ -274,7 +274,7 @@ example: --target-timeline=3
 
 ##### `recovery-setting` option
 
-Recovery settings in restore.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).  This option can be used multiple times.
+Recovery settings in recovery.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your database version).  This option can be used multiple times.
 
 Note: `restore_command` will be automatically generated but can be overridden with this option.  Be careful about specifying your own `restore_command` as PgBackRest is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by PgBackRest and should not be set with this option.
 
@@ -306,6 +306,33 @@ example: --tablespace-map ts_01=/db/ts_01
 /path/to/pg_backrest.pl --stanza=db --type=name --target=release restore
 ```
 Restores the latest database backup and then recovers to the `release` restore point.
+
+#### `info` command
+
+Retrieve information about backups for a single stanza or for all stanzas.  Text output is the default and gives a human-readable summary of backups for the stanza(s) requested.  This format is subject to change with any release.
+
+For machine-readable output use `--output=json`.  The JSON output contains far more information than the text output, however **this feature is currently experimental so the format may change between versions**.
+
+##### `output` option
+
+The following output types are supported:
+
+- `text` - Human-readable summary of backup information.
+- `json` - Exhaustive machine-readable backup information in JSON format.
+
+```
+required: n
+default: text
+example: --output=json
+```
+
+##### Example: Backup information
+
+```
+/path/to/pg_backrest.pl --stanza=db --output=json info
+```
+
+Get information about backups in the `db` stanza.
 
 ## Configuration
 
@@ -354,7 +381,7 @@ cmd-psql=/usr/local/bin/psql -X %option%
 
 [global:general]
 compress=n
-repo-path=/Users/dsteele/Documents/Code/backrest/test/test/backrest
+repo-path=/path/to/db/repo
 
 [global:log]
 log-level-file=debug
@@ -413,7 +440,7 @@ The `command` section defines the location of external commands that are used by
 
 Defines the full path to `psql`.  `psql` is used to call `pg_start_backup()` and `pg_stop_backup()`.
 
-If addtional per stanza parameters need to be passed to `psql` (such as `--port` or `--cluster`) then add `%option%` to the command line and use `command-option::psql` to set options.
+If additional per stanza parameters need to be passed to `psql` (such as `--port` or `--cluster`) then add `%option%` to the command line and use `command-option::psql` to set options.
 ```
 required: n
 default: /usr/bin/psql -X
@@ -641,7 +668,7 @@ example: archive-async=y
 
 Limits the amount of archive log that will be written locally when `archive-async=y`.  After the limit is reached, the following will happen:
 
-- PgBackRest will notify Postgres that the archive was succesfully backed up, then DROP IT.
+- PgBackRest will notify Postgres that the archive was successfully backed up, then DROP IT.
 - An error will be logged to the console and also to the Postgres log.
 - A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.
 
@@ -670,7 +697,7 @@ example: tablespace=n
 
 #### `expire` section
 
-The `expire` section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for rentention + 1 backups.
+The `expire` section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.
 
 ##### `retention-full` key
 
@@ -701,7 +728,9 @@ example: retention-archive-type=diff
 
 ##### `retention-archive` key
 
-Number of backups worth of archive log to keep.
+Number of backups worth of archive log to keep.  If this is set less than your backup retention then be sure you set `archive-copy=y` or you won't be able to restore some older backups.
+
+For example, if `retention-archive=2` and `retention-full=4`, then any backups older than the most recent two full backups will not have WAL segments in the archive to make them consistent.  To solve this, set `archive-copy=y` and use `type=none` when restoring.  This issue will be addressed in a future release but for now be careful with this setting.
 ```
 required: n
 example: retention-archive=2
@@ -736,6 +765,18 @@ example: db-path=/data/db
 ```
 
 ## Release Notes
+
+### v0.75: New repository format, info command and experimental 9.5 support
+
+* IMPORTANT NOTE: This flag day release breaks compatibility with older versions of PgBackRest.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of PgBackRest and keep your older repository for a time in case you need to do a restore.  The `pg_backrest.conf` file has not changed but you'll need to change any references to `pg_backrest.pl` in cron (or elsewhere) to `pg_backrest` (without the `.pl` extension).
+
+* Add info command.
+
+* More efficient file ordering for backup.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for restore.
+
+* Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
+
+* Experimental support for PostgreSQL 9.5.  This may break when the control version or WAL magic changes but will be updated in each release.
 
 ### v0.70: Stability improvements for archiving, improved logging and help
 
@@ -791,7 +832,7 @@ example: db-path=/data/db
 
 * Added option `--no-start-stop` to allow backups when Postgres is shut down.  If `postmaster.pid` is present then `--force` is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.
 
-* Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplied a number of things.  Issue #28 has been created for checksum deltas.
+* Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplified a number of things.  Issue #28 has been created for checksum deltas.
 
 * Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.
 
@@ -831,7 +872,7 @@ example: db-path=/data/db
 
 ### v0.16: RequestTTY=yes for SSH Sessions
 
-* Added `RequestTTY=yes` to ssh sesssions.  Hoping this will prevent random lockups.
+* Added `RequestTTY=yes` to ssh sessions.  Hoping this will prevent random lockups.
 
 ### v0.15: RequestTTY=yes for SSH Sessions
 
@@ -851,7 +892,7 @@ example: db-path=/data/db
 
 * Archiving is single-threaded.  This has not posed an issue on our multi-terabyte databases with heavy write volume.  Recommend a large WAL volume or to use the async option with a large volume nearby.
 
-* Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% threadsafe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.
+* Backups are multi-threaded, but the Net::OpenSSH library does not appear to be 100% thread-safe so it will very occasionally lock up on a thread.  There is an overall process timeout that resolves this issue by killing the process.  Yes, very ugly.
 
 * Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes.  Checksums from previous backups are correctly recorded and a full backup will reset everything.
 
@@ -863,4 +904,4 @@ example: db-path=/data/db
 
 Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of PgBackRest.
 
-Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary Postgres backup solution.
+Crunchy Data Solutions (http://www.crunchydata.com) has contributed time and resources to PgBackRest and continues to support development. Resonate (http://www.resonate.com/) also contributed to the development of PgBackRest and allowed me to install early (but well tested) versions as their primary PostgreSQL backup solution.

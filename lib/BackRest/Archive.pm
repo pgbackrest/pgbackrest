@@ -7,37 +7,29 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname basename);
-use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT O_EXCL);
 use Exporter qw(import);
+use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT O_EXCL);
+use File::Basename qw(dirname basename);
 
 use lib dirname($0);
-use BackRest::Utility;
-use BackRest::Exception;
+use BackRest::ArchiveInfo;
 use BackRest::Config;
-use BackRest::Lock;
+use BackRest::Exception;
 use BackRest::File;
+use BackRest::Ini;
+use BackRest::Lock;
 use BackRest::Remote;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant
-{
-    OP_ARCHIVE_PUSH_CHECK => 'Archive->pushCheck'
-};
+use constant OP_ARCHIVE                                             => 'Archive';
 
-our @EXPORT = qw(OP_ARCHIVE_PUSH_CHECK);
-
-####################################################################################################################################
-# File constants
-####################################################################################################################################
-use constant
-{
-    ARCHIVE_INFO_FILE => 'archive.info'
-};
-
-push @EXPORT, qw(ARCHIVE_INFO_FILE);
+use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
+    our @EXPORT = qw(OP_ARCHIVE_PUSH_CHECK);
+use constant OP_ARCHIVE_GET_CHECK                                   => OP_ARCHIVE . '->getCheck';
+    push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 
 ####################################################################################################################################
 # constructor
@@ -114,6 +106,7 @@ sub walFileName
 {
     my $self = shift;
     my $oFile = shift;
+    my $strArchiveId = shift;
     my $strWalSegment = shift;
     my $iWaitSeconds = shift;
 
@@ -121,7 +114,7 @@ sub walFileName
     my $oWait = waitInit($iWaitSeconds);
 
     # Determine the path where the requested WAL segment is located
-    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strWalSegment));
+    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strWalSegment}"));
 
     do
     {
@@ -183,7 +176,12 @@ sub walInfo
     my $strDbVersion;
     my $iSysIdOffset;
 
-    if ($iMagic == hex('0xD07E'))
+    if ($iMagic == hex('0xD085'))
+    {
+        $strDbVersion = '9.5';
+        $iSysIdOffset = 20;
+    }
+    elsif ($iMagic == hex('0xD07E'))
     {
         $strDbVersion = '9.4';
         $iSysIdOffset = 20;
@@ -292,7 +290,8 @@ sub get
     }
 
     # Get the wal segment filename
-    my $strArchiveFile = $self->walFileName($oFile, $strSourceArchive);
+    my $strArchiveId = $self->getCheck($oFile);
+    my $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strSourceArchive);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
@@ -312,12 +311,38 @@ sub get
     my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
 
     # Copy the archive file to the requested location
-    $oFile->copy(PATH_BACKUP_ARCHIVE, $strArchiveFile,     # Source file
-                 PATH_DB_ABSOLUTE, $strDestinationFile,    # Destination file
-                 $bSourceCompressed,                       # Source compression based on detection
-                 false);                                   # Destination is not compressed
+    $oFile->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",  # Source file
+                 PATH_DB_ABSOLUTE, $strDestinationFile,                     # Destination file
+                 $bSourceCompressed,                                        # Source compression based on detection
+                 false);                                                    # Destination is not compressed
 
     return 0;
+}
+
+####################################################################################################################################
+# getCheck
+####################################################################################################################################
+sub getCheck
+{
+    my $self = shift;
+    my $oFile = shift;
+
+    # &log(DEBUG, OP_ARCHIVE_GET_CHECK . "()");
+    my $strArchiveId;
+
+    if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
+    {
+        $strArchiveId = $oFile->{oRemote}->command_execute(OP_ARCHIVE_GET_CHECK, undef, true);
+    }
+    else
+    {
+        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->archiveId();
+    }
+
+    # Set operation and debug strings
+    &log(DEBUG, OP_ARCHIVE_GET_CHECK . "=>: archiveId = ${strArchiveId}");
+
+    return $strArchiveId;
 }
 
 ####################################################################################################################################
@@ -465,28 +490,44 @@ sub push
     my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
 
     # Check that there are no issues with pushing this WAL segment
-    if ($bArchiveFile && !$bAsync)
+    my $strArchiveId;
+    my $strChecksum = undef;
+
+    if (!$bAsync)
     {
-        my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
-        $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strSourceFile, $strDbVersion, $ullDbSysId);
+        if ($bArchiveFile)
+        {
+            my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
+            ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strSourceFile,
+                                                             $strDbVersion, $ullDbSysId);
+        }
+        else
+        {
+            $strArchiveId = $self->getCheck($oFile);
+        }
     }
 
-    # Append compression extension
-    if ($bArchiveFile && $bCompress)
+    # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already exists
+    # in the repository with the same checksum (else there would have been an error on checksum mismatch).
+    if (!defined($strChecksum))
     {
-        $strDestinationFile .= '.' . $oFile->{strCompressExtension};
-    }
+        # Append compression extension
+        if ($bArchiveFile && $bCompress)
+        {
+            $strDestinationFile .= '.' . $oFile->{strCompressExtension};
+        }
 
-    # Copy the WAL segment
-    $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,                          # Source type/file
-                 $bAsync ? PATH_BACKUP_ARCHIVE_OUT : PATH_BACKUP_ARCHIVE,   # Destination type
-                 $strDestinationFile,                                       # Destination file
-                 false,                                                     # Source is not compressed
-                 $bArchiveFile && $bCompress,                               # Destination compress is configurable
-                 undef, undef, undef,                                       # Unused params
-                 true,                                                      # Create path if it does not exist
-                 undef, undef,                                              # User and group
-                 $bArchiveFile);                                            # Append checksum if archive file
+        # Copy the WAL segment
+        $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,                          # Source type/file
+                     $bAsync ? PATH_BACKUP_ARCHIVE_OUT : PATH_BACKUP_ARCHIVE,   # Destination type
+                     ($bAsync ? '' : "${strArchiveId}/") . $strDestinationFile, # Destination file
+                     false,                                                     # Source is not compressed
+                     $bArchiveFile && $bCompress,                               # Destination compress is configurable
+                     undef, undef, undef,                                       # Unused params
+                     true,                                                      # Create path if it does not exist
+                     undef, undef,                                              # User and group
+                     $bArchiveFile);                                            # Append checksum if archive file
+    }
 }
 
 ####################################################################################################################################
@@ -505,6 +546,7 @@ sub pushCheck
     my $strOperation = OP_ARCHIVE_PUSH_CHECK;
     &log(DEBUG, "${strOperation}: " . PATH_BACKUP_ARCHIVE . ":${strWalSegment}");
     my $strChecksum;
+    my $strArchiveId;
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
     {
@@ -519,7 +561,10 @@ sub pushCheck
         &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
 
         # Execute the command
-        $strChecksum = $oFile->{oRemote}->command_execute($strOperation, \%oParamHash, true);
+        my $strResult = $oFile->{oRemote}->command_execute($strOperation, \%oParamHash, true);
+
+        $strArchiveId = (split("\t", $strResult))[0];
+        $strChecksum = (split("\t", $strResult))[1];
 
         if ($strChecksum eq 'Y')
         {
@@ -535,40 +580,10 @@ sub pushCheck
         }
 
         # If the info file exists check db version and system-id
-        my %oDbConfig;
-
-        if ($oFile->exists(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE))
-        {
-            ini_load($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
-
-            my $strError = undef;
-
-            if ($oDbConfig{database}{'version'} ne $strDbVersion)
-            {
-                $strError = "WAL segment version ${strDbVersion} does not match archive version $oDbConfig{database}{'version'}";
-            }
-
-            if ($oDbConfig{database}{'system-id'} ne $ullDbSysId)
-            {
-                $strError = "WAL segment system-id ${ullDbSysId} does not match" .
-                            " archive system-id $oDbConfig{database}{'system-id'}";
-            }
-
-            if (defined($strError))
-            {
-                confess &log(ERROR, "${strError}\nHINT: are you archiving to the correct stanza?", ERROR_ARCHIVE_MISMATCH);
-            }
-        }
-        # Else create the info file from the current WAL segment
-        else
-        {
-            $oDbConfig{database}{'system-id'} = $ullDbSysId;
-            $oDbConfig{database}{'version'} = $strDbVersion;
-            ini_save($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
-        }
+        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive
-        $strChecksum = $self->walFileName($oFile, $strWalSegment);
+        $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment);
 
         if (defined($strChecksum))
         {
@@ -588,10 +603,10 @@ sub pushCheck
         &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
                    "HINT: this is valid in some recovery scenarios but may also indicate a problem");
 
-        return undef;
+        return $strArchiveId, $strChecksum;
     }
 
-    return $strChecksum;
+    return $strArchiveId, $strChecksum;
 }
 
 ####################################################################################################################################
@@ -691,19 +706,33 @@ sub xfer
                         "destination_compress ${bDestinationCompress}, default_compress = " . optionGet(OPTION_COMPRESS));
 
             # Check that there are no issues with pushing this WAL segment
+            my $strArchiveId;
+            my $strChecksum = undef;
+
             if ($bArchiveFile)
             {
                 my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-                $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $strArchiveFile, $strDbVersion, $ullDbSysId);
+                ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24),
+                                                                 $strArchiveFile, $strDbVersion, $ullDbSysId);
+            }
+            else
+            {
+                $strArchiveId = $self->getCheck($oFile);
             }
 
-            # Copy the archive file
-            $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source file
-                         PATH_BACKUP_ARCHIVE, $strDestinationFile,  # Destination file
-                         $bSourceCompressed,                        # Source is not compressed
-                         $bDestinationCompress,                     # Destination compress is configurable
-                         undef, undef, undef,                       # Unused params
-                         true);                                     # Create path if it does not exist
+            # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already
+            # exists in the repository with the same checksum (else there would have been an error on checksum mismatch).
+            if (!defined($strChecksum))
+            {
+                # Copy the archive file
+                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source path/file
+                             PATH_BACKUP_ARCHIVE,                       # Destination path
+                             "${strArchiveId}/${strDestinationFile}",   # Destination file
+                             $bSourceCompressed,                        # Source is not compressed
+                             $bDestinationCompress,                     # Destination compress is configurable
+                             undef, undef, undef,                       # Unused params
+                             true);                                     # Create path if it does not exist
+            }
 
             #  Remove the source archive file
             unlink($strArchiveFile)
