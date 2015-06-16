@@ -13,11 +13,12 @@ Primary PgBackRest features:
 - In-stream compression/decompression
 - Archiving and retrieval of logs for replicas/restores built in
 - Async archiving for very busy systems (including space limits)
-- Backup directories are consistent Postgres clusters (when hardlinks are on and compression is off)
+- Backup directories are consistent PostgreSQL clusters (when hardlinks are on and compression is off)
 - Tablespace support
 - Restore delta option
 - Restore using timestamp/size or checksum
 - Restore remapping base/tablespaces
+- Support for PostgreSQL >= 8.3
 
 Instead of relying on traditional backup tools like tar and rsync, PgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
 
