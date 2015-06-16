@@ -722,6 +722,14 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
+			<release-version version="0.80" title="DALLAS MILESTONE - UNDER DEVELOPMENT">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text></text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.75" title="New repository format, info command and experimental 9.5 support">
 				<release-feature-bullet-list>
 					<release-feature>
