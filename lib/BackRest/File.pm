@@ -469,7 +469,7 @@ sub pathSync
     my $strPathType = shift;
     my $strPath = shift;
 
-    &log(TRACE, OP_FILE_PATH_SYNC . "(): pathType = ${strPathType}, path = ${strPath}");
+    logTrace(OP_FILE_PATH_SYNC, DEBUG_CALL, undef, {pathType => $strPathType, path => $strPath});
     
     filePathSync($self->path_get($strPathType, $strPath eq '.' ? undef : $strPath));
 }

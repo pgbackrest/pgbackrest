@@ -31,8 +31,8 @@ sub filePathSync
 {
     my $strPath = shift;
 
-    &log(TRACE, OP_FILE_BASE_PATH_SYNC . "(): path = ${strPath}");
-    
+    logTrace(OP_FILE_BASE_PATH_SYNC, DEBUG_CALL, undef, {path => $strPath});
+
     open(my $hPath, "<", $strPath)
         or confess &log(ERROR, "unable to open ${strPath}", ERROR_PATH_OPEN);
     open(my $hPathDup, ">&", $hPath)

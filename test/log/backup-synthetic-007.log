@@ -4,13 +4,13 @@ run 007 - rmt 1, cmp 1, hardlink 0
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -176,7 +176,7 @@ db-version="9.3"
 info db
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = db
 stanza db
    status: ok
@@ -189,7 +189,7 @@ DEBUG:     safe exit called, terminating threads
 info db
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = db
 [
    {
@@ -243,14 +243,14 @@ DEBUG:     safe exit called, terminating threads
 full backup (resume)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
  WARN: backup [BACKUP-FULL-1] is missing from the repository - removed from backup.info
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -420,7 +420,7 @@ db-version="9.3"
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-FULL-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-FULL-2]
@@ -464,7 +464,7 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid database version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -473,7 +473,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not match backup version = 8.0, system-id = 6156904820763115222
               HINT: are you backing up to the correct stanza?
@@ -482,7 +482,7 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid system id)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -491,7 +491,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not match backup version = 9.3, system-id = 6999999999999999999
               HINT: are you backing up to the correct stanza?
@@ -500,7 +500,7 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid control version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -509,7 +509,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database control-version = 937, catalog-version 201306121 does not match backup control-version = 842, catalog-version = 201306121
               HINT: this may be a symptom of database or repository corruption!
@@ -518,7 +518,7 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid catalog version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -527,7 +527,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database control-version = 937, catalog-version 201306121 does not match backup control-version = 937, catalog-version = 197208141
               HINT: this may be a symptom of database or repository corruption!
@@ -536,7 +536,7 @@ DEBUG:     safe exit called, terminating threads
 incr backup (add tablespace 1)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -545,7 +545,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -724,7 +724,7 @@ db-version="9.3"
 incr backup (resume and add tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -734,7 +734,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -929,7 +929,7 @@ db-version="9.3"
 diff backup (cannot resume - new diff)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -939,7 +939,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -1136,7 +1136,7 @@ db-version="9.3"
 diff backup (cannot resume - disabled)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1146,7 +1146,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -1344,7 +1344,7 @@ db-version="9.3"
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 (fail on used path)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1360,7 +1360,7 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1372,7 +1372,7 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1384,7 +1384,7 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1459,7 +1459,7 @@ DEBUG:     safe exit called, terminating threads
 incr backup (add files and remove tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1468,7 +1468,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -1649,7 +1649,7 @@ db-version="9.3"
 incr backup (update files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1658,7 +1658,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -1837,7 +1837,7 @@ db-version="9.3"
 diff backup (no updates)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1846,7 +1846,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2039,7 +2039,7 @@ db-version="9.3"
 incr backup (remove files - but won't affect manifest)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2048,7 +2048,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2226,7 +2226,7 @@ db-version="9.3"
 diff backup (remove files during backup)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2235,7 +2235,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2424,13 +2424,13 @@ db-version="9.3"
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2631,7 +2631,7 @@ db-version="9.3"
 diff backup (add files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2640,7 +2640,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = true, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = true
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2829,7 +2829,7 @@ db-version="9.3"
 restore delta, backup '[BACKUP-DIFF-5]' (no tablespace remap)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-DIFF-5] --no-tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-5]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-5]
@@ -2889,7 +2889,7 @@ DEBUG:     safe exit called, terminating threads
 info
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = [undef], remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = [undef], user = [USER-2]
 DEBUG:     Info->listStanza
 stanza db
    status: ok
@@ -2905,7 +2905,7 @@ DEBUG:     safe exit called, terminating threads
 info
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = [undef], remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = [undef], user = [USER-2]
 DEBUG:     Info->listStanza
 [
    {
@@ -3218,7 +3218,7 @@ DEBUG:     safe exit called, terminating threads
 info bogus
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = bogus, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = bogus, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = bogus
 stanza bogus
    status: error (missing stanza path)
@@ -3227,7 +3227,7 @@ DEBUG:     safe exit called, terminating threads
 info bogus
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-2], stanza = bogus, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
+DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = bogus, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = bogus
 [
    {

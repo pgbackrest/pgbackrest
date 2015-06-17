@@ -57,7 +57,7 @@ sub new
     my $class = shift;                  # Class name
     my $strArchiveClusterPath = shift;  # Backup cluster path
 
-    &log(DEBUG, OP_ARCHIVE_INFO_NEW . "(): archiveClusterPath = ${strArchiveClusterPath}");
+    logDebug(OP_ARCHIVE_INFO_NEW, DEBUG_CALL, undef, {archiveClusterPath => $strArchiveClusterPath});
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;

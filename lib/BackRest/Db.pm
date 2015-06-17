@@ -153,9 +153,7 @@ sub info
     my $oFile = shift;
     my $strDbPath = shift;
 
-    # Set operation and debug strings
-    &log(DEBUG, OP_DB_INFO . "(): isRemote = " . ($oFile->is_remote(PATH_DB_ABSOLUTE) ? 'true' : 'false') .
-                ", dbPath = ${strDbPath}");
+    logDebug(OP_DB_INFO, DEBUG_CALL, undef, {isRemote => $oFile->is_remote(PATH_DB_ABSOLUTE), dbPath => $strDbPath});
 
     # Database info
     my $iCatalogVersion;

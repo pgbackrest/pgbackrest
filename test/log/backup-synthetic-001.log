@@ -9,7 +9,7 @@ DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -222,7 +222,7 @@ DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mod
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
  WARN: backup [BACKUP-FULL-1] is missing from the repository - removed from backup.info
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -411,7 +411,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not match backup version = 8.0, system-id = 6156904820763115222
               HINT: are you backing up to the correct stanza?
@@ -428,7 +428,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not match backup version = 9.3, system-id = 6999999999999999999
               HINT: are you backing up to the correct stanza?
@@ -445,7 +445,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database control-version = 937, catalog-version 201306121 does not match backup control-version = 842, catalog-version = 201306121
               HINT: this may be a symptom of database or repository corruption!
@@ -462,7 +462,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 ERROR: [126]: database control-version = 937, catalog-version 201306121 does not match backup control-version = 937, catalog-version = 197208141
               HINT: this may be a symptom of database or repository corruption!
@@ -479,7 +479,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -639,7 +639,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -814,7 +814,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -992,7 +992,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
@@ -1281,7 +1281,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -1447,7 +1447,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -1611,7 +1611,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -1789,7 +1789,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 1, incremental = 1: ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
  INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -1952,7 +1952,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2123,7 +2123,7 @@ DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
@@ -2309,7 +2309,7 @@ DEBUG:     BackupInfo->new: backupClusterPath = [TEST_PATH]/backrest/backup/db
 DEBUG:     BackupCommon::backupRegExpGet: full = 1, differential = 0, incremental = 0: ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
  INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-DEBUG:     Db->info(): isRemote = false, dbPath = [TEST_PATH]/db/common-2
+DEBUG:     Db->info(): dbPath = [TEST_PATH]/db/common-2, isRemote = false
 DEBUG:     Db->info=>: dbVersion = 9.3, controlVersion = 937, catalogVersion = 201306121, dbSysId = 6156904820763115222
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build

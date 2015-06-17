@@ -418,6 +418,74 @@ sub test_check
 }
 
 ####################################################################################################################################
+# logDebug
+####################################################################################################################################
+use constant DEBUG_CALL                                             => '()';
+    push @EXPORT, qw(DEBUG_CALL);
+use constant DEBUG_RESULT                                           => '=>';
+    push @EXPORT, qw(DEBUG_RESULT);
+use constant DEBUG_MISC                                             => '';
+    push @EXPORT, qw(DEBUG_MISC);
+
+sub logDebug
+{
+    my $strFunction = shift;
+    my $strType = shift;
+    my $strMessage = shift;
+    my $oParamHash = shift;
+    my $strLevel = shift;
+    
+    $strLevel = defined($strLevel) ? $strLevel : DEBUG;
+
+    if ($oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
+        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank})
+    {
+        if (defined($oParamHash))
+        {
+            my $strParamSet;
+            
+            foreach my $strParam (sort(keys($oParamHash)))
+            {
+                if (defined($strParamSet))
+                {
+                    $strParamSet .= ', ';
+                }
+                
+                $strParamSet .= "${strParam} = " .
+                                (defined($$oParamHash{$strParam}) ?
+                                    ($strParam =~ /^is/ ? ($$oParamHash{$strParam} ? 'true' : 'false'): 
+                                    $$oParamHash{$strParam}) : '[undef]');
+            }
+            
+            if (defined($strMessage))
+            {
+                $strMessage = "${strMessage}: ${strParamSet}";
+            }
+            else
+            {
+                $strMessage = $strParamSet;
+            }
+        }
+
+        &log($strLevel, "${strFunction}${strType}" . (defined($strMessage) ? ": $strMessage" : ''));
+    }
+}
+
+push @EXPORT, qw(logDebug);
+
+sub logTrace
+{
+    my $strFunction = shift;
+    my $strType = shift;
+    my $strMessage = shift;
+    my $oParamHash = shift;
+
+    logDebug($strFunction, $strType, $strMessage, $oParamHash, TRACE);
+}
+
+push @EXPORT, qw(logTrace);
+
+####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
 sub log
