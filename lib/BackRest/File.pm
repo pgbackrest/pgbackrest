@@ -470,7 +470,7 @@ sub pathSync
     my $strPath = shift;
 
     logTrace(OP_FILE_PATH_SYNC, DEBUG_CALL, undef, {pathType => $strPathType, path => $strPath});
-    
+
     filePathSync($self->path_get($strPathType, $strPath eq '.' ? undef : $strPath));
 }
 
@@ -546,7 +546,7 @@ sub move
                 }
             }
         }
-        
+
         $self->pathSync($strDestinationPathType, dirname($strDestinationFile));
     }
 }

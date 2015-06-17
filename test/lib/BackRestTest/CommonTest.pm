@@ -810,7 +810,7 @@ sub BackRestTestCommon_Setup
         &log(WARN, "unit tests do not currently work with version 9.5");
         return false;
     }
-    
+
     return true;
 }
 

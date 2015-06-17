@@ -224,7 +224,7 @@ if (!$bMatch)
 ####################################################################################################################################
 my $hVersion;
 
-if (-e './test.pl' && -e '../bin/pg_backrest.pl' && open($hVersion, '<', '../VERSION'))
+if (-e './test.pl' && -e '../bin/pg_backrest' && open($hVersion, '<', '../VERSION'))
 {
     my $strTestVersion = readline($hVersion);
 

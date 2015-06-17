@@ -434,7 +434,7 @@ sub logDebug
     my $strMessage = shift;
     my $oParamHash = shift;
     my $strLevel = shift;
-    
+
     $strLevel = defined($strLevel) ? $strLevel : DEBUG;
 
     if ($oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
@@ -443,20 +443,20 @@ sub logDebug
         if (defined($oParamHash))
         {
             my $strParamSet;
-            
+
             foreach my $strParam (sort(keys($oParamHash)))
             {
                 if (defined($strParamSet))
                 {
                     $strParamSet .= ', ';
                 }
-                
+
                 $strParamSet .= "${strParam} = " .
                                 (defined($$oParamHash{$strParam}) ?
-                                    ($strParam =~ /^is/ ? ($$oParamHash{$strParam} ? 'true' : 'false'): 
+                                    ($strParam =~ /^is/ ? ($$oParamHash{$strParam} ? 'true' : 'false'):
                                     $$oParamHash{$strParam}) : '[undef]');
             }
-            
+
             if (defined($strMessage))
             {
                 $strMessage = "${strMessage}: ${strParamSet}";
