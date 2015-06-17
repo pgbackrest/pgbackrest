@@ -26,7 +26,7 @@ use BackRest::Db;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Remote;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
@@ -454,6 +454,8 @@ sub BackRestTestCommon_ExecuteRegAll
 
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION',
+        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . version_get(), version_get() . '$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
         "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
@@ -773,7 +775,7 @@ sub BackRestTestCommon_Setup
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
     $strCommonCommandMain = "../bin/pg_backrest";
-    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote";
+    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;

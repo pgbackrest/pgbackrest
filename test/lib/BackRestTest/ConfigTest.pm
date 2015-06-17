@@ -547,7 +547,7 @@ sub BackRestTestConfig_Test
             optionSetTest($oOption, OPTION_COMMAND_PSQL_OPTION, '--port 5432');
 
             configLoadExpect($oOption, OP_BACKUP);
-            optionTestExpect(OPTION_COMMAND_REMOTE, dirname(abs_path($0)) . '/pg_backrest_remote');
+            optionTestExpect(OPTION_COMMAND_REMOTE, abs_path($0));
         }
 
         if (BackRestTestCommon_Run(++$iRun, OP_BACKUP . ' missing option ' . OPTION_DB_PATH))

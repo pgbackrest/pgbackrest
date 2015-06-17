@@ -18,7 +18,7 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Lock;
-use BackRest::Remote;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -275,7 +275,7 @@ sub get
         optionGet(OPTION_STANZA),
         optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
         optionRemoteType(),
-        optionRemote()
+        protocolGet()
     );
 
     # If the destination file path is not absolute then it is relative to the db data path
@@ -332,7 +332,7 @@ sub getCheck
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
     {
-        $strArchiveId = $oFile->{oRemote}->command_execute(OP_ARCHIVE_GET_CHECK, undef, true);
+        $strArchiveId = $oFile->{oProtocol}->command_execute(OP_ARCHIVE_GET_CHECK, undef, true);
     }
     else
     {
@@ -466,7 +466,7 @@ sub push
         optionGet(OPTION_STANZA),
         $bAsync || optionRemoteTypeTest(NONE) ? optionGet(OPTION_REPO_PATH) : optionGet(OPTION_REPO_REMOTE_PATH),
         $bAsync ? NONE : optionRemoteType(),
-        optionRemote($bAsync)
+        protocolGet($bAsync)
     );
 
     # If the source file path is not absolute then it is relative to the data path
@@ -558,10 +558,10 @@ sub pushCheck
         $oParamHash{'db-sys-id'} = $ullDbSysId;
 
         # Output remote trace info
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string(\%oParamHash) . ')');
 
         # Execute the command
-        my $strResult = $oFile->{oRemote}->command_execute($strOperation, \%oParamHash, true);
+        my $strResult = $oFile->{oProtocol}->command_execute($strOperation, \%oParamHash, true);
 
         $strArchiveId = (split("\t", $strResult))[0];
         $strChecksum = (split("\t", $strResult))[1];
@@ -624,7 +624,7 @@ sub xfer
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
         NONE,
-        optionRemote(true)
+        protocolGet(true)
     );
 
     # Load the archive manifest - all the files that need to be pushed
@@ -665,7 +665,7 @@ sub xfer
                 optionGet(OPTION_STANZA),
                 optionGet(OPTION_REPO_REMOTE_PATH),
                 optionRemoteType(),
-                optionRemote()
+                protocolGet()
             );
         }
 

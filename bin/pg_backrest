@@ -23,7 +23,8 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Info;
 use BackRest::Lock;
-use BackRest::Remote qw(DB BACKUP NONE);
+use BackRest::Protocol qw(DB BACKUP NONE);
+use BackRest::Remote;
 use BackRest::Restore;
 use BackRest::ThreadGroup;
 use BackRest::Utility;
@@ -108,7 +109,7 @@ sub safe_exit
     &log(DEBUG, "safe exit called, terminating threads");
 
     my $iTotal = threadGroupDestroy();
-    remoteDestroy();
+    protocolDestroy();
 
     if (defined($iExitCode))
     {
@@ -131,6 +132,14 @@ eval
     # Load command line parameters and config
     ################################################################################################################################
     configLoad();
+
+    ################################################################################################################################
+    # Process remote commands
+    ################################################################################################################################
+    if (operationTest(OP_REMOTE))
+    {
+        safe_exit((new BackRest::Remote())->process());
+    }
 
     # Set the log levels
     log_level_set(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
@@ -177,7 +186,7 @@ eval
         optionGet(OPTION_STANZA),
         optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
         optionRemoteType(),
-        optionRemote()
+        protocolGet()
     );
 
     ################################################################################################################################

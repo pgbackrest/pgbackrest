@@ -171,10 +171,10 @@ sub info
         $oParamHash{'db-path'} = ${strDbPath};
 
         # Output remote trace info
-        &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
+        &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->command_param_string(\%oParamHash) . ')');
 
         # Execute the command
-        my $strResult = $oFile->{oRemote}->command_execute(OP_DB_INFO, \%oParamHash, true);
+        my $strResult = $oFile->{oProtocol}->command_execute(OP_DB_INFO, \%oParamHash, true);
 
         # Split the result into return values
         my @stryToken = split(/\t/, $strResult);

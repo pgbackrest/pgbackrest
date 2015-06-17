@@ -19,7 +19,7 @@ db-version="9.3"
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000090000000900000009
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Protocol->new(): host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
  INFO: 000000090000000900000009 was not found in the archive repository

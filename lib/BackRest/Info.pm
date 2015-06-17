@@ -97,7 +97,7 @@ sub info
         $strStanza,
         optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
         optionRemoteTypeTest(BACKUP) ? BACKUP : NONE,
-        optionRemote(!optionRemoteTypeTest(BACKUP))
+        protocolGet(!optionRemoteTypeTest(BACKUP))
     );
 
     # Get the stanza list with all info
@@ -171,10 +171,10 @@ sub listStanza
         }
 
         # Trace the remote parameters
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string($oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string($oParamHash) . ')');
 
         # Execute the command
-        my $strStanzaList = $oFile->{oRemote}->command_execute($strOperation, $oParamHash, true);
+        my $strStanzaList = $oFile->{oProtocol}->command_execute($strOperation, $oParamHash, true);
 
         # Trace the remote response
         &log(TRACE, "${strOperation}: remote json response (${strStanzaList})");

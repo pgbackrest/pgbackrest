@@ -22,8 +22,8 @@ use BackRest::Utility;
 # Export functions
 ####################################################################################################################################
 our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault operationGet operationTest
-                 operationSet operationWrite optionRemoteType optionRemoteTypeTest optionRemote optionRemoteTest
-                 remoteDestroy);
+                 operationSet operationWrite optionRemoteType optionRemoteTypeTest protocolGet optionRemoteTest
+                 protocolDestroy);
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -40,17 +40,20 @@ push @EXPORT, qw(DB BACKUP NONE);
 ####################################################################################################################################
 # Operation constants - basic operations that are allowed in backrest
 ####################################################################################################################################
-use constant
-{
-    OP_ARCHIVE_GET   => 'archive-get',
-    OP_ARCHIVE_PUSH  => 'archive-push',
-    OP_BACKUP        => 'backup',
-    OP_INFO          => 'info',
-    OP_RESTORE       => 'restore',
-    OP_EXPIRE        => 'expire'
-};
-
-push @EXPORT, qw(OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_INFO OP_RESTORE OP_EXPIRE);
+use constant OP_ARCHIVE_GET                                       => 'archive-get';
+    push @EXPORT, qw(OP_ARCHIVE_GET);
+use constant OP_ARCHIVE_PUSH                                      => 'archive-push';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH);
+use constant OP_BACKUP                                            => 'backup';
+    push @EXPORT, qw(OP_BACKUP);
+use constant OP_INFO                                              => 'info';
+    push @EXPORT, qw(OP_INFO);
+use constant OP_REMOTE                                            => 'remote';
+    push @EXPORT, qw(OP_REMOTE);
+use constant OP_RESTORE                                           => 'restore';
+    push @EXPORT, qw(OP_RESTORE);
+use constant OP_EXPIRE                                            => 'expire';
+    push @EXPORT, qw(OP_EXPIRE);
 
 ####################################################################################################################################
 # BACKUP Type Constants
@@ -67,8 +70,10 @@ push @EXPORT, qw(BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR);
 ####################################################################################################################################
 # INFO Output Constants
 ####################################################################################################################################
-use constant INFO_OUTPUT_TEXT => 'text';    push @EXPORT, qw(INFO_OUTPUT_TEXT);
-use constant INFO_OUTPUT_JSON => 'json';    push @EXPORT, qw(INFO_OUTPUT_JSON);
+use constant INFO_OUTPUT_TEXT                                       => 'text';
+    push @EXPORT, qw(INFO_OUTPUT_TEXT);
+use constant INFO_OUTPUT_JSON                                       => 'json';
+    push @EXPORT, qw(INFO_OUTPUT_JSON);
 
 ####################################################################################################################################
 # SOURCE Constants
@@ -240,7 +245,7 @@ use constant
     OPTION_DEFAULT_ARCHIVE_ASYNC                    => false,
 
     OPTION_DEFAULT_COMMAND_PSQL                     => '/usr/bin/psql -X',
-    OPTION_DEFAULT_COMMAND_REMOTE                   => dirname(abs_path($0)) . '/pg_backrest_remote',
+    OPTION_DEFAULT_COMMAND_REMOTE                   => abs_path($0),
 
     OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK             => true,
     OPTION_DEFAULT_BACKUP_ARCHIVE_COPY              => false,
@@ -1071,7 +1076,7 @@ my %oOptionRule =
 my %oOption;            # Option hash
 my $strOperation;       # Operation (backup, archive-get, ...)
 my $strRemoteType;      # Remote type (DB, BACKUP, NONE)
-my $oRemote;            # Global remote object that is created on first request (NOT THREADSAFE!)
+my $oProtocol;          # Global remote object that is created on first request (NOT THREADSAFE!)
 
 ####################################################################################################################################
 # configLoad
@@ -1207,6 +1212,7 @@ sub optionValid
         $strOperation ne OP_ARCHIVE_PUSH &&
         $strOperation ne OP_BACKUP &&
         $strOperation ne OP_INFO &&
+        $strOperation ne OP_REMOTE &&
         $strOperation ne OP_RESTORE &&
         $strOperation ne OP_EXPIRE)
     {
@@ -1778,13 +1784,13 @@ sub optionRemoteTypeTest
 }
 
 ####################################################################################################################################
-# optionRemote
+# protocolGet
 #
-# Get the remote object or create it if does not exist.  Shared remotes are used because they create an SSH connection to the remote
-# host and the number of these connections should be minimized.  A remote can be shared without a single thread - for new threads
-# clone() should be called on the shared remote.
+# Get the protocol object or create it if does not exist.  Shared protocol objects are used because they create an SSH connection
+# to the remote host and the number of these connections should be minimized.  A protocol object can be shared within a single
+# thread - for new threads clone() should be called on the shared protocol object.
 ####################################################################################################################################
-sub optionRemote
+sub protocolGet
 {
     my $bForceLocal = shift;
     my $bStore = shift;
@@ -1792,7 +1798,7 @@ sub optionRemote
     # If force local or remote = NONE then create a local remote and return it
     if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
     {
-        return new BackRest::Remote
+        return new BackRest::Protocol
         (
             undef, undef, undef, undef, undef,
             optionGet(OPTION_BUFFER_SIZE),
@@ -1802,13 +1808,13 @@ sub optionRemote
     }
 
     # Return the remote if is already defined
-    if (defined($oRemote))
+    if (defined($oProtocol))
     {
-        return $oRemote;
+        return $oProtocol;
     }
 
     # Return the remote when required
-    my $oRemoteTemp = new BackRest::Remote
+    my $oProtocolTemp = new BackRest::Protocol
     (
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
@@ -1822,22 +1828,22 @@ sub optionRemote
 
     if ($bStore)
     {
-        $oRemote = $oRemoteTemp;
+        $oProtocol = $oProtocolTemp;
     }
 
-    return $oRemoteTemp;
+    return $oProtocolTemp;
 }
 
 ####################################################################################################################################
-# remoteDestroy
+# protocolDestroy
 #
-# Undefine the remote if it is stored locally.
+# Undefine the protocol if it is stored locally.
 ####################################################################################################################################
-sub remoteDestroy
+sub protocolDestroy
 {
-    if (defined($oRemote))
+    if (defined($oProtocol))
     {
-        undef($oRemote);
+        undef($oProtocol);
     }
 }
 

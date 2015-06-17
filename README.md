@@ -769,7 +769,7 @@ example: db-path=/data/db
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
-* 
+* Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.
 
 ### v0.75: New repository format, info command and experimental 9.5 support
 

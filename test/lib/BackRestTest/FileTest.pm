@@ -23,7 +23,7 @@ use Time::HiRes qw(gettimeofday usleep);
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
 use BackRest::File;
-use BackRest::Remote;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 use BackRestTest::CommonTest;
@@ -92,7 +92,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = BackRest::Remote->new
+    my $oRemote = BackRest::Protocol->new
     (
         $strHost,                               # Host
         $strUser,                               # User
@@ -104,7 +104,7 @@ sub BackRestTestFile_Test
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
     );
 
-    my $oLocal = new BackRest::Remote
+    my $oLocal = new BackRest::Protocol
     (
         undef,                                  # Host
         undef,                                  # User
