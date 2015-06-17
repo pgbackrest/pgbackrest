@@ -14,11 +14,13 @@ use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use File::stat;
+use IO::Handle;
 use Net::OpenSSH;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
 use BackRest::Exception;
+use BackRest::FileCommon;
 use BackRest::Protocol;
 use BackRest::Utility;
 
@@ -76,19 +78,21 @@ push @EXPORT, qw(PIPE_STDIN PIPE_STDOUT PIPE_STDERR);
 ####################################################################################################################################
 use constant
 {
-    OP_FILE_OWNER       => 'File->owner',
-    OP_FILE_WAIT        => 'File->wait',
-    OP_FILE_LIST        => 'File->list',
-    OP_FILE_EXISTS      => 'File->exists',
-    OP_FILE_HASH        => 'File->hash',
-    OP_FILE_REMOVE      => 'File->remove',
-    OP_FILE_MANIFEST    => 'File->manifest',
-    OP_FILE_COMPRESS    => 'File->compress',
-    OP_FILE_MOVE        => 'File->move',
-    OP_FILE_COPY        => 'File->copy',
-    OP_FILE_COPY_OUT    => 'File->copy_out',
-    OP_FILE_COPY_IN     => 'File->copy_in',
-    OP_FILE_PATH_CREATE => 'File->path_create',
+    OP_FILE_OWNER               => 'File->owner',
+    OP_FILE_WAIT                => 'File->wait',
+    OP_FILE_LIST                => 'File->list',
+    OP_FILE_EXISTS              => 'File->exists',
+    OP_FILE_HASH                => 'File->hash',
+    OP_FILE_REMOVE              => 'File->remove',
+    OP_FILE_MANIFEST            => 'File->manifest',
+    OP_FILE_COMPRESS            => 'File->compress',
+    OP_FILE_MOVE                => 'File->move',
+    OP_FILE_COPY                => 'File->copy',
+    OP_FILE_COPY_OUT            => 'File->copy_out',
+    OP_FILE_COPY_IN             => 'File->copy_in',
+    OP_FILE_PATH_CREATE         => 'File->path_create',
+    OP_FILE_PATH_SYNC           => 'File->pathSync',
+    OP_FILE_PATH_SYNC_STATIC    => 'File::filePathSync',
     OP_FILE_LINK_CREATE => 'File->link_create'
 };
 
@@ -455,6 +459,22 @@ sub link_create
 }
 
 ####################################################################################################################################
+# pathSync
+#
+# Sync a directory.
+####################################################################################################################################
+sub pathSync
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+
+    &log(TRACE, OP_FILE_PATH_SYNC . "(): pathType = ${strPathType}, path = ${strPath}");
+    
+    filePathSync($self->path_get($strPathType, $strPath eq '.' ? undef : $strPath));
+}
+
+####################################################################################################################################
 # MOVE
 #
 # Moves a file locally or remotely.
@@ -526,6 +546,8 @@ sub move
                 }
             }
         }
+        
+        $self->pathSync($strDestinationPathType, dirname($strDestinationFile));
     }
 }
 
@@ -1662,16 +1684,20 @@ sub copy
         }
     }
 
-    # Close the source file (if open)
+    # Close the source file (if local)
     if (defined($hSourceFile))
     {
         close($hSourceFile) or confess &log(ERROR, "cannot close file ${strSourceOp}");
     }
 
-    # Close the destination file (if open)
+    # Sync and close the destination file (if local)
     if (defined($hDestinationFile))
     {
-        close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
+        $hDestinationFile->sync()
+            or confess &log(ERROR, "unable to sync ${strDestinationTmpOp}", ERROR_FILE_SYNC);
+
+        close($hDestinationFile)
+            or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
     }
 
     # Checksum and file size should be set if the destination is not remote

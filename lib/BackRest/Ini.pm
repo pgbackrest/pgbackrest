@@ -9,11 +9,13 @@ use Carp qw(confess);
 
 use Exporter qw(import);
 use File::Basename qw(dirname basename);
+use IO::Handle;
 use JSON::PP;
 use Storable qw(dclone);
 
 use lib dirname($0);
 use BackRest::Exception;
+use BackRest::FileCommon;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -272,6 +274,9 @@ sub iniSave
         $bFirst = false;
     }
 
+    # Sync and close ini file
+    $hFile->sync();
+    filePathSync(dirname($strFileName));
     close($hFile);
 }
 
