@@ -184,7 +184,7 @@ sub listStanza
     }
     else
     {
-        my @stryStanza = $oFile->list(PATH_BACKUP, OP_BACKUP, undef, undef, true);
+        my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, undef, undef, true);
 
         foreach my $strStanzaFound (@stryStanza)
         {
@@ -250,7 +250,7 @@ sub listBackup
     my $strStanza = shift;
 
     # Load or build backup.info
-    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP, OP_BACKUP . "/${strStanza}"));
+    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"));
 
     # Build the db list
     my @oyDbList;

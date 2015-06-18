@@ -29,9 +29,9 @@ use BackRest::Utility;
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_REMOTE_BASE                                       => 'Remote';
+use constant OP_REMOTE                                              => 'Remote';
 
-use constant OP_REMOTE_NEW                                        => OP_REMOTE_BASE . "->new";
+use constant OP_REMOTE_NEW                                          => OP_REMOTE . "->new";
 
 ####################################################################################################################################
 # Operation constants
@@ -61,7 +61,7 @@ sub new
              defined($strHost) ? DEBUG : TRACE);
 
     # Init object and store variables
-    my $self = $class->SUPER::new(OP_REMOTE, !defined($strHost), $strCommand, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork,
+    my $self = $class->SUPER::new(CMD_REMOTE, !defined($strHost), $strCommand, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork,
                                   $strHost, $strUser);
 
     return $self;

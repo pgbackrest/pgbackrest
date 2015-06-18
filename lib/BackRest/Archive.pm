@@ -55,19 +55,19 @@ sub process
     my $self = shift;
 
     # Process push
-    if (operationTest(OP_ARCHIVE_PUSH))
+    if (commandTest(CMD_ARCHIVE_PUSH))
     {
         return $self->pushProcess();
     }
 
     # Process get
-    if (operationTest(OP_ARCHIVE_GET))
+    if (commandTest(CMD_ARCHIVE_GET))
     {
         return $self->getProcess();
     }
 
-    # Error if any other operation is found
-    confess &log(ASSERT, "Archive->process() called with invalid operation: " . operationGet());
+    # Error if any other command is found
+    confess &log(ASSERT, "Archive->process() called with invalid command: " . commandGet());
 }
 
 ################################################################################################################################
@@ -327,7 +327,6 @@ sub getCheck
     my $self = shift;
     my $oFile = shift;
 
-    # &log(DEBUG, OP_ARCHIVE_GET_CHECK . "()");
     my $strArchiveId;
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
@@ -352,16 +351,16 @@ sub pushProcess
 {
     my $self = shift;
 
-    # Make sure the archive push operation happens on the db side
+    # Make sure the archive push command happens on the db side
     if (optionRemoteTypeTest(DB))
     {
-        confess &log(ERROR, OP_ARCHIVE_PUSH . ' operation must run on the db host');
+        confess &log(ERROR, CMD_ARCHIVE_PUSH . ' operation must run on the db host');
     }
 
     # Load the archive object
     use BackRest::Archive;
 
-    # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
+    # If an archive section has been defined, use that instead of the backup section when command is CMD_ARCHIVE_PUSH
     my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC);
     my $strArchivePath = optionGet(OPTION_REPO_PATH);
 
@@ -418,7 +417,7 @@ sub pushProcess
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    if (!lockAcquire(operationGet(), false))
+    if (!lockAcquire(commandGet(), false))
     {
         &log(DEBUG, 'another async archive-push process is already running - exiting');
         return 0;
@@ -735,7 +734,7 @@ sub xfer
             unlink($strArchiveFile)
                 or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
                                        'This file will need to be cleaned up manually.  If the problem persists, check if ' .
-                                       OP_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+                                       CMD_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
 
             # Remove the copied segment from the total size
             $lFileSize -= $oManifestHash{name}{$strFile}{size};

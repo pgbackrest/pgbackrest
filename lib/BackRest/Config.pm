@@ -21,8 +21,8 @@ use BackRest::Utility;
 ####################################################################################################################################
 # Export functions
 ####################################################################################################################################
-our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault operationGet operationTest
-                 operationSet operationWrite optionRemoteType optionRemoteTypeTest protocolGet optionRemoteTest
+our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault commandGet commandTest
+                 commandSet commandWrite optionRemoteType optionRemoteTypeTest protocolGet optionRemoteTest
                  protocolDestroy);
 
 ####################################################################################################################################
@@ -38,22 +38,22 @@ use constant
 push @EXPORT, qw(DB BACKUP NONE);
 
 ####################################################################################################################################
-# Operation constants - basic operations that are allowed in backrest
+# Command constants - basic commands that are allowed in backrest
 ####################################################################################################################################
-use constant OP_ARCHIVE_GET                                       => 'archive-get';
-    push @EXPORT, qw(OP_ARCHIVE_GET);
-use constant OP_ARCHIVE_PUSH                                      => 'archive-push';
-    push @EXPORT, qw(OP_ARCHIVE_PUSH);
-use constant OP_BACKUP                                            => 'backup';
-    push @EXPORT, qw(OP_BACKUP);
-use constant OP_INFO                                              => 'info';
-    push @EXPORT, qw(OP_INFO);
-use constant OP_REMOTE                                            => 'remote';
-    push @EXPORT, qw(OP_REMOTE);
-use constant OP_RESTORE                                           => 'restore';
-    push @EXPORT, qw(OP_RESTORE);
-use constant OP_EXPIRE                                            => 'expire';
-    push @EXPORT, qw(OP_EXPIRE);
+use constant CMD_ARCHIVE_GET                                      => 'archive-get';
+    push @EXPORT, qw(CMD_ARCHIVE_GET);
+use constant CMD_ARCHIVE_PUSH                                     => 'archive-push';
+    push @EXPORT, qw(CMD_ARCHIVE_PUSH);
+use constant CMD_BACKUP                                           => 'backup';
+    push @EXPORT, qw(CMD_BACKUP);
+use constant CMD_INFO                                             => 'info';
+    push @EXPORT, qw(CMD_INFO);
+use constant CMD_REMOTE                                           => 'remote';
+    push @EXPORT, qw(CMD_REMOTE);
+use constant CMD_RESTORE                                          => 'restore';
+    push @EXPORT, qw(CMD_RESTORE);
+use constant CMD_EXPIRE                                           => 'expire';
+    push @EXPORT, qw(CMD_EXPIRE);
 
 ####################################################################################################################################
 # BACKUP Type Constants
@@ -305,7 +305,7 @@ use constant
     OPTION_RULE_DEPEND_VALUE     => 'depend-value',
     OPTION_RULE_HINT             => 'hint',
     OPTION_RULE_NEGATE           => 'negate',
-    OPTION_RULE_OPERATION        => 'operation',
+    OPTION_RULE_COMMAND          => 'command',
     OPTION_RULE_REQUIRED         => 'required',
     OPTION_RULE_SECTION          => 'section',
     OPTION_RULE_SECTION_INHERIT  => 'section-inherit',
@@ -313,7 +313,7 @@ use constant
 };
 
 push @EXPORT, qw(OPTION_RULE_ALLOW_LIST OPTION_RULE_ALLOW_RANGE OPTION_RULE_DEFAULT OPTION_RULE_DEPEND OPTION_RULE_DEPEND_OPTION
-                 OPTION_RULE_DEPEND_LIST OPTION_RULE_DEPEND_VALUE OPTION_RULE_NEGATE OPTION_RULE_OPERATION OPTION_RULE_REQUIRED
+                 OPTION_RULE_DEPEND_LIST OPTION_RULE_DEPEND_VALUE OPTION_RULE_NEGATE OPTION_RULE_COMMAND OPTION_RULE_REQUIRED
                  OPTION_RULE_SECTION OPTION_RULE_SECTION_INHERIT OPTION_RULE_TYPE);
 
 ####################################################################################################################################
@@ -347,9 +347,9 @@ my %oOptionRule =
     &OPTION_DELTA =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_DELTA,
             }
@@ -359,14 +359,14 @@ my %oOptionRule =
     &OPTION_FORCE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_FORCE,
             },
 
-            &OP_BACKUP =>
+            &CMD_BACKUP =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_FORCE,
                 &OPTION_RULE_DEPEND =>
@@ -381,9 +381,9 @@ my %oOptionRule =
     &OPTION_NO_START_STOP =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP =>
+            &CMD_BACKUP =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_NO_START_STOP
             }
@@ -393,9 +393,9 @@ my %oOptionRule =
     &OPTION_SET =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_SET,
             }
@@ -405,29 +405,29 @@ my %oOptionRule =
     &OPTION_STANZA =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET =>
+            &CMD_ARCHIVE_GET =>
             {
                 &OPTION_RULE_REQUIRED => true
             },
-            &OP_ARCHIVE_PUSH =>
+            &CMD_ARCHIVE_PUSH =>
             {
                 &OPTION_RULE_REQUIRED => true
             },
-            &OP_BACKUP =>
+            &CMD_BACKUP =>
             {
                 &OPTION_RULE_REQUIRED => true
             },
-            &OP_EXPIRE =>
+            &CMD_EXPIRE =>
             {
                 &OPTION_RULE_REQUIRED => true
             },
-            &OP_REMOTE =>
+            &CMD_REMOTE =>
             {
                 &OPTION_RULE_REQUIRED => false
             },
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_REQUIRED => true
             }
@@ -437,9 +437,9 @@ my %oOptionRule =
     &OPTION_TARGET =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEPEND =>
                 {
@@ -458,9 +458,9 @@ my %oOptionRule =
     &OPTION_TARGET_EXCLUSIVE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE,
                 &OPTION_RULE_DEPEND =>
@@ -479,9 +479,9 @@ my %oOptionRule =
     &OPTION_TARGET_RESUME =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TARGET_RESUME,
                 &OPTION_RULE_DEPEND =>
@@ -501,9 +501,9 @@ my %oOptionRule =
     &OPTION_TARGET_TIMELINE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_REQUIRED => false,
                 &OPTION_RULE_DEPEND =>
@@ -524,9 +524,9 @@ my %oOptionRule =
     &OPTION_TYPE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP =>
+            &CMD_BACKUP =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_TYPE,
                 &OPTION_RULE_ALLOW_LIST =>
@@ -537,7 +537,7 @@ my %oOptionRule =
                 }
             },
 
-            &OP_RESTORE =>
+            &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TYPE,
                 &OPTION_RULE_ALLOW_LIST =>
@@ -556,9 +556,9 @@ my %oOptionRule =
     &OPTION_OUTPUT =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_INFO =>
+            &CMD_INFO =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_INFO_OUTPUT,
                 &OPTION_RULE_ALLOW_LIST =>
@@ -577,13 +577,13 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMMAND_REMOTE,
         &OPTION_RULE_SECTION => CONFIG_SECTION_COMMAND,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_INFO => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -592,9 +592,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMMAND_PSQL,
         &OPTION_RULE_SECTION => CONFIG_SECTION_COMMAND,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         }
     },
 
@@ -602,9 +602,9 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_SECTION => CONFIG_SECTION_COMMAND,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>
@@ -618,9 +618,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_ARCHIVE_ASYNC,
         &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_PUSH => true
+            &CMD_ARCHIVE_PUSH => true
         }
     },
 
@@ -629,9 +629,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         }
     },
 
@@ -639,9 +639,9 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>
@@ -655,12 +655,12 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_INFO => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
         },
     },
 
@@ -668,12 +668,12 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_INFO => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>
@@ -687,14 +687,14 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_PATH,
         &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_INFO => true,
-            &OP_RESTORE => true,
-            &OP_EXPIRE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
+            &CMD_EXPIRE => true
         },
     },
 
@@ -703,13 +703,13 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_INFO => true,
-            &OP_REMOTE => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
         },
     },
 
@@ -718,17 +718,17 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_HINT => "Does this stanza exist?",
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET =>
+            &CMD_ARCHIVE_GET =>
             {
                 &OPTION_RULE_REQUIRED => false
             },
-            &OP_ARCHIVE_PUSH =>
+            &CMD_ARCHIVE_PUSH =>
             {
                 &OPTION_RULE_REQUIRED => false
             },
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         },
     },
 
@@ -746,9 +746,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_PUSH => true
+            &CMD_ARCHIVE_PUSH => true
         }
     },
 
@@ -757,9 +757,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP =>
+            &CMD_BACKUP =>
             {
                 &OPTION_RULE_DEPEND =>
                 {
@@ -775,9 +775,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_COPY,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP =>
+            &CMD_BACKUP =>
             {
                 &OPTION_RULE_DEPEND =>
                 {
@@ -794,12 +794,12 @@ my %oOptionRule =
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMPRESS,
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -810,14 +810,14 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_COMPRESS_LEVEL_MIN, OPTION_DEFAULT_COMPRESS_LEVEL_MAX],
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_INFO => true,
-            &OP_REMOTE => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -828,14 +828,14 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN, OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX],
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_INFO => true,
-            &OP_REMOTE => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -844,9 +844,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_HARDLINK,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         }
     },
 
@@ -864,14 +864,14 @@ my %oOptionRule =
             lc(DEBUG)  => true,
             lc(TRACE)  => true
         },
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_EXPIRE => true,
-            &OP_INFO => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -889,14 +889,14 @@ my %oOptionRule =
             lc(DEBUG)  => true,
             lc(TRACE)  => true
         },
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_ARCHIVE_GET => true,
-            &OP_ARCHIVE_PUSH => true,
-            &OP_BACKUP => true,
-            &OP_EXPIRE => true,
-            &OP_INFO => true,
-            &OP_RESTORE => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -905,9 +905,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TABLESPACE,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE => true
+            &CMD_RESTORE => true
         }
     },
 
@@ -916,9 +916,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_TABLESPACE_MAP,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE => 1
+            &CMD_RESTORE => 1
         },
     },
 
@@ -927,9 +927,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_RECOVERY_SETTING,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_RESTORE => 1
+            &CMD_RESTORE => 1
         },
         &OPTION_RULE_DEPEND =>
         {
@@ -950,10 +950,10 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_EXPIRE,
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_RETENTION_MIN, OPTION_DEFAULT_RETENTION_MAX],
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true,
-            &OP_EXPIRE => true
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => true
         }
     },
 
@@ -963,10 +963,10 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => true,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE,
         &OPTION_RULE_SECTION => CONFIG_SECTION_EXPIRE,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true,
-            &OP_EXPIRE => true
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => true
         },
         &OPTION_RULE_ALLOW_LIST =>
         {
@@ -986,10 +986,10 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_EXPIRE,
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_RETENTION_MIN, OPTION_DEFAULT_RETENTION_MAX],
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true,
-            &OP_EXPIRE => true
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => true
         }
     },
 
@@ -999,10 +999,10 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => CONFIG_SECTION_EXPIRE,
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_RETENTION_MIN, OPTION_DEFAULT_RETENTION_MAX],
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true,
-            &OP_EXPIRE => true
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => true
         }
     },
 
@@ -1011,9 +1011,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         }
     },
 
@@ -1022,9 +1022,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_RESUME,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         }
     },
 
@@ -1033,9 +1033,9 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_START_FAST,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true
+            &CMD_BACKUP => true
         }
     },
 
@@ -1045,10 +1045,10 @@ my %oOptionRule =
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_THREAD_MAX,
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true,
-            &OP_RESTORE => true
+            &CMD_BACKUP => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -1058,10 +1058,10 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_OPERATION =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OP_BACKUP => true,
-            &OP_RESTORE => true
+            &CMD_BACKUP => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -1099,7 +1099,7 @@ my %oOptionRule =
 # Global variables
 ####################################################################################################################################
 my %oOption;            # Option hash
-my $strOperation;       # Operation (backup, archive-get, ...)
+my $strCommand;         # Command (backup, archive-get, ...)
 my $strRemoteType;      # Remote type (DB, BACKUP, NONE)
 my $oProtocol;          # Global remote object that is created on first request (NOT THREADSAFE!)
 
@@ -1220,41 +1220,41 @@ sub configLoad
 ####################################################################################################################################
 # optionValid
 #
-# Make sure the command-line options are valid based on the operation.
+# Make sure the command-line options are valid based on the command.
 ####################################################################################################################################
 sub optionValid
 {
     my $oOptionTest = shift;
 
-    # Check that the operation is present and valid
-    $strOperation = $ARGV[0];
+    # Check that the command is present and valid
+    $strCommand = $ARGV[0];
 
-    if (!defined($strOperation))
+    if (!defined($strCommand))
     {
-        confess &log(ERROR, "operation must be specified", ERROR_OPERATION_REQUIRED);
+        confess &log(ERROR, "command must be specified", ERROR_COMMAND_REQUIRED);
     }
 
-    if ($strOperation ne OP_ARCHIVE_GET &&
-        $strOperation ne OP_ARCHIVE_PUSH &&
-        $strOperation ne OP_BACKUP &&
-        $strOperation ne OP_INFO &&
-        $strOperation ne OP_REMOTE &&
-        $strOperation ne OP_RESTORE &&
-        $strOperation ne OP_EXPIRE)
+    if ($strCommand ne CMD_ARCHIVE_GET &&
+        $strCommand ne CMD_ARCHIVE_PUSH &&
+        $strCommand ne CMD_BACKUP &&
+        $strCommand ne CMD_INFO &&
+        $strCommand ne CMD_REMOTE &&
+        $strCommand ne CMD_RESTORE &&
+        $strCommand ne CMD_EXPIRE)
     {
-        confess &log(ERROR, "invalid operation ${strOperation}", ERROR_OPERATION_INVALID);
+        confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
     }
 
-    # Set the operation section - because of the various archive commands this is not always the operation
-    my $strOperationSection;
+    # Set the command section - because of the various archive commands this is not always the command
+    my $strCommandSection;
 
-    if (operationTest(OP_ARCHIVE_GET) || operationTest(OP_ARCHIVE_PUSH))
+    if (commandTest(CMD_ARCHIVE_GET) || commandTest(CMD_ARCHIVE_PUSH))
     {
-        $strOperationSection = CONFIG_SECTION_ARCHIVE;
+        $strCommandSection = CONFIG_SECTION_ARCHIVE;
     }
     else
     {
-        $strOperationSection = $strOperation;
+        $strCommandSection = $strCommand;
     }
 
     # Hash to store contents of the config file.  The file will be loaded one the config dependency is resolved unless all options
@@ -1301,13 +1301,13 @@ sub optionValid
                 }
             }
 
-            # If the operation has rules store them for later evaluation
-            my $oOperationRule = optionOperationRule($strOption, $strOperation);
+            # If the command has rules store them for later evaluation
+            my $oCommandRule = optionCommandRule($strOption, $strCommand);
 
-            # Check dependency for the operation then for the option
+            # Check dependency for the command then for the option
             my $bDependResolved = true;
-            my $oDepend = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEPEND} :
-                                                     $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
+            my $oDepend = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_DEPEND} :
+                                                   $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
             my $strDependOption;
             my $strDependValue;
             my $strDependType;
@@ -1382,7 +1382,7 @@ sub optionValid
                     # Get the section that the value should be in
                     my $strSection = defined($oOptionRule{$strOption}{&OPTION_RULE_SECTION}) ?
                                          ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq '1' ?
-                                             $strOperationSection : $oOptionRule{$strOption}{&OPTION_RULE_SECTION}) : undef;
+                                             $strCommandSection : $oOptionRule{$strOption}{&OPTION_RULE_SECTION}) : undef;
 
                     # Only look in the stanza section when $strSection = true
                     if ($strSection eq CONFIG_SECTION_STANZA)
@@ -1533,17 +1533,17 @@ sub optionValid
                         or confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
                 }
 
-                # Process an allow list for the operation then for the option
-                my $oAllow = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_ALLOW_LIST} :
-                                                        $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_LIST};
+                # Process an allow list for the command then for the option
+                my $oAllow = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_ALLOW_LIST} :
+                                                      $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_LIST};
 
                 if (defined($oAllow) && !defined($$oAllow{$strValue}))
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
                 }
 
-                # Process an allow range for the operation then for the option
-                $oAllow = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_ALLOW_RANGE} :
+                # Process an allow range for the command then for the option
+                $oAllow = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_ALLOW_RANGE} :
                                                      $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE};
 
                 if (defined($oAllow) && ($strValue < $$oAllow[0] || $strValue > $$oAllow[1]))
@@ -1590,14 +1590,14 @@ sub optionValid
             }
             # Else try to set a default
             elsif ($bDependResolved &&
-                   (!defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) ||
-                    defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation})))
+                   (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
+                    defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand})))
             {
                 # Source is default for this option
                 $oOption{$strOption}{source} = SOURCE_DEFAULT;
 
-                # Check for default in operation then option
-                my $strDefault = optionDefault($strOption, $strOperation);
+                # Check for default in command then option
+                my $strDefault = optionDefault($strOption, $strCommand);
 
                 # If default is defined
                 if (defined($strDefault))
@@ -1606,9 +1606,9 @@ sub optionValid
                     $oOption{$strOption}{value} = $strDefault if !$bNegate;
                 }
                 # Else check required
-                elsif (optionRequired($strOption, $strOperation))
+                elsif (optionRequired($strOption, $strCommand))
                 {
-                    confess &log(ERROR, "${strOperation} operation requires option: ${strOption}" .
+                    confess &log(ERROR, "${strCommand} command requires option: ${strOption}" .
                                         (defined($oOptionRule{$strOption}{&OPTION_RULE_HINT}) ?
                                          "\nHINT: " . $oOptionRule{$strOption}{&OPTION_RULE_HINT} : ''),
                                         ERROR_OPTION_REQUIRED);
@@ -1621,21 +1621,21 @@ sub optionValid
 }
 
 ####################################################################################################################################
-# optionOperationRule
+# optionCommandRule
 #
-# Returns the option rules based on the operation.
+# Returns the option rules based on the command.
 ####################################################################################################################################
-sub optionOperationRule
+sub optionCommandRule
 {
     my $strOption = shift;
-    my $strOperation = shift;
+    my $strCommand = shift;
 
-    if (defined($strOperation))
+    if (defined($strCommand))
     {
-        return defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) &&
-               defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) &&
-               ref($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation}) eq 'HASH' ?
-               $oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strOperation} : undef;
+        return defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) &&
+               defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}) &&
+               ref($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}) eq 'HASH' ?
+               $oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand} : undef;
     }
 
     return undef;
@@ -1644,19 +1644,19 @@ sub optionOperationRule
 ####################################################################################################################################
 # optionRequired
 #
-# Is the option required for this operation?
+# Is the option required for this command?
 ####################################################################################################################################
 sub optionRequired
 {
     my $strOption = shift;
-    my $strOperation = shift;
+    my $strCommand = shift;
 
-    # Get the operation rule
-    my $oOperationRule = optionOperationRule($strOption, $strOperation);
+    # Get the command rule
+    my $oCommandRule = optionCommandRule($strOption, $strCommand);
 
-    # Check for required in operation then option
-    my $bRequired = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_REQUIRED} :
-                                               $oOptionRule{$strOption}{&OPTION_RULE_REQUIRED};
+    # Check for required in command then option
+    my $bRequired = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_REQUIRED} :
+                                             $oOptionRule{$strOption}{&OPTION_RULE_REQUIRED};
 
     # Return required
     return !defined($bRequired) || $bRequired;
@@ -1666,55 +1666,55 @@ sub optionRequired
 ####################################################################################################################################
 # optionDefault
 #
-# Does the option have a default for this operation?
+# Does the option have a default for this command?
 ####################################################################################################################################
 sub optionDefault
 {
     my $strOption = shift;
-    my $strOperation = shift;
+    my $strCommand = shift;
 
-    # Get the operation rule
-    my $oOperationRule = optionOperationRule($strOption, $strOperation);
+    # Get the command rule
+    my $oCommandRule = optionCommandRule($strOption, $strCommand);
 
-    # Check for default in operation
-    my $strDefault = defined($oOperationRule) ? $$oOperationRule{&OPTION_RULE_DEFAULT} : undef;
+    # Check for default in command
+    my $strDefault = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_DEFAULT} : undef;
 
     # If defined return, else try to grab the global default
     return defined($strDefault) ? $strDefault : $oOptionRule{$strOption}{&OPTION_RULE_DEFAULT};
 }
 
 ####################################################################################################################################
-# operationGet
+# commandGet
 #
-# Get the current operation.
+# Get the current command.
 ####################################################################################################################################
-sub operationGet
+sub commandGet
 {
-    return $strOperation;
+    return $strCommand;
 }
 
 ####################################################################################################################################
-# operationTest
+# commandTest
 #
-# Test the current operation.
+# Test the current command.
 ####################################################################################################################################
-sub operationTest
+sub commandTest
 {
-    my $strOperationTest = shift;
+    my $strCommandTest = shift;
 
-    return $strOperationTest eq $strOperation;
+    return $strCommandTest eq $strCommand;
 }
 
 ####################################################################################################################################
-# operationSet
+# commandSet
 #
-# Set current operation (usually for triggering follow-on operations).
+# Set current command (usually for triggering follow-on commands).
 ####################################################################################################################################
-sub operationSet
+sub commandSet
 {
     my $strValue = shift;
 
-    $strOperation = $strValue;
+    $strCommand = $strValue;
 }
 
 ####################################################################################################################################
@@ -1736,25 +1736,25 @@ sub optionGet
 }
 
 ####################################################################################################################################
-# operationWrite
+# commandWrite
 #
-# Using the options that were passed to the current operations, write the command string for another operation.  For example, this
+# Using the options that were passed to the current command, write the command string for another command.  For example, this
 # can be used to write the archive-get command for recovery.conf during a restore.
 ####################################################################################################################################
-sub operationWrite
+sub commandWrite
 {
-    my $strNewOperation = shift;
+    my $strNewCommand = shift;
     my $bIncludeConfig = shift;
-    my $strCommand = shift;
+    my $strCommandString = shift;
 
-    $strCommand = defined($strCommand) ? $strCommand : abs_path($0);
+    $strCommandString = defined($strCommandString) ? $strCommandString : abs_path($0);
 
     # If config setting are included then also set --no-config
     $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
 
     if ($bIncludeConfig)
     {
-        $strCommand .= ' --no-config';
+        $strCommandString .= ' --no-config';
     }
 
     foreach my $strOption (sort(keys(%oOption)))
@@ -1764,8 +1764,8 @@ sub operationWrite
         # &log(WARN, "option ${strOption} = " . (defined($oOption{$strOption}{source}) ? $oOption{$strOption}{source} : 'undef') .
         #            ", " . (defined($oOption{$strOption}{value}) ? $oOption{$strOption}{value} : 'undef'));
 
-        if ((!defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}) ||
-             defined($oOptionRule{$strOption}{&OPTION_RULE_OPERATION}{$strNewOperation})) &&
+        if ((!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
+             defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strNewCommand})) &&
              defined($oOption{$strOption}{value}) &&
             ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
         {
@@ -1782,20 +1782,20 @@ sub operationWrite
 
             if (index($oOption{$strOption}{value}, " ") != -1)
             {
-                $strCommand .= " \"${strParam}\"";
+                $strCommandString .= " \"${strParam}\"";
             }
             else
             {
-                $strCommand .= " ${strParam}";
+                $strCommandString .= " ${strParam}";
             }
         }
     }
 
-    $strCommand .= " ${strNewOperation}";
+    $strCommandString .= " ${strNewCommand}";
 }
 
 ####################################################################################################################################
-# commandWrite
+# optionTest
 #
 # Test a option value.
 ####################################################################################################################################
@@ -1853,8 +1853,8 @@ sub protocolGet
         (
             undef, false, undef,
             optionGet(OPTION_BUFFER_SIZE),
-            operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-            operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+            commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
+            commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
         );
     }
 
@@ -1869,10 +1869,10 @@ sub protocolGet
     (
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
-        operationWrite(OP_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE)),
+        commandWrite(CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE)),
         optionGet(OPTION_BUFFER_SIZE),
-        operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-        operationTest(OP_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+        commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
+        commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
     );
 
     if ($bStore)
