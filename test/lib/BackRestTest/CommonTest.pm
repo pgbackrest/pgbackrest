@@ -43,12 +43,13 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
                  BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
                  BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet
-                 BackRestTestCommon_TestLogAppendFile);
+                 BackRestTestCommon_TestLogAppendFile BackRestTestCommon_CommandRemoteFullGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
 my $strCommonCommandMain;
 my $strCommonCommandRemote;
+my $strCommonCommandRemoteFull;
 my $strCommonCommandPsql;
 my $strCommonHost;
 my $strCommonUser;
@@ -776,6 +777,8 @@ sub BackRestTestCommon_Setup
 
     $strCommonCommandMain = "../bin/pg_backrest";
     $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest";
+    $strCommonCommandRemoteFull = "${strCommonCommandRemote} --stanza=${strCommonStanza}" .
+                                  " --repo-remote-path=${strCommonRepoPath} --no-config remote";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;
@@ -1196,6 +1199,11 @@ sub BackRestTestCommon_CommandMainAbsGet
 sub BackRestTestCommon_CommandRemoteGet
 {
     return $strCommonCommandRemote;
+}
+
+sub BackRestTestCommon_CommandRemoteFullGet
+{
+    return $strCommonCommandRemoteFull;
 }
 
 sub BackRestTestCommon_HostGet

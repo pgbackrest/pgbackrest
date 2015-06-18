@@ -427,9 +427,6 @@ sub pushProcess
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
 
-    # Build the basic command string that will be used to modify the command during processing
-    my $strCommand = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA);
-
     # Call the archive_xfer function and continue to loop as long as there are files to process
     my $iLogTotal;
 

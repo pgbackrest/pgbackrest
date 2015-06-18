@@ -19,7 +19,8 @@ db-version="9.3"
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000001
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
@@ -30,7 +31,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000002
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
@@ -41,7 +43,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000003
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz [TEST_PATH]/db/common/pg_xlog/000000010000000100000003

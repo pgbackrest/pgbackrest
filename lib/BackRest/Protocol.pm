@@ -33,18 +33,19 @@ use constant OP_PROTOCOL_COMMAND_WRITE                              => OP_PROTOC
 sub new
 {
     my $class = shift;                  # Class name
-    my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
-    my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
+    my $strName = shift;                # Name of the protocol
+    my $bBackend = shift;               # Is the the backend side of the protocol?
     my $strCommand = shift;             # Command to execute on remote ('remote' if this is the remote)
-    my $strStanza = shift;              # Stanza
-    my $strRepoPath = shift;            # Remote Repository Path
     my $iBlockSize = shift;             # Buffer size
     my $iCompressLevel = shift;         # Set compression level
     my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
+    my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
+    my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
 
     # Debug
     logDebug(OP_PROTOCOL_NEW, DEBUG_CALL, undef,
-             {host => $strHost, user => $strUser, stanza => $strStanza, remoteRepoPath => $strRepoPath, command => $strCommand},
+             {name => $strName, isBackend => $bBackend, command => $strCommand, host => $strHost, user => $strUser,
+              blockSize => $iBlockSize, compressLevel => $iCompressLevel, compressLevelNetwork => $iCompressLevelNetwork},
              defined($strHost) ? DEBUG : TRACE);
 
     # Create the class hash
@@ -52,84 +53,86 @@ sub new
     bless $self, $class;
 
     # Create the greeting that will be used to check versions with the remote
-    $self->{strGreeting} = 'PG_BACKREST_REMOTE ' . version_get();
+    if (defined($strName))
+    {
+        $self->{strName} = $strName;
+        $self->{strGreeting} = 'PG_BACKREST_' . uc($strName) . ' ' . version_get();
+    }
 
-    # Set stanza and repo path
-    $self->{strStanza} = $strStanza;
-    $self->{strRepoPath} = $strRepoPath;
+    $self->{bBackend} = $bBackend;
 
     # Set default block size
     $self->{iBlockSize} = $iBlockSize;
 
-    # Set compress levels
-    $self->{iCompressLevel} = $iCompressLevel;
-    $self->{iCompressLevelNetwork} = $iCompressLevelNetwork;
-
-    # If host is defined then make a connnection
-    if (defined($strHost))
-    {
-        # User must be defined
-        if (!defined($strUser))
-        {
-            confess &log(ASSERT, 'strUser must be defined');
-        }
-
-        # Command must be defined
-        if (!defined($strCommand))
-        {
-            confess &log(ASSERT, 'strCommand must be defined');
-        }
-
-        $self->{strHost} = $strHost;
-        $self->{strUser} = $strUser;
-        $self->{strCommand} = $strCommand . ' remote';
-
-        # Set SSH Options
-        my $strOptionSSHRequestTTY = 'RequestTTY=yes';
-        my $strOptionSSHCompression = 'Compression=no';
-
-        &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
-
-        # Make SSH connection
-        $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
-                                          master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
-
-        $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error,
-                                              ERROR_HOST_CONNECT);
-        &log(TRACE, 'connected to remote ssh host ' . $self->{strHost});
-
-        # Execute remote command
-        ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
-
-        $self->greeting_read();
-        $self->setting_write($self->{strStanza}, $self->{strRepoPath},
-                             $self->{iBlockSize}, $self->{iCompressLevel}, $self->{iCompressLevelNetwork});
-    }
-    elsif (defined($strCommand) && $strCommand eq 'remote')
-    {
-        # Write the greeting so master process knows who we are
-        $self->greeting_write();
-
-        # Read settings from master
-        ($self->{strStanza}, $self->{strRepoPath}, $self->{iBlockSize}, $self->{iCompressLevel},
-         $self->{iCompressLevelNetwork}) = $self->setting_read();
-    }
-
-    # Check block size
     if (!defined($self->{iBlockSize}))
     {
         confess &log(ASSERT, 'iBlockSize must be set');
     }
 
-    # Check compress levels
+    # Set compress levels
+    $self->{iCompressLevel} = $iCompressLevel;
+
     if (!defined($self->{iCompressLevel}))
     {
         confess &log(ASSERT, 'iCompressLevel must be set');
     }
 
+    $self->{iCompressLevelNetwork} = $iCompressLevelNetwork;
+
     if (!defined($self->{iCompressLevelNetwork}))
     {
         confess &log(ASSERT, 'iCompressLevelNetwork must be set');
+    }
+
+    if ($bBackend)
+    {
+        # Write the greeting so master process knows who we are
+        $self->greeting_write();
+    }
+    elsif (defined($strCommand))
+    {
+        # If host is defined then make a connnection
+        if (defined($strHost))
+        {
+            # User must be defined
+            if (!defined($strUser))
+            {
+                confess &log(ASSERT, 'strUser must be defined');
+            }
+
+            # Command must be defined
+            if (!defined($strCommand))
+            {
+                confess &log(ASSERT, 'strCommand must be defined');
+            }
+
+            $self->{strHost} = $strHost;
+            $self->{strUser} = $strUser;
+            $self->{strCommand} = $strCommand . ' remote';
+
+            # Set SSH Options
+            my $strOptionSSHRequestTTY = 'RequestTTY=yes';
+            my $strOptionSSHCompression = 'Compression=no';
+
+            &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
+
+            # Make SSH connection
+            $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
+                                              master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
+
+            $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error,
+                                                  ERROR_HOST_CONNECT);
+            &log(TRACE, 'connected to remote ssh host ' . $self->{strHost});
+
+            # Execute remote command
+            ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
+
+            $self->greeting_read();
+        }
+        else
+        {
+            confess &log(ASSERT, 'local operation not yet supported');
+        }
     }
 
     return $self;
@@ -158,26 +161,6 @@ sub DESTROY
 }
 
 ####################################################################################################################################
-# repoPath
-####################################################################################################################################
-sub repoPath
-{
-    my $self = shift;
-
-    return $self->{strRepoPath};
-}
-
-####################################################################################################################################
-# stanza
-####################################################################################################################################
-sub stanza
-{
-    my $self = shift;
-
-    return $self->{strStanza};
-}
-
-####################################################################################################################################
 # CLONE
 ####################################################################################################################################
 sub clone
@@ -186,14 +169,14 @@ sub clone
 
     return BackRest::Protocol->new
     (
-        $self->{strHost},
-        $self->{strUser},
+        $self->{strName},
+        $self->{bBackend},
         $self->{strCommand},
-        $self->{strStanza},
-        $self->{strRepoPath},
         $self->{iBlockSize},
         $self->{iCompressLevel},
-        $self->{iCompressLevelNetwork}
+        $self->{iCompressLevelNetwork},
+        $self->{strHost},
+        $self->{strUser}
     );
 }
 
@@ -207,9 +190,11 @@ sub greeting_read
     my $self = shift;
 
     # Make sure that the remote is running the right version
-    if ($self->read_line($self->{hOut}) ne $self->{strGreeting})
+    my $strLine = $self->read_line($self->{hOut});
+
+    if ($strLine ne $self->{strGreeting})
     {
-        confess &log(ERROR, 'protocol version mismatch');
+        confess &log(ERROR, "protocol version mismatch: ${strLine}");
     }
 }
 
@@ -223,59 +208,6 @@ sub greeting_write
     my $self = shift;
 
     $self->write_line(*STDOUT, $self->{strGreeting});
-}
-
-####################################################################################################################################
-# SETTING_READ
-#
-# Read the settings from the master process.
-####################################################################################################################################
-sub setting_read
-{
-    my $self = shift;
-
-    # Get Stanza
-    my $strStanza = $self->read_line(*STDIN);
-
-    # Get Repo Path
-    my $strRepoPath = $self->read_line(*STDIN);
-
-    # Tokenize the settings
-    my @stryToken = split(/ /, $self->read_line(*STDIN));
-
-    # Make sure there are the correct number of tokens
-    if (@stryToken != 4)
-    {
-        confess &log(ASSERT, 'settings token count is invalid', ERROR_PROTOCOL);
-    }
-
-    # Check for the setting token just to be sure
-    if ($stryToken[0] ne 'setting')
-    {
-        confess &log(ASSERT, 'settings token 0 must be \'setting\'');
-    }
-
-    # Return the settings
-    return $strStanza, $strRepoPath, $stryToken[1], $stryToken[2], $stryToken[3];
-}
-
-####################################################################################################################################
-# SETTING_WRITE
-#
-# Send settings to the remote process.
-####################################################################################################################################
-sub setting_write
-{
-    my $self = shift;
-    my $strStanza = shift;              # Database stanza
-    my $strRepoPath = shift;            # Path to the repository on the remote
-    my $iBlockSize = shift;             # Optionally, set the block size (defaults to DEFAULT_BLOCK_SIZE)
-    my $iCompressLevel = shift;         # Set compression level
-    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
-
-    $self->write_line($self->{hIn}, $strStanza);
-    $self->write_line($self->{hIn}, $strRepoPath);
-    $self->write_line($self->{hIn}, "setting ${iBlockSize} ${iCompressLevel} ${iCompressLevelNetwork}");
 }
 
 ####################################################################################################################################
@@ -1277,27 +1209,6 @@ sub command_execute
     $self->command_write($strCommand, $oParamRef);
 
     return $self->output_read($bOutputRequired, $strErrorPrefix);
-}
-
-####################################################################################################################################
-# paramGet
-#
-# Helper function that returns the param or an error if required and it does not exist.
-####################################################################################################################################
-sub paramGet
-{
-    my $oParamHashRef = shift;
-    my $strParam = shift;
-    my $bRequired = shift;
-
-    my $strValue = ${$oParamHashRef}{$strParam};
-
-    if (!defined($strValue) && (!defined($bRequired) || $bRequired))
-    {
-        confess "${strParam} must be defined";
-    }
-
-    return $strValue;
 }
 
 1;

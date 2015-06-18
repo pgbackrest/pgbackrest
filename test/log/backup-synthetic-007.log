@@ -4,7 +4,8 @@ run 007 - rmt 1, cmp 1, hardlink 0
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -176,7 +177,8 @@ db-version="9.3"
 info db
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = db
 stanza db
    status: ok
@@ -189,7 +191,8 @@ DEBUG:     safe exit called, terminating threads
 info db
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = db
 [
    {
@@ -243,7 +246,8 @@ DEBUG:     safe exit called, terminating threads
 full backup (resume)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -420,7 +424,8 @@ db-version="9.3"
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-FULL-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-FULL-2]
@@ -464,7 +469,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid database version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -482,7 +488,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid system id)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -500,7 +507,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid control version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -518,7 +526,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid catalog version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -536,7 +545,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (add tablespace 1)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -724,7 +734,8 @@ db-version="9.3"
 incr backup (resume and add tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -929,7 +940,8 @@ db-version="9.3"
 diff backup (cannot resume - new diff)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1136,7 +1148,8 @@ db-version="9.3"
 diff backup (cannot resume - disabled)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1344,7 +1357,8 @@ db-version="9.3"
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 (fail on used path)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1360,7 +1374,8 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1372,7 +1387,8 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1384,7 +1400,8 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1459,7 +1476,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (add files and remove tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1649,7 +1667,8 @@ db-version="9.3"
 incr backup (update files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -1837,7 +1856,8 @@ db-version="9.3"
 diff backup (no updates)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2039,7 +2059,8 @@ db-version="9.3"
 incr backup (remove files - but won't affect manifest)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2226,7 +2247,8 @@ db-version="9.3"
 diff backup (remove files during backup)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2424,7 +2446,8 @@ db-version="9.3"
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2631,7 +2654,8 @@ db-version="9.3"
 diff backup (add files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-1]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode [undef]
@@ -2829,7 +2853,8 @@ db-version="9.3"
 restore delta, backup '[BACKUP-DIFF-5]' (no tablespace remap)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-DIFF-5] --no-tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = db, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: Restoring backup set [BACKUP-DIFF-5]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-5]
@@ -2889,7 +2914,8 @@ DEBUG:     safe exit called, terminating threads
 info
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = [undef], user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     Info->listStanza
 stanza db
    status: ok
@@ -2905,7 +2931,8 @@ DEBUG:     safe exit called, terminating threads
 info
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = [undef], user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     Info->listStanza
 [
    {
@@ -3218,7 +3245,8 @@ DEBUG:     safe exit called, terminating threads
 info bogus
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = bogus, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = bogus
 stanza bogus
    status: error (missing stanza path)
@@ -3227,7 +3255,8 @@ DEBUG:     safe exit called, terminating threads
 info bogus
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol->new(): command = [BACKREST_BIN_PATH]/pg_backrest, host = 127.0.0.1, remoteRepoPath = [TEST_PATH]/backrest, stanza = bogus, user = [USER-2]
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-2]
 DEBUG:     Info->listStanza: stanza = bogus
 [
    {

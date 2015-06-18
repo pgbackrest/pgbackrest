@@ -138,7 +138,22 @@ eval
     ################################################################################################################################
     if (operationTest(OP_REMOTE))
     {
-        safe_exit((new BackRest::Remote())->process());
+        # Turn all logging off
+        log_level_set(OFF, OFF);
+
+        # Create the remote object
+        my $oRemote = new BackRest::Remote
+        (
+            undef,      # Host
+            undef,      # User
+            'remote',   # Command
+            optionGet(OPTION_BUFFER_SIZE),
+            optionGet(OPTION_COMPRESS_LEVEL),
+            optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+        );
+
+        # Process remote requests
+        safe_exit($oRemote->process());
     }
 
     # Set the log levels

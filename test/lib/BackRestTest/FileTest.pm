@@ -92,25 +92,21 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = BackRest::Protocol->new
+    my $oRemote = new BackRest::Remote
     (
-        $strHost,                               # Host
-        $strUser,                               # User
-        BackRestTestCommon_CommandRemoteGet(),  # Command
-        $strStanza,                             # Stanza
-        '',                                     # Repo Path
-        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        $strHost,                                   # Host
+        $strUser,                                   # User
+        BackRestTestCommon_CommandRemoteFullGet(),  # Command
+        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
     );
 
     my $oLocal = new BackRest::Protocol
     (
-        undef,                                  # Host
-        undef,                                  # User
+        undef,                                  # Name
+        false,                                  # Is backend?
         undef,                                  # Command
-        undef,                                  # Stanza
-        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level

@@ -44,11 +44,9 @@ sub BackRestTestUtility_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oLocal = new BackRest::Protocol
     (
-        undef,                                  # Host
-        undef,                                  # User
+        undef,                                  # Name
+        false,                                  # Is backend?
         undef,                                  # Command
-        undef,                                  # Stanza
-        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
