@@ -54,7 +54,7 @@ sudo apt-get update
 
 apt-get install postgresql-9.3
 ```
-* Perl version 5.14 or greater is required.  5.12 may work (though it has not been tested) but anything 5.10 or lower definitely will not work.
+* Perl version 5.12 or greater is required.
 
 * Install required Perl modules:
 ```
