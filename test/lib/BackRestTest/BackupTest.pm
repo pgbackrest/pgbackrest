@@ -761,7 +761,7 @@ sub BackRestTestBackup_ManifestReference
     }
 
     # Find all file sections
-    foreach my $strSectionFile (sort(keys $oManifestRef))
+    foreach my $strSectionFile (sort(keys(%$oManifestRef)))
     {
         # Skip non-file sections
         if ($strSectionFile !~ /\:file$/)
@@ -769,7 +769,7 @@ sub BackRestTestBackup_ManifestReference
             next;
         }
 
-        foreach my $strFile (sort(keys ${$oManifestRef}{$strSectionFile}))
+        foreach my $strFile (sort(keys(%{${$oManifestRef}{$strSectionFile}})))
         {
             if (!defined($strReference))
             {
@@ -1311,7 +1311,7 @@ sub BackRestTestBackup_RestoreCompare
 
     if (!$bSynthetic)
     {
-        foreach my $strTablespaceName (keys(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}))
+        foreach my $strTablespaceName (keys(%{${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}}))
         {
             if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strTablespaceName}{&MANIFEST_SUBKEY_LINK}))
             {

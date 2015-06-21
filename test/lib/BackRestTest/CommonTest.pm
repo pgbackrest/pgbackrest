@@ -965,7 +965,7 @@ sub BackRestTestCommon_ConfigRemap
     # Rewrite remap section
     delete($oConfig{"${strStanza}:restore:tablespace-map"});
 
-    foreach my $strRemap (sort(keys $oRemapHashRef))
+    foreach my $strRemap (sort(keys(%$oRemapHashRef)))
     {
         my $strRemapPath = ${$oRemapHashRef}{$strRemap};
 
@@ -1028,7 +1028,7 @@ sub BackRestTestCommon_ConfigRecovery
     # Rewrite remap section
     delete($oConfig{"${strStanza}:restore:recovery-setting"});
 
-    foreach my $strOption (sort(keys $oRecoveryHashRef))
+    foreach my $strOption (sort(keys(%$oRecoveryHashRef)))
     {
         $oConfig{"${strStanza}:restore:recovery-setting"}{$strOption} = ${$oRecoveryHashRef}{$strOption};
     }

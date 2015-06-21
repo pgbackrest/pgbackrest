@@ -13,6 +13,7 @@ use Carp qw(confess);
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
 use File::Basename qw(dirname);
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Backup;
@@ -326,7 +327,7 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if ($oMessage->isa('BackRest::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('BackRest::Exception'))
     {
         safe_exit($oMessage->code());
     }

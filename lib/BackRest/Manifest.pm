@@ -375,7 +375,7 @@ sub build
             my %oTablespaceManifestHash;
             $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath . '/' . PATH_PG_TBLSPC, \%oTablespaceManifestHash);
 
-            foreach my $strName (sort(CORE::keys $oTablespaceManifestHash{name}))
+            foreach my $strName (sort(CORE::keys(%{$oTablespaceManifestHash{name}})))
             {
                 if ($strName eq '.' or $strName eq '..')
                 {
@@ -401,7 +401,7 @@ sub build
     $self->set(MANIFEST_SECTION_BACKUP_PATH, $strLevel, MANIFEST_SUBKEY_PATH, $strDbClusterPath);
 
     # Loop though all paths/files/links in the manifest
-    foreach my $strName (sort(CORE::keys $oManifestHash{name}))
+    foreach my $strName (sort(CORE::keys(%{$oManifestHash{name}})))
     {
         # Skip certain files during backup
         if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) || # pg_xlog/ - this will be reconstructed

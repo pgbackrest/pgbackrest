@@ -71,7 +71,7 @@ sub argvWriteTest
 
     if (defined($$oOption{boolean}))
     {
-        foreach my $strKey (keys $$oOption{boolean})
+        foreach my $strKey (keys(%{$$oOption{boolean}}))
         {
             if ($$oOption{boolean}{$strKey})
             {
@@ -86,7 +86,7 @@ sub argvWriteTest
 
     if (defined($$oOption{option}))
     {
-        foreach my $strKey (keys $$oOption{option})
+        foreach my $strKey (keys(%{$$oOption{option}}))
         {
             $ARGV[@ARGV] = "--${strKey}=$$oOption{option}{$strKey}";
         }

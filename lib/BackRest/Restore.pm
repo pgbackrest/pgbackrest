@@ -157,7 +157,7 @@ sub manifest_ownership_check
         # Output warning for any invalid owners
         if (defined($oOwnerHash{$strOwnerType}))
         {
-            foreach my $strOwner (sort (keys $oOwnerHash{$strOwnerType}))
+            foreach my $strOwner (sort (keys(%{$oOwnerHash{$strOwnerType}})))
             {
                 if (!$oOwnerHash{$strOwnerType}{$strOwner})
                 {
@@ -241,7 +241,7 @@ sub manifest_load
         # If tablespaces have been remapped, update the manifest
         elsif (defined($self->{oRemapRef}))
         {
-            foreach my $strTablespaceKey (sort(keys $self->{oRemapRef}))
+            foreach my $strTablespaceKey (sort(keys(%{$self->{oRemapRef}})))
             {
                 my $strRemapPath = ${$self->{oRemapRef}}{$strTablespaceKey};
                 my $strPathKey = "tablespace/${strTablespaceKey}";
@@ -301,7 +301,7 @@ sub clean
         my %oPathManifest;
         $self->{oFile}->manifest(PATH_DB_ABSOLUTE, $strPath, \%oPathManifest);
 
-        foreach my $strName (sort {$b cmp $a} (keys $oPathManifest{name}))
+        foreach my $strName (sort {$b cmp $a} (keys(%{$oPathManifest{name}})))
         {
             # Skip the root path
             if ($strName eq '.')
@@ -519,7 +519,7 @@ sub recovery
 
     if (defined($self->{oRecoveryRef}))
     {
-        foreach my $strKey (sort(keys $self->{oRecoveryRef}))
+        foreach my $strKey (sort(keys(%{$self->{oRecoveryRef}})))
         {
             my $strPgKey = $strKey;
             $strPgKey =~ s/\-/\_/g;
@@ -671,7 +671,7 @@ sub restore
         {
             push(@oyRestoreQueue, Thread::Queue->new());
 
-            foreach my $strFileKey (sort {$b cmp $a} (keys $oRestoreHash{$strPathKey}))
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
             {
                 $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strPathKey}{$strFileKey});
             }
@@ -706,7 +706,7 @@ sub restore
         # Restore file in main process
         foreach my $strPathKey (sort (keys %oRestoreHash))
         {
-            foreach my $strFileKey (sort {$b cmp $a} (keys $oRestoreHash{$strPathKey}))
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
             {
                 $lSizeCurrent = restoreFile($oRestoreHash{$strPathKey}{$strFileKey}, $lCopyTimeBegin, $self->{bDelta},
                                             $self->{bForce}, $self->{strBackupPath}, $bSourceCompression, $strCurrentUser,

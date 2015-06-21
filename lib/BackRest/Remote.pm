@@ -220,7 +220,7 @@ sub process
 
                 my $strOutput = "name\ttype\tuser\tgroup\tmode\tmodification_time\tinode\tsize\tlink_destination";
 
-                foreach my $strName (sort(keys $oManifestHash{name}))
+                foreach my $strName (sort(keys(%{$oManifestHash{name}})))
                 {
                     $strOutput .= "\n${strName}\t" .
                         $oManifestHash{name}{"${strName}"}{type} . "\t" .

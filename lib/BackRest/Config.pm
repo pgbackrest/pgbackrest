@@ -1495,7 +1495,7 @@ sub optionValid
                 {
                     my @oyValue;
 
-                    foreach my $strValue (sort(keys($$oDepend{&OPTION_RULE_DEPEND_LIST})))
+                    foreach my $strValue (sort(keys(%{$$oDepend{&OPTION_RULE_DEPEND_LIST}})))
                     {
                         push(@oyValue, "'${strValue}'");
                     }

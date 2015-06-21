@@ -112,7 +112,7 @@ sub backup_file_not_in_manifest
 
     my @stryFile;
 
-    foreach my $strName (sort(keys $oFileHash{name}))
+    foreach my $strName (sort(keys(%{$oFileHash{name}})))
     {
         # Ignore certain files that will never be in the manifest
         if ($strName eq FILE_MANIFEST ||
@@ -418,7 +418,7 @@ sub backup_file
             $oyBackupQueue[@oyBackupQueue] = Thread::Queue->new();
         }
 
-        foreach my $strFileKey (sort {$b cmp $a} (keys $oFileCopyMap{$strPathKey}))
+        foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oFileCopyMap{$strPathKey}})))
         {
             my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFileKey};
 

@@ -632,7 +632,7 @@ sub xfer
     my $lFileSize = 0;
     my $lFileTotal = 0;
 
-    foreach my $strFile (sort(keys $oManifestHash{name}))
+    foreach my $strFile (sort(keys(%{$oManifestHash{name}})))
     {
         if ($strFile =~ "^[0-F]{24}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
             $strFile =~ /^[0-F]{8}\.history$/ || $strFile =~ /^[0-F]{24}\.[0-F]{8}\.backup$/)

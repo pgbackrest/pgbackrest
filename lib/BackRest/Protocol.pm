@@ -111,14 +111,13 @@ sub new
             $self->{strCommand} = $strCommand . ' remote';
 
             # Set SSH Options
-            my $strOptionSSHRequestTTY = 'RequestTTY=yes';
             my $strOptionSSHCompression = 'Compression=no';
 
             &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
             # Make SSH connection
             $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
-                                              master_opts => [-o => $strOptionSSHCompression, -o => $strOptionSSHRequestTTY]);
+                                              master_opts => [-o => $strOptionSSHCompression]);
 
             $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error,
                                                   ERROR_HOST_CONNECT);
@@ -1082,7 +1081,7 @@ sub command_param_string
 
     if (defined($oParamHashRef))
     {
-        foreach my $strParam (sort(keys $oParamHashRef))
+        foreach my $strParam (sort(keys(%$oParamHashRef)))
         {
             $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
                              (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
@@ -1162,7 +1161,7 @@ sub command_write
     {
         $strOutput = "${strCommand}:\n";
 
-        foreach my $strParam (sort(keys $oParamRef))
+        foreach my $strParam (sort(keys(%$oParamRef)))
         {
             if ($strParam =~ /=/)
             {

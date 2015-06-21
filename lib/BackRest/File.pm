@@ -16,6 +16,7 @@ use File::Path qw(make_path remove_tree);
 use File::stat;
 use IO::Handle;
 use Net::OpenSSH;
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
@@ -1643,7 +1644,7 @@ sub copy
 
                 # We'll ignore this error if the source file was missing and missing file exception was returned
                 # and bIgnoreMissingSource is set
-                if ($bIgnoreMissingSource && $strRemote eq 'in' && $oMessage->isa('BackRest::Exception') &&
+                if ($bIgnoreMissingSource && $strRemote eq 'in' && blessed($oMessage) && $oMessage->isa('BackRest::Exception') &&
                     $oMessage->code() == COMMAND_ERR_FILE_MISSING)
                 {
                     close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");

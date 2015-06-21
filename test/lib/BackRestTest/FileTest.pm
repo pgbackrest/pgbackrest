@@ -11,13 +11,13 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Cwd 'abs_path';
+use Cwd qw(abs_path);
 use Exporter qw(import);
-use Fcntl ':mode';
+use Fcntl qw(:mode);
 use File::Basename;
 use File::stat;
 use POSIX qw(ceil);
-use Scalar::Util 'blessed';
+use Scalar::Util qw(blessed);
 use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
@@ -578,7 +578,7 @@ sub BackRestTestFile_Test
                 my $strManifest;
 
                 # Validate the manifest
-                foreach my $strName (sort(keys $oManifestHash{name}))
+                foreach my $strName (sort(keys(%{$oManifestHash{name}})))
                 {
                     if (!defined($strManifest))
                     {

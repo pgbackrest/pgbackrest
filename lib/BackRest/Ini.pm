@@ -220,7 +220,7 @@ sub iniSave
     $bRelaxed = defined($bRelaxed) ? $bRelaxed : false;
 
     # Write the INI file
-    foreach my $strSection (sort(keys $oContent))
+    foreach my $strSection (sort(keys(%$oContent)))
     {
         # Add a linefeed between sections
         if (!$bFirst)
@@ -246,7 +246,7 @@ sub iniSave
             or confess "unable to write section ${strSection}: $!";
 
         # Iterate through all keys in the section
-        foreach my $strKey (sort(keys ${$oContent}{"${strSection}"}))
+        foreach my $strKey (sort(keys(%{${$oContent}{"${strSection}"}})))
         {
             # Skip comments
             if ($strKey eq INI_COMMENT)
@@ -295,7 +295,7 @@ sub hash
     # Caculate the checksum
     my $oChecksumContent = dclone($self->{oContent});
 
-    foreach my $strSection (keys($oChecksumContent))
+    foreach my $strSection (keys(%$oChecksumContent))
     {
         delete(${$oChecksumContent}{$strSection}{&INI_COMMENT});
     }
@@ -527,14 +527,14 @@ sub keys
     {
         if ($self->test($strSection, $strKey))
         {
-            return sort(keys $self->get($strSection, $strKey));
+            return sort(keys(%{$self->get($strSection, $strKey)}));
         }
 
         my @stryEmptyArray;
         return @stryEmptyArray;
     }
 
-    return sort(keys $self->{oContent});
+    return sort(keys(%{$self->{oContent}}));
 }
 
 ####################################################################################################################################

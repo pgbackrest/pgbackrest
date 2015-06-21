@@ -16,6 +16,7 @@ use File::Basename;
 use Getopt::Long;
 use Cwd 'abs_path';
 use Pod::Usage;
+use Scalar::Util qw(blessed);
 #use Test::More;
 
 use lib dirname($0) . '/../lib';
@@ -156,7 +157,7 @@ my $strVersionSupport = versionSupport();
 
 if (!defined($strPgSqlBin))
 {
-    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
+    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/usr/pgsql-VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
 
     foreach my $strSearchPath (@strySearchPath)
     {
@@ -178,7 +179,7 @@ if (!defined($strPgSqlBin))
     }
 
     # Make sure at least one version of postgres was found
-    @{$strVersionSupport} > 0
+    @stryTestVersion > 0
         or confess 'pgsql-bin was not defined and postgres could not be located automatically';
 }
 else
@@ -307,9 +308,8 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if ($oMessage->isa('BackRest::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('BackRest::Exception'))
     {
-        # syswrite(*STDOUT, $oMessage->message() . "\n");
         syswrite(*STDOUT, $oMessage->trace());
         exit $oMessage->code();
     }

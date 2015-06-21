@@ -444,7 +444,7 @@ sub logDebug
         {
             my $strParamSet;
 
-            foreach my $strParam (sort(keys($oParamHash)))
+            foreach my $strParam (sort(keys(%$oParamHash)))
             {
                 if (defined($strParamSet))
                 {
