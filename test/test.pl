@@ -158,7 +158,14 @@ my $strVersionSupport = versionSupport();
 
 if (!defined($strPgSqlBin))
 {
-    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/usr/pgsql-VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
+    # Distribution-specific paths where the PostgreSQL binaries may be located
+    my @strySearchPath =
+    (
+        '/usr/lib/postgresql/VERSION/bin',  # Debian/Ubuntu
+        '/usr/pgsql-VERSION/bin',           # CentOS/RHEL/Fedora
+        '/Library/PostgreSQL/VERSION/bin',  # OSX
+        '/usr/local/bin'                    # BSD
+    );
 
     foreach my $strSearchPath (@strySearchPath)
     {
