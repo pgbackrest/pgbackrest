@@ -54,7 +54,7 @@ sub BackRestTestBackup_PgConnect
     BackRestTestBackup_PgDisconnect();
 
     # Default
-    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 30;
+    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 20;
 
     # Record the start time
     my $lTime = time();
@@ -62,19 +62,13 @@ sub BackRestTestBackup_PgConnect
     do
     {
         # Connect to the db (whether it is local or remote)
-        eval
-        {
-            $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
-                                ';host=' . BackRestTestCommon_DbPathGet(),
-                                BackRestTestCommon_UserGet(),
-                                undef,
-                                {AutoCommit => 0, RaiseError => 1});
-        };
+        $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+                            ';host=' . BackRestTestCommon_DbPathGet(),
+                            BackRestTestCommon_UserGet(),
+                            undef,
+                            {AutoCommit => 0, RaiseError => 0, PrintError => 0});
 
-        if (!$@)
-        {
-            return;
-        }
+        return if $hDb;
 
         # If waiting then sleep before trying again
         if (defined($iWaitSeconds))
@@ -84,7 +78,8 @@ sub BackRestTestBackup_PgConnect
     }
     while ($lTime > time() - $iWaitSeconds);
 
-    confess &log(ERROR, "unable to connect to Postgres after ${iWaitSeconds} second(s)");
+    confess &log(ERROR, "unable to connect to Postgres after ${iWaitSeconds} second(s).\n" .
+        $DBI::errstr);
 }
 
 ####################################################################################################################################
@@ -1911,9 +1906,6 @@ sub BackRestTestBackup_Test
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --stanza=db archive-get';
 
-
-                BackRestTestCommon_Execute($strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
-                                           undef, undef, undef, ERROR_FILE_MISSING);
 
                 # Create the archive info file
                 if ($bRemote)
