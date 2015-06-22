@@ -810,7 +810,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.</text>
 					</release-feature>
 					<release-feature>
-						<text>Added file and directory syncs to the File object for additional safety during backup and archiving.  Suggested by Andres Freund.</text>
+						<text>Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.</text>
 					</release-feature>
 					<release-feature>
 						<text>Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.</text>

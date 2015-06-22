@@ -853,7 +853,7 @@ example: db-path=/data/db
 
 * Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.
 
-* Added file and directory syncs to the File object for additional safety during backup and archiving.  Suggested by Andres Freund.
+* Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.
 
 * Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.
 
