@@ -855,6 +855,8 @@ example: db-path=/data/db
 
 * Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.
 
+* Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  Found by Eric Radman.
+
 * Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.
 
 ### v0.75: New repository format, info command and experimental 9.5 support

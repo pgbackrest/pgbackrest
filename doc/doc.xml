@@ -813,6 +813,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.</text>
 					</release-feature>
 					<release-feature>
+						<text>Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  Found by Eric Radman.</text>
+					</release-feature>
+					<release-feature>
 						<text>Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.</text>
 					</release-feature>
 				</release-feature-bullet-list>
