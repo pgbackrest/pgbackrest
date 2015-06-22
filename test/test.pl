@@ -158,7 +158,7 @@ my $strVersionSupport = versionSupport();
 
 if (!defined($strPgSqlBin))
 {
-    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/usr/pgsql-VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
+    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/usr/pgsql-VERSION/bin', '/Library/PostgreSQL/VERSION/bin', '/usr/local/bin');
 
     foreach my $strSearchPath (@strySearchPath)
     {
