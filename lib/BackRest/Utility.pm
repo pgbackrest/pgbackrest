@@ -26,7 +26,7 @@ our @EXPORT = qw(version_get
                  hsleep wait_remainder
                  timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
-                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME FORMAT);
+                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME);
 
 # Global constants
 use constant
@@ -62,16 +62,6 @@ $oLogLevelRank{ERROR}{rank} = 2;
 $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
 
-# Construct the version file name
-my $strVersionFile = abs_path(dirname($0) . '/../VERSION');
-
-####################################################################################################################################
-# FORMAT Constant
-#
-# Identified the format of the manifest and file structure.  The format is used to determine compatability between versions.
-####################################################################################################################################
-use constant FORMAT => 4;
-
 ####################################################################################################################################
 # TEST Constants and Variables
 ####################################################################################################################################
@@ -88,41 +78,6 @@ use constant
 # Test global variables
 my $bTest = false;
 my $fTestDelay;
-
-####################################################################################################################################
-# VERSION_GET
-####################################################################################################################################
-my $strVersion;
-
-sub version_get
-{
-    my $hVersion;
-
-    # If version is already stored then return it (should never change during execution)
-    if (defined($strVersion))
-    {
-        return $strVersion;
-    }
-
-    # Open the file
-    if (!open($hVersion, '<', $strVersionFile))
-    {
-        confess &log(ASSERT, "unable to open VERSION file: ${strVersionFile}");
-    }
-
-    # Read version and trim
-    if (!($strVersion = readline($hVersion)))
-    {
-        confess &log(ASSERT, "unable to read VERSION file: ${strVersionFile}");
-    }
-
-    $strVersion = trim($strVersion);
-
-    # Close file
-    close($hVersion);
-
-    return $strVersion;
-}
 
 ####################################################################################################################################
 # WAIT_REMAINDER - Wait the remainder of the current second

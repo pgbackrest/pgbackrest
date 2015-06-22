@@ -110,7 +110,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -155,7 +155,7 @@ pg_tblspc={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -203,7 +203,7 @@ DEBUG:     Info->listStanza: stanza = db
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -356,7 +356,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -401,7 +401,7 @@ pg_tblspc={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -654,7 +654,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -709,7 +709,7 @@ tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","group":"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -851,7 +851,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -914,7 +914,7 @@ tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","group":"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1058,7 +1058,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1121,7 +1121,7 @@ tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","group":"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1266,7 +1266,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1329,7 +1329,7 @@ tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","group":"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1381,7 +1381,7 @@ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
 DEBUG:     File->copy: remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
-ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 4 is required by this version of PgBackRest.
+ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 4 is required by this  version of PgBackRest.
 DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
@@ -1394,7 +1394,7 @@ DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
 DEBUG:     File->copy: remote backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]/backup.manifest to local db:absolute:[TEST_PATH]/db/common/backup.manifest, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = false, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/backup.manifest.backrest.tmp to absolute:[TEST_PATH]/db/common/backup.manifest, destination_path_create = false
-ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 4 is required by this version of PgBackRest.
+ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 4 is required by this  version of PgBackRest.
 DEBUG:     safe exit called, terminating threads
 
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
@@ -1580,7 +1580,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1637,7 +1637,7 @@ tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1767,7 +1767,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1824,7 +1824,7 @@ tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1968,7 +1968,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2025,7 +2025,7 @@ tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2154,7 +2154,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2211,7 +2211,7 @@ tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2353,7 +2353,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2408,7 +2408,7 @@ tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2559,7 +2559,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2614,7 +2614,7 @@ tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2754,7 +2754,7 @@ log-level-file=trace
 -----------------------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2811,7 +2811,7 @@ tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","group":
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2943,7 +2943,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -2972,7 +2972,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3003,7 +3003,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3035,7 +3035,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3068,7 +3068,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3099,7 +3099,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3131,7 +3131,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3162,7 +3162,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {
@@ -3191,7 +3191,7 @@ DEBUG:     Info->listStanza
                    "stop" : null
                },
                "backrest" : {
-                   "format" : [FORMAT-1],
+                   "format" : 4,
                    "version" : "[VERSION-1]"
                },
                "database" : {

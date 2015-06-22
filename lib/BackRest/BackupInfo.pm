@@ -116,8 +116,6 @@ sub new
     # Init object and store variables
     my $self = $class->SUPER::new($strBackupInfoFile, $bExists);
 
-    $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, version_get());
-
     $self->{bExists} = $bExists;
     $self->{strBackupClusterPath} = $strBackupClusterPath;
 

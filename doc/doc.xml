@@ -818,6 +818,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<release-feature>
 						<text>Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.</text>
 					</release-feature>
+					<release-feature>
+						<text>Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.</text>
+					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
 

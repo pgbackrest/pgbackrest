@@ -40,19 +40,19 @@ push @EXPORT, qw(DB BACKUP NONE);
 ####################################################################################################################################
 # Command constants - basic commands that are allowed in backrest
 ####################################################################################################################################
-use constant CMD_ARCHIVE_GET                                      => 'archive-get';
+use constant CMD_ARCHIVE_GET                                        => 'archive-get';
     push @EXPORT, qw(CMD_ARCHIVE_GET);
-use constant CMD_ARCHIVE_PUSH                                     => 'archive-push';
+use constant CMD_ARCHIVE_PUSH                                       => 'archive-push';
     push @EXPORT, qw(CMD_ARCHIVE_PUSH);
-use constant CMD_BACKUP                                           => 'backup';
+use constant CMD_BACKUP                                             => 'backup';
     push @EXPORT, qw(CMD_BACKUP);
-use constant CMD_INFO                                             => 'info';
+use constant CMD_INFO                                               => 'info';
     push @EXPORT, qw(CMD_INFO);
-use constant CMD_REMOTE                                           => 'remote';
+use constant CMD_REMOTE                                             => 'remote';
     push @EXPORT, qw(CMD_REMOTE);
-use constant CMD_RESTORE                                          => 'restore';
+use constant CMD_RESTORE                                            => 'restore';
     push @EXPORT, qw(CMD_RESTORE);
-use constant CMD_EXPIRE                                           => 'expire';
+use constant CMD_EXPIRE                                             => 'expire';
     push @EXPORT, qw(CMD_EXPIRE);
 
 ####################################################################################################################################
@@ -1156,14 +1156,14 @@ sub configLoad
 
     if (!GetOptions(\%oOptionTest, %oOptionAllow))
     {
-        syswrite(*STDOUT, "\npg_backrest " . version_get() . "\n\n");
+        syswrite(*STDOUT, "\npg_backrest " . BACKREST_VERSION . "\n\n");
         pod2usage(2);
     };
 
     # Display version and exit if requested
     if (defined($oOptionTest{&OPTION_VERSION}) || defined($oOptionTest{&OPTION_HELP}))
     {
-        syswrite(*STDOUT, 'pg_backrest ' . version_get() . "\n");
+        syswrite(*STDOUT, 'pg_backrest ' . BACKREST_VERSION . "\n");
 
         if (!defined($oOptionTest{&OPTION_HELP}))
         {

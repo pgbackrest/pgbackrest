@@ -5,7 +5,7 @@ run 001 - local
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -67,7 +67,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -139,7 +139,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -201,7 +201,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -283,7 +283,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -371,7 +371,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -453,7 +453,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -528,7 +528,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -587,7 +587,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -649,7 +649,7 @@ DEBUG:     safe exit called, terminating threads
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]

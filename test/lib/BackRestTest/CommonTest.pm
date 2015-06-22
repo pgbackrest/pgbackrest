@@ -445,18 +445,12 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', 'version[ ]{0,1}=[ ]{0,1}\"' . version_get(), version_get . '$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', '"version"[ ]{0,1}:[ ]{0,1}\"' . version_get(), version_get . '$');
-
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', 'format=' . FORMAT, FORMAT . '$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', '"format"[ ]{0,1}:[ ]{0,1}' . FORMAT, FORMAT . '$');
-
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', '--port=[0-9]+', '[0-9]+$');
 
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION',
-        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . version_get(), version_get() . '$');
+        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . BACKREST_VERSION, BACKREST_VERSION . '$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
         "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',

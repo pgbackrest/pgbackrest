@@ -21,6 +21,7 @@ use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Db;
+use BackRest::Ini;
 use BackRest::Utility;
 
 use lib dirname($0) . '/lib';
@@ -199,7 +200,6 @@ if ($iThreadMax < 1 || $iThreadMax > 32)
 my $hReadMe;
 my $strLine;
 my $bMatch = false;
-my $strVersion = version_get();
 
 if (!open($hReadMe, '<', dirname($0) . '/../README.md'))
 {
@@ -210,35 +210,26 @@ while ($strLine = readline($hReadMe))
 {
     if ($strLine =~ /^\#\#\# v/)
     {
-        $bMatch = substr($strLine, 5, length($strVersion)) eq $strVersion;
+        $bMatch = substr($strLine, 5, length(BACKREST_VERSION)) eq BACKREST_VERSION;
         last;
     }
 }
 
 if (!$bMatch)
 {
-    confess "unable to find version ${strVersion} as last revision in README.md";
+    confess 'unable to find version ' . BACKREST_VERSION . ' as last revision in README.md';
 }
 
 ####################################################################################################################################
 # Clean whitespace only if test.pl is being run from the test directory in the backrest repo
 ####################################################################################################################################
-my $hVersion;
-
-if (-e './test.pl' && -e '../bin/pg_backrest' && open($hVersion, '<', '../VERSION'))
+if (-e './test.pl' && -e '../bin/pg_backrest')
 {
-    my $strTestVersion = readline($hVersion);
-
-    if (defined($strTestVersion) && $strVersion eq trim($strTestVersion))
-    {
-        BackRestTestCommon_Execute(
-            "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
-            "-not -path \"../test/data/*\" " .
-            "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
-            "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
-    }
-
-    close($hVersion);
+    BackRestTestCommon_Execute(
+        "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
+        "-not -path \"../test/data/*\" " .
+        "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
+        "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
 }
 
 ####################################################################################################################################

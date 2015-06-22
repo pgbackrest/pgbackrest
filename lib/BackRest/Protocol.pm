@@ -17,6 +17,7 @@ use Scalar::Util qw(blessed);
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
 use BackRest::Exception;
+use BackRest::Ini;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -56,7 +57,7 @@ sub new
     if (defined($strName))
     {
         $self->{strName} = $strName;
-        $self->{strGreeting} = 'PG_BACKREST_' . uc($strName) . ' ' . version_get();
+        $self->{strGreeting} = 'PG_BACKREST_' . uc($strName) . ' ' . BACKREST_VERSION;
     }
 
     $self->{bBackend} = $bBackend;

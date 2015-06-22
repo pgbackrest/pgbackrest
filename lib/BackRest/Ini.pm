@@ -17,6 +17,7 @@ use lib dirname($0);
 use BackRest::Exception;
 use BackRest::FileCommon;
 use BackRest::Utility;
+use BackRest::Version;
 
 ####################################################################################################################################
 # Operation constants
@@ -24,6 +25,14 @@ use BackRest::Utility;
 use constant OP_INI                                                 => 'Ini';
 
 use constant OP_INI_SET                                             => OP_INI . "->set";
+
+####################################################################################################################################
+# Version and Format Constants
+####################################################################################################################################
+use constant BACKREST_VERSION                                       => "$VERSION";
+    our @EXPORT = qw(BACKREST_VERSION);
+use constant BACKREST_FORMAT                                        => "$FORMAT";
+    push @EXPORT, qw(BACKREST_FORMAT);
 
 ####################################################################################################################################
 # Boolean constants
@@ -35,7 +44,7 @@ use constant INI_FALSE                                              => JSON::PP:
 # Ini control constants
 ####################################################################################################################################
 use constant INI_SECTION_BACKREST                                   => 'backrest';
-    our @EXPORT = qw(INI_SECTION_BACKREST);
+    push @EXPORT, qw(INI_SECTION_BACKREST);
 
 use constant INI_KEY_CHECKSUM                                       => 'backrest-checksum';
     push @EXPORT, qw(INI_KEY_CHECKSUM);
@@ -88,16 +97,16 @@ sub new
         # Make sure that the format is current, otherwise error
         my $iFormat = $self->get(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, false, 0);
 
-        if ($iFormat != FORMAT)
+        if ($iFormat != BACKREST_FORMAT)
         {
-            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . FORMAT . ' is required by this version of ' .
-                                'PgBackRest.', ERROR_FORMAT);
+            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . BACKREST_FORMAT . ' is required by this ' .
+                                ' version of PgBackRest.', ERROR_FORMAT);
         }
     }
     else
     {
-        $self->setNumeric(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, FORMAT);
-        $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, version_get());
+        $self->setNumeric(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
+        $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
     }
 
     return $self;

@@ -1072,7 +1072,7 @@ sub BackRestTestBackup_BackupCompare
         $oActualManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START};
     ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
         $oActualManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
-    ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = FORMAT + 0;
+    ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT + 0;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
@@ -2158,7 +2158,7 @@ sub BackRestTestBackup_Test
             # Build the manifest
             my %oManifest;
 
-            $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = version_get();
+            $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
@@ -2418,7 +2418,8 @@ sub BackRestTestBackup_Test
                                       undef, undef, undef, undef, undef, undef,
                                       'fail on mismatch format', ERROR_FORMAT);
 
-            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, FORMAT);
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef,
+                                             BACKREST_FORMAT);
 
             # Remap the base path
             my %oRemapHash;
