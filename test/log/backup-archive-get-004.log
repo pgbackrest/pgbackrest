@@ -1,6 +1,15 @@
 run 004 - rmt 0, cmp 1, exists 1
 ================================
 
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: getting WAL segment 000000010000000100000001
+DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ERROR: [130]: archive.info does not exist but is required to get WAL segments
+              HINT: Is archive_command configured in postgresql.conf?
+              HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+DEBUG:     safe exit called, terminating threads
+
 + supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
 -----------------------------------------------------------------
 [backrest]

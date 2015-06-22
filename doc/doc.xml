@@ -152,7 +152,7 @@
 						./test.pl --module=backup --module-test=full --db-version=all --thread-max=&lt;# threads&gt;
 					</code-block>
 					This will run full backup/restore regression with a variety of options on all installed versions of <postgres/>.  If you are only interested in one version then modify the <setting>db-version</setting> setting to X.X (e.g. 9.4).  <setting>--thread-max</setting> can be omitted if you are running single-threaded.
-					
+
 					If there are errors in this test then run full regression to help isolate problems:
 					<code-block>
 						./test.pl --db-version=all --thread-max=&lt;# threads&gt;
@@ -811,6 +811,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					</release-feature>
 					<release-feature>
 						<text>Added file and directory syncs to the File object for additional safety during backup and archiving.  Suggested by Andres Freund.</text>
+					</release-feature>
+					<release-feature>
+						<text>Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

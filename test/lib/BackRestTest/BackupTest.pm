@@ -1912,6 +1912,9 @@ sub BackRestTestBackup_Test
                                  '/pg_backrest.conf --stanza=db archive-get';
 
 
+                BackRestTestCommon_Execute($strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
+                                           undef, undef, undef, ERROR_FILE_MISSING);
+
                 # Create the archive info file
                 if ($bRemote)
                 {

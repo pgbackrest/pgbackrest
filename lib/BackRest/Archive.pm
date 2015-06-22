@@ -335,7 +335,7 @@ sub getCheck
     }
     else
     {
-        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->archiveId();
+        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE), true))->archiveId();
     }
 
     # Set operation and debug strings

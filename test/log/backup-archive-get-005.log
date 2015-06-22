@@ -1,6 +1,16 @@
 run 005 - rmt 1, cmp 0, exists 0
 ================================
 
+> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: getting WAL segment 000000010000000100000001
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
+ERROR: [130]: archive.info does not exist but is required to get WAL segments
+              HINT: Is archive_command configured in postgresql.conf?
+              HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+DEBUG:     safe exit called, terminating threads
+
 + supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
 -----------------------------------------------------------------
 [backrest]

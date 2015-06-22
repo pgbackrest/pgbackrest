@@ -56,12 +56,21 @@ sub new
 {
     my $class = shift;                  # Class name
     my $strArchiveClusterPath = shift;  # Backup cluster path
+    my $bRequired = shift;              # Is archive info required?
 
     logDebug(OP_ARCHIVE_INFO_NEW, DEBUG_CALL, undef, {archiveClusterPath => $strArchiveClusterPath});
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
     my $bExists = -e $strArchiveInfoFile ? true : false;
+
+    if (!$bExists && defined($bRequired) && $bRequired)
+    {
+        confess &log(ERROR, ARCHIVE_INFO_FILE . " does not exist but is required to get WAL segments\n" .
+                     "HINT: Is archive_command configured in postgresql.conf?\n" .
+                     "HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving" .
+                     " scheme.", ERROR_FILE_MISSING);
+    }
 
     # Init object and store variables
     my $self = $class->SUPER::new($strArchiveInfoFile, $bExists);

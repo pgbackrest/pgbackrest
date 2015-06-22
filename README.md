@@ -855,6 +855,8 @@ example: db-path=/data/db
 
 * Added file and directory syncs to the File object for additional safety during backup and archiving.  Suggested by Andres Freund.
 
+* Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.
+
 ### v0.75: New repository format, info command and experimental 9.5 support
 
 * IMPORTANT NOTE: This flag day release breaks compatibility with older versions of PgBackRest.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of PgBackRest and keep your older repository for a time in case you need to do a restore.  The `pg_backrest.conf` file has not changed but you'll need to change any references to `pg_backrest.pl` in cron (or elsewhere) to `pg_backrest` (without the `.pl` extension).
