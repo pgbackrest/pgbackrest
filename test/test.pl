@@ -46,8 +46,8 @@ test.pl [options]
 
  Test Options:
    --module             test module to execute:
-   --module-test        execute the specified test in a module
-   --module-test-run    execute only the specified test run
+   --test               execute the specified test in a module
+   --run                execute only the specified test run
    --thread-max         max threads to run for backup/restore (default 4)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
@@ -92,8 +92,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'module=s' => \$strModule,
-            'module-test=s' => \$strModuleTest,
-            'module-test-run=s' => \$iModuleTestRun,
+            'test=s' => \$strModuleTest,
+            'run=s' => \$iModuleTestRun,
             'thread-max=s' => \$iThreadMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
