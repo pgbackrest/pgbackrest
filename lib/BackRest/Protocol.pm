@@ -10,7 +10,7 @@ use Carp qw(confess);
 use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
 use IO::String qw();
-use Net::OpenSSH qw();
+use IPC::Open3;
 use POSIX qw(:sys_wait_h);
 use Scalar::Util qw(blessed);
 
@@ -109,25 +109,18 @@ sub new
 
             $self->{strHost} = $strHost;
             $self->{strUser} = $strUser;
-            $self->{strCommand} = $strCommand . ' remote';
+            $self->{strCommand} = $strCommand;
 
-            # Set SSH Options
-            my $strOptionSSHCompression = 'Compression=no';
+            # Generate remote command
+            my $strCommandSSH = "ssh -o Compression=no ${strUser}\@${strHost} '" . $self->{strCommand} . "'";
 
             &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
-            # Make SSH connection
-            $self->{oSSH} = Net::OpenSSH->new($self->{strHost}, timeout => 600, user => $self->{strUser},
-                                              master_opts => [-o => $strOptionSSHCompression]);
-
-            $self->{oSSH}->error and confess &log(ERROR, "unable to connect to $self->{strHost}: " . $self->{oSSH}->error,
-                                                  ERROR_HOST_CONNECT);
-            &log(TRACE, 'connected to remote ssh host ' . $self->{strHost});
-
-            # Execute remote command
-            ($self->{hIn}, $self->{hOut}, $self->{hErr}, $self->{pId}) = $self->{oSSH}->open3($self->{strCommand});
-
+            # Open the remote command and read the greeting to make sure it worked
+            $self->{pId} = open3($self->{hIn}, $self->{hOut}, $self->{hErr}, $strCommandSSH);
             $self->greeting_read();
+
+            &log(TRACE, 'connected to remote ssh host ' . $self->{strHost});
         }
         else
         {
@@ -194,7 +187,12 @@ sub greeting_read
 
     if ($strLine ne $self->{strGreeting})
     {
-        confess &log(ERROR, "protocol version mismatch: ${strLine}");
+        kill 'KILL', $self->{pId};
+        waitpid($self->{pId}, 0);
+
+        undef($self->{pId});
+
+        confess &log(ERROR, "protocol version mismatch: ${strLine}", ERROR_HOST_CONNECT);
     }
 }
 

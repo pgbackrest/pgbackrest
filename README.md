@@ -39,7 +39,6 @@ apt-get upgrade (reboot if required)
 ```
 apt-get install ssh
 apt-get install git
-apt-get install cpanminus
 ```
 * Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
 
@@ -54,10 +53,9 @@ sudo apt-get update
 
 apt-get install postgresql-9.3
 ```
-* Install required Perl modules using CPAN (will be removed in the next release):
+* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
 ```
-cpanm Net::OpenSSH
-cpanm IPC::System::Simple
+apt-get install cpanminus
 cpanm threads (update this package when thread-max > 1)
 cpanm Thread::Queue (update this package when thread-max > 1)
 ```
@@ -71,9 +69,7 @@ PgBackRest can be installed anywhere but it's best (though not required) to inst
 
 * Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
 ```
-apt-get install postgresql-server-dev-9.3
-cpanm DBI
-cpanm DBD:Pg
+apt-get install libdbd-pg-perl
 ```
 
 ### CentOS 6
@@ -85,18 +81,15 @@ yum install perl-Time-HiRes
 yum install perl-Compress-Raw-Zlib
 yum install perl-IO-String
 yum install perl-parent
+yum install perl-JSON
+yum install perl-Digest-SHA
 ```
-* Install additional required Perl modules using CPAN (will be removed in next release):
+* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
 ```
+yum install gcc
 yum install perl-CPAN
 curl -L http://cpanmin.us | perl - --sudo App::cpanminus
 
-cpanm IPC::System::Simple
-cpanm Net::OpenSSH
- ```
-For multi-threading you must also update:
-```
-yum install gcc
 cpanm threads
 cpanm Thread::Queue
  ```
@@ -860,6 +853,8 @@ example: db-path=/data/db
 * Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.
 
 * Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.
+
+* Replaced IPC::System::Simple and Net::OpenSSH with IPC::Open3 to eliminate CPAN dependency for multiple distros.
 
 ### v0.75: New repository format, info command and experimental 9.5 support
 

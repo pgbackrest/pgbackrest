@@ -41,7 +41,6 @@
 					<code-block>
 						apt-get install ssh
 						apt-get install git
-						apt-get install cpanminus
 					</code-block>
 					* Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
 
@@ -56,10 +55,9 @@
 
 						apt-get install postgresql-9.3
 					</code-block>
-					* Install required Perl modules using CPAN (will be removed in the next release):
+					* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
 					<code-block>
-						cpanm Net::OpenSSH
-						cpanm IPC::System::Simple
+						apt-get install cpanminus
 						cpanm threads (update this package when thread-max > 1)
 						cpanm Thread::Queue (update this package when thread-max > 1)
 					</code-block>
@@ -73,9 +71,7 @@
 
 					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
 					<code-block>
-						apt-get install postgresql-server-dev-9.3
-						cpanm DBI
-						cpanm DBD:Pg
+						apt-get install libdbd-pg-perl
 					</code-block></text>
 			</install-system>
 
@@ -87,18 +83,15 @@
 						yum install perl-Compress-Raw-Zlib
 						yum install perl-IO-String
 						yum install perl-parent
+						yum install perl-JSON
+						yum install perl-Digest-SHA
 					</code-block>
-					* Install additional required Perl modules using CPAN (will be removed in next release):
+					* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
 					<code-block>
+						yum install gcc
 						yum install perl-CPAN
 						curl -L http://cpanmin.us | perl - --sudo App::cpanminus
 
-						cpanm IPC::System::Simple
-						cpanm Net::OpenSSH
-				 	</code-block>
-					For multi-threading you must also update:
-					<code-block>
-						yum install gcc
 						cpanm threads
 						cpanm Thread::Queue
 				 	</code-block>
@@ -820,6 +813,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					</release-feature>
 					<release-feature>
 						<text>Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Replaced IPC::System::Simple and Net::OpenSSH with IPC::Open3 to eliminate CPAN dependency for multiple distros.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

@@ -15,7 +15,6 @@ use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use File::stat;
 use IO::Handle;
-use Net::OpenSSH;
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';

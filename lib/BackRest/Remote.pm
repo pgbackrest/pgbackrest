@@ -12,7 +12,6 @@ use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
 
 use IO::String qw();
-use Net::OpenSSH qw();
 use POSIX qw(:sys_wait_h);
 use Scalar::Util qw(blessed);
 
@@ -108,7 +107,7 @@ sub process
     my $oArchive = new BackRest::Archive();
     my $oInfo = new BackRest::Info();
     my $oJSON = JSON::PP->new();
-    my $oDb = new BackRest::Db(false);
+    my $oDb = new BackRest::Db();
 
     # Command string
     my $strCommand = OP_NOOP;
@@ -266,6 +265,10 @@ sub process
                     $oDb->info($oFile, paramGet(\%oParamHash, 'db-path'));
 
                 $self->output_write("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
+            }
+            elsif ($strCommand eq OP_DB_EXECUTE_SQL)
+            {
+                $self->output_write($oDb->executeSql(paramGet(\%oParamHash, 'script')));
             }
             # Continue if noop or exit
             elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)

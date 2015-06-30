@@ -252,14 +252,7 @@ eval
 
     if (commandTest(CMD_BACKUP))
     {
-        $oDb = new BackRest::Db
-        (
-            !optionGet(OPTION_NO_START_STOP),
-            optionGet(OPTION_DB_PATH),
-            optionGet(OPTION_COMMAND_PSQL),
-            optionGet(OPTION_DB_HOST, false),
-            optionGet(OPTION_DB_USER, optionTest(OPTION_DB_HOST))
-        );
+        $oDb = new BackRest::Db();
 
         # Run backup_init - parameters required for backup and restore commands
         backup_init

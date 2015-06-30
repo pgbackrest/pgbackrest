@@ -734,7 +734,7 @@ sub backup
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new BackRest::Archive();
         my $strArchiveId = $oArchive->getCheck($oFile);
-        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
+        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $oDb->versionGet() < 9.3);
 
         foreach my $strArchive (@stryArchive)
         {

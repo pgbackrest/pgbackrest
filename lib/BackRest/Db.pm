@@ -9,27 +9,31 @@ use Carp qw(confess);
 
 use Exporter qw(import);
 use Fcntl qw(O_RDONLY);
-use File::Basename;
-use IPC::System::Simple qw(capture);
-use Net::OpenSSH;
+use File::Basename qw(dirname);
 
 use lib dirname($0);
 use BackRest::Config;
 use BackRest::Exception;
 use BackRest::File;
+use BackRest::Open3;
 use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_DB                 => 'Db';
+use constant OP_DB                                                  => 'Db';
 
-use constant OP_DB_INFO             => OP_DB . "->info";            our @EXPORT = qw(OP_DB_INFO);
+use constant OP_DB_INFO                                             => OP_DB . "->info";
+    our @EXPORT = qw(OP_DB_INFO);
+use constant OP_DB_EXECUTE_SQL                                      => OP_DB . "->executeSql";
+    push @EXPORT, qw(OP_DB_EXECUTE_SQL);
+use constant OP_DB_VERSION_GET                                      => OP_DB . "->versionGet";
 
 ####################################################################################################################################
 # Postmaster process Id file
 ####################################################################################################################################
-use constant FILE_POSTMASTER_PID => 'postmaster.pid';               push @EXPORT, qw(FILE_POSTMASTER_PID);
+use constant FILE_POSTMASTER_PID                                    => 'postmaster.pid';
+    push @EXPORT, qw(FILE_POSTMASTER_PID);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -37,47 +41,12 @@ use constant FILE_POSTMASTER_PID => 'postmaster.pid';               push @EXPORT
 sub new
 {
     my $class = shift;          # Class name
-    my $bStartStop = shift;     # Will start/stop be called?
-    my $strDbPath = shift;      # Database path
-    my $strCommandPsql = shift; # PSQL command
-    my $strDbHost = shift;      # Database host name
-    my $strDbUser = shift;      # Database user name (generally postgres)
 
     # Create the class hash
     my $self = {};
     bless $self, $class;
 
-    # Initialize variables
-    $self->{bStartStop} = $bStartStop;
-    $self->{strDbPath} = $strDbPath;
-    $self->{strCommandPsql} = $strCommandPsql;
-    $self->{strDbHost} = $strDbHost;
-    $self->{strDbUser} = $strDbUser;
-
-    # Connect SSH object if db host is defined
-    if ($self->{bStartStop} && defined($self->{strDbHost}) && !defined($self->{oDbSSH}))
-    {
-        &log(TRACE, "connecting to database ssh host $self->{strDbHost}");
-
-        # !!! This could be improved by redirecting stderr to a file to get a better error message
-        $self->{oDbSSH} = Net::OpenSSH->new($self->{strDbHost}, user => $self->{strDbUser});
-        $self->{oDbSSH}->error and confess &log(ERROR, "unable to connect to $self->{strDbHost}: " . $self->{oDbSSH}->error);
-    }
-
     return $self;
-}
-
-####################################################################################################################################
-# IS_REMOTE
-#
-# Determine whether database operations are remote.
-####################################################################################################################################
-sub is_remote
-{
-    my $self = shift;
-
-    # If the SSH object is defined then db is remote
-    return defined($self->{oDbSSH}) ? true : false;
 }
 
 ####################################################################################################################################
@@ -95,32 +64,34 @@ sub versionSupport
 push @EXPORT, qw(versionSupport);
 
 ####################################################################################################################################
-# PSQL_EXECUTE
+# executeSql
 ####################################################################################################################################
-sub psql_execute
+sub executeSql
 {
     my $self = shift;
-    my $strScript = shift;  # psql script to execute
+    my $strScript = shift;  # psql script to execute (must be on a single line)
+
+    logDebug(OP_DB_EXECUTE_SQL, DEBUG_CALL, undef, {isRemote => optionRemoteTypeTest(DB), script => $strScript});
 
     # Get the user-defined command for psql
-    my $strCommand = $self->{strCommandPsql} . " -c \"${strScript}\" postgres";
+    my $strCommand = optionGet(OPTION_COMMAND_PSQL) . " -c \"${strScript}\" postgres";
     my $strResult;
 
-    # !!! Need to capture error output with open3 and log it
-
     # Run remotely
-    if ($self->is_remote())
+    if (optionRemoteTypeTest(DB))
     {
-        &log(TRACE, "psql execute: remote ${strScript}");
+        # Build param hash
+        my %oParamHash;
 
-        $strResult = $self->{oDbSSH}->capture($strCommand)
-            or confess &log(ERROR, "unable to execute remote psql command '${strCommand}'");
+        $oParamHash{'script'} = $strScript;
+
+        # Execute the command
+        $strResult = protocolGet()->command_execute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
     }
     # Else run locally
     else
     {
-        &log(TRACE, "psql execute: ${strScript}");
-        $strResult = capture($strCommand) or confess &log(ERROR, "unable to execute local psql command '${strCommand}'");
+        $strResult = (new BackRest::Open3($strCommand))->capture();
     }
 
     return $strResult;
@@ -135,7 +106,7 @@ sub tablespace_map_get
 
     my $oHashRef = {};
 
-    data_hash_build($oHashRef, "oid\tname\n" . $self->psql_execute(
+    data_hash_build($oHashRef, "oid\tname\n" . $self->executeSql(
                     'copy (select oid, spcname from pg_tablespace) to stdout'), "\t");
 
     return $oHashRef;
@@ -215,7 +186,7 @@ sub info
         {
             $strDbVersion = '9.4';
         }
-        # Leave 9.5 catalog version out until it stabilizes (then move 9.5 to the top of if list)
+        # Leave 9.5 catalog version out until it stabilizes (then move 9.5 to the top of the list)
         elsif ($iControlVersion == 942) # && $iCatalogVersion == 201505311)
         {
             $strDbVersion = '9.5';
@@ -271,9 +242,9 @@ sub info
 }
 
 ####################################################################################################################################
-# DB_VERSION_GET
+# versionGet
 ####################################################################################################################################
-sub db_version_get
+sub versionGet
 {
     my $self = shift;
 
@@ -283,9 +254,7 @@ sub db_version_get
     }
 
     $self->{fVersion} =
-        trim($self->psql_execute("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
-
-    &log(DEBUG, "database version is $self->{fVersion}");
+        trim($self->executeSql("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
 
     my $strVersionSupport = versionSupport();
 
@@ -293,6 +262,8 @@ sub db_version_get
     {
         confess &log(ERROR, "unsupported Postgres version ${$strVersionSupport}[0]", ERROR_VERSION_NOT_SUPPORTED);
     }
+
+    logDebug(OP_DB_VERSION_GET, DEBUG_RESULT, {dbVersion => $self->{fVersion}});
 
     return $self->{fVersion};
 }
@@ -306,7 +277,7 @@ sub backup_start
     my $strLabel = shift;
     my $bStartFast = shift;
 
-    $self->db_version_get();
+    $self->versionGet();
 
     if ($self->{fVersion} < 8.4 && $bStartFast)
     {
@@ -317,7 +288,7 @@ sub backup_start
     &log(INFO, "executing pg_start_backup() with label \"${strLabel}\": backup will begin after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-    my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
+    my @stryField = split("\t", trim($self->executeSql("set client_min_messages = 'warning';" .
                                     "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), " .
                                     "pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
                                     ($bStartFast ? ', true' : '') . ') as xlog) to stdout')));
@@ -334,8 +305,9 @@ sub backup_stop
 
     &log(INFO, 'executing pg_stop_backup() and waiting for all WAL segments to be archived');
 
-    my @stryField = split("\t", trim($self->psql_execute("set client_min_messages = 'warning';" .
-                                    "copy (select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout")));
+    my @stryField = split("\t", trim($self->executeSql("set client_min_messages = 'warning';" .
+                          "copy (select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ')," .
+                          " pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout")));
 
     return $stryField[1], $stryField[0];
 }

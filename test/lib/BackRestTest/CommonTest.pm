@@ -522,10 +522,11 @@ sub BackRestTestCommon_ExecuteEnd
                 {
                     $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
 
-                    if ($strLine !~ /^  TEST/ && $strLine !~ /\r$/)
+                    if ($strLine !~ /^  TEST/)
                     {
                         $strLine =~ s/^                            //;
                         $strLine =~ s/^ //;
+                        $strLine =~ s/\r$//;
 
                         $strLine = BackRestTestCommon_ExecuteRegAll($strLine);
                         $strFullLog .= $strLine;
