@@ -800,6 +800,14 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.80" title="DALLAS MILESTONE - UNDER DEVELOPMENT">
 				<release-feature-bullet-list>
 					<release-feature>
+						<text></text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
+			<release-version version="0.77" title="CentOS/RHEL 6 support and protocol improvements">
+				<release-feature-bullet-list>
+					<release-feature>
 						<text>Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.</text>
 					</release-feature>
 					<release-feature>

@@ -844,6 +844,10 @@ example: db-path=/data/db
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
+* 
+
+### v0.77: CentOS/RHEL 6 support and protocol improvements
+
 * Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.
 
 * Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.
