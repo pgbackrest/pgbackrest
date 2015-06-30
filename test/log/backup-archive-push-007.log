@@ -4,7 +4,8 @@ run 007 - rmt 1, cmp 1, arc_async 0
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -12,7 +13,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
@@ -21,7 +23,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
@@ -30,7 +33,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000001 already exists in the archive with the same checksum
@@ -40,7 +44,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
@@ -49,7 +54,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -57,7 +63,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -65,7 +72,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000004
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -73,7 +81,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -81,7 +90,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
@@ -90,7 +100,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
@@ -99,7 +110,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000005 already exists in the archive with the same checksum
@@ -109,7 +121,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
@@ -118,7 +131,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -126,7 +140,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000007
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -134,7 +149,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000008
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -142,7 +158,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
 DEBUG:     safe exit called, terminating threads
@@ -150,7 +167,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
@@ -159,7 +177,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
@@ -168,7 +187,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
  WARN: WAL segment 000000010000000100000009 already exists in the archive with the same checksum
@@ -178,7 +198,8 @@ DEBUG:     safe exit called, terminating threads
 > ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
 DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
 ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
@@ -188,7 +209,7 @@ DEBUG:     safe exit called, terminating threads
 -----------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=[FORMAT-1]
+backrest-format=4
 backrest-version="[VERSION-1]"
 
 [db]

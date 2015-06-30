@@ -13,11 +13,12 @@ Primary PgBackRest features:
 - In-stream compression/decompression
 - Archiving and retrieval of logs for replicas/restores built in
 - Async archiving for very busy systems (including space limits)
-- Backup directories are consistent Postgres clusters (when hardlinks are on and compression is off)
+- Backup directories are consistent PostgreSQL clusters (when hardlinks are on and compression is off)
 - Tablespace support
 - Restore delta option
 - Restore using timestamp/size or checksum
 - Restore remapping base/tablespaces
+- Support for PostgreSQL >= 8.3
 
 Instead of relying on traditional backup tools like tar and rsync, PgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
 
@@ -25,7 +26,7 @@ PgBackRest uses the gitflow model of development.  This means that the master br
 
 ## Install
 
-PgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.
+PgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.  All examples below are for PostgreSQL 9.3 but should be easily adaptable to any recent version.
 
 ### Ubuntu 12.04
 
@@ -38,7 +39,6 @@ apt-get upgrade (reboot if required)
 ```
 apt-get install ssh
 apt-get install git
-apt-get install cpanminus
 ```
 * Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
 
@@ -53,10 +53,9 @@ sudo apt-get update
 
 apt-get install postgresql-9.3
 ```
-* Install required Perl modules:
+* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
 ```
-cpanm Net::OpenSSH
-cpanm IPC::System::Simple
+apt-get install cpanminus
 cpanm threads (update this package when thread-max > 1)
 cpanm Thread::Queue (update this package when thread-max > 1)
 ```
@@ -68,12 +67,89 @@ https://github.com/pgmasters/backrest/releases
 
 PgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
 
-* Install PostgreSQL development libraries and additional Perl modules for regression tests:
+* Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
 ```
-apt-get install postgresql-server-dev-9.4
-cpanm DBI
-cpanm DBD:Pg
+apt-get install libdbd-pg-perl
 ```
+
+### CentOS 6
+
+* Install Perl and required modules:
+```
+yum install perl-devel
+yum install perl-Time-HiRes
+yum install perl-Compress-Raw-Zlib
+yum install perl-IO-String
+yum install perl-parent
+yum install perl-JSON
+yum install perl-Digest-SHA
+```
+* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
+```
+yum install gcc
+yum install perl-CPAN
+curl -L http://cpanmin.us | perl - --sudo App::cpanminus
+
+cpanm threads
+cpanm Thread::Queue
+ ```
+* Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
+```
+yum install perl-DBI
+yum install perl-DBD-Pg
+```
+CAVEAT: You must run regression tests with --log-force since file sizes do no currently match up with the test logs.
+
+* Install the versions of PostgreSQL that you want to test:
+
+Install package definitions (for each version you need):
+```
+sudo rpm -ivh http://yum.postgresql.org/8.4/redhat/rhel-6-x86_64/pgdg-centos-8.4-3.noarch.rpm
+sudo rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm
+sudo rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm
+sudo rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm
+sudo rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+```
+
+Install packages (for each version you need):
+```
+yum install postgresqlXX-server
+```
+CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.
+
+### Regression Test Setup
+
+* Create the backrest user
+
+The backrest user must be created on the same system and in the same group as the user you will use for testing (which can be any user you prefer).  For example:
+```
+adduser -g <test-user-group> backrest
+```
+* Setup password-less SSH login between the test user and the backrest user
+
+The test user should be able to `ssh backrest@127.0.0.1` and the backrest user should be able to `ssh <testuser>@127.0.0.1` without requiring any passwords.  This article (http://archive.oreilly.com/pub/h/66) has details on how to accomplish this.  Do the logons both ways at the command line before running regression tests.
+
+* Give group read and execute permissions to `~/backrest/test`:
+
+Usually this can be accomplished by running the following as the test user:
+```
+chmod 750 ~
+```
+* Running regression:
+
+Running the full regression suite is generally not necessary.  Run the following first:
+```
+./test.pl --module=backup --module-test=full --db-version=all --thread-max=<# threads>
+```
+This will run full backup/restore regression with a variety of options on all installed versions of PostgreSQL.  If you are only interested in one version then modify the `db-version` setting to X.X (e.g. 9.4).  `--thread-max` can be omitted if you are running single-threaded.
+
+If there are errors in this test then run full regression to help isolate problems:
+```
+./test.pl --db-version=all --thread-max=<# threads>
+```
+Report regression test failures at https://github.com/pgmasters/backrest/issues.
+
 
 ## Operation
 
@@ -765,6 +841,20 @@ example: db-path=/data/db
 ```
 
 ## Release Notes
+
+### v0.77: CentOS/RHEL 6 support and protocol improvements
+
+* Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.
+
+* Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.
+
+* Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  Found by Eric Radman.
+
+* Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.
+
+* Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.
+
+* Replaced IPC::System::Simple and Net::OpenSSH with IPC::Open3 to eliminate CPAN dependency for multiple distros.
 
 ### v0.75: New repository format, info command and experimental 9.5 support
 

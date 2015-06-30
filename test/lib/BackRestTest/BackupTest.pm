@@ -27,6 +27,7 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Manifest;
+use BackRest::Protocol;
 use BackRest::Remote;
 use BackRest::Utility;
 
@@ -53,7 +54,7 @@ sub BackRestTestBackup_PgConnect
     BackRestTestBackup_PgDisconnect();
 
     # Default
-    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 30;
+    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 20;
 
     # Record the start time
     my $lTime = time();
@@ -61,19 +62,13 @@ sub BackRestTestBackup_PgConnect
     do
     {
         # Connect to the db (whether it is local or remote)
-        eval
-        {
-            $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
-                                ';host=' . BackRestTestCommon_DbPathGet(),
-                                BackRestTestCommon_UserGet(),
-                                undef,
-                                {AutoCommit => 0, RaiseError => 1});
-        };
+        $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+                            ';host=' . BackRestTestCommon_DbPathGet(),
+                            BackRestTestCommon_UserGet(),
+                            undef,
+                            {AutoCommit => 0, RaiseError => 0, PrintError => 0});
 
-        if (!$@)
-        {
-            return;
-        }
+        return if $hDb;
 
         # If waiting then sleep before trying again
         if (defined($iWaitSeconds))
@@ -83,7 +78,8 @@ sub BackRestTestBackup_PgConnect
     }
     while ($lTime > time() - $iWaitSeconds);
 
-    confess &log(ERROR, "unable to connect to Postgres after ${iWaitSeconds} second(s)");
+    confess &log(ERROR, "unable to connect to PostgreSQL after ${iWaitSeconds} second(s):\n" .
+                 $DBI::errstr, ERROR_DB_CONNECT);
 }
 
 ####################################################################################################################################
@@ -760,7 +756,7 @@ sub BackRestTestBackup_ManifestReference
     }
 
     # Find all file sections
-    foreach my $strSectionFile (sort(keys $oManifestRef))
+    foreach my $strSectionFile (sort(keys(%$oManifestRef)))
     {
         # Skip non-file sections
         if ($strSectionFile !~ /\:file$/)
@@ -768,7 +764,7 @@ sub BackRestTestBackup_ManifestReference
             next;
         }
 
-        foreach my $strFile (sort(keys ${$oManifestRef}{$strSectionFile}))
+        foreach my $strFile (sort(keys(%{${$oManifestRef}{$strSectionFile}})))
         {
             if (!defined($strReference))
             {
@@ -1071,7 +1067,7 @@ sub BackRestTestBackup_BackupCompare
         $oActualManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START};
     ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} =
         $oActualManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
-    ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = FORMAT + 0;
+    ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT + 0;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
@@ -1310,7 +1306,7 @@ sub BackRestTestBackup_RestoreCompare
 
     if (!$bSynthetic)
     {
-        foreach my $strTablespaceName (keys(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}))
+        foreach my $strTablespaceName (keys(%{${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}}))
         {
             if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strTablespaceName}{&MANIFEST_SUBKEY_LINK}))
             {
@@ -1511,25 +1507,21 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = BackRest::Remote->new
+    my $oRemote = new BackRest::Remote
     (
-        $strHost,                               # Host
-        $strUserBackRest,                       # User
-        BackRestTestCommon_CommandRemoteGet(),  # Command
-        $strStanza,                             # Stanza
-        '',                                     # Repo Path
-        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        $strHost,                                   # Host
+        $strUserBackRest,                           # User
+        BackRestTestCommon_CommandRemoteFullGet(),  # Command
+        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
     );
 
-    my $oLocal = new BackRest::Remote
+    my $oLocal = new BackRest::Protocol
     (
-        undef,                                  # Host
-        undef,                                  # User
+        undef,                                  # Name
+        false,                                  # Is backend?
         undef,                                  # Command
-        undef,                                  # Stanza
-        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
@@ -1915,6 +1907,9 @@ sub BackRestTestBackup_Test
                                  '/pg_backrest.conf --stanza=db archive-get';
 
 
+                BackRestTestCommon_Execute($strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
+                                           undef, undef, undef, ERROR_FILE_MISSING);
+
                 # Create the archive info file
                 if ($bRemote)
                 {
@@ -2158,7 +2153,7 @@ sub BackRestTestBackup_Test
             # Build the manifest
             my %oManifest;
 
-            $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = version_get();
+            $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
@@ -2418,7 +2413,8 @@ sub BackRestTestBackup_Test
                                       undef, undef, undef, undef, undef, undef,
                                       'fail on mismatch format', ERROR_FORMAT);
 
-            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, FORMAT);
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_FORMAT, undef,
+                                             BACKREST_FORMAT);
 
             # Remap the base path
             my %oRemapHash;

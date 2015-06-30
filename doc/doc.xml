@@ -15,11 +15,12 @@
 			<li>In-stream compression/decompression</li>
 			<li>Archiving and retrieval of logs for replicas/restores built in</li>
 			<li>Async archiving for very busy systems (including space limits)</li>
-			<li>Backup directories are consistent Postgres clusters (when hardlinks are on and compression is off)</li>
+			<li>Backup directories are consistent <postgres/> clusters (when hardlinks are on and compression is off)</li>
 			<li>Tablespace support</li>
 			<li>Restore delta option</li>
 			<li>Restore using timestamp/size or checksum</li>
 			<li>Restore remapping base/tablespaces</li>
+			<li>Support for <postgres/> >= 8.3</li>
 		</ul>
 		Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
 
@@ -27,7 +28,7 @@
 	</intro>
 
 	<install title="Install">
-		<text><backrest/> is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.</text>
+		<text><backrest/> is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.  All examples below are for <postgres/> 9.3 but should be easily adaptable to any recent version.</text>
 
 		<install-system-list>
 			<install-system title="Ubuntu 12.04">
@@ -40,7 +41,6 @@
 					<code-block>
 						apt-get install ssh
 						apt-get install git
-						apt-get install cpanminus
 					</code-block>
 					* Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
 
@@ -55,10 +55,9 @@
 
 						apt-get install postgresql-9.3
 					</code-block>
-					* Install required Perl modules:
+					* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
 					<code-block>
-						cpanm Net::OpenSSH
-						cpanm IPC::System::Simple
+						apt-get install cpanminus
 						cpanm threads (update this package when thread-max > 1)
 						cpanm Thread::Queue (update this package when thread-max > 1)
 					</code-block>
@@ -70,12 +69,89 @@
 
 					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
 
-					* Install <postgres/> development libraries and additional Perl modules for regression tests:
+					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
 					<code-block>
-						apt-get install postgresql-server-dev-9.4
-						cpanm DBI
-						cpanm DBD:Pg
-				</code-block></text>
+						apt-get install libdbd-pg-perl
+					</code-block></text>
+			</install-system>
+
+			<install-system title="CentOS 6">
+				<text>* Install Perl and required modules:
+					<code-block>
+						yum install perl-devel
+						yum install perl-Time-HiRes
+						yum install perl-Compress-Raw-Zlib
+						yum install perl-IO-String
+						yum install perl-parent
+						yum install perl-JSON
+						yum install perl-Digest-SHA
+					</code-block>
+					* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
+					<code-block>
+						yum install gcc
+						yum install perl-CPAN
+						curl -L http://cpanmin.us | perl - --sudo App::cpanminus
+
+						cpanm threads
+						cpanm Thread::Queue
+				 	</code-block>
+					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
+					<code-block>
+						yum install perl-DBI
+						yum install perl-DBD-Pg
+					</code-block>
+					CAVEAT: You must run regression tests with --log-force since file sizes do no currently match up with the test logs.
+
+					* Install the versions of PostgreSQL that you want to test:
+
+					Install package definitions (for each version you need):
+					<code-block>
+						sudo rpm -ivh http://yum.postgresql.org/8.4/redhat/rhel-6-x86_64/pgdg-centos-8.4-3.noarch.rpm
+						sudo rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm
+						sudo rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm
+						sudo rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm
+						sudo rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+						sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+					</code-block>
+
+					Install packages (for each version you need):
+					<code-block>
+						yum install postgresqlXX-server
+					</code-block>
+					CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.</text>
+			</install-system>
+
+			<install-system title="Regression Test Setup">
+				<text>* Create the backrest user
+
+					The backrest user must be created on the same system and in the same group as the user you will use for testing (which can be any user you prefer).  For example:
+					<code-block>
+						adduser -g &lt;test-user-group&gt; backrest
+					</code-block>
+					* Setup password-less SSH login between the test user and the backrest user
+
+					The test user should be able to `ssh backrest@127.0.0.1` and the backrest user should be able to `ssh &lt;testuser&gt;@127.0.0.1` without requiring any passwords.  This article (http://archive.oreilly.com/pub/h/66) has details on how to accomplish this.  Do the logons both ways at the command line before running regression tests.
+
+					* Give group read and execute permissions to <path>~/backrest/test</path>:
+
+					Usually this can be accomplished by running the following as the test user:
+					<code-block>
+						chmod 750 ~
+					</code-block>
+					* Running regression:
+
+					Running the full regression suite is generally not necessary.  Run the following first:
+					<code-block>
+						./test.pl --module=backup --module-test=full --db-version=all --thread-max=&lt;# threads&gt;
+					</code-block>
+					This will run full backup/restore regression with a variety of options on all installed versions of <postgres/>.  If you are only interested in one version then modify the <setting>db-version</setting> setting to X.X (e.g. 9.4).  <setting>--thread-max</setting> can be omitted if you are running single-threaded.
+
+					If there are errors in this test then run full regression to help isolate problems:
+					<code-block>
+						./test.pl --db-version=all --thread-max=&lt;# threads&gt;
+					</code-block>
+					Report regression test failures at https://github.com/pgmasters/backrest/issues.
+					</text>
 			</install-system>
 		</install-system-list>
 	</install>
@@ -721,6 +797,29 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 	<release title="Release Notes">
 		<release-version-list>
+			<release-version version="0.77" title="CentOS/RHEL 6 support and protocol improvements">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.</text>
+					</release-feature>
+					<release-feature>
+						<text>Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.</text>
+					</release-feature>
+					<release-feature>
+						<text>Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  Found by Eric Radman.</text>
+					</release-feature>
+					<release-feature>
+						<text>Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.</text>
+					</release-feature>
+					<release-feature>
+						<text>Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.</text>
+					</release-feature>
+					<release-feature>
+						<text>Replaced IPC::System::Simple and Net::OpenSSH with IPC::Open3 to eliminate CPAN dependency for multiple distros.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.75" title="New repository format, info command and experimental 9.5 support">
 				<release-feature-bullet-list>
 					<release-feature>

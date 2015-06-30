@@ -13,6 +13,7 @@ use Carp qw(confess);
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
 use File::Basename qw(dirname);
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Backup;
@@ -23,7 +24,8 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Info;
 use BackRest::Lock;
-use BackRest::Remote qw(DB BACKUP NONE);
+use BackRest::Protocol qw(DB BACKUP NONE);
+use BackRest::Remote;
 use BackRest::Restore;
 use BackRest::ThreadGroup;
 use BackRest::Utility;
@@ -38,9 +40,9 @@ pg_backrest.pl - Simple Postgres Backup and Restore
 
 =head1 SYNOPSIS
 
-pg_backrest.pl [options] [operation]
+pg_backrest.pl [options] [command]
 
- Operations:
+ Commands:
    archive-get      retrieve an archive file from backup
    archive-push     push an archive file to backup
    backup           backup a cluster
@@ -49,7 +51,6 @@ pg_backrest.pl [options] [operation]
 
  General Options:
    --stanza         stanza (cluster) to operate on
-                    (currently required for all operations)
    --config         alternate path for pg_backrest.conf
                     (defaults to /etc/pg_backrest.conf)
    --version        display version and exit
@@ -108,7 +109,7 @@ sub safe_exit
     &log(DEBUG, "safe exit called, terminating threads");
 
     my $iTotal = threadGroupDestroy();
-    remoteDestroy();
+    protocolDestroy();
 
     if (defined($iExitCode))
     {
@@ -132,6 +133,29 @@ eval
     ################################################################################################################################
     configLoad();
 
+    ################################################################################################################################
+    # Process remote commands
+    ################################################################################################################################
+    if (commandTest(CMD_REMOTE))
+    {
+        # Turn all logging off
+        log_level_set(OFF, OFF);
+
+        # Create the remote object
+        my $oRemote = new BackRest::Remote
+        (
+            undef,      # Host
+            undef,      # User
+            'remote',   # Command
+            optionGet(OPTION_BUFFER_SIZE),
+            optionGet(OPTION_COMPRESS_LEVEL),
+            optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+        );
+
+        # Process remote requests
+        safe_exit($oRemote->process());
+    }
+
     # Set the log levels
     log_level_set(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
@@ -141,7 +165,7 @@ eval
     ################################################################################################################################
     # Process archive commands
     ################################################################################################################################
-    if (operationTest(OP_ARCHIVE_PUSH) || operationTest(OP_ARCHIVE_GET))
+    if (commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET))
     {
         safe_exit(new BackRest::Archive()->process());
     }
@@ -149,20 +173,20 @@ eval
     ################################################################################################################################
     # Process info command
     ################################################################################################################################
-    if (operationTest(OP_INFO))
+    if (commandTest(CMD_INFO))
     {
         safe_exit(new BackRest::Info()->info());
     }
 
     ################################################################################################################################
-    # Acquire the operation lock
+    # Acquire the command lock
     ################################################################################################################################
-    lockAcquire(operationGet());
+    lockAcquire(commandGet());
 
     ################################################################################################################################
     # Open the log file
     ################################################################################################################################
-    log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(operationGet()));
+    log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(commandGet()));
 
     ################################################################################################################################
     # Create the thread group that will be used for parallel processing
@@ -177,17 +201,17 @@ eval
         optionGet(OPTION_STANZA),
         optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
         optionRemoteType(),
-        optionRemote()
+        protocolGet()
     );
 
     ################################################################################################################################
     # RESTORE
     ################################################################################################################################
-    if (operationTest(OP_RESTORE))
+    if (commandTest(CMD_RESTORE))
     {
         if (optionRemoteTypeTest(DB))
         {
-            confess &log(ASSERT, 'restore operation must be performed locally on the db server');
+            confess &log(ASSERT, 'restore command must be performed locally on the db server');
         }
 
         # Do the restore
@@ -217,27 +241,20 @@ eval
     ################################################################################################################################
     # GET MORE CONFIG INFO
     ################################################################################################################################
-    # Make sure backup and expire operations happen on the backup side
+    # Make sure backup and expire command happen on the backup side
     if (optionRemoteTypeTest(BACKUP))
     {
-        confess &log(ERROR, 'backup and expire operations must run on the backup host');
+        confess &log(ERROR, 'backup and expire commands must run on the backup host');
     }
 
     # Initialize the db object
     my $oDb;
 
-    if (operationTest(OP_BACKUP))
+    if (commandTest(CMD_BACKUP))
     {
-        $oDb = new BackRest::Db
-        (
-            !optionGet(OPTION_NO_START_STOP),
-            optionGet(OPTION_DB_PATH),
-            optionGet(OPTION_COMMAND_PSQL),
-            optionGet(OPTION_DB_HOST, false),
-            optionGet(OPTION_DB_USER, optionTest(OPTION_DB_HOST))
-        );
+        $oDb = new BackRest::Db();
 
-        # Run backup_init - parameters required for backup and restore operations
+        # Run backup_init - parameters required for backup and restore commands
         backup_init
         (
             $oDb,
@@ -255,17 +272,17 @@ eval
     ################################################################################################################################
     # BACKUP
     ################################################################################################################################
-    if (operationTest(OP_BACKUP))
+    if (commandTest(CMD_BACKUP))
     {
         backup(optionGet(OPTION_DB_PATH), optionGet(OPTION_START_FAST));
 
-        operationSet(OP_EXPIRE);
+        commandSet(CMD_EXPIRE);
     }
 
     ################################################################################################################################
     # EXPIRE
     ################################################################################################################################
-    if (operationTest(OP_EXPIRE))
+    if (commandTest(CMD_EXPIRE))
     {
         if (!defined($oDb))
         {
@@ -289,7 +306,7 @@ eval
     # Cleanup backup (should be removed when backup becomes an object)
     backup_cleanup();
 
-    # Release the operation lock
+    # Release the command lock
     lockRelease();
 
     safe_exit(0);
@@ -303,7 +320,7 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if ($oMessage->isa('BackRest::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('BackRest::Exception'))
     {
         safe_exit($oMessage->code());
     }

@@ -14,12 +14,14 @@ use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use File::stat;
-use Net::OpenSSH;
+use IO::Handle;
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
 use BackRest::Exception;
-use BackRest::Remote;
+use BackRest::FileCommon;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -76,19 +78,21 @@ push @EXPORT, qw(PIPE_STDIN PIPE_STDOUT PIPE_STDERR);
 ####################################################################################################################################
 use constant
 {
-    OP_FILE_OWNER       => 'File->owner',
-    OP_FILE_WAIT        => 'File->wait',
-    OP_FILE_LIST        => 'File->list',
-    OP_FILE_EXISTS      => 'File->exists',
-    OP_FILE_HASH        => 'File->hash',
-    OP_FILE_REMOVE      => 'File->remove',
-    OP_FILE_MANIFEST    => 'File->manifest',
-    OP_FILE_COMPRESS    => 'File->compress',
-    OP_FILE_MOVE        => 'File->move',
-    OP_FILE_COPY        => 'File->copy',
-    OP_FILE_COPY_OUT    => 'File->copy_out',
-    OP_FILE_COPY_IN     => 'File->copy_in',
-    OP_FILE_PATH_CREATE => 'File->path_create',
+    OP_FILE_OWNER               => 'File->owner',
+    OP_FILE_WAIT                => 'File->wait',
+    OP_FILE_LIST                => 'File->list',
+    OP_FILE_EXISTS              => 'File->exists',
+    OP_FILE_HASH                => 'File->hash',
+    OP_FILE_REMOVE              => 'File->remove',
+    OP_FILE_MANIFEST            => 'File->manifest',
+    OP_FILE_COMPRESS            => 'File->compress',
+    OP_FILE_MOVE                => 'File->move',
+    OP_FILE_COPY                => 'File->copy',
+    OP_FILE_COPY_OUT            => 'File->copy_out',
+    OP_FILE_COPY_IN             => 'File->copy_in',
+    OP_FILE_PATH_CREATE         => 'File->path_create',
+    OP_FILE_PATH_SYNC           => 'File->pathSync',
+    OP_FILE_PATH_SYNC_STATIC    => 'File::filePathSync',
     OP_FILE_LINK_CREATE => 'File->link_create'
 };
 
@@ -104,7 +108,7 @@ sub new
     my $strStanza = shift;
     my $strBackupPath = shift;
     my $strRemote = shift;
-    my $oRemote = shift;
+    my $oProtocol = shift;
     my $strDefaultPathMode = shift;
     my $strDefaultFileMode = shift;
     my $iThreadIdx = shift;
@@ -124,13 +128,13 @@ sub new
     $self->{strStanza} = $strStanza;
     $self->{strBackupPath} = $strBackupPath;
     $self->{strRemote} = $strRemote;
-    $self->{oRemote} = $oRemote;
+    $self->{oProtocol} = $oProtocol;
     $self->{iThreadIdx} = $iThreadIdx;
 
     # Remote object must be set
-    if (!defined($self->{oRemote}))
+    if (!defined($self->{oProtocol}))
     {
-        confess &log(ASSERT, 'oRemote must be defined');
+        confess &log(ASSERT, 'oProtocol must be defined');
     }
 
     # If remote is defined check parameters and open session
@@ -154,9 +158,9 @@ sub DEMOLISH
 {
     my $self = shift;
 
-    if (defined($self->{oRemote}))
+    if (defined($self->{oProtocol}))
     {
-        $self->{oRemote} = undef;
+        $self->{oProtocol} = undef;
     }
 }
 
@@ -173,7 +177,7 @@ sub clone
         $self->{strStanza},
         $self->{strBackupPath},
         $self->{strRemote},
-        defined($self->{oRemote}) ? $self->{oRemote}->clone() : undef,
+        defined($self->{oProtocol}) ? $self->{oProtocol}->clone() : undef,
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
         $iThreadIdx
@@ -455,6 +459,22 @@ sub link_create
 }
 
 ####################################################################################################################################
+# pathSync
+#
+# Sync a directory.
+####################################################################################################################################
+sub pathSync
+{
+    my $self = shift;
+    my $strPathType = shift;
+    my $strPath = shift;
+
+    logTrace(OP_FILE_PATH_SYNC, DEBUG_CALL, undef, {pathType => $strPathType, path => $strPath});
+
+    filePathSync($self->path_get($strPathType, $strPath eq '.' ? undef : $strPath));
+}
+
+####################################################################################################################################
 # MOVE
 #
 # Moves a file locally or remotely.
@@ -526,6 +546,8 @@ sub move
                 }
             }
         }
+
+        $self->pathSync($strDestinationPathType, dirname($strDestinationFile));
     }
 }
 
@@ -598,12 +620,12 @@ sub path_create
         }
 
         # Add remote info to debug string
-        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
+        my $strRemote = 'remote (' . $self->{oProtocol}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
         # Execute the command
-        $self->{oRemote}->command_execute($strOperation, \%oParamHash, false, $strDebug);
+        $self->{oProtocol}->command_execute($strOperation, \%oParamHash, false, $strDebug);
     }
     else
     {
@@ -667,12 +689,12 @@ sub exists
         $oParamHash{path} = $strPathOp;
 
         # Add remote info to debug string
-        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
+        my $strRemote = 'remote (' . $self->{oProtocol}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
         # Execute the command
-        return $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq 'Y';
+        return $self->{oProtocol}->command_execute($strOperation, \%oParamHash, true, $strDebug) eq 'Y';
     }
     # Run locally
     else
@@ -837,7 +859,7 @@ sub hash_size
         if ($bCompressed)
         {
             ($strHash, $iSize) =
-                $self->{oRemote}->binary_xfer($hFile, undef, 'in', true, false, false);
+                $self->{oProtocol}->binary_xfer($hFile, undef, 'in', true, false, false);
         }
         else
         {
@@ -975,12 +997,12 @@ sub list
         }
 
         # Add remote info to debug string
-        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
+        my $strRemote = 'remote (' . $self->{oProtocol}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
         # Execute the command
-        my $strOutput = $self->{oRemote}->command_execute($strOperation, \%oParamHash, false, $strDebug);
+        my $strOutput = $self->{oProtocol}->command_execute($strOperation, \%oParamHash, false, $strDebug);
 
         if (defined($strOutput))
         {
@@ -1071,7 +1093,7 @@ sub wait
         &log(TRACE, "${strOperation}: remote");
 
         # Execute the command
-        $lTimeBegin = $self->{oRemote}->command_execute($strOperation, undef, true, $strDebug);
+        $lTimeBegin = $self->{oProtocol}->command_execute($strOperation, undef, true, $strDebug);
     }
     # Run locally
     else
@@ -1113,12 +1135,12 @@ sub manifest
         $oParamHash{path} = $strPathOp;
 
         # Add remote info to debug string
-        my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
+        my $strRemote = 'remote (' . $self->{oProtocol}->command_param_string(\%oParamHash) . ')';
         $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
         &log(TRACE, "${strOperation}: ${strRemote}");
 
         # Execute the command
-        data_hash_build($oManifestHashRef, $self->{oRemote}->command_execute($strOperation, \%oParamHash, true, $strDebug), "\t");
+        data_hash_build($oManifestHashRef, $self->{oProtocol}->command_execute($strOperation, \%oParamHash, true, $strDebug), "\t");
     }
     # Run locally
     else
@@ -1388,7 +1410,7 @@ sub copy
             {
                 if ($strDestinationPathType eq PIPE_STDOUT)
                 {
-                    $self->{oRemote}->write_line(*STDOUT, 'block -1');
+                    $self->{oProtocol}->write_line(*STDOUT, 'block -1');
                 }
 
                 confess &log(ERROR, $strError, $iErrorCode);
@@ -1460,7 +1482,7 @@ sub copy
                 $oParamHash{source_compressed} = $bSourceCompressed;
                 $oParamHash{destination_compress} = $bDestinationCompress;
 
-                $hIn = $self->{oRemote}->{hOut};
+                $hIn = $self->{oProtocol}->{hOut};
             }
         }
         # Else if source is local and destination is remote
@@ -1501,7 +1523,7 @@ sub copy
                     $oParamHash{append_checksum} = true;
                 }
 
-                $hOut = $self->{oRemote}->{hIn};
+                $hOut = $self->{oProtocol}->{hIn};
             }
         }
         # Else source and destination are remote
@@ -1544,7 +1566,7 @@ sub copy
         # Build debug string
         if (%oParamHash)
         {
-            my $strRemote = 'remote (' . $self->{oRemote}->command_param_string(\%oParamHash) . ')';
+            my $strRemote = 'remote (' . $self->{oProtocol}->command_param_string(\%oParamHash) . ')';
             $strDebug = "${strOperation}: ${strRemote}: ${strDebug}";
 
             &log(TRACE, "${strOperation}: ${strRemote}");
@@ -1553,14 +1575,14 @@ sub copy
         # If an operation is defined then write it
         if (%oParamHash)
         {
-            $self->{oRemote}->command_write($strOperation, \%oParamHash);
+            $self->{oProtocol}->command_write($strOperation, \%oParamHash);
         }
 
         # Transfer the file (skip this for copies where both sides are remote)
         if ($strOperation ne OP_FILE_COPY)
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
+                $self->{oProtocol}->binary_xfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
         }
 
         # If this is the controlling process then wait for OK from remote
@@ -1571,7 +1593,7 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oRemote}->output_read(true, $strDebug, true);
+                $strOutput = $self->{oProtocol}->output_read(true, $strDebug, true);
 
                 # Check the result of the remote call
                 if (substr($strOutput, 0, 1) eq 'Y')
@@ -1621,7 +1643,7 @@ sub copy
 
                 # We'll ignore this error if the source file was missing and missing file exception was returned
                 # and bIgnoreMissingSource is set
-                if ($bIgnoreMissingSource && $strRemote eq 'in' && $oMessage->isa('BackRest::Exception') &&
+                if ($bIgnoreMissingSource && $strRemote eq 'in' && blessed($oMessage) && $oMessage->isa('BackRest::Exception') &&
                     $oMessage->code() == COMMAND_ERR_FILE_MISSING)
                 {
                     close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
@@ -1641,37 +1663,41 @@ sub copy
         if (!$bSourceCompressed && $bDestinationCompress)
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, true, false);
+                $self->{oProtocol}->binary_xfer($hSourceFile, $hDestinationFile, 'out', false, true, false);
         }
         # If the source is compressed and the destination is not then decompress
         elsif ($bSourceCompressed && !$bDestinationCompress)
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', true, false, false);
+                $self->{oProtocol}->binary_xfer($hSourceFile, $hDestinationFile, 'in', true, false, false);
         }
         # Else both side are compressed, so copy capturing checksum
         elsif ($bSourceCompressed)
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'out', true, true, false);
+                $self->{oProtocol}->binary_xfer($hSourceFile, $hDestinationFile, 'out', true, true, false);
         }
         else
         {
             ($strChecksum, $iFileSize) =
-                $self->{oRemote}->binary_xfer($hSourceFile, $hDestinationFile, 'in', false, true, false);
+                $self->{oProtocol}->binary_xfer($hSourceFile, $hDestinationFile, 'in', false, true, false);
         }
     }
 
-    # Close the source file (if open)
+    # Close the source file (if local)
     if (defined($hSourceFile))
     {
         close($hSourceFile) or confess &log(ERROR, "cannot close file ${strSourceOp}");
     }
 
-    # Close the destination file (if open)
+    # Sync and close the destination file (if local)
     if (defined($hDestinationFile))
     {
-        close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
+        $hDestinationFile->sync()
+            or confess &log(ERROR, "unable to sync ${strDestinationTmpOp}", ERROR_FILE_SYNC);
+
+        close($hDestinationFile)
+            or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
     }
 
     # Checksum and file size should be set if the destination is not remote

@@ -18,7 +18,7 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Lock;
-use BackRest::Remote;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -55,19 +55,19 @@ sub process
     my $self = shift;
 
     # Process push
-    if (operationTest(OP_ARCHIVE_PUSH))
+    if (commandTest(CMD_ARCHIVE_PUSH))
     {
         return $self->pushProcess();
     }
 
     # Process get
-    if (operationTest(OP_ARCHIVE_GET))
+    if (commandTest(CMD_ARCHIVE_GET))
     {
         return $self->getProcess();
     }
 
-    # Error if any other operation is found
-    confess &log(ASSERT, "Archive->process() called with invalid operation: " . operationGet());
+    # Error if any other command is found
+    confess &log(ASSERT, "Archive->process() called with invalid command: " . commandGet());
 }
 
 ################################################################################################################################
@@ -275,7 +275,7 @@ sub get
         optionGet(OPTION_STANZA),
         optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
         optionRemoteType(),
-        optionRemote()
+        protocolGet()
     );
 
     # If the destination file path is not absolute then it is relative to the db data path
@@ -327,16 +327,15 @@ sub getCheck
     my $self = shift;
     my $oFile = shift;
 
-    # &log(DEBUG, OP_ARCHIVE_GET_CHECK . "()");
     my $strArchiveId;
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
     {
-        $strArchiveId = $oFile->{oRemote}->command_execute(OP_ARCHIVE_GET_CHECK, undef, true);
+        $strArchiveId = $oFile->{oProtocol}->command_execute(OP_ARCHIVE_GET_CHECK, undef, true);
     }
     else
     {
-        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->archiveId();
+        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE), true))->archiveId();
     }
 
     # Set operation and debug strings
@@ -352,16 +351,16 @@ sub pushProcess
 {
     my $self = shift;
 
-    # Make sure the archive push operation happens on the db side
+    # Make sure the archive push command happens on the db side
     if (optionRemoteTypeTest(DB))
     {
-        confess &log(ERROR, OP_ARCHIVE_PUSH . ' operation must run on the db host');
+        confess &log(ERROR, CMD_ARCHIVE_PUSH . ' operation must run on the db host');
     }
 
     # Load the archive object
     use BackRest::Archive;
 
-    # If an archive section has been defined, use that instead of the backup section when operation is OP_ARCHIVE_PUSH
+    # If an archive section has been defined, use that instead of the backup section when command is CMD_ARCHIVE_PUSH
     my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC);
     my $strArchivePath = optionGet(OPTION_REPO_PATH);
 
@@ -418,7 +417,7 @@ sub pushProcess
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    if (!lockAcquire(operationGet(), false))
+    if (!lockAcquire(commandGet(), false))
     {
         &log(DEBUG, 'another async archive-push process is already running - exiting');
         return 0;
@@ -426,9 +425,6 @@ sub pushProcess
 
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
-
-    # Build the basic command string that will be used to modify the command during processing
-    my $strCommand = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA);
 
     # Call the archive_xfer function and continue to loop as long as there are files to process
     my $iLogTotal;
@@ -466,7 +462,7 @@ sub push
         optionGet(OPTION_STANZA),
         $bAsync || optionRemoteTypeTest(NONE) ? optionGet(OPTION_REPO_PATH) : optionGet(OPTION_REPO_REMOTE_PATH),
         $bAsync ? NONE : optionRemoteType(),
-        optionRemote($bAsync)
+        protocolGet($bAsync)
     );
 
     # If the source file path is not absolute then it is relative to the data path
@@ -558,10 +554,10 @@ sub pushCheck
         $oParamHash{'db-sys-id'} = $ullDbSysId;
 
         # Output remote trace info
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string(\%oParamHash) . ')');
 
         # Execute the command
-        my $strResult = $oFile->{oRemote}->command_execute($strOperation, \%oParamHash, true);
+        my $strResult = $oFile->{oProtocol}->command_execute($strOperation, \%oParamHash, true);
 
         $strArchiveId = (split("\t", $strResult))[0];
         $strChecksum = (split("\t", $strResult))[1];
@@ -624,7 +620,7 @@ sub xfer
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
         NONE,
-        optionRemote(true)
+        protocolGet(true)
     );
 
     # Load the archive manifest - all the files that need to be pushed
@@ -636,7 +632,7 @@ sub xfer
     my $lFileSize = 0;
     my $lFileTotal = 0;
 
-    foreach my $strFile (sort(keys $oManifestHash{name}))
+    foreach my $strFile (sort(keys(%{$oManifestHash{name}})))
     {
         if ($strFile =~ "^[0-F]{24}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
             $strFile =~ /^[0-F]{8}\.history$/ || $strFile =~ /^[0-F]{24}\.[0-F]{8}\.backup$/)
@@ -665,7 +661,7 @@ sub xfer
                 optionGet(OPTION_STANZA),
                 optionGet(OPTION_REPO_REMOTE_PATH),
                 optionRemoteType(),
-                optionRemote()
+                protocolGet()
             );
         }
 
@@ -738,7 +734,7 @@ sub xfer
             unlink($strArchiveFile)
                 or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
                                        'This file will need to be cleaned up manually.  If the problem persists, check if ' .
-                                       OP_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+                                       CMD_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
 
             # Remove the copied segment from the total size
             $lFileSize -= $oManifestHash{name}{$strFile}{size};

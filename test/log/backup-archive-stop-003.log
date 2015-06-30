@@ -11,7 +11,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -30,7 +31,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
@@ -46,7 +48,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: archive to be copied to backup total 2, size 32MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
@@ -68,7 +71,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: archive to be copied to backup total 3, size 48MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
@@ -93,7 +97,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Remote->new: host = 127.0.0.1, user = [USER-1], stanza = db, remote-repo-path = [TEST_PATH]/backrest, command = [BACKREST_BIN_PATH]/pg_backrest_remote
+DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, isBackend = false, name = remote, user = [USER-1]
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006

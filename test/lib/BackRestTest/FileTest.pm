@@ -11,19 +11,19 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Cwd 'abs_path';
+use Cwd qw(abs_path);
 use Exporter qw(import);
-use Fcntl ':mode';
+use Fcntl qw(:mode);
 use File::Basename;
 use File::stat;
 use POSIX qw(ceil);
-use Scalar::Util 'blessed';
+use Scalar::Util qw(blessed);
 use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
 use BackRest::File;
-use BackRest::Remote;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 use BackRestTest::CommonTest;
@@ -92,25 +92,21 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = BackRest::Remote->new
+    my $oRemote = new BackRest::Remote
     (
-        $strHost,                               # Host
-        $strUser,                               # User
-        BackRestTestCommon_CommandRemoteGet(),  # Command
-        $strStanza,                             # Stanza
-        '',                                     # Repo Path
-        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        $strHost,                                   # Host
+        $strUser,                                   # User
+        BackRestTestCommon_CommandRemoteFullGet(),  # Command
+        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
     );
 
-    my $oLocal = new BackRest::Remote
+    my $oLocal = new BackRest::Protocol
     (
-        undef,                                  # Host
-        undef,                                  # User
+        undef,                                  # Name
+        false,                                  # Is backend?
         undef,                                  # Command
-        undef,                                  # Stanza
-        undef,                                  # Repo Path
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
@@ -582,7 +578,7 @@ sub BackRestTestFile_Test
                 my $strManifest;
 
                 # Validate the manifest
-                foreach my $strName (sort(keys $oManifestHash{name}))
+                foreach my $strName (sort(keys(%{$oManifestHash{name}})))
                 {
                     if (!defined($strManifest))
                     {

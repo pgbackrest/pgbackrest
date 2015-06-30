@@ -26,7 +26,7 @@ our @EXPORT = qw(version_get
                  hsleep wait_remainder
                  timestamp_string_get timestamp_file_string_get
                  TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
-                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME FORMAT);
+                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME);
 
 # Global constants
 use constant
@@ -63,13 +63,6 @@ $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
 
 ####################################################################################################################################
-# FORMAT Constant
-#
-# Identified the format of the manifest and file structure.  The format is used to determine compatability between versions.
-####################################################################################################################################
-use constant FORMAT => 4;
-
-####################################################################################################################################
 # TEST Constants and Variables
 ####################################################################################################################################
 use constant
@@ -85,44 +78,6 @@ use constant
 # Test global variables
 my $bTest = false;
 my $fTestDelay;
-
-####################################################################################################################################
-# VERSION_GET
-####################################################################################################################################
-my $strVersion;
-
-sub version_get
-{
-    my $hVersion;
-
-    # If version is already stored then return it (should never change during execution)
-    if (defined($strVersion))
-    {
-        return $strVersion;
-    }
-
-    # Construct the version file name
-    my $strVersionFile = abs_path(dirname($0) . '/../VERSION');
-
-    # Open the file
-    if (!open($hVersion, '<', $strVersionFile))
-    {
-        confess &log(ASSERT, "unable to open VERSION file: ${strVersionFile}");
-    }
-
-    # Read version and trim
-    if (!($strVersion = readline($hVersion)))
-    {
-        confess &log(ASSERT, "unable to read VERSION file: ${strVersionFile}");
-    }
-
-    $strVersion = trim($strVersion);
-
-    # Close file
-    close($hVersion);
-
-    return $strVersion;
-}
 
 ####################################################################################################################################
 # WAIT_REMAINDER - Wait the remainder of the current second
@@ -416,6 +371,74 @@ sub test_check
 
     return index($strLog, TEST_ENCLOSE . '-' . $strTest . '-' . TEST_ENCLOSE) != -1;
 }
+
+####################################################################################################################################
+# logDebug
+####################################################################################################################################
+use constant DEBUG_CALL                                             => '()';
+    push @EXPORT, qw(DEBUG_CALL);
+use constant DEBUG_RESULT                                           => '=>';
+    push @EXPORT, qw(DEBUG_RESULT);
+use constant DEBUG_MISC                                             => '';
+    push @EXPORT, qw(DEBUG_MISC);
+
+sub logDebug
+{
+    my $strFunction = shift;
+    my $strType = shift;
+    my $strMessage = shift;
+    my $oParamHash = shift;
+    my $strLevel = shift;
+
+    $strLevel = defined($strLevel) ? $strLevel : DEBUG;
+
+    if ($oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
+        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank})
+    {
+        if (defined($oParamHash))
+        {
+            my $strParamSet;
+
+            foreach my $strParam (sort(keys(%$oParamHash)))
+            {
+                if (defined($strParamSet))
+                {
+                    $strParamSet .= ', ';
+                }
+
+                $strParamSet .= "${strParam} = " .
+                                (defined($$oParamHash{$strParam}) ?
+                                    ($strParam =~ /^is/ ? ($$oParamHash{$strParam} ? 'true' : 'false'):
+                                    $$oParamHash{$strParam}) : '[undef]');
+            }
+
+            if (defined($strMessage))
+            {
+                $strMessage = "${strMessage}: ${strParamSet}";
+            }
+            else
+            {
+                $strMessage = $strParamSet;
+            }
+        }
+
+        &log($strLevel, "${strFunction}${strType}" . (defined($strMessage) ? ": $strMessage" : ''));
+    }
+}
+
+push @EXPORT, qw(logDebug);
+
+sub logTrace
+{
+    my $strFunction = shift;
+    my $strType = shift;
+    my $strMessage = shift;
+    my $oParamHash = shift;
+
+    logDebug($strFunction, $strType, $strMessage, $oParamHash, TRACE);
+}
+
+push @EXPORT, qw(logTrace);
 
 ####################################################################################################################################
 # LOG - log messages

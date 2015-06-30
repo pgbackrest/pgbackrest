@@ -26,7 +26,7 @@ use BackRest::Db;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Remote;
+use BackRest::Protocol;
 use BackRest::Utility;
 
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
@@ -43,12 +43,13 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
                  BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
                  BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet
-                 BackRestTestCommon_TestLogAppendFile);
+                 BackRestTestCommon_TestLogAppendFile BackRestTestCommon_CommandRemoteFullGet);
 
 my $strPgSqlBin;
 my $strCommonStanza;
 my $strCommonCommandMain;
 my $strCommonCommandRemote;
+my $strCommonCommandRemoteFull;
 my $strCommonCommandPsql;
 my $strCommonHost;
 my $strCommonUser;
@@ -444,16 +445,12 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', 'version[ ]{0,1}=[ ]{0,1}\"' . version_get(), version_get . '$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', '"version"[ ]{0,1}:[ ]{0,1}\"' . version_get(), version_get . '$');
-
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', 'format=' . FORMAT, FORMAT . '$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', '"format"[ ]{0,1}:[ ]{0,1}' . FORMAT, FORMAT . '$');
-
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', '--port=[0-9]+', '[0-9]+$');
 
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION',
+        "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . BACKREST_VERSION, BACKREST_VERSION . '$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
         "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
@@ -525,10 +522,11 @@ sub BackRestTestCommon_ExecuteEnd
                 {
                     $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
 
-                    if ($strLine !~ /^  TEST/ && $strLine !~ /\r$/)
+                    if ($strLine !~ /^  TEST/)
                     {
                         $strLine =~ s/^                            //;
                         $strLine =~ s/^ //;
+                        $strLine =~ s/\r$//;
 
                         $strLine = BackRestTestCommon_ExecuteRegAll($strLine);
                         $strFullLog .= $strLine;
@@ -773,7 +771,9 @@ sub BackRestTestCommon_Setup
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
     $strCommonCommandMain = "../bin/pg_backrest";
-    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest_remote";
+    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest";
+    $strCommonCommandRemoteFull = "${strCommonCommandRemote} --stanza=${strCommonStanza}" .
+                                  " --repo-remote-path=${strCommonRepoPath} --no-config remote";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;
@@ -808,7 +808,7 @@ sub BackRestTestCommon_Setup
         &log(WARN, "unit tests do not currently work with version 9.5");
         return false;
     }
-    
+
     return true;
 }
 
@@ -960,7 +960,7 @@ sub BackRestTestCommon_ConfigRemap
     # Rewrite remap section
     delete($oConfig{"${strStanza}:restore:tablespace-map"});
 
-    foreach my $strRemap (sort(keys $oRemapHashRef))
+    foreach my $strRemap (sort(keys(%$oRemapHashRef)))
     {
         my $strRemapPath = ${$oRemapHashRef}{$strRemap};
 
@@ -1023,7 +1023,7 @@ sub BackRestTestCommon_ConfigRecovery
     # Rewrite remap section
     delete($oConfig{"${strStanza}:restore:recovery-setting"});
 
-    foreach my $strOption (sort(keys $oRecoveryHashRef))
+    foreach my $strOption (sort(keys(%$oRecoveryHashRef)))
     {
         $oConfig{"${strStanza}:restore:recovery-setting"}{$strOption} = ${$oRecoveryHashRef}{$strOption};
     }
@@ -1194,6 +1194,11 @@ sub BackRestTestCommon_CommandMainAbsGet
 sub BackRestTestCommon_CommandRemoteGet
 {
     return $strCommonCommandRemote;
+}
+
+sub BackRestTestCommon_CommandRemoteFullGet
+{
+    return $strCommonCommandRemoteFull;
 }
 
 sub BackRestTestCommon_HostGet

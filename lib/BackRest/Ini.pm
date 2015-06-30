@@ -9,12 +9,15 @@ use Carp qw(confess);
 
 use Exporter qw(import);
 use File::Basename qw(dirname basename);
+use IO::Handle;
 use JSON::PP;
 use Storable qw(dclone);
 
 use lib dirname($0);
 use BackRest::Exception;
+use BackRest::FileCommon;
 use BackRest::Utility;
+use BackRest::Version;
 
 ####################################################################################################################################
 # Operation constants
@@ -22,6 +25,14 @@ use BackRest::Utility;
 use constant OP_INI                                                 => 'Ini';
 
 use constant OP_INI_SET                                             => OP_INI . "->set";
+
+####################################################################################################################################
+# Version and Format Constants
+####################################################################################################################################
+use constant BACKREST_VERSION                                       => "$VERSION";
+    our @EXPORT = qw(BACKREST_VERSION);
+use constant BACKREST_FORMAT                                        => "$FORMAT";
+    push @EXPORT, qw(BACKREST_FORMAT);
 
 ####################################################################################################################################
 # Boolean constants
@@ -33,7 +44,7 @@ use constant INI_FALSE                                              => JSON::PP:
 # Ini control constants
 ####################################################################################################################################
 use constant INI_SECTION_BACKREST                                   => 'backrest';
-    our @EXPORT = qw(INI_SECTION_BACKREST);
+    push @EXPORT, qw(INI_SECTION_BACKREST);
 
 use constant INI_KEY_CHECKSUM                                       => 'backrest-checksum';
     push @EXPORT, qw(INI_KEY_CHECKSUM);
@@ -86,16 +97,16 @@ sub new
         # Make sure that the format is current, otherwise error
         my $iFormat = $self->get(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, false, 0);
 
-        if ($iFormat != FORMAT)
+        if ($iFormat != BACKREST_FORMAT)
         {
-            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . FORMAT . ' is required by this version of ' .
-                                'PgBackRest.', ERROR_FORMAT);
+            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . BACKREST_FORMAT . ' is required by this ' .
+                                ' version of PgBackRest.', ERROR_FORMAT);
         }
     }
     else
     {
-        $self->setNumeric(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, FORMAT);
-        $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, version_get());
+        $self->setNumeric(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
+        $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
     }
 
     return $self;
@@ -218,7 +229,7 @@ sub iniSave
     $bRelaxed = defined($bRelaxed) ? $bRelaxed : false;
 
     # Write the INI file
-    foreach my $strSection (sort(keys $oContent))
+    foreach my $strSection (sort(keys(%$oContent)))
     {
         # Add a linefeed between sections
         if (!$bFirst)
@@ -244,7 +255,7 @@ sub iniSave
             or confess "unable to write section ${strSection}: $!";
 
         # Iterate through all keys in the section
-        foreach my $strKey (sort(keys ${$oContent}{"${strSection}"}))
+        foreach my $strKey (sort(keys(%{${$oContent}{"${strSection}"}})))
         {
             # Skip comments
             if ($strKey eq INI_COMMENT)
@@ -272,6 +283,9 @@ sub iniSave
         $bFirst = false;
     }
 
+    # Sync and close ini file
+    $hFile->sync();
+    filePathSync(dirname($strFileName));
     close($hFile);
 }
 
@@ -290,7 +304,7 @@ sub hash
     # Caculate the checksum
     my $oChecksumContent = dclone($self->{oContent});
 
-    foreach my $strSection (keys($oChecksumContent))
+    foreach my $strSection (keys(%$oChecksumContent))
     {
         delete(${$oChecksumContent}{$strSection}{&INI_COMMENT});
     }
@@ -522,14 +536,14 @@ sub keys
     {
         if ($self->test($strSection, $strKey))
         {
-            return sort(keys $self->get($strSection, $strKey));
+            return sort(keys(%{$self->get($strSection, $strKey)}));
         }
 
         my @stryEmptyArray;
         return @stryEmptyArray;
     }
 
-    return sort(keys $self->{oContent});
+    return sort(keys(%{$self->{oContent}}));
 }
 
 ####################################################################################################################################

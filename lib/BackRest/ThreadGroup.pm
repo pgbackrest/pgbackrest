@@ -83,7 +83,7 @@ sub threadGroupThread
             optionGet(OPTION_STANZA),
             optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
             optionRemoteType(),
-            optionRemote(undef, false),
+            protocolGet(undef, false),
             undef, undef,
             $iThreadIdx + 1
         );

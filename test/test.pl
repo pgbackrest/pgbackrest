@@ -16,10 +16,12 @@ use File::Basename;
 use Getopt::Long;
 use Cwd 'abs_path';
 use Pod::Usage;
+use Scalar::Util qw(blessed);
 #use Test::More;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Db;
+use BackRest::Ini;
 use BackRest::Utility;
 
 use lib dirname($0) . '/lib';
@@ -44,8 +46,8 @@ test.pl [options]
 
  Test Options:
    --module             test module to execute:
-   --module-test        execute the specified test in a module
-   --module-test-run    execute only the specified test run
+   --test               execute the specified test in a module
+   --run                execute only the specified test run
    --thread-max         max threads to run for backup/restore (default 4)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
@@ -90,8 +92,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'module=s' => \$strModule,
-            'module-test=s' => \$strModuleTest,
-            'module-test-run=s' => \$iModuleTestRun,
+            'test=s' => \$strModuleTest,
+            'run=s' => \$iModuleTestRun,
             'thread-max=s' => \$iThreadMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
@@ -156,7 +158,14 @@ my $strVersionSupport = versionSupport();
 
 if (!defined($strPgSqlBin))
 {
-    my @strySearchPath = ('/usr/lib/postgresql/VERSION/bin', '/Library/PostgreSQL/VERSION/bin');
+    # Distribution-specific paths where the PostgreSQL binaries may be located
+    my @strySearchPath =
+    (
+        '/usr/lib/postgresql/VERSION/bin',  # Debian/Ubuntu
+        '/usr/pgsql-VERSION/bin',           # CentOS/RHEL/Fedora
+        '/Library/PostgreSQL/VERSION/bin',  # OSX
+        '/usr/local/bin'                    # BSD
+    );
 
     foreach my $strSearchPath (@strySearchPath)
     {
@@ -178,7 +187,7 @@ if (!defined($strPgSqlBin))
     }
 
     # Make sure at least one version of postgres was found
-    @{$strVersionSupport} > 0
+    @stryTestVersion > 0
         or confess 'pgsql-bin was not defined and postgres could not be located automatically';
 }
 else
@@ -198,7 +207,6 @@ if ($iThreadMax < 1 || $iThreadMax > 32)
 my $hReadMe;
 my $strLine;
 my $bMatch = false;
-my $strVersion = version_get();
 
 if (!open($hReadMe, '<', dirname($0) . '/../README.md'))
 {
@@ -209,35 +217,26 @@ while ($strLine = readline($hReadMe))
 {
     if ($strLine =~ /^\#\#\# v/)
     {
-        $bMatch = substr($strLine, 5, length($strVersion)) eq $strVersion;
+        $bMatch = substr($strLine, 5, length(BACKREST_VERSION)) eq BACKREST_VERSION;
         last;
     }
 }
 
 if (!$bMatch)
 {
-    confess "unable to find version ${strVersion} as last revision in README.md";
+    confess 'unable to find version ' . BACKREST_VERSION . ' as last revision in README.md';
 }
 
 ####################################################################################################################################
 # Clean whitespace only if test.pl is being run from the test directory in the backrest repo
 ####################################################################################################################################
-my $hVersion;
-
-if (-e './test.pl' && -e '../bin/pg_backrest.pl' && open($hVersion, '<', '../VERSION'))
+if (-e './test.pl' && -e '../bin/pg_backrest')
 {
-    my $strTestVersion = readline($hVersion);
-
-    if (defined($strTestVersion) && $strVersion eq trim($strTestVersion))
-    {
-        BackRestTestCommon_Execute(
-            "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
-            "-not -path \"../test/data/*\" " .
-            "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
-            "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
-    }
-
-    close($hVersion);
+    BackRestTestCommon_Execute(
+        "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
+        "-not -path \"../test/data/*\" " .
+        "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
+        "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
 }
 
 ####################################################################################################################################
@@ -307,9 +306,8 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if ($oMessage->isa('BackRest::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('BackRest::Exception'))
     {
-        # syswrite(*STDOUT, $oMessage->message() . "\n");
         syswrite(*STDOUT, $oMessage->trace());
         exit $oMessage->code();
     }

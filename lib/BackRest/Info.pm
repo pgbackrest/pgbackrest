@@ -97,7 +97,7 @@ sub info
         $strStanza,
         optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
         optionRemoteTypeTest(BACKUP) ? BACKUP : NONE,
-        optionRemote(!optionRemoteTypeTest(BACKUP))
+        protocolGet(!optionRemoteTypeTest(BACKUP))
     );
 
     # Get the stanza list with all info
@@ -171,10 +171,10 @@ sub listStanza
         }
 
         # Trace the remote parameters
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string($oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string($oParamHash) . ')');
 
         # Execute the command
-        my $strStanzaList = $oFile->{oRemote}->command_execute($strOperation, $oParamHash, true);
+        my $strStanzaList = $oFile->{oProtocol}->command_execute($strOperation, $oParamHash, true);
 
         # Trace the remote response
         &log(TRACE, "${strOperation}: remote json response (${strStanzaList})");
@@ -184,7 +184,7 @@ sub listStanza
     }
     else
     {
-        my @stryStanza = $oFile->list(PATH_BACKUP, OP_BACKUP, undef, undef, true);
+        my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, undef, undef, true);
 
         foreach my $strStanzaFound (@stryStanza)
         {
@@ -250,7 +250,7 @@ sub listBackup
     my $strStanza = shift;
 
     # Load or build backup.info
-    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP, OP_BACKUP . "/${strStanza}"));
+    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"));
 
     # Build the db list
     my @oyDbList;

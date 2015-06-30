@@ -116,8 +116,6 @@ sub new
     # Init object and store variables
     my $self = $class->SUPER::new($strBackupInfoFile, $bExists);
 
-    $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, version_get());
-
     $self->{bExists} = $bExists;
     $self->{strBackupClusterPath} = $strBackupClusterPath;
 
@@ -311,7 +309,7 @@ sub backupAdd
 
     if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, BACKUP_TYPE_FULL))
     {
-        my @stryReference = sort(keys($oReferenceHash));
+        my @stryReference = sort(keys(%$oReferenceHash));
 
         $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_PRIOR,
             $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR));
