@@ -25,7 +25,7 @@ use BackRest::Config;
 
 =head1 NAME
 
-doc.pl - Generate PgBackRest documentation
+doc.pl - Generate pgBackRest documentation
 
 =head1 SYNOPSIS
 
@@ -57,7 +57,7 @@ my $oRenderTag =
         'setting' => ['`', '`'],
         'code' => ['`', '`'],
         'code-block' => ['```', '```'],
-        'backrest' => ['PgBackRest', ''],
+        'backrest' => ['ERROR - TITLE NOT SET', ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -634,6 +634,11 @@ sub doc_render
 
         if (defined($$oDoc{param}{title}))
         {
+            if ($iDepth == 1)
+            {
+                $$oRenderTag{'markdown'}{'backrest'}[0] = $$oDoc{param}{title};
+            }
+
             $strBuffer = ('#' x $iDepth) . ' ';
 
             if (defined($$oDoc{param}{version}))
@@ -683,6 +688,13 @@ sub doc_render
             my $strAllow = $$oDoc{field}{allow};
             my $strOverride = $$oDoc{field}{override};
             my $strExample = $$oDoc{field}{example};
+
+            # !!! Temporary hack to make docs generate correctly.  This should be replaced with a search if the bin path to
+            # find the name of the current exe.
+            if ($$oDoc{param}{id} eq 'config')
+            {
+                $strDefault = '/etc/pg_backrest.conf';
+            }
 
             if (defined($strExample))
             {

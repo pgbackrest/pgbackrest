@@ -9,9 +9,8 @@ use Carp qw(confess);
 
 use Cwd qw(abs_path);
 use Exporter qw(import);
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 use Getopt::Long qw(GetOptions);
-use Pod::Usage;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
@@ -24,6 +23,12 @@ use BackRest::Utility;
 our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault commandGet commandTest
                  commandSet commandWrite optionRemoteType optionRemoteTypeTest protocolGet optionRemoteTest
                  protocolDestroy);
+
+####################################################################################################################################
+# BackRest executable name used for help messages and default
+####################################################################################################################################
+use constant BACKREST_EXE                                           => basename($0);
+    push @EXPORT, qw(BACKREST_EXE);
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -237,7 +242,7 @@ use constant
     OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN       => 0,
     OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX       => 9,
 
-    OPTION_DEFAULT_CONFIG                           => '/etc/pg_backrest.conf',
+    OPTION_DEFAULT_CONFIG                           => '/etc/' . BACKREST_EXE . '.conf',
     OPTION_DEFAULT_LOG_LEVEL_CONSOLE                => lc(WARN),
     OPTION_DEFAULT_LOG_LEVEL_FILE                   => lc(INFO),
     OPTION_DEFAULT_THREAD_MAX                       => 1,
@@ -1098,12 +1103,74 @@ my %oOptionRule =
 );
 
 ####################################################################################################################################
+# Help text - not using Pod::Usage since some elements are dynamic
+####################################################################################################################################
+use constant BACKREST_HELP                                          =>
+    "Usage:\n" .
+    "    " . BACKREST_EXE . " [options] [command]\n" .
+    "\n" .
+    "     Commands:\n" .
+    "       archive-get      retrieve an archive file from backup\n" .
+    "       archive-push     push an archive file to backup\n" .
+    "       backup           backup a cluster\n" .
+    "       restore          restore a cluster\n" .
+    "       expire           expire old backups (automatically run after backup)\n" .
+    "\n" .
+    "     General Options:\n" .
+    "       --stanza         stanza (cluster) to operate on\n" .
+    "       --config         alternate path for configuration file\n" .
+    "                        (defaults to " . OPTION_DEFAULT_CONFIG . ")\n" .
+    "       --version        display version and exit\n" .
+    "       --help           display usage and exit\n" .
+    "\n" .
+    "     Backup Options:\n" .
+    "        --type           type of backup to perform (full, diff, incr)\n" .
+    "        --no-start-stop  do not call pg_start/stop_backup().  Postmaster should not\n" .
+    "                         be running.\n" .
+    "        --force          force backup when --no-start-stop passed and\n" .
+    "                         postmaster.pid exists. Use with extreme caution as this\n" .
+    "                         will probably produce an inconsistent backup!\n" .
+    "\n" .
+    "     Restore Options:\n" .
+    "        --set            backup set to restore (defaults to latest set).\n" .
+    "        --delta          perform a delta restore.\n" .
+    "        --force          force a restore and overwrite all existing files.\n" .
+    "                         with --delta forces size/timestamp deltas.\n" .
+    "\n" .
+    "     Recovery Options:\n" .
+    "        --type               type of recovery:\n" .
+    "                                 default - recover to end of archive log stream\n" .
+    "                                 name - restore point target\n" .
+    "                                 time - timestamp target\n" .
+    "                                 xid - transaction id target\n" .
+    "                                 preserve - preserve the existing recovery.conf\n" .
+    "                                 none - no recovery.conf generated\n" .
+    "        --target             recovery target if type is name, time, or xid.\n" .
+    "        --target-exclusive   stop just before the recovery target\n" .
+    "                             (default is inclusive).\n" .
+    "        --target-resume      do not pause after recovery (default is to pause).\n" .
+    "        --target-timeline    recover into specified timeline\n" .
+    "                             (default is current timeline).\n" .
+    "\n" .
+    "     Output Options:\n" .
+    "        --log-level-console  console log level (defaults to warn):\n" .
+    "                                 off - No logging at all (not recommended)\n" .
+    "                                 error - Log only errors\n" .
+    "                                 warn - Log warnings and errors\n" .
+    "                                 info - Log info, warnings, and errors\n" .
+    "                                 debug - Log debug, info, warnings, and errors\n" .
+    "                                 trace - Log trace (very verbose debugging), debug,\n" .
+    "                                         info, warnings, and errors\n" .
+    "        --log-level-file     file log level (defaults to info).  Same options as\n" .
+    "                             --log-level-console.";
+
+####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-my %oOption;            # Option hash
-my $strCommand;         # Command (backup, archive-get, ...)
-my $strRemoteType;      # Remote type (DB, BACKUP, NONE)
-my $oProtocol;          # Global remote object that is created on first request (NOT THREADSAFE!)
+my %oOption;                # Option hash
+my $strCommand;             # Command (backup, archive-get, ...)
+my $strRemoteType;          # Remote type (DB, BACKUP, NONE)
+my $oProtocol;              # Global remote object that is created on first request (NOT THREADSAFE!)
 
 ####################################################################################################################################
 # configLoad
@@ -1158,14 +1225,14 @@ sub configLoad
 
     if (!GetOptions(\%oOptionTest, %oOptionAllow))
     {
-        syswrite(*STDOUT, "\npg_backrest " . BACKREST_VERSION . "\n\n");
+        syswrite(*STDOUT, "\n" . BACKREST_EXE . ' ' . BACKREST_VERSION . "\n\n");
         pod2usage(2);
     };
 
     # Display version and exit if requested
     if (defined($oOptionTest{&OPTION_VERSION}) || defined($oOptionTest{&OPTION_HELP}))
     {
-        syswrite(*STDOUT, 'pg_backrest ' . BACKREST_VERSION . "\n");
+        syswrite(*STDOUT, BACKREST_EXE . ' ' . BACKREST_VERSION . "\n");
 
         if (!defined($oOptionTest{&OPTION_HELP}))
         {
@@ -1176,8 +1243,7 @@ sub configLoad
     # Display help and exit if requested
     if (defined($oOptionTest{&OPTION_HELP}))
     {
-        syswrite(*STDOUT, "\n");
-        pod2usage();
+        syswrite(*STDOUT, "\n" . BACKREST_HELP . "\n");
         exit 0;
     }
 
@@ -1350,7 +1416,7 @@ sub optionValid
                 }
             }
 
-            # If the option value is undefined and not negated, see if it can be loaded from pg_backrest.conf
+            # If the option value is undefined and not negated, see if it can be loaded from the config file
             if (!defined($strValue) && !$bNegate && $strOption ne OPTION_CONFIG &&
                 $oOptionRule{$strOption}{&OPTION_RULE_SECTION} && $bDependResolved)
             {
@@ -1663,7 +1729,6 @@ sub optionRequired
     # Return required
     return !defined($bRequired) || $bRequired;
 }
-
 
 ####################################################################################################################################
 # optionDefault

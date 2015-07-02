@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="PgBackRest" subtitle="Simple Postgres Backup &amp; Restore">
+<doc title="pgBackRest" subtitle="Simple Postgres Backup &amp; Restore">
 	<intro>
 		<text><backrest/> aims to be a simple backup and restore system that can seamlessly scale up to the largest databases and workloads.
 
@@ -61,7 +61,7 @@
 						cpanm threads (update this package when thread-max > 1)
 						cpanm Thread::Queue (update this package when thread-max > 1)
 					</code-block>
-					* Install PgBackRest
+					* Install <backrest/>
 
 					<backrest/> can be installed by downloading the most recent release:
 
@@ -78,7 +78,7 @@
 			<install-system title="CentOS 6">
 				<text>* Install Perl and required modules:
 					<code-block>
-						yum install perl-devel
+						yum install perl
 						yum install perl-Time-HiRes
 						yum install perl-Compress-Raw-Zlib
 						yum install perl-IO-String
@@ -97,7 +97,6 @@
 				 	</code-block>
 					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
 					<code-block>
-						yum install perl-DBI
 						yum install perl-DBD-Pg
 					</code-block>
 					CAVEAT: You must run regression tests with --log-force since file sizes do no currently match up with the test logs.
@@ -698,7 +697,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<config-key id="archive-max-mb">
 						<text>Limits the amount of archive log that will be written locally when <setting>archive-async=y</setting>.  After the limit is reached, the following will happen:
 						<ol>
-							<li>PgBackRest will notify Postgres that the archive was successfully backed up, then DROP IT.</li>
+							<li><backrest/> will notify Postgres that the archive was successfully backed up, then DROP IT.</li>
 							<li>An error will be logged to the console and also to the Postgres log.</li>
 							<li>A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.</li>
 						</ol>
@@ -747,7 +746,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION-TYPE KEY -->
 					<config-key id="retention-archive-type">
-						<text>Type of backup to use for archive retention (full or differential).  If set to full, then PgBackRest will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to differential, then PgBackRest will keep archive logs for the number of differential backups defined by <setting>retention-archive</setting>.
+						<text>Type of backup to use for archive retention (full or differential).  If set to full, then <backrest/> will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to differential, then <backrest/> will keep archive logs for the number of differential backups defined by <setting>retention-archive</setting>.
 
 						If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup, but there may be reasons for doing so.</text>
 
