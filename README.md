@@ -232,7 +232,7 @@ default: n
 ##### Example: Full Backup
 
 ```
-/path/to/pg_backrest.pl --stanza=db --type=full backup
+/path/to/pg_backrest --stanza=db --type=full backup
 ```
 Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if no `full` backup exists then a `full` backup will be forced even if `incr` or `diff` is requested.
 
@@ -243,9 +243,9 @@ Archive a WAL segment to the repository.
 ##### Example
 
 ```
-/path/to/pg_backrest.pl --stanza=db archive-push %p
+/path/to/pg_backrest --stanza=db archive-push %p
 ```
-Accepts a WAL segment from PostgreSQL and archives it in the repository.  `%p` is how PostgreSQL specifies the location of the WAL segment to be archived.
+Accepts a WAL segment from PostgreSQL and archives it in the repository defined by `repo-path`.  `%p` is how PostgreSQL specifies the location of the WAL segment to be archived.
 
 #### `archive-get` command
 
@@ -254,7 +254,7 @@ Get a WAL segment from the repository.
 ##### Example
 
 ```
-/path/to/pg_backrest.pl --stanza=db archive-get %f %p
+/path/to/pg_backrest --stanza=db archive-get %f %p
 ```
 Retrieves a WAL segment from the repository.  This command is used in `recovery.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs and `%p` is the location where it should be copied.
 
@@ -265,7 +265,7 @@ pgBackRest does backup rotation, but is not concerned with when the backups were
 ##### Example
 
 ```
-/path/to/pg_backrest.pl --stanza=db expire
+/path/to/pg_backrest --stanza=db expire
 ```
 Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.
 
@@ -378,7 +378,7 @@ example: --tablespace-map ts_01=/db/ts_01
 ##### Example: Restore Latest
 
 ```
-/path/to/pg_backrest.pl --stanza=db --type=name --target=release restore
+/path/to/pg_backrest --stanza=db --type=name --target=release restore
 ```
 Restores the latest database backup and then recovers to the `release` restore point.
 
@@ -404,7 +404,7 @@ example: --output=json
 ##### Example: Backup information
 
 ```
-/path/to/pg_backrest.pl --stanza=db --output=json info
+/path/to/pg_backrest --stanza=db --output=json info
 ```
 
 Get information about backups in the `db` stanza.
@@ -421,7 +421,7 @@ Modify the following settings in `postgresql.conf`:
 ```
 wal_level = archive
 archive_mode = on
-archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
+archive_command = '/path/to/backrest/bin/pg_backrest --stanza=db archive-push %p'
 ```
 Replace the path with the actual location where pgBackRest was installed.  The stanza parameter should be changed to the actual stanza name for your database.
 
@@ -475,7 +475,7 @@ cmd-psql-option=--port=5433
 
 #### Simple Multiple Host Configuration
 
-This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest_remote.pl and pg_backrest.pl in the same path on both servers.
+This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest in the same path on both servers.
 
 `/etc/pg_backrest.conf` on the db host:
 ```
@@ -843,7 +843,7 @@ example: db-path=/data/db
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
-*
+* 
 
 ### v0.77: CentOS/RHEL 6 support and protocol improvements
 

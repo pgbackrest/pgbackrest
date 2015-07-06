@@ -1,5 +1,6 @@
 <!ELEMENT doc (intro, install, operation, config, release, recognition)>
 	<!ATTLIST doc title CDATA #REQUIRED>
+	<!ATTLIST doc exe CDATA #REQUIRED>
 	<!ATTLIST doc subtitle CDATA #REQUIRED>
 
 <!ELEMENT intro (text)>
@@ -75,20 +76,21 @@
 <!ELEMENT recognition (text)>
 	<!ATTLIST recognition title CDATA #REQUIRED>
 
-<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest|postgres)*>
+<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>
 <!ELEMENT bi (#PCDATA)>
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
-<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|backrest|postgres)*>
+<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres)*>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
-<!ELEMENT code-block (#PCDATA)>
+<!ELEMENT code-block (#PCDATA|exe)*>
 <!ELEMENT file (#PCDATA)>
 <!ELEMENT path (#PCDATA)>
 <!ELEMENT cmd (#PCDATA)>
 <!ELEMENT param (#PCDATA)>
 <!ELEMENT setting (#PCDATA)>
+<!ELEMENT exe EMPTY>
 <!ELEMENT backrest EMPTY>
 <!ELEMENT postgres EMPTY>

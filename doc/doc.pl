@@ -10,6 +10,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+$SIG{__DIE__} = sub { Carp::confess @_ };
+
 use File::Basename qw(dirname);
 use Pod::Usage qw(pod2usage);
 use Getopt::Long qw(GetOptions);
@@ -57,6 +59,7 @@ my $oRenderTag =
         'setting' => ['`', '`'],
         'code' => ['`', '`'],
         'code-block' => ['```', '```'],
+        'exe' => ['ERROR - EXE NOT SET', ''],
         'backrest' => ['ERROR - TITLE NOT SET', ''],
         'postgres' => ['PostgreSQL', '']
     },
@@ -85,7 +88,7 @@ sub doc_render_tag
 
     $strBuffer .= $strStart;
 
-    if ($strTag eq 'li')
+    if ($strTag eq 'li' || $strTag eq 'code-block')
     {
         $strBuffer .= doc_render_text($oTag, $strType);
     }
@@ -241,7 +244,7 @@ sub doc_parse
 
     my %oOut;
     my $iIndex = 0;
-    my $bText = $strName eq 'text' || $strName eq 'li';
+    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'code-block';
 
     # Store the node name
     $oOut{name} = $strName;
@@ -434,7 +437,7 @@ sub doc_build
             my $oSub = $$oDoc{children}[$iIndex];
             my $strName = $$oSub{name};
 
-            if ($strName eq 'text')
+            if ($strName eq 'text' || $strName eq 'code-block')
             {
                 $$oOut{field}{text} = $oSub;
             }
@@ -637,6 +640,7 @@ sub doc_render
             if ($iDepth == 1)
             {
                 $$oRenderTag{'markdown'}{'backrest'}[0] = $$oDoc{param}{title};
+                $$oRenderTag{'markdown'}{'exe'}[0] = $$oDoc{param}{exe};
             }
 
             $strBuffer = ('#' x $iDepth) . ' ';

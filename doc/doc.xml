@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="pgBackRest" subtitle="Simple Postgres Backup &amp; Restore">
+<doc title="pgBackRest" exe="pg_backrest" subtitle="Simple Postgres Backup &amp; Restore">
 	<intro>
 		<text><backrest/> aims to be a simple backup and restore system that can seamlessly scale up to the largest databases and workloads.
 
@@ -221,7 +221,7 @@ Examples of how to configure a stanza can be found in the `configuration example
 				<command-example-list>
 					<command-example title="Full Backup">
 						<text><code-block>
-/path/to/pg_backrest.pl --stanza=db --type=full backup
+/path/to/<exe/> --stanza=db --type=full backup
 </code-block>
 Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can also be set to <id>incr</id> or <id>diff</id> for incremental or differential backups.  However, if no <id>full</id> backup exists then a <id>full</id> backup will be forced even if <id>incr</id> or <id>diff</id> is requested.</text>
 					</command-example>
@@ -235,9 +235,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				<command-example-list>
 					<command-example>
 						<text><code-block>
-								/path/to/pg_backrest.pl --stanza=db archive-push %p
+								/path/to/<exe/> --stanza=db archive-push %p
 							</code-block>
-							Accepts a WAL segment from <postgres/> and archives it in the repository.  <param>%p</param> is how <postgres/> specifies the location of the WAL segment to be archived.</text>
+							Accepts a WAL segment from <postgres/> and archives it in the repository defined by <setting>repo-path</setting>.  <param>%p</param> is how <postgres/> specifies the location of the WAL segment to be archived.</text>
 					</command-example>
 				</command-example-list>
 			</command>
@@ -249,7 +249,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				<command-example-list>
 					<command-example>
 						<text><code-block>
-								/path/to/pg_backrest.pl --stanza=db archive-get %f %p
+								/path/to/<exe/> --stanza=db archive-get %f %p
 							</code-block>
 							Retrieves a WAL segment from the repository.  This command is used in <file>recovery.conf</file> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  <param>%f</param> is how <postgres/> specifies the WAL segment it needs and <param>%p</param> is the location where it should be copied.</text>
 					</command-example>
@@ -263,7 +263,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				<command-example-list>
 					<command-example>
 						<text><code-block>
-								/path/to/pg_backrest.pl --stanza=db expire
+								/path/to/<exe/> --stanza=db expire
 							</code-block>
 							Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.</text>
 					</command-example>
@@ -354,7 +354,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				<command-example-list>
 					<command-example title="Restore Latest">
 						<text><code-block>
-									/path/to/pg_backrest.pl --stanza=db --type=name --target=release restore
+									/path/to/<exe/> --stanza=db --type=name --target=release restore
 							</code-block>
 							Restores the latest database backup and then recovers to the <id>release</id> restore point.</text>
 					</command-example>
@@ -383,7 +383,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				<command-example-list>
 					<command-example title="Backup information">
 						<text><code-block>
-								/path/to/pg_backrest.pl --stanza=db --output=json info
+								/path/to/<exe/> --stanza=db --output=json info
 							</code-block>
 
 							Get information about backups in the <id>db</id> stanza.</text>
@@ -402,7 +402,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<code-block>
 						wal_level = archive
 						archive_mode = on
-						archive_command = '/path/to/backrest/bin/pg_backrest.pl --stanza=db archive-push %p'
+						archive_command = '/path/to/backrest/bin/<exe/> --stanza=db archive-push %p'
 					</code-block>
 					Replace the path with the actual location where <backrest/> was installed.  The stanza parameter should be changed to the actual stanza name for your database.
 				</text>
@@ -456,7 +456,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			</config-example>
 
 				<config-example title="Simple Multiple Host Configuration">
-					<text>This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest_remote.pl and pg_backrest.pl in the same path on both servers.
+					<text>This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have <exe/> in the same path on both servers.
 
 						<file>/etc/pg_backrest.conf</file> on the db host:
 						<code-block>
