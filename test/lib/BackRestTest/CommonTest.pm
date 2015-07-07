@@ -123,7 +123,6 @@ sub BackRestTestCommon_DropRepo
     }
 }
 
-
 ####################################################################################################################################
 # BackRestTestCommon_CreateRepo
 ####################################################################################################################################
@@ -444,6 +443,7 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', '^db-user=.+$', '[^=]+$');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', '--port=[0-9]+', '[0-9]+$');
 
@@ -457,6 +457,10 @@ sub BackRestTestCommon_ExecuteRegAll
         "start\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
         "stop\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'SIZE',
+        "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'DELTA',
+        "delta\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP-STR', "est backup timestamp: $strTimestampRegExp",
                                                 "${strTimestampRegExp}\$", false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
@@ -770,7 +774,7 @@ sub BackRestTestCommon_Setup
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
-    $strCommonCommandMain = "../bin/pg_backrest";
+    $strCommonCommandMain = $strCommonBasePath . "/bin/../bin/pg_backrest";
     $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest";
     $strCommonCommandRemoteFull = "${strCommonCommandRemote} --stanza=${strCommonStanza}" .
                                   " --repo-remote-path=${strCommonRepoPath} --no-config remote";

@@ -54,7 +54,7 @@ sub BackRestTestBackup_PgConnect
     BackRestTestBackup_PgDisconnect();
 
     # Default
-    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 20;
+    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 30;
 
     # Record the start time
     my $lTime = time();
@@ -1257,6 +1257,9 @@ sub BackRestTestBackup_Restore
     if (!defined($iExpectedExitStatus) && (!defined($bCompare) || $bCompare))
     {
         BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $bSynthetic, $oExpectedManifestRef);
+        BackRestTestCommon_TestLogAppendFile(
+            $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_PATH}{&MANIFEST_KEY_BASE}{&MANIFEST_SUBKEY_PATH} .
+            "/recovery.conf");
     }
 }
 
@@ -1917,7 +1920,7 @@ sub BackRestTestBackup_Test
                 }
 
                 BackRestTestCommon_Execute('mkdir -p -m 770 ' . $oFile->path_get(PATH_BACKUP_ARCHIVE), $bRemote);
-                (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check('9.3', 6969);
+                (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check('9.3', 1234567890123456789);
                 BackRestTestCommon_TestLogAppendFile($oFile->path_get(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
 
                 if ($bRemote)
@@ -2059,10 +2062,7 @@ sub BackRestTestBackup_Test
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!BackRestTestCommon_Run(++$iRun,
-                                    "local",
-                                    $iThreadMax == 1 ? $strModule : undef,
-                                    $iThreadMax == 1 ? $strThisTest: undef,
-                                    false)) {next}
+                                    "local")) {next}
 
         # Append backup.info to create a baseline
         BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .

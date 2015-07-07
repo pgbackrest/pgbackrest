@@ -843,7 +843,7 @@ example: db-path=/data/db
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
-* 
+*
 
 ### v0.77: CentOS/RHEL 6 support and protocol improvements
 

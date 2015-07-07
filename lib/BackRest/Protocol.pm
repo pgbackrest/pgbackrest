@@ -112,7 +112,7 @@ sub new
             $self->{strCommand} = $strCommand;
 
             # Generate remote command
-            my $strCommandSSH = "ssh -o Compression=no ${strUser}\@${strHost} '" . $self->{strCommand} . "'";
+            my $strCommandSSH = "ssh -q -o Compression=no ${strUser}\@${strHost} '" . $self->{strCommand} . "'";
 
             &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
@@ -399,7 +399,7 @@ sub wait_pid
                     $self->{hOut} = undef;
                     $self->{hErr} = undef;
 
-                    confess &log(ERROR, "remote process terminated: ${strError}");
+                    confess &log(ERROR, "remote process terminated: ${strError}", ERROR_HOST_CONNECT);
                 }
 
                 return true;
