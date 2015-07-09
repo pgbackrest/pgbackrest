@@ -1,4 +1,4 @@
-<!ELEMENT doc (intro, install, operation, config, release, recognition)>
+<!ELEMENT doc (intro, install, config, operation, release, recognition)>
 	<!ATTLIST doc title CDATA #REQUIRED>
 	<!ATTLIST doc exe CDATA #REQUIRED>
 	<!ATTLIST doc subtitle CDATA #REQUIRED>
