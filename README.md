@@ -53,7 +53,7 @@ sudo apt-get update
 
 apt-get install postgresql-9.3
 ```
-* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
+* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (CPAN requirement will be removed in next release):
 ```
 apt-get install cpanminus
 cpanm threads (update this package when thread-max > 1)
@@ -84,7 +84,7 @@ yum install perl-parent
 yum install perl-JSON
 yum install perl-Digest-SHA
 ```
-* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (will be removed in next release):
+* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (CPAN requirement will be removed in next release):
 ```
 yum install gcc
 yum install perl-CPAN
@@ -843,7 +843,7 @@ example: db-path=/data/db
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
-*
+* 
 
 ### v0.77: CentOS/RHEL 6 support and protocol improvements
 
