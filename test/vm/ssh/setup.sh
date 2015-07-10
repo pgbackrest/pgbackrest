@@ -9,8 +9,9 @@ chown -R vagrant:vagrant /home/vagrant/.ssh
 chmod 700 /home/vagrant/.ssh
 chmod 600 /home/vagrant/.ssh/*
 
+chmod 750 /home/vagrant
+
 # Create the backrest user and copy ssh keys
-adduser --ingroup=vagrant --disabled-password --gecos "" backrest
 mkdir /home/backrest/.ssh
 cp /backrest/test/vm/ssh/config /home/backrest/.ssh
 cp /backrest/test/vm/ssh/id_rsa /home/backrest/.ssh

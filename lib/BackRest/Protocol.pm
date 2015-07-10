@@ -182,17 +182,25 @@ sub greeting_read
 {
     my $self = shift;
 
-    # Make sure that the remote is running the right version
-    my $strLine = $self->read_line($self->{hOut});
+    # Get the first line of output from the remote if possible
+    my $strLine;
 
-    if ($strLine ne $self->{strGreeting})
+    eval
     {
-        kill 'KILL', $self->{pId};
-        waitpid($self->{pId}, 0);
+        $strLine = $self->read_line($self->{hOut});
+    };
 
-        undef($self->{pId});
+    # If the line could not be read or does equal the greeting then error and exit
+    if (!defined($strLine) || $strLine ne $self->{strGreeting})
+    {
+        if (defined($self->{pId}))
+        {
+            kill 'KILL', $self->{pId};
+            waitpid($self->{pId}, 0);
+            undef($self->{pId});
+        }
 
-        confess &log(ERROR, "protocol version mismatch: ${strLine}", ERROR_HOST_CONNECT);
+        confess &log(ERROR, 'protocol version mismatch' . (defined($strLine) ? ": ${strLine}" : ''), ERROR_HOST_CONNECT);
     }
 }
 

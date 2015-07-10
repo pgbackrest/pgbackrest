@@ -31,7 +31,7 @@
 		<text><backrest/> is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.  All examples below are for <postgres/> 9.3 but should be easily adaptable to any recent version.</text>
 
 		<install-system-list>
-			<install-system title="Ubuntu 12.04">
+			<install-system title="Ubuntu 12.04 Setup">
 				<text>* Starting from a clean install, update the OS:
 					<code-block>
 						apt-get update
@@ -55,27 +55,13 @@
 
 						apt-get install postgresql-9.3
 					</code-block>
-					* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (CPAN requirement will be removed in next release):
-					<code-block>
-						apt-get install cpanminus
-						cpanm threads (update this package when thread-max > 1)
-						cpanm Thread::Queue (update this package when thread-max > 1)
-					</code-block>
-					* Install <backrest/>
-
-					<backrest/> can be installed by downloading the most recent release:
-
-					https://github.com/pgmasters/backrest/releases
-
-					<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
-
 					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
 					<code-block>
 						apt-get install libdbd-pg-perl
 					</code-block></text>
 			</install-system>
 
-			<install-system title="CentOS 6">
+			<install-system title="CentOS 6 Setup">
 				<text>* Install Perl and required modules:
 					<code-block>
 						yum install perl
@@ -86,21 +72,6 @@
 						yum install perl-JSON
 						yum install perl-Digest-SHA
 					</code-block>
-					* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (CPAN requirement will be removed in next release):
-					<code-block>
-						yum install gcc
-						yum install perl-CPAN
-						curl -L http://cpanmin.us | perl - --sudo App::cpanminus
-
-						cpanm threads
-						cpanm Thread::Queue
-				 	</code-block>
-					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
-					<code-block>
-						yum install perl-DBD-Pg
-					</code-block>
-					CAVEAT: You must run regression tests with --log-force since file sizes do no currently match up with the test logs.
-
 					* Install the versions of PostgreSQL that you want to test:
 
 					Install package definitions (for each version you need):
@@ -117,7 +88,20 @@
 					<code-block>
 						yum install postgresqlXX-server
 					</code-block>
-					CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.</text>
+					CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.
+
+					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
+					<code-block>
+						yum install perl-DBD-Pg
+					</code-block></text>
+			</install-system>
+
+			<install-system title="Software Installation">
+				<text><backrest/> can be installed by downloading the most recent release:
+
+				https://github.com/pgmasters/backrest/releases
+
+				<backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.</text>
 			</install-system>
 
 			<install-system title="Regression Test Setup">

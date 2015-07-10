@@ -1942,7 +1942,7 @@ sub protocolGet
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
     );
 
-    if ($bStore)
+    if (!defined($bStore) || $bStore)
     {
         $oProtocol = $oProtocolTemp;
     }

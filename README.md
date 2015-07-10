@@ -28,7 +28,7 @@ pgBackRest uses the gitflow model of development.  This means that the master br
 
 pgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.  All examples below are for PostgreSQL 9.3 but should be easily adaptable to any recent version.
 
-### Ubuntu 12.04
+### Ubuntu 12.04 Setup
 
 * Starting from a clean install, update the OS:
 ```
@@ -53,26 +53,12 @@ sudo apt-get update
 
 apt-get install postgresql-9.3
 ```
-* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (CPAN requirement will be removed in next release):
-```
-apt-get install cpanminus
-cpanm threads (update this package when thread-max > 1)
-cpanm Thread::Queue (update this package when thread-max > 1)
-```
-* Install pgBackRest
-
-pgBackRest can be installed by downloading the most recent release:
-
-https://github.com/pgmasters/backrest/releases
-
-pgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
-
 * Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
 ```
 apt-get install libdbd-pg-perl
 ```
 
-### CentOS 6
+### CentOS 6 Setup
 
 * Install Perl and required modules:
 ```
@@ -84,21 +70,6 @@ yum install perl-parent
 yum install perl-JSON
 yum install perl-Digest-SHA
 ```
-* FOR MULTI-THREADING ONLY: Install additional required Perl modules using CPAN (CPAN requirement will be removed in next release):
-```
-yum install gcc
-yum install perl-CPAN
-curl -L http://cpanmin.us | perl - --sudo App::cpanminus
-
-cpanm threads
-cpanm Thread::Queue
- ```
-* Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
-```
-yum install perl-DBD-Pg
-```
-CAVEAT: You must run regression tests with --log-force since file sizes do no currently match up with the test logs.
-
 * Install the versions of PostgreSQL that you want to test:
 
 Install package definitions (for each version you need):
@@ -116,6 +87,19 @@ Install packages (for each version you need):
 yum install postgresqlXX-server
 ```
 CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.
+
+* Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
+```
+yum install perl-DBD-Pg
+```
+
+### Software Installation
+
+pgBackRest can be installed by downloading the most recent release:
+
+https://github.com/pgmasters/backrest/releases
+
+pgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
 
 ### Regression Test Setup
 

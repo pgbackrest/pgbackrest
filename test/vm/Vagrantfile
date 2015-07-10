@@ -1,91 +1,66 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
 Vagrant.configure(2) do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
+    config.vm.define "u12" do |u12|
+        u12.vm.box = "ubuntu/precise64"
 
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/precise64"
+        # Provision the VM
+        u12.vm.provision "shell", inline: <<-SHELL
+            # Install db
+            echo 'deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main' > /etc/apt/sources.list.d/pgdg.list
+            wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+            sudo apt-get update
+            # apt-get install -y postgresql-8.3
+            # pg_dropcluster --stop 8.3 main
+            # apt-get install -y postgresql-8.4
+            # pg_dropcluster --stop 8.4 main
+            # apt-get install -y postgresql-9.0
+            # pg_dropcluster --stop 9.0 main
+            # apt-get install -y postgresql-9.1
+            # pg_dropcluster --stop 9.1 main
+            # apt-get install -y postgresql-9.2
+            # pg_dropcluster --stop 9.2 main
+            # apt-get install -y postgresql-9.3
+            # pg_dropcluster --stop 9.3 main
+            apt-get install -y postgresql-9.4
+            pg_dropcluster --stop 9.4 main
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+            # Setup SSH
+            adduser --ingroup=vagrant --disabled-password --gecos "" backrest
+            /backrest/test/vm/ssh/setup.sh
 
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
+            # Install packages required for testing
+            apt-get install -y libdbd-pg-perl
 
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
+            # Run the actual test
+            # /backrest/test/test.pl --test-path=/home/vagrant/test --db-version=all --thread-max=4
+        SHELL
+    end
 
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+    config.vm.define "co6" do |co6|
+        co6.vm.box = "chef/centos-6.6"
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
+        # Provision the VM
+        co6.vm.provision "shell", inline: <<-SHELL
+            # Install db
+            sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+            yum -y install postgresql94-server
 
-  # Define a Vagrant Push strategy for pushing to Atlas. Other push strategies
-  # such as FTP and Heroku are also available. See the documentation at
-  # https://docs.vagrantup.com/v2/push/atlas.html for more information.
-  # config.push.define "atlas" do |push|
-  #   push.app = "YOUR_ATLAS_USERNAME/YOUR_APPLICATION_NAME"
-  # end
+            # Install Perl
+            yum -y install perl
+            yum -y install perl-Time-HiRes
+            yum -y install perl-Compress-Raw-Zlib
+            yum -y install perl-IO-String
+            yum -y install perl-parent
+            yum -y install perl-JSON
+            yum -y install perl-Digest-SHA
 
-  # Provision the VM
-  config.vm.provision "shell", inline: <<-SHELL
-    # Install PostgreSQL package definitions
-    echo 'deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main' > /etc/apt/sources.list.d/pgdg.list
-    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-    sudo apt-get update
-    apt-get install -y postgresql-8.3
-    pg_dropcluster --stop 8.3 main
-    apt-get install -y postgresql-8.4
-    pg_dropcluster --stop 8.4 main
-    apt-get install -y postgresql-9.0
-    pg_dropcluster --stop 9.0 main
-    apt-get install -y postgresql-9.1
-    pg_dropcluster --stop 9.1 main
-    apt-get install -y postgresql-9.2
-    pg_dropcluster --stop 9.2 main
-    apt-get install -y postgresql-9.3
-    pg_dropcluster --stop 9.3 main
-    apt-get install -y postgresql-9.4
-    pg_dropcluster --stop 9.4 main
+            # Setup SSH
+            adduser -gvagrant -n backrest
+            /backrest/test/vm/ssh/setup.sh
 
-    # Setup SSH
-    /backrest/test/vm/ssh/setup.sh
-
-    # Install packages required for testing
-    apt-get install -y libdbd-pg-perl
-
-    # Run the actual test
-    # /backrest/test/test.pl --test-path=/home/vagrant/test --db-version=all
-  SHELL
+            # Install packages required for testing
+            yum -y install perl-DBD-Pg
+        SHELL
+    end
 
   # Don't share the default vagrant folder
   config.vm.synced_folder ".", "/vagrant", disabled: true
