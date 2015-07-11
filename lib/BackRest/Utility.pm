@@ -633,14 +633,22 @@ sub waitMore
     # Capture the end time
     $$oWait{time_end} = gettimeofday();
 
-    # Calculate the new sleep time
-    $$oWait{sleep} = $$oWait{sleep} * 2 < $$oWait{wait_time} - ($$oWait{time_end} - $$oWait{time_begin}) ?
-                         $$oWait{sleep} * 2 : ($$oWait{wait_time} - ($$oWait{time_end} - $$oWait{time_begin})) + .001;
-
+    # Exit if wait time has expired
     if ((gettimeofday() - $$oWait{time_begin}) < $$oWait{wait_time})
     {
         return true;
     }
+
+    # Else calculate the new sleep time
+    my $fSleepNext = $$oWait{sleep} + (defined($$oWait{sleep_prev}) ? $$oWait{sleep_prev} : 0);
+
+    if ($fSleepNext > $$oWait{wait_time} - ($$oWait{time_end} - $$oWait{time_begin}))
+    {
+        $fSleepNext = ($$oWait{wait_time} - ($$oWait{time_end} - $$oWait{time_begin})) + .001
+    }
+
+    $$oWait{sleep_prev} = $$oWait{sleep};
+    $$oWait{sleep} = $fSleepNext;
 
     return false;
 }
