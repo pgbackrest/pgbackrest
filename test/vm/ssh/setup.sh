@@ -19,3 +19,7 @@ cp /backrest/test/vm/ssh/id_rsa.pub /home/backrest/.ssh/authorized_keys
 chown -R backrest:vagrant /home/backrest/.ssh
 chmod 700 /home/backrest/.ssh
 chmod 600 /home/backrest/.ssh/*
+
+# Clear any messages
+sudo -u vagrant ssh backrest@127.0.0.1 ls
+sudo -u backrest ssh backrest@127.0.0.1 ls
