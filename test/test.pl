@@ -288,7 +288,7 @@ eval
                 {
                     for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
                     {
-                        BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx],
+                        BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[$iVersionIdx],
                                                  $iModuleTestRun, $bDryRun, $bNoCleanup);
                         &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
                         BackRestTestBackup_Test('full', $iThreadMax);

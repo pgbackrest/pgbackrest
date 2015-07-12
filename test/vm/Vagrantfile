@@ -39,7 +39,15 @@ Vagrant.configure(2) do |config|
         # Provision the VM
         co6.vm.provision "shell", inline: <<-SHELL
             # Install db
+            sudo rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm
+            sudo rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm
+            sudo rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm
+            sudo rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
             sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+            yum -y install postgresql90-server
+            yum -y install postgresql91-server
+            yum -y install postgresql92-server
+            yum -y install postgresql93-server
             yum -y install postgresql94-server
 
             # Install Perl
