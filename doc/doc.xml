@@ -797,7 +797,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.</text>
 					</release-feature>
 					<release-feature>
-						<text>Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make then grow less aggresively while still giving reasonable wait times.</text>
+						<text>Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make them grow less aggressively while still giving reasonable wait times.</text>
 					</release-feature>
 					<release-feature>
 						<text>More options for regression tests and improved code to run in a variety of environments.</text>
