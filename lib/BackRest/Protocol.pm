@@ -112,7 +112,7 @@ sub new
             $self->{strCommand} = $strCommand;
 
             # Generate remote command
-            my $strCommandSSH = "ssh -o Compression=no ${strUser}\@${strHost} '" . $self->{strCommand} . "'";
+            my $strCommandSSH = "ssh -q -o Compression=no ${strUser}\@${strHost} '" . $self->{strCommand} . "'";
 
             &log(TRACE, 'connecting to remote ssh host ' . $self->{strHost});
 
@@ -182,17 +182,25 @@ sub greeting_read
 {
     my $self = shift;
 
-    # Make sure that the remote is running the right version
-    my $strLine = $self->read_line($self->{hOut});
+    # Get the first line of output from the remote if possible
+    my $strLine;
 
-    if ($strLine ne $self->{strGreeting})
+    eval
     {
-        kill 'KILL', $self->{pId};
-        waitpid($self->{pId}, 0);
+        $strLine = $self->read_line($self->{hOut});
+    };
 
-        undef($self->{pId});
+    # If the line could not be read or does equal the greeting then error and exit
+    if (!defined($strLine) || $strLine ne $self->{strGreeting})
+    {
+        if (defined($self->{pId}))
+        {
+            kill 'KILL', $self->{pId};
+            waitpid($self->{pId}, 0);
+            undef($self->{pId});
+        }
 
-        confess &log(ERROR, "protocol version mismatch: ${strLine}", ERROR_HOST_CONNECT);
+        confess &log(ERROR, 'protocol version mismatch' . (defined($strLine) ? ": ${strLine}" : ''), ERROR_HOST_CONNECT);
     }
 }
 
@@ -399,7 +407,7 @@ sub wait_pid
                     $self->{hOut} = undef;
                     $self->{hErr} = undef;
 
-                    confess &log(ERROR, "remote process terminated: ${strError}");
+                    confess &log(ERROR, "remote process terminated: ${strError}", ERROR_HOST_CONNECT);
                 }
 
                 return true;

@@ -1,7 +1,7 @@
 run 005 - rmt 1, cmp 0, exists 0
 ================================
 
-> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000001
 DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]
@@ -20,13 +20,13 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6969
+db-system-id=1234567890123456789
 db-version="9.3"
 
 [db:history]
-1={"db-id":6969,"db-version":"9.3"}
+1={"db-id":1234567890123456789,"db-version":"9.3"}
 
-> ../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
+> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000090000000900000009
 DEBUG:     Remote->new(): command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, host = 127.0.0.1, user = [USER-1]

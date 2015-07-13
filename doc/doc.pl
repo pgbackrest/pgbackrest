@@ -10,6 +10,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+$SIG{__DIE__} = sub { Carp::confess @_ };
+
 use File::Basename qw(dirname);
 use Pod::Usage qw(pod2usage);
 use Getopt::Long qw(GetOptions);
@@ -25,7 +27,7 @@ use BackRest::Config;
 
 =head1 NAME
 
-doc.pl - Generate PgBackRest documentation
+doc.pl - Generate pgBackRest documentation
 
 =head1 SYNOPSIS
 
@@ -57,7 +59,8 @@ my $oRenderTag =
         'setting' => ['`', '`'],
         'code' => ['`', '`'],
         'code-block' => ['```', '```'],
-        'backrest' => ['PgBackRest', ''],
+        'exe' => ['ERROR - EXE NOT SET', ''],
+        'backrest' => ['ERROR - TITLE NOT SET', ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -85,7 +88,7 @@ sub doc_render_tag
 
     $strBuffer .= $strStart;
 
-    if ($strTag eq 'li')
+    if ($strTag eq 'li' || $strTag eq 'code-block')
     {
         $strBuffer .= doc_render_text($oTag, $strType);
     }
@@ -241,7 +244,7 @@ sub doc_parse
 
     my %oOut;
     my $iIndex = 0;
-    my $bText = $strName eq 'text' || $strName eq 'li';
+    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'code-block';
 
     # Store the node name
     $oOut{name} = $strName;
@@ -434,7 +437,7 @@ sub doc_build
             my $oSub = $$oDoc{children}[$iIndex];
             my $strName = $$oSub{name};
 
-            if ($strName eq 'text')
+            if ($strName eq 'text' || $strName eq 'code-block')
             {
                 $$oOut{field}{text} = $oSub;
             }
@@ -634,6 +637,12 @@ sub doc_render
 
         if (defined($$oDoc{param}{title}))
         {
+            if ($iDepth == 1)
+            {
+                $$oRenderTag{'markdown'}{'backrest'}[0] = $$oDoc{param}{title};
+                $$oRenderTag{'markdown'}{'exe'}[0] = $$oDoc{param}{exe};
+            }
+
             $strBuffer = ('#' x $iDepth) . ' ';
 
             if (defined($$oDoc{param}{version}))
@@ -683,6 +692,13 @@ sub doc_render
             my $strAllow = $$oDoc{field}{allow};
             my $strOverride = $$oDoc{field}{override};
             my $strExample = $$oDoc{field}{example};
+
+            # !!! Temporary hack to make docs generate correctly.  This should be replaced with a search if the bin path to
+            # find the name of the current exe.
+            if ($$oDoc{param}{id} eq 'config')
+            {
+                $strDefault = '/etc/pg_backrest.conf';
+            }
 
             if (defined($strExample))
             {

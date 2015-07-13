@@ -513,7 +513,7 @@ sub recovery
         return;
     }
 
-    # Write the recovery options from pg_backrest.conf
+    # Write recovery options read from the configuration file
     my $strRecovery = '';
     my $bRestoreCommandOverride = false;
 

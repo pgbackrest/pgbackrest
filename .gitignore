@@ -2,3 +2,4 @@
 *~
 *.swp
 test/test
+test/vm/.vagrant

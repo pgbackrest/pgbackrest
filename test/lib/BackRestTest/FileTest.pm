@@ -57,7 +57,7 @@ sub BackRestTestFile_Setup
         # Create the backrest private directory
         if (defined($bPrivate) && $bPrivate)
         {
-            system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die 'unable to create test/private path';
+            system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die "unable to create ${strTestPath}/private path";
         }
     }
 }

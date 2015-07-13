@@ -595,7 +595,7 @@ sub backup
         my $strTimestampDbStart;
 
         ($strArchiveStart, $strTimestampDbStart) =
-            $oDb->backup_start('pg_backrest backup started ' . timestamp_string_get(undef, $lTimestampStart), $bStartFast);
+            $oDb->backup_start(BACKREST_EXE . ' backup started ' . timestamp_string_get(undef, $lTimestampStart), $bStartFast);
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");

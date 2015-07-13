@@ -53,11 +53,8 @@ sub BackRestTestBackup_PgConnect
     # Disconnect user session
     BackRestTestBackup_PgDisconnect();
 
-    # Default
-    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 20;
-
-    # Record the start time
-    my $lTime = time();
+    # Setup the wait loop
+    my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 30);
 
     do
     {
@@ -69,14 +66,8 @@ sub BackRestTestBackup_PgConnect
                             {AutoCommit => 0, RaiseError => 0, PrintError => 0});
 
         return if $hDb;
-
-        # If waiting then sleep before trying again
-        if (defined($iWaitSeconds))
-        {
-            hsleep(.1);
-        }
     }
-    while ($lTime > time() - $iWaitSeconds);
+    while (waitMore($oWait));
 
     confess &log(ERROR, "unable to connect to PostgreSQL after ${iWaitSeconds} second(s):\n" .
                  $DBI::errstr, ERROR_DB_CONNECT);
@@ -1257,6 +1248,9 @@ sub BackRestTestBackup_Restore
     if (!defined($iExpectedExitStatus) && (!defined($bCompare) || $bCompare))
     {
         BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $bSynthetic, $oExpectedManifestRef);
+        BackRestTestCommon_TestLogAppendFile(
+            $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_PATH}{&MANIFEST_KEY_BASE}{&MANIFEST_SUBKEY_PATH} .
+            "/recovery.conf");
     }
 }
 
@@ -1684,14 +1678,18 @@ sub BackRestTestBackup_Test
                             $strArchiveCheck .= '.gz';
                         }
 
-                        if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
-                        {
-                            hsleep(1);
+                        my $oWait = waitInit(5);
+                        my $bFound = false;
 
-                            if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
-                            {
-                                confess 'unable to find ' . $strArchiveCheck;
-                            }
+                        do
+                        {
+                            $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+                        }
+                        while (!$bFound && waitMore($oWait));
+
+                        if (!$bFound)
+                        {
+                            confess 'unable to find ' . $strArchiveCheck;
                         }
                     }
 
@@ -1917,7 +1915,7 @@ sub BackRestTestBackup_Test
                 }
 
                 BackRestTestCommon_Execute('mkdir -p -m 770 ' . $oFile->path_get(PATH_BACKUP_ARCHIVE), $bRemote);
-                (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check('9.3', 6969);
+                (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check('9.3', 1234567890123456789);
                 BackRestTestCommon_TestLogAppendFile($oFile->path_get(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
 
                 if ($bRemote)
@@ -2059,10 +2057,7 @@ sub BackRestTestBackup_Test
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!BackRestTestCommon_Run(++$iRun,
-                                    "local",
-                                    $iThreadMax == 1 ? $strModule : undef,
-                                    $iThreadMax == 1 ? $strThisTest: undef,
-                                    false)) {next}
+                                    "local")) {next}
 
         # Append backup.info to create a baseline
         BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .

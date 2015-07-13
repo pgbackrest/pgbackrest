@@ -56,6 +56,7 @@ test.pl [options]
    --log-force          force overwrite of current test log files
 
  Configuration Options:
+   --exe                backup executable
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
    --test-path          path where tests are executed (defaults to ./test)
    --log-level          log level to use for tests (defaults to INFO)
@@ -77,6 +78,7 @@ my $iThreadMax = 1;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
+my $strExe;
 my $strTestPath;
 my $bVersion = false;
 my $bHelp = false;
@@ -89,6 +91,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
             'help' => \$bHelp,
             'pgsql-bin=s' => \$strPgSqlBin,
+            'exes=s' => \$strExe,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'module=s' => \$strModule,
@@ -123,10 +126,10 @@ if (@ARGV > 0)
 }
 
 # Must be run from the test path so relative paths to bin can be tested
-if ($0 ne './test.pl')
-{
-    confess 'test.pl must be run from the test path';
-}
+# if ($0 ne './test.pl')
+# {
+#     confess 'test.pl must be run from the test path';
+# }
 
 ####################################################################################################################################
 # Setup
@@ -251,7 +254,8 @@ eval
 {
     do
     {
-        if (BackRestTestCommon_Setup($strTestPath, $stryTestVersion[0], $iModuleTestRun, $bDryRun, $bNoCleanup, $bLogForce))
+        if (BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[0], $iModuleTestRun,
+                                     $bDryRun, $bNoCleanup, $bLogForce))
         {
             &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
 
@@ -284,7 +288,7 @@ eval
                 {
                     for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
                     {
-                        BackRestTestCommon_Setup($strTestPath, $stryTestVersion[$iVersionIdx],
+                        BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[$iVersionIdx],
                                                  $iModuleTestRun, $bDryRun, $bNoCleanup);
                         &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
                         BackRestTestBackup_Test('full', $iThreadMax);

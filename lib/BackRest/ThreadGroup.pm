@@ -203,7 +203,14 @@ sub threadMessageExpect
     if (defined($iTimeout))
     {
         &log(TRACE, "waiting for '${strExpected}' message from ${strContext}");
-        $strMessage = $oQueue->dequeue_timed($iTimeout);
+
+        my $oWait = waitInit($iTimeout);
+
+        do
+        {
+            $strMessage = $oQueue->dequeue_nb();
+        }
+        while (!defined($strMessage) && waitMore($oWait));
     }
     else
     {

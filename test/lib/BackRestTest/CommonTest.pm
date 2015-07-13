@@ -11,7 +11,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Cwd 'abs_path';
+use Cwd qw(abs_path cwd);
 use Exporter qw(import);
 use File::Basename;
 use File::Copy qw(move);
@@ -48,6 +48,7 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
 my $strPgSqlBin;
 my $strCommonStanza;
 my $strCommonCommandMain;
+my $bCommandMainSet = false;
 my $strCommonCommandRemote;
 my $strCommonCommandRemoteFull;
 my $strCommonCommandPsql;
@@ -122,7 +123,6 @@ sub BackRestTestCommon_DropRepo
         hsleep(.1);
     }
 }
-
 
 ####################################################################################################################################
 # BackRestTestCommon_CreateRepo
@@ -444,6 +444,7 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', '^db-user=.+$', '[^=]+$');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', '--port=[0-9]+', '[0-9]+$');
 
@@ -457,6 +458,10 @@ sub BackRestTestCommon_ExecuteRegAll
         "start\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP',
         "stop\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'SIZE',
+        "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'DELTA',
+        "delta\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP-STR', "est backup timestamp: $strTimestampRegExp",
                                                 "${strTimestampRegExp}\$", false);
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
@@ -737,6 +742,7 @@ sub BackRestTestCommon_FileRemove
 ####################################################################################################################################
 sub BackRestTestCommon_Setup
 {
+    my $strExe = shift;
     my $strTestPathParam = shift;
     my $strPgSqlBinParam = shift;
     my $iModuleTestRunOnlyParam = shift;
@@ -760,7 +766,7 @@ sub BackRestTestCommon_Setup
     }
     else
     {
-        $strCommonTestPath = "${strCommonBasePath}/test/test";
+        $strCommonTestPath = cwd() . "/test";
     }
 
     $strCommonDataPath = "${strCommonBasePath}/test/data";
@@ -770,8 +776,9 @@ sub BackRestTestCommon_Setup
     $strCommonDbCommonPath = "${strCommonTestPath}/db/common";
     $strCommonDbTablespacePath = "${strCommonTestPath}/db/tablespace";
 
-    $strCommonCommandMain = "../bin/pg_backrest";
-    $strCommonCommandRemote = "${strCommonBasePath}/bin/pg_backrest";
+    $strCommonCommandMain = defined($strExe) ? $strExe : $strCommonBasePath . "/bin/../bin/pg_backrest";
+    $bCommandMainSet = defined($strExe) ? true : false;
+    $strCommonCommandRemote = defined($strExe) ? $strExe : "${strCommonBasePath}/bin/pg_backrest";
     $strCommonCommandRemoteFull = "${strCommonCommandRemote} --stanza=${strCommonStanza}" .
                                   " --repo-remote-path=${strCommonRepoPath} --no-config remote";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
@@ -1188,7 +1195,12 @@ sub BackRestTestCommon_CommandMainGet
 
 sub BackRestTestCommon_CommandMainAbsGet
 {
-    return abs_path($strCommonCommandMain);
+    if ($bCommandMainSet)
+    {
+        return BackRestTestCommon_CommandMainGet()
+    }
+
+    return abs_path(BackRestTestCommon_CommandMainGet());
 }
 
 sub BackRestTestCommon_CommandRemoteGet
