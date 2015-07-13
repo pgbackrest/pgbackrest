@@ -53,11 +53,8 @@ sub BackRestTestBackup_PgConnect
     # Disconnect user session
     BackRestTestBackup_PgDisconnect();
 
-    # Default
-    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 30;
-
-    # Record the start time
-    my $lTime = time();
+    # Setup the wait loop
+    my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 30);
 
     do
     {
@@ -69,14 +66,8 @@ sub BackRestTestBackup_PgConnect
                             {AutoCommit => 0, RaiseError => 0, PrintError => 0});
 
         return if $hDb;
-
-        # If waiting then sleep before trying again
-        if (defined($iWaitSeconds))
-        {
-            hsleep(.1);
-        }
     }
-    while ($lTime > time() - $iWaitSeconds);
+    while (waitMore($oWait));
 
     confess &log(ERROR, "unable to connect to PostgreSQL after ${iWaitSeconds} second(s):\n" .
                  $DBI::errstr, ERROR_DB_CONNECT);
@@ -1687,14 +1678,18 @@ sub BackRestTestBackup_Test
                             $strArchiveCheck .= '.gz';
                         }
 
-                        if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
-                        {
-                            hsleep(1);
+                        my $oWait = waitInit(5);
+                        my $bFound = false;
 
-                            if (!$oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck))
-                            {
-                                confess 'unable to find ' . $strArchiveCheck;
-                            }
+                        do
+                        {
+                            $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+                        }
+                        while (!$bFound && waitMore($oWait));
+
+                        if (!$bFound)
+                        {
+                            confess 'unable to find ' . $strArchiveCheck;
                         }
                     }
 

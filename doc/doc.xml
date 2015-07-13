@@ -788,6 +788,23 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				</release-feature-bullet-list>
 			</release-version>
 
+			<release-version version="0.78" title="Remove CPAN dependencies, stability improvements">
+				<release-feature-bullet-list>
+					<release-feature>
+						<text>Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.</text>
+					</release-feature>
+					<release-feature>
+						<text>Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.</text>
+					</release-feature>
+					<release-feature>
+						<text>Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make then grow less aggresively while still giving reasonable wait times.</text>
+					</release-feature>
+					<release-feature>
+						<text>More options for regression tests and improved code to run in a variety of environments.</text>
+					</release-feature>
+				</release-feature-bullet-list>
+			</release-version>
+
 			<release-version version="0.77" title="CentOS/RHEL 6 support and protocol improvements">
 				<release-feature-bullet-list>
 					<release-feature>

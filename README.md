@@ -829,6 +829,16 @@ Get information about backups in the `db` stanza.
 
 * 
 
+### v0.78: Remove CPAN dependencies, stability improvements
+
+* Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.
+
+* Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.
+
+* Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make then grow less aggresively while still giving reasonable wait times.
+
+* More options for regression tests and improved code to run in a variety of environments.
+
 ### v0.77: CentOS/RHEL 6 support and protocol improvements
 
 * Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.
