@@ -72,5 +72,5 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   # Mount backrest path for testing
-  config.vm.synced_folder "../..", "/backrest", :mount_options => ["ro"]
+  config.vm.synced_folder "../..", "/backrest"
 end
