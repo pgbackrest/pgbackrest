@@ -783,7 +783,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.80" title="DALLAS MILESTONE - UNDER DEVELOPMENT">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text></text>
+						<text>Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by <postgres/>.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

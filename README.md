@@ -827,7 +827,7 @@ Get information about backups in the `db` stanza.
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
-* 
+* Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
 
 ### v0.78: Remove CPAN dependencies, stability improvements
 
@@ -835,7 +835,7 @@ Get information about backups in the `db` stanza.
 
 * Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.
 
-* Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make then grow less aggresively while still giving reasonable wait times.
+* Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make them grow less aggressively while still giving reasonable wait times.
 
 * More options for regression tests and improved code to run in a variety of environments.
 

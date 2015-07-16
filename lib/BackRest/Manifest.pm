@@ -34,6 +34,8 @@ use constant FILE_MANIFEST                                          => 'backup.m
     push @EXPORT, qw(FILE_MANIFEST);
 use constant PATH_PG_TBLSPC                                         => 'pg_tblspc';
     push @EXPORT, qw(PATH_PG_TBLSPC);
+use constant FILE_PG_CONTROL                                        => 'global/pg_control';
+    push @EXPORT, qw(FILE_PG_CONTROL);
 
 ####################################################################################################################################
 # MANIFEST Constants

@@ -54,7 +54,8 @@ sub BackRestTestBackup_PgConnect
     BackRestTestBackup_PgDisconnect();
 
     # Setup the wait loop
-    my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 30);
+    $iWaitSeconds = defined($iWaitSeconds) ? $iWaitSeconds : 30;
+    my $oWait = waitInit($iWaitSeconds);
 
     do
     {
