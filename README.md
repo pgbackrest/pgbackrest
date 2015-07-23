@@ -339,6 +339,17 @@ allow: 0-9
 example: compress-level-network=1
 ```
 
+##### `neutral-umask` key
+
+Sets the umask to 0000 so modes in the repository as created in a sensible way.  The default directory mode is 0750 and default file mode is 0640.  The lock and log directories set the directory and file mode to 0770 and 0660 respectively.
+
+To use the executing user's umask instead specify `neutral-umask=n` in the config file or `--no-neutral-umask` on the command line.
+```
+required: n
+default: y
+example: neutral-umask=n
+```
+
 ##### `repo-path` key
 
 Path to the backrest repository where WAL segments, backups, logs, etc are stored.
@@ -828,6 +839,8 @@ Get information about backups in the `db` stanza.
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
 * Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
+
+* The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the `neutral-umask` setting
 
 ### v0.78: Remove CPAN dependencies, stability improvements
 

@@ -333,6 +333,15 @@
 						<example>1</example>
 					</config-key>
 
+					<!-- CONFIG - GENERAL SECTION - NEUTRAL-UMASK -->
+					<config-key id="neutral-umask">
+						<text>Sets the umask to 0000 so modes in the repository as created in a sensible way.  The default directory mode is 0750 and default file mode is 0640.  The lock and log directories set the directory and file mode to 0770 and 0660 respectively.
+
+						To use the executing user's umask instead specify <setting>neutral-umask=n</setting> in the config file or <setting>--no-neutral-umask</setting> on the command line.</text>
+
+						<example>n</example>
+					</config-key>
+
 					<!-- CONFIG - GENERAL SECTION - REPO-PATH KEY -->
 					<config-key id="repo-path">
 						<text>Path to the backrest repository where WAL segments, backups, logs, etc are stored.</text>
@@ -784,6 +793,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 				<release-feature-bullet-list>
 					<release-feature>
 						<text>Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by <postgres/>.</text>
+					</release-feature>
+					<release-feature>
+						<text>The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the <setting>neutral-umask</setting> setting</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>

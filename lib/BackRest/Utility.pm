@@ -278,7 +278,8 @@ sub log_file_set
 
     unless (-e dirname($strFile))
     {
-        mkdir(dirname($strFile)) or die "unable to create directory for log file ${strFile}";
+        mkdir(dirname($strFile), oct('0770'))
+            or die "unable to create directory for log file ${strFile}";
     }
 
     $strFile .= '-' . timestamp_string_get('%4d%02d%02d') . '.log';
@@ -289,7 +290,8 @@ sub log_file_set
         $bExists = true;
     }
 
-    open($hLogFile, '>>', $strFile) or confess "unable to open log file ${strFile}";
+    sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT, 0660)
+        or confess &log(ERROR, "unable to open log file ${strFile}", ERROR_FILE_OPEN);
 
     if ($bExists)
     {

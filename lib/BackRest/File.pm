@@ -601,10 +601,11 @@ sub path_create
 
     # Set operation variables
     my $strPathOp = $self->path_get($strPathType, $strPath);
+    $strMode = defined($strMode) ? $strMode : '0750';
 
     # Set operation and debug strings
     my $strOperation = OP_FILE_PATH_CREATE;
-    my $strDebug = "${strPathType}:${strPathOp}, mode " . (defined($strMode) ? $strMode : '[undef]');
+    my $strDebug = "${strPathType}:${strPathOp}, mode ${strMode}";
     &log(DEBUG, "${strOperation}: ${strDebug}");
 
     if ($self->is_remote($strPathType))
@@ -1351,6 +1352,7 @@ sub copy
     $bIgnoreMissingSource = defined($bIgnoreMissingSource) ? $bIgnoreMissingSource : false;
     $bDestinationPathCreate = defined($bDestinationPathCreate) ? $bDestinationPathCreate : false;
     $bAppendChecksum = defined($bAppendChecksum) ? $bAppendChecksum : false;
+    $strMode = defined($strMode) ? $strMode : '0640';
 
     # Set working variables
     my $bSourceRemote = $self->is_remote($strSourcePathType) || $strSourcePathType eq PIPE_STDIN;
