@@ -136,7 +136,7 @@ sub info
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
-        syswrite(*STDOUT, $oJSON->encode($oStanzaList) . "\n");
+        syswrite(*STDOUT, $oJSON->encode($oStanzaList));
     }
     else
     {

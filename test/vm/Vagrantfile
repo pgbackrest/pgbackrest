@@ -29,7 +29,7 @@ Vagrant.configure(2) do |config|
             apt-get install -y libdbd-pg-perl
 
             # Install packages required for building the docs
-            apt-get install libxml-checker-perl
+            apt-get install -y libxml-checker-perl
 
             # Run the actual test
             # /backrest/test/test.pl --db-version=all --thread-max=4
