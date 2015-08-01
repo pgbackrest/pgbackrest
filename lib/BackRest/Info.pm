@@ -136,7 +136,16 @@ sub info
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
-        syswrite(*STDOUT, $oJSON->encode($oStanzaList));
+        my $strJSON = $oJSON->encode($oStanzaList);
+
+        syswrite(*STDOUT, $strJSON);
+
+        # On some systems a linefeed will be appended by encode() but others will not have it.  In our case there should always
+        # be a terminating linefeed.
+        if ($strJSON !~ /\n$/)
+        {
+            syswrite(*STDOUT, "\n");
+        }
     }
     else
     {
