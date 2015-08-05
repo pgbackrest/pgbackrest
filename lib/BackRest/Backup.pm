@@ -46,8 +46,8 @@ my $iThreadTimeout;
 ####################################################################################################################################
 sub backup_init
 {
-    my $oDbParam = shift;
     my $oFileParam = shift;
+    my $oDbParam = shift;
     my $strTypeParam = shift;
     my $bCompressParam = shift;
     my $bHardLinkParam = shift;
@@ -56,8 +56,8 @@ sub backup_init
     my $bNoStartStopParam = shift;
     my $bForceParam = shift;
 
-    $oDb = $oDbParam;
     $oFile = $oFileParam;
+    $oDb = $oDbParam;
     $strType = $strTypeParam;
     $bCompress = $bCompressParam;
     $bHardLink = $bHardLinkParam;

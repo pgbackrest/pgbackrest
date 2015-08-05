@@ -52,20 +52,14 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-# psql command and options
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 # general settings for all operations
 [global:general]
@@ -268,20 +262,14 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-# psql command and options
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 # general settings for all operations
 [global:general]
@@ -545,20 +533,14 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-# psql command and options
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 # general settings for all operations
 [global:general]
@@ -731,20 +713,14 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-# psql command and options
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 # general settings for all operations
 [global:general]
@@ -921,20 +897,14 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-# psql command and options
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 # general settings for all operations
 [global:general]
@@ -1112,20 +1082,14 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-# psql command and options
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 # general settings for all operations
 [global:general]
@@ -1415,9 +1379,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1427,9 +1390,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest
@@ -1594,9 +1554,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1606,9 +1565,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest
@@ -1777,9 +1733,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1789,9 +1744,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest
@@ -1959,9 +1911,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1971,9 +1922,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest
@@ -2142,9 +2090,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2154,9 +2101,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest
@@ -2323,9 +2267,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2335,9 +2278,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest
@@ -2510,9 +2450,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2522,9 +2461,6 @@ cmd-psql-option=--port=[PORT-1]
 archive-copy=y
 hardlink=y
 start-fast=y
-
-[global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 
 [global:general]
 repo-path=[TEST_PATH]/backrest

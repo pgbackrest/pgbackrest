@@ -4,8 +4,8 @@ run 005 - rmt 1, cmp 0, hardlink 0
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -54,15 +54,16 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 backup-host=127.0.0.1
 backup-user=backrest
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -82,20 +83,17 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 # backup settings
 [global:backup]
 archive-copy=y
 start-fast=y
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -179,8 +177,8 @@ db-version="9.3"
 info db
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Info->listStanza: stanza = db
 stanza db
    status: ok
@@ -193,8 +191,8 @@ DEBUG:     safe exit called, terminating threads
 info db
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Info->listStanza: stanza = db
 [
    {
@@ -248,8 +246,8 @@ DEBUG:     safe exit called, terminating threads
 full backup (resume)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -298,15 +296,16 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 backup-host=127.0.0.1
 backup-user=backrest
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -326,20 +325,17 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 # backup settings
 [global:backup]
 archive-copy=y
 start-fast=y
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -424,8 +420,8 @@ db-version="9.3"
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: restore backup set [BACKUP-FULL-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-FULL-2]
@@ -477,8 +473,8 @@ restore_command = '[BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_ba
 incr backup (invalid database version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -496,8 +492,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid system id)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -515,8 +511,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid control version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -534,8 +530,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (invalid catalog version)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -553,8 +549,8 @@ DEBUG:     safe exit called, terminating threads
 incr backup (add tablespace 1)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -606,15 +602,16 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 backup-host=127.0.0.1
 backup-user=backrest
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -634,20 +631,17 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 # backup settings
 [global:backup]
 archive-copy=y
 start-fast=y
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -744,8 +738,8 @@ db-version="9.3"
 incr backup (resume and add tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -804,15 +798,16 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 backup-host=127.0.0.1
 backup-user=backrest
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -832,20 +827,17 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 # backup settings
 [global:backup]
 archive-copy=y
 start-fast=y
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -951,8 +943,8 @@ db-version="9.3"
 diff backup (cannot resume - new diff)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -1013,15 +1005,16 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 backup-host=127.0.0.1
 backup-user=backrest
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -1041,20 +1034,17 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 # backup settings
 [global:backup]
 archive-copy=y
 start-fast=y
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -1161,8 +1151,8 @@ db-version="9.3"
 diff backup (cannot resume - disabled)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -1223,15 +1213,16 @@ DEBUG:     safe exit called, terminating threads
 # cluster-specific settings
 [db]
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 # backup settings
 [global:backup]
 backup-host=127.0.0.1
 backup-user=backrest
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -1251,20 +1242,17 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-# cluster-specific command options
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 # backup settings
 [global:backup]
 archive-copy=y
 start-fast=y
 
-# psql command and options
+# backrest command
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 # general settings for all operations
@@ -1372,8 +1360,8 @@ db-version="9.3"
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 (fail on used path)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: restore backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1390,8 +1378,8 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: restore backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1403,8 +1391,8 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
  INFO: restore backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1416,8 +1404,8 @@ DEBUG:     safe exit called, terminating threads
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: restore backup set [BACKUP-DIFF-2]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-2]
@@ -1499,8 +1487,8 @@ restore_command = '[BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_ba
 incr backup (add files and remove tablespace 2)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -1553,6 +1541,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1563,7 +1553,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -1580,17 +1569,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -1692,8 +1679,8 @@ db-version="9.3"
 incr backup (update files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -1742,6 +1729,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1752,7 +1741,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -1769,17 +1757,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -1883,8 +1869,8 @@ db-version="9.3"
 diff backup (no updates)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -1945,6 +1931,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -1955,7 +1943,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -1972,17 +1959,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2088,8 +2073,8 @@ db-version="9.3"
 incr backup (remove files - but won't affect manifest)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = incr
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -2133,6 +2118,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2143,7 +2130,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2160,17 +2146,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2278,8 +2262,8 @@ db-version="9.3"
 diff backup (remove files during backup)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1 remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -2334,6 +2318,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2344,7 +2330,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2361,17 +2346,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2479,8 +2462,8 @@ db-version="9.3"
 full backup
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = full
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -2542,6 +2525,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2552,7 +2537,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2569,17 +2553,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2689,8 +2671,8 @@ db-version="9.3"
 diff backup (add files)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X --port=[PORT-1] -h [TEST_PATH]/db" --cmd-psql-option=--port=[PORT-1] --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: backup start: type = diff
 DEBUG:     cluster path is [TEST_PATH]/db/common-2
 DEBUG:     File->path_create: backup:cluster:[TEST_PATH]/backrest/backup/db, mode 0750
@@ -2739,6 +2721,8 @@ DEBUG:     safe exit called, terminating threads
 ----------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 
 [db:restore:tablespace-map]
 1=[TEST_PATH]/db/tablespace/ts1-2
@@ -2749,7 +2733,6 @@ backup-host=127.0.0.1
 backup-user=backrest
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2766,17 +2749,15 @@ log-level-file=trace
 [db]
 db-host=127.0.0.1
 db-path=[TEST_PATH]/db/common-2
+db-port=[PORT-1]
+db-socket-path=[TEST_PATH]/db
 db-user=[USER-1]
-
-[db:command]
-cmd-psql-option=--port=[PORT-1]
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 [global:command]
-cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db
 cmd-remote=[BACKREST_BIN_PATH]/pg_backrest
 
 [global:general]
@@ -2890,8 +2871,8 @@ db-version="9.3"
 restore delta, backup '[BACKUP-DIFF-5]' (no tablespace remap)
 > [BACKREST_BIN_PATH]/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-DIFF-5] --no-tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
  INFO: restore backup set [BACKUP-DIFF-5]
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db/[BACKUP-DIFF-5]
@@ -2955,8 +2936,8 @@ DEBUG:     safe exit called, terminating threads
 info
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Info->listStanza
 stanza db
    status: ok
@@ -2972,8 +2953,8 @@ DEBUG:     safe exit called, terminating threads
 info
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Info->listStanza
 [
    {
@@ -3286,8 +3267,8 @@ DEBUG:     safe exit called, terminating threads
 info bogus
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Info->listStanza: stanza = bogus
 stanza bogus
    status: error (missing stanza path)
@@ -3296,8 +3277,8 @@ DEBUG:     safe exit called, terminating threads
 info bogus
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config "--cmd-psql=[PGSQL_BIN_PATH]/psql -X %option% -h [TEST_PATH]/db" --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Info->listStanza: stanza = bogus
 [
    {

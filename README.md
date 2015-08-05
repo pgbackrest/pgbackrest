@@ -26,34 +26,11 @@ pgBackRest uses the gitflow model of development.  This means that the master br
 
 ## Install
 
-pgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.  All examples below are for PostgreSQL 9.3 but should be easily adaptable to any recent version.
+pgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.
 
-### Ubuntu 12.04 Setup
+### Ubuntu 12.04/14.04 Setup
 
-* Starting from a clean install, update the OS:
-```
-apt-get update
-apt-get upgrade (reboot if required)
-```
-* Install ssh, git and cpanminus:
-```
-apt-get install ssh
-apt-get install git
-```
-* Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
-
-Create the file /etc/apt/sources.list.d/pgdg.list, and add a line for the repository:
-```
-deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main
-```
-* Then run the following:
-```
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt-get update
-
-apt-get install postgresql-9.3
-```
-* Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
+* Install required Perl modules:
 ```
 apt-get install libdbd-pg-perl
 ```
@@ -62,35 +39,7 @@ apt-get install libdbd-pg-perl
 
 * Install Perl and required modules:
 ```
-yum install perl
-yum install perl-Time-HiRes
-yum install perl-Compress-Raw-Zlib
-yum install perl-IO-String
-yum install perl-parent
-yum install perl-JSON
-yum install perl-Digest-SHA
-```
-* Install the versions of PostgreSQL that you want to test:
-
-Install package definitions (for each version you need):
-```
-sudo rpm -ivh http://yum.postgresql.org/8.4/redhat/rhel-6-x86_64/pgdg-centos-8.4-3.noarch.rpm
-sudo rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm
-sudo rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm
-sudo rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm
-sudo rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
-sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
-```
-
-Install packages (for each version you need):
-```
-yum install postgresqlXX-server
-```
-CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.
-
-* Install PostgreSQL development libraries and additional Perl modules for regression tests (optional):
-```
-yum install perl-DBD-Pg
+yum install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 ```
 
 ### Software Installation
@@ -123,7 +72,7 @@ chmod 750 ~
 
 Running the full regression suite is generally not necessary.  Run the following first:
 ```
-./test.pl --module=backup --module-test=full --db-version=all --thread-max=<# threads>
+./test.pl --module=backup --test=full --db-version=all --thread-max=<# threads>
 ```
 This will run full backup/restore regression with a variety of options on all installed versions of PostgreSQL.  If you are only interested in one version then modify the `db-version` setting to X.X (e.g. 9.4).  `--thread-max` can be omitted if you are running single-threaded.
 
@@ -166,8 +115,7 @@ The `db-path` option could also be provided on the command line, but it's best t
 
 This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.  A number of additional options are set:
 
-- `cmd-psql` - Custom location and parameters for psql.
-- `cmd-psql-option` - Options for psql can be set per stanza.
+- `db-port` - Custom port for PostgreSQL.
 - `compress` - Disable compression (handy if the file system is already compressed).
 - `repo-path` - Path to the pgBackRest repository where backups and WAL archive are stored.
 - `log-level-file` - Set the file log level to debug (Lots of extra info if something is not working as expected).
@@ -176,9 +124,6 @@ This configuration is appropriate for a small installation where backups are bei
 
 `/etc/pg_backrest.conf`:
 ```
-[global:command]
-cmd-psql=/usr/local/bin/psql -X %option%
-
 [global:general]
 compress=n
 repo-path=/path/to/db/repo
@@ -192,9 +137,7 @@ thread-max=2
 
 [main]
 db-path=/data/db
-
-[main:command]
-cmd-psql-option=--port=5433
+db-port=5555
 ```
 
 
@@ -235,25 +178,6 @@ db-user=postgres
 #### `command` section
 
 The `command` section defines the location of external commands that are used by pgBackRest.
-
-##### `cmd-psql` key
-
-Defines the full path to `psql`.  `psql` is used to call `pg_start_backup()` and `pg_stop_backup()`.
-
-If additional per stanza parameters need to be passed to `psql` (such as `--port` or `--cluster`) then add `%option%` to the command line and use `command-option::psql` to set options.
-```
-required: n
-default: /usr/bin/psql -X
-example: cmd-psql=/usr/bin/psql -X %option%
-```
-
-##### `cmd-psql-option` key
-
-Allows per stanza command line parameters to be passed to `psql`.
-```
-required: n
-example: cmd-psql-option --port=5433
-```
 
 ##### `cmd-remote` key
 
@@ -561,10 +485,11 @@ example: db-host=db.domain.com
 
 ##### `db-user` key
 
-Defines user account on the db host when `db-host` is defined.
+Defines the logon user when `db-host` is defined.  This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL.  For this to work correctly the user should be the PostgreSQL cluster owner which is generally `postgres`, the default.
 ```
 required: n
-example: db-user=postgres
+default: postgres
+example: db-user=test_user
 ```
 
 ##### `db-path` key
@@ -573,6 +498,23 @@ Path to the db data directory (data_directory setting in postgresql.conf).
 ```
 required: y
 example: db-path=/data/db
+```
+
+##### `db-port` key
+
+Port that PostgreSQL is running on.  This usually does not need to be specified as most clusters run on the default port.
+```
+required: n
+default: 5432
+example: db-port=6543
+```
+
+##### `db-socket-path` key
+
+The unix socket directory that was specified when PostgreSQL was started.  pgBackRest will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicily modified with the `unix_socket_directory` setting in `postgressql.conf`.
+```
+required: n
+example: db-socket-path=/var/run/postgresql
 ```
 
 ## Operation

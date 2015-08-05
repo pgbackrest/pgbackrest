@@ -10,7 +10,6 @@ use Carp qw(confess);
 use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
 use IO::String qw();
-#use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Config;

@@ -524,23 +524,10 @@ sub BackRestTestConfig_Test
             }
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_COMMAND_PSQL))
-        {
-            optionSetTest($oOption, OPTION_STANZA, $strStanza);
-            optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_COMMAND_PSQL, '/psql -X %option%');
-            optionSetTest($oOption, OPTION_COMMAND_PSQL_OPTION, '--port 5432');
-
-            configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_COMMAND_PSQL, '/psql -X --port 5432');
-        }
-
         if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' default value ' . OPTION_COMMAND_REMOTE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_COMMAND_PSQL, '/psql -X %option%');
-            optionSetTest($oOption, OPTION_COMMAND_PSQL_OPTION, '--port 5432');
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_COMMAND_REMOTE, abs_path($0));
@@ -823,21 +810,6 @@ sub BackRestTestConfig_Test
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_REPO_PATH, '/repo');
-        }
-
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_COMMAND_PSQL))
-        {
-            $oConfig = {};
-            $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_COMMAND}{&OPTION_COMMAND_PSQL} = '/psql -X %option%';
-            $$oConfig{&CONFIG_GLOBAL . ':' . &CONFIG_SECTION_COMMAND}{&OPTION_COMMAND_PSQL_OPTION} = '--port=5432';
-            iniSave($strConfigFile, $oConfig, true);
-
-            optionSetTest($oOption, OPTION_STANZA, $strStanza);
-            optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
-
-            configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_COMMAND_PSQL, '/psql -X --port=5432');
         }
 
         # Cleanup

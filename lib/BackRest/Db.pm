@@ -7,6 +7,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use DBI;
 use Exporter qw(import);
 use Fcntl qw(O_RDONLY);
 use File::Basename qw(dirname);
@@ -15,7 +16,6 @@ use lib dirname($0);
 use BackRest::Config;
 use BackRest::Exception;
 use BackRest::File;
-use BackRest::Open3;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -23,8 +23,10 @@ use BackRest::Utility;
 ####################################################################################################################################
 use constant OP_DB                                                  => 'Db';
 
+use constant OP_DB_NEW                                              => OP_DB . "->new";
+    our @EXPORT = qw(OP_DB_NEW);
 use constant OP_DB_INFO                                             => OP_DB . "->info";
-    our @EXPORT = qw(OP_DB_INFO);
+    push @EXPORT, qw(OP_DB_INFO);
 use constant OP_DB_EXECUTE_SQL                                      => OP_DB . "->executeSql";
     push @EXPORT, qw(OP_DB_EXECUTE_SQL);
 use constant OP_DB_VERSION_GET                                      => OP_DB . "->versionGet";
@@ -47,6 +49,20 @@ sub new
     bless $self, $class;
 
     return $self;
+}
+
+####################################################################################################################################
+# DESTRUCTOR
+####################################################################################################################################
+sub DESTROY
+{
+    my $self = shift;
+
+    if (defined($self->{hDb}))
+    {
+        $self->{hDb}->disconnect();
+        undef($self->{hDb});
+    }
 }
 
 ####################################################################################################################################
@@ -74,7 +90,6 @@ sub executeSql
     logDebug(OP_DB_EXECUTE_SQL, DEBUG_CALL, undef, {isRemote => optionRemoteTypeTest(DB), script => \$strScript});
 
     # Get the user-defined command for psql
-    my $strCommand = optionGet(OPTION_COMMAND_PSQL) . " -c \"${strScript}\" postgres";
     my $strResult;
 
     # Run remotely
@@ -91,8 +106,49 @@ sub executeSql
     # Else run locally
     else
     {
-        $strResult = (new BackRest::Open3($strCommand))->capture();
+        if (!defined($self->{hDb}))
+        {
+            # Connect to the db
+            my $strDbName = 'postgres';
+            my $strDbUser = getpwuid($<);
+            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(OPTION_DB_PORT) .
+                           (optionTest(OPTION_DB_SOCKET_PATH) ? ';host=' . optionGet(OPTION_DB_SOCKET_PATH) : '');
+
+            logDebug(OP_DB_EXECUTE_SQL, DEBUG_MISC, 'db connect', {strDbUri => $strDbUri, strDbUser => $strDbUser});
+
+            $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef, {AutoCommit => 1, RaiseError => 0, PrintError => 0});
+
+            if (!$self->{hDb})
+            {
+                confess &log(ERROR, $DBI::errstr, ERROR_DB_CONNECT);
+            }
+        }
+
+        # Execute the query
+        my $hStatement = $self->{hDb}->prepare($strScript)
+            or confess &log(ERROR, $DBI::errstr, ERROR_DB_QUERY);
+
+        $hStatement->execute() or
+            confess &log(ERROR, $DBI::errstr . ":\n${strScript}", ERROR_DB_QUERY);
+
+        # Get rows and return them
+        my @stryArray;
+
+        do
+        {
+            @stryArray = $hStatement->fetchrow_array;
+
+            if (!@stryArray && $hStatement->err)
+            {
+                confess &log(ERROR, $DBI::errstr . ":\n${strScript}", ERROR_DB_QUERY);
+            }
+
+            $strResult = (defined($strResult) ? "${strResult}\n" : '') . join("\t", @stryArray);
+        }
+        while (@stryArray);
     }
+
+    logDebug(OP_DB_EXECUTE_SQL, DEBUG_RESULT, undef, {strResult => $strResult});
 
     return $strResult;
 }
@@ -107,7 +163,7 @@ sub tablespace_map_get
     my $oHashRef = {};
 
     data_hash_build($oHashRef, "oid\tname\n" . $self->executeSql(
-                    'copy (select oid, spcname from pg_tablespace) to stdout'), "\t");
+                    'select oid, spcname from pg_tablespace'), "\t");
 
     return $oHashRef;
 }
@@ -254,7 +310,7 @@ sub versionGet
     }
 
     $self->{fVersion} =
-        trim($self->executeSql("copy (select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]) to stdout"));
+        trim($self->executeSql("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]"));
 
     my $strVersionSupport = versionSupport();
 
@@ -289,10 +345,10 @@ sub backup_start
     &log(INFO, "executing pg_start_backup() with label \"${strLabel}\": backup will begin after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-    my @stryField = split("\t", trim($self->executeSql("set client_min_messages = 'warning';" .
-                                    "copy (select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), " .
-                                    "pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
-                                    ($bStartFast ? ', true' : '') . ') as xlog) to stdout')));
+    my @stryField = split("\t", trim(
+        $self->executeSql("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), " .
+                          "pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
+                          ($bStartFast ? ', true' : '') . ') as xlog')));
 
     return $stryField[1], $stryField[0];
 }
@@ -306,9 +362,9 @@ sub backup_stop
 
     &log(INFO, 'executing pg_stop_backup() and waiting for all WAL segments to be archived');
 
-    my @stryField = split("\t", trim($self->executeSql("set client_min_messages = 'warning';" .
-                          "copy (select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ')," .
-                          " pg_xlogfile_name(xlog) from pg_stop_backup() as xlog) to stdout")));
+    my @stryField = split("\t",
+        trim($self->executeSql("select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ')," .
+                               " pg_xlogfile_name(xlog) from pg_stop_backup() as xlog")));
 
     return $stryField[1], $stryField[0];
 }

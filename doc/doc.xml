@@ -28,34 +28,11 @@
 	</intro>
 
 	<install title="Install">
-		<text><backrest/> is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.  All examples below are for <postgres/> 9.3 but should be easily adaptable to any recent version.</text>
+		<text><backrest/> is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.</text>
 
 		<install-system-list>
-			<install-system title="Ubuntu 12.04 Setup">
-				<text>* Starting from a clean install, update the OS:
-					<code-block>
-						apt-get update
-						apt-get upgrade (reboot if required)
-					</code-block>
-					* Install ssh, git and cpanminus:
-					<code-block>
-						apt-get install ssh
-						apt-get install git
-					</code-block>
-					* Install Postgres (instructions from http://www.postgresql.org/download/linux/ubuntu/)
-
-					Create the file /etc/apt/sources.list.d/pgdg.list, and add a line for the repository:
-					<code-block>
-						deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main
-					</code-block>
-					* Then run the following:
-					<code-block>
-						wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-						sudo apt-get update
-
-						apt-get install postgresql-9.3
-					</code-block>
-					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
+			<install-system title="Ubuntu 12.04/14.04 Setup">
+				<text>* Install required Perl modules:
 					<code-block>
 						apt-get install libdbd-pg-perl
 					</code-block></text>
@@ -64,35 +41,7 @@
 			<install-system title="CentOS 6 Setup">
 				<text>* Install Perl and required modules:
 					<code-block>
-						yum install perl
-						yum install perl-Time-HiRes
-						yum install perl-Compress-Raw-Zlib
-						yum install perl-IO-String
-						yum install perl-parent
-						yum install perl-JSON
-						yum install perl-Digest-SHA
-					</code-block>
-					* Install the versions of PostgreSQL that you want to test:
-
-					Install package definitions (for each version you need):
-					<code-block>
-						sudo rpm -ivh http://yum.postgresql.org/8.4/redhat/rhel-6-x86_64/pgdg-centos-8.4-3.noarch.rpm
-						sudo rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm
-						sudo rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm
-						sudo rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm
-						sudo rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
-						sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
-					</code-block>
-
-					Install packages (for each version you need):
-					<code-block>
-						yum install postgresqlXX-server
-					</code-block>
-					CAVEAT: Installing 8.4 with the 9.X series appears to break libpq.
-
-					* Install <postgres/> development libraries and additional Perl modules for regression tests (optional):
-					<code-block>
-						yum install perl-DBD-Pg
+						yum install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 					</code-block></text>
 			</install-system>
 
@@ -125,7 +74,7 @@
 
 					Running the full regression suite is generally not necessary.  Run the following first:
 					<code-block>
-						./test.pl --module=backup --module-test=full --db-version=all --thread-max=&lt;# threads&gt;
+						./test.pl --module=backup --test=full --db-version=all --thread-max=&lt;# threads&gt;
 					</code-block>
 					This will run full backup/restore regression with a variety of options on all installed versions of <postgres/>.  If you are only interested in one version then modify the <setting>db-version</setting> setting to X.X (e.g. 9.4).  <setting>--thread-max</setting> can be omitted if you are running single-threaded.
 
@@ -168,8 +117,7 @@
 			<config-example title="Simple Single Host Configuration">
 				<text>This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.  A number of additional options are set:
 					<ul>
-						<li><setting>cmd-psql</setting> - Custom location and parameters for psql.</li>
-						<li><setting>cmd-psql-option</setting> - Options for psql can be set per stanza.</li>
+						<li><setting>db-port</setting> - Custom port for <postgres/>.</li>
 						<li><setting>compress</setting> - Disable compression (handy if the file system is already compressed).</li>
 						<li><setting>repo-path</setting> - Path to the <backrest/> repository where backups and WAL archive are stored.</li>
 						<li><setting>log-level-file</setting> - Set the file log level to debug (Lots of extra info if something is not working as expected).</li>
@@ -178,9 +126,6 @@
 					</ul>
 					<file>/etc/pg_backrest.conf</file>:
 					<code-block>
-						[global:command]
-						cmd-psql=/usr/local/bin/psql -X %option%
-
 						[global:general]
 						compress=n
 						repo-path=/path/to/db/repo
@@ -194,9 +139,7 @@
 
 						[main]
 						db-path=/data/db
-
-						[main:command]
-						cmd-psql-option=--port=5433
+						db-port=5555
 					</code-block>
 				</text>
 			</config-example>
@@ -240,22 +183,6 @@
 				<text>The <setting>command</setting> section defines the location of external commands that are used by <backrest/>.</text>
 
 				<config-key-list>
-					<!-- CONFIG - COMMAND SECTION - CMD-PSQL KEY -->
-					<config-key id="cmd-psql">
-						<text>Defines the full path to <cmd>psql</cmd>.  <cmd>psql</cmd> is used to call <code>pg_start_backup()</code> and <code>pg_stop_backup()</code>.
-
-		If additional per stanza parameters need to be passed to <cmd>psql</cmd> (such as <param>--port</param> or <param>--cluster</param>) then add <param>%option%</param> to the command line and use <setting>command-option::psql</setting> to set options.</text>
-
-						<example>/usr/bin/psql -X %option%</example>
-					</config-key>
-
-					<!-- CONFIG - COMMAND SECTION - CMD-PSQL-OPTION KEY -->
-					<config-key id="cmd-psql-option">
-						<text>Allows per stanza command line parameters to be passed to <cmd>psql</cmd>.</text>
-
-						<example>--port=5433</example>
-					</config-key>
-
 					<!-- CONFIG - COMMAND SECTION - CMD-REMOTE KEY -->
 					<config-key id="cmd-remote">
 						<text>Defines the location of <cmd>pg_backrest_remote.pl</cmd>.
@@ -523,7 +450,7 @@
 			<config-section id="stanza">
 				<text>A stanza defines a backup for a specific database.  The stanza section must define the base database path and host/user if the database is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
 
-				<!-- CONFIG - RETENTION SECTION - HOST KEY -->
+				<!-- CONFIG - RETENTION SECTION - DB-HOST KEY -->
 				<config-key-list>
 					<config-key id="db-host">
 						<text>Define the database host.  Used for backups where the database host is different from the backup host.</text>
@@ -531,18 +458,32 @@
 						<example>db.domain.com</example>
 					</config-key>
 
-					<!-- CONFIG - RETENTION SECTION - USER KEY -->
+					<!-- CONFIG - RETENTION SECTION - DB-USER KEY -->
 					<config-key id="db-user">
-						<text>Defines user account on the db host when <setting>db-host</setting> is defined.</text>
+						<text>Defines the logon user when <setting>db-host</setting> is defined.  This user will also own the remote <backrest/> process and will initiate connections to <postgres/>.  For this to work correctly the user should be the <postgres/> cluster owner which is generally <id>postgres</id>, the default.</text>
 
-						<example>postgres</example>
+						<example>test_user</example>
 					</config-key>
 
-					<!-- CONFIG - RETENTION SECTION - PATH KEY -->
+					<!-- CONFIG - RETENTION SECTION - DB-PATH KEY -->
 					<config-key id="db-path">
 						<text>Path to the db data directory (data_directory setting in postgresql.conf).</text>
 
 						<example>/data/db</example>
+					</config-key>
+
+					<!-- CONFIG - RETENTION SECTION - DB-PORT KEY -->
+					<config-key id="db-port">
+						<text>Port that <postgres/> is running on.  This usually does not need to be specified as most clusters run on the default port.</text>
+
+						<example>6543</example>
+					</config-key>
+
+					<!-- CONFIG - RETENTION SECTION - DB-SOCKET-PATH KEY -->
+					<config-key id="db-socket-path">
+						<text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicily modified with the <setting>unix_socket_directory</setting> setting in <file>postgressql.conf</file>.</text>
+
+						<example>/var/run/postgresql</example>
 					</config-key>
 				</config-key-list>
 			</config-section>
