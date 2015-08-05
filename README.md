@@ -788,6 +788,8 @@ Get information about backups in the `db` stanza.
 
 * Fixed protocol issue that was preventing ssh errors (especially connect) from being logged.
 
+* Now using Perl DBI for connections to PostgreSQL rather than psql.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.
+
 ### v0.78: Remove CPAN dependencies, stability improvements
 
 * Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.

@@ -744,6 +744,9 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<release-feature>
 						<text>Fixed protocol issue that was preventing ssh errors (especially connect) from being logged.</text>
 					</release-feature>
+					<release-feature>
+						<text>Now using Perl DBI for connections to <postgres/> rather than psql.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.</text>
+					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
 
