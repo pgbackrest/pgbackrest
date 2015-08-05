@@ -1,19 +1,14 @@
 ####################################################################################################################################
-# REMOTE MODULE
+# PROTOCOL REMOTE MINION MODULE
 ####################################################################################################################################
-package BackRest::Remote;
-use parent 'BackRest::Protocol';
+package BackRest::Protocol::RemoteMinion;
+use parent 'BackRest::Protocol::CommonMinion';
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
-
-use IO::String qw();
-use POSIX qw(:sys_wait_h);
-use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Archive;
@@ -22,15 +17,15 @@ use BackRest::Db;
 use BackRest::Exception;
 use BackRest::File;
 use BackRest::Info;
-use BackRest::Protocol;
+use BackRest::Protocol::CommonMinion;
 use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_REMOTE                                              => 'Remote';
+use constant OP_PROTOCOL_REMOVE_MINION                              => 'Protocol::RemoteMinion';
 
-use constant OP_REMOTE_NEW                                          => OP_REMOTE . "->new";
+use constant OP_PROTOCOL_REMOVE_MINION_NEW                          => OP_PROTOCOL_REMOVE_MINION . "->new";
 
 ####################################################################################################################################
 # Operation constants
@@ -47,21 +42,17 @@ use constant
 sub new
 {
     my $class = shift;                  # Class name
-    my $strHost = shift;                # Host to connect to for remote (optional as this can also be used on the remote)
-    my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
-    my $strCommand = shift;             # Command to execute on remote ('remote' if this is the remote)
     my $iBlockSize = shift;             # Buffer size
     my $iCompressLevel = shift;         # Set compression level
     my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
     # Debug
-    logDebug(OP_REMOTE_NEW, DEBUG_CALL, undef,
-             {host => $strHost, user => $strUser, command => $strCommand},
-             defined($strHost) ? DEBUG : TRACE);
+    logTrace(OP_PROTOCOL_REMOVE_MINION_NEW, DEBUG_CALL, undef,
+             {iBlockSize => $iBlockSize, iCompressLevel => $iCompressLevel, iCompressNetworkLevel => $iCompressLevelNetwork});
 
     # Init object and store variables
-    my $self = $class->SUPER::new(CMD_REMOTE, !defined($strHost), $strCommand, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork,
-                                  $strHost, $strUser);
+    my $self = $class->SUPER::new(CMD_REMOTE, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork);
+    bless $self, $class;
 
     return $self;
 }
@@ -117,7 +108,7 @@ sub process
     {
         my %oParamHash;
 
-        $strCommand = $self->command_read(\%oParamHash);
+        $strCommand = $self->cmdRead(\%oParamHash);
 
         eval
         {
@@ -171,7 +162,7 @@ sub process
                                      paramGet(\%oParamHash, 'destination_compress'));
                 }
 
-                $self->output_write(($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
+                $self->outputWrite(($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
                                     (defined($iFileSize) ? $iFileSize : '?'));
             }
             # List files in a path
@@ -192,23 +183,23 @@ sub process
                     $strOutput .= $strFile;
                 }
 
-                $self->output_write($strOutput);
+                $self->outputWrite($strOutput);
             }
             # Create a path
             elsif ($strCommand eq OP_FILE_PATH_CREATE)
             {
                 $oFile->path_create(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path'), paramGet(\%oParamHash, 'mode', false));
-                $self->output_write();
+                $self->outputWrite();
             }
             # Check if a file/path exists
             elsif ($strCommand eq OP_FILE_EXISTS)
             {
-                $self->output_write($oFile->exists(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path')) ? 'Y' : 'N');
+                $self->outputWrite($oFile->exists(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path')) ? 'Y' : 'N');
             }
             # Wait
             elsif ($strCommand eq OP_FILE_WAIT)
             {
-                $self->output_write($oFile->wait(PATH_ABSOLUTE));
+                $self->outputWrite($oFile->wait(PATH_ABSOLUTE));
             }
             # Generate a manifest
             elsif ($strCommand eq OP_FILE_MANIFEST)
@@ -234,7 +225,7 @@ sub process
                             $oManifestHash{name}{"${strName}"}{link_destination} : "");
                 }
 
-                $self->output_write($strOutput);
+                $self->outputWrite($strOutput);
             }
             # Archive push checks
             elsif ($strCommand eq OP_ARCHIVE_PUSH_CHECK)
@@ -245,16 +236,16 @@ sub process
                                                                         paramGet(\%oParamHash, 'db-version'),
                                                                         paramGet(\%oParamHash, 'db-sys-id'));
 
-                $self->output_write("${strArchiveId}\t" . (defined($strChecksum) ? $strChecksum : 'Y'));
+                $self->outputWrite("${strArchiveId}\t" . (defined($strChecksum) ? $strChecksum : 'Y'));
             }
             elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
             {
-                $self->output_write($oArchive->getCheck($oFile));
+                $self->outputWrite($oArchive->getCheck($oFile));
             }
             # Info list stanza
             elsif ($strCommand eq OP_INFO_LIST_STANZA)
             {
-                $self->output_write(
+                $self->outputWrite(
                     $oJSON->encode(
                         $oInfo->listStanza($oFile,
                                        paramGet(\%oParamHash, 'stanza', false))));
@@ -264,11 +255,11 @@ sub process
                 my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
                     $oDb->info($oFile, paramGet(\%oParamHash, 'db-path'));
 
-                $self->output_write("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
+                $self->outputWrite("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
             }
             elsif ($strCommand eq OP_DB_EXECUTE_SQL)
             {
-                $self->output_write($oDb->executeSql(paramGet(\%oParamHash, 'script')));
+                $self->outputWrite($oDb->executeSql(paramGet(\%oParamHash, 'script')));
             }
             # Continue if noop or exit
             elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)
@@ -280,7 +271,7 @@ sub process
         # Process errors
         if ($@)
         {
-            $self->error_write($@);
+            $self->errorWrite($@);
         }
     }
 }

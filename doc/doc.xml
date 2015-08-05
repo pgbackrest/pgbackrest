@@ -797,6 +797,12 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<release-feature>
 						<text>The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the <setting>neutral-umask</setting> setting</text>
 					</release-feature>
+					<release-feature>
+						<text>Major refactoring of the protocol layer to support future development.</text>
+					</release-feature>
+					<release-feature>
+						<text>Fixed protocol issue that was preventing ssh errors (especially connect) from being logged.</text>
+					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
 

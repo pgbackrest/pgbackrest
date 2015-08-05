@@ -26,7 +26,6 @@ use BackRest::Db;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Protocol;
 use BackRest::Utility;
 
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin

@@ -842,6 +842,10 @@ Get information about backups in the `db` stanza.
 
 * The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the `neutral-umask` setting
 
+* Major refactoring of the protocol layer to support future development.
+
+* Fixed protocol issue that was preventing ssh errors (especially connect) from being logged.
+
 ### v0.78: Remove CPAN dependencies, stability improvements
 
 * Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.

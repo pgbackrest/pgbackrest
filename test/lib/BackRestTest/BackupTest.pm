@@ -27,8 +27,8 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Protocol;
-use BackRest::Remote;
+use BackRest::Protocol::Common;
+use BackRest::Protocol::RemoteMaster;
 use BackRest::Utility;
 
 use BackRestTest::CommonTest;
@@ -1502,24 +1502,21 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = new BackRest::Remote
+    my $oRemote = new BackRest::Protocol::RemoteMaster
     (
-        $strHost,                                   # Host
-        $strUserBackRest,                           # User
         BackRestTestCommon_CommandRemoteFullGet(),  # Command
         OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
+        $strHost,                                   # Host
+        $strUserBackRest                            # User
     );
 
-    my $oLocal = new BackRest::Protocol
+    my $oLocal = new BackRest::Protocol::Common
     (
-        undef,                                  # Name
-        false,                                  # Is backend?
-        undef,                                  # Command
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK   # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------

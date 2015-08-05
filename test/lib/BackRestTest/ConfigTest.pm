@@ -14,11 +14,7 @@ use Carp qw(confess);
 use Cwd qw(abs_path);
 use Exporter qw(import);
 use File::Basename qw(dirname);
-use Scalar::Util 'blessed';
-#use Data::Dumper qw(Dumper);
-#use Scalar::Util qw(blessed);
-# use Test::More qw(no_plan);
-# use Test::Deep;
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Config;

@@ -32,7 +32,7 @@ sub new
     my $strCommand = shift;             # Command to execute
 
     # Debug
-    logDebug(OP_OPEN3_NEW, DEBUG_CALL, undef, {command => $strCommand});
+    logDebug(OP_OPEN3_NEW, DEBUG_CALL, undef, {command => \$strCommand});
 
     # Create the class hash
     my $self = {};
@@ -70,6 +70,19 @@ sub run
     $self->{oErrorSelect}->add($self->{hError});
     $self->{oOutSelect} = IO::Select->new();
     $self->{oOutSelect}->add($self->{hOut});
+}
+
+####################################################################################################################################
+# lineRead
+####################################################################################################################################
+sub lineRead
+{
+    my $self = shift;
+
+    if ($self->{oOutSelect}->can_read(.1))
+    {
+        return readline($self->{hOut});
+    }
 }
 
 ####################################################################################################################################

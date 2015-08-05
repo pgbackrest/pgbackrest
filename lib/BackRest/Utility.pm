@@ -384,6 +384,8 @@ use constant DEBUG_RESULT                                           => '=>';
 use constant DEBUG_MISC                                             => '';
     push @EXPORT, qw(DEBUG_MISC);
 
+use constant DEBUG_STRING_MAX_LEN                                   => 1024;
+
 sub logDebug
 {
     my $strFunction = shift;
@@ -408,10 +410,14 @@ sub logDebug
                     $strParamSet .= ', ';
                 }
 
+                my $strValueRef = ref($$oParamHash{$strParam}) ? $$oParamHash{$strParam} : \$$oParamHash{$strParam};
+
                 $strParamSet .= "${strParam} = " .
-                                (defined($$oParamHash{$strParam}) ?
-                                    ($strParam =~ /^is/ ? ($$oParamHash{$strParam} ? 'true' : 'false'):
-                                    $$oParamHash{$strParam}) : '[undef]');
+                                (defined($$strValueRef) ?
+                                    ($strParam =~ /^is/ ? ($$strValueRef ? 'true' : 'false'):
+                                    (length($$strValueRef) > DEBUG_STRING_MAX_LEN ?
+                                     substr($$strValueRef, 0, DEBUG_STRING_MAX_LEN) . ' ... [TRUNCATED]':
+                                     $$strValueRef)) : '[undef]');
             }
 
             if (defined($strMessage))
@@ -437,7 +443,11 @@ sub logTrace
     my $strMessage = shift;
     my $oParamHash = shift;
 
-    logDebug($strFunction, $strType, $strMessage, $oParamHash, TRACE);
+    if ($oLogLevelRank{&TRACE}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
+        $oLogLevelRank{&TRACE}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank})
+    {
+        logDebug($strFunction, $strType, $strMessage, $oParamHash, TRACE);
+    }
 }
 
 push @EXPORT, qw(logTrace);

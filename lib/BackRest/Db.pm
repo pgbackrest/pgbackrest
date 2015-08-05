@@ -71,7 +71,7 @@ sub executeSql
     my $self = shift;
     my $strScript = shift;  # psql script to execute (must be on a single line)
 
-    logDebug(OP_DB_EXECUTE_SQL, DEBUG_CALL, undef, {isRemote => optionRemoteTypeTest(DB), script => $strScript});
+    logDebug(OP_DB_EXECUTE_SQL, DEBUG_CALL, undef, {isRemote => optionRemoteTypeTest(DB), script => \$strScript});
 
     # Get the user-defined command for psql
     my $strCommand = optionGet(OPTION_COMMAND_PSQL) . " -c \"${strScript}\" postgres";
@@ -86,7 +86,7 @@ sub executeSql
         $oParamHash{'script'} = $strScript;
 
         # Execute the command
-        $strResult = protocolGet()->command_execute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
+        $strResult = protocolGet()->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
     }
     # Else run locally
     else
@@ -137,10 +137,10 @@ sub info
         $oParamHash{'db-path'} = ${strDbPath};
 
         # Output remote trace info
-        &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->command_param_string(\%oParamHash) . ')');
+        &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
 
         # Execute the command
-        my $strResult = $oFile->{oProtocol}->command_execute(OP_DB_INFO, \%oParamHash, true);
+        my $strResult = $oFile->{oProtocol}->cmdExecute(OP_DB_INFO, \%oParamHash, true);
 
         # Split the result into return values
         my @stryToken = split(/\t/, $strResult);
@@ -279,6 +279,7 @@ sub backup_start
 
     $self->versionGet();
 
+    # Only allow start-fast option for version >= 8.4
     if ($self->{fVersion} < 8.4 && $bStartFast)
     {
         &log(WARN, 'start-fast option is only available in PostgreSQL >= 8.4');

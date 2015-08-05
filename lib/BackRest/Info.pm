@@ -180,10 +180,10 @@ sub listStanza
         }
 
         # Trace the remote parameters
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string($oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->commandParamString($oParamHash) . ')');
 
         # Execute the command
-        my $strStanzaList = $oFile->{oProtocol}->command_execute($strOperation, $oParamHash, true);
+        my $strStanzaList = $oFile->{oProtocol}->cmdExecute($strOperation, $oParamHash, true);
 
         # Trace the remote response
         &log(TRACE, "${strOperation}: remote json response (${strStanzaList})");

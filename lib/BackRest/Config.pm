@@ -15,6 +15,8 @@ use Getopt::Long qw(GetOptions);
 use lib dirname($0) . '/../lib';
 use BackRest::Exception;
 use BackRest::Ini;
+use BackRest::Protocol::Common;
+use BackRest::Protocol::RemoteMaster;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -1930,9 +1932,8 @@ sub protocolGet
     # If force local or remote = NONE then create a local remote and return it
     if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
     {
-        return new BackRest::Protocol
+        return new BackRest::Protocol::Common
         (
-            undef, false, undef,
             optionGet(OPTION_BUFFER_SIZE),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
@@ -1946,14 +1947,14 @@ sub protocolGet
     }
 
     # Return the remote when required
-    my $oProtocolTemp = new BackRest::Remote
+    my $oProtocolTemp = new BackRest::Protocol::RemoteMaster
     (
-        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
-        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
         commandWrite(CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE)),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-        commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+        commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
+        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
+        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER)
     );
 
     if (!defined($bStore) || $bStore)

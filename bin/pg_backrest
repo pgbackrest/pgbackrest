@@ -24,8 +24,7 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Info;
 use BackRest::Lock;
-use BackRest::Protocol qw(DB BACKUP NONE);
-use BackRest::Remote;
+use BackRest::Protocol::RemoteMinion;
 use BackRest::Restore;
 use BackRest::ThreadGroup;
 use BackRest::Utility;
@@ -73,11 +72,8 @@ eval
         log_level_set(OFF, OFF);
 
         # Create the remote object
-        my $oRemote = new BackRest::Remote
+        my $oRemote = new BackRest::Protocol::RemoteMinion
         (
-            undef,      # Host
-            undef,      # User
-            'remote',   # Command
             optionGet(OPTION_BUFFER_SIZE),
             optionGet(OPTION_COMPRESS_LEVEL),
             optionGet(OPTION_COMPRESS_LEVEL_NETWORK)

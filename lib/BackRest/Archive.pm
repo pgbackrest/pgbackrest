@@ -18,7 +18,7 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Lock;
-use BackRest::Protocol;
+#use BackRest::Protocol::Protocol;
 use BackRest::Utility;
 
 ####################################################################################################################################
@@ -331,7 +331,7 @@ sub getCheck
 
     if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
     {
-        $strArchiveId = $oFile->{oProtocol}->command_execute(OP_ARCHIVE_GET_CHECK, undef, true);
+        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_CHECK, undef, true);
     }
     else
     {
@@ -554,10 +554,10 @@ sub pushCheck
         $oParamHash{'db-sys-id'} = $ullDbSysId;
 
         # Output remote trace info
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string(\%oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
 
         # Execute the command
-        my $strResult = $oFile->{oProtocol}->command_execute($strOperation, \%oParamHash, true);
+        my $strResult = $oFile->{oProtocol}->cmdExecute($strOperation, \%oParamHash, true);
 
         $strArchiveId = (split("\t", $strResult))[0];
         $strChecksum = (split("\t", $strResult))[1];
