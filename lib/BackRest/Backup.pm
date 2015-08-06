@@ -560,9 +560,9 @@ sub backup
                               $bNoStartStop || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
     # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info($oFile, $strDbClusterPath);
+    my ($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info($oFile, $strDbClusterPath);
 
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $fDbVersion);
     $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
     $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
@@ -595,7 +595,8 @@ sub backup
         my $strTimestampDbStart;
 
         ($strArchiveStart, $strTimestampDbStart) =
-            $oDb->backup_start(BACKREST_EXE . ' backup started ' . timestamp_string_get(undef, $lTimestampStart), $bStartFast);
+            $oDb->backup_start($oFile, $strDbClusterPath, BACKREST_EXE . ' backup started ' .
+                               timestamp_string_get(undef, $lTimestampStart), $bStartFast);
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");
@@ -734,7 +735,7 @@ sub backup
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new BackRest::Archive();
         my $strArchiveId = $oArchive->getCheck($oFile);
-        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $oDb->versionGet() < 9.3);
+        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $fDbVersion < 9.3);
 
         foreach my $strArchive (@stryArchive)
         {

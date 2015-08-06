@@ -747,6 +747,12 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 					<release-feature>
 						<text>Now using Perl DBI for connections to <postgres/> rather than psql.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.</text>
 					</release-feature>
+					<release-feature>
+						<text>Added checks to be sure the <setting>db-path</setting> setting is consistent with <setting>db-port</setting> by comparing the <setting>data_directory</setting> as reported by the cluster against the <setting>db-path</setting> setting and the version as reported by the cluster against the value read from pg_control.  The <setting>db-socket-path</setting> setting is checked to be sure it is an absolute path.</text>
+					</release-feature>
+					<release-feature>
+						<text>Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.</text>
+					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
 

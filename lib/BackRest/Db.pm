@@ -111,6 +111,14 @@ sub executeSql
             # Connect to the db
             my $strDbName = 'postgres';
             my $strDbUser = getpwuid($<);
+            my $strDbSocketPath = optionGet(OPTION_DB_SOCKET_PATH, false);
+
+            if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
+            {
+                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . OPTION_DB_SOCKET_PATH . "' option:" .
+                                    " path must be absolute", ERROR_OPTION_INVALID_VALUE);
+            }
+
             my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(OPTION_DB_PORT) .
                            (optionTest(OPTION_DB_SOCKET_PATH) ? ';host=' . optionGet(OPTION_DB_SOCKET_PATH) : '');
 
@@ -179,11 +187,20 @@ sub info
 
     logDebug(OP_DB_INFO, DEBUG_CALL, undef, {isRemote => $oFile->is_remote(PATH_DB_ABSOLUTE), dbPath => $strDbPath});
 
+    # Return data from the cache if it exists
+    if (defined($self->{info}{$strDbPath}))
+    {
+        return $self->{info}{$strDbPath}{fDbVersion},
+               $self->{info}{$strDbPath}{iControlVersion},
+               $self->{info}{$strDbPath}{iCatalogVersion},
+               $self->{info}{$strDbPath}{ullDbSysId};
+    }
+
     # Database info
     my $iCatalogVersion;
     my $iControlVersion;
     my $ullDbSysId;
-    my $strDbVersion;
+    my $fDbVersion;
 
     if ($oFile->is_remote(PATH_DB_ABSOLUTE))
     {
@@ -201,7 +218,7 @@ sub info
         # Split the result into return values
         my @stryToken = split(/\t/, $strResult);
 
-        $strDbVersion = $stryToken[0];
+        $fDbVersion = $stryToken[0];
         $iControlVersion = $stryToken[1];
         $iCatalogVersion = $stryToken[2];
         $ullDbSysId = $stryToken[3];
@@ -240,48 +257,48 @@ sub info
         # Make sure the control version is supported
         if ($iControlVersion == 942 && $iCatalogVersion == 201409291)
         {
-            $strDbVersion = '9.4';
+            $fDbVersion = '9.4';
         }
         # Leave 9.5 catalog version out until it stabilizes (then move 9.5 to the top of the list)
         elsif ($iControlVersion == 942) # && $iCatalogVersion == 201505311)
         {
-            $strDbVersion = '9.5';
+            $fDbVersion = '9.5';
         }
         elsif ($iControlVersion == 937 && $iCatalogVersion == 201306121)
         {
-            $strDbVersion = '9.3';
+            $fDbVersion = '9.3';
         }
         elsif ($iControlVersion == 922 && $iCatalogVersion == 201204301)
         {
-            $strDbVersion = '9.2';
+            $fDbVersion = '9.2';
         }
         elsif ($iControlVersion == 903 && $iCatalogVersion == 201105231)
         {
-            $strDbVersion = '9.1';
+            $fDbVersion = '9.1';
         }
         elsif ($iControlVersion == 903 && $iCatalogVersion == 201008051)
         {
-            $strDbVersion = '9.0';
+            $fDbVersion = '9.0';
         }
         elsif ($iControlVersion == 843 && $iCatalogVersion == 200904091)
         {
-            $strDbVersion = '8.4';
+            $fDbVersion = '8.4';
         }
         elsif ($iControlVersion == 833 && $iCatalogVersion == 200711281)
         {
-            $strDbVersion = '8.3';
+            $fDbVersion = '8.3';
         }
         elsif ($iControlVersion == 822 && $iCatalogVersion == 200611241)
         {
-            $strDbVersion = '8.2';
+            $fDbVersion = '8.2';
         }
         elsif ($iControlVersion == 812 && $iCatalogVersion == 200510211)
         {
-            $strDbVersion = '8.1';
+            $fDbVersion = '8.1';
         }
         elsif ($iControlVersion == 74 && $iCatalogVersion == 200411041)
         {
-            $strDbVersion = '8.0';
+            $fDbVersion = '8.0';
         }
         else
         {
@@ -291,10 +308,16 @@ sub info
         }
     }
 
-    &log(DEBUG, OP_DB_INFO . "=>: dbVersion = ${strDbVersion}, controlVersion = ${iControlVersion}" .
+    # Store data in the cache
+    $self->{info}{$strDbPath}{fDbVersion} = $fDbVersion;
+    $self->{info}{$strDbPath}{iControlVersion} = $iControlVersion;
+    $self->{info}{$strDbPath}{iCatalogVersion} = $iCatalogVersion;
+    $self->{info}{$strDbPath}{ullDbSysId} = $ullDbSysId;
+
+    &log(DEBUG, OP_DB_INFO . "=>: dbVersion = ${fDbVersion}, controlVersion = ${iControlVersion}" .
                 ", catalogVersion = ${iCatalogVersion}, dbSysId = ${ullDbSysId}");
 
-    return $strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId;
+    return $fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId;
 }
 
 ####################################################################################################################################
@@ -304,13 +327,16 @@ sub versionGet
 {
     my $self = shift;
 
-    if (defined($self->{fVersion}))
+    # Get data from the cache if possible
+    if (defined($self->{fVersion}) && defined($self->{strDbPath}))
     {
-        return $self->{fVersion};
+        return $self->{fVersion}, $self->{strDbPath};
     }
 
-    $self->{fVersion} =
-        trim($self->executeSql("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1]"));
+    # Get version and db-path from
+    ($self->{fVersion}, $self->{strDbPath}) = split("\t", trim(
+        $self->executeSql("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1], setting" .
+                          " from pg_settings where name = 'data_directory'")));
 
     my $strVersionSupport = versionSupport();
 
@@ -321,7 +347,7 @@ sub versionGet
 
     logDebug(OP_DB_VERSION_GET, DEBUG_RESULT, {dbVersion => $self->{fVersion}});
 
-    return $self->{fVersion};
+    return $self->{fVersion}, $self->{strDbPath};
 }
 
 ####################################################################################################################################
@@ -330,10 +356,24 @@ sub versionGet
 sub backup_start
 {
     my $self = shift;
+    my $oFile = shift;
+    my $strDbPath = shift;
     my $strLabel = shift;
     my $bStartFast = shift;
 
-    $self->versionGet();
+    # Get the version from the control file
+    my ($fDbVersion) = $self->info($oFile, $strDbPath);
+
+    # Get version and db path from the database
+    my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();
+
+    # Error if they are not identical
+    if (!($fDbVersion == $fCompareDbVersion && $strDbPath eq $strCompareDbPath))
+    {
+        confess &log(ERROR, "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
+                            " version '${fDbVersion}' and db-path '${strDbPath}' read from '${strDbPath}/global/pg_control'\n" .
+                            "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
+    }
 
     # Only allow start-fast option for version >= 8.4
     if ($self->{fVersion} < 8.4 && $bStartFast)

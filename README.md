@@ -790,6 +790,10 @@ Get information about backups in the `db` stanza.
 
 * Now using Perl DBI for connections to PostgreSQL rather than psql.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.
 
+* Added checks to be sure the `db-path` setting is consistent with `db-port` by comparing the `data_directory` as reported by the cluster against the `db-path` setting and the version as reported by the cluster against the value read from pg_control.  The `db-socket-path` setting is checked to be sure it is an absolute path.
+
+* Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.
+
 ### v0.78: Remove CPAN dependencies, stability improvements
 
 * Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.
