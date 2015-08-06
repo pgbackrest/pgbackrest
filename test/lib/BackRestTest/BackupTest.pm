@@ -1334,7 +1334,7 @@ sub BackRestTestBackup_Test
             $strType = RECOVERY_TYPE_XID;
             $strTarget = $strXidTarget;
             $bTargetExclusive = undef;
-            $bTargetResume = BackRestTestCommon_DbVersion() >= 9.1 ? true : undef;
+            $bTargetResume = BackRestTestCommon_DbVersion() >= 9.1 && BackRestTestCommon_DbVersion() < 9.5 ? true : undef;
             $strTargetTimeline = undef;
             $oRecoveryHashRef = undef;
             $strComment = undef;

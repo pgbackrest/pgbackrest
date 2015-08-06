@@ -791,14 +791,19 @@ sub BackRestTestCommon_Setup
     BackRestTestCommon_Execute($strPgSqlBin . '/postgres --version');
 
     # Get the Postgres version
+    my $strVersionRegExp = '(devel|((alpha|beta)[0-9]+))$';
     my @stryVersionToken = split(/ /, $strOutLog);
     @stryVersionToken = split(/\./, $stryVersionToken[2]);
     $strCommonDbVersion = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
 
-    if ($strCommonDbVersion =~ /devel$/)
+    # Warn if this is a devel/alpha/beta version
+    if ($strCommonDbVersion =~ /$strVersionRegExp/)
     {
-        $strCommonDbVersion =~ s/devel$//;
-        &log(INFO, "Testing against ${strCommonDbVersion} development version");
+        my $strDevVersion = $strCommonDbVersion;
+        $strCommonDbVersion =~ s/$strVersionRegExp//;
+        $strDevVersion = substr($strDevVersion, length($strCommonDbVersion));
+
+        &log(WARN, "Testing against ${strCommonDbVersion} ${strDevVersion} version");
     }
 
     # Don't run unit tests for unsupported versions
@@ -807,12 +812,6 @@ sub BackRestTestCommon_Setup
     if ($strCommonDbVersion < ${$strVersionSupport}[0])
     {
         confess "currently only version ${$strVersionSupport}[0] and up are supported";
-    }
-
-    if ($strCommonDbVersion eq '9.5')
-    {
-        &log(WARN, "unit tests do not currently work with version 9.5");
-        return false;
     }
 
     return true;

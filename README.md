@@ -26,7 +26,7 @@ pgBackRest uses the gitflow model of development.  This means that the master br
 
 ## Install
 
-pgBackRest is written entirely in Perl and uses some non-standard modules that must be installed from CPAN.
+pgBackRest is written entirely in Perl.  Some additional modules will need to be installed depending on the OS.
 
 ### Ubuntu 12.04/14.04 Setup
 
@@ -795,6 +795,8 @@ Get information about backups in the `db` stanza.
 * Major refactoring of the protocol layer to support future development.
 
 * Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.
+
+* Experimental support for PostgreSQL 9.5 alpha1.  This may break when the control version or WAL magic changes in future versions but will be updated in each pgBackRest release to keep pace.  All regression tests pass except for `--target-resume` tests (this functionality has changed in 9.5) and there is no testing yet for `.partial` WAL segments.
 
 ### v0.78: Remove CPAN dependencies, stability improvements
 

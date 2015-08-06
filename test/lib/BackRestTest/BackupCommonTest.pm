@@ -298,13 +298,12 @@ sub BackRestTestBackup_ClusterStart
         confess 'postmaster.pid exists';
     }
 
-    # Creat the archive command
+    # Create the archive command
     my $strArchive = BackRestTestCommon_CommandMainAbsGet() . ' --stanza=' . BackRestTestCommon_StanzaGet() .
                      ' --config=' . BackRestTestCommon_DbPathGet() . '/pg_backrest.conf archive-push %p';
 
     # Start the cluster
-    my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}" .
-                     ' -c checkpoint_segments=1';
+    my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}";
 
     if ($bArchive)
     {
@@ -330,7 +329,8 @@ sub BackRestTestBackup_ClusterStart
         $strCommand .= " -c archive_mode=on -c wal_level=archive -c archive_command=true";
     }
 
-    $strCommand .= " -c unix_socket_director" . (BackRestTestCommon_DbVersion() < '9.3' ? "y='" : "ies='") .
+    $strCommand .= " -c log_error_verbosity=verbose" .
+                   " -c unix_socket_director" . (BackRestTestCommon_DbVersion() < '9.3' ? "y='" : "ies='") .
                    BackRestTestCommon_DbPathGet() . "'\" " .
                    "-D ${strPath} -l ${strPath}/postgresql.log -s";
 
@@ -1349,6 +1349,12 @@ sub BackRestTestBackup_RestoreCompare
 
     if (!$bSynthetic)
     {
+        # Tablespace_map file is not restored in versions >= 9.5 because it interferes with internal remapping features.
+        if (${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.5)
+        {
+            delete(${$oExpectedManifestRef}{'base:file'}{'tablespace_map'});
+        }
+
         foreach my $strTablespaceName (keys(%{${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}}))
         {
             if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strTablespaceName}{&MANIFEST_SUBKEY_LINK}))

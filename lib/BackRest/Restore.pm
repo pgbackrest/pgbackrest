@@ -24,9 +24,10 @@ use BackRest::ThreadGroup;
 use BackRest::Utility;
 
 ####################################################################################################################################
-# Recovery.conf file
+# File constants
 ####################################################################################################################################
-use constant FILE_RECOVERY_CONF  => 'recovery.conf';
+use constant FILE_RECOVERY_CONF  => 'recovery.conf';    # Conf file with settings for recovery after restore
+use constant FILE_TABLESPACE_MAP  => 'tablespace_map';  # Tablespace map introduced in 9.5
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -741,6 +742,14 @@ sub restore
                                             $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
             }
         }
+    }
+
+    # Remove the tablespace_map file in versions >= 9.5 so Postgres does not rewrite the links in the pg_tblspc directory.
+    if ($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
+    {
+        $self->{oFile}->remove(PATH_DB_ABSOLUTE,
+                               $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
+                               '/' . FILE_TABLESPACE_MAP);
     }
 
     # Create recovery.conf file
