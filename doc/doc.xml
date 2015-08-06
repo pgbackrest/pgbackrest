@@ -733,25 +733,25 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.80" title="DALLAS MILESTONE - UNDER DEVELOPMENT">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the info command.  Only text output was affected -- json output reported the correct epoch values.  Found by Michael Renner.</text>
+						<text>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command.  Only <id>text</id> output was affected -- <id>json</id> output reported the correct epoch values.  Found by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
-						<text>Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by <postgres/>.</text>
-					</release-feature>
-					<release-feature>
-						<text>The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the <setting>neutral-umask</setting> setting</text>
-					</release-feature>
-					<release-feature>
-						<text>Major refactoring of the protocol layer to support future development.</text>
-					</release-feature>
-					<release-feature>
-						<text>Fixed protocol issue that was preventing ssh errors (especially connect) from being logged.</text>
+						<text>Fixed protocol issue that was preventing ssh errors (especially on connection) from being logged.</text>
 					</release-feature>
 					<release-feature>
 						<text>Now using Perl DBI for connections to <postgres/> rather than psql.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.</text>
 					</release-feature>
 					<release-feature>
-						<text>Added checks to be sure the <setting>db-path</setting> setting is consistent with <setting>db-port</setting> by comparing the <setting>data_directory</setting> as reported by the cluster against the <setting>db-path</setting> setting and the version as reported by the cluster against the value read from pg_control.  The <setting>db-socket-path</setting> setting is checked to be sure it is an absolute path.</text>
+						<text>Remove <file>pg_control</file> file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by <postgres/>.</text>
+					</release-feature>
+					<release-feature>
+						<text>The repository is now created and updated with consistent directory and file modes.  By default <id>umask</id> is set to <id>0000</id> but this can be disabled with the <setting>neutral-umask</setting> setting</text>
+					</release-feature>
+					<release-feature>
+						<text>Added checks to be sure the <setting>db-path</setting> setting is consistent with <setting>db-port</setting> by comparing the <setting>data_directory</setting> as reported by the cluster against the <setting>db-path</setting> setting and the version as reported by the cluster against the value read from <file>pg_control</file>.  The <setting>db-socket-path</setting> setting is checked to be sure it is an absolute path.</text>
+					</release-feature>
+					<release-feature>
+						<text>Major refactoring of the protocol layer to support future development.</text>
 					</release-feature>
 					<release-feature>
 						<text>Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.</text>
@@ -762,13 +762,13 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.78" title="Remove CPAN dependencies, stability improvements">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text>Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.</text>
+						<text>Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the <id>threads</id> and <id>Thread::Queue</id> packages, it is no longer necessary.</text>
 					</release-feature>
 					<release-feature>
 						<text>Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.</text>
 					</release-feature>
 					<release-feature>
-						<text>Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make them grow less aggressively while still giving reasonable wait times.</text>
+						<text>Modified wait backoff to use a Fibonacci rather than geometric sequence.  This will make wait time grow less aggressively while still giving reasonable values.</text>
 					</release-feature>
 					<release-feature>
 						<text>More options for regression tests and improved code to run in a variety of environments.</text>
@@ -779,22 +779,22 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.77" title="CentOS/RHEL 6 support and protocol improvements">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text>Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.</text>
+						<text>Removed <file>pg_backrest_remote</file> and added the functionality to <file>pg_backrest</file> as the <cmd>remote</cmd> command.</text>
 					</release-feature>
 					<release-feature>
-						<text>Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.</text>
+						<text>Added file and directory syncs to the <id>File</id> object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.</text>
 					</release-feature>
 					<release-feature>
 						<text>Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  Found by Eric Radman.</text>
 					</release-feature>
 					<release-feature>
-						<text>Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.</text>
+						<text>Improved error message when backup is run without <setting>archive_command</setting> set and without <setting>--no-archive-check</setting> specified.  Found by Eric Radman.</text>
 					</release-feature>
 					<release-feature>
-						<text>Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.</text>
+						<text>Moved version number out of the <file>VERSION</file> file to <file>Version.pm</file> to better support packaging.  Suggested by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
-						<text>Replaced IPC::System::Simple and Net::OpenSSH with IPC::Open3 to eliminate CPAN dependency for multiple distros.</text>
+						<text>Replaced <id>IPC::System::Simple</id> and <id>Net::OpenSSH</id> with <id>IPC::Open3</id> to eliminate CPAN dependency for multiple distros.</text>
 					</release-feature>
 				</release-feature-bullet-list>
 			</release-version>
@@ -805,10 +805,10 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>IMPORTANT NOTE: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  The <file>pg_backrest.conf</file> file has not changed but you'll need to change any references to <file>pg_backrest.pl</file> in cron (or elsewhere) to <file>pg_backrest</file> (without the <file>.pl</file> extension).</text>
 					</release-feature>
 					<release-feature>
-						<text>Add info command.</text>
+						<text>Add <cmd>info</cmd> command.</text>
 					</release-feature>
 					<release-feature>
-						<text>More efficient file ordering for backup.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for restore.</text>
+						<text>More efficient file ordering for <cmd>backup</cmd>.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for <cmd>restore</cmd>.</text>
 					</release-feature>
 					<release-feature>
 						<text>Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.</text>
@@ -822,7 +822,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 			<release-version version="0.70" title="Stability improvements for archiving, improved logging and help">
 				<release-feature-bullet-list>
 					<release-feature>
-						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner</text>
+						<text>Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the <path>pg_xlog</path> path does not already exist and must be created. Reported by Michael Renner</text>
 					</release-feature>
 					<release-feature>
 						<text>Allow duplicate WAL segments to be archived when the checksum matches.  This is necessary for some recovery scenarios.</text>
@@ -831,13 +831,13 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 						<text>Allow comments/disabling in pg_backrest.conf using #.  Suggested by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
-						<text>Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.</text>
+						<text>Better logging before <id>pg_start_backup()</id> to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
 						<text>Various command behavior, help and logging fixes.  Reported by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
-						<text>Fixed an issue in async archiving where archive-push was not properly returning 0 when archive-max-mb was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.</text>
+						<text>Fixed an issue in async archiving where <cmd>archive-push</cmd> was not properly returning 0 when <setting>archive-max-mb</setting> was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.</text>
 					</release-feature>
 					<release-feature>
 						<text>Fixed a locking issue that could allow multiple operations of the same type against a single stanza.  This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore. Reported by Michael Renner.</text>

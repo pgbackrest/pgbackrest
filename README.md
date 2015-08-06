@@ -780,53 +780,53 @@ Get information about backups in the `db` stanza.
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
-* Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the info command.  Only text output was affected -- json output reported the correct epoch values.  Found by Michael Renner.
+* Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the `info` command.  Only `text` output was affected -- `json` output reported the correct epoch values.  Found by Michael Renner.
 
-* Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
-
-* The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the `neutral-umask` setting
-
-* Major refactoring of the protocol layer to support future development.
-
-* Fixed protocol issue that was preventing ssh errors (especially connect) from being logged.
+* Fixed protocol issue that was preventing ssh errors (especially on connection) from being logged.
 
 * Now using Perl DBI for connections to PostgreSQL rather than psql.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.
 
-* Added checks to be sure the `db-path` setting is consistent with `db-port` by comparing the `data_directory` as reported by the cluster against the `db-path` setting and the version as reported by the cluster against the value read from pg_control.  The `db-socket-path` setting is checked to be sure it is an absolute path.
+* Remove `pg_control` file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
+
+* The repository is now created and updated with consistent directory and file modes.  By default `umask` is set to `0000` but this can be disabled with the `neutral-umask` setting
+
+* Added checks to be sure the `db-path` setting is consistent with `db-port` by comparing the `data_directory` as reported by the cluster against the `db-path` setting and the version as reported by the cluster against the value read from `pg_control`.  The `db-socket-path` setting is checked to be sure it is an absolute path.
+
+* Major refactoring of the protocol layer to support future development.
 
 * Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.
 
 ### v0.78: Remove CPAN dependencies, stability improvements
 
-* Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the threads and Thread::Queue packages, it is no longer necessary.
+* Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the `threads` and `Thread::Queue` packages, it is no longer necessary.
 
 * Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.
 
-* Modified wait backoffs to use a Fibonacci sequence rather than geometric.  This will make them grow less aggressively while still giving reasonable wait times.
+* Modified wait backoff to use a Fibonacci rather than geometric sequence.  This will make wait time grow less aggressively while still giving reasonable values.
 
 * More options for regression tests and improved code to run in a variety of environments.
 
 ### v0.77: CentOS/RHEL 6 support and protocol improvements
 
-* Removed pg_backrest_remote and added the functionality to pg_backrest as remote command.
+* Removed `pg_backrest_remote` and added the functionality to `pg_backrest` as the `remote` command.
 
-* Added file and directory syncs to the File object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.
+* Added file and directory syncs to the `File` object for additional safety during backup/restore and archiving.  Suggested by Andres Freund.
 
 * Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  Found by Eric Radman.
 
-* Improved error message when backup is run without archive_command set and without --no-archive-check specified.  Found by Eric Radman.
+* Improved error message when backup is run without `archive_command` set and without `--no-archive-check` specified.  Found by Eric Radman.
 
-* Moved version number out of the VERSION file to Version.pm to better support packaging.  Suggested by Michael Renner.
+* Moved version number out of the `VERSION` file to `Version.pm` to better support packaging.  Suggested by Michael Renner.
 
-* Replaced IPC::System::Simple and Net::OpenSSH with IPC::Open3 to eliminate CPAN dependency for multiple distros.
+* Replaced `IPC::System::Simple` and `Net::OpenSSH` with `IPC::Open3` to eliminate CPAN dependency for multiple distros.
 
 ### v0.75: New repository format, info command and experimental 9.5 support
 
 * IMPORTANT NOTE: This flag day release breaks compatibility with older versions of pgBackRest.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of pgBackRest and keep your older repository for a time in case you need to do a restore.  The `pg_backrest.conf` file has not changed but you'll need to change any references to `pg_backrest.pl` in cron (or elsewhere) to `pg_backrest` (without the `.pl` extension).
 
-* Add info command.
+* Add `info` command.
 
-* More efficient file ordering for backup.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for restore.
+* More efficient file ordering for `backup`.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for `restore`.
 
 * Logging now uses unbuffered output.  This should make log files that are being written by multiple threads less chaotic.  Suggested by Michael Renner.
 
@@ -834,17 +834,17 @@ Get information about backups in the `db` stanza.
 
 ### v0.70: Stability improvements for archiving, improved logging and help
 
-* Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the pg_xlog path does not already exist and must be created. Reported by Michael Renner
+* Fixed an issue where archive-copy would fail on an incr/diff backup when hardlink=n.  In this case the `pg_xlog` path does not already exist and must be created. Reported by Michael Renner
 
 * Allow duplicate WAL segments to be archived when the checksum matches.  This is necessary for some recovery scenarios.
 
 * Allow comments/disabling in pg_backrest.conf using #.  Suggested by Michael Renner.
 
-* Better logging before pg_start_backup() to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.
+* Better logging before `pg_start_backup()` to make it clear when the backup is waiting on a checkpoint.  Suggested by Michael Renner.
 
 * Various command behavior, help and logging fixes.  Reported by Michael Renner.
 
-* Fixed an issue in async archiving where archive-push was not properly returning 0 when archive-max-mb was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.
+* Fixed an issue in async archiving where `archive-push` was not properly returning 0 when `archive-max-mb` was reached and moved the async check after transfer to avoid having to remove the stop file twice.  Also added unit tests for this case and improved error messages to make it clearer to the user what went wrong.  Reported by Michael Renner.
 
 * Fixed a locking issue that could allow multiple operations of the same type against a single stanza.  This appeared to be benign in terms of data integrity but caused spurious errors while archiving and could lead to errors in backup/restore. Reported by Michael Renner.
 
