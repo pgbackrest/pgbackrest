@@ -780,6 +780,8 @@ Get information about backups in the `db` stanza.
 
 ### v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
 
+* Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the info command.  Only text output was affected -- json output reported the correct epoch values.  Found by Michael Renner.
+
 * Remove pg_control file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
 
 * The repository is now created and updated with consistent directory and file modes.  By default umask is set to 0000 but this can be disabled with the `neutral-umask` setting

@@ -121,13 +121,13 @@ sub info
 
                 $strOutput .= '    oldest backup label: ' . $$oOldestBackup{&INFO_KEY_LABEL} . "\n";
                 $strOutput .= '    oldest backup timestamp: ' .
-                              timestamp_string_get(undef, $$oOldestBackup{&INFO_BACKUP_KEY_TIMESTAMP_STOP}) . "\n";
+                              timestamp_string_get(undef, $$oOldestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
 
                 my $oLatestBackup = $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}[@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} - 1];
 
                 $strOutput .= '    latest backup label: ' . $$oLatestBackup{&INFO_KEY_LABEL} . "\n";
                 $strOutput .= '    latest backup timestamp: ' .
-                              timestamp_string_get(undef, $$oLatestBackup{&INFO_BACKUP_KEY_TIMESTAMP_STOP}) . "\n";
+                              timestamp_string_get(undef, $$oLatestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
             }
         }
 
