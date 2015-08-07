@@ -602,7 +602,7 @@ sub restore
     my $oManifest = $self->manifest_load();
 
     # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database
-    # from being started.
+    # from being started by PostgreSQL.
     $self->{oFile}->remove(PATH_DB_ABSOLUTE,
                            $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
                            '/' . FILE_PG_CONTROL);
@@ -632,20 +632,32 @@ sub restore
         {
             foreach my $strFile ($oManifest->keys($strSection))
             {
+                # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in the pg_tblspc directory.
+                # The tablespace links have already been created by Restore::build().
+                if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_TABLESPACE_MAP &&
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
+                {
+                    next;
+                }
+
                 my $lSize = $oManifest->getNumeric($strSection, $strFile, MANIFEST_SUBKEY_SIZE);
                 $lSizeTotal += $lSize;
 
                 # Preface the file key with the size. This allows for sorting the files to restore by size.
-                # Skip this for global/pg_control since it will be copied last.
                 my $strFileKey;
 
+                # Skip this for global/pg_control since it will be copied as the last step and needs to named in a way that it
+                # can be found for the copy.
                 if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_PG_CONTROL)
                 {
                     $strFileKey = $strFile;
+                    $oRestoreHash{$strPathKey}{$strFileKey}{skip} = true;
                 }
+                # Else continue normally
                 else
                 {
                     $strFileKey = sprintf("%016d-${strFile}", $lSize);
+                    $oRestoreHash{$strPathKey}{$strFileKey}{skip} = false;
                 }
 
                 # Get restore information
@@ -690,11 +702,8 @@ sub restore
 
             foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
             {
-                # Skip pg_control
-                if ($strPathKey eq MANIFEST_KEY_BASE && $strFileKey eq FILE_PG_CONTROL)
-                {
-                    next;
-                }
+                # Skip files marked to be copied later
+                next if ($oRestoreHash{$strPathKey}{$strFileKey}{skip});
 
                 $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strPathKey}{$strFileKey});
             }
@@ -731,25 +740,14 @@ sub restore
         {
             foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
             {
-                # Skip pg_control
-                if ($strPathKey eq MANIFEST_KEY_BASE && $strFileKey eq FILE_PG_CONTROL)
-                {
-                    next;
-                }
+                # Skip files marked to be copied later
+                next if ($oRestoreHash{$strPathKey}{$strFileKey}{skip});
 
                 $lSizeCurrent = restoreFile($oRestoreHash{$strPathKey}{$strFileKey}, $lCopyTimeBegin, $self->{bDelta},
                                             $self->{bForce}, $self->{strBackupPath}, $bSourceCompression, $strCurrentUser,
                                             $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
             }
         }
-    }
-
-    # Remove the tablespace_map file in versions >= 9.5 so Postgres does not rewrite the links in the pg_tblspc directory.
-    if ($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
-    {
-        $self->{oFile}->remove(PATH_DB_ABSOLUTE,
-                               $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
-                               '/' . FILE_TABLESPACE_MAP);
     }
 
     # Create recovery.conf file
