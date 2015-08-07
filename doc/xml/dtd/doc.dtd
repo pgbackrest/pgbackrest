@@ -1,9 +1,10 @@
-<!ELEMENT doc (intro, install, config, operation, release, recognition)>
+<!ELEMENT doc ((intro, changelog)|(intro, start, contribute, support, recognition)|(intro, install, config, operation))>
 	<!ATTLIST doc title CDATA #REQUIRED>
-	<!ATTLIST doc exe CDATA #REQUIRED>
-	<!ATTLIST doc subtitle CDATA #REQUIRED>
 
 <!ELEMENT intro (text)>
+
+<!ELEMENT start (text)>
+	<!ATTLIST start title CDATA #REQUIRED>
 
 <!ELEMENT install (text, install-system-list)>
 	<!ATTLIST install title CDATA #REQUIRED>
@@ -60,21 +61,25 @@
 <!ELEMENT allow (#PCDATA)>
 <!ELEMENT example (#PCDATA)>
 
-<!ELEMENT release (text?, release-version-list)>
-	<!ATTLIST release title CDATA #REQUIRED>
+<!ELEMENT changelog (text?, changelog-release+)>
 
-<!ELEMENT release-version-list (release-version+)>
-
-<!ELEMENT release-version (text?, release-feature-bullet-list)>
-	<!ATTLIST release-version version CDATA #REQUIRED>
-	<!ATTLIST release-version title CDATA #REQUIRED>
+<!ELEMENT changelog-release (text?, release-feature-bullet-list)>
+	<!ATTLIST changelog-release date CDATA #REQUIRED>
+	<!ATTLIST changelog-release version CDATA #REQUIRED>
+	<!ATTLIST changelog-release title CDATA #REQUIRED>
 
 <!ELEMENT release-feature-bullet-list (release-feature+)>
 
 <!ELEMENT release-feature (text)>
 
+<!ELEMENT contribute (text)>
+	<!ATTLIST contribute title CDATA #REQUIRED>
+
 <!ELEMENT recognition (text)>
 	<!ATTLIST recognition title CDATA #REQUIRED>
+
+<!ELEMENT support (text)>
+	<!ATTLIST support title CDATA #REQUIRED>
 
 <!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres)*>
 <!ELEMENT i (#PCDATA)>

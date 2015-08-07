@@ -205,29 +205,30 @@ if ($iThreadMax < 1 || $iThreadMax > 32)
 }
 
 ####################################################################################################################################
-# Make sure version number matches in README.md and VERSION
+# Make sure version number matches in the change log.
 ####################################################################################################################################
 my $hReadMe;
 my $strLine;
 my $bMatch = false;
+my $strChangeLogFile = abs_path(dirname($0) . '/../CHANGELOG.md');
 
-if (!open($hReadMe, '<', dirname($0) . '/../README.md'))
+if (!open($hReadMe, '<', $strChangeLogFile))
 {
-    confess 'unable to open README.md';
+    confess "unable to open ${strChangeLogFile}";
 }
 
 while ($strLine = readline($hReadMe))
 {
-    if ($strLine =~ /^\#\#\# v/)
+    if ($strLine =~ /^\#\# v/)
     {
-        $bMatch = substr($strLine, 5, length(BACKREST_VERSION)) eq BACKREST_VERSION;
+        $bMatch = substr($strLine, 4, length(BACKREST_VERSION)) eq BACKREST_VERSION;
         last;
     }
 }
 
 if (!$bMatch)
 {
-    confess 'unable to find version ' . BACKREST_VERSION . ' as last revision in README.md';
+    confess 'unable to find version ' . BACKREST_VERSION . " as last revision in ${strChangeLogFile}";
 }
 
 ####################################################################################################################################

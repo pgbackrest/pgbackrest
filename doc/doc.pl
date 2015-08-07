@@ -12,14 +12,15 @@ use Carp qw(confess);
 
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
+use Cwd qw(abs_path);
 use File::Basename qw(dirname);
-use Pod::Usage qw(pod2usage);
 use Getopt::Long qw(GetOptions);
+use Pod::Usage qw(pod2usage);
 use XML::Checker::Parser;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
 use BackRest::Config;
+use BackRest::Utility;
 
 ####################################################################################################################################
 # Usage
@@ -37,6 +38,9 @@ doc.pl [options] [operation]
    --help           display usage and exit
 
 =cut
+
+my $strProjectName = 'pgBackRest';
+my $strExeName = 'pg_backrest';
 
 ####################################################################################################################################
 # DOC_RENDER_TAG - render a tag to another markup language
@@ -59,8 +63,8 @@ my $oRenderTag =
         'setting' => ['`', '`'],
         'code' => ['`', '`'],
         'code-block' => ['```', '```'],
-        'exe' => ['ERROR - EXE NOT SET', ''],
-        'backrest' => ['ERROR - TITLE NOT SET', ''],
+        'exe' => [$strExeName, ''],
+        'backrest' => [$strProjectName, ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -345,73 +349,87 @@ sub doc_write
     close($hFile);
 }
 
-####################################################################################################################################
-# Load command line parameters and config
-####################################################################################################################################
-my $bHelp = false;          # Display usage
-my $bVersion = false;       # Display version
-my $bQuiet = false;         # Sets log level to ERROR
-my $strLogLevel = 'info';   # Log level for tests
-
-GetOptions ('help' => \$bHelp,
-            'version' => \$bVersion,
-            'quiet' => \$bQuiet,
-            'log-level=s' => \$strLogLevel)
-    or pod2usage(2);
-
-# Display version and exit if requested
-if ($bHelp || $bVersion)
+sub doc_out_get
 {
-    print 'pg_backrest ' . version_get() . " doc builder\n";
+    my $oNode = shift;
+    my $strName = shift;
+    my $bRequired = shift;
 
-    if ($bHelp)
+    foreach my $oChild (@{$$oNode{children}})
     {
-        print "\n";
-        pod2usage();
+        if ($$oChild{name} eq $strName)
+        {
+            return $oChild;
+        }
     }
 
-    exit 0;
-}
-
-# Set console log level
-if ($bQuiet)
-{
-    $strLogLevel = 'off';
-}
-
-log_level_set(undef, uc($strLogLevel));
-
-####################################################################################################################################
-# Load the doc file
-####################################################################################################################################
-# Initialize parser object and parse the file
-my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-my $strFile = dirname($0) . '/doc.xml';
-my $oTree;
-
-eval
-{
-    local $XML::Checker::FAIL = sub
+    if (!defined($bRequired) || $bRequired)
     {
-        my $iCode = shift;
+        confess "unable to find child node '${strName}' in node '$$oNode{name}'";
+    }
 
-        die XML::Checker::error_string($iCode, @_);
-    };
-
-    $oTree = $oParser->parsefile(dirname($0) . '/doc.xml');
-};
-
-# Report any error that stopped parsing
-if ($@)
-{
-    $@ =~ s/at \/.*?$//s;               # remove module line number
-    die "malformed xml in '$strFile}':\n" . trim($@);
+    return undef;
 }
 
-####################################################################################################################################
-# Build the document from xml
-####################################################################################################################################
-my $oDocIn = doc_parse(${$oTree}[0], ${$oTree}[1]);
+sub doc_option_list_process
+{
+    my $oOptionListOut = shift;
+    my $strOperation = shift;
+    my $oOptionFoundRef = shift;
+    my $oOptionRuleRef = shift;
+
+    foreach my $oOptionOut (@{$$oOptionListOut{children}})
+    {
+        my $strOption = $$oOptionOut{param}{id};
+
+        # if (defined($oOptionFound{$strOption}))
+        # {
+        #     confess "option ${strOption} has already been found";
+        # }
+
+        if ($strOption eq 'help' || $strOption eq 'version')
+        {
+            next;
+        }
+
+        $$oOptionFoundRef{$strOption} = true;
+
+        if (!defined($$oOptionRuleRef{$strOption}{&OPTION_RULE_TYPE}))
+        {
+            confess "unable to find option $strOption";
+        }
+
+        $$oOptionOut{field}{default} = optionDefault($strOption, $strOperation);
+
+        if (defined($$oOptionOut{field}{default}))
+        {
+            $$oOptionOut{field}{required} = false;
+
+            if ($$oOptionRuleRef{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+            {
+                $$oOptionOut{field}{default} = $$oOptionOut{field}{default} ? 'y' : 'n';
+            }
+        }
+        else
+        {
+            $$oOptionOut{field}{required} = optionRequired($strOption, $strOperation);
+        }
+
+        if (defined($strOperation))
+        {
+            $$oOptionOut{field}{cmd} = true;
+        }
+
+        if ($strOption eq 'cmd-remote')
+        {
+            $$oOptionOut{field}{default} = 'same as local';
+        }
+
+        # &log(INFO, "operation " . (defined($strOperation) ? $strOperation : '[undef]') .
+        #            ", option ${strOption}, required $$oOptionOut{field}{required}" .
+        #            ", default " . (defined($$oOptionOut{field}{default}) ? $$oOptionOut{field}{default} : 'undef'));
+    }
+}
 
 sub doc_build
 {
@@ -459,157 +477,6 @@ sub doc_build
     return $oOut;
 }
 
-my $oDocOut = doc_build($oDocIn);
-
-####################################################################################################################################
-# Build commands pulled from the code
-####################################################################################################################################
-# Get the option rules
-my $oOptionRule = optionRuleGet();
-my %oOptionFound;
-
-sub doc_out_get
-{
-    my $oNode = shift;
-    my $strName = shift;
-    my $bRequired = shift;
-
-    foreach my $oChild (@{$$oNode{children}})
-    {
-        if ($$oChild{name} eq $strName)
-        {
-            return $oChild;
-        }
-    }
-
-    if (!defined($bRequired) || $bRequired)
-    {
-        confess "unable to find child node '${strName}' in node '$$oNode{name}'";
-    }
-
-    return undef;
-}
-
-sub doc_option_list_process
-{
-    my $oOptionListOut = shift;
-    my $strOperation = shift;
-
-    foreach my $oOptionOut (@{$$oOptionListOut{children}})
-    {
-        my $strOption = $$oOptionOut{param}{id};
-
-        # if (defined($oOptionFound{$strOption}))
-        # {
-        #     confess "option ${strOption} has already been found";
-        # }
-
-        if ($strOption eq 'help' || $strOption eq 'version')
-        {
-            next;
-        }
-
-        $oOptionFound{$strOption} = true;
-
-        if (!defined($$oOptionRule{$strOption}{&OPTION_RULE_TYPE}))
-        {
-            confess "unable to find option $strOption";
-        }
-
-        $$oOptionOut{field}{default} = optionDefault($strOption, $strOperation);
-
-        if (defined($$oOptionOut{field}{default}))
-        {
-            $$oOptionOut{field}{required} = false;
-
-            if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-            {
-                $$oOptionOut{field}{default} = $$oOptionOut{field}{default} ? 'y' : 'n';
-            }
-        }
-        else
-        {
-            $$oOptionOut{field}{required} = optionRequired($strOption, $strOperation);
-        }
-
-        if (defined($strOperation))
-        {
-            $$oOptionOut{field}{cmd} = true;
-        }
-
-        if ($strOption eq 'cmd-remote')
-        {
-            $$oOptionOut{field}{default} = 'same as local';
-        }
-
-        # &log(INFO, "operation " . (defined($strOperation) ? $strOperation : '[undef]') .
-        #            ", option ${strOption}, required $$oOptionOut{field}{required}" .
-        #            ", default " . (defined($$oOptionOut{field}{default}) ? $$oOptionOut{field}{default} : 'undef'));
-    }
-}
-
-# Ouput general options
-my $oOperationGeneralOptionListOut = doc_out_get(doc_out_get(doc_out_get($oDocOut, 'operation'), 'operation-general'), 'option-list');
-doc_option_list_process($oOperationGeneralOptionListOut);
-
-# Ouput commands
-my $oCommandListOut = doc_out_get(doc_out_get($oDocOut, 'operation'), 'command-list');
-
-foreach my $oCommandOut (@{$$oCommandListOut{children}})
-{
-    my $strOperation = $$oCommandOut{param}{id};
-
-    my $oOptionListOut = doc_out_get($oCommandOut, 'option-list', false);
-
-    if (defined($oOptionListOut))
-    {
-        doc_option_list_process($oOptionListOut, $strOperation);
-    }
-
-    my $oExampleListOut = doc_out_get($oCommandOut, 'command-example-list');
-
-    foreach my $oExampleOut (@{$$oExampleListOut{children}})
-    {
-        if (defined($$oExampleOut{param}{title}))
-        {
-            $$oExampleOut{param}{title} = 'Example: ' . $$oExampleOut{param}{title};
-        }
-        else
-        {
-            $$oExampleOut{param}{title} = 'Example';
-        }
-    }
-
-    # $$oExampleListOut{param}{title} = 'Examples';
-}
-
-# Ouput config section
-my $oConfigSectionListOut = doc_out_get(doc_out_get($oDocOut, 'config'), 'config-section-list');
-
-foreach my $oConfigSectionOut (@{$$oConfigSectionListOut{children}})
-{
-    my $oOptionListOut = doc_out_get($oConfigSectionOut, 'config-key-list', false);
-
-    if (defined($oOptionListOut))
-    {
-        doc_option_list_process($oOptionListOut);
-    }
-}
-
-# Mark undocumented features as processed
-$oOptionFound{'no-fork'} = true;
-$oOptionFound{'test'} = true;
-$oOptionFound{'test-delay'} = true;
-
-# Make sure all options were processed
-foreach my $strOption (sort(keys($oOptionRule)))
-{
-    if (!defined($oOptionFound{$strOption}))
-    {
-        confess "option ${strOption} was not found";
-    }
-}
-
 ####################################################################################################################################
 # Render the document
 ####################################################################################################################################
@@ -637,12 +504,6 @@ sub doc_render
 
         if (defined($$oDoc{param}{title}))
         {
-            if ($iDepth == 1)
-            {
-                $$oRenderTag{'markdown'}{'backrest'}[0] = $$oDoc{param}{title};
-                $$oRenderTag{'markdown'}{'exe'}[0] = $$oDoc{param}{exe};
-            }
-
             $strBuffer = ('#' x $iDepth) . ' ';
 
             if (defined($$oDoc{param}{version}))
@@ -650,17 +511,30 @@ sub doc_render
                 $strBuffer .= "v$$oDoc{param}{version}: ";
             }
 
-            $strBuffer .= $$oDoc{param}{title};
-        }
+            $strBuffer .= ($iDepth == 1 ? "${strProjectName} - " : '') . $$oDoc{param}{title};
 
-        if (defined($$oDoc{param}{subtitle}))
-        {
-            if (!defined($$oDoc{param}{subtitle}))
+            if (defined($$oDoc{param}{date}))
             {
-                confess "subtitle not valid without title";
-            }
+                my $strDate = $$oDoc{param}{date};
 
-            $strBuffer .= " - " . $$oDoc{param}{subtitle};
+                if ($strDate !~ /^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$/)
+                {
+                    confess "invalid date ${strDate}";
+                }
+
+                if ($strDate =~ /^X/)
+                {
+                    $strBuffer .= "\n__No Release Date Set__";
+                }
+                else
+                {
+                    my @stryMonth = ('January', 'February', 'March', 'April', 'May', 'June',
+                                     'July', 'August', 'September', 'October', 'November', 'December');
+
+                    $strBuffer .= "\n__Released " . $stryMonth[(substr($strDate, 5, 2) - 1)] . ' ' .
+                                  (substr($strDate, 8, 2) + 0) . ', ' . substr($strDate, 0, 4) . '__';
+                }
+            }
         }
 
         if ($strBuffer ne "")
@@ -773,5 +647,161 @@ sub doc_render
     return $strBuffer;
 }
 
+####################################################################################################################################
+# Load command line parameters and config
+####################################################################################################################################
+my $bHelp = false;          # Display usage
+my $bVersion = false;       # Display version
+my $bQuiet = false;         # Sets log level to ERROR
+my $strLogLevel = 'info';   # Log level for tests
+
+GetOptions ('help' => \$bHelp,
+            'version' => \$bVersion,
+            'quiet' => \$bQuiet,
+            'log-level=s' => \$strLogLevel)
+    or pod2usage(2);
+
+# Display version and exit if requested
+if ($bHelp || $bVersion)
+{
+    print 'pg_backrest ' . version_get() . " doc builder\n";
+
+    if ($bHelp)
+    {
+        print "\n";
+        pod2usage();
+    }
+
+    exit 0;
+}
+
+# Set console log level
+if ($bQuiet)
+{
+    $strLogLevel = 'off';
+}
+
+log_level_set(undef, uc($strLogLevel));
+
+my $strBasePath = abs_path(dirname($0));
+
+sub doc_process
+{
+    my $strXmlIn = shift;
+    my $strMdOut = shift;
+    my $bManual = shift;
+
+####################################################################################################################################
+# Load the doc file
+####################################################################################################################################
+# Initialize parser object and parse the file
+my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
+$oParser->set_sgml_search_path("${strBasePath}/xml/dtd");
+
+my $oTree;
+
+eval
+{
+    local $XML::Checker::FAIL = sub
+    {
+        my $iCode = shift;
+
+        die XML::Checker::error_string($iCode, @_);
+    };
+
+    $oTree = $oParser->parsefile($strXmlIn);
+};
+
+# Report any error that stopped parsing
+if ($@)
+{
+    $@ =~ s/at \/.*?$//s;               # remove module line number
+    die "malformed xml in '${strXmlIn}':\n" . trim($@);
+}
+
+####################################################################################################################################
+# Build the document from xml
+####################################################################################################################################
+my $oDocIn = doc_parse(${$oTree}[0], ${$oTree}[1]);
+
+my $oDocOut = doc_build($oDocIn);
+
+####################################################################################################################################
+# Build commands pulled from the code
+####################################################################################################################################
+if ($bManual)
+{
+# Get the option rules
+my $oOptionRule = optionRuleGet();
+my %oOptionFound;
+
+# Ouput general options
+my $oOperationGeneralOptionListOut = doc_out_get(doc_out_get(doc_out_get($oDocOut, 'operation'), 'operation-general'), 'option-list');
+doc_option_list_process($oOperationGeneralOptionListOut, undef, \%oOptionFound, $oOptionRule);
+
+# Ouput commands
+my $oCommandListOut = doc_out_get(doc_out_get($oDocOut, 'operation'), 'command-list');
+
+foreach my $oCommandOut (@{$$oCommandListOut{children}})
+{
+    my $strOperation = $$oCommandOut{param}{id};
+
+    my $oOptionListOut = doc_out_get($oCommandOut, 'option-list', false);
+
+    if (defined($oOptionListOut))
+    {
+        doc_option_list_process($oOptionListOut, $strOperation, \%oOptionFound, $oOptionRule);
+    }
+
+    my $oExampleListOut = doc_out_get($oCommandOut, 'command-example-list');
+
+    foreach my $oExampleOut (@{$$oExampleListOut{children}})
+    {
+        if (defined($$oExampleOut{param}{title}))
+        {
+            $$oExampleOut{param}{title} = 'Example: ' . $$oExampleOut{param}{title};
+        }
+        else
+        {
+            $$oExampleOut{param}{title} = 'Example';
+        }
+    }
+
+    # $$oExampleListOut{param}{title} = 'Examples';
+}
+
+# Ouput config section
+my $oConfigSectionListOut = doc_out_get(doc_out_get($oDocOut, 'config'), 'config-section-list');
+
+foreach my $oConfigSectionOut (@{$$oConfigSectionListOut{children}})
+{
+    my $oOptionListOut = doc_out_get($oConfigSectionOut, 'config-key-list', false);
+
+    if (defined($oOptionListOut))
+    {
+        doc_option_list_process($oOptionListOut, undef, \%oOptionFound, $oOptionRule);
+    }
+}
+
+# Mark undocumented features as processed
+$oOptionFound{'no-fork'} = true;
+$oOptionFound{'test'} = true;
+$oOptionFound{'test-delay'} = true;
+
+# Make sure all options were processed
+foreach my $strOption (sort(keys($oOptionRule)))
+{
+    if (!defined($oOptionFound{$strOption}))
+    {
+        confess "option ${strOption} was not found";
+    }
+}
+}
+
 # Write markdown
-doc_write(dirname($0) . '/../README.md', doc_render($oDocOut, 'markdown', 1));
+doc_write($strMdOut, doc_render($oDocOut, 'markdown', 1));
+}
+
+doc_process("${strBasePath}/xml/readme.xml", "${strBasePath}/../README.md", false);
+doc_process("${strBasePath}/xml/userguide.xml", "${strBasePath}/../USERGUIDE.md", true);
+doc_process("${strBasePath}/xml/changelog.xml", "${strBasePath}/../CHANGELOG.md", false);
