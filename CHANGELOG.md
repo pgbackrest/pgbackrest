@@ -9,6 +9,8 @@ __No Release Date Set__
 
 * Now using Perl DBI for connections to PostgreSQL rather than psql.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.
 
+* Add [stop-auto](USERGUIDE.md#stop-auto-key) setting to allow failed backups to automatically be stopped when a new backup starts.
+
 * Remove `pg_control` file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
 
 * The repository is now created and updated with consistent directory and file modes.  By default `umask` is set to `0000` but this can be disabled with the `neutral-umask` setting.

@@ -259,7 +259,8 @@ sub process
             }
             elsif ($strCommand eq OP_DB_EXECUTE_SQL)
             {
-                $self->outputWrite($oDb->executeSql(paramGet(\%oParamHash, 'script')));
+                $self->outputWrite($oDb->executeSql(paramGet(\%oParamHash, 'script'),
+                                                    paramGet(\%oParamHash, 'ignore-error', false)));
             }
             # Continue if noop or exit
             elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)

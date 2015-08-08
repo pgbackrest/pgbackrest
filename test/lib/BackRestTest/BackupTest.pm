@@ -22,6 +22,7 @@ use Time::HiRes qw(gettimeofday);
 use lib dirname($0) . '/../lib';
 use BackRest::Archive;
 use BackRest::ArchiveInfo;
+use BackRest::Db;
 use BackRest::Config;
 use BackRest::Exception;
 use BackRest::File;
@@ -1216,14 +1217,31 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
             $strTestPoint = TEST_MANIFEST_BUILD;
-            $strComment = 'insert during backup';
 
+            # Create the table where test messages will be stored
             BackRestTestBackup_PgExecute("create table test (message text not null)");
             BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("insert into test values ('$strDefaultMessage')");
 
+            # Acquire the backup advisory lock so it looks like a backup is running
+            if (!BackRestTestBackup_PgSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
+            {
+                confess 'unable to acquire advisory lock for testing';
+            }
+
+            $strComment = 'fail on backup lock exists';
+            BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, $strComment, undef, undef, ERROR_LOCK_ACQUIRE);
+
+            # Release the backup advisory lock so the next backup will succeed
+            if (!BackRestTestBackup_PgSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
+            {
+                confess 'unable to acquire advisory lock for testing';
+            }
+
+            $strComment = 'update during backup';
             BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
                                            defined($strTestPoint), $fTestDelay);
+
             BackRestTestCommon_ExecuteEnd($strTestPoint);
 
             BackRestTestBackup_PgExecute("update test set message = '$strFullMessage'", false);
@@ -1241,7 +1259,6 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
             $strTestPoint = TEST_MANIFEST_BUILD;
-            $strComment = 'update during backup';
 
             BackRestTestBackup_PgExecuteNoTrans("create tablespace ts1 location '" .
                                                 BackRestTestCommon_DbTablespacePathGet(1) . "'");
@@ -1252,8 +1269,19 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgExecute("update test set message = '$strDefaultMessage'", false);
             BackRestTestBackup_PgSwitchXlog();
 
+            # Start a backup so the next backup has to restart it
+            if (BackRestTestCommon_DbVersion() >= 9.3)
+            {
+                BackRestTestBackup_PgSelectOne("select pg_start_backup('test backup that will be cancelled', true)");
+            }
+
+            # # Can't do this test yet because it puts errors in the Postgres log
+            # $strComment = 'fail on backup already running';
+            # BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, $strComment, undef, undef, ERROR_DB_QUERY);
+
+            $strComment = 'update during backup';
             BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
-                                           defined($strTestPoint), $fTestDelay);
+                                           defined($strTestPoint), $fTestDelay, '--' . OPTION_STOP_AUTO);
             BackRestTestCommon_ExecuteEnd($strTestPoint);
 
             BackRestTestBackup_PgExecute("drop table test_remove", false);

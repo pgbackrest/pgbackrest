@@ -292,9 +292,25 @@ required: n
 example: backup-user=backrest
 ```
 
+##### `stop-auto` key
+
+Automatically stops a prior failed backup when a new backup is run.  This will only be done if an exclusive advisory lock can be acquired to demonstrate that the prior failed backup process has really stopped.
+
+This feature relies on pg_is_in_backup() so only works on PostgreSQL >= `9.3`.
+
+The setting is disabled by default because it assumes that pgBackRest is the only process doing exclusive online backups.  It depends on an advisory lock that only pgBackRest sets so it may abort other processes that do exclusive online backups.  Note that `base_backup` and `pg_dump` are safe to use with this setting because they do not call `pg_start_backup()` so are not exclusive.
+
+```
+required: n
+default: n
+example: stop-auto=y
+```
+
 ##### `start-fast` key
 
 Forces a checkpoint (by passing `true` to the `fast` parameter of `pg_start_backup()`) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.
+
+This feature only works in PostgreSQL <= `8.3`.
 ```
 required: n
 default: n

@@ -614,7 +614,7 @@ sub binaryXfer
         }
     }
 
-    # If message is defined the the checksum and size should be in it
+    # If message is defined then the checksum and size should be in it
     if (defined($strMessage))
     {
         my @stryToken = split(/-/, $strMessage);

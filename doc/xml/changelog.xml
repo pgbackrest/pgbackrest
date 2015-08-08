@@ -18,6 +18,9 @@
 					<text>Now using Perl DBI for connections to <postgres/> rather than psql.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.</text>
 				</release-feature>
 				<release-feature>
+					<text>Add [stop-auto](USERGUIDE.md#stop-auto-key) setting to allow failed backups to automatically be stopped when a new backup starts.</text>
+				</release-feature>
+				<release-feature>
 					<text>Remove <file>pg_control</file> file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by <postgres/>.</text>
 				</release-feature>
 				<release-feature>

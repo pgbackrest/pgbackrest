@@ -595,15 +595,15 @@ sub backup
         my $strTimestampDbStart;
 
         ($strArchiveStart, $strTimestampDbStart) =
-            $oDb->backup_start($oFile, $strDbClusterPath, BACKREST_EXE . ' backup started ' .
-                               timestamp_string_get(undef, $lTimestampStart), $bStartFast);
+            $oDb->backupStart($oFile, $strDbClusterPath, BACKREST_EXE . ' backup started ' .
+                              timestamp_string_get(undef, $lTimestampStart), $bStartFast);
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");
     }
 
     # Build the backup manifest
-    my $oTablespaceMap = $bNoStartStop ? undef : $oDb->tablespace_map_get();
+    my $oTablespaceMap = $bNoStartStop ? undef : $oDb->tablespaceMapGet();
 
     $oBackupManifest->build($oFile, $strDbClusterPath, $oLastManifest, $bNoStartStop, $oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
@@ -713,7 +713,7 @@ sub backup
     if (!$bNoStartStop)
     {
         my $strTimestampDbStop;
-        ($strArchiveStop, $strTimestampDbStop) = $oDb->backup_stop();
+        ($strArchiveStop, $strTimestampDbStop) = $oDb->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
 

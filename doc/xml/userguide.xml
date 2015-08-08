@@ -287,9 +287,23 @@
 						<example>backrest</example>
 					</config-key>
 
+					<!-- CONFIG - BACKUP SECTION - STOP-AUTO -->
+					<config-key id="stop-auto">
+						<text>Automatically stops a prior failed backup when a new backup is run.  This will only be done if an exclusive advisory lock can be acquired to demonstrate that the prior failed backup process has really stopped.
+
+						This feature relies on pg_is_in_backup() so only works on <postgres/> >= <id>9.3</id>.
+
+						The setting is disabled by default because it assumes that <backrest/> is the only process doing exclusive online backups.  It depends on an advisory lock that only <backrest/> sets so it may abort other processes that do exclusive online backups.  Note that <cmd>base_backup</cmd> and <cmd>pg_dump</cmd> are safe to use with this setting because they do not call <code>pg_start_backup()</code> so are not exclusive.
+					</text>
+
+						<example>y</example>
+					</config-key>
+
 					<!-- CONFIG - BACKUP SECTION - START-FAST -->
 					<config-key id="start-fast">
-						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.</text>
+						<text>Forces a checkpoint (by passing <id>true</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.
+
+						This feature only works in <postgres/> &lt;= <id>8.3</id>.</text>
 
 						<example>y</example>
 					</config-key>
