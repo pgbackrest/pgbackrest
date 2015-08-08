@@ -79,11 +79,11 @@ wal_level = archive
 archive_mode = on
 archive_command = '/path/to/backrest/bin/pg_backrest --stanza=db archive-push %p'
 ```
-Replace the path with the actual location where pgBackRest was installed.  The stanza parameter should be changed to the actual stanza name for your database.
+Replace the path with the actual location where pgBackRest was installed.  The stanza parameter should be changed to the actual stanza name for your database cluster.
 
 #### Minimal Configuration
 
-The absolute minimum required to run pgBackRest (if all defaults are accepted) is the database path.
+The absolute minimum required to run pgBackRest (if all defaults are accepted) is the database cluster path.
 
 `/etc/pg_backrest.conf`:
 ```
@@ -234,7 +234,7 @@ example: compress-level=9
 
 ##### `compress-level-network` key
 
-Sets the zlib level to be used for protocol compression when `compress=n` and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting `compress-level-network=0`.  When `compress=y` the `compress-level-network` setting is ignored and `compress-level` is used instead so that the file is only compressed once.  SSH compression is always disabled.
+Sets the zlib level to be used for protocol compression when `compress=n` and the database cluster is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting `compress-level-network=0`.  When `compress=y` the `compress-level-network` setting is ignored and `compress-level` is used instead so that the file is only compressed once.  SSH compression is always disabled.
 ```
 required: n
 default: 3
@@ -383,7 +383,7 @@ example: archive-check=n
 
 Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
 
-Even though WAL segments will be restored with the backup, PostgreSQL will ignore them if a `recovery.conf` file exists and instead use `archive_command` to fetch WAL segments.  Specifying `type=none` when restoring will not create `recovery.conf` and force PostgreSQL to use the WAL segments in pg_xlog.  This will get the database to a consistent state.
+Even though WAL segments will be restored with the backup, PostgreSQL will ignore them if a `recovery.conf` file exists and instead use `archive_command` to fetch WAL segments.  Specifying `type=none` when restoring will not create `recovery.conf` and force PostgreSQL to use the WAL segments in pg_xlog.  This will get the database cluster to a consistent state.
 ```
 required: n
 default: n
@@ -413,7 +413,7 @@ Limits the amount of archive log that will be written locally when `archive-asyn
 
 If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.
 
-The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.
+The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have PostgreSQL go down.
 
 To start normal archiving again you'll need to remove the stop file which will be located at `${repo-path}/lock/${stanza}-archive.stop` where `${repo-path}` is the path set in the `general` section, and `${stanza}` is the backup stanza.
 ```
@@ -477,11 +477,11 @@ example: retention-archive=2
 
 #### `stanza` section
 
-A stanza defines a backup for a specific database.  The stanza section must define the base database path and host/user if the database is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
+A stanza defines the backup configuration for a specific PostgreSQL database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
 
 ##### `db-host` key
 
-Define the database host.  Used for backups where the database host is different from the backup host.
+Define the database cluster host.  Used for backups where the database cluster host is different from the backup host.
 ```
 required: n
 example: db-host=db.domain.com
@@ -489,7 +489,7 @@ example: db-host=db.domain.com
 
 ##### `db-user` key
 
-Defines the logon user when `db-host` is defined.  This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL.  For this to work correctly the user should be the PostgreSQL cluster owner which is generally `postgres`, the default.
+Defines the logon user when `db-host` is defined.  This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL.  For this to work correctly the user should be the PostgreSQL database cluster owner which is generally `postgres`, the default.
 ```
 required: n
 default: postgres
@@ -506,7 +506,7 @@ example: db-path=/data/db
 
 ##### `db-port` key
 
-Port that PostgreSQL is running on.  This usually does not need to be specified as most clusters run on the default port.
+Port that PostgreSQL is running on.  This usually does not need to be specified as most database clusters run on the default port.
 ```
 required: n
 default: 5432
@@ -538,7 +538,7 @@ example: config=/var/lib/backrest/pg_backrest.conf
 
 #### `stanza` option
 
-Defines the stanza for the command.  A stanza is the configuration for a database that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres cluster and therefore one stanza, whereas backup servers will have a stanza for every database that needs to be backed up.
+Defines the stanza for the command.  A stanza is the configuration for a PostgreSQL database cluster that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres database cluster and therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to be backed up.
 
 Examples of how to configure a stanza can be found in the `configuration examples` section.
 ```
@@ -564,13 +564,13 @@ required: n
 
 #### `backup` command
 
-Perform a database backup.  pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.
+Perform a database cluster backup.  pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.
 
 ##### `type` option
 
 The following backup types are supported:
 
-- `full` - all database files will be copied and there will be no dependencies on previous backups.
+- `full` - all database cluster files will be copied and there will be no dependencies on previous backups.
 - `incr` - incremental from the last successful backup.
 - `diff` - like an incremental backup but always based on the last full backup.
 
@@ -582,7 +582,7 @@ example: --type=full
 
 ##### `no-start-stop` option
 
-This option prevents pgBackRest from running `pg_start_backup()` and `pg_stop_backup()` on the database.  In order for this to work PostgreSQL should be shut down and pgBackRest will generate an error if it is not.
+This option prevents pgBackRest from running `pg_start_backup()` and `pg_stop_backup()` on the database cluster.  In order for this to work PostgreSQL should be shut down and pgBackRest will generate an error if it is not.
 
 The purpose of this option is to allow cold backups.  The `pg_xlog` directory is copied as-is and `archive-check` is automatically disabled for the backup.
 ```
@@ -594,7 +594,7 @@ default: n
 
 When used with  `--no-start-stop` a backup will be run even if pgBackRest thinks that PostgreSQL is running.  **This option should be used with extreme care as it will likely result in a bad backup.**
 
-There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.
+There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database cluster volume can only be mounted read-only, it would be a good idea to take a backup even if `postmaster.pid` is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.
 ```
 required: n
 default: n
@@ -642,7 +642,7 @@ Expire (rotate) any backups that exceed the defined retention.  Expiration is ru
 
 #### `restore` command
 
-Perform a database restore.  This command is generally run manually, but there are instances where it might be automated.
+Perform a database cluster restore.  This command is generally run manually, but there are instances where it might be automated.
 
 ##### `set` option
 
@@ -720,7 +720,7 @@ example: --target-timeline=3
 
 ##### `recovery-setting` option
 
-Recovery settings in recovery.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your database version).  This option can be used multiple times.
+Recovery settings in recovery.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your PostgreSQL version).  This option can be used multiple times.
 
 Note: `restore_command` will be automatically generated but can be overridden with this option.  Be careful about specifying your own `restore_command` as pgBackRest is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by pgBackRest and should not be set with this option.
 
@@ -751,7 +751,7 @@ example: --tablespace-map ts_01=/db/ts_01
 ```
 /path/to/pg_backrest --stanza=db --type=name --target=release restore
 ```
-Restores the latest database backup and then recovers to the `release` restore point.
+Restores the latest database cluster backup and then recovers to the `release` restore point.
 
 #### `info` command
 

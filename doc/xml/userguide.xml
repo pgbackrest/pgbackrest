@@ -83,11 +83,11 @@
 					archive_mode = on
 					archive_command = '/path/to/backrest/bin/<exe/> --stanza=db archive-push %p'
 				</code-block>
-				Replace the path with the actual location where <backrest/> was installed.  The stanza parameter should be changed to the actual stanza name for your database.</text>
+				Replace the path with the actual location where <backrest/> was installed.  The stanza parameter should be changed to the actual stanza name for your database cluster.</text>
 			</config-example>
 
 			<config-example title="Minimal Configuration">
-				<text>The absolute minimum required to run <backrest/> (if all defaults are accepted) is the database path.
+				<text>The absolute minimum required to run <backrest/> (if all defaults are accepted) is the database cluster path.
 
 				<file>/etc/pg_backrest.conf</file>:
 				<code-block>
@@ -218,7 +218,7 @@
 						<example>32768</example>
 					</config-key>
 
-					<!-- CONFIG - GENERALSECTION - COMPRESS -->
+					<!-- CONFIG - GENERAL SECTION - COMPRESS -->
 					<config-key id="compress">
 						<text>Enable gzip compression.  Backup files are compatible with command-line gzip tools.</text>
 
@@ -235,7 +235,7 @@
 
 					<!-- CONFIG - GENERAL SECTION - COMPRESS-LEVEL-NETWORK KEY -->
 					<config-key id="compress-level-network">
-						<text>Sets the zlib level to be used for protocol compression when <setting>compress=n</setting> and the database is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>.  When <setting>compress=y</setting> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.  SSH compression is always disabled.</text>
+						<text>Sets the zlib level to be used for protocol compression when <setting>compress=n</setting> and the database cluster is not on the same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>.  When <setting>compress=y</setting> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.  SSH compression is always disabled.</text>
 
 						<allow>0-9</allow>
 						<example>1</example>
@@ -361,7 +361,7 @@
 					<config-key id="archive-copy">
 						<text>Store WAL segments required to make the backup consistent in the backup's pg_xlog path.  This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
 
-						Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in pg_xlog.  This will get the database to a consistent state.</text>
+						Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in pg_xlog.  This will get the database cluster to a consistent state.</text>
 
 						<example>y</example>
 					</config-key>
@@ -390,7 +390,7 @@
 						</ol>
 						If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.
 
-						The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have the database go down.
+						The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.
 
 						To start normal archiving again you'll need to remove the stop file which will be located at <file>${repo-path}/lock/${stanza}-archive.stop</file> where <code>${repo-path}</code> is the path set in the <setting>general</setting> section, and <code>${stanza}</code> is the backup stanza.</text>
 
@@ -454,19 +454,19 @@
 
 			<!-- CONFIG - STANZA -->
 			<config-section id="stanza">
-				<text>A stanza defines a backup for a specific database.  The stanza section must define the base database path and host/user if the database is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
+				<text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
 
 				<!-- CONFIG - RETENTION SECTION - DB-HOST KEY -->
 				<config-key-list>
 					<config-key id="db-host">
-						<text>Define the database host.  Used for backups where the database host is different from the backup host.</text>
+						<text>Define the database cluster host.  Used for backups where the database cluster host is different from the backup host.</text>
 
 						<example>db.domain.com</example>
 					</config-key>
 
 					<!-- CONFIG - RETENTION SECTION - DB-USER KEY -->
 					<config-key id="db-user">
-						<text>Defines the logon user when <setting>db-host</setting> is defined.  This user will also own the remote <backrest/> process and will initiate connections to <postgres/>.  For this to work correctly the user should be the <postgres/> cluster owner which is generally <id>postgres</id>, the default.</text>
+						<text>Defines the logon user when <setting>db-host</setting> is defined.  This user will also own the remote <backrest/> process and will initiate connections to <postgres/>.  For this to work correctly the user should be the <postgres/> database cluster owner which is generally <id>postgres</id>, the default.</text>
 
 						<example>test_user</example>
 					</config-key>
@@ -480,7 +480,7 @@
 
 					<!-- CONFIG - RETENTION SECTION - DB-PORT KEY -->
 					<config-key id="db-port">
-						<text>Port that <postgres/> is running on.  This usually does not need to be specified as most clusters run on the default port.</text>
+						<text>Port that <postgres/> is running on.  This usually does not need to be specified as most database clusters run on the default port.</text>
 
 						<example>6543</example>
 					</config-key>
@@ -510,7 +510,7 @@
 
 				<!-- OPERATION - GENERAL - STANZA OPTION -->
 				<option id="stanza">
-					<text>Defines the stanza for the command.  A stanza is the configuration for a database that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres cluster and therefore one stanza, whereas backup servers will have a stanza for every database that needs to be backed up.
+					<text>Defines the stanza for the command.  A stanza is the configuration for a <postgres/> database cluster that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres database cluster and therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to be backed up.
 
 					Examples of how to configure a stanza can be found in the `configuration examples` section.</text>
 
@@ -532,14 +532,14 @@
 		<command-list title="Commands">
 			<!-- OPERATION - BACKUP COMMAND -->
 			<command id="backup">
-				<text>Perform a database backup.  <backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</text>
+				<text>Perform a database cluster backup.  <backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</text>
 
 				<option-list>
 					<!-- OPERATION - BACKUP COMMAND - TYPE OPTION -->
 					<option id="type">
 						<text>The following backup types are supported:
 							<ul>
-								<li><id>full</id> - all database files will be copied and there will be no dependencies on previous backups.</li>
+								<li><id>full</id> - all database cluster files will be copied and there will be no dependencies on previous backups.</li>
 								<li><id>incr</id> - incremental from the last successful backup.</li>
 								<li><id>diff</id> - like an incremental backup but always based on the last full backup.</li>
 							</ul></text>
@@ -549,16 +549,16 @@
 
 					<!-- OPERATION - BACKUP COMMAND - NO-START-STOP OPTION -->
 					<option id="no-start-stop">
-						<text>This option prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
+						<text>This option prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
 
-							The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
+						The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
 					</option>
 
 					<!-- OPERATION - BACKUP COMMAND - FORCE OPTION -->
 					<option id="force">
 						<text>When used with  <param>--no-start-stop</param> a backup will be run even if <backrest/> thinks that <postgres/> is running.  <b>This option should be used with extreme care as it will likely result in a bad backup.</b>
 
-						There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.</text>
+						There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database cluster volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.</text>
 					</option>
 				</option-list>
 
@@ -616,7 +616,7 @@
 
 			<!-- OPERATION - RESTORE COMMAND -->
 			<command id="restore">
-				<text>Perform a database restore.  This command is generally run manually, but there are instances where it might be automated.</text>
+				<text>Perform a database cluster restore.  This command is generally run manually, but there are instances where it might be automated.</text>
 				<option-list>
 					<!-- OPERATION - RESTORE COMMAND - SET OPTION -->
 					<option id="set">
@@ -672,7 +672,7 @@
 
 					<!-- OPERATION - RESTORE COMMAND - RECOVERY-SETTING OPTION -->
 					<option id="recovery-setting">
-						<text>Recovery settings in recovery.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your database version).  This option can be used multiple times.
+						<text>Recovery settings in recovery.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf options (replace X.X with your <postgres/> version).  This option can be used multiple times.
 
 						Note: <setting>restore_command</setting> will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.
 
@@ -700,7 +700,7 @@
 						<text><code-block>
 									/path/to/<exe/> --stanza=db --type=name --target=release restore
 							</code-block>
-							Restores the latest database backup and then recovers to the <id>release</id> restore point.</text>
+							Restores the latest database cluster backup and then recovers to the <id>release</id> restore point.</text>
 					</command-example>
 				</command-example-list>
 			</command>

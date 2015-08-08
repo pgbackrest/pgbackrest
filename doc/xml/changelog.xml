@@ -39,7 +39,7 @@
 					<text>Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.</text>
 				</release-feature>
 				<release-feature>
-					<text>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.</text>
+					<text>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to "database" in the user guide to "database cluster" for clarity.</text>
 				</release-feature>
 			</release-feature-bullet-list>
 		</changelog-release>

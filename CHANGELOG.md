@@ -23,7 +23,7 @@ __No Release Date Set__
 
 * Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.
 
-* Split most of `README.md` out into `USERGUIDE.md` and `CHANGELOG.md` because it was becoming unwieldy.
+* Split most of `README.md` out into `USERGUIDE.md` and `CHANGELOG.md` because it was becoming unwieldy.  Changed most references to "database" in the user guide to "database cluster" for clarity.
 
 ## v0.78: Remove CPAN Dependencies, Stability Improvements
 __Released July 13, 2015__
