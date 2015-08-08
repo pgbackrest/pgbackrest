@@ -9,7 +9,9 @@ __No Release Date Set__
 
 * Now using Perl DBI for connections to PostgreSQL rather than psql.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.
 
-* Add [stop-auto](USERGUIDE.md#stop-auto-key) setting to allow failed backups to automatically be stopped when a new backup starts.
+* Add [stop-auto](USERGUIDE.md#stop-auto-key) option to allow failed backups to automatically be stopped when a new backup starts.
+
+* Add [db-timeout](USERGUIDE.md#db-timeout-key) option to limit the amount of time pgBackRest will wait for pg_start_backup() and pg_stop_backup() to return.
 
 * Remove `pg_control` file at the beginning of the restore and copy it back at the very end.  This prevents the possibility that a partial restore can be started by PostgreSQL.
 
