@@ -292,6 +292,15 @@ required: n
 example: backup-user=backrest
 ```
 
+##### `db-timeout` key
+
+Sets the timeout for operations against the database during the backup.  This includes the `pg_start_backup()` and `pg_stop_backup()` functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set `startfast=y` and you know that the database cluster will not generate many WAL segments during the backup).
+```
+required: n
+default: 1800
+example: db-timeout=600
+```
+
 ##### `stop-auto` key
 
 Automatically stops a prior failed backup when a new backup is run.  This will only be done if an exclusive advisory lock can be acquired to demonstrate that the prior failed backup process has really stopped.

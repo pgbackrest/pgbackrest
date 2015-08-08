@@ -7,6 +7,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use DBD::Pg ':async';
 use DBI;
 use Exporter qw(import);
     our @EXPORT =  qw();
@@ -148,37 +149,60 @@ sub executeSql
         }
 
         # Prepare the query
-        my $hStatement = $self->{hDb}->prepare($strSql)
+        my $hStatement = $self->{hDb}->prepare($strSql, {pg_async => PG_ASYNC})
             or confess &log(ERROR, $DBI::errstr, ERROR_DB_QUERY);
 
         # Execute the query
-        if (!$hStatement->execute())
-        {
-            # Return if the error should be ignored
-            if (defined($bIgnoreError) && $bIgnoreError)
-            {
-                return '';
-            }
+        $hStatement->execute();
 
-            # Else report it
-            confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
-        }
-
-        # Get rows and return them
-        my @stryArray;
+        # Wait for the query to return
+        my $iWaitSeconds = optionGet(OPTION_DB_TIMEOUT);
+        my $oExecuteWait = waitInit($iWaitSeconds);
+        my $bTimeout = true;
 
         do
         {
-            @stryArray = $hStatement->fetchrow_array;
-
-            if (!@stryArray && $hStatement->err)
+            # Is the statement done?
+            if ($hStatement->pg_ready())
             {
-                confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
-            }
+                if (!$hStatement->pg_result())
+                {
+                    # Return if the error should be ignored
+                    if (defined($bIgnoreError) && $bIgnoreError)
+                    {
+                        return '';
+                    }
 
-            $strResult = (defined($strResult) ? "${strResult}\n" : '') . join("\t", @stryArray);
+                    # Else report it
+                    confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
+                }
+
+                # Get rows and return them
+                my @stryArray;
+
+                do
+                {
+                    @stryArray = $hStatement->fetchrow_array;
+
+                    if (!@stryArray && $hStatement->err)
+                    {
+                        confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
+                    }
+
+                    $strResult = (defined($strResult) ? "${strResult}\n" : '') . join("\t", @stryArray);
+                }
+                while (@stryArray);
+
+                $bTimeout = false;
+            }
+        } while ($bTimeout && waitMore($oExecuteWait));
+
+        # If timeout then cancel the query and confess
+        if ($bTimeout)
+        {
+            $hStatement->pg_cancel();
+            confess &log(ERROR, "statement timed out after ${iWaitSeconds} second(s):\n${strSql}", ERROR_DB_TIMEOUT);
         }
-        while (@stryArray);
     }
 
     logDebug(OP_DB_EXECUTE_SQL, DEBUG_RESULT, undef, {strResult => $strResult});
