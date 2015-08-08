@@ -578,6 +578,12 @@ sub BackRestTestBackup_Test
 
         &log(INFO, "Test ${strThisTest}\n");
 
+        if (BackRestTestCommon_DbVersion() >= 9.5)
+        {
+            &log(WARN, 'currently unable to run expire test on version 9.5');
+        }
+        else
+        {
         # Create the file object
         $oFile = (BackRest::File->new
         (
@@ -683,6 +689,7 @@ sub BackRestTestBackup_Test
         # Expire archive based on the last diff
         splice(@stryArchiveExpected, 0, 3);
         BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'diff', 1);
+        }
 
         # Cleanup
         if (BackRestTestCommon_Cleanup())

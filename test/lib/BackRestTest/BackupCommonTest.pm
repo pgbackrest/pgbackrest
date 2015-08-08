@@ -303,7 +303,8 @@ sub BackRestTestBackup_ClusterStart
                      ' --config=' . BackRestTestCommon_DbPathGet() . '/pg_backrest.conf archive-push %p';
 
     # Start the cluster
-    my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}";
+    my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}" .
+                     (BackRestTestCommon_DbVersion() < 9.5 ? ' -c checkpoint_segments=1' : '');
 
     if ($bArchive)
     {
