@@ -159,37 +159,6 @@ sub hsleep
 }
 
 ####################################################################################################################################
-# WAIT_FOR_FILE
-####################################################################################################################################
-sub wait_for_file
-{
-    my $strDir = shift;
-    my $strRegEx = shift;
-    my $iSeconds = shift;
-
-    my $lTime = time();
-    my $hDir;
-
-    while ($lTime > time() - $iSeconds)
-    {
-        if (opendir($hDir, $strDir))
-        {
-            my @stryFile = grep(/$strRegEx/i, readdir $hDir);
-            close $hDir;
-
-            if (scalar @stryFile == 1)
-            {
-                return;
-            }
-        }
-
-        hsleep(.1);
-    }
-
-    confess &log(ERROR, "could not find $strDir/$strRegEx after ${iSeconds} second(s)");
-}
-
-####################################################################################################################################
 # COMMON_PREFIX
 ####################################################################################################################################
 sub common_prefix
@@ -239,7 +208,7 @@ sub file_size_format
 }
 
 ####################################################################################################################################
-# TIMESTAMP_STRING_GET - Get backrest standard timestamp (or formatted as specified
+# TIMESTAMP_STRING_GET - Get standard timestamp (or formatted as specified)
 ####################################################################################################################################
 sub timestamp_string_get
 {
