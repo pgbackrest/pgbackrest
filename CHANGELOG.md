@@ -1,13 +1,18 @@
 # pgBackRest - Change Log
 
-## v0.80: DALLAS MILESTONE - UNDER DEVELOPMENT
+## v0.85: DALLAS MILESTONE - UNDER DEVELOPMENT
 __No Release Date Set__
+
+* 
+
+## v0.80: DBI Support, Stability, and Convenience Features
+__Released August 9, 2015__
 
 * Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the `info` command.  Only `text` output was affected -- `json` output reported the correct epoch values.  _Reported by Michael Renner_.
 
 * Fixed protocol issue that was preventing ssh errors (especially on connection) from being logged.
 
-* Now using Perl DBI for connections to PostgreSQL rather than psql.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.
+* Now using Perl `DBI` and `DBD::Pg` for connections to PostgreSQL rather than `psql`.  The `cmd-psql` and `cmd-psql-option` settings have been removed and replaced with `db-port` and `db-socket-path`.  Follow the instructions in [Installation](USERGUIDE.md#installation) to install `DBD::Pg` on your operating system.
 
 * Add [stop-auto](USERGUIDE.md#stop-auto-key) option to allow failed backups to automatically be stopped when a new backup starts.
 

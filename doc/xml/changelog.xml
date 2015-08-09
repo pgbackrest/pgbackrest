@@ -6,7 +6,15 @@
 	</intro>
 
 	<changelog>
-		<changelog-release date="XXXX-XX-XX" version="0.80" title="DALLAS MILESTONE - UNDER DEVELOPMENT">
+		<changelog-release date="XXXX-XX-XX" version="0.85" title="DALLAS MILESTONE - UNDER DEVELOPMENT">
+			<release-feature-bullet-list>
+				<release-feature>
+					<text></text>
+				</release-feature>
+			</release-feature-bullet-list>
+		</changelog-release>
+
+		<changelog-release date="2015-08-09" version="0.80" title="DBI Support, Stability, and Convenience Features">
 			<release-feature-bullet-list>
 				<release-feature>
 					<text>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command.  Only <id>text</id> output was affected -- <id>json</id> output reported the correct epoch values.  <i>Reported by Michael Renner</i>.</text>
@@ -15,7 +23,7 @@
 					<text>Fixed protocol issue that was preventing ssh errors (especially on connection) from being logged.</text>
 				</release-feature>
 				<release-feature>
-					<text>Now using Perl DBI for connections to <postgres/> rather than psql.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.</text>
+					<text>Now using Perl <code>DBI</code> and <code>DBD::Pg</code> for connections to <postgres/> rather than <cmd>psql</cmd>.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.  Follow the instructions in [Installation](USERGUIDE.md#installation) to install <code>DBD::Pg</code> on your operating system.</text>
 				</release-feature>
 				<release-feature>
 					<text>Add [stop-auto](USERGUIDE.md#stop-auto-key) option to allow failed backups to automatically be stopped when a new backup starts.</text>
