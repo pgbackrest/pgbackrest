@@ -24,9 +24,10 @@ use BackRest::ThreadGroup;
 use BackRest::Utility;
 
 ####################################################################################################################################
-# Recovery.conf file
+# File constants
 ####################################################################################################################################
-use constant FILE_RECOVERY_CONF  => 'recovery.conf';
+use constant FILE_RECOVERY_CONF  => 'recovery.conf';    # Conf file with settings for recovery after restore
+use constant FILE_TABLESPACE_MAP  => 'tablespace_map';  # Tablespace map introduced in 9.5
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -201,12 +202,12 @@ sub manifest_load
         elsif ($self->{strBackupPath} ne $strBackupLabel)
         {
             confess &log(ASSERT, "request backup $self->{strBackupPath} and label ${strBackupLabel} do not match " .
-                                 ' - this indicates some sort of corruption (at the very least paths have been renamed.');
+                                 ' - this indicates some sort of corruption (at the very least paths have been renamed)');
         }
 
         if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH))
         {
-            &log(INFO, 'base path remapped to ' . $self->{strDbClusterPath});
+            &log(INFO, 'remap base path to ' . $self->{strDbClusterPath});
             $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
         }
 
@@ -253,7 +254,7 @@ sub manifest_load
                 }
 
                 # Remap the tablespace in the manifest
-                &log(INFO, "remapping tablespace ${strTablespaceKey} to ${strRemapPath}");
+                &log(INFO, "remap tablespace ${strTablespaceKey} to ${strRemapPath}");
 
                 my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
 
@@ -292,7 +293,7 @@ sub clean
 
         &log(INFO, "checking/cleaning db path ${strPath}");
 
-        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
+        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strPath))
         {
             next;
         }
@@ -595,10 +596,16 @@ sub restore
     }
 
     # Log the backup set to restore
-    &log(INFO, "Restoring backup set " . $self->{strBackupPath});
+    &log(INFO, "restore backup set " . $self->{strBackupPath});
 
     # Make sure the backup path is valid and load the manifest
     my $oManifest = $self->manifest_load();
+
+    # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database
+    # from being started by PostgreSQL.
+    $self->{oFile}->remove(PATH_DB_ABSOLUTE,
+                           $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
+                           '/' . FILE_PG_CONTROL);
 
     # Clean the restore paths
     $self->clean($oManifest);
@@ -625,11 +632,33 @@ sub restore
         {
             foreach my $strFile ($oManifest->keys($strSection))
             {
+                # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in the pg_tblspc directory.
+                # The tablespace links have already been created by Restore::build().
+                if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_TABLESPACE_MAP &&
+                    $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
+                {
+                    next;
+                }
+
                 my $lSize = $oManifest->getNumeric($strSection, $strFile, MANIFEST_SUBKEY_SIZE);
                 $lSizeTotal += $lSize;
 
-                # Preface the file key with the size. This allows for sorting the files to restore by size
-                my $strFileKey = sprintf("%016d-${strFile}", $lSize);
+                # Preface the file key with the size. This allows for sorting the files to restore by size.
+                my $strFileKey;
+
+                # Skip this for global/pg_control since it will be copied as the last step and needs to named in a way that it
+                # can be found for the copy.
+                if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_PG_CONTROL)
+                {
+                    $strFileKey = $strFile;
+                    $oRestoreHash{$strPathKey}{$strFileKey}{skip} = true;
+                }
+                # Else continue normally
+                else
+                {
+                    $strFileKey = sprintf("%016d-${strFile}", $lSize);
+                    $oRestoreHash{$strPathKey}{$strFileKey}{skip} = false;
+                }
 
                 # Get restore information
                 $oRestoreHash{$strPathKey}{$strFileKey}{file} = $strFile;
@@ -673,6 +702,9 @@ sub restore
 
             foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
             {
+                # Skip files marked to be copied later
+                next if ($oRestoreHash{$strPathKey}{$strFileKey}{skip});
+
                 $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strPathKey}{$strFileKey});
             }
         }
@@ -708,6 +740,9 @@ sub restore
         {
             foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
             {
+                # Skip files marked to be copied later
+                next if ($oRestoreHash{$strPathKey}{$strFileKey}{skip});
+
                 $lSizeCurrent = restoreFile($oRestoreHash{$strPathKey}{$strFileKey}, $lCopyTimeBegin, $self->{bDelta},
                                             $self->{bForce}, $self->{strBackupPath}, $bSourceCompression, $strCurrentUser,
                                             $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
@@ -718,7 +753,14 @@ sub restore
     # Create recovery.conf file
     $self->recovery();
 
-    &log(INFO, "restore complete");
+    # Copy pg_control last
+    &log(INFO, 'restore ' . FILE_PG_CONTROL . ' (copied last to ensure aborted restores cannot be started)');
+
+    restoreFile($oRestoreHash{&MANIFEST_KEY_BASE}{&FILE_PG_CONTROL}, $lCopyTimeBegin, $self->{bDelta}, $self->{bForce},
+                $self->{strBackupPath}, $bSourceCompression, $strCurrentUser, $strCurrentGroup, $self->{oFile}, $lSizeTotal,
+                $lSizeCurrent);
+
+    &log(INFO, 'restore complete');
 }
 
 1;

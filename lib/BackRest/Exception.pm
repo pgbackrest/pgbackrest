@@ -45,7 +45,10 @@ use constant
     ERROR_PATH_OPEN                    => 128,
     ERROR_PATH_SYNC                    => 129,
     ERROR_FILE_MISSING                 => 130,
-    ERROR_DB_CONNECT                   => 132,
+    ERROR_DB_CONNECT                   => 131,
+    ERROR_DB_QUERY                     => 132,
+    ERROR_DB_MISMATCH                  => 133,
+    ERROR_DB_TIMEOUT                   => 134,
 
     ERROR_UNKNOWN                      => 199
 };
@@ -56,7 +59,7 @@ our @EXPORT = qw(ERROR_ASSERT ERROR_CHECKSUM ERROR_CONFIG ERROR_FILE_INVALID ERR
                  ERROR_RESTORE_PATH_NOT_EMPTY ERROR_FILE_OPEN ERROR_FILE_READ ERROR_PARAM_REQUIRED ERROR_ARCHIVE_MISMATCH
                  ERROR_ARCHIVE_DUPLICATE ERROR_VERSION_NOT_SUPPORTED ERROR_PATH_CREATE ERROR_COMMAND_INVALID ERROR_HOST_CONNECT
                  ERROR_UNKNOWN ERROR_LOCK_ACQUIRE ERROR_BACKUP_MISMATCH ERROR_FILE_SYNC ERROR_PATH_OPEN ERROR_PATH_SYNC
-                 ERROR_FILE_MISSING ERROR_DB_CONNECT);
+                 ERROR_FILE_MISSING ERROR_DB_CONNECT ERROR_DB_QUERY ERROR_DB_MISMATCH ERROR_DB_TIMEOUT);
 
 ####################################################################################################################################
 # CONSTRUCTOR

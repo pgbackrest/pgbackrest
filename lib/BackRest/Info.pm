@@ -121,13 +121,13 @@ sub info
 
                 $strOutput .= '    oldest backup label: ' . $$oOldestBackup{&INFO_KEY_LABEL} . "\n";
                 $strOutput .= '    oldest backup timestamp: ' .
-                              timestamp_string_get(undef, $$oOldestBackup{&INFO_BACKUP_KEY_TIMESTAMP_STOP}) . "\n";
+                              timestamp_string_get(undef, $$oOldestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
 
                 my $oLatestBackup = $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}[@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} - 1];
 
                 $strOutput .= '    latest backup label: ' . $$oLatestBackup{&INFO_KEY_LABEL} . "\n";
                 $strOutput .= '    latest backup timestamp: ' .
-                              timestamp_string_get(undef, $$oLatestBackup{&INFO_BACKUP_KEY_TIMESTAMP_STOP}) . "\n";
+                              timestamp_string_get(undef, $$oLatestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
             }
         }
 
@@ -136,7 +136,16 @@ sub info
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
-        syswrite(*STDOUT, $oJSON->encode($oStanzaList));
+        my $strJSON = $oJSON->encode($oStanzaList);
+
+        syswrite(*STDOUT, $strJSON);
+
+        # On some systems a linefeed will be appended by encode() but others will not have it.  In our case there should always
+        # be a terminating linefeed.
+        if ($strJSON !~ /\n$/)
+        {
+            syswrite(*STDOUT, "\n");
+        }
     }
     else
     {
@@ -171,10 +180,10 @@ sub listStanza
         }
 
         # Trace the remote parameters
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->command_param_string($oParamHash) . ')');
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->commandParamString($oParamHash) . ')');
 
         # Execute the command
-        my $strStanzaList = $oFile->{oProtocol}->command_execute($strOperation, $oParamHash, true);
+        my $strStanzaList = $oFile->{oProtocol}->cmdExecute($strOperation, $oParamHash, true);
 
         # Trace the remote response
         &log(TRACE, "${strOperation}: remote json response (${strStanzaList})");

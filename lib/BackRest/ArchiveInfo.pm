@@ -58,7 +58,7 @@ sub new
     my $strArchiveClusterPath = shift;  # Backup cluster path
     my $bRequired = shift;              # Is archive info required?
 
-    logDebug(OP_ARCHIVE_INFO_NEW, DEBUG_CALL, undef, {archiveClusterPath => $strArchiveClusterPath});
+    logDebug(OP_ARCHIVE_INFO_NEW, DEBUG_CALL, undef, {archiveClusterPath => \$strArchiveClusterPath});
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;

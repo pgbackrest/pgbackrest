@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+use Fcntl qw(:mode O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname basename);
 use IO::Handle;
 use JSON::PP;
@@ -221,7 +222,7 @@ sub iniSave
     my $hFile;
     my $bFirst = true;
 
-    open($hFile, '>', $strFileName)
+    sysopen($hFile, $strFileName, O_WRONLY | O_CREAT | O_TRUNC, 0640)
         or confess &log(ERROR, "unable to open ${strFileName}");
 
     # Create the JSON object canonical so that fields are alpha ordered to pass unit tests

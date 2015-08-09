@@ -26,7 +26,6 @@ use BackRest::Db;
 use BackRest::File;
 use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Protocol;
 use BackRest::Utility;
 
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
@@ -237,13 +236,13 @@ sub BackRestTestCommon_TestLogAppendFile
         open($hFile, '<', $strFileName)
             or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
 
-        my $strHeader = "+ supplemental file: " . BackRestTestCommon_ExecuteRegAll($strFileName);
+        my $strHeader = "+ supplemental file: " . BackRestTestCommon_ExecuteRegExpAll($strFileName);
 
         $strFullLog .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
 
         while (my $strLine = readline($hFile))
         {
-            $strLine = BackRestTestCommon_ExecuteRegAll($strLine);
+            $strLine = BackRestTestCommon_ExecuteRegExpAll($strLine);
             $strFullLog .= $strLine;
         }
 
@@ -325,11 +324,11 @@ sub BackRestTestCommon_ExecuteBegin
 
     if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest/)
     {
-        $strCommandParam = BackRestTestCommon_ExecuteRegAll($strCommandParam);
+        $strCommandParam = BackRestTestCommon_ExecuteRegExpAll($strCommandParam);
 
         if (defined($strComment))
         {
-            $strComment = BackRestTestCommon_ExecuteRegAll($strComment);
+            $strComment = BackRestTestCommon_ExecuteRegExpAll($strComment);
             $strFullLog .= "\n${strComment}";
         }
 
@@ -417,7 +416,7 @@ sub BackRestTestCommon_ExecuteRegExp
 ####################################################################################################################################
 # BackRestTestCommon_ExecuteRegExpAll
 ####################################################################################################################################
-sub BackRestTestCommon_ExecuteRegAll
+sub BackRestTestCommon_ExecuteRegExpAll
 {
     my $strLine = shift;
 
@@ -446,7 +445,7 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', '^db-user=.+$', '[^=]+$');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', '--port=[0-9]+', '[0-9]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'PORT', 'db-port=[0-9]+', '[0-9]+$');
 
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
@@ -533,7 +532,7 @@ sub BackRestTestCommon_ExecuteEnd
                         $strLine =~ s/^ //;
                         $strLine =~ s/\r$//;
 
-                        $strLine = BackRestTestCommon_ExecuteRegAll($strLine);
+                        $strLine = BackRestTestCommon_ExecuteRegExpAll($strLine);
                         $strFullLog .= $strLine;
                     }
                 }
@@ -792,14 +791,19 @@ sub BackRestTestCommon_Setup
     BackRestTestCommon_Execute($strPgSqlBin . '/postgres --version');
 
     # Get the Postgres version
+    my $strVersionRegExp = '(devel|((alpha|beta)[0-9]+))$';
     my @stryVersionToken = split(/ /, $strOutLog);
     @stryVersionToken = split(/\./, $stryVersionToken[2]);
     $strCommonDbVersion = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
 
-    if ($strCommonDbVersion =~ /devel$/)
+    # Warn if this is a devel/alpha/beta version
+    if ($strCommonDbVersion =~ /$strVersionRegExp/)
     {
-        $strCommonDbVersion =~ s/devel$//;
-        &log(INFO, "Testing against ${strCommonDbVersion} development version");
+        my $strDevVersion = $strCommonDbVersion;
+        $strCommonDbVersion =~ s/$strVersionRegExp//;
+        $strDevVersion = substr($strDevVersion, length($strCommonDbVersion));
+
+        &log(WARN, "Testing against ${strCommonDbVersion} ${strDevVersion} version");
     }
 
     # Don't run unit tests for unsupported versions
@@ -808,12 +812,6 @@ sub BackRestTestCommon_Setup
     if ($strCommonDbVersion < ${$strVersionSupport}[0])
     {
         confess "currently only version ${$strVersionSupport}[0] and up are supported";
-    }
-
-    if ($strCommonDbVersion eq '9.5')
-    {
-        &log(WARN, "unit tests do not currently work with version 9.5");
-        return false;
     }
 
     return true;
@@ -1064,11 +1062,9 @@ sub BackRestTestCommon_ConfigCreate
 
     if (defined($strRemote))
     {
+        $oParamHash{'global:command'}{'[comment]'} = 'backrest command';
         $oParamHash{'global:command'}{'cmd-remote'} = $strCommonCommandRemote;
     }
-
-    $oParamHash{'global:command'}{'[comment]'} = 'psql command and options';
-    $oParamHash{'global:command'}{'cmd-psql'} = $strCommonCommandPsql;
 
     if (defined($strRemote) && $strRemote eq BACKUP)
     {
@@ -1122,8 +1118,8 @@ sub BackRestTestCommon_ConfigCreate
 
     if (($strLocal eq BACKUP) || ($strLocal eq DB && !defined($strRemote)))
     {
-        $oParamHash{"${strCommonStanza}:command"}{'[comment]'} = 'cluster-specific command options';
-        $oParamHash{"${strCommonStanza}:command"}{'cmd-psql-option'} = "--port=${iCommonDbPort}";
+        # $oParamHash{"${strCommonStanza}:command"}{'[comment]'} = 'cluster-specific command options';
+        # $oParamHash{"${strCommonStanza}:command"}{'cmd-psql-option'} = "--port=${iCommonDbPort}";
 
         if (defined($bHardlink) && $bHardlink)
         {
@@ -1142,6 +1138,8 @@ sub BackRestTestCommon_ConfigCreate
     # Stanza settings
     $oParamHash{$strCommonStanza}{'[comment]'} = "cluster-specific settings";
     $oParamHash{$strCommonStanza}{'db-path'} = $strCommonDbCommonPath;
+    $oParamHash{$strCommonStanza}{'db-port'} = $iCommonDbPort;
+    $oParamHash{$strCommonStanza}{'db-socket-path'} = BackRestTestCommon_DbPathGet();
 
     # Comments
     if (defined($oParamHash{'global:backup'}))

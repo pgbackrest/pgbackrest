@@ -4,8 +4,8 @@ run 001 - rmt 0, cmp 0, error version
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/out, mode [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
+DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/out, mode 0750
 DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/out
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
@@ -18,8 +18,8 @@ DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
-DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, mode [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
+DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, mode 0750
 DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
@@ -31,7 +31,7 @@ DEBUG:     safe exit called, terminating threads
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -48,7 +48,7 @@ DEBUG:     safe exit called, terminating threads
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -71,7 +71,7 @@ DEBUG:     safe exit called, terminating threads
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -82,21 +82,21 @@ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     archive 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     archive 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 0, default_compress = 0
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     transferred 3 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out
@@ -107,7 +107,7 @@ DEBUG:     safe exit called, terminating threads
 > [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:out:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006.tmp to absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
@@ -118,7 +118,7 @@ DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
 DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
 DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000006(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = [undef], user = [undef], group = [undef]
+DEBUG:     File->copy: local db:absolute:[TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
 DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, destination_path_create = true
 DEBUG:     transferred 1 WAL segment(s), calling Archive->xfer() again
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/backrest/archive/db/out

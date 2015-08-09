@@ -1,6 +1,15 @@
 Vagrant.configure(2) do |config|
+    config.vm.provider :virtualbox do |vb|
+        vb.memory = 1024
+        vb.cpus = 4
+    end
+
     config.vm.define "u12" do |u12|
         u12.vm.box = "ubuntu/precise64"
+
+        u12.vm.provider :virtualbox do |vb|
+            vb.name = "backrest-test-ubuntu-12.04"
+        end
 
         # Provision the VM
         u12.vm.provision "shell", inline: <<-SHELL
@@ -24,17 +33,61 @@ Vagrant.configure(2) do |config|
             # Setup SSH
             adduser --ingroup=vagrant --disabled-password --gecos "" backrest
             /backrest/test/vm/ssh/setup.sh
+            /backrest/test/vm/ssh/setup-cm.sh
 
-            # Install packages required for testing
+            # Install required Perl modules
             apt-get install -y libdbd-pg-perl
 
-            # Run the actual test
-            # /backrest/test/test.pl --db-version=all --thread-max=4
+            # Install Perl modules required for building the docs
+            apt-get install -y libxml-checker-perl
+        SHELL
+    end
+
+    config.vm.define "u14" do |u14|
+        u14.vm.box = "ubuntu/trusty64"
+
+        u14.vm.provider :virtualbox do |vb|
+            vb.name = "backrest-test-ubuntu-14.04"
+        end
+
+        # Provision the VM
+        u14.vm.provision "shell", inline: <<-SHELL
+            # Install db
+            echo 'deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main 9.5' >> /etc/apt/sources.list.d/pgdg.list
+            wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+            sudo apt-get update
+            apt-get install -y postgresql-9.5
+            pg_dropcluster --stop 9.5 main
+            apt-get install -y postgresql-9.4
+            pg_dropcluster --stop 9.4 main
+            apt-get install -y postgresql-9.3
+            pg_dropcluster --stop 9.3 main
+            apt-get install -y postgresql-9.2
+            pg_dropcluster --stop 9.2 main
+            apt-get install -y postgresql-9.1
+            pg_dropcluster --stop 9.1 main
+            apt-get install -y postgresql-9.0
+            pg_dropcluster --stop 9.0 main
+
+            # Setup SSH
+            adduser --ingroup=vagrant --disabled-password --gecos "" backrest
+            /backrest/test/vm/ssh/setup.sh
+            /backrest/test/vm/ssh/setup-cm.sh
+
+            # Install required Perl modules
+            apt-get install -y libdbd-pg-perl
+
+            # Install Perl modules required for building the docs
+            apt-get install -y libxml-checker-perl
         SHELL
     end
 
     config.vm.define "co6" do |co6|
         co6.vm.box = "chef/centos-6.6"
+
+        co6.vm.provider :virtualbox do |vb|
+            vb.name = "backrest-test-centos-6.6"
+        end
 
         # Provision the VM
         co6.vm.provision "shell", inline: <<-SHELL
@@ -50,21 +103,39 @@ Vagrant.configure(2) do |config|
             yum -y install postgresql93-server
             yum -y install postgresql94-server
 
-            # Install Perl
-            yum -y install perl
-            yum -y install perl-Time-HiRes
-            yum -y install perl-Compress-Raw-Zlib
-            yum -y install perl-IO-String
-            yum -y install perl-parent
-            yum -y install perl-JSON
-            yum -y install perl-Digest-SHA
+            # Install Perl and required modules
+            yum -y install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 
             # Setup SSH
             adduser -gvagrant -n backrest
             /backrest/test/vm/ssh/setup.sh
+        SHELL
+    end
 
-            # Install packages required for testing
-            yum -y install perl-DBD-Pg
+    config.vm.define "co7" do |co7|
+        co7.vm.box = "chef/centos-7.1"
+
+        co7.vm.provider :virtualbox do |vb|
+            vb.name = "backrest-test-centos-7.1"
+        end
+
+        # Provision the VM
+        co7.vm.provision "shell", inline: <<-SHELL
+            # Install db
+            sudo rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+            sudo rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+            sudo rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-1.noarch.rpm
+            yum -y install postgresql93-server
+            yum -y install postgresql94-server
+            yum -y install postgresql95-server
+
+            # Install Perl and required modules
+            yum -y install perl perl-IO-String perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
+
+            # Setup SSH
+            adduser -gvagrant -n backrest
+            /backrest/test/vm/ssh/setup.sh
+            /backrest/test/vm/ssh/setup-cm.sh
         SHELL
     end
 

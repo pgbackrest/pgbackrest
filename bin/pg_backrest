@@ -24,8 +24,7 @@ use BackRest::Exception;
 use BackRest::File;
 use BackRest::Info;
 use BackRest::Lock;
-use BackRest::Protocol qw(DB BACKUP NONE);
-use BackRest::Remote;
+use BackRest::Protocol::RemoteMinion;
 use BackRest::Restore;
 use BackRest::ThreadGroup;
 use BackRest::Utility;
@@ -73,11 +72,8 @@ eval
         log_level_set(OFF, OFF);
 
         # Create the remote object
-        my $oRemote = new BackRest::Remote
+        my $oRemote = new BackRest::Protocol::RemoteMinion
         (
-            undef,      # Host
-            undef,      # User
-            'remote',   # Command
             optionGet(OPTION_BUFFER_SIZE),
             optionGet(OPTION_COMPRESS_LEVEL),
             optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
@@ -170,26 +166,23 @@ eval
     }
 
     ################################################################################################################################
-    # GET MORE CONFIG INFO
-    ################################################################################################################################
     # Make sure backup and expire command happen on the backup side
+    ################################################################################################################################
     if (optionRemoteTypeTest(BACKUP))
     {
         confess &log(ERROR, 'backup and expire commands must run on the backup host');
     }
 
-    # Initialize the db object
-    my $oDb;
-
+    ################################################################################################################################
+    # BACKUP
+    ################################################################################################################################
     if (commandTest(CMD_BACKUP))
     {
-        $oDb = new BackRest::Db();
-
-        # Run backup_init - parameters required for backup and restore commands
+        # Run backup_init - parameters required for backup commands
         backup_init
         (
-            $oDb,
             $oFile,
+            new BackRest::Db(),
             optionGet(OPTION_TYPE),
             optionGet(OPTION_COMPRESS),
             optionGet(OPTION_HARDLINK),
@@ -198,13 +191,7 @@ eval
             optionGet(OPTION_NO_START_STOP),
             optionTest(OPTION_FORCE)
         );
-    }
 
-    ################################################################################################################################
-    # BACKUP
-    ################################################################################################################################
-    if (commandTest(CMD_BACKUP))
-    {
         backup(optionGet(OPTION_DB_PATH), optionGet(OPTION_START_FAST));
 
         commandSet(CMD_EXPIRE);
@@ -215,14 +202,10 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_EXPIRE))
     {
-        if (!defined($oDb))
-        {
-            backup_init
-            (
-                undef,
-                $oFile
-            );
-        }
+        backup_init
+        (
+            $oFile
+        );
 
         backup_expire
         (

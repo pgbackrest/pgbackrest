@@ -159,37 +159,6 @@ sub hsleep
 }
 
 ####################################################################################################################################
-# WAIT_FOR_FILE
-####################################################################################################################################
-sub wait_for_file
-{
-    my $strDir = shift;
-    my $strRegEx = shift;
-    my $iSeconds = shift;
-
-    my $lTime = time();
-    my $hDir;
-
-    while ($lTime > time() - $iSeconds)
-    {
-        if (opendir($hDir, $strDir))
-        {
-            my @stryFile = grep(/$strRegEx/i, readdir $hDir);
-            close $hDir;
-
-            if (scalar @stryFile == 1)
-            {
-                return;
-            }
-        }
-
-        hsleep(.1);
-    }
-
-    confess &log(ERROR, "could not find $strDir/$strRegEx after ${iSeconds} second(s)");
-}
-
-####################################################################################################################################
 # COMMON_PREFIX
 ####################################################################################################################################
 sub common_prefix
@@ -239,7 +208,7 @@ sub file_size_format
 }
 
 ####################################################################################################################################
-# TIMESTAMP_STRING_GET - Get backrest standard timestamp (or formatted as specified
+# TIMESTAMP_STRING_GET - Get standard timestamp (or formatted as specified)
 ####################################################################################################################################
 sub timestamp_string_get
 {
@@ -278,7 +247,8 @@ sub log_file_set
 
     unless (-e dirname($strFile))
     {
-        mkdir(dirname($strFile)) or die "unable to create directory for log file ${strFile}";
+        mkdir(dirname($strFile), oct('0770'))
+            or die "unable to create directory for log file ${strFile}";
     }
 
     $strFile .= '-' . timestamp_string_get('%4d%02d%02d') . '.log';
@@ -289,7 +259,8 @@ sub log_file_set
         $bExists = true;
     }
 
-    open($hLogFile, '>>', $strFile) or confess "unable to open log file ${strFile}";
+    sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT, 0660)
+        or confess &log(ERROR, "unable to open log file ${strFile}", ERROR_FILE_OPEN);
 
     if ($bExists)
     {
@@ -382,6 +353,8 @@ use constant DEBUG_RESULT                                           => '=>';
 use constant DEBUG_MISC                                             => '';
     push @EXPORT, qw(DEBUG_MISC);
 
+use constant DEBUG_STRING_MAX_LEN                                   => 1024;
+
 sub logDebug
 {
     my $strFunction = shift;
@@ -406,10 +379,14 @@ sub logDebug
                     $strParamSet .= ', ';
                 }
 
+                my $strValueRef = ref($$oParamHash{$strParam}) ? $$oParamHash{$strParam} : \$$oParamHash{$strParam};
+
                 $strParamSet .= "${strParam} = " .
-                                (defined($$oParamHash{$strParam}) ?
-                                    ($strParam =~ /^is/ ? ($$oParamHash{$strParam} ? 'true' : 'false'):
-                                    $$oParamHash{$strParam}) : '[undef]');
+                                (defined($$strValueRef) ?
+                                    ($strParam =~ /^is/ ? ($$strValueRef ? 'true' : 'false'):
+                                    (length($$strValueRef) > DEBUG_STRING_MAX_LEN ?
+                                     substr($$strValueRef, 0, DEBUG_STRING_MAX_LEN) . ' ... [TRUNCATED]':
+                                     $$strValueRef)) : '[undef]');
             }
 
             if (defined($strMessage))
@@ -435,7 +412,11 @@ sub logTrace
     my $strMessage = shift;
     my $oParamHash = shift;
 
-    logDebug($strFunction, $strType, $strMessage, $oParamHash, TRACE);
+    if ($oLogLevelRank{&TRACE}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
+        $oLogLevelRank{&TRACE}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank})
+    {
+        logDebug($strFunction, $strType, $strMessage, $oParamHash, TRACE);
+    }
 }
 
 push @EXPORT, qw(logTrace);

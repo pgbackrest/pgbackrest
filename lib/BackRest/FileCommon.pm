@@ -18,9 +18,9 @@ use BackRest::Utility;
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_FILE_BASE                                         => 'FileBase';
+use constant OP_FILE_COMMON                                       => 'FileCommon';
 
-use constant OP_FILE_BASE_PATH_SYNC                               => OP_FILE_BASE . '::filePathSync';
+use constant OP_FILE_COMMON_PATH_SYNC                             => OP_FILE_COMMON . '::filePathSync';
 
 ####################################################################################################################################
 # filePathSync
@@ -31,7 +31,7 @@ sub filePathSync
 {
     my $strPath = shift;
 
-    logTrace(OP_FILE_BASE_PATH_SYNC, DEBUG_CALL, undef, {path => $strPath});
+    logTrace(OP_FILE_COMMON_PATH_SYNC, DEBUG_CALL, undef, {path => \$strPath});
 
     open(my $hPath, "<", $strPath)
         or confess &log(ERROR, "unable to open ${strPath}", ERROR_PATH_OPEN);

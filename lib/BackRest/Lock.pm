@@ -70,17 +70,17 @@ sub lockAcquire
         confess &lock(ASSERT, "${strCurrentLockType} lock is already held");
     }
 
-    # Create the lock path if it does not exist
+    # Create the lock path if it does not exist.  Use 770 so that members of the group can run read-only processes.
     if (! -e lockPathName(optionGet(OPTION_REPO_PATH)))
     {
-        mkdir lockPathName(optionGet(OPTION_REPO_PATH))
+        mkdir (lockPathName(optionGet(OPTION_REPO_PATH)), 0770)
             or confess(ERROR, 'unable to create lock path ' . lockPathName(optionGet(OPTION_REPO_PATH)), ERROR_PATH_CREATE);
     }
 
     # Attempt to open the lock file
     $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA), optionGet(OPTION_REPO_PATH));
 
-    sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT)
+    sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, 0660)
         or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
 
     # Attempt to lock the lock file

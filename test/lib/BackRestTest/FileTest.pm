@@ -23,7 +23,8 @@ use Time::HiRes qw(gettimeofday usleep);
 use lib dirname($0) . '/../lib';
 use BackRest::Config;
 use BackRest::File;
-use BackRest::Protocol;
+use BackRest::Protocol::Common;
+use BackRest::Protocol::RemoteMaster;
 use BackRest::Utility;
 
 use BackRestTest::CommonTest;
@@ -57,7 +58,11 @@ sub BackRestTestFile_Setup
         # Create the backrest private directory
         if (defined($bPrivate) && $bPrivate)
         {
-            system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/private'") == 0 or die "unable to create ${strTestPath}/private path";
+            system("ssh backrest\@${strHost} 'mkdir -m 700 ${strTestPath}/backrest_private'") == 0
+                or die "unable to create ${strTestPath}/backrest_private path";
+
+            system("mkdir -m 700 ${strTestPath}/user_private") == 0
+                or die "unable to create ${strTestPath}/user_private path";
         }
     }
 }
@@ -92,24 +97,21 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $oRemote = new BackRest::Remote
+    my $oRemote = new BackRest::Protocol::RemoteMaster
     (
-        $strHost,                                   # Host
-        $strUser,                                   # User
         BackRestTestCommon_CommandRemoteFullGet(),  # Command
         OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
+        $strHost,                                   # Host
+        $strUserBackRest                            # User
     );
 
-    my $oLocal = new BackRest::Protocol
+    my $oLocal = new BackRest::Protocol::Common
     (
-        undef,                                  # Name
-        false,                                  # Is backend?
-        undef,                                  # Command
         OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,  # Compress network level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK   # Compress network level
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -163,7 +165,8 @@ sub BackRestTestFile_Test
                 # If not exists then set the path to something bogus
                 if ($bError)
                 {
-                    $strPath = "${strTestPath}/private/path";
+                    $strPath = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . "_private/path";
+
                     $strPathType = PATH_BACKUP_ABSOLUTE;
                 }
 
@@ -270,7 +273,7 @@ sub BackRestTestFile_Test
 
                 if ($bSourceError)
                 {
-                    $strSourceFile = "${strTestPath}/private/test.txt";
+                    $strSourceFile = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . "_private/test.txt";
                 }
                 elsif ($bSourceExists)
                 {
@@ -279,7 +282,7 @@ sub BackRestTestFile_Test
 
                 if ($bDestinationError)
                 {
-                    $strSourceFile = "${strTestPath}/private/test.txt";
+                    $strDestinationFile = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . "_private/test.txt";
                 }
                 elsif (!$bDestinationExists)
                 {
@@ -357,7 +360,7 @@ sub BackRestTestFile_Test
 
                 if ($bError)
                 {
-                    $strFile = "${strTestPath}/private/test.txt";
+                    $strFile = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . "_private/test.txt";
                 }
                 elsif ($bExists)
                 {
@@ -542,7 +545,7 @@ sub BackRestTestFile_Test
 
                 if ($bError)
                 {
-                    $strPath = $strTestPath . '/private';
+                    $strPath = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . '_private';
                 }
                 elsif (!$bExists)
                 {
@@ -684,7 +687,7 @@ sub BackRestTestFile_Test
 
                         if ($bError)
                         {
-                            $strPath = "${strTestPath}/private";
+                            $strPath = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . '_private';
                         }
                         elsif (!$bExists)
                         {
@@ -792,7 +795,7 @@ sub BackRestTestFile_Test
 
                     if ($bError)
                     {
-                        $strFile = "${strTestPath}/private/test.txt"
+                        $strFile = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . '_private/test.txt';
                     }
                     elsif (!$bExists)
                     {
@@ -891,7 +894,7 @@ sub BackRestTestFile_Test
 
                 if ($bError)
                 {
-                    $strFile = "${strTestPath}/private/test.txt";
+                    $strFile = "${strTestPath}/" . ($bRemote ? 'user' : 'backrest') . '_private/test.txt';
                 }
                 elsif (!$bExists)
                 {
@@ -1189,7 +1192,7 @@ sub BackRestTestFile_Test
                         $oFile->copy($strSourcePathType, $strSourceFile,
                                      $strDestinationPathType, $strDestinationFile,
                                      $bSourceCompressed, $bDestinationCompress,
-                                     $bSourceIgnoreMissing, undef, '0700', false, undef, undef,
+                                     $bSourceIgnoreMissing, undef, '0770', false, undef, undef,
                                      $bChecksumAppend);
                 };
 
