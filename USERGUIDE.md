@@ -69,6 +69,8 @@ Report regression test failures at https://github.com/pgmasters/backrest/issues.
 
 pgBackRest can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is `/etc/pg_backrest.conf`.
 
+Each system where pgBackRest is installed should have a repository owned by the user that will be running pgBackRest on that system.  Normally this will be the `postgres` user on a database server and the `backrest` user on a backup server.  See [repo-path](USERGUIDE.md#repo-path-key) for more information on how repositories are used.
+
 ### Examples
 
 #### Confguring Postgres for Archiving
@@ -256,6 +258,15 @@ example: neutral-umask=n
 ##### `repo-path` key
 
 Path to the backrest repository where WAL segments, backups, logs, etc are stored.
+
+The repository serves as both storage and working area for pgBackRest.  In a simple installation where the backups are stored locally to the database server there will be only one repository which will contain everything: backups, archives, logs, locks, etc.
+
+If the backups are being done remotely then the backup server's repository will contain backups, archives, locks and logs while the database server's repository will contain only locks and logs.  However, if asynchronous archving is enabled then the database server's repository will also contain a spool directory for archive logs that have not yet been pushed to the remote repository.
+
+Each system where pgBackRest is installed should have a repository directory configured.  Storage requirements vary based on usage.  The main backup repository will need the most space as it contains both backups and WAL segments for whatever retention you have specified.  The database repository only needs significant space if asynchronous archiving is enabled and then it will act as an overflow for WAL segments and might need to be large depending on your database activity.
+
+If you are new to backup then it will be difficult to estimate in advance how much space you'll need.  The best thing to do it take some backups then record the size of different types of backups (full/incr/diff) and measure the amount of WAL generated per day.  This will give you a general idea of how much space you'll need, though of course requirements will change over time as your database evolves.
+
 ```
 required: n
 default: /var/lib/backup
@@ -265,6 +276,8 @@ example: repo-path=/data/db/backrest
 ##### `repo-remote-path` key
 
 Path to the remote backrest repository where WAL segments, backups, logs, etc are stored.
+
+The remote repository is relative to the current installation of pgBackRest.  On a database server the backup server will be remote and visa versa for the backup server where the database server will be remote.  This option is only required if the remote repository is in a different location than the local repository.
 ```
 required: n
 example: repo-remote-path=/backup/backrest

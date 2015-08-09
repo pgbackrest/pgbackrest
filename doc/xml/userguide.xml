@@ -73,7 +73,9 @@
 	</install>
 
 	<config title="Configuration">
-		<text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pg_backrest.conf</file>.</text>
+		<text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pg_backrest.conf</file>.
+
+		Each system where <backrest/> is installed should have a repository owned by the user that will be running <backrest/> on that system.  Normally this will be the <id>postgres</id> user on a database server and the <id>backrest</id> user on a backup server.  See [repo-path](USERGUIDE.md#repo-path-key) for more information on how repositories are used.</text>
 
 		<config-example-list title="Examples">
 			<config-example title="Confguring Postgres for Archiving">
@@ -252,14 +254,25 @@
 
 					<!-- CONFIG - GENERAL SECTION - REPO-PATH KEY -->
 					<config-key id="repo-path">
-						<text>Path to the backrest repository where WAL segments, backups, logs, etc are stored.</text>
+						<text>Path to the backrest repository where WAL segments, backups, logs, etc are stored.
+
+						The repository serves as both storage and working area for pgBackRest.  In a simple installation where the backups are stored locally to the database server there will be only one repository which will contain everything: backups, archives, logs, locks, etc.
+
+						If the backups are being done remotely then the backup server's repository will contain backups, archives, locks and logs while the database server's repository will contain only locks and logs.  However, if asynchronous archving is enabled then the database server's repository will also contain a spool directory for archive logs that have not yet been pushed to the remote repository.
+
+						Each system where <backrest/> is installed should have a repository directory configured.  Storage requirements vary based on usage.  The main backup repository will need the most space as it contains both backups and WAL segments for whatever retention you have specified.  The database repository only needs significant space if asynchronous archiving is enabled and then it will act as an overflow for WAL segments and might need to be large depending on your database activity.
+
+						If you are new to backup then it will be difficult to estimate in advance how much space you'll need.  The best thing to do it take some backups then record the size of different types of backups (full/incr/diff) and measure the amount of WAL generated per day.  This will give you a general idea of how much space you'll need, though of course requirements will change over time as your database evolves.
+						</text>
 
 						<example>/data/db/backrest</example>
 					</config-key>
 
 					<!-- CONFIG - GENERAL SECTION - REPO-REMOTE-PATH KEY -->
 					<config-key id="repo-remote-path">
-						<text>Path to the remote backrest repository where WAL segments, backups, logs, etc are stored.</text>
+						<text>Path to the remote backrest repository where WAL segments, backups, logs, etc are stored.
+
+						The remote repository is relative to the current installation of <backrest/>.  On a database server the backup server will be remote and visa versa for the backup server where the database server will be remote.  This option is only required if the remote repository is in a different location than the local repository.</text>
 
 						<example>/backup/backrest</example>
 					</config-key>
