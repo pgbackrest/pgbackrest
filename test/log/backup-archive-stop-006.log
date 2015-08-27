@@ -1,7 +1,7 @@
 run 006 - rmt 1, cmp 1, error connect
 =====================================
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000001, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
@@ -11,8 +11,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
@@ -23,7 +23,7 @@ DEBUG:     no archive logs to be copied to backup
 DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push  --backup-host=bogus [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push  --backup-host=bogus [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000002, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
@@ -31,12 +31,12 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = bogus, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@bogus '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = bogus, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@bogus '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 ERROR: [124]: protocol version mismatch: ssh: Could not resolve hostname bogus: Name or service not known
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push  --backup-host=bogus [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push  --backup-host=bogus [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000003, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
@@ -44,18 +44,18 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = bogus, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@bogus '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = bogus, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@bogus '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 ERROR: [124]: protocol version mismatch: ssh: Could not resolve hostname bogus: Name or service not known
 ERROR: local archive store max size has exceeded limit of 24MB - WAL segments will be discarded until the stop file ([TEST_PATH]/local/lock/db-archive.stop) is removed
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
 ERROR: discarding 000000010000000100000004 due to the archive store max size exceeded - remove the archive stop file ([TEST_PATH]/local/lock/db-archive.stop) to resume archiving and be sure to take a new backup as soon as possible
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000005, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
@@ -63,8 +63,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: archive to be copied to backup total 3, size 48MB
 DEBUG:     archive 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
@@ -81,7 +81,7 @@ DEBUG:     no archive logs to be copied to backup
 DEBUG:     transfer found 0 WAL segments - exiting
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
 DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:out:[TEST_PATH]/local/archive/db/out/000000010000000100000006, source_compressed = false, destination_compress = false, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
@@ -89,8 +89,8 @@ DEBUG:     File->move: absolute:[TEST_PATH]/local/archive/db/out/000000010000000
 DEBUG:     No fork on archive local for TESTING
 DEBUG:     starting async archive-push
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/local/archive/db/out
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --no-fork --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
  INFO: archive to be copied to backup total 1, size 16MB
 DEBUG:     archive 000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, is WAL 1, source_compressed = 0, destination_compress 1, default_compress = 1
 DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006

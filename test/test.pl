@@ -137,6 +137,11 @@ if (@ARGV > 0)
 # Set a neutral umask so tests work as expected
 umask(0);
 
+if (defined($strExe) && !-e $strExe)
+{
+    confess '--exe must exist and be fully qualified'
+}
+
 # Set console log level
 if ($bQuiet)
 {

@@ -322,7 +322,7 @@ sub BackRestTestCommon_ExecuteBegin
 
     $bFullLog = false;
 
-    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest/)
+    if (defined($strModule) && $strCommandParam =~ /^$strCommonCommandMain/)
     {
         $strCommandParam = BackRestTestCommon_ExecuteRegExpAll($strCommandParam);
 
@@ -422,7 +422,7 @@ sub BackRestTestCommon_ExecuteRegExpAll
 
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
-    $strLine =~ s/$strBinPath/[BACKREST_BIN_PATH]/g;
+    $strLine =~ s/$strCommonCommandMain/[BACKREST_BIN]/g;
     $strLine =~ s/$strPgSqlBin/[PGSQL_BIN_PATH]/g;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();

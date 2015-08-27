@@ -1,11 +1,11 @@
 run 008 - rmt 1, cmp 1, exists 1
 ================================
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000001
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 ERROR: [130]: archive.info does not exist but is required to get WAL segments
               HINT: Is archive_command configured in postgresql.conf?
               HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
@@ -26,11 +26,11 @@ db-version="9.3"
 [db:history]
 1={"db-id":1234567890123456789,"db-version":"9.3"}
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000001
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
@@ -38,11 +38,11 @@ DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, destination_path_create = false
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000002
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
@@ -50,11 +50,11 @@ DEBUG:     File->copy: remote backup:archive:[TEST_PATH]/backrest/archive/db/9.3
 DEBUG:     File->move: absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002.backrest.tmp to absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002, destination_path_create = false
 DEBUG:     safe exit called, terminating threads
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: getting WAL segment 000000010000000100000003
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN_PATH]/pg_backrest --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
 DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
 DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
 DEBUG:     archive_get: cp 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
