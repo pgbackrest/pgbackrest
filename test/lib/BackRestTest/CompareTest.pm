@@ -17,7 +17,7 @@ use File::stat;
 use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Utility;
+use BackRest::Common::Log;
 
 use BackRestTest::BackupTest;
 use BackRestTest::CommonTest;
@@ -35,7 +35,7 @@ sub BackRestTestCompare_BuildDb
     my $iTableTotal = shift;
     my $iTableSize = shift;
 
-    &log(INFO, "build database: " . file_size_format($iTableTotal * $iTableSize * 1024 * 1024));
+    &log(INFO, "build database: " . fileSizeFormat($iTableTotal * $iTableSize * 1024 * 1024));
 
     for (my $iTableIdx = 0; $iTableIdx < $iTableTotal; $iTableIdx++)
     {

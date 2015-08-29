@@ -1,13 +1,14 @@
 ####################################################################################################################################
-# INI MODULE
+# COMMON INI MODULE
 ####################################################################################################################################
-package BackRest::Ini;
+package BackRest::Common::Ini;
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use Fcntl qw(:mode O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname basename);
 use IO::Handle;
@@ -15,9 +16,10 @@ use JSON::PP;
 use Storable qw(dclone);
 
 use lib dirname($0);
-use BackRest::Exception;
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Common::String;
 use BackRest::FileCommon;
-use BackRest::Utility;
 use BackRest::Version;
 
 ####################################################################################################################################
@@ -31,7 +33,7 @@ use constant OP_INI_SET                                             => OP_INI . 
 # Version and Format Constants
 ####################################################################################################################################
 use constant BACKREST_VERSION                                       => "$VERSION";
-    our @EXPORT = qw(BACKREST_VERSION);
+    push @EXPORT, qw(BACKREST_VERSION);
 use constant BACKREST_FORMAT                                        => "$FORMAT";
     push @EXPORT, qw(BACKREST_FORMAT);
 
@@ -100,13 +102,12 @@ sub new
 
         if ($iFormat != BACKREST_FORMAT)
         {
-            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . BACKREST_FORMAT . ' is required by this ' .
-                                ' version of PgBackRest.', ERROR_FORMAT);
+            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . BACKREST_FORMAT . ' is required', ERROR_FORMAT);
         }
     }
     else
     {
-        $self->setNumeric(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
+        $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
         $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
     }
 
@@ -265,7 +266,7 @@ sub iniSave
             }
 
             # If the value is a hash then convert it to JSON, otherwise store as is
-            my $strValue = ${$oContent}{"${strSection}"}{"${strKey}"};
+            my $strValue = ${$oContent}{$strSection}{$strKey};
 
             # If relaxed then store as old-style config
             if ($bRelaxed)
@@ -320,42 +321,6 @@ sub hash
     $self->set(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef, $strHash);
 
     return $strHash;
-}
-
-####################################################################################################################################
-# getBool
-#
-# Get a numeric value.
-####################################################################################################################################
-sub getBool
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bRequired = shift;
-    my $bDefault = shift;
-
-    return $self->get($strSection, $strValue, $strSubValue, $bRequired,
-                      defined($bDefault) ? ($bDefault ? INI_TRUE : INI_FALSE) : undef) ? true : false;
-}
-
-####################################################################################################################################
-# getNumeric
-#
-# Get a numeric value.
-####################################################################################################################################
-sub getNumeric
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bRequired = shift;
-    my $nDefault = shift;
-
-    return $self->get($strSection, $strValue, $strSubValue, $bRequired,
-                      defined($nDefault) ? $nDefault + 0 : undef) + 0;
 }
 
 ####################################################################################################################################
@@ -425,35 +390,39 @@ sub get
 }
 
 ####################################################################################################################################
-# setBool
+# boolGet
 #
-# Set a boolean value.
+# Get a numeric value.
 ####################################################################################################################################
-sub setBool
+sub boolGet
 {
     my $self = shift;
     my $strSection = shift;
-    my $strKey = shift;
-    my $strSubKey = shift;
-    my $bValue = shift;
+    my $strValue = shift;
+    my $strSubValue = shift;
+    my $bRequired = shift;
+    my $bDefault = shift;
 
-    $self->set($strSection, $strKey, $strSubKey, $bValue ? INI_TRUE : INI_FALSE);
+    return $self->get($strSection, $strValue, $strSubValue, $bRequired,
+                      defined($bDefault) ? ($bDefault ? INI_TRUE : INI_FALSE) : undef) ? true : false;
 }
 
 ####################################################################################################################################
-# setNumeric
+# numericGet
 #
-# Set a numeric value.
+# Get a numeric value.
 ####################################################################################################################################
-sub setNumeric
+sub numericGet
 {
     my $self = shift;
     my $strSection = shift;
-    my $strKey = shift;
-    my $strSubKey = shift;
-    my $nValue = shift;
+    my $strValue = shift;
+    my $strSubValue = shift;
+    my $bRequired = shift;
+    my $nDefault = shift;
 
-    $self->set($strSection, $strKey, $strSubKey, $nValue + 0);
+    return $self->get($strSection, $strValue, $strSubValue, $bRequired,
+                      defined($nDefault) ? $nDefault + 0 : undef) + 0;
 }
 
 ####################################################################################################################################
@@ -482,20 +451,52 @@ sub set
 }
 
 ####################################################################################################################################
-# setComment
+# boolSet
 #
-# Set a section comment.
+# Set a boolean value.
 ####################################################################################################################################
-sub setComment
+sub boolSet
 {
     my $self = shift;
     my $strSection = shift;
-    my $strComment = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $bValue = shift;
 
-    my $oContent = $self->{oContent};
-
-    ${$oContent}{$strSection}{&INI_COMMENT} = $strComment;
+    $self->set($strSection, $strKey, $strSubKey, $bValue ? INI_TRUE : INI_FALSE);
 }
+
+####################################################################################################################################
+# numericSet
+#
+# Set a numeric value.
+####################################################################################################################################
+sub numericSet
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $nValue = shift;
+
+    $self->set($strSection, $strKey, $strSubKey, $nValue + 0);
+}
+
+####################################################################################################################################
+# commentSet
+#
+# Set a section comment.
+####################################################################################################################################
+# sub commentSet
+# {
+#     my $self = shift;
+#     my $strSection = shift;
+#     my $strComment = shift;
+#
+#     my $oContent = $self->{oContent};
+#
+#     ${$oContent}{$strSection}{&INI_COMMENT} = $strComment;
+# }
 
 ####################################################################################################################################
 # remove
@@ -548,22 +549,6 @@ sub keys
 }
 
 ####################################################################################################################################
-# testBool
-#
-# Test a value to see if it equals the supplied test boolean value.  If no test value is given, tests that it is defined.
-####################################################################################################################################
-sub testBool
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bTest = shift;
-
-    return $self->test($strSection, $strValue, $strSubValue, defined($bTest) ? ($bTest ? INI_TRUE : INI_FALSE) : undef);
-}
-
-####################################################################################################################################
 # test
 #
 # Test a value to see if it equals the supplied test value.  If no test value is given, tests that it is defined.
@@ -589,6 +574,22 @@ sub test
     }
 
     return false;
+}
+
+####################################################################################################################################
+# boolTest
+#
+# Test a value to see if it equals the supplied test boolean value.  If no test value is given, tests that it is defined.
+####################################################################################################################################
+sub boolTest
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strValue = shift;
+    my $strSubValue = shift;
+    my $bTest = shift;
+
+    return $self->test($strSection, $strValue, $strSubValue, defined($bTest) ? ($bTest ? INI_TRUE : INI_FALSE) : undef);
 }
 
 1;

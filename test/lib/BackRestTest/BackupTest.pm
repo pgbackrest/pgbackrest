@@ -22,15 +22,16 @@ use Time::HiRes qw(gettimeofday);
 use lib dirname($0) . '/../lib';
 use BackRest::Archive;
 use BackRest::ArchiveInfo;
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Common::Wait;
 use BackRest::Db;
 use BackRest::Config;
-use BackRest::Exception;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;
-use BackRest::Utility;
 
 use BackRestTest::BackupCommonTest;
 use BackRestTest::CommonTest;
@@ -188,7 +189,7 @@ sub BackRestTestBackup_Test
                         if ($iArchive == $iBackup)
                         {
                             # load the archive info file so it can be munged for testing
-                            my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
+                            my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
                             my %oInfo;
                             BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
                             my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
@@ -272,7 +273,7 @@ sub BackRestTestBackup_Test
                     # !!! Need to put in tests for .backup files here
                 }
 
-                BackRestTestCommon_TestLogAppendFile($oFile->path_get(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
+                BackRestTestCommon_TestLogAppendFile($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
             }
             }
 
@@ -370,7 +371,7 @@ sub BackRestTestBackup_Test
                 archivePush($oFile, $strXlogPath, $strArchiveTestFile, 1);
 
                 # load the archive info file so it can be munged for testing
-                my $strInfoFile = $oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
+                my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
                 my %oInfo;
                 BackRestTestCommon_iniLoad($strInfoFile, \%oInfo, $bRemote);
                 my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
@@ -490,9 +491,9 @@ sub BackRestTestBackup_Test
                     BackRestTestCommon_Execute("chmod g+r,g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
                 }
 
-                BackRestTestCommon_Execute('mkdir -p -m 770 ' . $oFile->path_get(PATH_BACKUP_ARCHIVE), $bRemote);
-                (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check('9.3', 1234567890123456789);
-                BackRestTestCommon_TestLogAppendFile($oFile->path_get(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
+                BackRestTestCommon_Execute('mkdir -p -m 770 ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE), $bRemote);
+                (new BackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check('9.3', 1234567890123456789);
+                BackRestTestCommon_TestLogAppendFile($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
 
                 if ($bRemote)
                 {
@@ -646,7 +647,7 @@ sub BackRestTestBackup_Test
                                              "/backup/${strStanza}/backup.info", false);
 
         # Create an archive log path that will be removed as old on the first archive expire call
-        $oFile->path_create(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000000000000');
+        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000000000000');
 
         # Get the expected archive list
         my @stryArchiveExpected = $oFile->list(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000100000000');
@@ -922,6 +923,8 @@ sub BackRestTestBackup_Test
                                                             'add tablespace 1');
 
             # Resume Incr Backup
+            #
+            # Links are removed in the resume because it's easy to recreate them.
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
 
@@ -1626,7 +1629,7 @@ sub BackRestTestBackup_Test
             # Sleep .5 seconds to give a reasonable amount of time for the file to be copied after the manifest was generated
             # Sleep for a while to show there is a large window where this can happen
             &log(INFO, 'time ' . gettimeofday());
-            hsleep(.5);
+            waitHiRes(.5);
             &log(INFO, 'time ' . gettimeofday());
 
             # Insert another row
@@ -1718,7 +1721,7 @@ sub BackRestTestBackup_Test
 
             # Sleep for a while to show there is a large window where this can happen
             &log(INFO, 'time ' . gettimeofday());
-            hsleep(.5);
+            waitHiRes(.5);
             &log(INFO, 'time ' . gettimeofday());
 
             # Modify the test file within the same second

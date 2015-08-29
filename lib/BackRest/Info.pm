@@ -8,22 +8,27 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname);
 
 use lib dirname($0);
+use BackRest::Common::Log;
+use BackRest::Common::Ini;
+use BackRest::Common::String;
 use BackRest::BackupCommon;
 use BackRest::BackupInfo;
 use BackRest::Config;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_INFO_LIST_STANZA                                    => 'Info->listStanza';
-    our @EXPORT = qw(OP_INFO_LIST_STANZA);
+use constant OP_INFO_BACKUP_LIST                                    => 'Info->backupList';
+use constant OP_INFO_NEW                                            => 'Info->new';
+use constant OP_INFO_PROCESS                                        => 'Info->process';
+use constant OP_INFO_STANZA_LIST                                    => 'Info->stanzaList';
+    push @EXPORT, qw(OP_INFO_STANZA_LIST);
 
 ####################################################################################################################################
 # Info constants
@@ -75,18 +80,41 @@ sub new
     my $self = {};
     bless $self, $class;
 
-    # Set variables
-    $self->{oFile} = $oFile;
+    # Assign function parameters, defaults, and log debug info
+    (
+        my $strOperation,
+        $self->{oFile}
+    ) =
+        logDebugParam
+        (
+            OP_INFO_NEW, \@_,
+            {name => 'oFile', required => false, trace => true}
+        );
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
-# info
+# process
 ####################################################################################################################################
-sub info
+sub process
 {
     my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_INFO_PROCESS
+        );
 
     # Get stanza if specified
     my $strStanza = optionTest(OPTION_STANZA) ? optionGet(OPTION_STANZA) : undef;
@@ -101,13 +129,13 @@ sub info
     );
 
     # Get the stanza list with all info
-    my $oStanzaList = $self->listStanza($oFile, $strStanza);
+    my $oyStanzaList = $self->stanzaList($oFile, $strStanza);
 
     if (optionTest(OPTION_OUTPUT, INFO_OUTPUT_TEXT))
     {
         my $strOutput;
 
-        foreach my $oStanzaInfo (@{$oStanzaList})
+        foreach my $oStanzaInfo (@{$oyStanzaList})
         {
             $strOutput = defined($strOutput) ? $strOutput .= "\n" : '';
 
@@ -121,13 +149,13 @@ sub info
 
                 $strOutput .= '    oldest backup label: ' . $$oOldestBackup{&INFO_KEY_LABEL} . "\n";
                 $strOutput .= '    oldest backup timestamp: ' .
-                              timestamp_string_get(undef, $$oOldestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
+                              timestampFormat(undef, $$oOldestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
 
                 my $oLatestBackup = $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}[@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} - 1];
 
                 $strOutput .= '    latest backup label: ' . $$oLatestBackup{&INFO_KEY_LABEL} . "\n";
                 $strOutput .= '    latest backup timestamp: ' .
-                              timestamp_string_get(undef, $$oLatestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
+                              timestampFormat(undef, $$oLatestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
             }
         }
 
@@ -136,7 +164,7 @@ sub info
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
-        my $strJSON = $oJSON->encode($oStanzaList);
+        my $strJSON = $oJSON->encode($oyStanzaList);
 
         syswrite(*STDOUT, $strJSON);
 
@@ -152,24 +180,38 @@ sub info
         confess &log(ASSERT, "invalid info output option '" . optionGet(OPTION_OUTPUT) . "'");
     }
 
-    return 0;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => 0, trace => true}
+    );
 }
 
 ####################################################################################################################################
-# listStanza
+# stanzaList
 ####################################################################################################################################
-sub listStanza
+sub stanzaList
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strStanza = shift;
 
-    # Set operation and debug strings
-    my $strOperation = OP_INFO_LIST_STANZA;
-    &log(DEBUG, "${strOperation}". (defined($strStanza) ? ": stanza = ${strStanza}" : ''));
-    my @oStanzaList;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strStanza
+    ) =
+        logDebugParam
+        (
+            OP_INFO_STANZA_LIST, \@_,
+            {name => 'oFile'},
+            {name => 'strStanza', required => false}
+        );
 
-    if ($oFile->is_remote(PATH_BACKUP))
+    my @oyStanzaList;
+
+    if ($oFile->isRemote(PATH_BACKUP))
     {
         # Build param hash
         my $oParamHash = undef;
@@ -180,13 +222,13 @@ sub listStanza
         }
 
         # Trace the remote parameters
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->commandParamString($oParamHash) . ')');
+        &log(TRACE, OP_INFO_STANZA_LIST . ": remote (" . $oFile->{oProtocol}->commandParamString($oParamHash) . ')');
 
         # Execute the command
-        my $strStanzaList = $oFile->{oProtocol}->cmdExecute($strOperation, $oParamHash, true);
+        my $strStanzaList = $oFile->{oProtocol}->cmdExecute(OP_INFO_STANZA_LIST, $oParamHash, true);
 
         # Trace the remote response
-        &log(TRACE, "${strOperation}: remote json response (${strStanzaList})");
+        &log(TRACE, OP_INFO_STANZA_LIST . ": remote json response (${strStanzaList})");
 
         my $oJSON = JSON::PP->new();
         return $oJSON->decode($strStanzaList);
@@ -205,7 +247,7 @@ sub listStanza
             my $oStanzaInfo = {};
             $$oStanzaInfo{&INFO_STANZA_NAME} = $strStanzaFound;
             ($$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}, $$oStanzaInfo{&INFO_BACKUP_SECTION_DB}) =
-                $self->listBackup($oFile, $strStanzaFound);
+                $self->backupList($oFile, $strStanzaFound);
 
             if (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} == 0)
             {
@@ -224,10 +266,10 @@ sub listStanza
                 };
             }
 
-            push @oStanzaList, $oStanzaInfo;
+            push @oyStanzaList, $oStanzaInfo;
         }
 
-        if (defined($strStanza) && @oStanzaList == 0)
+        if (defined($strStanza) && @oyStanzaList == 0)
         {
             my $oStanzaInfo = {};
 
@@ -242,24 +284,41 @@ sub listStanza
             $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP} = [];
             $$oStanzaInfo{&INFO_BACKUP_SECTION_DB} = [];
 
-            push @oStanzaList, $oStanzaInfo;
+            push @oyStanzaList, $oStanzaInfo;
         }
     }
 
-    return \@oStanzaList;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oyStanzaList', value => \@oyStanzaList, log => false, ref => true}
+    );
 }
 
 ####################################################################################################################################
-# listBackup
+# backupList
 ###################################################################################################################################
-sub listBackup
+sub backupList
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strStanza = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strStanza
+    ) =
+        logDebugParam
+        (
+            OP_INFO_BACKUP_LIST, \@_,
+            {name => 'oFile'},
+            {name => 'strStanza'}
+        );
 
     # Load or build backup.info
-    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"));
+    my $oBackupInfo = new BackRest::BackupInfo($oFile->pathGet(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"));
 
     # Build the db list
     my @oyDbList;
@@ -295,14 +354,14 @@ sub listBackup
             &INFO_SECTION_BACKREST =>
             {
                 &INFO_KEY_FORMAT =>
-                    $oBackupInfo->getNumeric(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INI_KEY_FORMAT),
+                    $oBackupInfo->numericGet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INI_KEY_FORMAT),
                 &INFO_KEY_VERSION =>
                     $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INI_KEY_VERSION)
             },
             &INFO_SECTION_DB =>
             {
                 &INFO_KEY_ID =>
-                    $oBackupInfo->getNumeric(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID)
+                    $oBackupInfo->numericGet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID)
             },
             &INFO_SECTION_INFO =>
             {
@@ -321,9 +380,9 @@ sub listBackup
             &INFO_SECTION_TIMESTAMP =>
             {
                 &INFO_KEY_START =>
-                    $oBackupInfo->getNumeric(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_TIMESTAMP_START),
+                    $oBackupInfo->numericGet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_TIMESTAMP_START),
                 &INFO_KEY_STOP =>
-                    $oBackupInfo->getNumeric(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_TIMESTAMP_STOP),
+                    $oBackupInfo->numericGet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_TIMESTAMP_STOP),
             },
             &INFO_KEY_LABEL => $strBackup,
             &INFO_KEY_PRIOR =>
@@ -337,7 +396,13 @@ sub listBackup
         push(@oyBackupList, $oBackupHash);
     }
 
-    return \@oyBackupList, \@oyDbList;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oyBackupList', value => \@oyBackupList, log => false, ref => true},
+        {name => 'oyDbList', value => \@oyDbList, log => false, ref => true}
+    );
 }
 
 1;

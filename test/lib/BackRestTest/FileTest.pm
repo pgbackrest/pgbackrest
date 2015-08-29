@@ -21,11 +21,11 @@ use Scalar::Util qw(blessed);
 use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Log;
 use BackRest::Config;
 use BackRest::File;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;
-use BackRest::Utility;
 
 use BackRestTest::CommonTest;
 
@@ -121,7 +121,7 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "Test File->path_create()\n");
+        &log(INFO, "Test File->pathCreate()\n");
 
         # Loop through local/remote
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
@@ -175,7 +175,7 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    $oFile->path_create($strPathType, $strPath, $strMode);
+                    $oFile->pathCreate($strPathType, $strPath, $strMode);
                 };
 
                 # Check for errors
@@ -196,7 +196,7 @@ sub BackRestTestFile_Test
                 }
 
                 # Make sure the path was actually created
-                my $strPathCheck = $oFile->path_get($strPathType, $strPath);
+                my $strPathCheck = $oFile->pathGet($strPathType, $strPath);
 
                 unless (-e $strPathCheck)
                 {
@@ -365,7 +365,7 @@ sub BackRestTestFile_Test
                 elsif ($bExists)
                 {
                     system("echo 'TESTDATA' > ${strFile}");
-                    ($strSourceHash, $iSourceSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile);
+                    ($strSourceHash, $iSourceSize) = $oFile->hashSize(PATH_BACKUP_ABSOLUTE, $strFile);
                 }
 
                 # Execute in eval in case of error
@@ -403,7 +403,7 @@ sub BackRestTestFile_Test
 
                 system("gzip -d ${strDestinationFile}") == 0 or die "could not decompress ${strDestinationFile}";
 
-                my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile);
+                my ($strDestinationHash, $iDestinationSize) = $oFile->hashSize(PATH_BACKUP_ABSOLUTE, $strFile);
 
                 if ($strSourceHash ne $strDestinationHash)
                 {
@@ -918,7 +918,7 @@ sub BackRestTestFile_Test
 
                 eval
                 {
-                    ($strHash, $iSize) = $oFile->hash_size(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
+                    ($strHash, $iSize) = $oFile->hashSize(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
                 };
 
                 if ($@)
@@ -1006,7 +1006,7 @@ sub BackRestTestFile_Test
 
                         if (blessed($oMessage))
                         {
-                            if ($oMessage->isa('BackRest::Exception'))
+                            if ($oMessage->isa('BackRest::Common::Exception'))
                             {
                                 $iCode = $oMessage->code();
                                 $strMessage = $oMessage->message();
@@ -1203,7 +1203,7 @@ sub BackRestTestFile_Test
 
                     if (blessed($oMessage))
                     {
-                        if ($oMessage->isa('BackRest::Exception'))
+                        if ($oMessage->isa('BackRest::Common::Exception'))
                         {
                             if ($bSourceMissing && !$bSourceIgnoreMissing)
                             {
@@ -1269,7 +1269,7 @@ sub BackRestTestFile_Test
                         or die "could not decompress ${strDestinationFile}";
                 }
 
-                my ($strDestinationHash, $iDestinationSize) = $oFile->hash_size(PATH_ABSOLUTE, $strDestinationTest);
+                my ($strDestinationHash, $iDestinationSize) = $oFile->hashSize(PATH_ABSOLUTE, $strDestinationTest);
 
                 if ($strSourceHash ne $strDestinationHash || $strSourceHash ne $strCopyHash)
                 {

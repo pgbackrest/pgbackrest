@@ -21,12 +21,14 @@ use IPC::Open3;
 use POSIX ':sys_wait_h';
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Common::String;
+use BackRest::Common::Wait;
 use BackRest::Config;
 use BackRest::Db;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Utility;
 
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
                  BackRestTestCommon_ExecuteEnd BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
@@ -119,7 +121,7 @@ sub BackRestTestCommon_DropRepo
     {
         BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
         BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
-        hsleep(.1);
+        waitHiRes(.1);
     }
 }
 
@@ -322,7 +324,8 @@ sub BackRestTestCommon_ExecuteBegin
 
     $bFullLog = false;
 
-    if (defined($strModule) && $strCommandParam =~ /^$strCommonCommandMain/)
+    if (defined($strModule) &&
+        ($strCommandParam =~ /$strCommonCommandMain/ || $strCommandParam =~ /$strCommonCommandRemote/))
     {
         $strCommandParam = BackRestTestCommon_ExecuteRegExpAll($strCommandParam);
 
@@ -423,6 +426,7 @@ sub BackRestTestCommon_ExecuteRegExpAll
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
     $strLine =~ s/$strCommonCommandMain/[BACKREST_BIN]/g;
+    $strLine =~ s/$strCommonCommandRemote/[BACKREST_BIN]/g;
     $strLine =~ s/$strPgSqlBin/[PGSQL_BIN_PATH]/g;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
@@ -432,16 +436,16 @@ sub BackRestTestCommon_ExecuteRegExpAll
         $strLine =~ s/$strTestPath/[TEST_PATH]/g;
     }
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'MODIFICATION-TIME', 'modification_time = [0-9]+', '[0-9]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'MODIFICATION-TIME', 'lModificationTime = [0-9]+', '[0-9]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]+$');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-FULL', '[0-9]{8}\-[0-9]{6}F');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'strUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', '^db-user=.+$', '[^=]+$');
 
@@ -516,7 +520,7 @@ sub BackRestTestCommon_ExecuteEnd
             {
                 $strOutLog .= $strLine;
 
-                if (defined($strTest) && test_check($strLine, $strTest))
+                if (defined($strTest) && testCheck($strLine, $strTest))
                 {
                     &log(DEBUG, "Found test ${strTest}");
                     return true;
@@ -807,11 +811,11 @@ sub BackRestTestCommon_Setup
     }
 
     # Don't run unit tests for unsupported versions
-    my $strVersionSupport = versionSupport();
+    my @stryVersionSupport = versionSupport();
 
-    if ($strCommonDbVersion < ${$strVersionSupport}[0])
+    if ($strCommonDbVersion < $stryVersionSupport[0])
     {
-        confess "currently only version ${$strVersionSupport}[0] and up are supported";
+        confess "currently only version $stryVersionSupport[0] and up are supported";
     }
 
     return true;

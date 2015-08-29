@@ -15,10 +15,12 @@ use Fcntl qw(O_RDONLY);
 use File::Basename qw(dirname);
 
 use lib dirname($0);
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Common::String;
+use BackRest::Common::Wait;
 use BackRest::Config;
-use BackRest::Exception;
 use BackRest::File;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
@@ -28,12 +30,16 @@ use constant OP_DB                                                  => 'Db';
 use constant OP_DB_NEW                                              => OP_DB . "->new";
 use constant OP_DB_BACKUP_START                                     => OP_DB . "->backupStart";
 use constant OP_DB_BACKUP_STOP                                      => OP_DB . "->backupStop";
+use constant OP_DB_DESTROY                                          => OP_DB . "->DESTROY";
 use constant OP_DB_EXECUTE_SQL                                      => OP_DB . "->executeSql";
     push @EXPORT, qw(OP_DB_EXECUTE_SQL);
+use constant OP_DB_EXECUTE_SQL_ONE                                  => OP_DB . "->executeSqlOne";
+use constant OP_DB_EXECUTE_SQL_ROW                                  => OP_DB . "->executeSqlRow";
 use constant OP_DB_INFO                                             => OP_DB . "->info";
     push @EXPORT, qw(OP_DB_INFO);
 use constant OP_DB_TABLESPACE_MAP_GET                               => OP_DB . "->tablespaceMapGet";
 use constant OP_DB_VERSION_GET                                      => OP_DB . "->versionGet";
+use constant OP_DB_VERSION_SUPPORT                                  => OP_DB . "->versionSupport";
 
 ####################################################################################################################################
 # Postmaster process Id file
@@ -58,7 +64,21 @@ sub new
     my $self = {};
     bless $self, $class;
 
-    return $self;
+    # Assign function parameters, defaults, and log debug info
+    (
+        my $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_DB_NEW
+        );
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -68,11 +88,27 @@ sub DESTROY
 {
     my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_DB_DESTROY
+        );
+
     if (defined($self->{hDb}))
     {
         $self->{hDb}->disconnect();
         undef($self->{hDb});
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 ####################################################################################################################################
@@ -82,9 +118,24 @@ sub DESTROY
 ####################################################################################################################################
 sub versionSupport
 {
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_DB_VERSION_SUPPORT
+        );
+
     my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5');
 
-    return \@strySupportVersion;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strySupportVersion', value => \@strySupportVersion}
+    );
 }
 
 push @EXPORT, qw(versionSupport);
@@ -95,10 +146,20 @@ push @EXPORT, qw(versionSupport);
 sub executeSql
 {
     my $self = shift;
-    my $strSql = shift;
-    my $bIgnoreError = shift;
 
-    logDebug(OP_DB_EXECUTE_SQL, DEBUG_CALL, undef, {isRemote => optionRemoteTypeTest(DB), script => \$strSql});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSql,
+        $bIgnoreError
+    ) =
+        logDebugParam
+        (
+            OP_DB_EXECUTE_SQL, \@_,
+            {name => 'strSql'},
+            {name => 'bIgnoreError', default => false}
+        );
 
     # Get the user-defined command for psql
     my $strResult;
@@ -110,11 +171,7 @@ sub executeSql
         my %oParamHash;
 
         $oParamHash{'script'} = $strSql;
-
-        if (defined($bIgnoreError) && $bIgnoreError)
-        {
-            $oParamHash{'ignore-error'} = true;
-        }
+        $oParamHash{'ignore-error'} = $bIgnoreError;
 
         # Execute the command
         $strResult = protocolGet()->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
@@ -138,7 +195,12 @@ sub executeSql
             my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(OPTION_DB_PORT) .
                            (optionTest(OPTION_DB_SOCKET_PATH) ? ';host=' . optionGet(OPTION_DB_SOCKET_PATH) : '');
 
-            logDebug(OP_DB_EXECUTE_SQL, DEBUG_MISC, 'db connect', {strDbUri => $strDbUri, strDbUser => $strDbUser});
+            logDebugMisc
+            (
+                $strOperation, 'db connect',
+                {name => 'strDbUri', value => $strDbUri},
+                {name => 'strDbUser', value => $strDbUser}
+            );
 
             $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef, {AutoCommit => 1, RaiseError => 0, PrintError => 0});
 
@@ -156,8 +218,7 @@ sub executeSql
         $hStatement->execute();
 
         # Wait for the query to return
-        my $iWaitSeconds = optionGet(OPTION_DB_TIMEOUT);
-        my $oExecuteWait = waitInit($iWaitSeconds);
+        my $oWait = waitInit(optionGet(OPTION_DB_TIMEOUT));
         my $bTimeout = true;
 
         do
@@ -168,7 +229,7 @@ sub executeSql
                 if (!$hStatement->pg_result())
                 {
                     # Return if the error should be ignored
-                    if (defined($bIgnoreError) && $bIgnoreError)
+                    if ($bIgnoreError)
                     {
                         return '';
                     }
@@ -195,19 +256,23 @@ sub executeSql
 
                 $bTimeout = false;
             }
-        } while ($bTimeout && waitMore($oExecuteWait));
+        } while ($bTimeout && waitMore($oWait));
 
         # If timeout then cancel the query and confess
         if ($bTimeout)
         {
             $hStatement->pg_cancel();
-            confess &log(ERROR, "statement timed out after ${iWaitSeconds} second(s):\n${strSql}", ERROR_DB_TIMEOUT);
+            confess &log(ERROR, 'statement timed out after ' . waitInterval($oWait) .
+                                " second(s):\n${strSql}", ERROR_DB_TIMEOUT);
         }
     }
 
-    logDebug(OP_DB_EXECUTE_SQL, DEBUG_RESULT, undef, {strResult => $strResult});
-
-    return $strResult;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strResult', value => $strResult}
+    );
 }
 
 ####################################################################################################################################
@@ -216,9 +281,28 @@ sub executeSql
 sub executeSqlRow
 {
     my $self = shift;
-    my $strSql = shift;
 
-    return split("\t", trim($self->executeSql($strSql)));
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSql
+    ) =
+        logDebugParam
+        (
+            OP_DB_EXECUTE_SQL_ROW, \@_,
+            {name => 'strSql', trace => true}
+        );
+
+    # Return from function and log return values if any
+    my @stryResult = split("\t", trim($self->executeSql($strSql)));
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strResult', value => \@stryResult}
+    );
 }
 
 ####################################################################################################################################
@@ -227,9 +311,25 @@ sub executeSqlRow
 sub executeSqlOne
 {
     my $self = shift;
-    my $strSql = shift;
 
-    return ($self->executeSqlRow($strSql))[0];
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSql
+    ) =
+        logDebugParam
+        (
+            OP_DB_EXECUTE_SQL_ONE, \@_,
+            {name => 'strSql', trace => true}
+        );
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strResult', value => ($self->executeSqlRow($strSql))[0], trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -241,14 +341,25 @@ sub tablespaceMapGet
 {
     my $self = shift;
 
-    logTrace(OP_DB_TABLESPACE_MAP_GET, DEBUG_CALL);
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_DB_TABLESPACE_MAP_GET
+        );
 
-    my $oHashRef = {};
+    dataHashBuild(my $oTablespaceMapRef = {}, "oid\tname\n" . $self->executeSql(
+                  'select oid, spcname from pg_tablespace'), "\t");
 
-    data_hash_build($oHashRef, "oid\tname\n" . $self->executeSql(
-                    'select oid, spcname from pg_tablespace'), "\t");
-
-    return $oHashRef;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oTablespaceMapRef', value => $oTablespaceMapRef}
+    );
 }
 
 ####################################################################################################################################
@@ -257,10 +368,20 @@ sub tablespaceMapGet
 sub info
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strDbPath = shift;
 
-    logDebug(OP_DB_INFO, DEBUG_CALL, undef, {isRemote => $oFile->is_remote(PATH_DB_ABSOLUTE), dbPath => \$strDbPath});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strDbPath
+    ) =
+        logDebugParam
+        (
+            OP_DB_INFO, \@_,
+            {name => 'oFile'},
+            {name => 'strDbPath'}
+        );
 
     # Return data from the cache if it exists
     if (defined($self->{info}{$strDbPath}))
@@ -277,7 +398,7 @@ sub info
     my $ullDbSysId;
     my $fDbVersion;
 
-    if ($oFile->is_remote(PATH_DB_ABSOLUTE))
+    if ($oFile->isRemote(PATH_DB_ABSOLUTE))
     {
         # Build param hash
         my %oParamHash;
@@ -389,10 +510,15 @@ sub info
     $self->{info}{$strDbPath}{iCatalogVersion} = $iCatalogVersion;
     $self->{info}{$strDbPath}{ullDbSysId} = $ullDbSysId;
 
-    &log(DEBUG, OP_DB_INFO . "=>: dbVersion = ${fDbVersion}, controlVersion = ${iControlVersion}" .
-                ", catalogVersion = ${iCatalogVersion}, dbSysId = ${ullDbSysId}");
-
-    return $fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'fDbVersion', value => $fDbVersion},
+        {name => 'iControlVersion', value => $iControlVersion},
+        {name => 'iCatalogVersion', value => $iCatalogVersion},
+        {name => 'ullDbSysId', value => $ullDbSysId}
+    );
 }
 
 ####################################################################################################################################
@@ -402,27 +528,41 @@ sub versionGet
 {
     my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_DB_VERSION_GET
+        );
+
     # Get data from the cache if possible
-    if (defined($self->{fVersion}) && defined($self->{strDbPath}))
+    if (defined($self->{fDbVersion}) && defined($self->{strDbPath}))
     {
-        return $self->{fVersion}, $self->{strDbPath};
+        return $self->{fDbVersion}, $self->{strDbPath};
     }
 
     # Get version and db-path from
-    ($self->{fVersion}, $self->{strDbPath}) =
+    ($self->{fDbVersion}, $self->{strDbPath}) =
         $self->executeSqlRow("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1], setting" .
                              " from pg_settings where name = 'data_directory'");
 
-    my $strVersionSupport = versionSupport();
+    my @stryVersionSupport = versionSupport();
 
-    if ($self->{fVersion} < ${$strVersionSupport}[0])
+    if ($self->{fDbVersion} < $stryVersionSupport[0])
     {
-        confess &log(ERROR, "unsupported Postgres version ${$strVersionSupport}[0]", ERROR_VERSION_NOT_SUPPORTED);
+        confess &log(ERROR, 'unsupported Postgres version' . $self->{fDbVersion}, ERROR_VERSION_NOT_SUPPORTED);
     }
 
-    logDebug(OP_DB_VERSION_GET, DEBUG_RESULT, {dbVersion => $self->{fVersion}});
-
-    return $self->{fVersion}, $self->{strDbPath};
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'fDbVersion', value => $self->{fDbVersion}},
+        {name => 'strDbPath', value => $self->{strDbPath}}
+    );
 }
 
 ####################################################################################################################################
@@ -431,12 +571,24 @@ sub versionGet
 sub backupStart
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strDbPath = shift;
-    my $strLabel = shift;
-    my $bStartFast = shift;
 
-    logDebug(OP_DB_BACKUP_START, DEBUG_CALL, undef, {dbPath => \$strDbPath, strLabel => \$strLabel, isStartFast => $bStartFast});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strDbPath,
+        $strLabel,
+        $bStartFast
+    ) =
+        logDebugParam
+        (
+            OP_DB_BACKUP_START, \@_,
+            {name => 'oFile'},
+            {name => 'strDbPath'},
+            {name => 'strLabel'},
+            {name => 'bStartFast'}
+        );
 
     # Get the version from the control file
     my ($fDbVersion) = $self->info($oFile, $strDbPath);
@@ -453,7 +605,7 @@ sub backupStart
     }
 
     # Only allow start-fast option for version >= 8.4
-    if ($self->{fVersion} < 8.4 && $bStartFast)
+    if ($self->{fDbVersion} < 8.4 && $bStartFast)
     {
         &log(WARN, OPTION_START_FAST . ' option is only available in PostgreSQL >= 8.4');
         $bStartFast = false;
@@ -469,7 +621,7 @@ sub backupStart
     # Test if a backup is already running when version >= 9.3
     if (optionGet(OPTION_STOP_AUTO))
     {
-        if ($self->{fVersion} >= 9.3)
+        if ($self->{fDbVersion} >= 9.3)
         {
             if ($self->executeSqlOne('select pg_is_in_backup()'))
             {
@@ -484,7 +636,7 @@ sub backupStart
         }
     }
 
-    &log(INFO, "executing pg_start_backup() with label \"${strLabel}\": backup will begin after " .
+    &log(INFO, "execute pg_start_backup() with label \"${strLabel}\": backup begins after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
     my ($strTimestampDbStart, $strArchiveStart) =
@@ -492,7 +644,13 @@ sub backupStart
                              "pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
                              ($bStartFast ? ', true' : '') . ') as xlog');
 
-    return $strArchiveStart, $strTimestampDbStart;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveStart', value => $strArchiveStart},
+        {name => 'strTimestampDbStart', value => $strTimestampDbStart}
+    );
 }
 
 ####################################################################################################################################
@@ -502,14 +660,29 @@ sub backupStop
 {
     my $self = shift;
 
-    logDebug(OP_DB_BACKUP_STOP, DEBUG_CALL);
-    &log(INFO, 'executing pg_stop_backup() and waiting for all WAL segments to be archived');
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+        (
+            OP_DB_BACKUP_STOP
+        );
+
+    &log(INFO, 'execute pg_stop_backup() and wait for all WAL segments to archive');
 
     my ($strTimestampDbStop, $strArchiveStop) =
         $self->executeSqlRow("select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ')," .
                              " pg_xlogfile_name(xlog) from pg_stop_backup() as xlog");
 
-    return $strArchiveStop, $strTimestampDbStop;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveStop', value => $strArchiveStop},
+        {name => 'strTimestampDbStop', value => $strTimestampDbStop}
+    );
 }
 
 1;

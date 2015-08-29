@@ -12,12 +12,13 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Common::String;
 use BackRest::Config;
-use BackRest::Exception;
-use BackRest::Ini;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::IO;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
@@ -32,26 +33,28 @@ use constant OP_PROTOCOL_COMMON_MINION_NEW                          => OP_PROTOC
 sub new
 {
     my $class = shift;                  # Class name
-    my $strName = shift;                # Name of the protocol
-    my $iBlockSize = shift;             # Buffer size
-    my $iCompressLevel = shift;         # Set compression level
-    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
-    # Debug
-    logTrace(OP_PROTOCOL_COMMON_MINION_NEW, DEBUG_CALL, undef,
-             {name => \$strName, blockSize => $iBlockSize, compressLevel => $iCompressLevel,
-              compressLevelNetwork => $iCompressLevelNetwork});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,                                   # Name of the protocol
+        $iBlockSize,                                # Buffer size
+        $iCompressLevel,                            # Set compression level
+        $iCompressLevelNetwork                      # Set compression level for network only compression
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_COMMON_MINION_NEW, \@_,
+            {name => 'strName'},
+            {name => 'iBlockSize'},
+            {name => 'iCompressLevel'},
+            {name => 'iCompressLevelNetwork'}
+        );
 
     # Create the class hash
     my $self = $class->SUPER::new($iBlockSize, $iCompressLevel, $iCompressLevelNetwork, $strName);
     bless $self, $class;
-
-    # Create the greeting that will be used to check versions with the remote
-    if (defined($strName))
-    {
-        $self->{strName} = $strName;
-        $self->{strGreeting} = 'PG_BACKREST_' . uc($strName) . ' ' . BACKREST_VERSION;
-    }
 
     # Create the IO object with std io
     $self->{io} = new BackRest::Protocol::IO(*STDIN, *STDOUT, *STDERR);
@@ -119,7 +122,7 @@ sub errorWrite
     if (blessed($oMessage))
     {
         # Check if it is a standard exception
-        if ($oMessage->isa('BackRest::Exception'))
+        if ($oMessage->isa('BackRest::Common::Exception'))
         {
             $iCode = $oMessage->code();
             $strMessage = $oMessage->message();

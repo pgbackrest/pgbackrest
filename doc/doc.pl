@@ -19,8 +19,9 @@ use Pod::Usage qw(pod2usage);
 use XML::Checker::Parser;
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Log;
+use BackRest::Common::String;
 use BackRest::Config;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Usage
@@ -681,7 +682,7 @@ if ($bQuiet)
     $strLogLevel = 'off';
 }
 
-log_level_set(undef, uc($strLogLevel));
+logLevelSet(undef, uc($strLogLevel));
 
 my $strBasePath = abs_path(dirname($0));
 

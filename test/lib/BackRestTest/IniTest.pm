@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# UtilityTest.pl - Unit Tests for BackRest::Utility
+# IniTest.pm - Unit Tests for ini load and save
 ####################################################################################################################################
-package BackRestTest::UtilityTest;
+package BackRestTest::IniTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -15,19 +15,19 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
 use BackRest::Config;
 use BackRest::File;
-use BackRest::Ini;
-use BackRest::Utility;
 
 use BackRestTest::CommonTest;
 
 ####################################################################################################################################
-# BackRestTestUtility_Test
+# BackRestTestIni_Test
 ####################################################################################################################################
-our @EXPORT = qw(BackRestTestUtility_Test);
+our @EXPORT = qw(BackRestTestIni_Test);
 
-sub BackRestTestUtility_Test
+sub BackRestTestIni_Test
 {
     my $strTest = shift;
 
@@ -37,7 +37,7 @@ sub BackRestTestUtility_Test
     my $strTestPath = BackRestTestCommon_TestPathGet();
 
     # Print test banner
-    &log(INFO, 'UTILITY MODULE ******************************************************************');
+    &log(INFO, 'INI MODULE ******************************************************************');
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remote

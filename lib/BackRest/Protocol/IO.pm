@@ -8,12 +8,14 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use File::Basename qw(dirname);
-use IPC::Open3;
+use IPC::Open3 qw(open3);
 use POSIX qw(:sys_wait_h);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Utility;
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Common::String;
+use BackRest::Common::Wait;
 
 ####################################################################################################################################
 # Operation constants
@@ -28,25 +30,35 @@ use constant OP_IO_PROTOCOL_NEW3                                             => 
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;                  # Class name
-    my $hIn = shift;                    # Input stream
-    my $hOut = shift;                   # Output stream
-    my $hErr = shift;                   # Error stream
-    my $pId = shift;                    # Process ID
-
-    # Debug
-    logTrace(OP_IO_PROTOCOL_NEW3, DEBUG_CALL);
+    my $class = shift;
 
     # Create the class hash
     my $self = {};
     bless $self, $class;
 
-    $self->{hIn} = $hIn;
-    $self->{hOut} = $hOut;
-    $self->{hErr} = $hErr;
-    $self->{pId} = $pId;
+    # Assign function parameters, defaults, and log debug info
+    (
+        my $strOperation,
+        $self->{hIn},                               # Input stream
+        $self->{hOut},                              # Output stream
+        $self->{hErr},                              # Error stream
+        $self->{pId}                                # Process ID
+    ) =
+        logDebugParam
+        (
+            OP_IO_PROTOCOL_NEW, \@_,
+            {name => 'hIn', required => false, trace => true},
+            {name => 'hOut', required => false, trace => true},
+            {name => 'hErr', required => false, trace => true},
+            {name => 'pId', required => false, trace => true}
+        );
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -57,18 +69,30 @@ sub new
 sub new3
 {
     my $class = shift;
-    my $strCommand = shift;
 
-    # Debug
-    logTrace(OP_IO_PROTOCOL_NEW3, DEBUG_CALL, undef, {command => \$strCommand});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand
+    ) =
+        logDebugParam
+        (
+            OP_IO_PROTOCOL_NEW3, \@_,
+            {name => 'strCommand', trace => true}
+        );
 
     # Use open3 to run the command
     my ($pId, $hIn, $hOut, $hErr);
 
     $pId = IPC::Open3::open3($hIn, $hOut, $hErr, $strCommand);
 
-    # Return the IO class
-    return $class->new($hOut, $hIn, $hErr, $pId);
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $class->new($hOut, $hIn, $hErr, $pId)}
+    );
 }
 
 ####################################################################################################################################

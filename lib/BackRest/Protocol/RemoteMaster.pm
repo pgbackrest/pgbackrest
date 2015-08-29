@@ -11,9 +11,9 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Log;
 use BackRest::Config;
 use BackRest::Protocol::CommonMaster;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
@@ -27,36 +27,29 @@ use constant OP_PROTOCOL_REMOTE_MASTER_NEW                          => OP_PROTOC
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;                  # Class name
-    my $strCommand = shift;             # Command to execute on local/remote
-    my $iBlockSize = shift;             # Buffer size
-    my $iCompressLevel = shift;         # Set compression level
-    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
-    my $strHost = shift;                # Host to connect to for remote (optional as this can also be used for local)
-    my $strUser = shift;                # User to connect to for remote (must be set if strHost is set)
+    my $class = shift;
 
-    # Debug
-    logDebug(OP_PROTOCOL_REMOTE_MASTER_NEW, DEBUG_CALL, undef,
-             {command => \$strCommand, host => \$strHost, user => \$strUser, blockSize => $iBlockSize,
-              compressLevel => $iCompressLevel, compressLevelNetwork => $iCompressLevelNetwork});
-
-    # Host must be defined
-    if (!defined($strHost))
-    {
-        confess &log(ASSERT, 'strHost must be defined');
-    }
-
-    # User must be defined
-    if (!defined($strUser))
-    {
-        confess &log(ASSERT, 'strUser must be defined');
-    }
-
-    # Command must be defined
-    if (!defined($strCommand))
-    {
-        confess &log(ASSERT, 'strCommand must be defined');
-    }
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand,                                # Command to execute on local/remote
+        $iBlockSize,                                # Buffer size
+        $iCompressLevel,                            # Set compression level
+        $iCompressLevelNetwork,                     # Set compression level for network only compression
+        $strHost,                                   # Host to connect to for remote (optional as this can also be used for local)
+        $strUser                                    # User to connect to for remote (must be set if strHost is set)
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_REMOTE_MASTER_NEW, \@_,
+            {name => 'strCommand'},
+            {name => 'iBlockSize'},
+            {name => 'iCompressLevel'},
+            {name => 'iCompressLevelNetwork'},
+            {name => 'strHost'},
+            {name => 'strUser'}
+        );
 
     # Create SSH command
     $strCommand = "ssh -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
@@ -65,7 +58,12 @@ sub new
     my $self = $class->SUPER::new('remote', $strCommand, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork);
     bless $self, $class;
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################

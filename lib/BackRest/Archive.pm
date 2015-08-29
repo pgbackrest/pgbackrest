@@ -8,28 +8,40 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
-use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT O_EXCL);
+    our @EXPORT = qw();
+use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT);
 use File::Basename qw(dirname basename);
 
 use lib dirname($0);
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Lock;
+use BackRest::Common::Log;
 use BackRest::ArchiveInfo;
+use BackRest::Common::String;
+use BackRest::Common::Wait;
 use BackRest::Config;
-use BackRest::Exception;
 use BackRest::File;
-use BackRest::Ini;
-use BackRest::Lock;
-#use BackRest::Protocol::Protocol;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
 use constant OP_ARCHIVE                                             => 'Archive';
 
-use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
-    our @EXPORT = qw(OP_ARCHIVE_PUSH_CHECK);
+use constant OP_ARCHIVE_GET                                         => OP_ARCHIVE . '->get';
 use constant OP_ARCHIVE_GET_CHECK                                   => OP_ARCHIVE . '->getCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
+use constant OP_ARCHIVE_GET_PROCESS                                 => OP_ARCHIVE . '->getProcess';
+use constant OP_ARCHIVE_NEW                                         => OP_ARCHIVE . '->new';
+use constant OP_ARCHIVE_PROCESS                                     => OP_ARCHIVE . '->process';
+use constant OP_ARCHIVE_PUSH                                        => OP_ARCHIVE . '->pushProcess';
+use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
+use constant OP_ARCHIVE_PUSH_PROCESS                                => OP_ARCHIVE . '->pushProcess';
+use constant OP_ARCHIVE_RANGE                                       => OP_ARCHIVE . '->range';
+use constant OP_ARCHIVE_WAL_FILE_NAME                               => OP_ARCHIVE . '->walFileName';
+use constant OP_ARCHIVE_WAL_INFO                                    => OP_ARCHIVE . '->walInfo';
+use constant OP_ARCHIVE_XFER                                        => OP_ARCHIVE . '->xfer';
 
 ####################################################################################################################################
 # constructor
@@ -38,11 +50,26 @@ sub new
 {
     my $class = shift;          # Class name
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_NEW
+    );
+
     # Create the class hash
     my $self = {};
     bless $self, $class;
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -54,20 +81,40 @@ sub process
 {
     my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_PROCESS
+    );
+
+    my $iResult;
+
     # Process push
     if (commandTest(CMD_ARCHIVE_PUSH))
     {
-        return $self->pushProcess();
+        $iResult = $self->pushProcess();
     }
-
     # Process get
-    if (commandTest(CMD_ARCHIVE_GET))
+    elsif (commandTest(CMD_ARCHIVE_GET))
     {
-        return $self->getProcess();
+        $iResult = $self->getProcess();
+    }
+    # Else error if any other command is found
+    else
+    {
+        confess &log(ASSERT, "Archive->process() called with invalid command: " . commandGet());
     }
 
-    # Error if any other command is found
-    confess &log(ASSERT, "Archive->process() called with invalid command: " . commandGet());
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $iResult, trace => true}
+    );
 }
 
 ################################################################################################################################
@@ -76,6 +123,16 @@ sub process
 sub getProcess
 {
     my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_GET_PROCESS
+    );
 
     # Make sure the archive file is defined
     if (!defined($ARGV[1]))
@@ -90,10 +147,14 @@ sub getProcess
     }
 
     # Info for the Postgres log
-    &log(INFO, 'getting WAL segment ' . $ARGV[1]);
+    &log(INFO, 'get WAL segment ' . $ARGV[1]);
 
-    # Get the WAL segment
-    return $self->get($ARGV[1], $ARGV[2]);
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $self->get($ARGV[1], $ARGV[2]), trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -105,28 +166,37 @@ sub getProcess
 sub walFileName
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strArchiveId = shift;
-    my $strWalSegment = shift;
-    my $iWaitSeconds = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strArchiveId,
+        $strWalSegment,
+        $iWaitSeconds
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_WAL_FILE_NAME, \@_,
+            {name => 'oFile'},
+            {name => 'strArchiveId'},
+            {name => 'strWalSegment'},
+            {name => 'iWaitSeconds', required => false}
+        );
 
     # Record the start time
     my $oWait = waitInit($iWaitSeconds);
 
     # Determine the path where the requested WAL segment is located
-    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strWalSegment}"));
+    my $strArchivePath = dirname($oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strWalSegment}"));
+    my @stryWalFileName;
 
     do
     {
         # Get the name of the requested WAL segment (may have hash info and compression extension)
-        my @stryWalFileName = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
+        @stryWalFileName = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
             "^${strWalSegment}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", undef, true);
-
-        # If there is only one result then return it
-        if (@stryWalFileName == 1)
-        {
-            return $stryWalFileName[0];
-        }
 
         # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
         if (@stryWalFileName > 1)
@@ -134,15 +204,20 @@ sub walFileName
             confess &log(ASSERT, @stryWalFileName . " duplicate files found for ${strWalSegment}", ERROR_ARCHIVE_DUPLICATE);
         }
     }
-    while (waitMore($oWait));
+    while (@stryWalFileName == 0 && waitMore($oWait));
 
     # If waiting and no WAL segment was found then throw an error
-    if (defined($iWaitSeconds))
+    if (@stryWalFileName == 0 && defined($iWaitSeconds))
     {
         confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . waitInterval($oWait)  . ' second(s)');
     }
 
-    return undef;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strWalFileName', value => $stryWalFileName[0]}
+    );
 }
 
 ####################################################################################################################################
@@ -153,11 +228,18 @@ sub walFileName
 sub walInfo
 {
     my $self = shift;
-    my $strWalFile = shift;
 
-    # Set operation and debug strings
-    my $strOperation = 'Archive->walInfo';
-    &log(TRACE, "${strOperation}: " . PATH_ABSOLUTE . ":${strWalFile}");
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strWalFile,
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_WAL_INFO, \@_,
+            {name => 'strWalFile'}
+        );
 
     # Open the WAL segment
     my $hFile;
@@ -238,6 +320,7 @@ sub walInfo
 
     my $iFlag = unpack('S', $tBlock);
 
+    # Make sure that the long header is present or there won't be a system id
     $iFlag & 2
         or confess &log(ERROR, "expected long header in flags " . sprintf("%x", $iFlag));
 
@@ -255,9 +338,13 @@ sub walInfo
 
     my $ullDbSysId = unpack('Q', $tBlock);
 
-    &log(TRACE, sprintf("${strOperation}: WAL magic = 0x%X, database system id = ", $iMagic) . $ullDbSysId);
-
-    return $strDbVersion, $ullDbSysId;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strDbVersion', value => $strDbVersion},
+        {name => 'ullDbSysId', value => $ullDbSysId}
+    );
 }
 
 ####################################################################################################################################
@@ -266,8 +353,20 @@ sub walInfo
 sub get
 {
     my $self = shift;
-    my $strSourceArchive = shift;
-    my $strDestinationFile = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSourceArchive,
+        $strDestinationFile
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_GET, \@_,
+            {name => 'strSourceArchive'},
+            {name => 'strDestinationFile'}
+        );
 
     # Create the file object
     my $oFile = new BackRest::File
@@ -281,9 +380,11 @@ sub get
     # If the destination file path is not absolute then it is relative to the db data path
     if (index($strDestinationFile, '/',) != 0)
     {
+        # !!! If db-path is required this is can be removed.
+        # !!! db-path should be added as a requirement for the remote settings work.
         if (!optionTest(OPTION_DB_PATH))
         {
-            confess &log(ERROR, 'database path must be set if relative xlog paths are used');
+            confess &log(ERROR, 'option db-path must be set when relative xlog paths are used');
         }
 
         $strDestinationFile = optionGet(OPTION_DB_PATH) . "/${strDestinationFile}";
@@ -298,25 +399,32 @@ sub get
     # 2) There is a hole in the archive stream and a hard error should be returned.  However, holes are possible due to
     #    async archiving and threading - so when to report a hole?  Since a hard error will cause PG to terminate, for now
     #    treat as case #1.
+    my $iResult = 0;
+
     if (!defined($strArchiveFile))
     {
-        &log(INFO, "${strSourceArchive} was not found in the archive repository");
+        &log(INFO, "unable to find ${strSourceArchive} in the archive");
 
-        return 1;
+        $iResult = 1;
+    }
+    else
+    {
+        # Determine if the source file is already compressed
+        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
+
+        # Copy the archive file to the requested location
+        $oFile->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",  # Source file
+                     PATH_DB_ABSOLUTE, $strDestinationFile,                     # Destination file
+                     $bSourceCompressed,                                        # Source compression based on detection
+                     false);                                                    # Destination is not compressed
     }
 
-    &log(DEBUG, "archive_get: cp ${strArchiveFile} ${strDestinationFile}");
-
-    # Determine if the source file is already compressed
-    my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
-
-    # Copy the archive file to the requested location
-    $oFile->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",  # Source file
-                 PATH_DB_ABSOLUTE, $strDestinationFile,                     # Destination file
-                 $bSourceCompressed,                                        # Source compression based on detection
-                 false);                                                    # Destination is not compressed
-
-    return 0;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $iResult}
+    );
 }
 
 ####################################################################################################################################
@@ -327,21 +435,33 @@ sub getCheck
     my $self = shift;
     my $oFile = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_GET_CHECK
+    );
+
     my $strArchiveId;
 
-    if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
+    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
     {
         $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_CHECK, undef, true);
     }
     else
     {
-        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE), true))->archiveId();
+        $strArchiveId = (new BackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->archiveId();
     }
 
-    # Set operation and debug strings
-    &log(DEBUG, OP_ARCHIVE_GET_CHECK . "=>: archiveId = ${strArchiveId}");
-
-    return $strArchiveId;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveId', value => $strArchiveId, trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -350,6 +470,16 @@ sub getCheck
 sub pushProcess
 {
     my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_PUSH_PROCESS
+    );
 
     # Make sure the archive push command happens on the db side
     if (optionRemoteTypeTest(DB))
@@ -388,63 +518,69 @@ sub pushProcess
             }
         }
 
-        &log(INFO, 'pushing WAL segment ' . $ARGV[1] . ($bArchiveAsync ? ' asynchronously' : ''));
+        &log(INFO, 'push WAL segment ' . $ARGV[1] . ($bArchiveAsync ? ' asynchronously' : ''));
 
         $self->push($ARGV[1], $bArchiveAsync);
 
-        # Exit if we are not archiving async
-        if (!$bArchiveAsync)
+        # Fork is async archiving is enabled
+        if ($bArchiveAsync)
         {
-            return 0;
-        }
-
-        # Fork and exit the parent process so the async process can continue
-        if (!optionTest(OPTION_TEST_NO_FORK) || !optionGet(OPTION_TEST_NO_FORK))
-        {
-            if (fork())
+            # Fork and disable the async archive flag if this is the parent process
+            if (!optionTest(OPTION_TEST_NO_FORK) || !optionGet(OPTION_TEST_NO_FORK))
             {
-                return 0;
+                $bArchiveAsync = fork() == 0 ? true : false;
+            }
+            # Else the no-fork flag has been specified for testing
+            else
+            {
+                logDebugMisc($strOperation, 'no fork on archive local for TESTING');
             }
         }
-        # Else the no-fork flag has been specified for testing
-        else
-        {
-            &log(DEBUG, 'No fork on archive local for TESTING');
-        }
+    }
 
+    if ($bArchiveAsync)
+    {
         # Start the async archive push
-        &log(DEBUG, 'starting async archive-push');
-    }
+        logDebugMisc($strOperation, 'start async archive-push');
 
-    # Create a lock file to make sure async archive-push does not run more than once
-    if (!lockAcquire(commandGet(), false))
-    {
-        &log(DEBUG, 'another async archive-push process is already running - exiting');
-        return 0;
-    }
-
-    # Open the log file
-    log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
-
-    # Call the archive_xfer function and continue to loop as long as there are files to process
-    my $iLogTotal;
-
-    while (!defined($iLogTotal) || $iLogTotal > 0)
-    {
-        $iLogTotal = $self->xfer($strArchivePath . "/archive/" . optionGet(OPTION_STANZA) . "/out", $strStopFile);
-
-        if ($iLogTotal > 0)
+        # Create a lock file to make sure async archive-push does not run more than once
+        if (!lockAcquire(commandGet(), false))
         {
-            &log(DEBUG, "transferred ${iLogTotal} WAL segment(s), calling Archive->xfer() again");
+            logDebugMisc($strOperation, 'async archive-push process is already running - exiting');
         }
         else
         {
-            &log(DEBUG, 'transfer found 0 WAL segments - exiting');
+            # Open the log file
+            logFileSet(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
+
+            # Call the archive_xfer function and continue to loop as long as there are files to process
+            my $iLogTotal;
+
+            while (!defined($iLogTotal) || $iLogTotal > 0)
+            {
+                $iLogTotal = $self->xfer($strArchivePath . "/archive/" . optionGet(OPTION_STANZA) . "/out", $strStopFile);
+
+                if ($iLogTotal > 0)
+                {
+                    logDebugMisc($strOperation, "transferred ${iLogTotal} WAL segment" .
+                                 ($iLogTotal > 1 ? 's' : '') . ', calling Archive->xfer() again');
+                }
+                else
+                {
+                    logDebugMisc($strOperation, 'transfer found 0 WAL segments - exiting');
+                }
+            }
+
+            lockRelease();
         }
     }
 
-    lockRelease();
-    return 0;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => 0, trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -453,8 +589,20 @@ sub pushProcess
 sub push
 {
     my $self = shift;
-    my $strSourceFile = shift;
-    my $bAsync = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSourceFile,
+        $bAsync
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_PUSH, \@_,
+            {name => 'strSourceFile'},
+            {name => 'bAsync'}
+        );
 
     # Create the file object
     my $oFile = new BackRest::File
@@ -470,7 +618,7 @@ sub push
     {
         if (!optionTest(OPTION_DB_PATH))
         {
-            confess &log(ERROR, 'database path must be set if relative xlog paths are used');
+            confess &log(ERROR, 'option db-path must be set when relative xlog paths are used');
         }
 
         $strSourceFile = optionGet(OPTION_DB_PATH) . "/${strSourceFile}";
@@ -524,6 +672,12 @@ sub push
                      undef, undef,                                              # User and group
                      $bArchiveFile);                                            # Append checksum if archive file
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 ####################################################################################################################################
@@ -532,19 +686,32 @@ sub push
 sub pushCheck
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strWalSegment = shift;
-    my $strWalFile = shift;
-    my $strDbVersion = shift;
-    my $ullDbSysId = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strWalSegment,
+        $strWalFile,
+        $strDbVersion,
+        $ullDbSysId
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_PUSH_CHECK, \@_,
+            {name => 'oFile'},
+            {name => 'strWalSegment'},
+            {name => 'strWalFile', required => false},
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'}
+        );
 
     # Set operation and debug strings
-    my $strOperation = OP_ARCHIVE_PUSH_CHECK;
-    &log(DEBUG, "${strOperation}: " . PATH_BACKUP_ARCHIVE . ":${strWalSegment}");
     my $strChecksum;
     my $strArchiveId;
 
-    if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
+    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
     {
         # Build param hash
         my %oParamHash;
@@ -553,11 +720,8 @@ sub pushCheck
         $oParamHash{'db-version'} = $strDbVersion;
         $oParamHash{'db-sys-id'} = $ullDbSysId;
 
-        # Output remote trace info
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
-
         # Execute the command
-        my $strResult = $oFile->{oProtocol}->cmdExecute($strOperation, \%oParamHash, true);
+        my $strResult = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_PUSH_CHECK, \%oParamHash, true);
 
         $strArchiveId = (split("\t", $strResult))[0];
         $strChecksum = (split("\t", $strResult))[1];
@@ -572,11 +736,11 @@ sub pushCheck
         # Create the archive path if it does not exist
         if (!$oFile->exists(PATH_BACKUP_ARCHIVE))
         {
-            $oFile->path_create(PATH_BACKUP_ARCHIVE);
+            $oFile->pathCreate(PATH_BACKUP_ARCHIVE);
         }
 
         # If the info file exists check db version and system-id
-        $strArchiveId = (new BackRest::ArchiveInfo($oFile->path_get(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
+        $strArchiveId = (new BackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive
         $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment);
@@ -598,11 +762,15 @@ sub pushCheck
 
         &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
                    "HINT: this is valid in some recovery scenarios but may also indicate a problem");
-
-        return $strArchiveId, $strChecksum;
     }
 
-    return $strArchiveId, $strChecksum;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveId', value => $strArchiveId},
+        {name => 'strChecksum', value => $strChecksum}
+    );
 }
 
 ####################################################################################################################################
@@ -611,8 +779,20 @@ sub pushCheck
 sub xfer
 {
     my $self = shift;
-    my $strArchivePath = shift;
-    my $strStopFile = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchivePath,
+        $strStopFile
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_XFER, \@_,
+            {name => 'strArchivePath'},
+            {name => 'strStopFile'}
+        );
 
     # Create a local file object to read archive logs in the local store
     my $oFile = new BackRest::File
@@ -646,128 +826,140 @@ sub xfer
 
     if ($lFileTotal == 0)
     {
-        &log(DEBUG, 'no archive logs to be copied to backup');
+        logDebugMisc($strOperation, 'no WAL segments to archive');
 
         return 0;
     }
-
-    eval
+    else
     {
-        # If the archive repo is remote create a new file object to do the copies
-        if (!optionRemoteTypeTest(NONE))
+        eval
         {
-            $oFile = new BackRest::File
-            (
-                optionGet(OPTION_STANZA),
-                optionGet(OPTION_REPO_REMOTE_PATH),
-                optionRemoteType(),
-                protocolGet()
-            );
+            # If the archive repo is remote create a new file object to do the copies
+            if (!optionRemoteTypeTest(NONE))
+            {
+                $oFile = new BackRest::File
+                (
+                    optionGet(OPTION_STANZA),
+                    optionGet(OPTION_REPO_REMOTE_PATH),
+                    optionRemoteType(),
+                    protocolGet()
+                );
+            }
+
+            # Modify process name to indicate async archiving
+            $0 = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA) .
+                 "archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
+
+            # Output files to be moved to backup
+            &log(INFO, "WAL segments to archive: total = ${lFileTotal}, size = " . fileSizeFormat($lFileSize));
+
+            # Transfer each file
+            foreach my $strFile (sort @stryFile)
+            {
+                # Construct the archive filename to backup
+                my $strArchiveFile = "${strArchivePath}/${strFile}";
+
+                # Determine if the source file is already compressed
+                my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
+
+                # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
+                my $bArchiveFile = basename($strFile) =~
+                    "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
+
+                # Figure out whether the compression extension needs to be added or removed
+                my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
+                my $strDestinationFile = basename($strFile);
+
+                if (!$bSourceCompressed && $bDestinationCompress)
+                {
+                    $strDestinationFile .= ".$oFile->{strCompressExtension}";
+                }
+                elsif ($bSourceCompressed && !$bDestinationCompress)
+                {
+                    $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
+                }
+
+                logDebugMisc
+                (
+                    $strOperation, undef,
+                    {name => 'strFile', value => $strFile},
+                    {name => 'bArchiveFile', value => $bArchiveFile},
+                    {name => 'bSourceCompressed', value => $bSourceCompressed},
+                    {name => 'bDestinationCompress', value => $bDestinationCompress}
+                );
+
+                # Check that there are no issues with pushing this WAL segment
+                my $strArchiveId;
+                my $strChecksum = undef;
+
+                if ($bArchiveFile)
+                {
+                    my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
+                    ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24),
+                                                                     $strArchiveFile, $strDbVersion, $ullDbSysId);
+                }
+                else
+                {
+                    $strArchiveId = $self->getCheck($oFile);
+                }
+
+                # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already
+                # exists in the repository with the same checksum (else there would have been an error on checksum mismatch).
+                if (!defined($strChecksum))
+                {
+                    # Copy the archive file
+                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source path/file
+                                 PATH_BACKUP_ARCHIVE,                       # Destination path
+                                 "${strArchiveId}/${strDestinationFile}",   # Destination file
+                                 $bSourceCompressed,                        # Source is not compressed
+                                 $bDestinationCompress,                     # Destination compress is configurable
+                                 undef, undef, undef,                       # Unused params
+                                 true);                                     # Create path if it does not exist
+                }
+
+                #  Remove the source archive file
+                unlink($strArchiveFile)
+                    or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
+                                           'This file will need to be cleaned up manually.  If the problem persists, check if ' .
+                                           CMD_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
+
+                # Remove the copied segment from the total size
+                $lFileSize -= $oManifestHash{name}{$strFile}{size};
+            }
+        };
+
+        my $oException = $@;
+
+        # Create a stop file if the archive store exceeds the max even after xfer
+        if (optionTest(OPTION_ARCHIVE_MAX_MB))
+        {
+            my $iArchiveMaxMB = optionGet(OPTION_ARCHIVE_MAX_MB);
+
+            if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
+            {
+                &log(ERROR, "local archive queue has exceeded limit of ${iArchiveMaxMB}MB" .
+                            " - WAL segments will be discarded until the stop file (${strStopFile}) is removed");
+
+                my $hStopFile;
+                open($hStopFile, '>', $strStopFile)
+                    or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
+                close($hStopFile);
+            }
         }
 
-        # Modify process name to indicate async archiving
-        $0 = $^X . ' ' . $0 . " --stanza=" . optionGet(OPTION_STANZA) .
-             "archive-push-async " . $stryFile[0] . '-' . $stryFile[scalar @stryFile - 1];
-
-        # Output files to be moved to backup
-        &log(INFO, "archive to be copied to backup total ${lFileTotal}, size " . file_size_format($lFileSize));
-
-        # Transfer each file
-        foreach my $strFile (sort @stryFile)
+        # If there was an exception before throw it now
+        if ($oException)
         {
-            # Construct the archive filename to backup
-            my $strArchiveFile = "${strArchivePath}/${strFile}";
-
-            # Determine if the source file is already compressed
-            my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
-
-            # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
-            my $bArchiveFile = basename($strFile) =~
-                "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
-
-            # Figure out whether the compression extension needs to be added or removed
-            my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
-            my $strDestinationFile = basename($strFile);
-
-            if (!$bSourceCompressed && $bDestinationCompress)
-            {
-                $strDestinationFile .= ".$oFile->{strCompressExtension}";
-            }
-            elsif ($bSourceCompressed && !$bDestinationCompress)
-            {
-                $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
-            }
-
-            &log(DEBUG, "archive ${strFile}, is WAL ${bArchiveFile}, source_compressed = ${bSourceCompressed}, " .
-                        "destination_compress ${bDestinationCompress}, default_compress = " . optionGet(OPTION_COMPRESS));
-
-            # Check that there are no issues with pushing this WAL segment
-            my $strArchiveId;
-            my $strChecksum = undef;
-
-            if ($bArchiveFile)
-            {
-                my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-                ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24),
-                                                                 $strArchiveFile, $strDbVersion, $ullDbSysId);
-            }
-            else
-            {
-                $strArchiveId = $self->getCheck($oFile);
-            }
-
-            # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already
-            # exists in the repository with the same checksum (else there would have been an error on checksum mismatch).
-            if (!defined($strChecksum))
-            {
-                # Copy the archive file
-                $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source path/file
-                             PATH_BACKUP_ARCHIVE,                       # Destination path
-                             "${strArchiveId}/${strDestinationFile}",   # Destination file
-                             $bSourceCompressed,                        # Source is not compressed
-                             $bDestinationCompress,                     # Destination compress is configurable
-                             undef, undef, undef,                       # Unused params
-                             true);                                     # Create path if it does not exist
-            }
-
-            #  Remove the source archive file
-            unlink($strArchiveFile)
-                or confess &log(ERROR, "copied ${strArchiveFile} to archive successfully but unable to remove it locally.  " .
-                                       'This file will need to be cleaned up manually.  If the problem persists, check if ' .
-                                       CMD_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
-
-            # Remove the copied segment from the total size
-            $lFileSize -= $oManifestHash{name}{$strFile}{size};
-        }
-    };
-
-    my $oException = $@;
-
-    # Create a stop file if the archive store exceeds the max even after xfer
-    if (optionTest(OPTION_ARCHIVE_MAX_MB))
-    {
-        my $iArchiveMaxMB = optionGet(OPTION_ARCHIVE_MAX_MB);
-
-        if ($iArchiveMaxMB < int($lFileSize / 1024 / 1024))
-        {
-            &log(ERROR, "local archive store max size has exceeded limit of ${iArchiveMaxMB}MB" .
-                        " - WAL segments will be discarded until the stop file (${strStopFile}) is removed");
-
-            my $hStopFile;
-            open($hStopFile, '>', $strStopFile)
-                or confess &log(ERROR, "unable to create stop file file ${strStopFile}");
-            close($hStopFile);
+            confess $oException;
         }
     }
 
-    # If there was an exception before throw it now
-    if ($oException)
-    {
-        confess $oException;
-    }
-
-    # Return number of files indicating that processing should continue
-    return $lFileTotal;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'lFileTotal', value => $lFileTotal}
+    );
 }
 
 
@@ -780,21 +972,22 @@ sub xfer
 sub range
 {
     my $self = shift;
-    my $strArchiveStart = shift;
-    my $strArchiveStop = shift;
-    my $bSkipFF = shift;
 
-    # strSkipFF default to false
-    $bSkipFF = defined($bSkipFF) ? $bSkipFF : false;
-
-    if ($bSkipFF)
-    {
-        &log(TRACE, 'archive_list_get: pre-9.3 database, skipping log FF');
-    }
-    else
-    {
-        &log(TRACE, 'archive_list_get: post-9.3 database, including log FF');
-    }
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchiveStart,
+        $strArchiveStop,
+        $bSkipFF
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_RANGE, \@_,
+            {name => 'strArchiveStart'},
+            {name => 'strArchiveStop'},
+            {name => 'bSkipFF', default => false}
+        );
 
     # Get the timelines and make sure they match
     my $strTimeline = substr($strArchiveStart, 0, 8);
@@ -803,7 +996,7 @@ sub range
 
     if ($strTimeline ne substr($strArchiveStop, 0, 8))
     {
-        confess &log(ERROR, "Timelines between ${strArchiveStart} and ${strArchiveStop} differ");
+        confess &log(ERROR, "timelines differ between ${strArchiveStart} and ${strArchiveStop}");
     }
 
     # Iterate through all archive logs between start and stop
@@ -830,9 +1023,12 @@ sub range
         $iArchiveIdx += 1;
     }
 
-    &log(TRACE, "    archive_list_get: $strArchiveStart:$strArchiveStop (@stryArchive)");
-
-    return @stryArchive;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryArchive', value => \@stryArchive}
+    );
 }
 
 1;

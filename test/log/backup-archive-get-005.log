@@ -3,13 +3,17 @@ run 005 - rmt 1, cmp 0, exists 0
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: getting WAL segment 000000010000000100000001
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
+ INFO: archive-get start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/local --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: get WAL segment 000000010000000100000001
+DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
+DEBUG:     Protocol::RemoteMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
 ERROR: [130]: archive.info does not exist but is required to get WAL segments
               HINT: Is archive_command configured in postgresql.conf?
               HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 130
+ INFO: archive-get stop
 
 + supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
 -----------------------------------------------------------------
@@ -28,10 +32,17 @@ db-version="9.3"
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: getting WAL segment 000000090000000900000009
-DEBUG:     Protocol::RemoteMaster->new(): blockSize = 4194304, command = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, compressLevel = 6, compressLevelNetwork = 3, host = 127.0.0.1, user = [USER-1]
-DEBUG:     Protocol::CommonMaster->new(): blockSize = 4194304, command = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', compressLevel = 6, compressLevelNetwork = 3, name = remote
-DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
- INFO: 000000090000000900000009 was not found in the archive repository
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-get start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/local --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: get WAL segment 000000090000000900000009
+DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
+DEBUG:     Protocol::RemoteMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = [BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+DEBUG:     Protocol::CommonMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-remote-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+ INFO: unable to find 000000090000000900000009 in the archive
+DEBUG:     Archive->get=>: iResult = 1
+DEBUG:     Main::safeExit(): iExitCode = 1
+ INFO: archive-get stop

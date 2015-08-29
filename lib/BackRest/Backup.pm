@@ -12,103 +12,170 @@ use Exporter qw(import);
 use Fcntl 'SEEK_CUR';
 use File::Basename;
 use File::Path qw(remove_tree);
-use Scalar::Util qw(looks_like_number);
 use Thread::Queue;
 
 use lib dirname($0);
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
 use BackRest::Archive;
 use BackRest::BackupCommon;
 use BackRest::BackupFile;
 use BackRest::BackupInfo;
+use BackRest::Common::String;
 use BackRest::Config;
 use BackRest::Db;
-use BackRest::Exception;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::ThreadGroup;
-use BackRest::Utility;
-
-our @EXPORT = qw(backup_init backup_cleanup backup backup_expire archive_list_get);
-
-my $oDb;
-my $oFile;
-my $strType;        # Type of backup: full, differential (diff), incremental (incr)
-my $bCompress;
-my $bHardLink;
-my $bNoStartStop;
-my $bForce;
-my $iThreadMax;
-my $iThreadTimeout;
+use BackRest::Protocol::ThreadGroup;
 
 ####################################################################################################################################
-# BACKUP_INIT
+# Operation constants
 ####################################################################################################################################
-sub backup_init
+use constant OP_BACKUP                                              => 'Backup';
+
+use constant OP_BACKUP_DESTROY                                      => OP_BACKUP . '->DESTROY';
+use constant OP_BACKUP_FILE_NOT_IN_MANIFEST                         => OP_BACKUP . '->fileNotInManifest';
+use constant OP_BACKUP_NEW                                          => OP_BACKUP . '->new';
+use constant OP_BACKUP_PROCESS                                      => OP_BACKUP . '->process';
+use constant OP_BACKUP_PROCESS_MANIFEST                             => OP_BACKUP . '->processManifest';
+use constant OP_BACKUP_TMP_CLEAN                                    => OP_BACKUP . '->tmpClean';
+use constant OP_BACKUP_TYPE_FIND                                    => OP_BACKUP . '->typeFind';
+
+####################################################################################################################################
+# new
+####################################################################################################################################
+sub new
 {
-    my $oFileParam = shift;
-    my $oDbParam = shift;
-    my $strTypeParam = shift;
-    my $bCompressParam = shift;
-    my $bHardLinkParam = shift;
-    my $iThreadMaxParam = shift;
-    my $iThreadTimeoutParam = shift;
-    my $bNoStartStopParam = shift;
-    my $bForceParam = shift;
+    my $class = shift;          # Class name
 
-    $oFile = $oFileParam;
-    $oDb = $oDbParam;
-    $strType = $strTypeParam;
-    $bCompress = $bCompressParam;
-    $bHardLink = $bHardLinkParam;
-    $iThreadMax = $iThreadMaxParam;
-    $iThreadTimeout = $iThreadTimeoutParam;
-    $bNoStartStop = $bNoStartStopParam;
-    $bForce = $bForceParam;
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
+    # Assign function parameters, defaults, and log debug info
+    (
+        my $strOperation,
+        $self->{oFile}
+    ) =
+        logDebugParam
+        (
+            OP_BACKUP_NEW, \@_,
+            {name => 'oFile', trace => true}
+        );
+
+    $self->{oDb} = new BackRest::Db();
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
-# BACKUP_CLEANUP
+# DESTROY
 ####################################################################################################################################
-sub backup_cleanup
+sub DESTROY
 {
-    undef($oFile);
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_BACKUP_DESTROY
+    );
+
+    undef($self->{oFile});
+    undef($self->{oDb});
+
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 ####################################################################################################################################
-# BACKUP_TYPE_FIND - Find the last backup depending on the type
+# typeFind
+#
+# Find the last backup depending on the type.
 ####################################################################################################################################
-sub backup_type_find
+sub typeFind
 {
-    my $strType = shift;
-    my $strBackupClusterPath = shift;
+    my $self = shift;
 
-    my $strDirectory;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType,
+        $strBackupClusterPath
+    ) =
+        logDebugParam
+        (
+            OP_BACKUP_TYPE_FIND, \@_,
+            {name => 'strType'},
+            {name => 'strBackupClusterPath'}
+        );
+
+    my $strLabel;
 
     if ($strType eq BACKUP_TYPE_INCR)
     {
-        $strDirectory = ($oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(1, 1, 1), 'reverse'))[0];
+        $strLabel = ($self->{oFile}->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(true, true, true), 'reverse'))[0];
     }
 
-    if (!defined($strDirectory) && $strType ne BACKUP_TYPE_FULL)
+    if (!defined($strLabel) && $strType ne BACKUP_TYPE_FULL)
     {
-        $strDirectory = ($oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(1, 0, 0), 'reverse'))[0];
+        $strLabel = ($self->{oFile}->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(true), 'reverse'))[0];
     }
 
-    return $strDirectory;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strLabel', value => $strLabel}
+    );
 }
 
 ####################################################################################################################################
-# BACKUP_FILE_NOT_IN_MANIFEST - Find all files in a backup path that are not in the supplied manifest
+# fileNotInManifest
+#
+# Find all files in a backup path that are not in the supplied manifest.
 ####################################################################################################################################
-sub backup_file_not_in_manifest
+sub fileNotInManifest
 {
-    my $strPathType = shift;
-    my $oManifest = shift;
-    my $oAbortedManifest = shift;
+    my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathType,
+        $oManifest,
+        $oAbortedManifest
+    ) =
+        logDebugParam
+        (
+            OP_BACKUP_FILE_NOT_IN_MANIFEST, \@_,
+            {name => 'strPathType', trace => true},
+            {name => 'oManifest', trace => true},
+            {name => 'oAbortedManifest', trace => true}
+        );
+
+    # Build manifest for aborted temp path
     my %oFileHash;
-    $oFile->manifest($strPathType, undef, \%oFileHash);
+    $self->{oFile}->manifest($strPathType, undef, \%oFileHash);
+
+    # Get compress flag
+    my $bCompressed = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
 
     my @stryFile;
 
@@ -177,17 +244,28 @@ sub backup_file_not_in_manifest
                     next;
                 }
             }
+            # Else if a file
             elsif ($cType eq 'f')
             {
-                if ($oManifest->test("${strSection}:file", "${strPath}") &&
+                # If the original backup was compressed the remove the extension before checking the manifest
+                if ($bCompressed)
+                {
+                    $strPath = substr($strPath, 0, length($strPath) - 3);
+                }
+
+                # To be preserved the file must exist in the new manifest and not be a reference to a previous backup
+                if ($oManifest->test("${strSection}:file", $strPath) &&
                     !$oManifest->test("${strSection}:file", $strPath, MANIFEST_SUBKEY_REFERENCE))
                 {
+                    # To be preserved the checksum must be defined
                     my $strChecksum = $oAbortedManifest->get("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, false);
 
+                    # The timestamp should also match and the size if the file is not compressed.  If the file is compressed it's
+                    # not worth extracting the size - it will be hashed later to verify its authenticity.
                     if (defined($strChecksum) &&
-                        $oManifest->getNumeric("${strSection}:file", $strPath, MANIFEST_SUBKEY_SIZE) ==
-                            $oFileHash{name}{$strName}{size} &&
-                        $oManifest->getNumeric("${strSection}:file", $strPath, MANIFEST_SUBKEY_TIMESTAMP) ==
+                        ($bCompressed || ($oManifest->numericGet("${strSection}:file", $strPath, MANIFEST_SUBKEY_SIZE) ==
+                            $oFileHash{name}{$strName}{size})) &&
+                        $oManifest->numericGet("${strSection}:file", $strPath, MANIFEST_SUBKEY_TIMESTAMP) ==
                             $oFileHash{name}{$strName}{modification_time})
                     {
                         $oManifest->set("${strSection}:file", $strPath, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
@@ -200,65 +278,110 @@ sub backup_file_not_in_manifest
         push @stryFile, $strName;
     }
 
-    return @stryFile;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryFile', value => \@stryFile}
+    );
 }
 
 ####################################################################################################################################
-# BACKUP_TMP_CLEAN
+# tmpClean
 #
 # Cleans the temp directory from a previous failed backup so it can be reused
 ####################################################################################################################################
-sub backup_tmp_clean
+sub tmpClean
 {
-    my $oManifest = shift;
-    my $oAbortedManifest = shift;
+    my $self = shift;
 
-    &log(INFO, 'cleaning backup tmp path');
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oManifest,
+        $oAbortedManifest
+    ) =
+        logDebugParam
+    (
+        OP_BACKUP_TMP_CLEAN, \@_,
+        {name => 'oManifest', trace => true},
+        {name => 'oAbortedManifest', trace => true}
+    );
+
+    &log(INFO, 'clean backup temp path: ' . $self->{oFile}->pathGet(PATH_BACKUP_TMP));
 
     # Remove the pg_xlog directory since it contains nothing useful for the new backup
-    if (-e $oFile->path_get(PATH_BACKUP_TMP, 'base/pg_xlog'))
+    if (-e $self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_xlog'))
     {
-        remove_tree($oFile->path_get(PATH_BACKUP_TMP, 'base/pg_xlog')) or confess &log(ERROR, 'unable to delete tmp pg_xlog path');
+        remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_xlog')) or confess &log(ERROR, 'unable to delete tmp pg_xlog path');
     }
 
     # Remove the pg_tblspc directory since it is trivial to rebuild, but hard to compare
-    if (-e $oFile->path_get(PATH_BACKUP_TMP, 'base/pg_tblspc'))
+    if (-e $self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_tblspc'))
     {
-        remove_tree($oFile->path_get(PATH_BACKUP_TMP, 'base/pg_tblspc')) or confess &log(ERROR, 'unable to delete tmp pg_tblspc path');
+        remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_tblspc')) or confess &log(ERROR, 'unable to delete tmp pg_tblspc path');
     }
 
     # Get the list of files that should be deleted from temp
-    my @stryFile = backup_file_not_in_manifest(PATH_BACKUP_TMP, $oManifest, $oAbortedManifest);
+    my @stryFile = $self->fileNotInManifest(PATH_BACKUP_TMP, $oManifest, $oAbortedManifest);
 
     foreach my $strFile (sort {$b cmp $a} @stryFile)
     {
-        my $strDelete = $oFile->path_get(PATH_BACKUP_TMP, $strFile);
+        my $strDelete = $self->{oFile}->pathGet(PATH_BACKUP_TMP, $strFile);
 
         # If a path then delete it, all the files should have already been deleted since we are going in reverse order
         if (-d $strDelete)
         {
-            &log(DEBUG, "remove path ${strDelete}");
-            rmdir($strDelete) or confess &log(ERROR, "unable to delete path ${strDelete}, is it empty?");
+            logDebugMisc($strOperation, "remove path ${strDelete}");
+
+            rmdir($strDelete)
+                or confess &log(ERROR, "unable to delete path ${strDelete}, is it empty?", ERROR_PATH_REMOVE);
         }
         # Else delete a file
         else
         {
-            &log(DEBUG, "remove file ${strDelete}");
-            unlink($strDelete) or confess &log(ERROR, "unable to delete file ${strDelete}");
+            logDebugMisc($strOperation, "remove file ${strDelete}");
+
+            unlink($strDelete)
+                or confess &log(ERROR, "unable to delete file ${strDelete}", ERROR_FILE_REMOVE);
         }
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 ####################################################################################################################################
-# BACKUP_FILE - Performs the file level backup
+# processManifest
 #
-# Uses the information in the manifest to determine which files need to be copied.  Directories and tablespace links are only
-# created when needed, except in the case of a full backup or if hardlinks are requested.
+# Process the file level backup.  Uses the information in the manifest to determine which files need to be copied.  Directories
+# and tablespace links are only created when needed, except in the case of a full backup or if hardlinks are requested.
 ####################################################################################################################################
-sub backup_file
+sub processManifest
 {
-    my $strDbClusterPath = shift;   # Database base data path
-    my $oBackupManifest = shift;    # Manifest for the current backup
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType,
+        $bCompress,
+        $bHardLink,
+        $oBackupManifest                            # Manifest for the current backup
+    ) =
+        logDebugParam
+    (
+        OP_BACKUP_PROCESS_MANIFEST, \@_,
+        {name => 'strType'},
+        {name => 'bCompress'},
+        {name => 'bHardLink'},
+        {name => 'oBackupManifest'},
+    );
 
     # Variables used for parallel copy
     my %oFileCopyMap;
@@ -281,7 +404,7 @@ sub backup_file
         # Create links for tablespaces
         if ($oBackupManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK) && $bFullCreate)
         {
-            $oFile->link_create(PATH_BACKUP_TMP, $strBackupDestinationPath,
+            $self->{oFile}->linkCreate(PATH_BACKUP_TMP, $strBackupDestinationPath,
                                 PATH_BACKUP_TMP,
                                 'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_PATH,
                                                                           $strPathKey, MANIFEST_SUBKEY_LINK),
@@ -300,7 +423,7 @@ sub backup_file
                 {
                     if ($strPath ne '.')
                     {
-                        $oFile->path_create(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}");
+                        $self->{oFile}->pathCreate(PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strPath}");
                     }
                 }
             }
@@ -315,7 +438,7 @@ sub backup_file
                     # Create links except in pg_tblspc because they have already been created
                     if (!($strPathKey eq 'base' && $strLink =~ /^pg_tblspc\/.*/))
                     {
-                        $oFile->link_create(PATH_BACKUP_ABSOLUTE,
+                        $self->{oFile}->linkCreate(PATH_BACKUP_ABSOLUTE,
                                             $oBackupManifest->get($strSectionLink, $strLink, MANIFEST_SUBKEY_DESTINATION),
                                             PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strLink}",
                                             false, false, false);
@@ -343,14 +466,14 @@ sub backup_file
                 # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
                 if ($bHardLink)
                 {
-                    &log(DEBUG, "hardlink ${strBackupSourceFile} to ${strReference}");
+                    logDebugMisc($strOperation, "hardlink ${strBackupSourceFile} to ${strReference}");
 
-                    $oFile->link_create(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
+                    $self->{oFile}->linkCreate(PATH_BACKUP_CLUSTER, "${strReference}/${strBackupDestinationPath}/${strFile}",
                                         PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strFile}", true, false, true);
                 }
                 else
                 {
-                    &log(DEBUG, "reference ${strBackupSourceFile} to ${strReference}");
+                    logDebugMisc($strOperation, "reference ${strBackupSourceFile} to ${strReference}");
                 }
 
                 $bProcess = false;
@@ -358,7 +481,7 @@ sub backup_file
 
             if ($bProcess)
             {
-                my $lFileSize = $oBackupManifest->getNumeric($strSectionFile, $strFile, MANIFEST_SUBKEY_SIZE);
+                my $lFileSize = $oBackupManifest->numericGet($strSectionFile, $strFile, MANIFEST_SUBKEY_SIZE);
 
                 # Setup variables needed for threaded copy
                 $lFileTotal++;
@@ -372,7 +495,7 @@ sub backup_file
                 $oFileCopyMap{$strPathKey}{$strFileKey}{backup_file} = "${strBackupDestinationPath}/${strFile}";
                 $oFileCopyMap{$strPathKey}{$strFileKey}{size} = $lFileSize;
                 $oFileCopyMap{$strPathKey}{$strFileKey}{modification_time} =
-                    $oBackupManifest->getNumeric($strSectionFile, $strFile, MANIFEST_SUBKEY_TIMESTAMP, false);
+                    $oBackupManifest->numericGet($strSectionFile, $strFile, MANIFEST_SUBKEY_TIMESTAMP, false);
                 $oFileCopyMap{$strPathKey}{$strFileKey}{checksum} =
                     $oBackupManifest->get($strSectionFile, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
             }
@@ -387,137 +510,146 @@ sub backup_file
         {
             confess &log(ERROR, "no files have changed since the last backup - this seems unlikely");
         }
-
-        return;
     }
-
-    # Create backup and result queues
-    my $oResultQueue = Thread::Queue->new();
-    my @oyBackupQueue;
-
-    # Variables used for local copy
-    my $lSizeCurrent = 0;       # Running total of bytes copied
-    my $bCopied;                # Was the file copied?
-    my $lCopySize;              # Size reported by copy
-    my $strCopyChecksum;        # Checksum reported by copy
-
-    # Determine how often the manifest will be saved
-    my $lManifestSaveCurrent = 0;
-    my $lManifestSaveSize = int($lSizeTotal / 100);
-
-    if ($lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
+    else
     {
-        $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
-    }
+        # Create backup and result queues
+        my $oResultQueue = Thread::Queue->new();
+        my @oyBackupQueue;
 
-    # Iterate all backup files
-    foreach my $strPathKey (sort (keys %oFileCopyMap))
-    {
-        if ($iThreadMax > 1)
+        # Variables used for local copy
+        my $lSizeCurrent = 0;       # Running total of bytes copied
+        my $bCopied;                # Was the file copied?
+        my $lCopySize;              # Size reported by copy
+        my $strCopyChecksum;        # Checksum reported by copy
+
+        # Determine how often the manifest will be saved
+        my $lManifestSaveCurrent = 0;
+        my $lManifestSaveSize = int($lSizeTotal / 100);
+
+        if ($lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
         {
-            $oyBackupQueue[@oyBackupQueue] = Thread::Queue->new();
+            $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
         }
 
-        foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oFileCopyMap{$strPathKey}})))
+        # Iterate all backup files
+        foreach my $strPathKey (sort (keys %oFileCopyMap))
         {
-            my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFileKey};
-
-            if ($iThreadMax > 1)
+            if (optionGet(OPTION_THREAD_MAX) > 1)
             {
-                $oyBackupQueue[@oyBackupQueue - 1]->enqueue($oFileCopy);
+                $oyBackupQueue[@oyBackupQueue] = Thread::Queue->new();
             }
-            else
+
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oFileCopyMap{$strPathKey}})))
             {
-                # Backup the file
-                ($bCopied, $lSizeCurrent, $lCopySize, $strCopyChecksum) =
-                    backupFile($oFile, $$oFileCopy{db_file}, $$oFileCopy{backup_file}, $bCompress,
-                               $$oFileCopy{checksum}, $$oFileCopy{modification_time},
-                               $$oFileCopy{size}, $lSizeTotal, $lSizeCurrent);
+                my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFileKey};
 
-                $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oFileCopy{file_section}, $$oFileCopy{file},
-                                                             $bCopied, $lCopySize, $strCopyChecksum, $lManifestSaveSize,
-                                                             $lManifestSaveCurrent);
-            }
-        }
-    }
+                if (optionGet(OPTION_THREAD_MAX) > 1)
+                {
+                    $oyBackupQueue[@oyBackupQueue - 1]->enqueue($oFileCopy);
+                }
+                else
+                {
+                    # Backup the file
+                    ($bCopied, $lSizeCurrent, $lCopySize, $strCopyChecksum) =
+                        backupFile($self->{oFile}, $$oFileCopy{db_file}, $$oFileCopy{backup_file}, $bCompress,
+                                   $$oFileCopy{checksum}, $$oFileCopy{modification_time},
+                                   $$oFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
-    # If multi-threaded then create threads to copy files
-    if ($iThreadMax > 1)
-    {
-        for (my $iThreadIdx = 0; $iThreadIdx < $iThreadMax; $iThreadIdx++)
-        {
-            my %oParam;
-
-            $oParam{compress} = $bCompress;
-            $oParam{size_total} = $lSizeTotal;
-            $oParam{queue} = \@oyBackupQueue;
-            $oParam{result_queue} = $oResultQueue;
-
-            threadGroupRun($iThreadIdx, 'backup', \%oParam);
-        }
-
-        # Complete thread queues
-        my $bDone = false;
-
-        do
-        {
-            $bDone = threadGroupComplete();
-
-            # Read the messages that are passed back from the backup threads
-            while (my $oMessage = $oResultQueue->dequeue_nb())
-            {
-                &log(TRACE, "message received in master queue: section = $$oMessage{file_section}, file = $$oMessage{file}" .
-                            ", copied = $$oMessage{copied}");
-
-                $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oMessage{file_section}, $$oMessage{file},
-                                                      $$oMessage{copied}, $$oMessage{size}, $$oMessage{checksum},
-                                                      $lManifestSaveSize, $lManifestSaveCurrent);
+                    $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oFileCopy{file_section}, $$oFileCopy{file},
+                                                                 $bCopied, $lCopySize, $strCopyChecksum, $lManifestSaveSize,
+                                                                 $lManifestSaveCurrent);
+                }
             }
         }
-        while (!$bDone);
+
+        # If multi-threaded then create threads to copy files
+        if (optionGet(OPTION_THREAD_MAX) > 1)
+        {
+            for (my $iThreadIdx = 0; $iThreadIdx < optionGet(OPTION_THREAD_MAX); $iThreadIdx++)
+            {
+                my %oParam;
+
+                $oParam{compress} = $bCompress;
+                $oParam{size_total} = $lSizeTotal;
+                $oParam{queue} = \@oyBackupQueue;
+                $oParam{result_queue} = $oResultQueue;
+
+                threadGroupRun($iThreadIdx, 'backup', \%oParam);
+            }
+
+            # Complete thread queues
+            my $bDone = false;
+
+            do
+            {
+                $bDone = threadGroupComplete();
+
+                # Read the messages that are passed back from the backup threads
+                while (my $oMessage = $oResultQueue->dequeue_nb())
+                {
+                    &log(TRACE, "message received in master queue: section = $$oMessage{file_section}, file = $$oMessage{file}" .
+                                ", copied = $$oMessage{copied}");
+
+                    $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oMessage{file_section}, $$oMessage{file},
+                                                          $$oMessage{copied}, $$oMessage{size}, $$oMessage{checksum},
+                                                          $lManifestSaveSize, $lManifestSaveCurrent);
+                }
+            }
+            while (!$bDone);
+        }
     }
 
-    &log(INFO, 'total backup size: ' . file_size_format($lSizeTotal));
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'lSizeTotal', value => $lSizeTotal}
+    );
 }
 
 ####################################################################################################################################
-# BACKUP
+# process
 #
-# Performs the entire database backup.
+# Process the database backup.
 ####################################################################################################################################
-sub backup
+sub process
 {
-    my $strDbClusterPath = shift;
-    my $bStartFast = shift;
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_BACKUP_PROCESS
+    );
 
     # Record timestamp start
     my $lTimestampStart = time();
 
-    # Backup start
-    &log(INFO, "backup start: type = ${strType}");
+    # Store local type, compress, and hardlink options since they can be modified by the process
+    my $strType = optionGet(OPTION_TYPE);
+    my $bCompress = optionGet(OPTION_COMPRESS);
+    my $bHardLink = optionGet(OPTION_HARDLINK);
 
     # Not supporting remote backup hosts yet
-    if ($oFile->is_remote(PATH_BACKUP))
+    if ($self->{oFile}->isRemote(PATH_BACKUP))
     {
         confess &log(ERROR, 'remote backup host not currently supported');
     }
 
-    if (!defined($strDbClusterPath))
-    {
-        confess &log(ERROR, 'cluster data path is not defined');
-    }
-
-    &log(DEBUG, "cluster path is $strDbClusterPath");
-
     # Create the cluster backup path
-    $oFile->path_create(PATH_BACKUP_CLUSTER, undef, undef, true);
+    $self->{oFile}->pathCreate(PATH_BACKUP_CLUSTER, undef, undef, true);
 
     # Load or build backup.info
-    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new BackRest::BackupInfo($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
 
     # Build backup tmp and config
-    my $strBackupTmpPath = $oFile->path_get(PATH_BACKUP_TMP);
-    my $strBackupConfFile = $oFile->path_get(PATH_BACKUP_TMP, 'backup.manifest');
+    my $strBackupTmpPath = $self->{oFile}->pathGet(PATH_BACKUP_TMP);
+    my $strBackupConfFile = $self->{oFile}->pathGet(PATH_BACKUP_TMP, 'backup.manifest');
 
     # Declare the backup manifest
     my $oBackupManifest = new BackRest::Manifest($strBackupConfFile, false);
@@ -525,24 +657,42 @@ sub backup
     # Find the previous backup based on the type
     my $oLastManifest = undef;
 
-    my $strBackupLastPath = backup_type_find($strType, $oFile->path_get(PATH_BACKUP_CLUSTER));
+    my $strBackupLastPath = $self->typeFind($strType, $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
 
     if (defined($strBackupLastPath))
     {
-        $oLastManifest = new BackRest::Manifest($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest");
+        $oLastManifest = new BackRest::Manifest($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER) . "/${strBackupLastPath}/backup.manifest");
 
         &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
                    ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
+
+        # If this is incr or diff warn if certain options have changed
+        if ($strType ne BACKUP_TYPE_FULL)
+        {
+            my $strKey;
+
+            # Warn if compress option changed
+            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress))
+            {
+                &log(WARN, "${strType} backup cannot alter compress option to '" . boolFormat($bCompress) .
+                           "', reset to value in ${strBackupLastPath}");
+                $bCompress = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+            }
+
+            # Warn if hardlink option changed
+            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink))
+            {
+                &log(WARN, "${strType} backup cannot alter hardlink option to '" . boolFormat($bHardLink) .
+                           "', reset to value in ${strBackupLastPath}");
+                $bHardLink = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
+            }
+        }
     }
     else
     {
-        if ($strType eq BACKUP_TYPE_DIFF)
+        if ($strType eq BACKUP_TYPE_DIFF || $strType eq BACKUP_TYPE_INCR)
         {
-            &log(WARN, 'No full backup exists, differential backup has been changed to full');
-        }
-        elsif ($strType eq BACKUP_TYPE_INCR)
-        {
-            &log(WARN, 'No prior backup exists, incremental backup has been changed to full');
+            &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
         }
 
         $strType = BACKUP_TYPE_FULL;
@@ -550,33 +700,36 @@ sub backup
 
     # Backup settings
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
-    $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
-    $oBackupManifest->setBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
-    $oBackupManifest->setBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
-    $oBackupManifest->setBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_START_STOP, undef, !$bNoStartStop);
-    $oBackupManifest->setBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
-                              $bNoStartStop || optionGet(OPTION_BACKUP_ARCHIVE_COPY));
-    $oBackupManifest->setBool(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
-                              $bNoStartStop || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_START_STOP, undef, !optionGet(OPTION_NO_START_STOP));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
+                              optionGet(OPTION_NO_START_STOP) || optionGet(OPTION_BACKUP_ARCHIVE_COPY));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
+                              optionGet(OPTION_NO_START_STOP) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
     # Database info
-    my ($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info($oFile, $strDbClusterPath);
+    my ($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
+        $self->{oDb}->info($self->{oFile}, optionGet(OPTION_DB_PATH));
 
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $fDbVersion);
-    $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
-    $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
-    $oBackupManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
     $oBackupInfo->check($oBackupManifest);
 
     # Start backup (unless no-start-stop is set)
     my $strArchiveStart;
+    my $oTablespaceMap;
 
-    if ($bNoStartStop)
+    # Don't start the backup but do check if PostgreSQL is running
+    if (optionGet(OPTION_NO_START_STOP))
     {
-        if ($oFile->exists(PATH_DB_ABSOLUTE, $strDbClusterPath . '/' . FILE_POSTMASTER_PID))
+        if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, optionGet(OPTION_DB_PATH) . '/' . FILE_POSTMASTER_PID))
         {
-            if ($bForce)
+            if (optionGet(OPTION_FORCE))
             {
                 &log(WARN, '--no-start-stop passed and ' . FILE_POSTMASTER_PID . ' exists but --force was passed so backup will ' .
                            'continue though it looks like the postmaster is running and the backup will probably not be ' .
@@ -590,130 +743,155 @@ sub backup
             }
         }
     }
+    # Else start the backup normally
     else
     {
         my $strTimestampDbStart;
 
+        # Start the backup
         ($strArchiveStart, $strTimestampDbStart) =
-            $oDb->backupStart($oFile, $strDbClusterPath, BACKREST_EXE . ' backup started ' .
-                              timestamp_string_get(undef, $lTimestampStart), $bStartFast);
+            $self->{oDb}->backupStart($self->{oFile}, optionGet(OPTION_DB_PATH), BACKREST_EXE . ' backup started ' .
+                                      timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
+        # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");
+
+        # Build the backup manifest
+        $oTablespaceMap = optionGet(OPTION_NO_START_STOP) ? undef : $self->{oDb}->tablespaceMapGet();
     }
 
-    # Build the backup manifest
-    my $oTablespaceMap = $bNoStartStop ? undef : $oDb->tablespaceMapGet();
-
-    $oBackupManifest->build($oFile, $strDbClusterPath, $oLastManifest, $bNoStartStop, $oTablespaceMap);
+    # Buid the manifest
+    $oBackupManifest->build($self->{oFile}, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_NO_START_STOP),
+                            $oTablespaceMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # Check if an aborted backup exists for this stanza
     if (-e $strBackupTmpPath)
     {
         my $bUsable = false;
-
-        my $strType = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
-        my $strPrior = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
-        my $strVersion = $oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
-
-        my $strAbortedType = '<undef>';
-        my $strAbortedPrior = '<undef>';
-        my $strAbortedVersion = '<undef>';
+        my $strReason = "resume is disabled";
         my $oAbortedManifest;
 
-        # Attempt to read the manifest file in the aborted backup to see if the backup type and prior backup are the same as the
-        # new backup that is being started.  If any error at all occurs then the backup will be considered unusable and a resume
-        # will not be attempted.
-        eval
+        # Attempt to read the manifest file in the aborted backup to seeif it can be used.  If any error at all occurs then the
+        # backup will be considered unusable and a resume will not be attempted.
+        if (optionGet(OPTION_RESUME))
         {
-            # Load the aborted manifest
-            $oAbortedManifest = new BackRest::Manifest("${strBackupTmpPath}/backup.manifest");
+            $strReason = "unable to read ${strBackupTmpPath}/backup.manifest";
 
-            # Default values if they are not set
-            $strAbortedType = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
-            $strAbortedPrior = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
-            $strAbortedVersion = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
-
-            # The backup is usable if between the current backup and the aborted backup:
-            # 1) The version matches
-            # 2) The type of both is full or the types match and prior matches
-            if ($strAbortedVersion eq $strVersion)
+            eval
             {
-                if ($strAbortedType eq BACKUP_TYPE_FULL
-                    && $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) eq BACKUP_TYPE_FULL)
+                # Load the aborted manifest
+                $oAbortedManifest = new BackRest::Manifest("${strBackupTmpPath}/backup.manifest");
+
+                # Key and values that do not match
+                my $strKey;
+                my $strValueNew;
+                my $strValueAborted;
+
+                # Check version
+                if ($oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION) ne
+                    $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION))
+                {
+                    $strKey =  INI_KEY_VERSION;
+                    $strValueNew = $oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
+                    $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION);
+                }
+                # Check format
+                elsif ($oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT) ne
+                       $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT))
+                {
+                    $strKey =  INI_KEY_FORMAT;
+                    $strValueNew = $oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT);
+                    $strValueAborted = $oAbortedManifest->get(INI_SECTION_BACKREST, INI_KEY_FORMAT);
+                }
+                # Check backup type
+                elsif ($oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) ne
+                       $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE))
+                {
+                    $strKey =  MANIFEST_KEY_TYPE;
+                    $strValueNew = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+                    $strValueAborted = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+                }
+                # Check prior label
+                elsif ($oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>') ne
+                       $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>'))
+                {
+                    $strKey =  MANIFEST_KEY_PRIOR;
+                    $strValueNew = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
+                    $strValueAborted = $oAbortedManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, false, '<undef>');
+                }
+                # Check compression
+                elsif ($oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) ne
+                       $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS))
+                {
+                    $strKey = MANIFEST_KEY_COMPRESS;
+                    $strValueNew = $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+                    $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+                }
+                # Check hardlink
+                elsif ($oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK) ne
+                       $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK))
+                {
+                    $strKey = MANIFEST_KEY_HARDLINK;
+                    $strValueNew = $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
+                    $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
+                }
+
+                # If key is defined then something didn't match
+                if (defined($strKey))
+                {
+                    $strReason = "new ${strKey} '${strValueNew}' does not match aborted ${strKey} '${strValueAborted}'";
+                }
+                # Else the backup can be resumed
+                else
                 {
                     $bUsable = true;
                 }
-                elsif ($strAbortedType eq $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE) &&
-                       $strAbortedPrior eq $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR))
-                {
-                    $bUsable = true;
-                }
-            }
-        };
+            };
+        }
 
         # If the aborted backup is usable then clean it
-        if ($bUsable && optionGet(OPTION_RESUME))
+        if ($bUsable)
         {
             &log(WARN, 'aborted backup of same type exists, will be cleaned to remove invalid files and resumed');
             &log(TEST, TEST_BACKUP_RESUME);
 
             # Clean the old backup tmp path
-            backup_tmp_clean($oBackupManifest, $oAbortedManifest);
+            $self->tmpClean($oBackupManifest, $oAbortedManifest);
         }
         # Else remove it
         else
         {
-            my $strReason = "resume is disabled";
-
-            if (optionGet(OPTION_RESUME))
-            {
-                if ($strVersion eq $strAbortedVersion)
-                {
-                    if ($strType ne $strAbortedType)
-                    {
-                        $strReason = "new type '${strType}' does not match aborted type '${strAbortedType}'";
-                    }
-                    else
-                    {
-                        $strReason = "new prior '${strPrior}' does not match aborted prior '${strAbortedPrior}'";
-                    }
-                }
-                else
-                {
-                    $strReason = "new version '${strVersion}' does not match aborted version '${strVersion}'";
-                }
-            }
-
             &log(WARN, "aborted backup exists, but cannot be resumed (${strReason}) - will be dropped and recreated");
             &log(TEST, TEST_BACKUP_NORESUME);
 
-            remove_tree($oFile->path_get(PATH_BACKUP_TMP))
+            remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP))
                 or confess &log(ERROR, "unable to delete tmp path: ${strBackupTmpPath}");
-            $oFile->path_create(PATH_BACKUP_TMP);
+            $self->{oFile}->pathCreate(PATH_BACKUP_TMP);
         }
     }
     # Else create the backup tmp path
     else
     {
-        &log(DEBUG, "creating backup path ${strBackupTmpPath}");
-        $oFile->path_create(PATH_BACKUP_TMP);
+        logDebugMisc($strOperation, "create temp backup path ${strBackupTmpPath}");
+        $self->{oFile}->pathCreate(PATH_BACKUP_TMP);
     }
 
     # Save the backup manifest
     $oBackupManifest->save();
 
     # Perform the backup
-    backup_file($strDbClusterPath, $oBackupManifest);
+    my $lBackupSizeTotal = $self->processManifest($strType, $bCompress, $bHardLink, $oBackupManifest);
+    &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Stop backup (unless no-start-stop is set)
     my $strArchiveStop;
 
-    if (!$bNoStartStop)
+    if (!optionGet(OPTION_NO_START_STOP))
     {
         my $strTimestampDbStop;
-        ($strArchiveStop, $strTimestampDbStop) = $oDb->backupStop();
+        ($strArchiveStop, $strTimestampDbStop) = $self->{oDb}->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
 
@@ -732,25 +910,25 @@ sub backup
         my $lModificationTime = time();
 
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
-        &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
+        logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new BackRest::Archive();
-        my $strArchiveId = $oArchive->getCheck($oFile);
+        my $strArchiveId = $oArchive->getCheck($self->{oFile});
         my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $fDbVersion < 9.3);
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = $oArchive->walFileName($oFile, $strArchiveId, $strArchive, 600);
+            my $strArchiveFile = $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, 600);
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {
-                &log(DEBUG, "archiving: ${strArchive} (${strArchiveFile})");
+                logDebugMisc($strOperation, "archive: ${strArchive} (${strArchiveFile})");
 
                 # Copy the log file from the archive repo to the backup
-                my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$oFile->{strCompressExtension}" : '');
-                my $bArchiveCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$";
+                my $strDestinationFile = "base/pg_xlog/${strArchive}" . ($bCompress ? ".$self->{oFile}->{strCompressExtension}" : '');
+                my $bArchiveCompressed = $strArchiveFile =~ "^.*\.$self->{oFile}->{strCompressExtension}\$";
 
                 my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-                    $oFile->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",
+                    $self->{oFile}->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",
                                  PATH_BACKUP_TMP, $strDestinationFile,
                                  $bArchiveCompressed, $bCompress,
                                  undef, $lModificationTime, undef, true);
@@ -762,7 +940,7 @@ sub backup
                 my $strFileLog = "pg_xlog/${strArchive}";
 
                 # Compare the checksum against the one already in the archive log name
-                if ($strArchiveFile !~ "^${strArchive}-${strCopyChecksum}(\\.$oFile->{strCompressExtension}){0,1}\$")
+                if ($strArchiveFile !~ "^${strArchive}-${strCopyChecksum}(\\.$self->{oFile}->{strCompressExtension}){0,1}\$")
                 {
                     confess &log(ERROR, "error copying WAL segment '${strArchiveFile}' to backup - checksum recorded with " .
                                         "file does not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
@@ -787,14 +965,14 @@ sub backup
 
     if ($strType eq BACKUP_TYPE_FULL || !defined($strBackupLastPath))
     {
-        $strBackupPath = timestamp_file_string_get() . 'F';
+        $strBackupPath = timestampFileFormat() . 'F';
         $strType = BACKUP_TYPE_FULL;
     }
     else
     {
         $strBackupPath = substr($strBackupLastPath, 0, 16);
 
-        $strBackupPath .= '_' . timestamp_file_string_get(undef, $lTimestampStop);
+        $strBackupPath .= '_' . timestampFileFormat(undef, $lTimestampStop);
 
         if ($strType eq BACKUP_TYPE_DIFF)
         {
@@ -813,233 +991,24 @@ sub backup
     # Save the backup manifest final time
     $oBackupManifest->save();
 
-    &log(INFO, "new backup label: ${strBackupPath}");
+    &log(INFO, "new backup label = ${strBackupPath}");
 
     # Rename the backup tmp path to complete the backup
-    &log(DEBUG, "moving ${strBackupTmpPath} to " . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackupPath));
-    $oFile->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+    logDebugMisc($strOperation, "move ${strBackupTmpPath} to " . $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strBackupPath));
+    $self->{oFile}->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
 
     # Create a link to the most recent backup
-    $oFile->remove(PATH_BACKUP_CLUSTER, "latest");
-    $oFile->link_create(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
+    $self->{oFile}->remove(PATH_BACKUP_CLUSTER, "latest");
+    $self->{oFile}->linkCreate(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
 
     # Save backup info
-    $oBackupInfo->backupAdd($oFile, $oBackupManifest);
+    $oBackupInfo->add($self->{oFile}, $oBackupManifest);
 
-    # Backup stop
-    &log(INFO, 'backup stop');
-}
-
-####################################################################################################################################
-# BACKUP_EXPIRE
-#
-# Removes expired backups and archive logs from the backup directory.  Partial backups are not counted for expiration, so if full
-# or differential retention is set to 2, there must be three complete backups before the oldest one can be deleted.
-#
-# iFullRetention - Optional, must be greater than 0 when supplied.
-# iDifferentialRetention - Optional, must be greater than 0 when supplied.
-# strArchiveRetention - Optional, must be (full,differential/diff,incremental/incr) when supplied
-# iArchiveRetention - Required when strArchiveRetention is supplied.  Must be greater than 0.
-####################################################################################################################################
-sub backup_expire
-{
-    my $strBackupClusterPath = shift;       # Base path to cluster backup
-    my $iFullRetention = shift;             # Number of full backups to keep
-    my $iDifferentialRetention = shift;     # Number of differential backups to keep
-    my $strArchiveRetentionType = shift;    # Type of backup to base archive retention on
-    my $iArchiveRetention = shift;          # Number of backups worth of archive to keep
-
-    my $strPath;
-    my @stryPath;
-
-    # Load or build backup.info
-    my $oBackupInfo = new BackRest::BackupInfo($oFile->path_get(PATH_BACKUP_CLUSTER));
-
-    # Find all the expired full backups
-    if (defined($iFullRetention))
-    {
-        # Make sure iFullRetention is valid
-        if (!looks_like_number($iFullRetention) || $iFullRetention < 1)
-        {
-            confess &log(ERROR, 'full_rentention must be a number >= 1');
-        }
-
-        my $iIndex = $iFullRetention;
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(1, 0, 0), 'reverse');
-
-        while (defined($stryPath[$iIndex]))
-        {
-            # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
-            # be consistent if the process dies
-            foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, '^' . $stryPath[$iIndex] . '.*', 'reverse'))
-            {
-                system("rm -rf ${strBackupClusterPath}/${strPath}") == 0
-                    or confess &log(ERROR, "unable to delete backup ${strPath}");
-
-                $oBackupInfo->backupRemove($strPath);
-            }
-
-            &log(INFO, 'remove expired full backup: ' . $stryPath[$iIndex]);
-
-            $iIndex++;
-        }
-    }
-
-    # Find all the expired differential backups
-    if (defined($iDifferentialRetention))
-    {
-        # Make sure iDifferentialRetention is valid
-        if (!looks_like_number($iDifferentialRetention) || $iDifferentialRetention < 1)
-        {
-            confess &log(ERROR, 'differential_rentention must be a number >= 1');
-        }
-
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(0, 1, 0), 'reverse');
-
-        if (defined($stryPath[$iDifferentialRetention - 1]))
-        {
-            &log(DEBUG, 'differential expiration based on ' . $stryPath[$iDifferentialRetention - 1]);
-
-            # Get a list of all differential and incremental backups
-            foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(0, 1, 1), 'reverse'))
-            {
-                &log(DEBUG, "checking ${strPath} for differential expiration");
-
-                # Remove all differential and incremental backups before the oldest valid differential
-                if ($strPath lt $stryPath[$iDifferentialRetention - 1])
-                {
-                    system("rm -rf ${strBackupClusterPath}/${strPath}") == 0
-                        or confess &log(ERROR, "unable to delete backup ${strPath}");
-                    $oBackupInfo->backupRemove($strPath);
-
-                    &log(INFO, "remove expired diff/incr backup ${strPath}");
-                }
-            }
-        }
-    }
-
-    # If no archive retention type is set then exit
-    if (!defined($strArchiveRetentionType))
-    {
-        &log(INFO, 'archive rentention type not set - archive logs will not be expired');
-        return;
-    }
-
-    # Determine which backup type to use for archive retention (full, differential, incremental)
-    if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
-    {
-        if (!defined($iArchiveRetention))
-        {
-            $iArchiveRetention = $iFullRetention;
-        }
-
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(1, 0, 0), 'reverse');
-    }
-    elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
-    {
-        if (!defined($iArchiveRetention))
-        {
-            $iArchiveRetention = $iDifferentialRetention;
-        }
-
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(1, 1, 0), 'reverse');
-    }
-    elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
-    {
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(1, 1, 1), 'reverse');
-    }
-    else
-    {
-        confess &log(ERROR, "unknown archive_retention_type '${strArchiveRetentionType}'");
-    }
-
-    # Make sure that iArchiveRetention is set and valid
-    if (!defined($iArchiveRetention))
-    {
-        confess &log(ERROR, 'archive_rentention must be set if archive_retention_type is set');
-        return;
-    }
-
-    if (!looks_like_number($iArchiveRetention) || $iArchiveRetention < 1)
-    {
-        confess &log(ERROR, 'archive_rentention must be a number >= 1');
-    }
-
-    # if no backups were found then preserve current archive logs - too scary to delete them!
-    my $iBackupTotal = scalar @stryPath;
-
-    if ($iBackupTotal == 0)
-    {
-        return;
-    }
-
-    # See if enough backups exist for expiration to start
-    my $strArchiveRetentionBackup = $stryPath[$iArchiveRetention - 1];
-
-    if (!defined($strArchiveRetentionBackup))
-    {
-        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryPath > 0)
-        {
-            &log(INFO, 'fewer than required backups for retention, but since archive_retention_type = full using oldest full backup');
-            $strArchiveRetentionBackup = $stryPath[scalar @stryPath - 1];
-        }
-
-        if (!defined($strArchiveRetentionBackup))
-        {
-            return;
-        }
-    }
-
-    # Get the archive logs that need to be kept.  To be cautious we will keep all the archive logs starting from this backup
-    # even though they are also in the pg_xlog directory (since they have been copied more than once).
-    &log(INFO, 'archive retention based on backup ' . $strArchiveRetentionBackup);
-
-    my $oManifest = new BackRest::Manifest($oFile->path_get(PATH_BACKUP_CLUSTER) . "/${strArchiveRetentionBackup}/backup.manifest");
-    my $strArchiveLast = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START);
-
-    if (!defined($strArchiveLast))
-    {
-        confess &log(ERROR, "invalid archive location retrieved ${strArchiveRetentionBackup}");
-    }
-
-    &log(INFO, 'archive retention starts at ' . $strArchiveLast);
-
-    # Get archive info
-    my $oArchive = new BackRest::Archive();
-    my $strArchiveId = $oArchive->getCheck($oFile);
-
-    # Remove any archive directories or files that are out of date
-    foreach $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
-    {
-        &log(DEBUG, 'found major archive path ' . $strPath);
-
-        # If less than first 16 characters of current archive file, then remove the directory
-        if ($strPath lt substr($strArchiveLast, 0, 16))
-        {
-            my $strFullPath = $oFile->path_get(PATH_BACKUP_ARCHIVE, $strArchiveId) . "/${strPath}";
-
-            remove_tree($strFullPath) > 0 or confess &log(ERROR, "unable to remove ${strFullPath}");
-
-            &log(DEBUG, 'remove major archive path ' . $strFullPath);
-        }
-        # If equals the first 16 characters of the current archive file, then delete individual files instead
-        elsif ($strPath eq substr($strArchiveLast, 0, 16))
-        {
-            my $strSubPath;
-
-            # Look for archive files in the archive directory
-            foreach $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strPath}", "^[0-F]{24}.*\$"))
-            {
-                # Delete if the first 24 characters less than the current archive file
-                if ($strSubPath lt substr($strArchiveLast, 0, 24))
-                {
-                    unlink($oFile->path_get(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"))
-                        or confess &log(ERROR, 'unable to remove ' . $strSubPath);
-                    &log(DEBUG, 'remove expired archive file ' . $strSubPath);
-                }
-            }
-        }
-    }
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 1;

@@ -9,6 +9,7 @@ use strict;
 use warnings FATAL => qw(all);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 
 # BackRest Version Number
 #
@@ -18,7 +19,7 @@ use Exporter qw(import);
 our # 'our' keyword is on a separate line to make the ExtUtils::MakeMaker parser happy.
 $VERSION = '0.85';
 
-our @EXPORT = qw($VERSION);
+push @EXPORT, qw($VERSION);
 
 # Format Format Number
 #

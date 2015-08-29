@@ -10,32 +10,60 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname);
 
 use lib dirname($0);
-use BackRest::Exception;
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Common::String;
 use BackRest::File;
 use BackRest::Manifest;
-use BackRest::Utility;
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_BACKUP_FILE                                         => 'BackupFile';
+
+use constant OP_BACKUP_FILE_BACKUP_FILE                             => OP_BACKUP_FILE . '::backupFile';
+use constant OP_BACKUP_FILE_BACKUP_MANIFEST_UPDATE                  => OP_BACKUP_FILE . '::backupManifestUpdate';
 
 ####################################################################################################################################
 # backupFile
 ####################################################################################################################################
 sub backupFile
 {
-    my $oFile = shift;                  # File object
-    my $strSourceFile = shift;          # Source file to backup
-    my $strDestinationFile = shift;     # Destination backup file
-    my $bDestinationCompress = shift;   # Compress destination file
-    my $strChecksum = shift;            # File checksum to be checked
-    my $lModificationTime = shift;      # File modification time
-    my $lSizeFile = shift;              # File size
-    my $lSizeTotal = shift;             # Total size of the files to be copied
-    my $lSizeCurrent = shift;           # Size of files copied so far
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,                                     # File object
+        $strSourceFile,                             # Source file to backup
+        $strDestinationFile,                        # Destination backup file
+        $bDestinationCompress,                      # Compress destination file
+        $strChecksum,                               # File checksum to be checked
+        $lModificationTime,                         # File modification time
+        $lSizeFile,                                 # File size
+        $lSizeTotal,                                # Total size of the files to be copied
+        $lSizeCurrent,                              # Size of files copied so far
+    ) =
+        logDebugParam
+        (
+            OP_BACKUP_FILE_BACKUP_FILE, \@_,
+            {name => 'oFile', trace => true},
+            {name => 'strSourceFile', trace => true},
+            {name => 'strDestinationFile', trace => true},
+            {name => 'bDestinationCompress', trace => true},
+            {name => 'strChecksum', required => false, trace => true},
+            {name => 'lModificationTime', trace => true},
+            {name => 'lSizeFile', trace => true},
+            {name => 'lSizeTotal', trace => true},
+            {name => 'lSizeCurrent', trace => true}
+        );
 
-    my $bCopyResult;                # Copy result
-    my $strCopyChecksum;            # Copy checksum
-    my $lCopySize;                  # Copy Size
+    my $bCopyResult = true;                         # Copy result
+    my $strCopyChecksum;                            # Copy checksum
+    my $lCopySize;                                  # Copy Size
 
     # Add the size of the current file to keep track of percent complete
     $lSizeCurrent += $lSizeFile;
@@ -45,7 +73,9 @@ sub backupFile
 
     if (defined($strChecksum))
     {
-        ($strCopyChecksum, $lCopySize) = $oFile->hash_size(PATH_BACKUP_TMP, $strDestinationFile);
+        ($strCopyChecksum, $lCopySize) =
+            $oFile->hashSize(PATH_BACKUP_TMP, $strDestinationFile .
+                             ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : ''), $bDestinationCompress);
 
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
@@ -75,35 +105,61 @@ sub backupFile
         {
             # If file is missing assume the database removed it (else corruption and nothing we can do!)
             &log(INFO, "skip file removed by database: " . $strSourceFile);
-
-            return false, $lSizeCurrent, undef, undef;
         }
     }
 
     # Ouput log
-    &log(INFO, (defined($strChecksum) && !$bCopy ? 'checksum resumed file' : 'backup file') .
-               " $strSourceFile (" . file_size_format($lCopySize) .
-               ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-               ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
+    if ($bCopyResult)
+    {
+        &log(INFO, (defined($strChecksum) && !$bCopy ? 'checksum resumed file' : 'backup file') .
+                   " $strSourceFile (" . fileSizeFormat($lCopySize) .
+                   ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
+                   ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
+    }
 
-    return true, $lSizeCurrent, $lCopySize, $strCopyChecksum;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bCopyResult', value => $bCopyResult, trace => true},
+        {name => 'lSizeCurrent', value => $lSizeCurrent, trace => true},
+        {name => 'lCopySize', value => $lCopySize, trace => true},
+        {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true}
+    );
 }
 
-our @EXPORT = qw(backupFile);
+push @EXPORT, qw(backupFile);
 
 ####################################################################################################################################
 # backupManifestUpdate
 ####################################################################################################################################
 sub backupManifestUpdate
 {
-    my $oManifest = shift;
-    my $strSection = shift;
-    my $strFile = shift;
-    my $bCopied = shift;
-    my $lSize = shift;
-    my $strChecksum = shift;
-    my $lManifestSaveSize = shift;
-    my $lManifestSaveCurrent = shift;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oManifest,
+        $strSection,
+        $strFile,
+        $bCopied,
+        $lSize,
+        $strChecksum,
+        $lManifestSaveSize,
+        $lManifestSaveCurrent
+    ) =
+        logDebugParam
+        (
+            OP_BACKUP_FILE_BACKUP_MANIFEST_UPDATE, \@_,
+            {name => 'oManifest', trace => true},
+            {name => 'strSection', trace => true},
+            {name => 'strFile', trace => true},
+            {name => 'bCopied', trace => true},
+            {name => 'lSize', required => false, trace => true},
+            {name => 'strChecksum', required => false, trace => true},
+            {name => 'lManifestSaveSize', trace => true},
+            {name => 'lManifestSaveCurrent', trace => true}
+        );
 
     # If copy was successful store the checksum and size
     if ($bCopied)
@@ -121,7 +177,12 @@ sub backupManifestUpdate
         if ($lManifestSaveCurrent >= $lManifestSaveSize)
         {
             $oManifest->save();
-            &log(DEBUG, 'manifest saved');
+            logDebugMisc
+            (
+                $strOperation, 'save manifest',
+                {name => 'lManifestSaveSize', value => $lManifestSaveSize},
+                {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
+            );
 
             $lManifestSaveCurrent = 0;
         }
@@ -132,7 +193,12 @@ sub backupManifestUpdate
         $oManifest->remove($strSection, $strFile);
     }
 
-    return $lManifestSaveCurrent;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent, trace => true}
+    );
 }
 
 push @EXPORT, qw(backupManifestUpdate);

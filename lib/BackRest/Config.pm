@@ -9,22 +9,16 @@ use Carp qw(confess);
 
 use Cwd qw(abs_path);
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 use Getopt::Long qw(GetOptions);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Exception;
-use BackRest::Ini;
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;
-use BackRest::Utility;
-
-####################################################################################################################################
-# Export functions
-####################################################################################################################################
-our @EXPORT = qw(configLoad optionGet optionTest optionRuleGet optionRequired optionDefault commandGet commandTest
-                 commandSet commandWrite optionRemoteType optionRemoteTypeTest protocolGet optionRemoteTest
-                 protocolDestroy);
 
 ####################################################################################################################################
 # BackRest executable name used for help messages and default
@@ -35,14 +29,12 @@ use constant BACKREST_EXE                                           => basename(
 ####################################################################################################################################
 # DB/BACKUP Constants
 ####################################################################################################################################
-use constant
-{
-    DB              => 'db',
-    BACKUP          => 'backup',
-    NONE            => 'none'
-};
-
-push @EXPORT, qw(DB BACKUP NONE);
+use constant DB                                                     => 'db';
+    push @EXPORT, qw(DB);
+use constant BACKUP                                                 => 'backup';
+    push @EXPORT, qw(BACKUP);
+use constant NONE                                                   => 'none';
+    push @EXPORT, qw(NONE);
 
 ####################################################################################################################################
 # Command constants - basic commands that are allowed in backrest
@@ -65,14 +57,12 @@ use constant CMD_EXPIRE                                             => 'expire';
 ####################################################################################################################################
 # BACKUP Type Constants
 ####################################################################################################################################
-use constant
-{
-    BACKUP_TYPE_FULL          => 'full',
-    BACKUP_TYPE_DIFF          => 'diff',
-    BACKUP_TYPE_INCR          => 'incr'
-};
-
-push @EXPORT, qw(BACKUP_TYPE_FULL BACKUP_TYPE_DIFF BACKUP_TYPE_INCR);
+use constant BACKUP_TYPE_FULL                                       => 'full';
+    push @EXPORT, qw(BACKUP_TYPE_FULL);
+use constant BACKUP_TYPE_DIFF                                       => 'diff';
+    push @EXPORT, qw(BACKUP_TYPE_DIFF);
+use constant BACKUP_TYPE_INCR                                       => 'incr';
+    push @EXPORT, qw(BACKUP_TYPE_INCR);
 
 ####################################################################################################################################
 # INFO Output Constants
@@ -85,272 +75,377 @@ use constant INFO_OUTPUT_JSON                                       => 'json';
 ####################################################################################################################################
 # SOURCE Constants
 ####################################################################################################################################
-use constant
-{
-    SOURCE_CONFIG       => 'config',
-    SOURCE_PARAM        => 'param',
-    SOURCE_DEFAULT      => 'default'
-};
+use constant SOURCE_CONFIG       => 'config';
+use constant SOURCE_PARAM        => 'param';
+use constant SOURCE_DEFAULT      => 'default';
 
 ####################################################################################################################################
 # RECOVERY Type Constants
 ####################################################################################################################################
-use constant
-{
-    RECOVERY_TYPE_NAME          => 'name',
-    RECOVERY_TYPE_TIME          => 'time',
-    RECOVERY_TYPE_XID           => 'xid',
-    RECOVERY_TYPE_PRESERVE      => 'preserve',
-    RECOVERY_TYPE_NONE          => 'none',
-    RECOVERY_TYPE_DEFAULT       => 'default'
-};
-
-push @EXPORT, qw(RECOVERY_TYPE_NAME RECOVERY_TYPE_TIME RECOVERY_TYPE_XID RECOVERY_TYPE_PRESERVE RECOVERY_TYPE_NONE
-                 RECOVERY_TYPE_DEFAULT);
-
-####################################################################################################################################
-# Configuration section constants
-####################################################################################################################################
-use constant
-{
-    CONFIG_GLOBAL                           => 'global',
-
-    CONFIG_SECTION_ARCHIVE                  => 'archive',
-    CONFIG_SECTION_BACKUP                   => 'backup',
-    CONFIG_SECTION_COMMAND                  => 'command',
-    CONFIG_SECTION_GENERAL                  => 'general',
-    CONFIG_SECTION_LOG                      => 'log',
-    CONFIG_SECTION_RESTORE_RECOVERY_SETTING => 'restore:recovery-setting',
-    CONFIG_SECTION_RESTORE_TABLESPACE_MAP   => 'restore:tablespace-map',
-    CONFIG_SECTION_EXPIRE                   => 'expire',
-    CONFIG_SECTION_STANZA                   => 'stanza'
-};
-
-push @EXPORT, qw(CONFIG_GLOBAL
-
-                 CONFIG_SECTION_ARCHIVE CONFIG_SECTION_BACKUP CONFIG_SECTION_COMMAND
-                 CONFIG_SECTION_GENERAL CONFIG_SECTION_LOG CONFIG_SECTION_RESTORE_RECOVERY_SETTING
-                 CONFIG_SECTION_EXPIRE CONFIG_SECTION_STANZA CONFIG_SECTION_RESTORE_TABLESPACE_MAP);
-
-####################################################################################################################################
-# Option constants
-####################################################################################################################################
-use constant
-{
-    # Command-line-only options
-    OPTION_CONFIG                   => 'config',
-    OPTION_DELTA                    => 'delta',
-    OPTION_FORCE                    => 'force',
-    OPTION_NO_START_STOP            => 'no-start-stop',
-    OPTION_SET                      => 'set',
-    OPTION_STANZA                   => 'stanza',
-    OPTION_TARGET                   => 'target',
-    OPTION_TARGET_EXCLUSIVE         => 'target-exclusive',
-    OPTION_TARGET_RESUME            => 'target-resume',
-    OPTION_TARGET_TIMELINE          => 'target-timeline',
-    OPTION_TYPE                     => 'type',
-    OPTION_OUTPUT                   => 'output',
-
-    # Command-line/conf file options
-    # GENERAL Section
-    OPTION_BUFFER_SIZE              => 'buffer-size',
-    OPTION_DB_TIMEOUT               => 'db-timeout',
-    OPTION_COMPRESS                 => 'compress',
-    OPTION_COMPRESS_LEVEL           => 'compress-level',
-    OPTION_COMPRESS_LEVEL_NETWORK   => 'compress-level-network',
-    OPTION_NEUTRAL_UMASK            => 'neutral-umask',
-    OPTION_REPO_PATH                => 'repo-path',
-    OPTION_REPO_REMOTE_PATH         => 'repo-remote-path',
-    OPTION_THREAD_MAX               => 'thread-max',
-    OPTION_THREAD_TIMEOUT           => 'thread-timeout',
-
-    # ARCHIVE Section
-    OPTION_ARCHIVE_MAX_MB           => 'archive-max-mb',
-    OPTION_ARCHIVE_ASYNC            => 'archive-async',
-
-    # BACKUP Section
-    OPTION_BACKUP_ARCHIVE_CHECK     => 'archive-check',
-    OPTION_BACKUP_ARCHIVE_COPY      => 'archive-copy',
-    OPTION_BACKUP_HOST              => 'backup-host',
-    OPTION_BACKUP_USER              => 'backup-user',
-    OPTION_HARDLINK                 => 'hardlink',
-    OPTION_MANIFEST_SAVE_THRESHOLD  => 'manifest-save-threshold',
-    OPTION_RESUME                   => 'resume',
-    OPTION_STOP_AUTO                => 'stop-auto',
-    OPTION_START_FAST               => 'start-fast',
-
-    # COMMAND Section
-    OPTION_COMMAND_REMOTE           => 'cmd-remote',
-
-    # LOG Section
-    OPTION_LOG_LEVEL_CONSOLE        => 'log-level-console',
-    OPTION_LOG_LEVEL_FILE           => 'log-level-file',
-
-    # EXPIRE Section
-    OPTION_RETENTION_ARCHIVE        => 'retention-archive',
-    OPTION_RETENTION_ARCHIVE_TYPE   => 'retention-archive-type',
-    OPTION_RETENTION_DIFF           => 'retention-' . BACKUP_TYPE_DIFF,
-    OPTION_RETENTION_FULL           => 'retention-' . BACKUP_TYPE_FULL,
-
-    # RESTORE Section
-    OPTION_TABLESPACE               => 'tablespace',
-    OPTION_RESTORE_TABLESPACE_MAP   => 'tablespace-map',
-    OPTION_RESTORE_RECOVERY_SETTING => 'recovery-setting',
-
-    # STANZA Section
-    OPTION_DB_HOST                  => 'db-host',
-    OPTION_DB_PATH                  => 'db-path',
-    OPTION_DB_PORT                  => 'db-port',
-    OPTION_DB_SOCKET_PATH           => 'db-socket-path',
-    OPTION_DB_USER                  => 'db-user',
-
-    # Command-line-only help/version options
-    OPTION_HELP                     => 'help',
-    OPTION_VERSION                  => 'version',
-
-    # Command-line-only test options
-    OPTION_TEST                     => 'test',
-    OPTION_TEST_DELAY               => 'test-delay',
-    OPTION_TEST_NO_FORK             => 'no-fork'
-};
-
-push @EXPORT, qw(OPTION_CONFIG OPTION_DELTA OPTION_FORCE OPTION_NO_START_STOP OPTION_SET OPTION_STANZA OPTION_TARGET
-                 OPTION_TARGET_EXCLUSIVE OPTION_TARGET_RESUME OPTION_TARGET_TIMELINE OPTION_TYPE
-
-                 OPTION_DB_HOST OPTION_BACKUP_HOST OPTION_ARCHIVE_MAX_MB OPTION_BACKUP_ARCHIVE_CHECK OPTION_BACKUP_ARCHIVE_COPY
-                 OPTION_ARCHIVE_ASYNC
-                 OPTION_BUFFER_SIZE OPTION_COMPRESS OPTION_COMPRESS_LEVEL OPTION_COMPRESS_LEVEL_NETWORK OPTION_HARDLINK
-                 OPTION_MANIFEST_SAVE_THRESHOLD OPTION_RESUME OPTION_PATH_ARCHIVE OPTION_REPO_PATH OPTION_NEUTRAL_UMASK
-                 OPTION_REPO_REMOTE_PATH OPTION_DB_PATH OPTION_OUTPUT OPTION_LOG_LEVEL_CONSOLE OPTION_LOG_LEVEL_FILE
-                 OPTION_RESTORE_RECOVERY_SETTING OPTION_RETENTION_ARCHIVE OPTION_RETENTION_ARCHIVE_TYPE OPTION_RETENTION_FULL
-                 OPTION_RETENTION_DIFF OPTION_START_FAST OPTION_STOP_AUTO OPTION_THREAD_MAX OPTION_THREAD_TIMEOUT
-                 OPTION_DB_USER OPTION_BACKUP_USER OPTION_COMMAND_REMOTE OPTION_DB_TIMEOUT
-                 OPTION_TABLESPACE OPTION_RESTORE_TABLESPACE_MAP OPTION_DB_PORT OPTION_DB_SOCKET_PATH
-
-                 OPTION_TEST OPTION_TEST_DELAY OPTION_TEST_NO_FORK);
-
-####################################################################################################################################
-# Option Defaults
-####################################################################################################################################
-use constant
-{
-    OPTION_DEFAULT_BUFFER_SIZE                      => 4194304,
-    OPTION_DEFAULT_BUFFER_SIZE_MIN                  => 16384,
-    OPTION_DEFAULT_BUFFER_SIZE_MAX                  => 8388608,
-
-    OPTION_DEFAULT_COMPRESS                         => true,
-    OPTION_DEFAULT_COMPRESS_LEVEL                   => 6,
-    OPTION_DEFAULT_COMPRESS_LEVEL_MIN               => 0,
-    OPTION_DEFAULT_COMPRESS_LEVEL_MAX               => 9,
-    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK           => 3,
-    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN       => 0,
-    OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX       => 9,
-
-    OPTION_DEFAULT_DB_TIMEOUT                       => 1800,
-    OPTION_DEFAULT_CONFIG                           => '/etc/' . BACKREST_EXE . '.conf',
-    OPTION_DEFAULT_LOG_LEVEL_CONSOLE                => lc(WARN),
-    OPTION_DEFAULT_LOG_LEVEL_FILE                   => lc(INFO),
-    OPTION_DEFAULT_THREAD_MAX                       => 1,
-
-    OPTION_DEFAULT_ARCHIVE_ASYNC                    => false,
-
-    OPTION_DEFAULT_DB_PORT                          => 5432,
-    OPTION_DEFAULT_DB_USER                          => 'postgres',
-
-    OPTION_DEFAULT_COMMAND_REMOTE                   => abs_path($0),
-
-    OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK             => true,
-    OPTION_DEFAULT_BACKUP_ARCHIVE_COPY              => false,
-    OPTION_DEFAULT_BACKUP_FORCE                     => false,
-    OPTION_DEFAULT_BACKUP_HARDLINK                  => false,
-    OPTION_DEFAULT_BACKUP_NO_START_STOP             => false,
-    OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD   => 1073741824,
-    OPTION_DEFAULT_BACKUP_RESUME                    => true,
-    OPTION_DEFAULT_BACKUP_STOP_AUTO                 => false,
-    OPTION_DEFAULT_BACKUP_START_FAST                => false,
-    OPTION_DEFAULT_BACKUP_TYPE                      => BACKUP_TYPE_INCR,
-
-    OPTION_DEFAULT_INFO_OUTPUT                      => INFO_OUTPUT_TEXT,
-
-    OPTION_DEFAULT_NEUTRAL_UMASK                    => true,
-    OPTION_DEFAULT_REPO_PATH                        => '/var/lib/backup',
-
-    OPTION_DEFAULT_RESTORE_DELTA                    => false,
-    OPTION_DEFAULT_RESTORE_FORCE                    => false,
-    OPTION_DEFAULT_RESTORE_SET                      => 'latest',
-    OPTION_DEFAULT_RESTORE_TABLESPACE               => true,
-    OPTION_DEFAULT_RESTORE_TYPE                     => RECOVERY_TYPE_DEFAULT,
-    OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE         => false,
-    OPTION_DEFAULT_RESTORE_TARGET_RESUME            => false,
-
-    OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE           => BACKUP_TYPE_FULL,
-    OPTION_DEFAULT_RETENTION_MIN                    => 1,
-    OPTION_DEFAULT_RETENTION_MAX                    => 999999999,
-
-    OPTION_DEFAULT_TEST                             => false,
-    OPTION_DEFAULT_TEST_DELAY                       => 5,
-    OPTION_DEFAULT_TEST_NO_FORK                     => false
-};
-
-push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE OPTION_DEFAULT_COMPRESS OPTION_DEFAULT_CONFIG OPTION_LEVEL_CONSOLE OPTION_LEVEL_FILE
-                 OPTION_DEFAULT_THREAD_MAX
-
-                 OPTION_DEFAULT_COMPRESS OPTION_DEFAULT_COMPRESS_LEVEL OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK
-                 OPTION_DEFAULT_COMMAND_REMOTE
-
-                 OPTION_DEFAULT_BACKUP_FORCE OPTION_DEFAULT_BACKUP_NO_START_STOP OPTION_DEFAULT_BACKUP_TYPE
-
-                 OPTION_DEFAULT_RESTORE_DELTA OPTION_DEFAULT_RESTORE_FORCE OPTION_DEFAULT_RESTORE_SET OPTION_DEFAULT_RESTORE_TYPE
-                 OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE OPTION_DEFAULT_RESTORE_TARGET_RESUME
-
-                 OPTION_DEFAULT_TEST OPTION_DEFAULT_TEST_DELAY OPTION_DEFAULT_TEST_NO_FORK OPTION_DEFAULT_DB_PORT
-                 OPTION_DEFAULT_DB_USER);
+use constant RECOVERY_TYPE_NAME          => 'name';
+    push @EXPORT, qw(RECOVERY_TYPE_NAME);
+use constant RECOVERY_TYPE_TIME          => 'time';
+    push @EXPORT, qw(RECOVERY_TYPE_TIME);
+use constant RECOVERY_TYPE_XID           => 'xid';
+    push @EXPORT, qw(RECOVERY_TYPE_XID);
+use constant RECOVERY_TYPE_PRESERVE      => 'preserve';
+    push @EXPORT, qw(RECOVERY_TYPE_PRESERVE);
+use constant RECOVERY_TYPE_NONE          => 'none';
+    push @EXPORT, qw(RECOVERY_TYPE_NONE);
+use constant RECOVERY_TYPE_DEFAULT       => 'default';
+    push @EXPORT, qw(RECOVERY_TYPE_DEFAULT);
 
 ####################################################################################################################################
 # Option Rules
 ####################################################################################################################################
-use constant
-{
-    OPTION_RULE_ALLOW_LIST       => 'allow-list',
-    OPTION_RULE_ALLOW_RANGE      => 'allow-range',
-    OPTION_RULE_DEFAULT          => 'default',
-    OPTION_RULE_DEPEND           => 'depend',
-    OPTION_RULE_DEPEND_OPTION    => 'depend-option',
-    OPTION_RULE_DEPEND_LIST      => 'depend-list',
-    OPTION_RULE_DEPEND_VALUE     => 'depend-value',
-    OPTION_RULE_HINT             => 'hint',
-    OPTION_RULE_NEGATE           => 'negate',
-    OPTION_RULE_COMMAND          => 'command',
-    OPTION_RULE_REQUIRED         => 'required',
-    OPTION_RULE_SECTION          => 'section',
-    OPTION_RULE_SECTION_INHERIT  => 'section-inherit',
-    OPTION_RULE_TYPE             => 'type'
-};
-
-push @EXPORT, qw(OPTION_RULE_ALLOW_LIST OPTION_RULE_ALLOW_RANGE OPTION_RULE_DEFAULT OPTION_RULE_DEPEND OPTION_RULE_DEPEND_OPTION
-                 OPTION_RULE_DEPEND_LIST OPTION_RULE_DEPEND_VALUE OPTION_RULE_NEGATE OPTION_RULE_COMMAND OPTION_RULE_REQUIRED
-                 OPTION_RULE_SECTION OPTION_RULE_SECTION_INHERIT OPTION_RULE_TYPE);
+use constant OPTION_RULE_ALLOW_LIST                                 => 'allow-list';
+    push @EXPORT, qw(OPTION_RULE_ALLOW_LIST);
+use constant OPTION_RULE_ALLOW_RANGE                                => 'allow-range';
+    push @EXPORT, qw(OPTION_RULE_ALLOW_RANGE);
+use constant OPTION_RULE_DEFAULT                                    => 'default';
+    push @EXPORT, qw(OPTION_RULE_DEFAULT);
+use constant OPTION_RULE_DEPEND                                     => 'depend';
+    push @EXPORT, qw(OPTION_RULE_DEPEND);
+use constant OPTION_RULE_DEPEND_OPTION                              => 'depend-option';
+    push @EXPORT, qw(OPTION_RULE_DEPEND_OPTION);
+use constant OPTION_RULE_DEPEND_LIST                                => 'depend-list';
+    push @EXPORT, qw(OPTION_RULE_DEPEND_LIST);
+use constant OPTION_RULE_DEPEND_VALUE                               => 'depend-value';
+    push @EXPORT, qw(OPTION_RULE_DEPEND_VALUE);
+use constant OPTION_RULE_HINT                                       => 'hint';
+    push @EXPORT, qw(OPTION_RULE_HINT);
+use constant OPTION_RULE_NEGATE                                     => 'negate';
+    push @EXPORT, qw(OPTION_RULE_NEGATE);
+use constant OPTION_RULE_COMMAND                                    => 'command';
+    push @EXPORT, qw(OPTION_RULE_COMMAND);
+use constant OPTION_RULE_REQUIRED                                   => 'required';
+    push @EXPORT, qw(OPTION_RULE_REQUIRED);
+use constant OPTION_RULE_SECTION                                    => 'section';
+    push @EXPORT, qw(OPTION_RULE_SECTION);
+use constant OPTION_RULE_SECTION_INHERIT                            => 'section-inherit';
+    push @EXPORT, qw(OPTION_RULE_SECTION_INHERIT);
+use constant OPTION_RULE_TYPE                                       => 'type';
+    push @EXPORT, qw(OPTION_RULE_TYPE);
 
 ####################################################################################################################################
 # Option Types
 ####################################################################################################################################
-use constant
-{
-    OPTION_TYPE_BOOLEAN      => 'boolean',
-    OPTION_TYPE_FLOAT        => 'float',
-    OPTION_TYPE_HASH         => 'hash',
-    OPTION_TYPE_INTEGER      => 'integer',
-    OPTION_TYPE_STRING       => 'string'
-};
+use constant OPTION_TYPE_BOOLEAN      => 'boolean';
+    push @EXPORT, qw(OPTION_TYPE_BOOLEAN);
+use constant OPTION_TYPE_FLOAT        => 'float';
+    push @EXPORT, qw(OPTION_TYPE_FLOAT);
+use constant OPTION_TYPE_HASH         => 'hash';
+    push @EXPORT, qw(OPTION_TYPE_HASH);
+use constant OPTION_TYPE_INTEGER      => 'integer';
+    push @EXPORT, qw(OPTION_TYPE_INTEGER);
+use constant OPTION_TYPE_STRING       => 'string';
+    push @EXPORT, qw(OPTION_TYPE_STRING);
 
-push @EXPORT, qw(OPTION_TYPE_BOOLEAN OPTION_TYPE_FLOAT OPTION_TYPE_INTEGER OPTION_TYPE_STRING);
+####################################################################################################################################
+# Configuration section constants
+####################################################################################################################################
+use constant CONFIG_GLOBAL                                          => 'global';
+    push @EXPORT, qw(CONFIG_GLOBAL);
+
+use constant CONFIG_SECTION_ARCHIVE                                 => 'archive';
+    push @EXPORT, qw(CONFIG_SECTION_ARCHIVE);
+use constant CONFIG_SECTION_BACKUP                                  => 'backup';
+    push @EXPORT, qw(CONFIG_SECTION_BACKUP);
+use constant CONFIG_SECTION_COMMAND                                 => 'command';
+    push @EXPORT, qw(CONFIG_SECTION_COMMAND);
+use constant CONFIG_SECTION_GENERAL                                 => 'general';
+    push @EXPORT, qw(CONFIG_SECTION_GENERAL);
+use constant CONFIG_SECTION_LOG                                     => 'log';
+    push @EXPORT, qw(CONFIG_SECTION_LOG);
+use constant CONFIG_SECTION_RESTORE_RECOVERY_SETTING                => 'restore:recovery-setting';
+    push @EXPORT, qw(CONFIG_SECTION_RESTORE_RECOVERY_SETTING);
+use constant CONFIG_SECTION_RESTORE_TABLESPACE_MAP                  => 'restore:tablespace-map';
+    push @EXPORT, qw(CONFIG_SECTION_RESTORE_TABLESPACE_MAP);
+use constant CONFIG_SECTION_EXPIRE                                  => 'expire';
+    push @EXPORT, qw(CONFIG_SECTION_EXPIRE);
+use constant CONFIG_SECTION_STANZA                                  => 'stanza';
+    push @EXPORT, qw(CONFIG_SECTION_STANZA);
+
+####################################################################################################################################
+# Option constants
+####################################################################################################################################
+# Command-line only
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_CONFIG                                          => 'config';
+    push @EXPORT, qw(OPTION_CONFIG);
+use constant OPTION_DELTA                                           => 'delta';
+    push @EXPORT, qw(OPTION_DELTA);
+use constant OPTION_FORCE                                           => 'force';
+    push @EXPORT, qw(OPTION_FORCE);
+use constant OPTION_NO_START_STOP                                   => 'no-start-stop';
+    push @EXPORT, qw(OPTION_NO_START_STOP);
+use constant OPTION_SET                                             => 'set';
+    push @EXPORT, qw(OPTION_SET);
+use constant OPTION_STANZA                                          => 'stanza';
+    push @EXPORT, qw(OPTION_STANZA);
+use constant OPTION_TARGET                                          => 'target';
+    push @EXPORT, qw(OPTION_TARGET);
+use constant OPTION_TARGET_EXCLUSIVE                                => 'target-exclusive';
+    push @EXPORT, qw(OPTION_TARGET_EXCLUSIVE);
+use constant OPTION_TARGET_RESUME                                   => 'target-resume';
+    push @EXPORT, qw(OPTION_TARGET_RESUME);
+use constant OPTION_TARGET_TIMELINE                                 => 'target-timeline';
+    push @EXPORT, qw(OPTION_TARGET_TIMELINE);
+use constant OPTION_TYPE                                            => 'type';
+    push @EXPORT, qw(OPTION_TYPE);
+use constant OPTION_OUTPUT                                          => 'output';
+    push @EXPORT, qw(OPTION_OUTPUT);
+
+# Command-line only help/version
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_HELP                                            => 'help';
+    push @EXPORT, qw(OPTION_HELP);
+use constant OPTION_VERSION                                         => 'version';
+    push @EXPORT, qw(OPTION_VERSION);
+
+# Command-line only test
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_TEST                                            => 'test';
+    push @EXPORT, qw(OPTION_TEST);
+use constant OPTION_TEST_DELAY                                      => 'test-delay';
+    push @EXPORT, qw(OPTION_TEST_DELAY);
+use constant OPTION_TEST_NO_FORK                                    => 'no-fork';
+    push @EXPORT, qw(OPTION_TEST_NO_FORK);
+
+# GENERAL Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_BUFFER_SIZE                                     => 'buffer-size';
+    push @EXPORT, qw(OPTION_BUFFER_SIZE);
+use constant OPTION_DB_TIMEOUT                                      => 'db-timeout';
+    push @EXPORT, qw(OPTION_DB_TIMEOUT);
+use constant OPTION_COMPRESS                                        => 'compress';
+    push @EXPORT, qw(OPTION_COMPRESS);
+use constant OPTION_COMPRESS_LEVEL                                  => 'compress-level';
+    push @EXPORT, qw(OPTION_COMPRESS_LEVEL);
+use constant OPTION_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
+    push @EXPORT, qw(OPTION_COMPRESS_LEVEL_NETWORK);
+use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-umask';
+    push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
+use constant OPTION_REPO_PATH                                       => 'repo-path';
+    push @EXPORT, qw(OPTION_REPO_PATH);
+use constant OPTION_REPO_REMOTE_PATH                                => 'repo-remote-path';
+    push @EXPORT, qw(OPTION_REPO_REMOTE_PATH);
+use constant OPTION_THREAD_MAX                                      => 'thread-max';
+    push @EXPORT, qw(OPTION_THREAD_MAX);
+use constant OPTION_THREAD_TIMEOUT                                  => 'thread-timeout';
+    push @EXPORT, qw(OPTION_THREAD_TIMEOUT);
+
+# COMMAND Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_COMMAND_REMOTE                                  => 'cmd-remote';
+    push @EXPORT, qw(OPTION_COMMAND_REMOTE);
+
+# LOG Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
+    push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
+use constant OPTION_LOG_LEVEL_FILE                                  => 'log-level-file';
+    push @EXPORT, qw(OPTION_LOG_LEVEL_FILE);
+
+# ARCHIVE Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_ARCHIVE_ASYNC                                   => 'archive-async';
+    push @EXPORT, qw(OPTION_ARCHIVE_ASYNC);
+use constant OPTION_ARCHIVE_MAX_MB                                  => 'archive-max-mb';
+    push @EXPORT, qw(OPTION_ARCHIVE_MAX_MB);
+
+# BACKUP Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_BACKUP_ARCHIVE_CHECK                            => 'archive-check';
+    push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_CHECK);
+use constant OPTION_BACKUP_ARCHIVE_COPY                             => 'archive-copy';
+    push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_COPY);
+use constant OPTION_BACKUP_HOST                                     => 'backup-host';
+    push @EXPORT, qw(OPTION_BACKUP_HOST);
+use constant OPTION_BACKUP_USER                                     => 'backup-user';
+    push @EXPORT, qw(OPTION_BACKUP_USER);
+use constant OPTION_HARDLINK                                        => 'hardlink';
+    push @EXPORT, qw(OPTION_HARDLINK);
+use constant OPTION_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
+    push @EXPORT, qw(OPTION_MANIFEST_SAVE_THRESHOLD);
+use constant OPTION_RESUME                                          => 'resume';
+    push @EXPORT, qw(OPTION_RESUME);
+use constant OPTION_START_FAST                                      => 'start-fast';
+    push @EXPORT, qw(OPTION_START_FAST);
+use constant OPTION_STOP_AUTO                                       => 'stop-auto';
+    push @EXPORT, qw(OPTION_STOP_AUTO);
+
+# EXPIRE Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_RETENTION_ARCHIVE                               => 'retention-archive';
+    push @EXPORT, qw(OPTION_RETENTION_ARCHIVE);
+use constant OPTION_RETENTION_ARCHIVE_TYPE                          => 'retention-archive-type';
+    push @EXPORT, qw(OPTION_RETENTION_ARCHIVE_TYPE);
+use constant OPTION_RETENTION_DIFF                                  => 'retention-' . BACKUP_TYPE_DIFF;
+    push @EXPORT, qw(OPTION_RETENTION_DIFF);
+use constant OPTION_RETENTION_FULL                                  => 'retention-' . BACKUP_TYPE_FULL;
+    push @EXPORT, qw(OPTION_RETENTION_FULL);
+
+# RESTORE Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_TABLESPACE                                      => 'tablespace';
+    push @EXPORT, qw(OPTION_TABLESPACE);
+use constant OPTION_RESTORE_TABLESPACE_MAP                          => 'tablespace-map';
+    push @EXPORT, qw(OPTION_RESTORE_TABLESPACE_MAP);
+use constant OPTION_RESTORE_RECOVERY_SETTING                        => 'recovery-setting';
+    push @EXPORT, qw(OPTION_RESTORE_RECOVERY_SETTING);
+
+# STANZA Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DB_HOST                                         => 'db-host';
+    push @EXPORT, qw(OPTION_DB_HOST);
+use constant OPTION_DB_PATH                                         => 'db-path';
+    push @EXPORT, qw(OPTION_DB_PATH);
+use constant OPTION_DB_PORT                                         => 'db-port';
+    push @EXPORT, qw(OPTION_DB_PORT);
+use constant OPTION_DB_SOCKET_PATH                                  => 'db-socket-path';
+    push @EXPORT, qw(OPTION_DB_SOCKET_PATH);
+use constant OPTION_DB_USER                                         => 'db-user';
+    push @EXPORT, qw(OPTION_DB_USER);
+
+####################################################################################################################################
+# Option Defaults
+####################################################################################################################################
+# Command-line only
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_BACKUP_TYPE                             => BACKUP_TYPE_INCR;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_TYPE);
+use constant OPTION_DEFAULT_INFO_OUTPUT                             => INFO_OUTPUT_TEXT;
+    push @EXPORT, qw(OPTION_DEFAULT_INFO_OUTPUT);
+use constant OPTION_DEFAULT_RESTORE_DELTA                           => false;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_DELTA);
+use constant OPTION_DEFAULT_RESTORE_FORCE                           => false;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_FORCE);
+use constant OPTION_DEFAULT_RESTORE_SET                             => 'latest';
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_SET);
+use constant OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE                => false;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE);
+use constant OPTION_DEFAULT_RESTORE_TARGET_RESUME                   => false;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_RESUME);
+use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_TYPE_DEFAULT;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
+
+# Command-line only test
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_TEST                                    => false;
+    push @EXPORT, qw(OPTION_DEFAULT_TEST);
+use constant OPTION_DEFAULT_TEST_DELAY                              => 5;
+    push @EXPORT, qw(OPTION_DEFAULT_TEST_DELAY);
+use constant OPTION_DEFAULT_TEST_NO_FORK                            => false;
+    push @EXPORT, qw(OPTION_DEFAULT_TEST_NO_FORK);
+
+# GENERAL Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_BUFFER_SIZE                             => 4194304;
+    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE);
+use constant OPTION_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
+    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MIN);
+use constant OPTION_DEFAULT_BUFFER_SIZE_MAX                         => 8388608;
+    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MAX);
+
+use constant OPTION_DEFAULT_COMPRESS                                => true;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS);
+
+use constant OPTION_DEFAULT_COMPRESS_LEVEL                          => 6;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL);
+use constant OPTION_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_MIN);
+use constant OPTION_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_MAX);
+
+use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK                  => 3;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK);
+use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN              => 0;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN);
+use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX              => 9;
+    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX);
+
+use constant OPTION_DEFAULT_DB_TIMEOUT                              => 1800;
+    push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT);
+use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_EXE . '.conf';
+    push @EXPORT, qw(OPTION_DEFAULT_CONFIG);
+use constant OPTION_DEFAULT_NEUTRAL_UMASK                           => true;
+    push @EXPORT, qw(OPTION_DEFAULT_NEUTRAL_UMASK);
+use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib/backup';
+    push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
+use constant OPTION_DEFAULT_THREAD_MAX                              => 1;
+    push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX);
+
+# COMMAND Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_COMMAND_REMOTE                          => abs_path($0);
+    push @EXPORT, qw(OPTION_DEFAULT_COMMAND_REMOTE);
+
+# LOG Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
+    push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
+use constant OPTION_LOG_LEVEL_FILE                                  => 'log-level-file';
+    push @EXPORT, qw(OPTION_LOG_LEVEL_FILE);
+
+use constant OPTION_DEFAULT_LOG_LEVEL_CONSOLE                       => lc(WARN);
+    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_CONSOLE);
+use constant OPTION_DEFAULT_LOG_LEVEL_FILE                          => lc(INFO);
+    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_FILE);
+
+# ARCHIVE SECTION
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_ARCHIVE_ASYNC                           => false;
+    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_ASYNC);
+
+# BACKUP Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK                    => true;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK);
+use constant OPTION_DEFAULT_BACKUP_ARCHIVE_COPY                     => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_ARCHIVE_COPY);
+use constant OPTION_DEFAULT_BACKUP_FORCE                            => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_FORCE);
+use constant OPTION_DEFAULT_BACKUP_HARDLINK                         => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_HARDLINK);
+use constant OPTION_DEFAULT_BACKUP_NO_START_STOP                    => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_NO_START_STOP);
+use constant OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD          => 1073741824;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD);
+use constant OPTION_DEFAULT_BACKUP_RESUME                           => true;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_RESUME);
+use constant OPTION_DEFAULT_BACKUP_STOP_AUTO                        => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STOP_AUTO);
+use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_START_FAST);
+
+# RESTORE SECTION
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_RESTORE_TABLESPACE                      => true;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TABLESPACE);
+
+# EXPIRE Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE                  => BACKUP_TYPE_FULL;
+    push @EXPORT, qw(OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE);
+use constant OPTION_DEFAULT_RETENTION_MIN                           => 1;
+    push @EXPORT, qw(OPTION_DEFAULT_RETENTION_MIN);
+use constant OPTION_DEFAULT_RETENTION_MAX                           => 999999999;
+    push @EXPORT, qw(OPTION_DEFAULT_RETENTION_MAX);
+
+# STANZA Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_DB_PORT                                 => 5432;
+    push @EXPORT, qw(OPTION_DEFAULT_DB_PORT);
+use constant OPTION_DEFAULT_DB_USER                                 => 'postgres';
+    push @EXPORT, qw(OPTION_DEFAULT_DB_USER);
 
 ####################################################################################################################################
 # Option Rule Hash
 ####################################################################################################################################
 my %oOptionRule =
 (
-    # Command-line-only option rule
+    # Command-line only
     #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_CONFIG =>
     {
@@ -585,174 +680,37 @@ my %oOptionRule =
         }
     },
 
-    # Command-line/conf option rules
+    # Command-line only test
     #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_COMMAND_REMOTE =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMMAND_REMOTE,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_COMMAND,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true
-        }
-    },
-
-    &OPTION_ARCHIVE_ASYNC =>
+    &OPTION_TEST =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_ARCHIVE_ASYNC,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true
-        }
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST
     },
 
-    &OPTION_DB_HOST =>
+    &OPTION_TEST_DELAY =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_DB_PORT =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_PORT,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_REMOTE => true
-        }
-    },
-
-    &OPTION_DB_SOCKET_PATH =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_REMOTE => true
-        }
-    },
-
-    &OPTION_DB_USER =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        },
-        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_DELAY,
         &OPTION_RULE_DEPEND =>
         {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
+            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST,
+            &OPTION_RULE_DEPEND_VALUE => true
         }
     },
 
-    &OPTION_BACKUP_HOST =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true
-        },
-    },
-
-    &OPTION_BACKUP_USER =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true
-        },
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
-        }
-    },
-
-    &OPTION_NEUTRAL_UMASK =>
+    &OPTION_TEST_NO_FORK =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_NEUTRAL_UMASK,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL
-    },
-
-    &OPTION_REPO_PATH =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_PATH,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_COMMAND =>
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_NO_FORK,
+        &OPTION_RULE_DEPEND =>
         {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true,
-            &CMD_EXPIRE => true
-        },
+            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST
+        }
     },
 
-    &OPTION_REPO_REMOTE_PATH =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_INFO => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true
-        },
-    },
-
-    &OPTION_DB_PATH =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_HINT => "Does this stanza exist?",
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_ARCHIVE_PUSH =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_BACKUP => true
-        },
-    },
-
+    # GENERAL Section
+    #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_BUFFER_SIZE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
@@ -762,50 +720,16 @@ my %oOptionRule =
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_BUFFER_SIZE_MIN, OPTION_DEFAULT_BUFFER_SIZE_MAX]
     },
 
-    &OPTION_ARCHIVE_MAX_MB =>
+    &OPTION_DB_TIMEOUT =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true
-        }
-    },
-
-    &OPTION_BACKUP_ARCHIVE_CHECK =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_TIMEOUT,
         &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_NO_START_STOP,
-                    &OPTION_RULE_DEPEND_VALUE   => false
-                }
-            }
-        }
-    },
-
-    &OPTION_BACKUP_ARCHIVE_COPY =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_COPY,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_ARCHIVE_CHECK,
-                    &OPTION_RULE_DEPEND_VALUE   => true
-                }
-            }
+            &CMD_BACKUP => true,
+            &CMD_REMOTE => true
         }
     },
 
@@ -860,17 +784,89 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_HARDLINK =>
+    &OPTION_NEUTRAL_UMASK =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_HARDLINK,
-        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_NEUTRAL_UMASK,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL
+    },
+
+    &OPTION_REPO_PATH =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_PATH,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP => true
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
+            &CMD_EXPIRE => true
+        },
+    },
+
+    &OPTION_REPO_REMOTE_PATH =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
+        },
+    },
+
+    &OPTION_THREAD_MAX =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_THREAD_MAX,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_RESTORE => true
         }
     },
 
+    &OPTION_THREAD_TIMEOUT =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_BACKUP,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_RESTORE => true
+        }
+    },
+
+    # COMMAND Section
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_COMMAND_REMOTE =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMMAND_REMOTE,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_COMMAND,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
+        }
+    },
+
+    # LOG Section
+    #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_LOG_LEVEL_CONSOLE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
@@ -921,50 +917,157 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_TABLESPACE =>
+    # ARCHIVE Section
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_ARCHIVE_ASYNC =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TABLESPACE,
-        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_ARCHIVE_ASYNC,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_RESTORE => true
+            &CMD_ARCHIVE_PUSH => true
         }
     },
 
-    &OPTION_RESTORE_TABLESPACE_MAP =>
+    &OPTION_ARCHIVE_MAX_MB =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_TABLESPACE_MAP,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_RESTORE => 1
-        },
+            &CMD_ARCHIVE_PUSH => true
+        }
     },
 
-    &OPTION_RESTORE_RECOVERY_SETTING =>
+    # BACKUP Section
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_BACKUP_ARCHIVE_CHECK =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_RECOVERY_SETTING,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
+        &OPTION_RULE_SECTION => true,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_RESTORE => 1
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
-            &OPTION_RULE_DEPEND_LIST =>
+            &CMD_BACKUP =>
             {
-                &RECOVERY_TYPE_DEFAULT  => true,
-                &RECOVERY_TYPE_NAME     => true,
-                &RECOVERY_TYPE_TIME     => true,
-                &RECOVERY_TYPE_XID      => true
+                &OPTION_RULE_DEPEND =>
+                {
+                    &OPTION_RULE_DEPEND_OPTION  => OPTION_NO_START_STOP,
+                    &OPTION_RULE_DEPEND_VALUE   => false
+                }
             }
         }
     },
 
+    &OPTION_BACKUP_ARCHIVE_COPY =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_COPY,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP =>
+            {
+                &OPTION_RULE_DEPEND =>
+                {
+                    &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_ARCHIVE_CHECK,
+                    &OPTION_RULE_DEPEND_VALUE   => true
+                }
+            }
+        }
+    },
+
+    &OPTION_BACKUP_HOST =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
+        },
+    },
+
+    &OPTION_BACKUP_USER =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true
+        },
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
+        }
+    },
+
+    &OPTION_HARDLINK =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_HARDLINK,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        }
+    },
+
+    &OPTION_MANIFEST_SAVE_THRESHOLD =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        }
+    },
+
+    &OPTION_RESUME =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_RESUME,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        }
+    },
+
+    &OPTION_START_FAST =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_START_FAST,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        }
+    },
+
+    &OPTION_STOP_AUTO =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STOP_AUTO,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        }
+    },
+
+    # EXPIRE Section
+    #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_RETENTION_ARCHIVE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
@@ -1027,69 +1130,90 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_MANIFEST_SAVE_THRESHOLD =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
+    # RESTORE Section
+    #-------------------------------------------------------------------------------------------------------------------------------
 
-    &OPTION_RESUME =>
+    &OPTION_TABLESPACE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_RESUME,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TABLESPACE,
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_STOP_AUTO =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STOP_AUTO,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_START_FAST =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_START_FAST,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_THREAD_MAX =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_THREAD_MAX,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
             &CMD_RESTORE => true
         }
     },
 
-    &OPTION_DB_TIMEOUT =>
+    &OPTION_RESTORE_TABLESPACE_MAP =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_TABLESPACE_MAP,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_RESTORE => 1
+        },
+    },
+
+    &OPTION_RESTORE_RECOVERY_SETTING =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_RECOVERY_SETTING,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_RESTORE => 1
+        },
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
+            &OPTION_RULE_DEPEND_LIST =>
+            {
+                &RECOVERY_TYPE_DEFAULT  => true,
+                &RECOVERY_TYPE_NAME     => true,
+                &RECOVERY_TYPE_TIME     => true,
+                &RECOVERY_TYPE_XID      => true
+            }
+        }
+    },
+
+    # STANZA Section
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_DB_HOST =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        }
+    },
+
+    &OPTION_DB_PATH =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_HINT => "Does this stanza exist?",
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
+            &CMD_ARCHIVE_PUSH =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
+            &CMD_BACKUP => true
+        },
+    },
+
+    &OPTION_DB_PORT =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_TIMEOUT,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_PORT,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
@@ -1097,45 +1221,31 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_THREAD_TIMEOUT =>
+    &OPTION_DB_SOCKET_PATH =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_BACKUP,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
-            &CMD_RESTORE => true
+            &CMD_REMOTE => true
         }
     },
 
-    # Command-line-only test option rules
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_TEST =>
+    &OPTION_DB_USER =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST
-    },
-
-    &OPTION_TEST_DELAY =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_DELAY,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
+        },
+        &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>
         {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST,
-            &OPTION_RULE_DEPEND_VALUE => true
-        }
-    },
-
-    &OPTION_TEST_NO_FORK =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_NO_FORK,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST
+            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
         }
     }
 );
@@ -1322,6 +1432,8 @@ sub configLoad
         $strRemoteType = NONE;
     }
 }
+
+push @EXPORT, qw(configLoad);
 
 ####################################################################################################################################
 # optionValid
@@ -1768,6 +1880,8 @@ sub optionRequired
     return !defined($bRequired) || $bRequired;
 }
 
+push @EXPORT, qw(optionRequired);
+
 ####################################################################################################################################
 # optionDefault
 #
@@ -1788,39 +1902,7 @@ sub optionDefault
     return defined($strDefault) ? $strDefault : $oOptionRule{$strOption}{&OPTION_RULE_DEFAULT};
 }
 
-####################################################################################################################################
-# commandGet
-#
-# Get the current command.
-####################################################################################################################################
-sub commandGet
-{
-    return $strCommand;
-}
-
-####################################################################################################################################
-# commandTest
-#
-# Test the current command.
-####################################################################################################################################
-sub commandTest
-{
-    my $strCommandTest = shift;
-
-    return $strCommandTest eq $strCommand;
-}
-
-####################################################################################################################################
-# commandSet
-#
-# Set current command (usually for triggering follow-on commands).
-####################################################################################################################################
-sub commandSet
-{
-    my $strValue = shift;
-
-    $strCommand = $strValue;
-}
+push @EXPORT, qw(optionDefault);
 
 ####################################################################################################################################
 # optionGet
@@ -1840,64 +1922,7 @@ sub optionGet
     return $oOption{$strOption}{value};
 }
 
-####################################################################################################################################
-# commandWrite
-#
-# Using the options that were passed to the current command, write the command string for another command.  For example, this
-# can be used to write the archive-get command for recovery.conf during a restore.
-####################################################################################################################################
-sub commandWrite
-{
-    my $strNewCommand = shift;
-    my $bIncludeConfig = shift;
-    my $strCommandString = shift;
-
-    $strCommandString = defined($strCommandString) ? $strCommandString : abs_path($0);
-
-    # If config setting are included then also set --no-config
-    $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
-
-    if ($bIncludeConfig)
-    {
-        $strCommandString .= ' --no-config';
-    }
-
-    foreach my $strOption (sort(keys(%oOption)))
-    {
-        next if ($bIncludeConfig && $strOption eq OPTION_CONFIG);
-
-        # &log(WARN, "option ${strOption} = " . (defined($oOption{$strOption}{source}) ? $oOption{$strOption}{source} : 'undef') .
-        #            ", " . (defined($oOption{$strOption}{value}) ? $oOption{$strOption}{value} : 'undef'));
-
-        if ((!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
-             defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strNewCommand})) &&
-             defined($oOption{$strOption}{value}) &&
-            ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
-        {
-            my $strParam;
-
-            if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
-            {
-                $strParam = '--' . ($oOption{$strOption}{value} ? '' : 'no-') . $strOption;
-            }
-            else
-            {
-                $strParam = "--${strOption}=$oOption{$strOption}{value}";
-            }
-
-            if (index($oOption{$strOption}{value}, " ") != -1)
-            {
-                $strCommandString .= " \"${strParam}\"";
-            }
-            else
-            {
-                $strCommandString .= " ${strParam}";
-            }
-        }
-    }
-
-    $strCommandString .= " ${strNewCommand}";
-}
+push @EXPORT, qw(optionGet);
 
 ####################################################################################################################################
 # optionTest
@@ -1917,6 +1942,21 @@ sub optionTest
     return defined($oOption{$strOption}{value});
 }
 
+push @EXPORT, qw(optionTest);
+
+####################################################################################################################################
+# optionRuleGet
+#
+# Get the option rules.
+####################################################################################################################################
+sub optionRuleGet
+{
+    use Storable qw(dclone);
+    return dclone(\%oOptionRule);
+}
+
+push @EXPORT, qw(optionRuleGet);
+
 ####################################################################################################################################
 # optionRemoteType
 #
@@ -1926,6 +1966,8 @@ sub optionRemoteType
 {
     return $strRemoteType;
 }
+
+push @EXPORT, qw(optionRemoteType);
 
 ####################################################################################################################################
 # optionRemoteTypeTest
@@ -1938,6 +1980,20 @@ sub optionRemoteTypeTest
 
     return $strRemoteType eq $strTest ? true : false;
 }
+
+push @EXPORT, qw(optionRemoteTypeTest);
+
+####################################################################################################################################
+# optionRemoteTest
+#
+# Test if the remote DB or BACKUP.
+####################################################################################################################################
+sub optionRemoteTest
+{
+    return $strRemoteType ne NONE ? true : false;
+}
+
+push @EXPORT, qw(optionRemoteTest);
 
 ####################################################################################################################################
 # protocolGet
@@ -1987,6 +2043,8 @@ sub protocolGet
     return $oProtocolTemp;
 }
 
+push @EXPORT, qw(protocolGet);
+
 ####################################################################################################################################
 # protocolDestroy
 #
@@ -2000,25 +2058,157 @@ sub protocolDestroy
     }
 }
 
-####################################################################################################################################
-# optionRemoteTest
-#
-# Test if the remote DB or BACKUP.
-####################################################################################################################################
-sub optionRemoteTest
-{
-    return $strRemoteType ne NONE ? true : false;
-}
+push @EXPORT, qw(protocolDestroy);
 
 ####################################################################################################################################
-# optionRuleGet
+# commandGet
 #
-# Get the option rules.
+# Get the current command.
 ####################################################################################################################################
-sub optionRuleGet
+sub commandGet
 {
-    use Storable qw(dclone);
-    return dclone(\%oOptionRule);
+    return $strCommand;
 }
+
+push @EXPORT, qw(commandGet);
+
+####################################################################################################################################
+# commandTest
+#
+# Test the current command.
+####################################################################################################################################
+sub commandTest
+{
+    my $strCommandTest = shift;
+
+    return $strCommandTest eq $strCommand;
+}
+
+push @EXPORT, qw(commandTest);
+
+####################################################################################################################################
+# commandStart
+#
+# Log information about the command that was just started.
+####################################################################################################################################
+sub commandStart
+{
+    &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} start:" . commandWrite($strCommand, true, '', false))
+}
+
+push @EXPORT, qw(commandStart);
+
+####################################################################################################################################
+# commandStop
+#
+# Log information about the command that was just stopped.
+####################################################################################################################################
+sub commandStop
+{
+    &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} stop")
+}
+
+push @EXPORT, qw(commandStop);
+
+####################################################################################################################################
+# commandSet
+#
+# Set current command (usually for triggering follow-on commands).
+####################################################################################################################################
+sub commandSet
+{
+    my $strValue = shift;
+
+    commandStop();
+
+    $strCommand = $strValue;
+
+    commandStart();
+}
+
+push @EXPORT, qw(commandSet);
+
+####################################################################################################################################
+# commandWrite
+#
+# Using the options that were passed to the current command, write the command string for another command.  For example, this
+# can be used to write the archive-get command for recovery.conf during a restore.
+####################################################################################################################################
+sub commandWrite
+{
+    my $strNewCommand = shift;
+    my $bIncludeConfig = shift;
+    my $strExeString = shift;
+    my $bIncludeCommand = shift;
+
+    # Set defaults
+    $strExeString = defined($strExeString) ? $strExeString : abs_path($0);
+    $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
+    $bIncludeCommand = defined($bIncludeCommand) ? $bIncludeCommand : true;
+
+    if ($bIncludeConfig && $strExeString ne '')
+    {
+        $strExeString .= ' --no-config';
+    }
+
+    foreach my $strOption (sort(keys(%oOption)))
+    {
+        next if ($bIncludeConfig && $strOption eq OPTION_CONFIG);
+
+        # &log(WARN, "option ${strOption} = " . (defined($oOption{$strOption}{source}) ? $oOption{$strOption}{source} : 'undef') .
+        #            ", " . (defined($oOption{$strOption}{value}) ? $oOption{$strOption}{value} : 'undef'));
+
+        if ((!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
+             defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strNewCommand})) &&
+             defined($oOption{$strOption}{value}) &&
+            ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
+        {
+            my $strParam;
+            my $oValue;
+            my $bHash = false;
+
+            # If this is a hash then it will break up into multple command-line options
+            if (ref($oOption{$strOption}{value}) eq 'HASH')
+            {
+                $oValue = $oOption{$strOption}{value};
+                $bHash = true;
+            }
+            # Else a single value but store it in a hash anyway to make processing below simpler
+            else
+            {
+                $oValue = {value => $oOption{$strOption}{value}};
+            }
+
+            # Loops though all keys in the hash
+            foreach my $strKey (sort(keys(%$oValue)))
+            {
+                # Get the value - if the original value was a hash then the key must be prefixed
+                my $strValue = ($bHash ?  "${strKey}=" : '') . $$oValue{$strKey};
+
+                # Handle the no- prefix for boolean values
+                if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+                {
+                    $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
+                }
+                else
+                {
+                    $strParam = "--${strOption}=${strValue}";
+                }
+
+                # Add quotes if the value has spaces in it
+                $strExeString .= ' ' . (index($strValue, " ") != -1 ? "\"${strParam}\"" : $strParam);
+            }
+        }
+    }
+
+    if ($bIncludeCommand)
+    {
+        $strExeString .= " ${strNewCommand}";
+    }
+
+    return $strExeString;
+}
+
+push @EXPORT, qw(commandWrite);
 
 1;

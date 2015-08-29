@@ -11,21 +11,21 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
 use BackRest::Archive;
 use BackRest::Config;
 use BackRest::Db;
-use BackRest::Exception;
 use BackRest::File;
 use BackRest::Info;
 use BackRest::Protocol::CommonMinion;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_PROTOCOL_REMOVE_MINION                              => 'Protocol::RemoteMinion';
+use constant OP_PROTOCOL_REMOTE_MINION                              => 'Protocol::RemoteMinion';
 
-use constant OP_PROTOCOL_REMOVE_MINION_NEW                          => OP_PROTOCOL_REMOVE_MINION . "->new";
+use constant OP_PROTOCOL_REMOTE_MINION_NEW                          => OP_PROTOCOL_REMOTE_MINION . "->new";
 
 ####################################################################################################################################
 # Operation constants
@@ -42,19 +42,33 @@ use constant
 sub new
 {
     my $class = shift;                  # Class name
-    my $iBlockSize = shift;             # Buffer size
-    my $iCompressLevel = shift;         # Set compression level
-    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
-    # Debug
-    logTrace(OP_PROTOCOL_REMOVE_MINION_NEW, DEBUG_CALL, undef,
-             {iBlockSize => $iBlockSize, iCompressLevel => $iCompressLevel, iCompressNetworkLevel => $iCompressLevelNetwork});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $iBlockSize,                                # Buffer size
+        $iCompressLevel,                            # Set compression level
+        $iCompressLevelNetwork                      # Set compression level for network only compression
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_REMOTE_MINION_NEW, \@_,
+            {name => 'iBlockSize', trace => true},
+            {name => 'iCompressLevel', trace => true},
+            {name => 'iCompressNetworkLevel', trace => true}
+        );
 
     # Init object and store variables
     my $self = $class->SUPER::new(CMD_REMOTE, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork);
     bless $self, $class;
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -188,7 +202,7 @@ sub process
             # Create a path
             elsif ($strCommand eq OP_FILE_PATH_CREATE)
             {
-                $oFile->path_create(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path'), paramGet(\%oParamHash, 'mode', false));
+                $oFile->pathCreate(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path'), paramGet(\%oParamHash, 'mode', false));
                 $self->outputWrite();
             }
             # Check if a file/path exists
@@ -243,12 +257,12 @@ sub process
                 $self->outputWrite($oArchive->getCheck($oFile));
             }
             # Info list stanza
-            elsif ($strCommand eq OP_INFO_LIST_STANZA)
+            elsif ($strCommand eq OP_INFO_STANZA_LIST)
             {
                 $self->outputWrite(
                     $oJSON->encode(
-                        $oInfo->listStanza($oFile,
-                                       paramGet(\%oParamHash, 'stanza', false))));
+                        $oInfo->stanzaList($oFile,
+                            paramGet(\%oParamHash, 'stanza', false))));
             }
             elsif ($strCommand eq OP_DB_INFO)
             {

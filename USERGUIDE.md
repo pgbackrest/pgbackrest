@@ -261,7 +261,7 @@ Path to the backrest repository where WAL segments, backups, logs, etc are store
 
 The repository serves as both storage and working area for pgBackRest.  In a simple installation where the backups are stored locally to the database server there will be only one repository which will contain everything: backups, archives, logs, locks, etc.
 
-If the backups are being done remotely then the backup server's repository will contain backups, archives, locks and logs while the database server's repository will contain only locks and logs.  However, if asynchronous archving is enabled then the database server's repository will also contain a spool directory for archive logs that have not yet been pushed to the remote repository.
+If the backups are being done remotely then the backup server's repository will contain backups, archives, locks and logs while the database server's repository will contain only locks and logs.  However, if asynchronous archiving is enabled then the database server's repository will also contain a spool directory for archive logs that have not yet been pushed to the remote repository.
 
 Each system where pgBackRest is installed should have a repository directory configured.  Storage requirements vary based on usage.  The main backup repository will need the most space as it contains both backups and WAL segments for whatever retention you have specified.  The database repository only needs significant space if asynchronous archiving is enabled and then it will act as an overflow for WAL segments and might need to be large depending on your database activity.
 

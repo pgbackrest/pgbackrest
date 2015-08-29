@@ -3,7 +3,13 @@
 ## v0.85: DALLAS MILESTONE - UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Fixed an issue where resumed compressed backups were not preserving existing files.
+
+* Fixed an issue where resume and incr/diff would not ensure that the prior backup has the same compression and hardlink settings.
+
+* Code cleanup and refactoring to standardize on patterns that have evolved over time.
+
+* Experimental support for PostgreSQL 9.5 alpha2.  This may break when the control version or WAL magic changes in future versions but will be updated in each pgBackRest release to keep pace.  All regression tests pass except for `--target-resume` tests (this functionality has changed in 9.5) and there is no testing yet for `.partial` WAL segments.
 
 ## v0.80: DBI Support, Stability, and Convenience Features
 __Released August 9, 2015__
