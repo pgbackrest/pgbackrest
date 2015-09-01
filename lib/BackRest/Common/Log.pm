@@ -470,7 +470,7 @@ sub log
                         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to console depending on log level and test flag
-    if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelConsole}"}{rank} ||
+    if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
         $bTest && $strLevel eq TEST)
     {
         if (!$bSuppressLog)
@@ -486,7 +486,7 @@ sub log
     }
 
     # Output to file depending on log level and test flag
-    if ($iLogLevelRank <= $oLogLevelRank{"${strLogLevelFile}"}{rank})
+    if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
     {
         if (defined($hLogFile))
         {

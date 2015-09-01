@@ -713,12 +713,12 @@ sub process
     my ($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
         $self->{oDb}->info($self->{oFile}, optionGet(OPTION_DB_PATH));
 
+    $oBackupInfo->check($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $fDbVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
-
-    $oBackupInfo->check($oBackupManifest);
 
     # Start backup (unless no-start-stop is set)
     my $strArchiveStart;
@@ -961,45 +961,24 @@ sub process
 
     # Create the path for the new backup
     my $lTimestampStop = time();
-    my $strBackupPath;
-
-    if ($strType eq BACKUP_TYPE_FULL || !defined($strBackupLastPath))
-    {
-        $strBackupPath = timestampFileFormat() . 'F';
-        $strType = BACKUP_TYPE_FULL;
-    }
-    else
-    {
-        $strBackupPath = substr($strBackupLastPath, 0, 16);
-
-        $strBackupPath .= '_' . timestampFileFormat(undef, $lTimestampStop);
-
-        if ($strType eq BACKUP_TYPE_DIFF)
-        {
-            $strBackupPath .= 'D';
-        }
-        else
-        {
-            $strBackupPath .= 'I';
-        }
-    }
+    my $strBackupLabel = backupLabelFormat($strType, $strBackupLastPath, $lTimestampStop);
 
     # Record timestamp stop in the config
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, $lTimestampStop + 0);
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupPath);
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
     # Save the backup manifest final time
     $oBackupManifest->save();
 
-    &log(INFO, "new backup label = ${strBackupPath}");
+    &log(INFO, "new backup label = ${strBackupLabel}");
 
     # Rename the backup tmp path to complete the backup
-    logDebugMisc($strOperation, "move ${strBackupTmpPath} to " . $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strBackupPath));
-    $self->{oFile}->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupPath);
+    logDebugMisc($strOperation, "move ${strBackupTmpPath} to " . $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strBackupLabel));
+    $self->{oFile}->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupLabel);
 
     # Create a link to the most recent backup
     $self->{oFile}->remove(PATH_BACKUP_CLUSTER, "latest");
-    $self->{oFile}->linkCreate(PATH_BACKUP_CLUSTER, $strBackupPath, PATH_BACKUP_CLUSTER, "latest", undef, true);
+    $self->{oFile}->linkCreate(PATH_BACKUP_CLUSTER, $strBackupLabel, PATH_BACKUP_CLUSTER, "latest", undef, true);
 
     # Save backup info
     $oBackupInfo->add($self->{oFile}, $oBackupManifest);

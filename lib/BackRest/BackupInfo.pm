@@ -191,18 +191,19 @@ sub check
     my
     (
         $strOperation,
-        $oBackupManifest
+        $strDbVersion,
+        $iControlVersion,
+        $iCatalogVersion,
+        $ullDbSysId,
     ) =
         logDebugParam
         (
             OP_INFO_BACKUP_CHECK, \@_,
-            {name => 'oBackupManifest', trace => true}
+            {name => 'strDbVersion', trace => true},
+            {name => 'iControlVersion', trace => true},
+            {name => 'iCatalogVersion', trace => true},
+            {name => 'ullDbSysId', trace => true}
         );
-
-    my $iCatalogVersion = $oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG);
-    my $iControlVersion = $oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL);
-    my $ullDbSysId = $oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
-    my $strDbVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
 
     if (!$self->test(INFO_BACKUP_SECTION_DB))
     {

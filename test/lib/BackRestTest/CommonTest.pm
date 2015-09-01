@@ -225,6 +225,7 @@ sub BackRestTestCommon_TestLogAppendFile
 {
     my $strFileName = shift;
     my $bRemote = shift;
+    my $strDescription = shift;
 
     if (defined($strModule))
     {
@@ -238,7 +239,12 @@ sub BackRestTestCommon_TestLogAppendFile
         open($hFile, '<', $strFileName)
             or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
 
-        my $strHeader = "+ supplemental file: " . BackRestTestCommon_ExecuteRegExpAll($strFileName);
+        my $strHeader .= "+ supplemental file: " . BackRestTestCommon_ExecuteRegExpAll($strFileName);
+
+        if (defined($strDescription))
+        {
+            $strFullLog .= "\n" . BackRestTestCommon_ExecuteRegExpAll($strDescription) . "\n" . ('=' x '132') . "\n";
+        }
 
         $strFullLog .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
 
@@ -608,10 +614,16 @@ sub BackRestTestCommon_PathCreate
 {
     my $strPath = shift;
     my $strMode = shift;
+    my $bIgnoreExists = shift;
 
     # Create the path
-    mkdir($strPath)
-        or confess "unable to create ${strPath} path";
+    if (!mkdir($strPath))
+    {
+        if (!(defined($bIgnoreExists) && $bIgnoreExists && -e $strPath))
+        {
+            confess "unable to create ${strPath} path";
+        }
+    }
 
     # Set the mode
     chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)

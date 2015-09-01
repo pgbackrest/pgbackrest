@@ -13,6 +13,8 @@ use File::Basename;
 
 use lib dirname($0);
 use BackRest::Common::Log;
+use BackRest::Common::String;
+use BackRest::Config;
 
 ####################################################################################################################################
 # Operation constants
@@ -20,6 +22,7 @@ use BackRest::Common::Log;
 use constant OP_BACKUP_COMMON                                       => 'BackupCommon';
 
 use constant OP_BACKUP_COMMON_REG_EXP_GET                           => OP_BACKUP_COMMON . '::backupRegExpGet';
+use constant OP_BACKUP_COMMON_BACKUP_LABEL_FORMAT                   => OP_BACKUP_COMMON . '::backupLabelFormat';
 
 ####################################################################################################################################
 # backupRegExpGet - Generate a regexp depending on the backups that need to be found
@@ -98,5 +101,68 @@ sub backupRegExpGet
 }
 
 push @EXPORT, qw(backupRegExpGet);
+
+####################################################################################################################################
+# backupLabelFormat
+####################################################################################################################################
+sub backupLabelFormat
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType,
+        $strBackupLabelLast,
+        $lTimestampStop
+    ) =
+        logDebugParam
+        (
+            OP_BACKUP_COMMON_BACKUP_LABEL_FORMAT, \@_,
+            {name => 'strType', trace => true},
+            {name => 'strBackupLabelLast', required => false, trace => true},
+            {name => 'lTimestampStop', trace => true}
+        );
+
+    my $strBackupLabel;
+
+    if ($strType eq BACKUP_TYPE_FULL)
+    {
+        if (defined($strBackupLabelLast))
+        {
+            confess &log(ASSERT, "strBackupPathLast cannot be defined when type = ${strType}");
+        }
+
+        $strBackupLabel = timestampFileFormat(undef, $lTimestampStop) . 'F';
+    }
+    else
+    {
+        if (!defined($strBackupLabelLast))
+        {
+            confess &log(ASSERT, "strBackupLabelLast must be defined when type = ${strType}");
+        }
+
+        $strBackupLabel = substr($strBackupLabelLast, 0, 16);
+
+        $strBackupLabel .= '_' . timestampFileFormat(undef, $lTimestampStop);
+
+        if ($strType eq BACKUP_TYPE_DIFF)
+        {
+            $strBackupLabel .= 'D';
+        }
+        else
+        {
+            $strBackupLabel .= 'I';
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBackupLabel', value => $strBackupLabel, trace => true}
+    );
+}
+
+push @EXPORT, qw(backupLabelFormat);
 
 1;

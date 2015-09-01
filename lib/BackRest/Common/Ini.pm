@@ -27,6 +27,7 @@ use BackRest::Version;
 ####################################################################################################################################
 use constant OP_INI                                                 => 'Ini';
 
+use constant OP_INI_INI_SAVE                                        => OP_INI . "::iniSave";
 use constant OP_INI_SET                                             => OP_INI . "->set";
 
 ####################################################################################################################################
@@ -215,9 +216,21 @@ push @EXPORT, qw(iniSave);
 
 sub iniSave
 {
-    my $strFileName = shift;
-    my $oContent = shift;
-    my $bRelaxed = shift;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileName,
+        $oContent,
+        $bRelaxed
+    ) =
+        logDebugParam
+        (
+            OP_INI_INI_SAVE, \@_,
+            {name => 'strFileName', trace => true},
+            {name => 'oContent', trace => true},
+            {name => 'bRelaxed', required => false, trace => true}
+        );
 
     # Open the ini file for writing
     my $hFile;
@@ -289,6 +302,12 @@ sub iniSave
     $hFile->sync();
     filePathSync(dirname($strFileName));
     close($hFile);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 ####################################################################################################################################

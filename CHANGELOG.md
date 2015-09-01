@@ -9,6 +9,8 @@ __No Release Date Set__
 
 * Code cleanup and refactoring to standardize on patterns that have evolved over time.
 
+* Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.
+
 * Experimental support for PostgreSQL 9.5 alpha2.  This may break when the control version or WAL magic changes in future versions but will be updated in each pgBackRest release to keep pace.  All regression tests pass except for `--target-resume` tests (this functionality has changed in 9.5) and there is no testing yet for `.partial` WAL segments.
 
 ## v0.80: DBI Support, Stability, and Convenience Features

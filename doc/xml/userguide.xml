@@ -500,7 +500,7 @@
 
 					<!-- CONFIG - RETENTION SECTION - DB-SOCKET-PATH KEY -->
 					<config-key id="db-socket-path">
-						<text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicily modified with the <setting>unix_socket_directory</setting> setting in <file>postgressql.conf</file>.</text>
+						<text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgressql.conf</file>.</text>
 
 						<example>/var/run/postgresql</example>
 					</config-key>

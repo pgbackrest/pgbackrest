@@ -34,6 +34,7 @@ use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;
 
 use BackRestTest::BackupCommonTest;
+use BackRestTest::ExpireCommonTest;
 use BackRestTest::CommonTest;
 
 ####################################################################################################################################
@@ -580,12 +581,11 @@ sub BackRestTestBackup_Test
 
         &log(INFO, "Test ${strThisTest}\n");
 
-        if (BackRestTestCommon_DbVersion() >= 9.5)
-        {
-            &log(WARN, 'currently unable to run expire test on version 9.5');
-        }
-        else
-        {
+        if (!BackRestTestCommon_Run(++$iRun,
+                                    "local",
+                                    $iThreadMax == 1 ? $strModule : undef,
+                                    $iThreadMax == 1 ? $strThisTest: undef)) {next}
+
         # Create the file object
         $oFile = (BackRest::File->new
         (
@@ -595,18 +595,9 @@ sub BackRestTestBackup_Test
             $oLocal
         ))->clone();
 
-        # Create the database
-        BackRestTestBackup_Create(false);
-
-        # Create db config
-        BackRestTestCommon_ConfigCreate('db',           # local
-                                        undef,          # remote
-                                        false,          # compress
-                                        undef,          # checksum
-                                        undef,          # hardlink
-                                        $iThreadMax,    # thread-max
-                                        undef,          # archive-async
-                                        undef);         # compress-async
+        # Create the repo
+        BackRestTestCommon_Create();
+        BackRestTestCommon_CreateRepo();
 
         # Create backup config
         BackRestTestCommon_ConfigCreate('backup',       # local
@@ -618,80 +609,53 @@ sub BackRestTestBackup_Test
                                         undef,          # archive-async
                                         undef);         # compress-async
 
-        # Backups
-        my @stryBackupExpected;
+        # Create the test object
+        my $oExpireTest = new BackRestTest::ExpireCommonTest($oFile);
 
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_FULL, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_FULL, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_FULL, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_INCR, $strStanza, false, $oFile);
-        push @stryBackupExpected, BackRestTestBackup_Backup(BACKUP_TYPE_DIFF, $strStanza, false, $oFile);
-        push @stryBackupExpected, 'backup.info';
-        push @stryBackupExpected, 'latest';
+        $oExpireTest->stanzaCreate($strStanza, '9.2');
+        use constant SECONDS_PER_DAY => 86400;
+        my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
 
-        # Increment the run, log, and decide whether this unit test should be run
-        if (!BackRestTestCommon_Run(++$iRun,
-                                    "local")) {next}
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strDescription = 'Nothing to expire';
 
-        # Append backup.info to create a baseline
-        BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
-                                             "/backup/${strStanza}/backup.info", false);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
 
-        # Create an archive log path that will be removed as old on the first archive expire call
-        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000000000000');
+        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
 
-        # Get the expected archive list
-        my @stryArchiveExpected = $oFile->list(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000100000000');
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire oldest full backup, archive expire falls on segment major boundary';
 
-        # Expire all but the last two fulls
-        splice(@stryBackupExpected, 0, 3);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
 
-        # Expire all but the last three diffs
-        splice(@stryBackupExpected, 1, 3);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, undef, 3);
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire oldest diff backup';
 
-        # Expire all but the last three diffs and last two fulls (should be no change)
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 256);
+        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
 
-        # Expire archive based on the last two fulls
-        splice(@stryArchiveExpected, 0, 10);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3, 'full', 2);
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire oldest full backup, archive expire does not fall on major segment boundary';
 
-        if ($oFile->exists(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000000000000'))
-        {
-            confess 'archive log path ' . BackRestTestCommon_DbVersion() . '-1/0000000000000000 should have been removed';
-        }
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, undef, 0);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, undef, 0);
+        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
 
-        # Expire archive based on the last two diffs
-        splice(@stryArchiveExpected, 0, 18);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 2, 3, 'diff', 2);
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire oldest diff backup (cascade to incr)';
 
-        # Expire archive based on the last two incrs
-        splice(@stryBackupExpected, 0, 2);
-        splice(@stryArchiveExpected, 0, 9);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 2, 'incr', 2);
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
 
-        # Expire archive based on the last two incrs (no change in archive)
-        splice(@stryBackupExpected, 1, 4);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'incr', 2);
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire archive based on newest incr backup';
 
-        # Expire archive based on the last two diffs (no change in archive)
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'diff', 2);
-
-        # Expire archive based on the last diff
-        splice(@stryArchiveExpected, 0, 3);
-        BackRestTestBackup_Expire($strStanza, $oFile, \@stryBackupExpected, \@stryArchiveExpected, 1, 1, 'diff', 1);
-        }
+        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_INCR, 1, $strDescription);
 
         # Cleanup
         if (BackRestTestCommon_Cleanup())

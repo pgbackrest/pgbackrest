@@ -528,7 +528,7 @@ example: db-port=6543
 
 ##### `db-socket-path` key
 
-The unix socket directory that was specified when PostgreSQL was started.  pgBackRest will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicily modified with the `unix_socket_directory` setting in `postgressql.conf`.
+The unix socket directory that was specified when PostgreSQL was started.  pgBackRest will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicitly modified with the `unix_socket_directory` setting in `postgressql.conf`.
 ```
 required: n
 example: db-socket-path=/var/run/postgresql

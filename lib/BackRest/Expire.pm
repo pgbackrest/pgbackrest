@@ -220,6 +220,9 @@ sub process
 
             if (defined($strArchiveRetentionBackup))
             {
+                my $strArchiveExpireStart;
+                my $strArchiveExpireStop;
+
                 # Get the archive logs that need to be kept.  To be cautious we will keep all the archive logs starting from this
                 # backup even though they are also in the pg_xlog directory (since they have been copied more than once).
                 &log(INFO, 'archive retention based on backup ' . $strArchiveRetentionBackup);
@@ -242,7 +245,7 @@ sub process
                 # Remove any archive directories or files that are out of date
                 foreach $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
                 {
-                    logDebugMisc($strOperation, "found major archive path: ${strPath}");
+                    logDebugMisc($strOperation, "found major WAL path: ${strPath}");
 
                     # If less than first 16 characters of current archive file, then remove the directory
                     if ($strPath lt substr($strArchiveLast, 0, 16))
@@ -251,7 +254,15 @@ sub process
 
                         remove_tree($strFullPath) > 0 or confess &log(ERROR, "unable to remove ${strFullPath}");
 
-                        logDebugMisc($strOperation, "remove major archive path: ${strFullPath}");
+                        logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
+
+                        # Record expire start and stop location for info
+                        if (!defined($strArchiveExpireStart))
+                        {
+                            $strArchiveExpireStart = $strPath;
+                        }
+
+                        $strArchiveExpireStop = $strPath;
                     }
                     # If equals the first 16 characters of the current archive file, then delete individual files instead
                     elsif ($strPath eq substr($strArchiveLast, 0, 16))
@@ -267,10 +278,27 @@ sub process
                                 unlink($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"))
                                     or confess &log(ERROR, 'unable to remove ' . $strSubPath);
 
-                                logDebugMisc($strOperation, "remove expired archive file: ${strSubPath}");
+                                logDebugMisc($strOperation, "remove expired WAL segment: ${strSubPath}");
+
+                                # Record expire start and stop location for info
+                                if (!defined($strArchiveExpireStart))
+                                {
+                                    $strArchiveExpireStart = $strSubPath;
+                                }
+
+                                $strArchiveExpireStop = $strSubPath;
                             }
                         }
                     }
+                }
+
+                if (!defined($strArchiveExpireStart))
+                {
+                    &log(INFO, 'no WAL segments to expire');
+                }
+                else
+                {
+                    &log(INFO, "expired WAL segments: start = ${strArchiveExpireStart}, stop = ${strArchiveExpireStop}");
                 }
             }
         }

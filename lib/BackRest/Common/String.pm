@@ -182,7 +182,10 @@ push @EXPORT, qw(timestampFormat);
 ####################################################################################################################################
 sub timestampFileFormat
 {
-    return timestampFormat('%4d%02d%02d-%02d%02d%02d');
+    my $strFormat = shift;
+    my $lTime = shift;
+
+    return timestampFormat(defined($strFormat) ? $strFormat : '%4d%02d%02d-%02d%02d%02d', $lTime);
 }
 
 push @EXPORT, qw(timestampFileFormat);
