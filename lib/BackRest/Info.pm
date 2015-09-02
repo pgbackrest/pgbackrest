@@ -74,7 +74,6 @@ use constant INFO_KEY_VERSION                                       => 'version'
 sub new
 {
     my $class = shift;       # Class name
-    my $oFile = shift;       # Remote object
 
     # Create the class hash
     my $self = {};
@@ -82,13 +81,11 @@ sub new
 
     # Assign function parameters, defaults, and log debug info
     (
-        my $strOperation,
-        $self->{oFile}
+        my $strOperation
     ) =
         logDebugParam
         (
-            OP_INFO_NEW, \@_,
-            {name => 'oFile', required => false, trace => true}
+            OP_INFO_NEW
         );
 
     # Return from function and log return values if any
