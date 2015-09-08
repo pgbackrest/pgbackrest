@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # CONFIG HELP MODULE
 ####################################################################################################################################
-package BackRest::Config::Config::ConfigHelp;
+package BackRest::Config::ConfigHelp;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -55,8 +55,8 @@ sub configHelp
     my $strOption = shift;
 
     # Load module dynamically
-    require BackRest::Config::Config::ConfigHelpData;
-    BackRest::Config::Config::ConfigHelpData->import();
+    require BackRest::Config::ConfigHelpData;
+    BackRest::Config::ConfigHelpData->import();
 
     # Get config data
     my $oCommandHash = commandHashGet();
@@ -234,7 +234,7 @@ sub configHelp
             # Find longest command length
             my $iCommandLength = 0;
 
-            foreach my $strCommand (sort(keys($$oConfigHelpData{&CONFIG_HELP_COMMAND})))
+            foreach my $strCommand (sort(keys(%{$$oConfigHelpData{&CONFIG_HELP_COMMAND}})))
             {
                 if (length($strCommand) > $iCommandLength)
                 {
@@ -243,7 +243,7 @@ sub configHelp
             }
 
             # Output commands
-            foreach my $strCommand (sort(keys($$oConfigHelpData{&CONFIG_HELP_COMMAND})))
+            foreach my $strCommand (sort(keys(%{$$oConfigHelpData{&CONFIG_HELP_COMMAND}})))
             {
                 my $oCommand = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand};
 
@@ -270,7 +270,7 @@ sub configHelp
 
             if (defined($$oCommand{&CONFIG_HELP_OPTION}))
             {
-                foreach my $strOption (sort(keys($$oCommand{&CONFIG_HELP_OPTION})))
+                foreach my $strOption (sort(keys(%{$$oCommand{&CONFIG_HELP_OPTION}})))
                 {
                     if (length($strOption) > $iOptionLength)
                     {
@@ -283,13 +283,13 @@ sub configHelp
                 }
 
                 # Iterate sections
-                foreach my $strSection (sort(keys($oSection)))
+                foreach my $strSection (sort(keys(%{$oSection})))
                 {
                     $strHelp .=
                         "\n\n" . ucfirst($strSection) . " Options:\n";
 
                     # Iterate options
-                    foreach my $strOption (sort(keys($$oSection{$strSection})))
+                    foreach my $strOption (sort(keys(%{$$oSection{$strSection}})))
                     {
                         $strHelp .= "\n";
 

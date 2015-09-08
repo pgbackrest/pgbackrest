@@ -90,6 +90,7 @@ my $strModule;
 my $strModuleTest;
 my $iModuleTestRun;
 my $bValidWalChecksum;
+my $bNormalLog;
 
 ####################################################################################################################################
 # BackRestTestCommon_ClusterStop
@@ -179,6 +180,7 @@ sub BackRestTestCommon_Run
     my $strModuleParam = shift;
     my $strModuleTestParam = shift;
     my $bValidWalChecksumParam = shift;
+    my $bNormalLogParam = shift;
 
     # &log(INFO, "module " . (defined($strModule) ? $strModule : ''));
     BackRestTestCommon_TestLog();
@@ -204,6 +206,7 @@ sub BackRestTestCommon_Run
     $strModuleTest = $strModuleTestParam;
     $iModuleTestRun = $iRun;
     $bValidWalChecksum = defined($bValidWalChecksumParam) ? $bValidWalChecksumParam : true;
+    $bNormalLog = defined($bNormalLogParam) ? $bNormalLogParam : true;
 
     return true;
 }
@@ -442,6 +445,9 @@ sub BackRestTestCommon_ExecuteRegExpAll
         $strLine =~ s/$strTestPath/[TEST_PATH]/g;
     }
 
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKREST_NAME_VERSION', '^' . BACKREST_NAME . ' ' . BACKREST_VERSION,
+                                                undef, false);
+
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'MODIFICATION-TIME', 'lModificationTime = [0-9]+', '[0-9]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]+$');
 
@@ -534,15 +540,22 @@ sub BackRestTestCommon_ExecuteEnd
 
                 if ($bFullLog)
                 {
-                    $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
-
-                    if ($strLine !~ /^  TEST/)
+                    if ($bNormalLog)
                     {
-                        $strLine =~ s/^                            //;
-                        $strLine =~ s/^ //;
-                        $strLine =~ s/\r$//;
+                        $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
+                    }
+
+                    if ($strLine !~ /^  TEST/ || !$bNormalLog)
+                    {
+                        if ($bNormalLog)
+                        {
+                            $strLine =~ s/^                            //;
+                            $strLine =~ s/^ //;
+                            $strLine =~ s/\r$//;
+                        }
 
                         $strLine = BackRestTestCommon_ExecuteRegExpAll($strLine);
+
                         $strFullLog .= $strLine;
                     }
                 }

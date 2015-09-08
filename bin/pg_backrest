@@ -89,7 +89,7 @@ eval
     # Display version
     if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
     {
-        syswrite(*STDOUT, (!$bConfigResult ? "\n" : '') .BACKREST_NAME . ' ' . BACKREST_VERSION);
+        syswrite(*STDOUT, (!$bConfigResult ? "\n" : '') . BACKREST_NAME . ' ' . BACKREST_VERSION);
 
         # If the command is version then exit
         if (commandTest(CMD_VERSION))
@@ -103,8 +103,8 @@ eval
     if (commandTest(CMD_HELP))
     {
         # Load module dynamically
-        require BackRest::Config::Config::ConfigHelp;
-        BackRest::Config::Config::ConfigHelp->import();
+        require BackRest::Config::ConfigHelp;
+        BackRest::Config::ConfigHelp->import();
 
         # Generate help and exit
         configHelp($ARGV[1], $ARGV[2]);

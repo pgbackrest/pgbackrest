@@ -30,6 +30,7 @@ use BackRestTest::CommonTest;
 use BackRestTest::CompareTest;
 use BackRestTest::ConfigTest;
 use BackRestTest::FileTest;
+use BackRestTest::HelpTest;
 # use BackRestTest::IniTest;
 
 ####################################################################################################################################
@@ -269,6 +270,11 @@ eval
             # {
             #     BackRestTestIni_Test($strModuleTest);
             # }
+
+            if ($strModule eq 'all' || $strModule eq 'help')
+            {
+                BackRestTestHelp_Test($strModuleTest);
+            }
 
             if ($strModule eq 'all' || $strModule eq 'config')
             {
