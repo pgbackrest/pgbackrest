@@ -984,6 +984,10 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2b.txt', 'TBLSPC2B',
                                                   'e324463005236d83e6e54795dbddd20a74533bf3', $lTime);
 
+            # Munge the version to make sure it gets corrected on the next run
+            BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
+                                             '0.00');
+
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                             'add files and remove tablespace 2');
 

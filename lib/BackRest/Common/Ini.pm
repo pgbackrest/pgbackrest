@@ -105,6 +105,12 @@ sub new
         {
             confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . BACKREST_FORMAT . ' is required', ERROR_FORMAT);
         }
+
+        # Check if the version has changed
+        if (!$self->test(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION))
+        {
+            $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
+        }
     }
     else
     {
