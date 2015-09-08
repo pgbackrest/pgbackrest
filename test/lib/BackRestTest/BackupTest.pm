@@ -1067,7 +1067,7 @@ sub BackRestTestBackup_Test
                                        undef, undef, undef, undef, undef, undef,
                                        'no tablespace remap', undef, '--no-tablespace', false);
 
-            # Backup Info
+            # Backup Info (with an empty stanza)
             #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestCommon_Execute('mkdir ' . BackRestTestCommon_RepoPathGet . '/backup/db_empty', $bRemote);
 
@@ -1075,6 +1075,13 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Info(undef, INFO_OUTPUT_JSON, false);
             BackRestTestBackup_Info('bogus', undef, false);
             BackRestTestBackup_Info('bogus', INFO_OUTPUT_JSON, false);
+
+            # Backup Info (with no stanzas)
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestCommon_Execute('rm -rf ' . BackRestTestCommon_RepoPathGet . '/backup/*', $bRemote);
+
+            BackRestTestBackup_Info(undef, undef, false);
+            BackRestTestBackup_Info(undef, INFO_OUTPUT_JSON, false);
         }
         }
         }

@@ -3619,3 +3619,27 @@ DEBUG:     Info->stanzaList(): oFile = [object], strStanza = bogus
 ]
 DEBUG:     Main::safeExit(): iExitCode = 0
 DEBUG:     info stop
+
+info
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info
+------------------------------------------------------------------------------------------------------------------------------------
+DEBUG:     info start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/local --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     Protocol::RemoteMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = [BACKREST_BIN] --no-config --repo-remote-path=[TEST_PATH]/backrest remote, strHost = 127.0.0.1, strUser = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --repo-remote-path=[TEST_PATH]/backrest remote', strName = remote
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = [undef]
+DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
+No stanzas exist in [TEST_PATH]/backrest.
+DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     info stop
+
+info
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
+------------------------------------------------------------------------------------------------------------------------------------
+DEBUG:     info start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/local --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     Protocol::RemoteMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = [BACKREST_BIN] --no-config --repo-remote-path=[TEST_PATH]/backrest remote, strHost = 127.0.0.1, strUser = [USER-2]
+DEBUG:     Protocol::CommonMaster->new(): iBlockSize = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --no-config --repo-remote-path=[TEST_PATH]/backrest remote', strName = remote
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = [undef]
+DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
+[]
+DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     info stop

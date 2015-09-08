@@ -156,7 +156,14 @@ sub process
             }
         }
 
-        syswrite(*STDOUT, $strOutput);
+        if (defined($strOutput))
+        {
+            syswrite(*STDOUT, $strOutput);
+        }
+        else
+        {
+            syswrite(*STDOUT, 'No stanzas exist in ' . $oFile->pathGet(PATH_BACKUP) . ".\n");
+        }
     }
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {

@@ -3264,3 +3264,27 @@ DEBUG:     File->list=>: stryFileList = (db, db_empty)
 ]
 DEBUG:     Main::safeExit(): iExitCode = 0
 DEBUG:     info stop
+
+info
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info
+------------------------------------------------------------------------------------------------------------------------------------
+DEBUG:     info start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = [undef]
+DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+No stanzas exist in [TEST_PATH]/backrest.
+DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     info stop
+
+info
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
+------------------------------------------------------------------------------------------------------------------------------------
+DEBUG:     info start: --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = [undef]
+DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+[]
+DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     info stop
