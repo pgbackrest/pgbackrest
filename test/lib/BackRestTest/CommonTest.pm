@@ -19,6 +19,7 @@ use File::Path qw(remove_tree);
 use IO::Select;
 use IPC::Open3;
 use POSIX ':sys_wait_h';
+use Symbol 'gensym';
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Ini;
@@ -351,7 +352,14 @@ sub BackRestTestCommon_ExecuteBegin
     &log(DEBUG, "executing command: ${strCommand}");
 
     # Execute the command
+    $hError = gensym;
+
     $pId = open3(undef, $hOut, $hError, $strCommand);
+
+    if (!defined($hError))
+    {
+        confess 'STDERR handle is undefined';
+    }
 }
 
 ####################################################################################################################################
@@ -576,6 +584,7 @@ sub BackRestTestCommon_ExecuteEnd
         if ($bSuppressError)
         {
             &log(DEBUG, "suppressed error was ${iExitStatus}");
+            $strErrorLog = '';
         }
         else
         {
@@ -584,6 +593,11 @@ sub BackRestTestCommon_ExecuteEnd
                          ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
                          ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
         }
+    }
+
+    if ($strErrorLog ne '')
+    {
+        confess &log(ERROR, "output found on STDERR:\n${strErrorLog}");
     }
 
     if ($bShowOutput)
