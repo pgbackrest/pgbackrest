@@ -202,7 +202,8 @@ sub executeSql
                 {name => 'strDbUser', value => $strDbUser}
             );
 
-            $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef, {AutoCommit => 1, RaiseError => 0, PrintError => 0});
+            $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef,
+                                        {AutoCommit => 1, RaiseError => 0, PrintError => 0, Warn => 0});
 
             if (!$self->{hDb})
             {
