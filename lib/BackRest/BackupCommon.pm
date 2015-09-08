@@ -14,7 +14,7 @@ use File::Basename;
 use lib dirname($0);
 use BackRest::Common::Log;
 use BackRest::Common::String;
-use BackRest::Config;
+use BackRest::Config::Config;
 
 ####################################################################################################################################
 # Operation constants

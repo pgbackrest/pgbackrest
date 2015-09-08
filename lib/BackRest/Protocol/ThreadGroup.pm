@@ -15,7 +15,7 @@ use File::Basename;
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Common::Wait;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::BackupFile;
 use BackRest::RestoreFile;
 
@@ -34,7 +34,7 @@ my @byThreadRunning;
 sub threadGroupCreate
 {
     # If thread-max is not defined then this operation does not use threads
-    if (!optionTest(OPTION_THREAD_MAX))
+    if (!(optionTest(OPTION_THREAD_MAX) && optionGet(OPTION_THREAD_MAX) > 1))
     {
         return;
     }

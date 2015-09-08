@@ -20,12 +20,13 @@ use XML::Checker::Parser;
 
 use lib dirname($0) . '/lib';
 use BackRestDoc::Doc;
+use BackRestDoc::DocConfig;
 use BackRestDoc::DocRender;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Common::String;
-use BackRest::Config;
+use BackRest::Config::Config;
 
 ####################################################################################################################################
 # Usage
@@ -63,7 +64,6 @@ sub optionListProcess
         $strOperation,
         $oOptionListOut,
         $strCommand,
-        $oOptionFoundRef,
         $oOptionRuleRef
     ) =
         logDebugParam
@@ -71,50 +71,49 @@ sub optionListProcess
             OP_MAIN_OPTION_LIST_PROCESS, \@_,
             {name => 'oOptionListOut'},
             {name => 'strCommand', required => false},
-            {name => 'oOptionFoundRef'},
             {name => 'oOptionRuleRef'}
         );
 
-    foreach my $oOptionOut (@{$$oOptionListOut{children}})
+    foreach my $oOptionOut ($oOptionListOut->nodeList())
     {
-        my $strOption = $$oOptionOut{param}{id};
+        my $strOption = $oOptionOut->paramGet('id');
 
         if ($strOption eq 'help' || $strOption eq 'version')
         {
             next;
         }
 
-        $$oOptionFoundRef{$strOption} = true;
-
         if (!defined($$oOptionRuleRef{$strOption}{&OPTION_RULE_TYPE}))
         {
             confess "unable to find option $strOption";
         }
 
-        $$oOptionOut{field}{default} = optionDefault($strOption, $strCommand);
-
-        if (defined($$oOptionOut{field}{default}))
+        if (defined(optionDefault($strOption, $strCommand)))
         {
-            $$oOptionOut{field}{required} = false;
+            $oOptionOut->fieldSet('required', false);
 
             if ($$oOptionRuleRef{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
             {
-                $$oOptionOut{field}{default} = $$oOptionOut{field}{default} ? 'y' : 'n';
+                $oOptionOut->fieldSet('default', optionDefault($strOption, $strCommand) ? 'y' : 'n');
+            }
+            else
+            {
+                $oOptionOut->fieldSet('default', optionDefault($strOption, $strCommand));
             }
         }
         else
         {
-            $$oOptionOut{field}{required} = optionRequired($strOption, $strCommand);
+            $oOptionOut->fieldSet('required', optionRequired($strOption, $strCommand));
         }
 
         if (defined($strCommand))
         {
-            $$oOptionOut{field}{cmd} = true;
+            $oOptionOut->fieldSet('cmd', true);
         }
 
         if ($strOption eq 'cmd-remote')
         {
-            $$oOptionOut{field}{default} = 'same as local';
+            $oOptionOut->fieldSet('default', 'same as local');
         }
     }
 }
@@ -184,81 +183,66 @@ sub docProcess
     # Build commands pulled from the code
     if ($bManual)
     {
-    # Get the option rules
-    my $oOptionRule = optionRuleGet();
-    my %oOptionFound;
+        # Get the option rules
+        my $oOptionRule = optionRuleGet();
 
-    # Ouput general options
-    my $oOperationGeneralOptionListOut =
-        $oDoc->nodeGet(
-            $oDoc->nodeGet(
-                $oDoc->nodeGet(undef, 'operation'), 'operation-general'), 'option-list');
+        # Ouput general options
+        my $oOperationGeneralOptionListOut =
+            $oDoc->nodeGet('operation')->nodeGet('operation-general')->nodeGet('option-list');
 
-    optionListProcess($oOperationGeneralOptionListOut, undef, \%oOptionFound, $oOptionRule);
+        optionListProcess($oOperationGeneralOptionListOut, undef, $oOptionRule);
 
-    # Ouput commands
-    my $oCommandListOut = $oDoc->nodeGet($oDoc->nodeGet(undef, 'operation'), 'command-list');
+        # Ouput commands
+        my $oCommandListOut = $oDoc->nodeGet('operation')->nodeGet('command-list');
 
-    foreach my $oCommandOut (@{$$oCommandListOut{children}})
-    {
-        my $strCommand = $$oCommandOut{param}{id};
-
-        my $oOptionListOut = $oDoc->nodeGet($oCommandOut, 'option-list', false);
-
-        if (defined($oOptionListOut))
+        foreach my $oCommandOut ($oCommandListOut->nodeList())
         {
-            optionListProcess($oOptionListOut, $strCommand, \%oOptionFound, $oOptionRule);
-        }
+            my $strCommand = $oCommandOut->paramGet('id');
 
-        my $oExampleListOut = $oDoc->nodeGet($oCommandOut, 'command-example-list');
+            my $oOptionListOut = $oCommandOut->nodeGet('option-list', false);
 
-        foreach my $oExampleOut (@{$$oExampleListOut{children}})
-        {
-            if (defined($$oExampleOut{param}{title}))
+            if (defined($oOptionListOut))
             {
-                $$oExampleOut{param}{title} = 'Example: ' . $$oExampleOut{param}{title};
+                optionListProcess($oOptionListOut, $strCommand, $oOptionRule);
             }
-            else
+
+            my $oExampleListOut = $oCommandOut->nodeGet('command-example-list');
+
+            foreach my $oExampleOut ($oExampleListOut->nodeList())
             {
-                $$oExampleOut{param}{title} = 'Example';
+                if (defined($oExampleOut->paramGet('title', false)))
+                {
+                    $oExampleOut->paramSet('title', 'Example: ' . $oExampleOut->paramGet('title'));
+                }
+                else
+                {
+                    $oExampleOut->paramSet('title', 'Example');
+                }
             }
         }
 
-        # $$oExampleListOut{param}{title} = 'Examples';
-    }
+        # Ouput config section
+        my $oConfigSectionListOut = $oDoc->nodeGet('config')->nodeGet('config-section-list');
 
-    # Ouput config section
-    my $oConfigSectionListOut = $oDoc->nodeGet($oDoc->nodeGet(undef, 'config'), 'config-section-list');
-
-    foreach my $oConfigSectionOut (@{$$oConfigSectionListOut{children}})
-    {
-        my $oOptionListOut = $oDoc->nodeGet($oConfigSectionOut, 'config-key-list', false);
-
-        if (defined($oOptionListOut))
+        foreach my $oConfigSectionOut ($oConfigSectionListOut->nodeList())
         {
-            optionListProcess($oOptionListOut, undef, \%oOptionFound, $oOptionRule);
-        }
-    }
+            my $oOptionListOut = $oConfigSectionOut->nodeGet('config-key-list', false);
 
-    # Mark undocumented features as processed
-    $oOptionFound{'no-fork'} = true;
-    $oOptionFound{'test'} = true;
-    $oOptionFound{'test-delay'} = true;
-
-    # Make sure all options were processed
-    foreach my $strOption (sort(keys($oOptionRule)))
-    {
-        if (!defined($oOptionFound{$strOption}))
-        {
-            confess "option ${strOption} was not found";
+            if (defined($oOptionListOut))
+            {
+                optionListProcess($oOptionListOut, undef, $oOptionRule);
+            }
         }
-    }
     }
 
     # Write markdown
-    my $oRender = new BackRestDoc::DocRender($oDoc, 'markdown', $strProjectName, $strExeName);
-    $oRender->save($strMdOut, $oRender->process());
+    my $oRender = new BackRestDoc::DocRender('markdown', $strProjectName, $strExeName);
+    $oRender->save($strMdOut, $oRender->process($oDoc));
 }
+
+my $oRender = new BackRestDoc::DocRender('text', $strProjectName, $strExeName);
+my $oDocConfig = new BackRestDoc::DocConfig(new BackRestDoc::Doc("${strBasePath}/xml/userguide.xml"), $oRender);
+$oDocConfig->helpDataWrite();
 
 docProcess("${strBasePath}/xml/readme.xml", "${strBasePath}/../README.md");
 docProcess("${strBasePath}/xml/userguide.xml", "${strBasePath}/../USERGUIDE.md", true);

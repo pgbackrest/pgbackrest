@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # CONFIG MODULE
 ####################################################################################################################################
-package BackRest::Config;
+package BackRest::Config::Config;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -25,6 +25,8 @@ use BackRest::Protocol::RemoteMaster;
 ####################################################################################################################################
 use constant BACKREST_EXE                                           => basename($0);
     push @EXPORT, qw(BACKREST_EXE);
+use constant BACKREST_NAME                                          => 'pgBackRest';
+    push @EXPORT, qw(BACKREST_NAME);
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -39,20 +41,35 @@ use constant NONE                                                   => 'none';
 ####################################################################################################################################
 # Command constants - basic commands that are allowed in backrest
 ####################################################################################################################################
+my %oCommandHash;
+
 use constant CMD_ARCHIVE_GET                                        => 'archive-get';
     push @EXPORT, qw(CMD_ARCHIVE_GET);
+    $oCommandHash{&CMD_ARCHIVE_GET} = true;
 use constant CMD_ARCHIVE_PUSH                                       => 'archive-push';
     push @EXPORT, qw(CMD_ARCHIVE_PUSH);
+    $oCommandHash{&CMD_ARCHIVE_PUSH} = true;
 use constant CMD_BACKUP                                             => 'backup';
     push @EXPORT, qw(CMD_BACKUP);
-use constant CMD_INFO                                               => 'info';
-    push @EXPORT, qw(CMD_INFO);
-use constant CMD_REMOTE                                             => 'remote';
-    push @EXPORT, qw(CMD_REMOTE);
-use constant CMD_RESTORE                                            => 'restore';
-    push @EXPORT, qw(CMD_RESTORE);
+    $oCommandHash{&CMD_BACKUP} = true;
 use constant CMD_EXPIRE                                             => 'expire';
     push @EXPORT, qw(CMD_EXPIRE);
+    $oCommandHash{&CMD_EXPIRE} = true;
+use constant CMD_HELP                                               => 'help';
+    push @EXPORT, qw(CMD_HELP);
+    $oCommandHash{&CMD_HELP} = true;
+use constant CMD_INFO                                               => 'info';
+    push @EXPORT, qw(CMD_INFO);
+    $oCommandHash{&CMD_INFO} = true;
+use constant CMD_REMOTE                                             => 'remote';
+    push @EXPORT, qw(CMD_REMOTE);
+    $oCommandHash{&CMD_REMOTE} = true;
+use constant CMD_RESTORE                                            => 'restore';
+    push @EXPORT, qw(CMD_RESTORE);
+    $oCommandHash{&CMD_RESTORE} = true;
+use constant CMD_VERSION                                            => 'version';
+    push @EXPORT, qw(CMD_VERSION);
+    $oCommandHash{&CMD_VERSION} = true;
 
 ####################################################################################################################################
 # BACKUP Type Constants
@@ -157,8 +174,8 @@ use constant CONFIG_SECTION_GENERAL                                 => 'general'
     push @EXPORT, qw(CONFIG_SECTION_GENERAL);
 use constant CONFIG_SECTION_LOG                                     => 'log';
     push @EXPORT, qw(CONFIG_SECTION_LOG);
-use constant CONFIG_SECTION_RESTORE_RECOVERY_SETTING                => 'restore:recovery-setting';
-    push @EXPORT, qw(CONFIG_SECTION_RESTORE_RECOVERY_SETTING);
+use constant CONFIG_SECTION_RESTORE_RECOVERY_OPTION                => 'restore:recovery-option';
+    push @EXPORT, qw(CONFIG_SECTION_RESTORE_RECOVERY_OPTION);
 use constant CONFIG_SECTION_RESTORE_TABLESPACE_MAP                  => 'restore:tablespace-map';
     push @EXPORT, qw(CONFIG_SECTION_RESTORE_TABLESPACE_MAP);
 use constant CONFIG_SECTION_EXPIRE                                  => 'expire';
@@ -292,8 +309,8 @@ use constant OPTION_TABLESPACE                                      => 'tablespa
     push @EXPORT, qw(OPTION_TABLESPACE);
 use constant OPTION_RESTORE_TABLESPACE_MAP                          => 'tablespace-map';
     push @EXPORT, qw(OPTION_RESTORE_TABLESPACE_MAP);
-use constant OPTION_RESTORE_RECOVERY_SETTING                        => 'recovery-setting';
-    push @EXPORT, qw(OPTION_RESTORE_RECOVERY_SETTING);
+use constant OPTION_RESTORE_RECOVERY_OPTION                         => 'recovery-option';
+    push @EXPORT, qw(OPTION_RESTORE_RECOVERY_OPTION);
 
 # STANZA Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -451,7 +468,16 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
-        &OPTION_RULE_NEGATE => true
+        &OPTION_RULE_NEGATE => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
+        }
     },
 
     &OPTION_DELTA =>
@@ -532,6 +558,10 @@ my %oOptionRule =
             &CMD_EXPIRE =>
             {
                 &OPTION_RULE_REQUIRED => true
+            },
+            &CMD_INFO =>
+            {
+                &OPTION_RULE_REQUIRED => false
             },
             &CMD_REMOTE =>
             {
@@ -717,7 +747,17 @@ my %oOptionRule =
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BUFFER_SIZE,
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_BUFFER_SIZE_MIN, OPTION_DEFAULT_BUFFER_SIZE_MAX]
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_BUFFER_SIZE_MIN, OPTION_DEFAULT_BUFFER_SIZE_MAX],
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_EXPIRE => false,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
+        }
     },
 
     &OPTION_DB_TIMEOUT =>
@@ -744,6 +784,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_EXPIRE => false,
             &CMD_RESTORE => true
         }
     },
@@ -760,6 +801,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_EXPIRE => false,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
@@ -778,6 +820,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_EXPIRE => false,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
@@ -788,7 +831,17 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_NEUTRAL_UMASK,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => false,
+            &CMD_EXPIRE => false,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
+        }
     },
 
     &OPTION_REPO_PATH =>
@@ -816,6 +869,7 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
@@ -840,7 +894,7 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_SECTION => true,
-        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_BACKUP,
+        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
@@ -1155,11 +1209,11 @@ my %oOptionRule =
         },
     },
 
-    &OPTION_RESTORE_RECOVERY_SETTING =>
+    &OPTION_RESTORE_RECOVERY_OPTION =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
         &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_RECOVERY_SETTING,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_RESTORE_RECOVERY_OPTION,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_RESTORE => 1
@@ -1251,68 +1305,6 @@ my %oOptionRule =
 );
 
 ####################################################################################################################################
-# Help text - not using Pod::Usage since some elements are dynamic
-####################################################################################################################################
-use constant BACKREST_HELP                                          =>
-    "Usage:\n" .
-    "    " . BACKREST_EXE . " [options] [command]\n" .
-    "\n" .
-    "     Commands:\n" .
-    "       archive-get      retrieve an archive file from backup\n" .
-    "       archive-push     push an archive file to backup\n" .
-    "       backup           backup a cluster\n" .
-    "       restore          restore a cluster\n" .
-    "       expire           expire old backups (automatically run after backup)\n" .
-    "\n" .
-    "     General Options:\n" .
-    "       --stanza         stanza (cluster) to operate on\n" .
-    "       --config         alternate path for configuration file\n" .
-    "                        (defaults to " . OPTION_DEFAULT_CONFIG . ")\n" .
-    "       --version        display version and exit\n" .
-    "       --help           display usage and exit\n" .
-    "\n" .
-    "     Backup Options:\n" .
-    "        --type           type of backup to perform (full, diff, incr)\n" .
-    "        --no-start-stop  do not call pg_start/stop_backup().  Postmaster should not\n" .
-    "                         be running.\n" .
-    "        --force          force backup when --no-start-stop passed and\n" .
-    "                         postmaster.pid exists. Use with extreme caution as this\n" .
-    "                         will probably produce an inconsistent backup!\n" .
-    "\n" .
-    "     Restore Options:\n" .
-    "        --set            backup set to restore (defaults to latest set).\n" .
-    "        --delta          perform a delta restore.\n" .
-    "        --force          force a restore and overwrite all existing files.\n" .
-    "                         with --delta forces size/timestamp deltas.\n" .
-    "\n" .
-    "     Recovery Options:\n" .
-    "        --type               type of recovery:\n" .
-    "                                 default - recover to end of archive log stream\n" .
-    "                                 name - restore point target\n" .
-    "                                 time - timestamp target\n" .
-    "                                 xid - transaction id target\n" .
-    "                                 preserve - preserve the existing recovery.conf\n" .
-    "                                 none - no recovery.conf generated\n" .
-    "        --target             recovery target if type is name, time, or xid.\n" .
-    "        --target-exclusive   stop just before the recovery target\n" .
-    "                             (default is inclusive).\n" .
-    "        --target-resume      do not pause after recovery (default is to pause).\n" .
-    "        --target-timeline    recover into specified timeline\n" .
-    "                             (default is current timeline).\n" .
-    "\n" .
-    "     Output Options:\n" .
-    "        --log-level-console  console log level (defaults to warn):\n" .
-    "                                 off - No logging at all (not recommended)\n" .
-    "                                 error - Log only errors\n" .
-    "                                 warn - Log warnings and errors\n" .
-    "                                 info - Log info, warnings, and errors\n" .
-    "                                 debug - Log debug, info, warnings, and errors\n" .
-    "                                 trace - Log trace (very verbose debugging), debug,\n" .
-    "                                         info, warnings, and errors\n" .
-    "        --log-level-file     file log level (defaults to info).  Same options as\n" .
-    "                             --log-level-console.";
-
-####################################################################################################################################
 # Global variables
 ####################################################################################################################################
 my %oOption;                # Option hash
@@ -1364,39 +1356,48 @@ sub configLoad
         }
     }
 
-    # Add help and version options
-    $oOptionAllow{'help'} = 'help';
-    $oOptionAllow{'version'} = 'version';
-
     # Get command-line options
     my %oOptionTest;
 
-    if (!GetOptions(\%oOptionTest, %oOptionAllow))
+    # If nothing was passed on the command line then display help
+    if (@ARGV == 0)
     {
-        syswrite(*STDOUT, "\n" . BACKREST_EXE . ' ' . BACKREST_VERSION . "\n\n");
-        pod2usage(2);
-    };
-
-    # Display version and exit if requested
-    if (defined($oOptionTest{&OPTION_VERSION}) || defined($oOptionTest{&OPTION_HELP}))
+        commandSet(CMD_HELP);
+    }
+    # Else process command line options
+    else
     {
-        syswrite(*STDOUT, BACKREST_EXE . ' ' . BACKREST_VERSION . "\n");
-
-        if (!defined($oOptionTest{&OPTION_HELP}))
+        # Parse command line options
+        if (!GetOptions(\%oOptionTest, %oOptionAllow))
         {
-            exit 0;
+            commandSet(CMD_HELP);
+            return false;
+        }
+        # Validate and store options
+        else
+        {
+            my $bHelp = false;
+
+            if (defined($ARGV[0]) && $ARGV[0] eq CMD_HELP && defined($ARGV[1]))
+            {
+                $bHelp = true;
+                $ARGV[0] = $ARGV[1];
+            }
+
+            optionValid(\%oOptionTest, $bHelp);
+
+            if ($bHelp)
+            {
+                commandSet(CMD_HELP);
+            }
         }
     }
 
-    # Display help and exit if requested
-    if (defined($oOptionTest{&OPTION_HELP}))
+    # Return and display version and help in main
+    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
     {
-        syswrite(*STDOUT, "\n" . BACKREST_HELP . "\n");
-        exit 0;
+        return true;
     }
-
-    # Validate and store options
-    optionValid(\%oOptionTest);
 
     # Neutralize the umask to make the repository file/path modes more consistent
     if (optionGet(OPTION_NEUTRAL_UMASK))
@@ -1431,6 +1432,8 @@ sub configLoad
     {
         $strRemoteType = NONE;
     }
+
+    return true;
 }
 
 push @EXPORT, qw(configLoad);
@@ -1443,6 +1446,7 @@ push @EXPORT, qw(configLoad);
 sub optionValid
 {
     my $oOptionTest = shift;
+    my $bHelp = shift;
 
     # Check that the command is present and valid
     $strCommand = $ARGV[0];
@@ -1452,13 +1456,7 @@ sub optionValid
         confess &log(ERROR, "command must be specified", ERROR_COMMAND_REQUIRED);
     }
 
-    if ($strCommand ne CMD_ARCHIVE_GET &&
-        $strCommand ne CMD_ARCHIVE_PUSH &&
-        $strCommand ne CMD_BACKUP &&
-        $strCommand ne CMD_INFO &&
-        $strCommand ne CMD_REMOTE &&
-        $strCommand ne CMD_RESTORE &&
-        $strCommand ne CMD_EXPIRE)
+    if (!defined($oCommandHash{$strCommand}))
     {
         confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
     }
@@ -1824,7 +1822,7 @@ sub optionValid
                     $oOption{$strOption}{value} = $strDefault if !$bNegate;
                 }
                 # Else check required
-                elsif (optionRequired($strOption, $strCommand))
+                elsif (optionRequired($strOption, $strCommand) && !$bHelp)
                 {
                     confess &log(ERROR, "${strCommand} command requires option: ${strOption}" .
                                         (defined($oOptionRule{$strOption}{&OPTION_RULE_HINT}) ?
@@ -1903,6 +1901,20 @@ sub optionDefault
 }
 
 push @EXPORT, qw(optionDefault);
+
+####################################################################################################################################
+# optionSource
+#
+# How was the option set?
+####################################################################################################################################
+sub optionSource
+{
+    my $strOption = shift;
+
+    return $oOption{$strOption}{source};
+}
+
+push @EXPORT, qw(optionSource);
 
 ####################################################################################################################################
 # optionGet
@@ -2093,7 +2105,7 @@ push @EXPORT, qw(commandTest);
 ####################################################################################################################################
 sub commandStart
 {
-    &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} start:" . commandWrite($strCommand, true, '', false))
+    &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} start:" . commandWrite($strCommand, true, '', false));
 }
 
 push @EXPORT, qw(commandStart);
@@ -2105,7 +2117,10 @@ push @EXPORT, qw(commandStart);
 ####################################################################################################################################
 sub commandStop
 {
-    &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} stop")
+    if (defined($strCommand))
+    {
+        &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} stop");
+    }
 }
 
 push @EXPORT, qw(commandStop);
@@ -2210,5 +2225,18 @@ sub commandWrite
 }
 
 push @EXPORT, qw(commandWrite);
+
+####################################################################################################################################
+# commandHashGet
+#
+# Get the hash that contains all valid commands.
+####################################################################################################################################
+sub commandHashGet
+{
+    use Storable qw(dclone);
+    return dclone(\%oCommandHash);
+}
+
+push @EXPORT, qw(commandHashGet);
 
 1;

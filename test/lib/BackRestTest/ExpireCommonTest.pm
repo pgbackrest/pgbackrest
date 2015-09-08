@@ -18,7 +18,7 @@ use BackRest::BackupCommon;
 use BackRest::BackupInfo;
 use BackRest::Common::Ini;
 use BackRest::Common::Log;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
 

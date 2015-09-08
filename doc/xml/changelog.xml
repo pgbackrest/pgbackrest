@@ -15,7 +15,16 @@
 					<text>Fixed an issue where resume and incr/diff would not ensure that the prior backup has the same compression and hardlink settings.</text>
 				</release-feature>
 				<release-feature>
+					<text>Fixed an issue where a thread could be started even when none where requested.</text>
+				</release-feature>
+				<release-feature>
+					<text>Command-line help is now extracted from the same XML source that is used for the other documentation and includes much more detail.</text>
+				</release-feature>
+				<release-feature>
 					<text>Code cleanup and refactoring to standardize on patterns that have evolved over time.</text>
+				</release-feature>
+				<release-feature>
+					<text>Added dynamic module loading to speed up commands, especially asynchronous archiving.</text>
 				</release-feature>
 				<release-feature>
 					<text>Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.</text>

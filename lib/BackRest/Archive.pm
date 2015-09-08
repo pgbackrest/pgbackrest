@@ -14,13 +14,11 @@ use File::Basename qw(dirname basename);
 
 use lib dirname($0);
 use BackRest::Common::Exception;
-use BackRest::Common::Ini;
-use BackRest::Common::Lock;
 use BackRest::Common::Log;
 use BackRest::ArchiveInfo;
 use BackRest::Common::String;
 use BackRest::Common::Wait;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 
 ####################################################################################################################################
@@ -542,6 +540,10 @@ sub pushProcess
     {
         # Start the async archive push
         logDebugMisc($strOperation, 'start async archive-push');
+
+        # Load module dynamically
+        require BackRest::Common::Lock;
+        BackRest::Common::Lock->import();
 
         # Create a lock file to make sure async archive-push does not run more than once
         if (!lockAcquire(commandGet(), false))

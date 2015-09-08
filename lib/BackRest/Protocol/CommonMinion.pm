@@ -16,7 +16,7 @@ use BackRest::Common::Exception;
 use BackRest::Common::Ini;
 use BackRest::Common::Log;
 use BackRest::Common::String;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::IO;
 

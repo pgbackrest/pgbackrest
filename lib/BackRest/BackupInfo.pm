@@ -17,7 +17,7 @@ use lib dirname($0);
 use BackRest::Common::Exception;
 use BackRest::Common::Ini;
 use BackRest::Common::Log;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
 

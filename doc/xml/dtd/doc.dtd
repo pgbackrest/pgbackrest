@@ -23,7 +23,7 @@
 <!ELEMENT command-list (text?, command+)>
 	<!ATTLIST command-list title CDATA #REQUIRED>
 
-<!ELEMENT command (text, option-list?, command-example-list)>
+<!ELEMENT command (summary, text, option-list?, command-example-list)>
 	<!ATTLIST command id CDATA #REQUIRED>
 
 <!ELEMENT command-example-list (text?, command-example+)>
@@ -34,7 +34,7 @@
 
 <!ELEMENT option-list (option+)>
 
-<!ELEMENT option (text, example?)>
+<!ELEMENT option (summary, text, example?)>
 	<!ATTLIST option id CDATA #REQUIRED>
 
 <!ELEMENT config (text, config-example-list, config-section-list)>
@@ -54,7 +54,7 @@
 
 <!ELEMENT config-key-list (config-key+)>
 
-<!ELEMENT config-key (text, default?, allow?, example)>
+<!ELEMENT config-key (summary, text, default?, allow?, example)>
 	<!ATTLIST config-key id CDATA #REQUIRED>
 
 <!ELEMENT default (#PCDATA)>
@@ -81,6 +81,7 @@
 <!ELEMENT support (text)>
 	<!ATTLIST support title CDATA #REQUIRED>
 
+<!ELEMENT summary (text)>
 <!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>

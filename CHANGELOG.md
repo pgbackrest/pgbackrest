@@ -7,7 +7,13 @@ __No Release Date Set__
 
 * Fixed an issue where resume and incr/diff would not ensure that the prior backup has the same compression and hardlink settings.
 
+* Fixed an issue where a thread could be started even when none where requested.
+
+* Command-line help is now extracted from the same XML source that is used for the other documentation and includes much more detail.
+
 * Code cleanup and refactoring to standardize on patterns that have evolved over time.
+
+* Added dynamic module loading to speed up commands, especially asynchronous archiving.
 
 * Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.
 

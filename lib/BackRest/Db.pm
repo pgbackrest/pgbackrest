@@ -19,7 +19,7 @@ use BackRest::Common::Exception;
 use BackRest::Common::Log;
 use BackRest::Common::String;
 use BackRest::Common::Wait;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 
 ####################################################################################################################################

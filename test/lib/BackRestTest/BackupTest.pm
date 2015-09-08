@@ -27,7 +27,7 @@ use BackRest::Common::Ini;
 use BackRest::Common::Log;
 use BackRest::Common::Wait;
 use BackRest::Db;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
 use BackRest::Protocol::Common;

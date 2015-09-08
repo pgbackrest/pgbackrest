@@ -21,9 +21,15 @@ use BackRest::Common::String;
 use constant OP_DOC                                                 => 'Doc';
 
 use constant OP_DOC_BUILD                                           => OP_DOC . '->build';
+use constant OP_DOC_NAME_GET                                        => OP_DOC . '->nameGet';
 use constant OP_DOC_NEW                                             => OP_DOC . '->new';
+use constant OP_DOC_NODE_BLESS                                      => OP_DOC . '->nodeBless';
 use constant OP_DOC_NODE_GET                                        => OP_DOC . '->nodeGet';
+use constant OP_DOC_NODE_LIST                                       => OP_DOC . '->nodeList';
+use constant OP_DOC_PARAM_GET                                       => OP_DOC . '->paramGet';
+use constant OP_DOC_PARAM_SET                                       => OP_DOC . '->paramSet';
 use constant OP_DOC_PARSE                                           => OP_DOC . '->parse';
+use constant OP_DOC_VALUE_GET                                       => OP_DOC . '->valueGet';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -35,6 +41,8 @@ sub new
     # Create the class hash
     my $self = {};
     bless $self, $class;
+
+    $self->{strClass} = $class;
 
     # Assign function parameters, defaults, and log debug info
     (
@@ -73,6 +81,7 @@ sub new
 
     # Parse and build the doc
     $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
+    $self->{strName} = 'root';
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -260,7 +269,7 @@ sub build
 #
 # Return a node by name - error if more than one exists
 ####################################################################################################################################
-sub nodeGet
+sub nodeGetById
 {
     my $self = shift;
 
@@ -268,23 +277,25 @@ sub nodeGet
     my
     (
         $strOperation,
-        $oDoc,
         $strName,
+        $strId,
         $bRequired,
     ) =
         logDebugParam
         (
             OP_DOC_NODE_GET, \@_,
-            {name => 'oDoc', default => $self->{oDoc}, trace => true},
             {name => 'strName', trace => true},
-            {name => 'bRequired', default => true, trace => true},
+            {name => 'strId', required => false, trace => true},
+            {name => 'bRequired', default => true, trace => true}
         );
 
+    my $oDoc = $self->{oDoc};
     my $oNode;
 
     for (my $iIndex = 0; $iIndex < @{$$oDoc{children}}; $iIndex++)
     {
-        if ($$oDoc{children}[$iIndex]{name} eq $strName)
+        if ((defined($strName) && $$oDoc{children}[$iIndex]{name} eq $strName) &&
+            (!defined($strId) || $$oDoc{children}[$iIndex]{param}{id} eq $strId))
         {
             if (!defined($oNode))
             {
@@ -306,7 +317,60 @@ sub nodeGet
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oNode', value => $oNode, trace => true}
+        {name => 'oNodeDoc', value => $self->nodeBless($oNode), trace => true}
+    );
+}
+
+####################################################################################################################################
+# nodeGet
+#
+# Return a node by name - error if more than one exists
+####################################################################################################################################
+sub nodeGet
+{
+    my $self = shift;
+
+    return $self->nodeGetById(shift, undef, shift);
+}
+
+####################################################################################################################################
+# nodeBless
+#
+# Make a new Doc object from a node.
+####################################################################################################################################
+sub nodeBless
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oNode
+    ) =
+        logDebugParam
+        (
+            OP_DOC_NODE_BLESS, \@_,
+            {name => 'oNode', required => false, trace => true}
+        );
+
+    my $oDoc;
+
+    if (defined($oNode))
+    {
+        $oDoc = {};
+        bless $oDoc, $self->{strClass};
+
+        $oDoc->{strClass} = $self->{strClass};
+        $oDoc->{strName} = $$oNode{name};
+        $oDoc->{oDoc} = $oNode;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oDoc', value => $oDoc, trace => true}
     );
 }
 
@@ -323,39 +387,191 @@ sub nodeList
     my
     (
         $strOperation,
-        $oDoc,
         $strName,
         $bRequired,
     ) =
         logDebugParam
         (
-            OP_DOC_NODE_GET, \@_,
-            {name => 'oDoc'},
+            OP_DOC_NODE_LIST, \@_,
             {name => 'strName', required => false, trace => true},
             {name => 'bRequired', default => true, trace => true},
         );
 
+    my $oDoc = $self->{oDoc};
     my @oyNode;
 
-    for (my $iIndex = 0; $iIndex < @{$$oDoc{children}}; $iIndex++)
+    if (defined($$oDoc{children}))
     {
-        if (!defined($strName) || $$oDoc{children}[$iIndex]{name} eq $strName)
+        for (my $iIndex = 0; $iIndex < @{$$oDoc{children}}; $iIndex++)
         {
-            push(@oyNode, $$oDoc{children}[$iIndex]);
+            if (!defined($strName) || $$oDoc{children}[$iIndex]{name} eq $strName)
+            {
+                if (ref(\$$oDoc{children}[$iIndex]) eq "SCALAR")
+                {
+                    push(@oyNode, $$oDoc{children}[$iIndex]);
+                }
+                else
+                {
+                    push(@oyNode, $self->nodeBless($$oDoc{children}[$iIndex]));
+                }
+            }
         }
     }
 
     if (@oyNode == 0 && $bRequired)
     {
-        confess "unable to find child ${strName} in node $$oDoc{name}";
+        confess 'unable to find ' . (defined($strName) ? "children named '${strName}'" : 'any children') . " in node $$oDoc{name}";
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oyNode', value => \@oyNode, ref => true, trace => true}
+        {name => 'oyNode', value => \@oyNode, trace => true}
     );
+}
+
+####################################################################################################################################
+# nameGet
+####################################################################################################################################
+sub nameGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my $strOperation = logDebugParam(OP_DOC_NAME_GET);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strName', value => ${$self->{oDoc}}{name}, trace => true}
+    );
+}
+
+####################################################################################################################################
+# valueGet
+####################################################################################################################################
+sub valueGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my $strOperation = logDebugParam(OP_DOC_VALUE_GET);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strValue', value => ${$self->{oDoc}}{value}, trace => true}
+    );
+}
+
+####################################################################################################################################
+# paramGet
+#
+# Get a parameter from a node.
+####################################################################################################################################
+sub paramGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,
+        $bRequired,
+        $strType
+    ) =
+        logDebugParam
+        (
+            OP_DOC_PARAM_GET, \@_,
+            {name => 'strName', trace => true},
+            {name => 'bRequired', default => true, trace => true},
+            {name => 'strType', default => 'param', trace => true}
+        );
+
+    my $strValue = ${$self->{oDoc}}{$strType}{$strName};
+
+    if (!defined($strValue) && $bRequired)
+    {
+        confess "${strType} '${strName}' in required in node '$self->{strName}'";
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strValue', value => $strValue, trace => true}
+    );
+}
+
+####################################################################################################################################
+# paramSet
+#
+# Set a parameter in a node.
+####################################################################################################################################
+sub paramSet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,
+        $strValue,
+        $strType
+    ) =
+        logDebugParam
+        (
+            OP_DOC_PARAM_SET, \@_,
+            {name => 'strName', trace => true},
+            {name => 'strValue', trace => true},
+            {name => 'strType', default => 'param', trace => true}
+        );
+
+    ${$self->{oDoc}}{$strType}{$strName} = $strValue;
+
+    # Return from function and log return values if any
+    logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# fieldGet
+#
+# Get a field from a node.
+####################################################################################################################################
+sub fieldGet
+{
+    my $self = shift;
+
+    return $self->paramGet(shift, shift, 'field');
+}
+
+####################################################################################################################################
+# textGet
+#
+# Get a field from a node.
+####################################################################################################################################
+sub textGet
+{
+    my $self = shift;
+
+    return $self->nodeBless($self->paramGet('text', shift, 'field'));
+}
+
+####################################################################################################################################
+# fieldSet
+#
+# Set a parameter in a node.
+####################################################################################################################################
+sub fieldSet
+{
+    my $self = shift;
+
+    $self->paramSet(shift, shift, 'field');
 }
 
 1;

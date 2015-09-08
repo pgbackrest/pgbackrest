@@ -22,7 +22,7 @@ use Time::HiRes qw(gettimeofday usleep);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;

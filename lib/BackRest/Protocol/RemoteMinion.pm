@@ -14,7 +14,7 @@ use lib dirname($0) . '/../lib';
 use BackRest::Common::Exception;
 use BackRest::Common::Log;
 use BackRest::Archive;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::Db;
 use BackRest::File;
 use BackRest::Info;

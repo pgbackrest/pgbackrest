@@ -190,4 +190,38 @@ sub timestampFileFormat
 
 push @EXPORT, qw(timestampFileFormat);
 
+####################################################################################################################################
+# stringSplit
+####################################################################################################################################
+sub stringSplit
+{
+    my $strString = shift;
+    my $strChar = shift;
+    my $iLength = shift;
+
+    if (length($strString) <= $iLength)
+    {
+        return $strString, undef;
+    }
+
+    my $iPos = index($strString, $strChar);
+
+    if ($iPos == -1)
+    {
+        return $strString, undef;
+    }
+
+    my $iNewPos = $iPos;
+
+    while ($iNewPos != -1 && $iNewPos + 1 < $iLength)
+    {
+        $iPos = $iNewPos;
+        $iNewPos = index($strString, $strChar, $iPos + 1);
+    }
+
+    return substr($strString, 0, $iPos + 1), substr($strString, $iPos + 1);
+}
+
+push @EXPORT, qw(stringSplit);
+
 1;

@@ -16,7 +16,7 @@ use Scalar::Util qw(looks_like_number);
 use lib dirname($0);
 use BackRest::Common::Log;
 use BackRest::BackupCommon;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
 

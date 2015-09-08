@@ -16,11 +16,10 @@ use File::stat qw(lstat);
 use lib dirname($0);
 use BackRest::Common::Exception;
 use BackRest::Common::Log;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::Db;
 use BackRest::File;
 use BackRest::Manifest;
-use BackRest::Protocol::ThreadGroup;
 use BackRest::RestoreFile;
 
 ####################################################################################################################################
@@ -583,9 +582,9 @@ sub recovery
             my $strRecovery = '';
             my $bRestoreCommandOverride = false;
 
-            if (optionTest(OPTION_RESTORE_RECOVERY_SETTING))
+            if (optionTest(OPTION_RESTORE_RECOVERY_OPTION))
             {
-                my $oRecoveryRef = optionGet(OPTION_RESTORE_RECOVERY_SETTING);
+                my $oRecoveryRef = optionGet(OPTION_RESTORE_RECOVERY_OPTION);
 
                 foreach my $strKey (sort(keys(%$oRecoveryRef)))
                 {
@@ -766,6 +765,11 @@ sub process
     # If multi-threaded then create threads to copy files
     if (optionGet(OPTION_THREAD_MAX) > 1)
     {
+        # Load module dynamically
+        require BackRest::Protocol::ThreadGroup;
+        BackRest::Protocol::ThreadGroup->import();
+
+
         logDebugMisc
         (
             $strOperation, 'restore with threads',

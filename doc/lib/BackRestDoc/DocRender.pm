@@ -26,6 +26,8 @@ use constant OP_DOC_RENDER_PROCESS_TEXT                             => OP_DOC_RE
 use constant OP_DOC_RENDER_NEW                                      => OP_DOC_RENDER . '->new';
 use constant OP_DOC_RENDER_SAVE                                     => OP_DOC_RENDER . '->save';
 
+# use HTML::HTML5::Builder qw[:standard JQUERY];
+
 ####################################################################################################################################
 # Render tags for various output types
 ####################################################################################################################################
@@ -52,6 +54,27 @@ my $oRenderTag =
         'postgres' => ['PostgreSQL', '']
     },
 
+    'text' =>
+    {
+        'b' => ['', ''],
+        'i' => ['', ''],
+        'bi' => ['', ''],
+        'ul' => ["\n", ''],
+        'ol' => ["\n", ''],
+        'li' => ['* ', "\n"],
+        'id' => ['', ''],
+        'file' => ['', ''],
+        'path' => ['', ''],
+        'cmd' => ['', ''],
+        'param' => ['', ''],
+        'setting' => ['', ''],
+        'code' => ['', ''],
+        'code-block' => ['', ''],
+        'exe' => [undef, ''],
+        'backrest' => [undef, ''],
+        'postgres' => ['PostgreSQL', '']
+    },
+
     'html' =>
     {
         'b' => ['<b>', '</b>']
@@ -72,7 +95,6 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{oDoc},
         $self->{strType},
         $self->{strProjectName},
         $self->{strExeName}
@@ -80,7 +102,6 @@ sub new
         logDebugParam
         (
             OP_DOC_RENDER_NEW, \@_,
-            {name => 'oDoc'},
             {name => 'strType'},
             {name => 'strProjectName'},
             {name => 'strExeName'}
@@ -88,6 +109,8 @@ sub new
 
     $$oRenderTag{markdown}{backrest}[0] = $self->{strProjectName};
     $$oRenderTag{markdown}{exe}[0] = $self->{strExeName};
+    $$oRenderTag{text}{backrest}[0] = $self->{strProjectName};
+    $$oRenderTag{text}{exe}[0] = $self->{strExeName};
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -117,7 +140,7 @@ sub process
         logDebugParam
         (
             OP_DOC_RENDER_PROCESS, \@_,
-            {name => 'oDoc', default => $self->{oDoc}->{oDoc}, trace => true},
+            {name => 'oDoc', trace => true},
             {name => 'iDepth', default => 1, trace => true},
             {name => 'bChildList', default => true, trace => true}
         );
@@ -126,37 +149,37 @@ sub process
     my $strProjectName = $self->{strProjectName};
 
     my $strBuffer = "";
-    my $bList = $$oDoc{name} =~ /.*-bullet-list$/;
+    my $bList = $oDoc->nameGet() =~ /.*-bullet-list$/;
     $bChildList = defined($bChildList) ? $bChildList : false;
     my $iChildDepth = $iDepth;
 
     my @stryMonth = ('January', 'February', 'March', 'April', 'May', 'June',
                      'July', 'August', 'September', 'October', 'November', 'December');
 
-    if ($strType eq 'markdown')
+    if ($strType eq 'markdown' || $strType eq 'text')
     {
-        if (defined($$oDoc{param}{id}))
+        if (defined($oDoc->paramGet('id', false)))
         {
-            my @stryToken = split('-', $$oDoc{name});
+            my @stryToken = split('-', $oDoc->nameGet());
             my $strTitle = @stryToken == 0 ? '[unknown]' : $stryToken[@stryToken - 1];
 
-            $strBuffer = ('#' x $iDepth) . " `$$oDoc{param}{id}` " . $strTitle;
+            $strBuffer = ('#' x $iDepth) . ' `' . $oDoc->paramGet('id') . '` ' . $strTitle;
         }
 
-        if (defined($$oDoc{param}{title}))
+        if (defined($oDoc->paramGet('title', false)))
         {
             $strBuffer = ('#' x $iDepth) . ' ';
 
-            if (defined($$oDoc{param}{version}))
+            if (defined($oDoc->paramGet('version', false)))
             {
-                $strBuffer .= "v$$oDoc{param}{version}: ";
+                $strBuffer .= 'v' . $oDoc->paramGet('version') . ': ';
             }
 
-            $strBuffer .= ($iDepth == 1 ? "${strProjectName} - " : '') . $$oDoc{param}{title};
+            $strBuffer .= ($iDepth == 1 ? "${strProjectName} - " : '') . $oDoc->paramGet('title');
 
-            if (defined($$oDoc{param}{date}))
+            if (defined($oDoc->paramGet('date', false)))
             {
-                my $strDate = $$oDoc{param}{date};
+                my $strDate = $oDoc->paramGet('date');
 
                 if ($strDate !~ /^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$/)
                 {
@@ -180,7 +203,7 @@ sub process
             $iChildDepth++;
         }
 
-        if (defined($$oDoc{field}{text}))
+        if (defined($oDoc->nodeGet('summary', false)))
         {
             if ($strBuffer ne "")
             {
@@ -192,22 +215,37 @@ sub process
                 $strBuffer .= '* ';
             }
 
-            $strBuffer .= $self->processText($$oDoc{field}{text});
+            $strBuffer .= $self->processText($oDoc->nodeGet('summary')->textGet());
         }
 
-        if ($$oDoc{name} eq 'config-key' || $$oDoc{name} eq 'option')
+        if (defined($oDoc->textGet(false)))
         {
-            my $strError = "config section ?, key $$oDoc{param}{id} requires";
+            if ($strBuffer ne "")
+            {
+                $strBuffer .= "\n\n";
+            }
 
-            my $bRequired = defined($$oDoc{field}{required}) && $$oDoc{field}{required};
-            my $strDefault = $$oDoc{field}{default};
-            my $strAllow = $$oDoc{field}{allow};
-            my $strOverride = $$oDoc{field}{override};
-            my $strExample = $$oDoc{field}{example};
+            if ($bChildList)
+            {
+                $strBuffer .= '* ';
+            }
+
+            $strBuffer .= $self->processText($oDoc->textGet());
+        }
+
+        if ($oDoc->nameGet() eq 'config-key' || $oDoc->nameGet() eq 'option')
+        {
+            my $strError = 'config section ?, key ' . $oDoc->paramGet('id') . 'requires';
+
+            my $bRequired = defined($oDoc->fieldGet('required', false)) && $oDoc->fieldGet('required');
+            my $strDefault = $oDoc->fieldGet('default', false);
+            my $strAllow = $oDoc->fieldGet('allow', false);
+            my $strOverride = $oDoc->fieldGet('override', false);
+            my $strExample = $oDoc->fieldGet('example', false);
 
             # !!! Temporary hack to make docs generate correctly.  This should be replace with a parameter so that it can be
             # changed based on the build.  Maybe check the exe name by default?
-            if ($$oDoc{param}{id} eq 'config')
+            if ($oDoc->paramGet('id') eq 'config')
             {
                 $strDefault = '/etc/pg_backrest.conf';
             }
@@ -223,13 +261,13 @@ sub process
                     $strExample = " ${strExample}";
                 }
 
-                $strExample = "$$oDoc{param}{id}${strExample}";
+                $strExample = $oDoc->paramGet('id') . $strExample;
 
-                if (defined($$oDoc{field}{cmd}) && $$oDoc{field}{cmd})
+                if (defined($oDoc->fieldGet('cmd', false)) && $oDoc->fieldGet('cmd'))
                 {
                     $strExample = '--' . $strExample;
 
-                    if (index($$oDoc{field}{example}, ' ') != -1)
+                    if (index($oDoc->fieldGet('example'), ' ') != -1)
                     {
                         $strExample = "\"${strExample}\"";
                     }
@@ -237,7 +275,7 @@ sub process
             }
 
             $strBuffer .= "\n```\n" .
-                          "required: " . ($bRequired ? 'y' : 'n') . "\n" .
+                          ($bRequired ? "required: " . ($bRequired ? 'y' : 'n') . "\n" : '') .
                           (defined($strDefault) ? "default: ${strDefault}\n" : '') .
                           (defined($strAllow) ? "allow: ${strAllow}\n" : '') .
                           (defined($strOverride) ? "override: ${strOverride}\n" : '') .
@@ -257,22 +295,25 @@ sub process
 
     my $bFirst = true;
 
-    foreach my $oChild (@{$$oDoc{children}})
+    foreach my $oChild ($oDoc->nodeList(undef, false))
     {
-        if ($strType eq 'markdown')
+        if ($oChild->nameGet() ne 'summary')
         {
-        }
-        else
-        {
-            confess "unknown type ${strType}";
-        }
+            if ($strType eq 'markdown' || $strType eq 'text')
+            {
+            }
+            else
+            {
+                confess "unknown type ${strType}";
+            }
 
-         $strBuffer .= $self->process($oChild, $iChildDepth, $bList);
+             $strBuffer .= $self->process($oChild, $iChildDepth, $bList);
+        }
     }
 
     if ($iDepth == 1)
     {
-        if ($strType eq 'markdown')
+        if ($strType eq 'markdown' || $strType eq 'text')
         {
             $strBuffer .= "\n";
         }
@@ -312,7 +353,7 @@ sub processTag
     my $strBuffer = "";
 
     my $strType = $self->{strType};
-    my $strTag = $$oTag{name};
+    my $strTag = $oTag->nameGet();
     my $strStart = $$oRenderTag{$strType}{$strTag}[0];
     my $strStop = $$oRenderTag{$strType}{$strTag}[1];
 
@@ -327,15 +368,13 @@ sub processTag
     {
         $strBuffer .= $self->processText($oTag);
     }
-    elsif (defined($$oTag{value}))
+    elsif (defined($oTag->valueGet()))
     {
-        $strBuffer .= $$oTag{value};
+        $strBuffer .= $oTag->valueGet();
     }
-    elsif (defined($$oTag{children}[0]))
+    else
     {
-        confess "GOT HERE" if !defined($self->{oDoc});
-
-        foreach my $oSubTag (@{$self->{oDoc}->nodeList($oTag)})
+        foreach my $oSubTag ($oTag->nodeList(undef, false))
         {
             $strBuffer .= $self->processTag($oSubTag);
         }
@@ -371,20 +410,17 @@ sub processText
         );
 
     my $strType = $self->{strType};
-    my $strBuffer = "";
+    my $strBuffer = '';
 
-    if (defined($$oText{children}))
+    foreach my $oNode ($oText->nodeList(undef, false))
     {
-        for (my $iIndex = 0; $iIndex < @{$$oText{children}}; $iIndex++)
+        if (ref(\$oNode) eq "SCALAR")
         {
-            if (ref(\$$oText{children}[$iIndex]) eq "SCALAR")
-            {
-                $strBuffer .= $$oText{children}[$iIndex];
-            }
-            else
-            {
-                $strBuffer .= $self->processTag($$oText{children}[$iIndex]);
-            }
+            $strBuffer .= $oNode;
+        }
+        else
+        {
+            $strBuffer .= $self->processTag($oNode);
         }
     }
 

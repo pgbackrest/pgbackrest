@@ -4,7 +4,7 @@ run 002 - rmt 0, cmp 0, hardlink 1
 full backup
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --manifest-save-threshold=3 --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --manifest-save-threshold=3 --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -56,7 +56,7 @@ DEBUG:     File->remove=>: bRemoved = false
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -158,7 +158,7 @@ db-version="9.3"
 info db
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = db
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -177,7 +177,7 @@ DEBUG:     info stop
 info db
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = db
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -237,7 +237,7 @@ DEBUG:     info stop
 full backup (resume)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0 --type=full
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0 --type=full
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -297,7 +297,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -473,7 +473,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --sta
 incr backup (invalid database version)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -496,7 +496,7 @@ DEBUG:     Main::safeExit(): iExitCode = 126
 incr backup (invalid system id)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -519,7 +519,7 @@ DEBUG:     Main::safeExit(): iExitCode = 126
 incr backup (invalid control version)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -542,7 +542,7 @@ DEBUG:     Main::safeExit(): iExitCode = 126
 incr backup (invalid catalog version)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -565,7 +565,7 @@ DEBUG:     Main::safeExit(): iExitCode = 126
 incr backup (add tablespace 1)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -634,7 +634,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -749,7 +749,7 @@ db-version="9.3"
 incr backup (resume and add tablespace 2)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -845,7 +845,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -969,7 +969,7 @@ db-version="9.3"
 diff backup (cannot resume - new diff)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0 --type=diff
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0 --type=diff
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -1052,7 +1052,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-1], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1177,7 +1177,7 @@ db-version="9.3"
 diff backup (cannot resume - disabled)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --no-resume --type=diff --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --no-resume --stanza=db --start-fast --test --test-delay=0 --type=diff
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --no-resume --stanza=db --start-fast --test --test-delay=0 --type=diff
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -1260,7 +1260,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-2], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=0
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1558,7 +1558,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --sta
 incr backup (add files and remove tablespace 2)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -1630,7 +1630,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-3], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1752,7 +1752,7 @@ db-version="9.3"
 incr backup (update files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -1824,7 +1824,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-4], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1948,7 +1948,7 @@ db-version="9.3"
 diff backup (no updates)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -2023,7 +2023,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-3], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2149,7 +2149,7 @@ db-version="9.3"
 incr backup (remove files - but won't affect manifest)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -2221,7 +2221,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-5], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2349,7 +2349,7 @@ db-version="9.3"
 diff backup (remove files during backup)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup --test --test-delay=1
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --type=diff
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --type=diff
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -2420,7 +2420,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-4], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --test --test-delay=1
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2548,7 +2548,7 @@ db-version="9.3"
 full backup
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -2615,7 +2615,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-3], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2745,7 +2745,7 @@ db-version="9.3"
 diff backup (add files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
+ INFO: backup start: --no-compress --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=debug --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 DEBUG:     File->exists(): strPath = [undef], strPathType = backup:cluster
@@ -2817,7 +2817,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-5], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --no-compress --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     Expire->new(): oFile = [object]
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -3392,7 +3392,7 @@ DEBUG:     info stop
 info bogus
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = bogus
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = bogus
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -3405,7 +3405,7 @@ DEBUG:     info stop
 info bogus
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = bogus
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = bogus
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>

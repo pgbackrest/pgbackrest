@@ -23,11 +23,10 @@ use BackRest::BackupCommon;
 use BackRest::BackupFile;
 use BackRest::BackupInfo;
 use BackRest::Common::String;
-use BackRest::Config;
+use BackRest::Config::Config;
 use BackRest::Db;
 use BackRest::File;
 use BackRest::Manifest;
-use BackRest::Protocol::ThreadGroup;
 
 ####################################################################################################################################
 # Operation constants
@@ -566,6 +565,10 @@ sub processManifest
         # If multi-threaded then create threads to copy files
         if (optionGet(OPTION_THREAD_MAX) > 1)
         {
+            # Load module dynamically
+            require BackRest::Protocol::ThreadGroup;
+            BackRest::Protocol::ThreadGroup->import();
+
             for (my $iThreadIdx = 0; $iThreadIdx < optionGet(OPTION_THREAD_MAX); $iThreadIdx++)
             {
                 my %oParam;

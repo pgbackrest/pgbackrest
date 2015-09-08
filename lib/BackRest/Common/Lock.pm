@@ -15,7 +15,7 @@ use File::Basename qw(dirname);
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Exception;
 use BackRest::Common::Log;
-use BackRest::Config;
+use BackRest::Config::Config;
 
 ####################################################################################################################################
 # Global lock type and handle

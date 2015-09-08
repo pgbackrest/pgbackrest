@@ -18,17 +18,11 @@ use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Archive;
-use BackRest::Backup;
 use BackRest::Common::Exception;
-use BackRest::Common::Lock;
+use BackRest::Common::Ini;
 use BackRest::Common::Log;
-use BackRest::Config;
-use BackRest::Expire;
+use BackRest::Config::Config;
 use BackRest::File;
-use BackRest::Info;
-use BackRest::Protocol::RemoteMinion;
-use BackRest::Protocol::ThreadGroup;
-use BackRest::Restore;
 
 ####################################################################################################################################
 # Operation constants
@@ -42,6 +36,8 @@ use constant OP_MAIN_SAFE_EXIT                                      => OP_MAIN .
 #
 # Terminate all threads and SSH connections when the script is terminated.
 ####################################################################################################################################
+my $iThreadMax = 1;
+
 sub safeExit
 {
     # Assign function parameters, defaults, and log debug info
@@ -58,7 +54,14 @@ sub safeExit
 
     commandStop();
 
-    my $iTotal = threadGroupDestroy();
+    # Stop threads if threading is enabled
+    my $iThreadsStopped = 0;
+
+    if ($iThreadMax > 1)
+    {
+        $iThreadsStopped = threadGroupDestroy();
+    }
+
     protocolDestroy();
 
     if (defined($iExitCode))
@@ -66,7 +69,7 @@ sub safeExit
         exit $iExitCode;
     }
 
-    &log(ERROR, "process terminated on signal or exception, ${iTotal} threads stopped");
+    &log(ERROR, 'process terminated on signal or exception' . ($iThreadsStopped > 0 ? "${iThreadsStopped} threads stopped" : ''));
 }
 
 $SIG{TERM} = \&safeExit;
@@ -81,7 +84,32 @@ eval
     ################################################################################################################################
     # Load command line parameters and config
     ################################################################################################################################
-    configLoad();
+    my $bConfigResult = configLoad();
+
+    # Display version
+    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
+    {
+        syswrite(*STDOUT, (!$bConfigResult ? "\n" : '') .BACKREST_NAME . ' ' . BACKREST_VERSION);
+
+        # If the command is version then exit
+        if (commandTest(CMD_VERSION))
+        {
+            syswrite(*STDOUT, "\n");
+            exit 0;
+        }
+    }
+
+    # Display help
+    if (commandTest(CMD_HELP))
+    {
+        # Load module dynamically
+        require BackRest::Config::Config::ConfigHelp;
+        BackRest::Config::Config::ConfigHelp->import();
+
+        # Generate help and exit
+        configHelp($ARGV[1], $ARGV[2]);
+        safeExit(0);
+    }
 
     ################################################################################################################################
     # Process remote commands
@@ -90,6 +118,10 @@ eval
     {
         # Turn all logging off
         logLevelSet(OFF, OFF);
+
+        # Load module dynamically
+        require BackRest::Protocol::RemoteMinion;
+        BackRest::Protocol::RemoteMinion->import();
 
         # Create the remote object
         my $oRemote = new BackRest::Protocol::RemoteMinion
@@ -125,12 +157,20 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_INFO))
     {
+        # Load module dynamically
+        require BackRest::Info;
+        BackRest::Info->import();
+
         safeExit(new BackRest::Info()->process());
     }
 
     ################################################################################################################################
     # Acquire the command lock
     ################################################################################################################################
+    # Load module dynamically
+    require BackRest::Common::Lock;
+    BackRest::Common::Lock->import();
+
     lockAcquire(commandGet());
 
     ################################################################################################################################
@@ -141,7 +181,17 @@ eval
     ################################################################################################################################
     # Create the thread group that will be used for parallel processing
     ################################################################################################################################
-    threadGroupCreate();
+    if (optionTest(OPTION_THREAD_MAX) && optionGet(OPTION_THREAD_MAX) > 1)
+    {
+        # Set local thread-max so safeExit knows to stop them on exit
+        $iThreadMax = optionGet(OPTION_THREAD_MAX);
+
+        # Load module dynamically
+        require BackRest::Protocol::ThreadGroup;
+        BackRest::Protocol::ThreadGroup->import();
+
+        threadGroupCreate();
+    }
 
     ################################################################################################################################
     # Initialize the default file object
@@ -163,6 +213,10 @@ eval
         {
             confess &log(ASSERT, 'restore command must be performed locally on the db server');
         }
+
+        # Load module dynamically
+        require BackRest::Restore;
+        BackRest::Restore->import();
 
         # Do the restore
         new BackRest::Restore
@@ -186,6 +240,10 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_BACKUP))
     {
+        # Load module dynamically
+        require BackRest::Backup;
+        BackRest::Backup->import();
+
         new BackRest::Backup
         (
             $oFile
@@ -199,6 +257,10 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_EXPIRE))
     {
+        # Load module dynamically
+        require BackRest::Expire;
+        BackRest::Expire->import();
+
         new BackRest::Expire
         (
             $oFile
