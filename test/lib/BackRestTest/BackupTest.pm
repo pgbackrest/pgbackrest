@@ -1503,6 +1503,26 @@ sub BackRestTestBackup_Test
                 BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 120);
             }
 
+            # Incr backup - make sure a --no-stop-start backup fails
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_INCR;
+            $strTestPoint = TEST_MANIFEST_BUILD;
+
+            $strComment = 'fail on --' . OPTION_NO_START_STOP;
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
+                                           defined($strTestPoint), $fTestDelay, '--' . OPTION_NO_START_STOP);
+            BackRestTestCommon_ExecuteEnd(undef, undef, undef, ERROR_POSTMASTER_RUNNING);
+
+            # Incr backup - allow --no-start-stop backup to succeed with --force
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_INCR;
+            $strTestPoint = TEST_MANIFEST_BUILD;
+
+            $strComment = 'succeed on --' . OPTION_NO_START_STOP . 'with --' . OPTION_FORCE;
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
+                                           defined($strTestPoint), $fTestDelay, '--' . OPTION_NO_START_STOP . ' --' . OPTION_FORCE);
+            BackRestTestCommon_ExecuteEnd();
+
             $bCreate = true;
         }
         }

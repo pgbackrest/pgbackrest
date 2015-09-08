@@ -740,9 +740,8 @@ sub process
             }
             else
             {
-                &log(ERROR, '--no-start-stop passed but ' . FILE_POSTMASTER_PID . ' exists - looks like the postmaster is ' .
-                            'running. Shutdown the postmaster and try again, or use --force.');
-                exit 1;
+                confess &log(ERROR, '--no-start-stop passed but ' . FILE_POSTMASTER_PID . ' exists - looks like the postmaster is ' .
+                            'running. Shutdown the postmaster and try again, or use --force.', ERROR_POSTMASTER_RUNNING);
             }
         }
     }
