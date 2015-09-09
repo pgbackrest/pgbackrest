@@ -12,10 +12,25 @@
 					<text>Fixed an issue where resumed compressed backups were not preserving existing files.</text>
 				</release-feature>
 				<release-feature>
-					<text>Fixed an issue where resume and incr/diff would not ensure that the prior backup has the same compression and hardlink settings.</text>
+					<text>Fixed an issue where resume and incr/diff would not ensure that the prior backup had the same compression and hardlink settings.</text>
 				</release-feature>
 				<release-feature>
-					<text>Fixed an issue where a thread could be started even when none where requested.</text>
+					<text>Fixed an issue where a cold backup using <setting>--no-start-stop</setting> could be started on a running <postgres/> cluster without <setting>--force</setting> specified.</text>
+				</release-feature>
+				<release-feature>
+					<text>Fixed an issue where a thread could be started even when none were requested.</text>
+				</release-feature>
+				<release-feature>
+					<text>Fixed an issue where the <backrest/> version number was not being updated in <file>backup.info</file> and <file>archive.info</file> after an upgrade/downgrade.</text>
+				</release-feature>
+				<release-feature>
+					<text>Fixed an issue where the <cmd>info</cmd> command was throwing an exception when the repository contained no stanzas.  <i>Reported by Stephen Frost</i>.</text>
+				</release-feature>
+				<release-feature>
+					<text>Fixed an issue where the <postgres/> pg_stop_backup() NOTICEs were being output to stderr.  <i>Reported by Stephen Frost</i>.</text>
+				</release-feature>
+				<release-feature>
+					<text>Renamed <setting>recovery-setting</setting> option and section to <setting>recovery-option</setting> to be more consistent with <backrest/> naming conventions.</text>
 				</release-feature>
 				<release-feature>
 					<text>Command-line help is now extracted from the same XML source that is used for the other documentation and includes much more detail.</text>

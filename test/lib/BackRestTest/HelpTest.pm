@@ -63,6 +63,7 @@ sub BackRestTestHelp_Test
         # Increment the run, log, and decide whether this unit test should be run
         if (BackRestTestCommon_Run(++$iRun, 'base', $strModule, $strThisTest, undef, false))
         {
+            BackRestTestHelp_ExecuteHelp('version');
             BackRestTestHelp_ExecuteHelp('help');
             BackRestTestHelp_ExecuteHelp('help version');
             BackRestTestHelp_ExecuteHelp('help --output=json --stanza=main info');

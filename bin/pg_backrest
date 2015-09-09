@@ -19,7 +19,6 @@ use Scalar::Util qw(blessed);
 use lib dirname($0) . '/../lib';
 use BackRest::Archive;
 use BackRest::Common::Exception;
-use BackRest::Common::Ini;
 use BackRest::Common::Log;
 use BackRest::Config::Config;
 use BackRest::File;
@@ -59,16 +58,38 @@ sub safeExit
 
     if ($iThreadMax > 1)
     {
-        $iThreadsStopped = threadGroupDestroy();
+        &log(DEBUG, "stop ${iThreadMax} threads");
+
+        # Don't fail if the threads cannot be stopped
+        eval
+        {
+            $iThreadsStopped = threadGroupDestroy();
+        };
+
+        if ($@ && defined($iExitCode))
+        {
+            &log(WARN, "unable to stop threads: $@");
+        }
     }
 
-    protocolDestroy();
+    # Don't fail if protocol cannot be destroyed
+    eval
+    {
+        protocolDestroy();
+    };
 
+    if ($@ && defined($iExitCode))
+    {
+        &log(WARN, "unable to shutdown protocol: $@");
+    }
+
+    # Exit with code when defined
     if (defined($iExitCode))
     {
         exit $iExitCode;
     }
 
+    # Else the process was terminated on a signal or exception
     &log(ERROR, 'process terminated on signal or exception' . ($iThreadsStopped > 0 ? "${iThreadsStopped} threads stopped" : ''));
 }
 
@@ -86,28 +107,15 @@ eval
     ################################################################################################################################
     my $bConfigResult = configLoad();
 
-    # Display version
+    # Display help and version
     if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
-    {
-        syswrite(*STDOUT, (!$bConfigResult ? "\n" : '') . BACKREST_NAME . ' ' . BACKREST_VERSION);
-
-        # If the command is version then exit
-        if (commandTest(CMD_VERSION))
-        {
-            syswrite(*STDOUT, "\n");
-            exit 0;
-        }
-    }
-
-    # Display help
-    if (commandTest(CMD_HELP))
     {
         # Load module dynamically
         require BackRest::Config::ConfigHelp;
         BackRest::Config::ConfigHelp->import();
 
         # Generate help and exit
-        configHelp($ARGV[1], $ARGV[2]);
+        configHelp($ARGV[1], $ARGV[2], commandTest(CMD_VERSION), $bConfigResult);
         safeExit(0);
     }
 

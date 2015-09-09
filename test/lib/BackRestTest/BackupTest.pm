@@ -75,6 +75,7 @@ sub BackRestTestBackup_Test
 
     # Print test banner
     &log(INFO, 'BACKUP MODULE ******************************************************************');
+    &log(INFO, "THREAD-MAX: ${iThreadMax}\n");
 
     # Drop any existing cluster
     BackRestTestBackup_Drop(true, true);
@@ -581,87 +582,88 @@ sub BackRestTestBackup_Test
 
         &log(INFO, "Test ${strThisTest}\n");
 
-        if (!BackRestTestCommon_Run(++$iRun,
+        if (BackRestTestCommon_Run(++$iRun,
                                     "local",
                                     $iThreadMax == 1 ? $strModule : undef,
-                                    $iThreadMax == 1 ? $strThisTest: undef)) {next}
-
-        # Create the file object
-        $oFile = (BackRest::File->new
-        (
-            $strStanza,
-            BackRestTestCommon_RepoPathGet(),
-            'db',
-            $oLocal
-        ))->clone();
-
-        # Create the repo
-        BackRestTestCommon_Create();
-        BackRestTestCommon_CreateRepo();
-
-        # Create backup config
-        BackRestTestCommon_ConfigCreate('backup',       # local
-                                        undef,          # remote
-                                        false,          # compress
-                                        undef,          # checksum
-                                        undef,          # hardlink
-                                        $iThreadMax,    # thread-max
-                                        undef,          # archive-async
-                                        undef);         # compress-async
-
-        # Create the test object
-        my $oExpireTest = new BackRestTest::ExpireCommonTest($oFile);
-
-        $oExpireTest->stanzaCreate($strStanza, '9.2');
-        use constant SECONDS_PER_DAY => 86400;
-        my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $strDescription = 'Nothing to expire';
-
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
-
-        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strDescription = 'Expire oldest full backup, archive expire falls on segment major boundary';
-
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strDescription = 'Expire oldest diff backup';
-
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 256);
-        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strDescription = 'Expire oldest full backup, archive expire does not fall on major segment boundary';
-
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, undef, 0);
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, undef, 0);
-        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strDescription = 'Expire oldest diff backup (cascade to incr)';
-
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strDescription = 'Expire archive based on newest incr backup';
-
-        $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_INCR, 1, $strDescription);
-
-        # Cleanup
-        if (BackRestTestCommon_Cleanup())
+                                    $iThreadMax == 1 ? $strThisTest: undef))
         {
-            &log(INFO, 'cleanup');
-            BackRestTestBackup_Drop(true);
+            # Create the file object
+            $oFile = (BackRest::File->new
+            (
+                $strStanza,
+                BackRestTestCommon_RepoPathGet(),
+                'db',
+                $oLocal
+            ))->clone();
+
+            # Create the repo
+            BackRestTestCommon_Create();
+            BackRestTestCommon_CreateRepo();
+
+            # Create backup config
+            BackRestTestCommon_ConfigCreate('backup',       # local
+                                            undef,          # remote
+                                            false,          # compress
+                                            undef,          # checksum
+                                            undef,          # hardlink
+                                            $iThreadMax,    # thread-max
+                                            undef,          # archive-async
+                                            undef);         # compress-async
+
+            # Create the test object
+            my $oExpireTest = new BackRestTest::ExpireCommonTest($oFile);
+
+            $oExpireTest->stanzaCreate($strStanza, '9.2');
+            use constant SECONDS_PER_DAY => 86400;
+            my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            my $strDescription = 'Nothing to expire';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
+
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire oldest full backup, archive expire falls on segment major boundary';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire oldest diff backup';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 256);
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire oldest full backup, archive expire does not fall on major segment boundary';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, undef, 0);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, undef, 0);
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire oldest diff backup (cascade to incr)';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire archive based on newest incr backup';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_INCR, 1, $strDescription);
+
+            # Cleanup
+            if (BackRestTestCommon_Cleanup())
+            {
+                &log(INFO, 'cleanup');
+                BackRestTestBackup_Drop(true);
+            }
         }
     }
 
@@ -1518,7 +1520,7 @@ sub BackRestTestBackup_Test
             $strType = BACKUP_TYPE_INCR;
             $strTestPoint = TEST_MANIFEST_BUILD;
 
-            $strComment = 'succeed on --' . OPTION_NO_START_STOP . 'with --' . OPTION_FORCE;
+            $strComment = 'succeed on --' . OPTION_NO_START_STOP . ' with --' . OPTION_FORCE;
             BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
                                            defined($strTestPoint), $fTestDelay, '--' . OPTION_NO_START_STOP . ' --' . OPTION_FORCE);
             BackRestTestCommon_ExecuteEnd();

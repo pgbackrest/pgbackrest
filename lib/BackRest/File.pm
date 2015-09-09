@@ -58,6 +58,7 @@ use constant OP_FILE_PATH_CREATE                                    => OP_FILE .
 use constant OP_FILE_PATH_GET                                       => OP_FILE . '->pathGet';
 use constant OP_FILE_PATH_SYNC                                      => OP_FILE . '->pathSync';
 use constant OP_FILE_PATH_SYNC_STATIC                               => OP_FILE . '::filePathSync';
+use constant OP_FILE_PATH_TYPE_GET                                  => OP_FILE . '->pathTypeGet';
 use constant OP_FILE_REMOVE                                         => OP_FILE . '->remove';
 use constant OP_FILE_STANZA                                         => OP_FILE . '->stanza';
 use constant OP_FILE_WAIT                                           => OP_FILE . '->wait';
@@ -274,7 +275,7 @@ sub pathTypeGet
     ) =
         logDebugParam
     (
-        OP_FILE_CLONE, \@_,
+        OP_FILE_PATH_TYPE_GET, \@_,
         {name => 'strType', trace => true}
     );
 

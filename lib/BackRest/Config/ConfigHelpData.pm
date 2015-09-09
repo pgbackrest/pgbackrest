@@ -806,7 +806,6 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'db-path' => 'section',
 
                 # DELTA Option Help
                 #-------------------------------------------------------------------------------------------------------------------

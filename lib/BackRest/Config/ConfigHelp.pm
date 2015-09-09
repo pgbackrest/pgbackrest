@@ -13,6 +13,7 @@ use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Exception;
+use BackRest::Common::Ini;
 use BackRest::Common::Log;
 use BackRest::Common::String;
 use BackRest::Config::Config;
@@ -53,6 +54,8 @@ sub configHelp
 {
     my $strCommand = shift;
     my $strOption = shift;
+    my $bVersion = shift;
+    my $bConfigResult = shift;
 
     # Load module dynamically
     require BackRest::Config::ConfigHelpData;
@@ -62,6 +65,16 @@ sub configHelp
     my $oCommandHash = commandHashGet();
     my $oOptionRule = optionRuleGet();
     my $oConfigHelpData = configHelpDataGet();
+
+    # Build version
+    my $strVersion = (!$bConfigResult ? "\n" : '') . BACKREST_NAME . ' ' . BACKREST_VERSION;
+
+    # Display version
+    if ($bVersion)
+    {
+        syswrite(*STDOUT, "${strVersion}\n");
+        return;
+    }
 
     # Build the title
     my $strTitle;
@@ -371,7 +384,7 @@ sub configHelp
     }
 
     # Output help
-    syswrite(*STDOUT, ' -' . (defined($strTitle) ? " ${strTitle}" : '') . " help\n\n${strHelp}\n" .
+    syswrite(*STDOUT, "${strVersion} -" . (defined($strTitle) ? " ${strTitle}" : '') . " help\n\n${strHelp}\n" .
              (defined($strMore) ? 'Use \'' . BACKREST_EXE . " help ${strMore}' for more information.\n" : ''));
 }
 

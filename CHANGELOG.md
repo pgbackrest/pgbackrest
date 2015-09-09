@@ -5,9 +5,19 @@ __No Release Date Set__
 
 * Fixed an issue where resumed compressed backups were not preserving existing files.
 
-* Fixed an issue where resume and incr/diff would not ensure that the prior backup has the same compression and hardlink settings.
+* Fixed an issue where resume and incr/diff would not ensure that the prior backup had the same compression and hardlink settings.
 
-* Fixed an issue where a thread could be started even when none where requested.
+* Fixed an issue where a cold backup using `--no-start-stop` could be started on a running PostgreSQL cluster without `--force` specified.
+
+* Fixed an issue where a thread could be started even when none were requested.
+
+* Fixed an issue where the pgBackRest version number was not being updated in `backup.info` and `archive.info` after an upgrade/downgrade.
+
+* Fixed an issue where the `info` command was throwing an exception when the repository contained no stanzas.  _Reported by Stephen Frost_.
+
+* Fixed an issue where the PostgreSQL pg_stop_backup() NOTICEs were being output to stderr.  _Reported by Stephen Frost_.
+
+* Renamed `recovery-setting` option and section to `recovery-option` to be more consistent with pgBackRest naming conventions.
 
 * Command-line help is now extracted from the same XML source that is used for the other documentation and includes much more detail.
 

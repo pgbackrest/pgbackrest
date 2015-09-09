@@ -590,7 +590,7 @@ sub BackRestTestCommon_ExecuteEnd
         {
             confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus .
                          (defined($iExpectedExitStatus) ? ", but ${iExpectedExitStatus} was expected" : '') . "\n" .
-                         ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
+                         ($strOutLog ne '' ? "STDOUT (last 10,000 characters):\n" . substr($strOutLog, length($strOutLog) - 10000) : '') .
                          ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
         }
     }

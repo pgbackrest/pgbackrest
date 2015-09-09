@@ -75,7 +75,7 @@ my $strLogLevel = 'info';
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
-my $iThreadMax = 1;
+my $iThreadMax = undef;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
@@ -85,7 +85,7 @@ my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
 my $bInfinite = false;
-my $strDbVersion = 'max';
+my $strDbVersion = 'all';
 my $bLogForce = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
@@ -199,7 +199,7 @@ else
 }
 
 # Check thread total
-if ($iThreadMax < 1 || $iThreadMax > 32)
+if (defined($iThreadMax) && ($iThreadMax < 1 || $iThreadMax > 32))
 {
     confess 'thread-max must be between 1 and 32';
 }
@@ -288,7 +288,15 @@ eval
 
             if ($strModule eq 'all' || $strModule eq 'backup')
             {
-                BackRestTestBackup_Test($strModuleTest, $iThreadMax);
+                if (!defined($iThreadMax) || $iThreadMax == 1)
+                {
+                    BackRestTestBackup_Test($strModuleTest, 1);
+                }
+
+                if (!defined($iThreadMax) || $iThreadMax > 1)
+                {
+                    BackRestTestBackup_Test($strModuleTest, defined($iThreadMax) ? $iThreadMax : 4);
+                }
 
                 if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
                 {
@@ -297,7 +305,7 @@ eval
                         BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[$iVersionIdx],
                                                  $iModuleTestRun, $bDryRun, $bNoCleanup);
                         &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
-                        BackRestTestBackup_Test('full', $iThreadMax);
+                        BackRestTestBackup_Test('full', defined($iThreadMax) ? $iThreadMax : 4);
                     }
                 }
             }
