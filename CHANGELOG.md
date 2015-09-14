@@ -1,5 +1,34 @@
 # pgBackRest - Change Log
 
+## v0.82: Refactoring, Command-line Help, and Minor Bug Fixes
+__Released September 14, 2015__
+
+* Fixed an issue where resumed compressed backups were not preserving existing files.
+
+* Fixed an issue where resume and incr/diff would not ensure that the prior backup had the same compression and hardlink settings.
+
+* Fixed an issue where a cold backup using `--no-start-stop` could be started on a running PostgreSQL cluster without `--force` specified.
+
+* Fixed an issue where a thread could be started even when none were requested.
+
+* Fixed an issue where the pgBackRest version number was not being updated in `backup.info` and `archive.info` after an upgrade/downgrade.
+
+* Fixed an issue where the `info` command was throwing an exception when the repository contained no stanzas.  _Reported by Stephen Frost_.
+
+* Fixed an issue where the PostgreSQL `pg_stop_backup()` NOTICEs were being output to stderr.  _Reported by Stephen Frost_.
+
+* Renamed `recovery-setting` option and section to `recovery-option` to be more consistent with pgBackRest naming conventions.
+
+* Command-line help is now extracted from the same XML source that is used for the other documentation and includes much more detail.
+
+* Code cleanup and refactoring to standardize on patterns that have evolved over time.
+
+* Added dynamic module loading to speed up commands, especially asynchronous archiving.
+
+* Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.
+
+* Experimental support for PostgreSQL 9.5 alpha2.  This may break when the control version or WAL magic changes in future versions but will be updated in each pgBackRest release to keep pace.  All regression tests pass except for `--target-resume` tests (this functionality has changed in 9.5) and there is no testing yet for `.partial` WAL segments.
+
 ## v0.80: DBI Support, Stability, and Convenience Features
 __Released August 9, 2015__
 

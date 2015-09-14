@@ -11,12 +11,12 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Config;
-use BackRest::Exception;
-use BackRest::Ini;
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Config::Config;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::IO;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
@@ -33,16 +33,26 @@ use constant OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ                  => OP_PROTOC
 sub new
 {
     my $class = shift;                  # Class name
-    my $strName = shift;                # Name of the protocol
-    my $strCommand = shift;             # Command to execute on local/remote
-    my $iBlockSize = shift;             # Buffer size
-    my $iCompressLevel = shift;         # Set compression level
-    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
 
-    # Debug
-    logDebug(OP_PROTOCOL_COMMON_MASTER_NEW, DEBUG_CALL, undef,
-             {name => \$strName, command => \$strCommand, blockSize => $iBlockSize,
-              compressLevel => $iCompressLevel, compressLevelNetwork => $iCompressLevelNetwork});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,                                   # Name of the protocol
+        $strCommand,                                # Command to execute on local/remote
+        $iBlockSize,                                # Buffer size
+        $iCompressLevel,                            # Set compression level
+        $iCompressLevelNetwork                      # Set compression level for network only compression
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_COMMON_MASTER_NEW, \@_,
+            {name => 'strName'},
+            {name => 'strCommand'},
+            {name => 'iBlockSize'},
+            {name => 'iCompressLevel'},
+            {name => 'iCompressLevelNetwork'}
+        );
 
     # Create the class hash
     my $self = $class->SUPER::new($iBlockSize, $iCompressLevel, $iCompressLevelNetwork, $strName);
@@ -60,7 +70,12 @@ sub new
     # Check greeting to be sure the protocol matches
     $self->greetingRead();
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -115,12 +130,22 @@ sub greetingRead
 sub outputRead
 {
     my $self = shift;
-    my $bOutputRequired = shift;
-    my $strErrorPrefix = shift;
-    my $bSuppressLog = shift;
 
-    logTrace(OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ, DEBUG_CALL, undef,
-             {isOutputRequired => $bOutputRequired, strErrorPrefix => \$strErrorPrefix, isSuppressLog => $bSuppressLog});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bOutputRequired,
+        $strErrorPrefix,
+        $bSuppressLog
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ, \@_,
+            {name => 'bOutputRequired', default => false, trace => true},
+            {name => 'strErrorPrefix', required => false, trace => true},
+            {name => 'bSuppressLog', required => false, trace => true}
+        );
 
     my $strLine;
     my $strOutput;
@@ -165,10 +190,12 @@ sub outputRead
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') . 'output is not defined');
     }
 
-    logTrace(OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ, DEBUG_RESULT, undef, {strOutput => \$strOutput});
-
-    # Return output
-    return $strOutput;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strOutput', value => $strOutput, trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -203,10 +230,20 @@ sub commandParamString
 sub cmdWrite
 {
     my $self = shift;
-    my $strCommand = shift;
-    my $oParamRef = shift;
 
-    logTrace(OP_PROTOCOL_COMMON_MASTER_COMMAND_WRITE, DEBUG_CALL, \$strCommand, $oParamRef);
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand,
+        $oParamRef,
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_COMMON_MASTER_COMMAND_WRITE, \@_,
+            {name => 'strCommand', trace => true},
+            {name => 'oParamRef', required => false, trace => true}
+        );
 
     if (defined($oParamRef))
     {
@@ -235,9 +272,13 @@ sub cmdWrite
         $strCommand .= 'end';
     }
 
-    $self->{io}->lineWrite($strCommand);
+    logDebugMisc
+    (
+        $strOperation, undef,
+        {name => 'strCommand', value => $strCommand, trace => true}
+    );
 
-    logTrace(OP_PROTOCOL_COMMON_MASTER_COMMAND_WRITE, DEBUG_RESULT, undef, {strCommand => \$strCommand});
+    $self->{io}->lineWrite($strCommand);
 }
 
 ####################################################################################################################################

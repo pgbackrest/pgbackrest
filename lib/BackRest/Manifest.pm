@@ -2,30 +2,32 @@
 # MANIFEST MODULE
 ####################################################################################################################################
 package BackRest::Manifest;
-use parent 'BackRest::Ini';
+use parent 'BackRest::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 use Digest::SHA;
 use Time::Local qw(timelocal);
 
 use lib dirname($0);
-use BackRest::Exception qw(ERROR_CHECKSUM ERROR_FORMAT);
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
 use BackRest::File;
-use BackRest::Ini;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
 use constant OP_MANIFEST                                            => 'Manifest';
-    our @EXPORT = qw(OP_MANIFEST);
+
+use constant OP_MANIFEST_BUILD                                      => OP_MANIFEST . '->build';
+use constant OP_MANIFEST_NEW                                        => OP_MANIFEST . '->new';
 use constant OP_MANIFEST_SAVE                                       => OP_MANIFEST . '->save';
-    push @EXPORT, qw(OP_MANIFEST_SAVE);
 
 ####################################################################################################################################
 # File/path constants
@@ -133,9 +135,21 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;       # Class name
-    my $strFileName = shift; # Manifest filename
-    my $bLoad = shift;       # Load the manifest?
+    my $class = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileName,                               # Manifest filename
+        $bLoad                                      # Load the manifest?
+    ) =
+        logDebugParam
+        (
+            OP_MANIFEST_NEW, \@_,
+            {name => 'strFileName', trace => true},
+            {name => 'bLoad', required => false, trace => true}
+        );
 
     # Set defaults
     $bLoad = defined($bLoad) ? $bLoad : true;
@@ -143,7 +157,12 @@ sub new
     # Init object and store variables
     my $self = $class->SUPER::new($strFileName, $bLoad);
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -155,8 +174,18 @@ sub save
 {
     my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+    ) =
+        logDebugParam
+        (
+            OP_MANIFEST_SAVE
+        );
+
     # !!! Add section comments here
-    # $self->setComment(MANIFEST_SECTION_BACKUP_INFO,
+    # $self->commentSet(MANIFEST_SECTION_BACKUP_INFO,
     #     #################################################################################
     #     "Information about the backup:\n" .
     #     "    backup-size       = total size of original files.\n" .
@@ -166,14 +195,20 @@ sub save
     #     "                        unless option-start-stop = true.\n" .
     #     "\n" .
     #     "Human-readable output:\n" .
-    #     "    backup-repo-size       = " . file_size_format($lBackupRepoSize) . "\n" .
-    #     "    backup-repo-size-delta = " . file_size_format($lBackupRepoSizeDelta) . "\n" .
-    #     "    backup-size            = " . file_size_format($lBackupSize) . "\n" .
-    #     "    backup-size-delta      = " . file_size_format($lBackupSizeDelta)
+    #     "    backup-repo-size       = " . fileSizeFormat($lBackupRepoSize) . "\n" .
+    #     "    backup-repo-size-delta = " . fileSizeFormat($lBackupRepoSizeDelta) . "\n" .
+    #     "    backup-size            = " . fileSizeFormat($lBackupSize) . "\n" .
+    #     "    backup-size-delta      = " . fileSizeFormat($lBackupSizeDelta)
     #     );
 
     # Call inherited save
     $self->SUPER::save();
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 ####################################################################################################################################
@@ -349,14 +384,28 @@ sub valid
 sub build
 {
     my $self = shift;
-    my $oFile = shift;
-    my $strDbClusterPath = shift;
-    my $oLastManifest = shift;
-    my $bNoStartStop = shift;
-    my $oTablespaceMapRef = shift;
-    my $strLevel = shift;
 
-    &log(DEBUG, 'Manifest->build');
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strDbClusterPath,
+        $oLastManifest,
+        $bNoStartStop,
+        $oTablespaceMapRef,
+        $strLevel
+    ) =
+        logDebugParam
+        (
+            OP_MANIFEST_BUILD, \@_,
+            {name => 'oFile'},
+            {name => 'strDbClusterPath'},
+            {name => 'oLastManifest', required => false},
+            {name => 'bNoStartStop'},
+            {name => 'oTablespaceMapRef', required => false},
+            {name => 'strLevel', required => false}
+        );
 
     # If no level is defined then it must be base
     if (!defined($strLevel))
@@ -389,7 +438,7 @@ sub build
                     confess &log(ERROR, PATH_PG_TBLSPC . "/${strName} is not a link");
                 }
 
-                &log(DEBUG, "Found tablespace ${strName}");
+                logDebugMisc($strOperation, "found tablespace ${strName}");
 
                 ${$oTablespaceMapRef}{oid}{$strName}{name} = $strName;
             }
@@ -491,22 +540,22 @@ sub build
                 {
                     # If modification time is in the future (in this backup OR the last backup) set warning flag and do not
                     # allow a reference
-                    if ($self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
+                    if ($self->numericGet($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin ||
                         (defined($oLastManifest) && $oLastManifest->test($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y')))
                     {
                         $bTimeInFuture = true;
 
                         # Only mark as future if still in the future in the current backup
-                        if ($self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin)
+                        if ($self->numericGet($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) > $lTimeBegin)
                         {
                             $self->set($strSection, $strName, MANIFEST_SUBKEY_FUTURE, 'y');
                         }
                     }
                     # Else check if modification time and size are unchanged since last backup
                     elsif (defined($oLastManifest) && $oLastManifest->test($strSection, $strName) &&
-                           $self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_SIZE) ==
+                           $self->numericGet($strSection, $strName, MANIFEST_SUBKEY_SIZE) ==
                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_SIZE) &&
-                           $self->getNumeric($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
+                           $self->numericGet($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP) ==
                                $oLastManifest->get($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP))
                     {
                         # Copy reference from previous backup if possible
@@ -542,6 +591,12 @@ sub build
         # Record the time when copying will start
         $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef, $lTimeBegin + 1);
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
+    );
 }
 
 1;

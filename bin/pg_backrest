@@ -10,48 +10,92 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+# Convert die to confess to capture the stack trace
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
 use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Backup;
 use BackRest::Archive;
-use BackRest::Config;
-use BackRest::Db;
-use BackRest::Exception;
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Config::Config;
 use BackRest::File;
-use BackRest::Info;
-use BackRest::Lock;
-use BackRest::Protocol::RemoteMinion;
-use BackRest::Restore;
-use BackRest::ThreadGroup;
-use BackRest::Utility;
 
 ####################################################################################################################################
-# SAFE_EXIT - terminate all threads and SSH connections when the script is terminated
+# Operation constants
 ####################################################################################################################################
-sub safe_exit
+use constant OP_MAIN                                                => 'Main';
+
+use constant OP_MAIN_SAFE_EXIT                                      => OP_MAIN . '::safeExit';
+
+####################################################################################################################################
+# safeExit
+#
+# Terminate all threads and SSH connections when the script is terminated.
+####################################################################################################################################
+my $iThreadMax = 1;
+
+sub safeExit
 {
-    my $iExitCode = shift;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $iExitCode
+    ) =
+        logDebugParam
+        (
+            OP_MAIN_SAFE_EXIT, \@_,
+            {name => 'iExitCode', required => false}
+        );
 
-    &log(DEBUG, "safe exit called, terminating threads");
+    commandStop();
 
-    my $iTotal = threadGroupDestroy();
-    protocolDestroy();
+    # Stop threads if threading is enabled
+    my $iThreadsStopped = 0;
 
+    if ($iThreadMax > 1)
+    {
+        &log(DEBUG, "stop ${iThreadMax} threads");
+
+        # Don't fail if the threads cannot be stopped
+        eval
+        {
+            $iThreadsStopped = threadGroupDestroy();
+        };
+
+        if ($@ && defined($iExitCode))
+        {
+            &log(WARN, "unable to stop threads: $@");
+        }
+    }
+
+    # Don't fail if protocol cannot be destroyed
+    eval
+    {
+        protocolDestroy();
+    };
+
+    if ($@ && defined($iExitCode))
+    {
+        &log(WARN, "unable to shutdown protocol: $@");
+    }
+
+    # Exit with code when defined
     if (defined($iExitCode))
     {
         exit $iExitCode;
     }
 
-    &log(ERROR, "process terminated on signal or exception, ${iTotal} threads stopped");
+    # Else the process was terminated on a signal or exception
+    &log(ERROR, 'process terminated on signal or exception' . ($iThreadsStopped > 0 ? "${iThreadsStopped} threads stopped" : ''));
 }
 
-$SIG{TERM} = \&safe_exit;
-$SIG{HUP} = \&safe_exit;
-$SIG{INT} = \&safe_exit;
+$SIG{TERM} = \&safeExit;
+$SIG{HUP} = \&safeExit;
+$SIG{INT} = \&safeExit;
 
 ####################################################################################################################################
 # START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
@@ -61,7 +105,19 @@ eval
     ################################################################################################################################
     # Load command line parameters and config
     ################################################################################################################################
-    configLoad();
+    my $bConfigResult = configLoad();
+
+    # Display help and version
+    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
+    {
+        # Load module dynamically
+        require BackRest::Config::ConfigHelp;
+        BackRest::Config::ConfigHelp->import();
+
+        # Generate help and exit
+        configHelp($ARGV[1], $ARGV[2], commandTest(CMD_VERSION), $bConfigResult);
+        safeExit(0);
+    }
 
     ################################################################################################################################
     # Process remote commands
@@ -69,7 +125,11 @@ eval
     if (commandTest(CMD_REMOTE))
     {
         # Turn all logging off
-        log_level_set(OFF, OFF);
+        logLevelSet(OFF, OFF);
+
+        # Load module dynamically
+        require BackRest::Protocol::RemoteMinion;
+        BackRest::Protocol::RemoteMinion->import();
 
         # Create the remote object
         my $oRemote = new BackRest::Protocol::RemoteMinion
@@ -80,21 +140,24 @@ eval
         );
 
         # Process remote requests
-        safe_exit($oRemote->process());
+        safeExit($oRemote->process());
     }
 
     # Set the log levels
-    log_level_set(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
+    logLevelSet(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # Set test options
-    !optionGet(OPTION_TEST) or test_set(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY));
+    !optionGet(OPTION_TEST) or testSet(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY));
+
+    # Log the command start
+    commandStart();
 
     ################################################################################################################################
     # Process archive commands
     ################################################################################################################################
     if (commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET))
     {
-        safe_exit(new BackRest::Archive()->process());
+        safeExit(new BackRest::Archive()->process());
     }
 
     ################################################################################################################################
@@ -102,23 +165,41 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_INFO))
     {
-        safe_exit(new BackRest::Info()->info());
+        # Load module dynamically
+        require BackRest::Info;
+        BackRest::Info->import();
+
+        safeExit(new BackRest::Info()->process());
     }
 
     ################################################################################################################################
     # Acquire the command lock
     ################################################################################################################################
+    # Load module dynamically
+    require BackRest::Common::Lock;
+    BackRest::Common::Lock->import();
+
     lockAcquire(commandGet());
 
     ################################################################################################################################
     # Open the log file
     ################################################################################################################################
-    log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(commandGet()));
+    logFileSet(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-' . lc(commandGet()));
 
     ################################################################################################################################
     # Create the thread group that will be used for parallel processing
     ################################################################################################################################
-    threadGroupCreate();
+    if (optionTest(OPTION_THREAD_MAX) && optionGet(OPTION_THREAD_MAX) > 1)
+    {
+        # Set local thread-max so safeExit knows to stop them on exit
+        $iThreadMax = optionGet(OPTION_THREAD_MAX);
+
+        # Load module dynamically
+        require BackRest::Protocol::ThreadGroup;
+        BackRest::Protocol::ThreadGroup->import();
+
+        threadGroupCreate();
+    }
 
     ################################################################################################################################
     # Initialize the default file object
@@ -141,28 +222,17 @@ eval
             confess &log(ASSERT, 'restore command must be performed locally on the db server');
         }
 
+        # Load module dynamically
+        require BackRest::Restore;
+        BackRest::Restore->import();
+
         # Do the restore
         new BackRest::Restore
         (
-            optionGet(OPTION_DB_PATH),
-            optionGet(OPTION_SET),
-            optionGet(OPTION_RESTORE_TABLESPACE_MAP, false),
-            $oFile,
-            optionGet(OPTION_THREAD_MAX),
-            optionGet(OPTION_DELTA),
-            optionGet(OPTION_FORCE),
-            optionGet(OPTION_TYPE),
-            optionGet(OPTION_TARGET, false),
-            optionGet(OPTION_TARGET_EXCLUSIVE, false),
-            optionGet(OPTION_TARGET_RESUME, false),
-            optionGet(OPTION_TARGET_TIMELINE, false),
-            optionGet(OPTION_RESTORE_RECOVERY_SETTING, false),
-            optionGet(OPTION_STANZA),
-            $0,
-            optionGet(OPTION_CONFIG)
-        )->restore;
+            $oFile
+        )->process;
 
-        safe_exit(0);
+        safeExit(0);
     }
 
     ################################################################################################################################
@@ -178,21 +248,14 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_BACKUP))
     {
-        # Run backup_init - parameters required for backup commands
-        backup_init
-        (
-            $oFile,
-            new BackRest::Db(),
-            optionGet(OPTION_TYPE),
-            optionGet(OPTION_COMPRESS),
-            optionGet(OPTION_HARDLINK),
-            optionGet(OPTION_THREAD_MAX),
-            optionGet(OPTION_THREAD_TIMEOUT, false),
-            optionGet(OPTION_NO_START_STOP),
-            optionTest(OPTION_FORCE)
-        );
+        # Load module dynamically
+        require BackRest::Backup;
+        BackRest::Backup->import();
 
-        backup(optionGet(OPTION_DB_PATH), optionGet(OPTION_START_FAST));
+        new BackRest::Backup
+        (
+            $oFile
+        )->process();
 
         commandSet(CMD_EXPIRE);
     }
@@ -202,28 +265,20 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_EXPIRE))
     {
-        backup_init
+        # Load module dynamically
+        require BackRest::Expire;
+        BackRest::Expire->import();
+
+        new BackRest::Expire
         (
             $oFile
-        );
-
-        backup_expire
-        (
-            $oFile->path_get(PATH_BACKUP_CLUSTER),
-            optionGet(OPTION_RETENTION_FULL, false),
-            optionGet(OPTION_RETENTION_DIFF, false),
-            optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false),
-            optionGet(OPTION_RETENTION_ARCHIVE, false)
-        );
+        )->process();
     }
-
-    # Cleanup backup (should be removed when backup becomes an object)
-    backup_cleanup();
 
     # Release the command lock
     lockRelease();
 
-    safe_exit(0);
+    safeExit(0);
 };
 
 ####################################################################################################################################
@@ -234,11 +289,11 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('BackRest::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('BackRest::Common::Exception'))
     {
-        safe_exit($oMessage->code());
+        safeExit($oMessage->code());
     }
 
-    safe_exit();
+    safeExit();
     confess $oMessage;
 }

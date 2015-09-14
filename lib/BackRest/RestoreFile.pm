@@ -11,15 +11,24 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
 use lib dirname($0);
-use BackRest::Config;
-use BackRest::Exception;
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Common::String;
+use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
-use BackRest::Utility;
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_RESTORE_FILE                                        => 'RestoreFile';
+
+use constant OP_RESTORE_FILE_RESTORE_FILE                           => OP_RESTORE_FILE . '::restoreFile';
 
 ####################################################################################################################################
 # restoreFile
@@ -29,19 +38,39 @@ use BackRest::Utility;
 sub restoreFile
 {
     my $oFileHash = shift;          # File to restore
-    my $lCopyTimeBegin = shift;     # Time that the backup begain - used for size/timestamp deltas
-    my $bDelta = shift;             # Is restore a delta?
-    my $bForce = shift;             # Force flag
-    my $strBackupPath = shift;      # Backup path
-    my $bSourceCompression = shift; # Is the source compressed?
-    my $strCurrentUser = shift;     # Current OS user
-    my $strCurrentGroup = shift;    # Current OS group
-    my $oFile = shift;              # File object
-    my $lSizeTotal = shift;         # Total size of files to be restored
-    my $lSizeCurrent = shift;       # Current size of files restored
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $lCopyTimeBegin,                            # Time that the backup begain - used for size/timestamp deltas
+        $bDelta,                                    # Is restore a delta?
+        $bForce,                                    # Force flag
+        $strBackupPath,                             # Backup path
+        $bSourceCompression,                        # Is the source compressed?
+        $strCurrentUser,                            # Current OS user
+        $strCurrentGroup,                           # Current OS group
+        $oFile,                                     # File object
+        $lSizeTotal,                                # Total size of files to be restored
+        $lSizeCurrent                               # Current size of files restored
+    ) =
+        logDebugParam
+        (
+            OP_RESTORE_FILE_RESTORE_FILE, \@_,
+            {name => 'lCopyTimeBegin', trace => true},
+            {name => 'bDelta', trace => true},
+            {name => 'bForce', trace => true},
+            {name => 'strBackupPath', trace => true},
+            {name => 'bSourceCompression', trace => true},
+            {name => 'strCurrentUser', trace => true},
+            {name => 'strCurrentGroup', trace => true},
+            {name => 'oFile', trace => true},
+            {name => 'lSizeTotal', trace => true},
+            {name => 'lSizeCurrent', trace => true}
+        );
 
     # Generate destination file name
-    my $strDestinationFile = $oFile->path_get(PATH_DB_ABSOLUTE, "$$oFileHash{destination_path}/$$oFileHash{file}");
+    my $strDestinationFile = $oFile->pathGet(PATH_DB_ABSOLUTE, "$$oFileHash{destination_path}/$$oFileHash{file}");
 
     # Copy flag and log message
     my $bCopy = true;
@@ -62,18 +91,17 @@ sub restoreFile
                 if (defined($oStat) && $oStat->size == $$oFileHash{size} &&
                     $oStat->mtime == $$oFileHash{modification_time} && $oStat->mtime < $lCopyTimeBegin)
                 {
-                    $strLog =  "${strDestinationFile} exists and matches size " . $oStat->size .
-                               " and modification time " . $oStat->mtime;
+                    $strLog =  'exists and matches size ' . $oStat->size . ' and modification time ' . $oStat->mtime;
                     $bCopy = false;
                 }
             }
             else
             {
-                my ($strChecksum, $lSize) = $oFile->hash_size(PATH_DB_ABSOLUTE, $strDestinationFile);
+                my ($strChecksum, $lSize) = $oFile->hashSize(PATH_DB_ABSOLUTE, $strDestinationFile);
 
                 if ($lSize == $$oFileHash{size} && ($lSize == 0 || $strChecksum eq $$oFileHash{checksum}))
                 {
-                    $strLog =  "exists and " . ($lSize == 0 ? 'is zero size' : "matches backup");
+                    $strLog =  'exists and ' . ($lSize == 0 ? 'is zero size' : "matches backup");
 
                     # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
                     # presents a pristine version of the database after restore.
@@ -107,17 +135,21 @@ sub restoreFile
             confess &log(ERROR, "error restoring ${strDestinationFile}: actual checksum ${strCopyChecksum} " .
                                 "does not match expected checksum $$oFileHash{checksum}", ERROR_CHECKSUM);
         }
-
-        $strLog = "restore";
     }
 
-    &log(INFO, "${strDestinationFile} ${strLog} (" . file_size_format($$oFileHash{size}) .
+    &log(INFO, "restore file ${strDestinationFile}" . (defined($strLog) ? " - ${strLog}" : '') .
+               ' (' . fileSizeFormat($$oFileHash{size}) .
                ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
                ($$oFileHash{size} != 0 ? " checksum $$oFileHash{checksum}" : ''));
 
-    return $lSizeCurrent;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'lSizeCurrent', value => $lSizeCurrent, trace => true}
+    );
 }
 
-our @EXPORT = qw(restoreFile);
+push @EXPORT, qw(restoreFile);
 
 1;

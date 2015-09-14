@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# THREADGROUP MODULE
+# COMMON THREADGROUP MODULE
 ####################################################################################################################################
-package BackRest::ThreadGroup;
+package BackRest::Protocol::ThreadGroup;
 
 use threads;
 use strict;
@@ -9,19 +9,19 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Config;
+use BackRest::Common::Log;
+use BackRest::Common::Wait;
+use BackRest::Config::Config;
 use BackRest::BackupFile;
 use BackRest::RestoreFile;
-use BackRest::Utility;
 
 ####################################################################################################################################
-# MODULE EXPORTS
+# Module globals
 ####################################################################################################################################
-our @EXPORT = qw(threadGroupCreate threadGroupRun threadGroupComplete threadGroupDestroy);
-
 my @oyThread;
 my @oyMessageQueue;
 my @oyCommandQueue;
@@ -34,7 +34,7 @@ my @byThreadRunning;
 sub threadGroupCreate
 {
     # If thread-max is not defined then this operation does not use threads
-    if (!optionTest(OPTION_THREAD_MAX))
+    if (!(optionTest(OPTION_THREAD_MAX) && optionGet(OPTION_THREAD_MAX) > 1))
     {
         return;
     }
@@ -55,6 +55,8 @@ sub threadGroupCreate
         }
     }
 }
+
+push @EXPORT, qw(threadGroupCreate);
 
 ####################################################################################################################################
 # threadGroupThread
@@ -251,6 +253,8 @@ sub threadGroupRun
     $byThreadRunning[$iThreadIdx] = true;
 }
 
+push @EXPORT, qw(threadGroupRun);
+
 ####################################################################################################################################
 # threadGroupComplete
 #
@@ -276,7 +280,7 @@ sub threadGroupComplete
     # Rejoin the threads
     # while ($iThreadComplete < @oyThread)
     # {
-        hsleep(.1);
+        waitHiRes(.1);
 
         # If a timeout has been defined, make sure we have not been running longer than that
         if (defined($iTimeout))
@@ -297,7 +301,7 @@ sub threadGroupComplete
                 {
                     my $strError;
 
-                    if ($oError->isa('BackRest::Exception'))
+                    if ($oError->isa('BackRest::Common::Exception'))
                     {
                         $strError = $oError->message();
                     }
@@ -347,6 +351,8 @@ sub threadGroupComplete
     return false;
 }
 
+push @EXPORT, qw(threadGroupComplete);
+
 ####################################################################################################################################
 # threadGroupDestroy
 ####################################################################################################################################
@@ -362,7 +368,7 @@ sub threadGroupDestroy
         $oCommand{function} = 'exit';
 
         $oyCommandQueue[$iThreadIdx]->enqueue(\%oCommand);
-        hsleep(.1);
+        waitHiRes(.1);
 
         if ($oyThread[$iThreadIdx]->is_running())
         {
@@ -382,5 +388,7 @@ sub threadGroupDestroy
 
     return(@oyThread);
 }
+
+push @EXPORT, qw(threadGroupDestroy);
 
 1;

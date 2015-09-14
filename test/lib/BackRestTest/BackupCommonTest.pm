@@ -22,12 +22,13 @@ use Time::HiRes qw(gettimeofday);
 use lib dirname($0) . '/../lib';
 use BackRest::Archive;
 use BackRest::ArchiveInfo;
-use BackRest::Config;
-use BackRest::Exception;
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Common::Wait;
+use BackRest::Config::Config;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Utility;
 
 use BackRestTest::CommonTest;
 
@@ -1092,7 +1093,7 @@ sub BackRestTestBackup_BackupCompare
     }
 
     my %oActualManifest;
-    iniLoad($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oActualManifest);
+    iniLoad($oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oActualManifest);
 
     ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
         $oActualManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START};
@@ -1149,12 +1150,12 @@ sub BackRestTestBackup_ManifestMunge
     if ($bRemote)
     {
         BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
-        BackRestTestCommon_Execute('chmod 770 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
+        BackRestTestCommon_Execute('chmod 770 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
     }
 
     # Read the manifest
     my %oManifest;
-    iniLoad($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oManifest);
+    iniLoad($oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oManifest);
 
     # Write in the munged value
     if (defined($strSubKey))
@@ -1191,12 +1192,12 @@ sub BackRestTestBackup_ManifestMunge
     $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
 
     # Resave the manifest
-    iniSave($oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oManifest);
+    iniSave($oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, \%oManifest);
 
     # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . $oFile->path_get(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
+        BackRestTestCommon_Execute('chmod 750 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
         BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
     }
 }
@@ -1418,11 +1419,11 @@ sub BackRestTestBackup_RestoreCompare
 
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION});
-    $oActualManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef,
+    $oActualManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef,
                                  ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL});
-    $oActualManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
+    $oActualManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
                                  ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
-    $oActualManifest->setNumeric(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef,
+    $oActualManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef,
                                  ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID});
 
     $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef,

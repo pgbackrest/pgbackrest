@@ -19,14 +19,17 @@ use File::Path qw(remove_tree);
 use IO::Select;
 use IPC::Open3;
 use POSIX ':sys_wait_h';
+use Symbol 'gensym';
 
 use lib dirname($0) . '/../lib';
-use BackRest::Config;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Common::String;
+use BackRest::Common::Wait;
+use BackRest::Config::Config;
 use BackRest::Db;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Utility;
 
 our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestCommon_Setup BackRestTestCommon_ExecuteBegin
                  BackRestTestCommon_ExecuteEnd BackRestTestCommon_Execute BackRestTestCommon_ExecuteBackRest
@@ -88,6 +91,7 @@ my $strModule;
 my $strModuleTest;
 my $iModuleTestRun;
 my $bValidWalChecksum;
+my $bNormalLog;
 
 ####################################################################################################################################
 # BackRestTestCommon_ClusterStop
@@ -119,7 +123,7 @@ sub BackRestTestCommon_DropRepo
     {
         BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), true, true);
         BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet(), false, true);
-        hsleep(.1);
+        waitHiRes(.1);
     }
 }
 
@@ -177,6 +181,7 @@ sub BackRestTestCommon_Run
     my $strModuleParam = shift;
     my $strModuleTestParam = shift;
     my $bValidWalChecksumParam = shift;
+    my $bNormalLogParam = shift;
 
     # &log(INFO, "module " . (defined($strModule) ? $strModule : ''));
     BackRestTestCommon_TestLog();
@@ -202,6 +207,7 @@ sub BackRestTestCommon_Run
     $strModuleTest = $strModuleTestParam;
     $iModuleTestRun = $iRun;
     $bValidWalChecksum = defined($bValidWalChecksumParam) ? $bValidWalChecksumParam : true;
+    $bNormalLog = defined($bNormalLogParam) ? $bNormalLogParam : true;
 
     return true;
 }
@@ -223,6 +229,7 @@ sub BackRestTestCommon_TestLogAppendFile
 {
     my $strFileName = shift;
     my $bRemote = shift;
+    my $strDescription = shift;
 
     if (defined($strModule))
     {
@@ -236,7 +243,12 @@ sub BackRestTestCommon_TestLogAppendFile
         open($hFile, '<', $strFileName)
             or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
 
-        my $strHeader = "+ supplemental file: " . BackRestTestCommon_ExecuteRegExpAll($strFileName);
+        my $strHeader .= "+ supplemental file: " . BackRestTestCommon_ExecuteRegExpAll($strFileName);
+
+        if (defined($strDescription))
+        {
+            $strFullLog .= "\n" . BackRestTestCommon_ExecuteRegExpAll($strDescription) . "\n" . ('=' x '132') . "\n";
+        }
 
         $strFullLog .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
 
@@ -322,7 +334,8 @@ sub BackRestTestCommon_ExecuteBegin
 
     $bFullLog = false;
 
-    if (defined($strModule) && $strCommandParam =~ /\/bin\/pg_backrest/)
+    if (defined($strModule) &&
+        ($strCommandParam =~ /$strCommonCommandMain/ || $strCommandParam =~ /$strCommonCommandRemote/))
     {
         $strCommandParam = BackRestTestCommon_ExecuteRegExpAll($strCommandParam);
 
@@ -339,7 +352,14 @@ sub BackRestTestCommon_ExecuteBegin
     &log(DEBUG, "executing command: ${strCommand}");
 
     # Execute the command
+    $hError = gensym;
+
     $pId = open3(undef, $hOut, $hError, $strCommand);
+
+    if (!defined($hError))
+    {
+        confess 'STDERR handle is undefined';
+    }
 }
 
 ####################################################################################################################################
@@ -422,7 +442,8 @@ sub BackRestTestCommon_ExecuteRegExpAll
 
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
-    $strLine =~ s/$strBinPath/[BACKREST_BIN_PATH]/g;
+    $strLine =~ s/$strCommonCommandMain/[BACKREST_BIN]/g;
+    $strLine =~ s/$strCommonCommandRemote/[BACKREST_BIN]/g;
     $strLine =~ s/$strPgSqlBin/[PGSQL_BIN_PATH]/g;
 
     my $strTestPath = BackRestTestCommon_TestPathGet();
@@ -432,16 +453,19 @@ sub BackRestTestCommon_ExecuteRegExpAll
         $strLine =~ s/$strTestPath/[TEST_PATH]/g;
     }
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'MODIFICATION-TIME', 'modification_time = [0-9]+', '[0-9]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKREST_NAME_VERSION', '^' . BACKREST_NAME . ' ' . BACKREST_VERSION,
+                                                undef, false);
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'MODIFICATION-TIME', 'lModificationTime = [0-9]+', '[0-9]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]+$');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-FULL', '[0-9]{8}\-[0-9]{6}F');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'strUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'USER', '^db-user=.+$', '[^=]+$');
 
@@ -516,7 +540,7 @@ sub BackRestTestCommon_ExecuteEnd
             {
                 $strOutLog .= $strLine;
 
-                if (defined($strTest) && test_check($strLine, $strTest))
+                if (defined($strTest) && testCheck($strLine, $strTest))
                 {
                     &log(DEBUG, "Found test ${strTest}");
                     return true;
@@ -524,15 +548,22 @@ sub BackRestTestCommon_ExecuteEnd
 
                 if ($bFullLog)
                 {
-                    $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
-
-                    if ($strLine !~ /^  TEST/)
+                    if ($bNormalLog)
                     {
-                        $strLine =~ s/^                            //;
-                        $strLine =~ s/^ //;
-                        $strLine =~ s/\r$//;
+                        $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
+                    }
+
+                    if ($strLine !~ /^  TEST/ || !$bNormalLog)
+                    {
+                        if ($bNormalLog)
+                        {
+                            $strLine =~ s/^                            //;
+                            $strLine =~ s/^ //;
+                            $strLine =~ s/\r$//;
+                        }
 
                         $strLine = BackRestTestCommon_ExecuteRegExpAll($strLine);
+
                         $strFullLog .= $strLine;
                     }
                 }
@@ -553,14 +584,20 @@ sub BackRestTestCommon_ExecuteEnd
         if ($bSuppressError)
         {
             &log(DEBUG, "suppressed error was ${iExitStatus}");
+            $strErrorLog = '';
         }
         else
         {
             confess &log(ERROR, "command '${strCommand}' returned " . $iExitStatus .
                          (defined($iExpectedExitStatus) ? ", but ${iExpectedExitStatus} was expected" : '') . "\n" .
-                         ($strOutLog ne '' ? "STDOUT:\n${strOutLog}" : '') .
+                         ($strOutLog ne '' ? "STDOUT (last 10,000 characters):\n" . substr($strOutLog, length($strOutLog) - 10000) : '') .
                          ($strErrorLog ne '' ? "STDERR:\n${strErrorLog}" : ''));
         }
+    }
+
+    if ($strErrorLog ne '')
+    {
+        confess &log(ERROR, "output found on STDERR:\n${strErrorLog}");
     }
 
     if ($bShowOutput)
@@ -604,10 +641,16 @@ sub BackRestTestCommon_PathCreate
 {
     my $strPath = shift;
     my $strMode = shift;
+    my $bIgnoreExists = shift;
 
     # Create the path
-    mkdir($strPath)
-        or confess "unable to create ${strPath} path";
+    if (!mkdir($strPath))
+    {
+        if (!(defined($bIgnoreExists) && $bIgnoreExists && -e $strPath))
+        {
+            confess "unable to create ${strPath} path";
+        }
+    }
 
     # Set the mode
     chmod(oct(defined($strMode) ? $strMode : '0700'), $strPath)
@@ -807,11 +850,11 @@ sub BackRestTestCommon_Setup
     }
 
     # Don't run unit tests for unsupported versions
-    my $strVersionSupport = versionSupport();
+    my @stryVersionSupport = versionSupport();
 
-    if ($strCommonDbVersion < ${$strVersionSupport}[0])
+    if ($strCommonDbVersion < $stryVersionSupport[0])
     {
-        confess "currently only version ${$strVersionSupport}[0] and up are supported";
+        confess "currently only version $stryVersionSupport[0] and up are supported";
     }
 
     return true;

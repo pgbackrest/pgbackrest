@@ -12,11 +12,11 @@ use File::Basename qw(dirname);
 use IO::String qw();
 
 use lib dirname($0) . '/../lib';
-use BackRest::Config;
-use BackRest::Exception;
-use BackRest::Ini;
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
+use BackRest::Config::Config;
 use BackRest::Protocol::IO;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
@@ -31,50 +31,40 @@ use constant OP_PROTOCOL_COMMON_NEW                                 => OP_PROTOC
 sub new
 {
     my $class = shift;                  # Class name
-    my $iBlockSize = shift;             # Buffer size
-    my $iCompressLevel = shift;         # Set compression level
-    my $iCompressLevelNetwork = shift;  # Set compression level for network only compression
-    my $strName = shift;                # Name to be used for gretting
-
-    # Debug
-    logTrace(OP_PROTOCOL_COMMON_NEW, DEBUG_CALL, undef,
-             {iBlockSize => $iBlockSize, iCompressLevel => $iCompressLevel, iCompressNetworkLevel => $iCompressLevelNetwork});
 
     # Create the class hash
     my $self = {};
     bless $self, $class;
 
-    # Set default block size
-    $self->{iBlockSize} = $iBlockSize;
-
-    if (!defined($self->{iBlockSize}))
-    {
-        confess &log(ASSERT, 'iBlockSize must be set');
-    }
-
-    # Set compress levels
-    $self->{iCompressLevel} = $iCompressLevel;
-
-    if (!defined($self->{iCompressLevel}))
-    {
-        confess &log(ASSERT, 'iCompressLevel must be set');
-    }
-
-    $self->{iCompressLevelNetwork} = $iCompressLevelNetwork;
-
-    if (!defined($self->{iCompressLevelNetwork}))
-    {
-        confess &log(ASSERT, 'iCompressLevelNetwork must be set');
-    }
+    # Assign function parameters, defaults, and log debug info
+    (
+        my $strOperation,
+        $self->{iBlockSize},
+        $self->{iCompressLevel},
+        $self->{iCompressLevelNetwork},
+        $self->{strName}
+    ) =
+        logDebugParam
+        (
+            OP_PROTOCOL_COMMON_NEW, \@_,
+            {name => 'iBlockSize', trace => true},
+            {name => 'iCompressLevel', trace => true},
+            {name => 'iCompressNetworkLevel', trace => true},
+            {name => 'strName', required => false, trace => true}
+        );
 
     # Create the greeting that will be used to check versions with the remote
-    if (defined($strName))
+    if (defined($self->{strName}))
     {
-        $self->{strName} = $strName;
-        $self->{strGreeting} = 'PG_BACKREST_' . uc($strName) . ' ' . BACKREST_VERSION;
+        $self->{strGreeting} = 'PG_BACKREST_' . uc($self->{strName}) . ' ' . BACKREST_VERSION;
     }
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################

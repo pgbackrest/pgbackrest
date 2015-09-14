@@ -1,237 +1,505 @@
 run 003 - rmt 0, cmp 1, arc_async 0
 ===================================
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     File->path_create: backup:archive:[TEST_PATH]/backrest/archive/db, mode 0750
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->path_create: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, mode 0750
-DEBUG:     File->exists: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = false
+DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [undef], strPathType = backup:archive
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute
+DEBUG:     File->exists=>: bExists = false
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = absolute
+DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = absolute
+DEBUG:     File->exists=>: bExists = false
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 119
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 119
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = (000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
+DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
+DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strHashType = [undef], strPathType = db:absolute
+DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strHashType = <sha1>, strPathType = db:absolute
+DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  WARN: WAL segment 000000010000000100000001 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000001
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000001, compressed = false, hash_type = sha1
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = (000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
+DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
+DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strHashType = [undef], strPathType = db:absolute
+DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strHashType = <sha1>, strPathType = db:absolute
+DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
 ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 120
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000002
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000002 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strWalSegment = 000000010000000100000002, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000002.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000003
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000003 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strWalSegment = 000000010000000100000003, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000003
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000003.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000004
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000004(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000004 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004, strWalSegment = 000000010000000100000004, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000004
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000004(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000004.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000005
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 119
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 119
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000005
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = (000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
+DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
+DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strHashType = [undef], strPathType = db:absolute
+DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strHashType = <sha1>, strPathType = db:absolute
+DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  WARN: WAL segment 000000010000000100000005 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000005
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000005, compressed = false, hash_type = sha1
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000005
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000005(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = (000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
+DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
+DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strHashType = [undef], strPathType = db:absolute
+DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strHashType = <sha1>, strPathType = db:absolute
+DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
 ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 120
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000006
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000006(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000006 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006, strWalSegment = 000000010000000100000006, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000006
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000006(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000006.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000007
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000007(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000007 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007, strWalSegment = 000000010000000100000007, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000007
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000007(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000007.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000008
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000008(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000008 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008, strWalSegment = 000000010000000100000008, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000008
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000008(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000008.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->copy: local db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009 to local backup:archive:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz, source_compressed = false, destination_compress = true, ignore_missing_source = false, destination_path_create = true, modification_time = [undef], mode = 0640, user = [undef], group = [undef]
-DEBUG:     File->move: absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz.tmp to absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, destination_path_create = true
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000009
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = ()
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
+DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strSourcePathType = db:absolute, strUser = [undef]
+DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz.tmp, strSourcePathType = absolute
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 119
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
               HINT: are you archiving to the correct stanza?
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 119
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000009
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = (000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
+DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
+DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strHashType = [undef], strPathType = db:absolute
+DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strHashType = <sha1>, strPathType = db:absolute
+DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  WARN: WAL segment 000000010000000100000009 already exists in the archive with the same checksum
        HINT: this is valid in some recovery scenarios but may also indicate a problem
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
+DEBUG:     Main::safeExit(): iExitCode = 0
+ INFO: archive-push stop
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: pushing WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
-DEBUG:     Archive->pushCheck: backup:archive:000000010000000100000009
-DEBUG:     File->exists: backup:archive:[TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, expression ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->hash: db:absolute:[TEST_PATH]/db/common/pg_xlog/000000010000000100000009, compressed = false, hash_type = sha1
+ INFO: archive-push start: --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     Archive->pushCheck(): oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
+DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
+DEBUG:     File->exists=>: bExists = true
+DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000009
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->list=>: stryFileList = (000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
+DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
+DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strHashType = [undef], strPathType = db:absolute
+DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strHashType = <sha1>, strPathType = db:absolute
+DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
 ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 120
+ INFO: archive-push stop
 
 + supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
 -----------------------------------------------------------------

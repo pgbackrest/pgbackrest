@@ -1,14 +1,18 @@
 run 001 - rmt 0, cmp 0, exists 0
 ================================
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: getting WAL segment 000000010000000100000001
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
+ INFO: archive-get start: --no-compress --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: get WAL segment 000000010000000100000001
+DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
 ERROR: [130]: archive.info does not exist but is required to get WAL segments
               HINT: Is archive_command configured in postgresql.conf?
               HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-DEBUG:     safe exit called, terminating threads
+DEBUG:     Main::safeExit(): iExitCode = 130
+ INFO: archive-get stop
 
 + supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
 -----------------------------------------------------------------
@@ -25,12 +29,20 @@ db-version="9.3"
 [db:history]
 1={"db-id":1234567890123456789,"db-version":"9.3"}
 
-> [BACKREST_BIN_PATH]/../bin/pg_backrest --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: getting WAL segment 000000090000000900000009
-DEBUG:     ArchiveInfo->new(): archiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     Archive->getCheck=>: archiveId = 9.3-1
-DEBUG:     File->list: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, expression ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, sort forward
-DEBUG:     File->exists: backup:absolute:[TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009
- INFO: 000000090000000900000009 was not found in the archive repository
-DEBUG:     safe exit called, terminating threads
+ INFO: archive-get start: --no-compress --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: get WAL segment 000000090000000900000009
+DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
+DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+DEBUG:     Archive->walFileName(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
+DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
+DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute
+DEBUG:     File->exists=>: bExists = false
+DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+ INFO: unable to find 000000090000000900000009 in the archive
+DEBUG:     Archive->get=>: iResult = 1
+DEBUG:     Main::safeExit(): iExitCode = 1
+ INFO: archive-get stop

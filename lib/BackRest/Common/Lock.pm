@@ -1,25 +1,21 @@
 ####################################################################################################################################
-# LOCK MODULE
+# COMMON LOCK MODULE
 ####################################################################################################################################
-package BackRest::Lock;
+package BackRest::Common::Lock;
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use Fcntl qw(:DEFAULT :flock);
 use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Config;
-use BackRest::Exception;
-use BackRest::Utility;
-
-####################################################################################################################################
-# Exported Functions
-####################################################################################################################################
-our @EXPORT = qw(lockAcquire lockRelease);
+use BackRest::Common::Exception;
+use BackRest::Common::Log;
+use BackRest::Config::Config;
 
 ####################################################################################################################################
 # Global lock type and handle
@@ -74,7 +70,7 @@ sub lockAcquire
     if (! -e lockPathName(optionGet(OPTION_REPO_PATH)))
     {
         mkdir (lockPathName(optionGet(OPTION_REPO_PATH)), 0770)
-            or confess(ERROR, 'unable to create lock path ' . lockPathName(optionGet(OPTION_REPO_PATH)), ERROR_PATH_CREATE);
+            or confess &log(ERROR, 'unable to create lock path ' . lockPathName(optionGet(OPTION_REPO_PATH)), ERROR_PATH_CREATE);
     }
 
     # Attempt to open the lock file
@@ -103,6 +99,8 @@ sub lockAcquire
     return true;
 }
 
+push @EXPORT, qw(lockAcquire);
+
 ####################################################################################################################################
 # lockRelease
 ####################################################################################################################################
@@ -130,5 +128,7 @@ sub lockRelease
     undef($strCurrentLockType);
     undef($hCurrentLockHandle);
 }
+
+push @EXPORT, qw(lockRelease);
 
 1;

@@ -2,7 +2,7 @@
 # ARCHIVE INFO MODULE
 ####################################################################################################################################
 package BackRest::ArchiveInfo;
-use parent 'BackRest::Ini';
+use parent 'BackRest::Common::Ini';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,19 +13,21 @@ use File::Basename qw(dirname basename);
 use File::stat;
 
 use lib dirname($0);
+use BackRest::Common::Exception;
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
 use BackRest::BackupInfo;
-use BackRest::Config;
-use BackRest::Exception;
+use BackRest::Config::Config;
 use BackRest::File;
-use BackRest::Ini;
 use BackRest::Manifest;
-use BackRest::Utility;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
 use constant OP_ARCHIVE_INFO                                        => 'ArchiveInfo';
 
+use constant OP_ARCHIVE_INFO_ARCHIVE_ID                             => OP_ARCHIVE_INFO . "->archiveId";
+use constant OP_ARCHIVE_INFO_CHECK                                  => OP_ARCHIVE_INFO . "->check";
 use constant OP_ARCHIVE_INFO_NEW                                    => OP_ARCHIVE_INFO . "->new";
 
 ####################################################################################################################################
@@ -54,17 +56,27 @@ use constant INFO_ARCHIVE_KEY_DB_SYSTEM_ID                          => MANIFEST_
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;                  # Class name
-    my $strArchiveClusterPath = shift;  # Backup cluster path
-    my $bRequired = shift;              # Is archive info required?
+    my $class = shift;                              # Class name
 
-    logDebug(OP_ARCHIVE_INFO_NEW, DEBUG_CALL, undef, {archiveClusterPath => \$strArchiveClusterPath});
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchiveClusterPath,                     # Backup cluster path
+        $bRequired                                  # Is archive info required?
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_INFO_NEW, \@_,
+            {name => 'strArchiveClusterPath'},
+            {name => 'bRequired', default => false}
+        );
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
     my $bExists = -e $strArchiveInfoFile ? true : false;
 
-    if (!$bExists && defined($bRequired) && $bRequired)
+    if (!$bExists && $bRequired)
     {
         confess &log(ERROR, ARCHIVE_INFO_FILE . " does not exist but is required to get WAL segments\n" .
                      "HINT: Is archive_command configured in postgresql.conf?\n" .
@@ -78,7 +90,12 @@ sub new
     $self->{bExists} = $bExists;
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################
@@ -89,8 +106,20 @@ sub new
 sub check
 {
     my $self = shift;
-    my $strDbVersion = shift;
-    my $ullDbSysId = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId
+    ) =
+        logDebugParam
+        (
+            OP_ARCHIVE_INFO_CHECK, \@_,
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'}
+        );
 
     my $bSave = false;
 
@@ -121,12 +150,12 @@ sub check
         my $iDbId = 1;
 
         # Fill db section
-        $self->setNumeric(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId);
+        $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId);
         $self->set(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion);
-        $self->setNumeric(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID, undef, $iDbId);
+        $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID, undef, $iDbId);
 
         # Fill db history
-        $self->setNumeric(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbId, INFO_ARCHIVE_KEY_DB_ID, $ullDbSysId);
+        $self->numericSet(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbId, INFO_ARCHIVE_KEY_DB_ID, $ullDbSysId);
         $self->set(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbId, INFO_ARCHIVE_KEY_DB_VERSION, $strDbVersion);
 
         $bSave = true;
@@ -138,7 +167,12 @@ sub check
         $self->save();
     }
 
-    return $self->archiveId();
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveId', value => $self->archiveId()}
+    );
 }
 
 
@@ -151,8 +185,23 @@ sub archiveId
 {
     my $self = shift;
 
-    return $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
-           $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID);
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_INFO_ARCHIVE_ID
+    );
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveId', value => $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
+                                          $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID)}
+    );
 }
 
 1;

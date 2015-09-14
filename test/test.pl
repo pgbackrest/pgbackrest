@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# test.pl - BackRest Unit Tests
+# test.pl - pgBackRest Unit Tests
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -10,27 +10,28 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
 
+# Convert die to confess to capture the stack trace
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
-use File::Basename;
-use Getopt::Long;
-use Cwd 'abs_path';
-use Pod::Usage;
+use File::Basename qw(dirname);
+use Getopt::Long qw(GetOptions);
+use Cwd qw(abs_path);
+use Pod::Usage qw(pod2usage);
 use Scalar::Util qw(blessed);
-#use Test::More;
 
 use lib dirname($0) . '/../lib';
+use BackRest::Common::Ini;
+use BackRest::Common::Log;
 use BackRest::Db;
-use BackRest::Ini;
-use BackRest::Utility;
 
 use lib dirname($0) . '/lib';
+use BackRestTest::BackupTest;
 use BackRestTest::CommonTest;
-use BackRestTest::UtilityTest;
+use BackRestTest::CompareTest;
 use BackRestTest::ConfigTest;
 use BackRestTest::FileTest;
-use BackRestTest::BackupTest;
-use BackRestTest::CompareTest;
+use BackRestTest::HelpTest;
+# use BackRestTest::IniTest;
 
 ####################################################################################################################################
 # Usage
@@ -38,7 +39,7 @@ use BackRestTest::CompareTest;
 
 =head1 NAME
 
-test.pl - Simple Postgres Backup and Restore Unit Tests
+test.pl - pgBackRest Unit Tests
 
 =head1 SYNOPSIS
 
@@ -74,7 +75,7 @@ my $strLogLevel = 'info';
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
-my $iThreadMax = 1;
+my $iThreadMax = undef;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
@@ -84,7 +85,7 @@ my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
 my $bInfinite = false;
-my $strDbVersion = 'max';
+my $strDbVersion = 'all';
 my $bLogForce = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
@@ -108,11 +109,11 @@ GetOptions ('q|quiet' => \$bQuiet,
 # Display version and exit if requested
 if ($bVersion || $bHelp)
 {
-    print 'pg_backrest ' . version_get() . " unit test\n";
+    syswrite(*STDOUT, 'pgBackRest ' . BACKREST_VERSION . " Unit Tests\n");
 
     if ($bHelp)
     {
-        print "\n";
+        syswrite(*STDOUT, "\n");
         pod2usage();
     }
 
@@ -121,15 +122,9 @@ if ($bVersion || $bHelp)
 
 if (@ARGV > 0)
 {
-    print "invalid parameter\n\n";
+    syswrite(*STDOUT, "invalid parameter\n\n");
     pod2usage();
 }
-
-# Must be run from the test path so relative paths to bin can be tested
-# if ($0 ne './test.pl')
-# {
-#     confess 'test.pl must be run from the test path';
-# }
 
 ####################################################################################################################################
 # Setup
@@ -137,13 +132,18 @@ if (@ARGV > 0)
 # Set a neutral umask so tests work as expected
 umask(0);
 
+if (defined($strExe) && !-e $strExe)
+{
+    confess '--exe must exist and be fully qualified'
+}
+
 # Set console log level
 if ($bQuiet)
 {
     $strLogLevel = 'off';
 }
 
-log_level_set(undef, uc($strLogLevel));
+logLevelSet(undef, uc($strLogLevel));
 
 if ($strModuleTest ne 'all' && $strModule eq 'all')
 {
@@ -157,7 +157,7 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 
 # Search for psql bin
 my @stryTestVersion;
-my $strVersionSupport = versionSupport();
+my @stryVersionSupport = versionSupport();
 
 if (!defined($strPgSqlBin))
 {
@@ -172,13 +172,13 @@ if (!defined($strPgSqlBin))
 
     foreach my $strSearchPath (@strySearchPath)
     {
-        for (my $iVersionIdx = @{$strVersionSupport} - 1; $iVersionIdx >= 0; $iVersionIdx--)
+        for (my $iVersionIdx = @stryVersionSupport - 1; $iVersionIdx >= 0; $iVersionIdx--)
         {
             if ($strDbVersion eq 'all' || $strDbVersion eq 'max' && @stryTestVersion == 0 ||
-                $strDbVersion eq ${$strVersionSupport}[$iVersionIdx])
+                $strDbVersion eq $stryVersionSupport[$iVersionIdx])
             {
                 my $strVersionPath = $strSearchPath;
-                $strVersionPath =~ s/VERSION/${$strVersionSupport}[$iVersionIdx]/g;
+                $strVersionPath =~ s/VERSION/$stryVersionSupport[$iVersionIdx]/g;
 
                 if (-e "${strVersionPath}/initdb")
                 {
@@ -199,7 +199,7 @@ else
 }
 
 # Check thread total
-if ($iThreadMax < 1 || $iThreadMax > 32)
+if (defined($iThreadMax) && ($iThreadMax < 1 || $iThreadMax > 32))
 {
     confess 'thread-max must be between 1 and 32';
 }
@@ -266,9 +266,14 @@ eval
                 &log(INFO, "INFINITE - RUN ${iRun}\n");
             }
 
-            if ($strModule eq 'all' || $strModule eq 'utility')
+            # if ($strModule eq 'all' || $strModule eq 'ini')
+            # {
+            #     BackRestTestIni_Test($strModuleTest);
+            # }
+
+            if ($strModule eq 'all' || $strModule eq 'help')
             {
-                BackRestTestUtility_Test($strModuleTest);
+                BackRestTestHelp_Test($strModuleTest);
             }
 
             if ($strModule eq 'all' || $strModule eq 'config')
@@ -283,7 +288,15 @@ eval
 
             if ($strModule eq 'all' || $strModule eq 'backup')
             {
-                BackRestTestBackup_Test($strModuleTest, $iThreadMax);
+                if (!defined($iThreadMax) || $iThreadMax == 1)
+                {
+                    BackRestTestBackup_Test($strModuleTest, 1);
+                }
+
+                if (!defined($iThreadMax) || $iThreadMax > 1)
+                {
+                    BackRestTestBackup_Test($strModuleTest, defined($iThreadMax) ? $iThreadMax : 4);
+                }
 
                 if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
                 {
@@ -292,7 +305,7 @@ eval
                         BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[$iVersionIdx],
                                                  $iModuleTestRun, $bDryRun, $bNoCleanup);
                         &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
-                        BackRestTestBackup_Test('full', $iThreadMax);
+                        BackRestTestBackup_Test('full', defined($iThreadMax) ? $iThreadMax : 4);
                     }
                 }
             }
@@ -311,7 +324,7 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('BackRest::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('BackRest::Common::Exception'))
     {
         syswrite(*STDOUT, $oMessage->trace());
         exit $oMessage->code();
