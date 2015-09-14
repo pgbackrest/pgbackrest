@@ -1,7 +1,12 @@
 # pgBackRest - Change Log
 
-## v0.85: DALLAS MILESTONE - UNDER DEVELOPMENT
+## v0.85: VIENNA MILESTONE - UNDER DEVELOPMENT
 __No Release Date Set__
+
+* 
+
+## v0.82: Refactoring, Command-line Help, and Minor Bug Fixes
+__Released September 14, 2015__
 
 * Fixed an issue where resumed compressed backups were not preserving existing files.
 
@@ -15,7 +20,7 @@ __No Release Date Set__
 
 * Fixed an issue where the `info` command was throwing an exception when the repository contained no stanzas.  _Reported by Stephen Frost_.
 
-* Fixed an issue where the PostgreSQL pg_stop_backup() NOTICEs were being output to stderr.  _Reported by Stephen Frost_.
+* Fixed an issue where the PostgreSQL `pg_stop_backup()` NOTICEs were being output to stderr.  _Reported by Stephen Frost_.
 
 * Renamed `recovery-setting` option and section to `recovery-option` to be more consistent with pgBackRest naming conventions.
 
