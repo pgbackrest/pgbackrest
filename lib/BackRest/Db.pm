@@ -597,7 +597,7 @@ sub backupStart
     # Get version and db path from the database
     my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();
 
-    # Error if they are not identical
+    # Error if the version from the control file and the configured db-path do not match the values obtained from the database
     if (!($fDbVersion == $fCompareDbVersion && $strDbPath eq $strCompareDbPath))
     {
         confess &log(ERROR, "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
@@ -612,18 +612,21 @@ sub backupStart
         $bStartFast = false;
     }
 
-    # Acquire the backup advisory lock
+    # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
+    # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
     {
         confess &log(ERROR, "unable to acquire backup lock\n" .
                             'HINT: is another backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
     }
 
-    # Test if a backup is already running when version >= 9.3
+    # If stop-auto is enabled check for a running backup
     if (optionGet(OPTION_STOP_AUTO))
     {
+        # Running backups can only be detected in PostgreSQL >= 9.3
         if ($self->{fDbVersion} >= 9.3)
         {
+            # If a backup is currently in progress emit a warning and then stop it
             if ($self->executeSqlOne('select pg_is_in_backup()'))
             {
                 &log(WARN, 'the cluster is already in backup mode but no backup process is running. pg_stop_backup() will be called' .
@@ -631,12 +634,15 @@ sub backupStart
                 $self->backupStop();
             }
         }
+        # Else emit a warning that the feature is not supported and continue.  If a backup is running then an error will be
+        # generated later on.
         else
         {
             &log(WARN, OPTION_STOP_AUTO . 'option is only available in PostgreSQL >= 9.3');
         }
     }
 
+    # Start the backup
     &log(INFO, "execute pg_start_backup() with label \"${strLabel}\": backup begins after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
@@ -671,6 +677,7 @@ sub backupStop
             OP_DB_BACKUP_STOP
         );
 
+    # Stop the backup
     &log(INFO, 'execute pg_stop_backup() and wait for all WAL segments to archive');
 
     my ($strTimestampDbStop, $strArchiveStop) =
