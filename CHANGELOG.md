@@ -3,7 +3,7 @@
 ## v0.85: VIENNA MILESTONE - UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.
 
 ## v0.82: Refactoring, Command-line Help, and Minor Bug Fixes
 __Released September 14, 2015__

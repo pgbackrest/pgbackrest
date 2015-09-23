@@ -187,13 +187,12 @@ sub fileNotInManifest
             next;
         }
 
+        # We'll always keep the base path
         if ($strName eq MANIFEST_KEY_BASE)
         {
-            if ($oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strName))
-            {
-                next;
-            }
+            next;
         }
+        # Keep the tablespace path if some tablespaces exist in the new manfest
         elsif ($strName eq MANIFEST_TABLESPACE)
         {
             my $bFound = false;
@@ -209,7 +208,8 @@ sub fileNotInManifest
 
             next if $bFound;
         }
-        else
+        # If there is a / in the name then check further, otherwise it's a temp file or some other garbage and should be deleted
+        elsif (index($strName, '/') != -1)
         {
             my $strBasePath = (split('/', $strName))[0];
             my $strPath = substr($strName, length($strBasePath) + 1);
@@ -217,6 +217,7 @@ sub fileNotInManifest
             # Create the section from the base path
             my $strSection = $strBasePath;
 
+            # Test to see if a tablespace exists in the new manifest
             if ($strSection eq 'tablespace')
             {
                 my $strTablespace = (split('/', $strPath))[0];
@@ -234,8 +235,10 @@ sub fileNotInManifest
                 $strPath = substr($strPath, length($strTablespace) + 1);
             }
 
+            # Get the file type (all links will be deleted since they are easy to recreate)
             my $cType = $oFileHash{name}{"${strName}"}{type};
 
+            # If a directory check if it exists in the new manifest
             if ($cType eq 'd')
             {
                 if ($oManifest->test("${strSection}:path", "${strPath}"))
@@ -274,6 +277,7 @@ sub fileNotInManifest
             }
         }
 
+        # Push the file/path/link to be deleted into the result array
         push @stryFile, $strName;
     }
 

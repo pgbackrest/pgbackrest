@@ -267,7 +267,8 @@ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPa
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/base, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/global, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/path-test, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
-DEBUG:     Backup->fileNotInManifest=>: stryFile = (base/PG_VERSION.gz, base/link-test)
+DEBUG:     Backup->fileNotInManifest=>: stryFile = (base/PG_VERSION.gz, base/link-test, file.tmp.gz)
+DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/file.tmp.gz
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/link-test
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz
 DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], strType = full

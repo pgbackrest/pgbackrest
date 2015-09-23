@@ -796,6 +796,9 @@ sub BackRestTestBackup_Test
             $oMungeManifest->remove('base:file', 'PG_VERSION', 'checksum');
             BackRestTestCommon_manifestSave("$strTmpPath/backup.manifest", $oMungeManifest, $bRemote);
 
+            # Create a temp file in backup temp root to be sure it's deleted correctly
+            BackRestTestCommon_Execute("touch ${strTmpPath}/file.tmp" . ($bCompress ? '.gz' : ''), $bRemote);
+
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                                 'resume', TEST_BACKUP_RESUME);
 
