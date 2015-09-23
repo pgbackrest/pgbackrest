@@ -1,31 +1,125 @@
 # pgBackRest - User Guide
 
-## Installation
+## Table of Contents
+1. [Installation](#installation)
+  * [Ubuntu 12.04/14.04 Setup](#ubuntu-12-14-setup)
+  * [CentOS 6 Setup](#centos-6-setup)
+  * [CentOS 7 Setup](#centos-7-setup)
+  * [Software Installation](#software-installation)
+  * [Regression Test Setup](#regression-test-setup)
+2. [Configuration](#configuration)
+  * [Examples](#configuration-examples)
+    * [Configuring Postgres for Archiving](#configuring-postgres-archiving)
+    * [Minimal Configuration](#minimal-configuration)
+    * [Simple Single Host Configuration](#simple-single-host-configuration)
+    * [Single Multiple Host Configuration](#simple-multiple-host-configuration)
+  * [Settings](#configuration-settings)
+    * [`command` section](#command-section)
+        * [`cmd-remote` key](#cmd-remote-key)
+    * [`log` section](#log-section)
+        * [`log-level-file` key](#log-level-file-key)
+        * [`log-level-console` key](#log-level-console-key)
+    * [`general` section](#configuration-general-section)
+        * [`buffer-size` key](#buffer-size-key)
+        * [`compress` key](#compress-key)
+        * [`compress-level` key](#compress-level-key)
+        * [`compress-level-network` key](#compress-level-network-key)
+        * [`db-timeout` key](#db-timeout-key)
+        * [`neutral-umask` key](#neutral-umask-key)
+        * [`repo-path` key](#repo-path-key)
+        * [`repo-remote-path` key](#repo-remote-path-key)
+        * [`thread-max` key](#thread-max-key)
+        * [`thread-timeout` key](#thread-timeout-key)
+    * [`backup` section](#backup-section)
+        * [`archive-check` key](#archive-check-key)
+        * [`archive-copy` key](#archive-copy-key)
+        * [`backup-host` key](#backup-host-key)
+        * [`backup-user` key](#backup-user-key)
+        * [`hardlink` key](#hardlink-key)
+        * [`manifest-save-threshold` key](#manifest-save-threshold-key)
+        * [`resume` key](#resume-key)
+        * [`start-fast` key](#start-fast-key)
+        * [`stop-auto` key](#stop-auto-key)
+    * [`archive` section](#archive-section)
+        * [`archive-async` key](#archive-async-key)
+        * [`archive-max-mb` key](#archive-max-mb-key)
+    * [`restore` section](#restore-section)
+        * [`tablespace` key](#tablespace-key)
+    * [`expire` section](#expire-section)
+        * [`retention-full` key](#retention-full-key)
+        * [`retention-diff` key](#retention-diff-key)
+        * [`retention-archive-type` key](#retention-archive-type-key)
+        * [`retention-archive` key](#retention-archive-key)
+    * [`stanza` section](#stanza-section)
+        * [`db-host` key](#db-host-key)
+        * [`db-user` key](#db-user-key)
+        * [`db-path` key](#db-path-key)
+        * [`db-port` key](#db-port-key)
+        * [`db-socket-path` key](#db-socket-path-key)
+2. [Commands](#commands)
+  * [General Options](#general-options)
+    * [`config` option](#config-option)
+    * [`stanza` option](#stanza-option)
+  * [Commands](#commands-inner)
+    * [`backup` command](#backup-command)
+        * [`type` option](#type-option)
+        * [`no-start-stop` option](#no-start-stop-option)
+        * [`force` option](#force-option)
+        * [Example: Full Backup](#example-full-backup)
+    * [`archive-push` command](#archive-push-command)
+        * [Example](#archive-push-command-example)
+    * [`archive-get` command](#archive-get-command)
+        * [Example](#archive-get-command-example)
+    * [`expire` command](#expire-command)
+        * [Example](#expire-command-example)
+    * [`restore` command](#restore-command)
+        * [`set` option](#set-option)
+        * [`delta` option](#delta-option)
+        * [`force` option](#force-option)
+        * [`type` option](#type-option)
+        * [`target` option](#target-option)
+        * [`target-exclusive` option](#target-exclusive-option)
+        * [`target-resume` option](#target-resume-option)
+        * [`target-timeline` option](#target-timeline-option)
+        * [`recovery-option` option](#recovery-option-option)
+        * [`tablespace-map` option](#tablespace-map-option)
+        * [Example: Restore Latest](#restore-latest-example)
+    * [`info` command](#info-command)
+        * [`output` option](#info-output-option)
+        * [Example: Information for a single stanzas](#info-single-stanza-example)
+        * [Example: Information for all stanzas](#info-all-stanza-example)
+    * [`help` command](#help-command)
+        * [Example: Help for the backup command](#help-backup-command-example)
+        * [Example: Help for backup command, --force option](#help-backup-command-force-example)
+    * [`version` command](#version-command)
+        * [Example: Get version](#get-version-example)
+
+## <a name="installation"></a>Installation
 
 pgBackRest is written entirely in Perl.  Some additional modules will need to be installed depending on the OS.
 
-### Ubuntu 12.04/14.04 Setup
+### <a name="ubuntu-12-14-setup"></a>Ubuntu 12.04/14.04 Setup
 
 * Install required Perl modules:
 ```
 apt-get install libdbd-pg-perl
 ```
 
-### CentOS 6 Setup
+### <a name="centos-6-setup"></a>CentOS 6 Setup
 
 * Install Perl and required modules:
 ```
 yum install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 ```
 
-### CentOS 7 Setup
+### <a name="centos-7-setup"></a>CentOS 7 Setup
 
 * Install Perl and required modules:
 ```
 yum install perl perl-IO-String perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
 ```
 
-### Software Installation
+### <a name="software-installation"></a>Software Installation
 
 pgBackRest can be installed by downloading the most recent release:
 
@@ -33,7 +127,7 @@ https://github.com/pgmasters/backrest/releases
 
 pgBackRest can be installed anywhere but it's best (though not required) to install it in the same location on all systems.
 
-### Regression Test Setup
+### <a name="regression-test-setup"></a>Regression Test Setup
 
 * Create the backrest user
 
@@ -65,15 +159,15 @@ If there are errors in this test then run full regression to help isolate proble
 ```
 Report regression test failures at https://github.com/pgmasters/backrest/issues.
 
-## Configuration
+## <a name="configuration"></a>Configuration
 
 pgBackRest can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is `/etc/pg_backrest.conf`.
 
 Each system where pgBackRest is installed should have a repository owned by the user that will be running pgBackRest on that system.  Normally this will be the `postgres` user on a database server and the `backrest` user on a backup server.  See [repo-path](USERGUIDE.md#repo-path-key) for more information on how repositories are used.
 
-### Examples
+### <a name="configuration-examples"></a>Examples
 
-#### Confguring Postgres for Archiving
+#### <a name="configuring-postgres-archiving"></a>Confguring Postgres for Archiving
 
 Modify the following settings in `postgresql.conf`:
 ```
@@ -83,7 +177,7 @@ archive_command = '/path/to/backrest/bin/pg_backrest --stanza=db archive-push %p
 ```
 Replace the path with the actual location where pgBackRest was installed.  The stanza parameter should be changed to the actual stanza name for your database cluster.
 
-#### Minimal Configuration
+#### <a name="minimal-configuration"></a>Minimal Configuration
 
 The absolute minimum required to run pgBackRest (if all defaults are accepted) is the database cluster path.
 
@@ -94,7 +188,7 @@ db-path=/data/db
 ```
 The `db-path` option could also be provided on the command line, but it's best to use a configuration file as options tend to pile up quickly.
 
-#### Simple Single Host Configuration
+#### <a name="simple-single-host-configuration"></a>Simple Single Host Configuration
 
 This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.  A number of additional options are set:
 
@@ -123,7 +217,7 @@ db-path=/data/db
 db-port=5555
 ```
 
-#### Simple Multiple Host Configuration
+#### <a name="simple-multiple-host-configuration"></a>Simple Multiple Host Configuration
 
 This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have pg_backrest in the same path on both servers.
 
@@ -154,13 +248,13 @@ db-path=/data/db
 db-user=postgres
 ```
 
-### Setttings
+### <a name="configuration-settings"></a>Setttings
 
-#### `command` section
+#### <a name="command-section"></a>`command` section
 
 The `command` section defines the location of external commands that are used by pgBackRest.
 
-##### `cmd-remote` key
+##### <a name="cmd-remote-key"></a>`cmd-remote` key
 
 pgBackRest exe path on the remote host.
 
@@ -170,11 +264,11 @@ default: same as local
 example: cmd-remote=/usr/lib/backrest/bin/pg_backrest_remote.pl
 ```
 
-#### `log` section
+#### <a name="log-section"></a>`log` section
 
 The `log` section defines logging-related settings.
 
-##### `log-level-file` key
+##### <a name="log-level-file-key"></a>`log-level-file` key
 
 Level for file logging.
 
@@ -192,7 +286,7 @@ default: info
 example: log-level-file=debug
 ```
 
-##### `log-level-console` key
+##### <a name="log-level-console-key"></a>`log-level-console` key
 
 Level for console logging.
 
@@ -210,11 +304,11 @@ default: warn
 example: log-level-console=error
 ```
 
-#### `general` section
+#### <a name="configuration-general-section"></a>`general` section
 
 The `general` section defines settings that are shared between multiple operations.
 
-##### `buffer-size` key
+##### <a name="buffer-size-key"></a>`buffer-size` key
 
 Buffer size for file operations.
 
@@ -225,7 +319,7 @@ allow: 16384 - 8388608
 example: buffer-size=32768
 ```
 
-##### `compress` key
+##### <a name="compress-key"></a>`compress` key
 
 Use file compression.
 
@@ -235,7 +329,7 @@ default: y
 example: compress=n
 ```
 
-##### `compress-level` key
+##### <a name="compress-level-key"></a>`compress-level` key
 
 Compression level for stored files.
 
@@ -246,7 +340,7 @@ allow: 0-9
 example: compress-level=9
 ```
 
-##### `compress-level-network` key
+##### <a name="compress-level-network-key"></a>`compress-level-network` key
 
 Compression level for network transfer when `compress=n`.
 
@@ -257,17 +351,17 @@ allow: 0-9
 example: compress-level-network=1
 ```
 
-##### `db-timeout` key
+##### <a name="db-timeout-key"></a>`db-timeout` key
 
 Database query timeout.
 
-Sets the timeout for queries against the database.  This includes the `pg_start_backup()` and `pg_stop_backup()` functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set `startfast=y` and you know that the database cluster will not generate many WAL segments during the backup).
+Sets the timeout for queries against the database.  This includes the `pg_start_backup()` and `pg_stop_backup()` functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will rme=""></a>eturn quickly (i.e. if you have set `startfast=y` and you know that the database cluster will not generate many WAL segments during the backup).
 ```
 default: 1800
 example: db-timeout=600
 ```
 
-##### `neutral-umask` key
+##### <a name="neutral-umask-key"></a>`neutral-umask` key
 
 Use a neutral umask.
 
@@ -279,7 +373,7 @@ default: y
 example: neutral-umask=n
 ```
 
-##### `repo-path` key
+##### <a name="repo-path-key"></a>`repo-path` key
 
 Repository path where WAL segments, backups, logs, etc are stored.
 
@@ -296,7 +390,7 @@ default: /var/lib/backup
 example: repo-path=/data/db/backrest
 ```
 
-##### `repo-remote-path` key
+##### <a name="repo-remote-path-key"></a>`repo-remote-path` key
 
 Remote repository path where WAL segments, backups, logs, etc are stored.
 
@@ -305,7 +399,7 @@ The remote repository is relative to the current installation of pgBackRest.  On
 example: repo-remote-path=/backup/backrest
 ```
 
-##### `thread-max` key
+##### <a name="thread-max-key"></a>`thread-max` key
 
 Max threads to use in process.
 
@@ -315,7 +409,7 @@ default: 1
 example: thread-max=4
 ```
 
-##### `thread-timeout` key
+##### <a name="thread-timeout-key"></a>`thread-timeout` key
 
 Max time a thread can run.
 
@@ -324,11 +418,11 @@ This limits the amount of time (in seconds) that a thread might be stuck due to 
 example: thread-timeout=3600
 ```
 
-#### `backup` section
+#### <a name="backup-section"></a>`backup` section
 
 The `backup` section defines settings related to backup.
 
-##### `archive-check` key
+##### <a name="archive-check-key"></a>`archive-check` key
 
 Check that WAL segments are present in the archive before backup completes.
 
@@ -338,7 +432,7 @@ default: y
 example: archive-check=n
 ```
 
-##### `archive-copy` key
+##### <a name="archive-copy-key"></a>`archive-copy` key
 
 Copy WAL segments needed for consistency to the backup.
 
@@ -350,7 +444,7 @@ default: n
 example: archive-copy=y
 ```
 
-##### `backup-host` key
+##### <a name="backup-host-key"></a>`backup-host` key
 
 Backup host when operating remotely via SSH.
 
@@ -361,7 +455,7 @@ When backing up to a locally mounted network filesystem this setting is not requ
 example: backup-host=backup.domain.com
 ```
 
-##### `backup-user` key
+##### <a name="backup-user-key"></a>`backup-user` key
 
 Backup host user when `backup-host` is set.
 
@@ -370,7 +464,7 @@ Defines the user that will be used for operations on the backup server.  Prefera
 example: backup-user=backrest
 ```
 
-##### `hardlink` key
+##### <a name="hardlink-key"></a>`hardlink` key
 
 Hardlink files between backups.
 
@@ -380,7 +474,7 @@ default: n
 example: hardlink=y
 ```
 
-##### `manifest-save-threshold` key
+##### <a name="manifest-save-threshold-key"></a>`manifest-save-threshold` key
 
 Manifest save threshold during backup.
 
@@ -390,7 +484,7 @@ default: 1073741824
 example: manifest-save-threshold=5368709120
 ```
 
-##### `resume` key
+##### <a name="resume-key"></a>`resume` key
 
 Allow resume of failed backup.
 
@@ -400,7 +494,7 @@ default: y
 example: resume=false
 ```
 
-##### `start-fast` key
+##### <a name="start-fast-key"></a>`start-fast` key
 
 Force a checkpoint to start backup quickly.
 
@@ -412,7 +506,7 @@ default: n
 example: start-fast=y
 ```
 
-##### `stop-auto` key
+##### <a name="stop-auto-key"></a>`stop-auto` key
 
 Stop prior failed backup on new backup.
 
@@ -426,11 +520,11 @@ default: n
 example: stop-auto=y
 ```
 
-#### `archive` section
+#### <a name="archive-section"></a>`archive` section
 
 The `archive` section defines parameters when doing async archiving.  This means that the archive files will be stored locally, then a background process will pick them and move them to the backup.
 
-##### `archive-async` key
+##### <a name="archive-async-key"></a>`archive-async` key
 
 Archive WAL segments asynchronously.
 
@@ -440,7 +534,7 @@ default: n
 example: archive-async=y
 ```
 
-##### `archive-max-mb` key
+##### <a name="archive-max-mb-key"></a>`archive-max-mb` key
 
 Limit size of the local asynchronous archive queue when `archive-async=y`.
 
@@ -459,11 +553,11 @@ To start normal archiving again you'll need to remove the stop file which will b
 example: archive-max-mb=1024
 ```
 
-#### `restore` section
+#### <a name="restore-section"></a>`restore` section
 
 The `restore` section defines settings used for restoring backups.
 
-##### `tablespace` key
+##### <a name="tablespace-key"></a>`tablespace` key
 
 Restore tablespaces into original or remapped paths.
 
@@ -473,11 +567,11 @@ default: y
 example: tablespace=n
 ```
 
-#### `expire` section
+#### <a name="expire-section"></a>`expire` section
 
 The `expire` section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.
 
-##### `retention-full` key
+##### <a name="retention-full-key"></a>`retention-full` key
 
 Number of full backups to retain.
 
@@ -486,7 +580,7 @@ When a full backup expires, all differential and incremental backups associated 
 example: retention-full=2
 ```
 
-##### `retention-diff` key
+##### <a name="retention-diff-key"></a>`retention-diff` key
 
 Number of differential backups to retain.
 
@@ -495,7 +589,7 @@ When a differential backup expires, all incremental backups associated with the 
 example: retention-diff=3
 ```
 
-##### `retention-archive-type` key
+##### <a name="retention-archive-type-key"></a>`retention-archive-type` key
 
 Backup type for WAL retention.
 
@@ -507,7 +601,7 @@ default: full
 example: retention-archive-type=diff
 ```
 
-##### `retention-archive` key
+##### <a name="retention-archive-key"></a>`retention-archive` key
 
 Number of backups worth of WAL to retain.
 
@@ -518,11 +612,11 @@ For example, if `retention-archive=2` and `retention-full=4`, then any backups o
 example: retention-archive=2
 ```
 
-#### `stanza` section
+#### <a name="stanza-section"></a>`stanza` section
 
 A stanza defines the backup configuration for a specific PostgreSQL database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
 
-##### `db-host` key
+##### <a name="db-host-key"></a>`db-host` key
 
 Cluster host for operating remotely via SSH.
 
@@ -531,7 +625,7 @@ Used for backups where the database cluster host is different from the backup ho
 example: db-host=db.domain.com
 ```
 
-##### `db-user` key
+##### <a name="db-user-key"></a>`db-user` key
 
 Cluster host logon user when `db-host` is set.
 
@@ -541,7 +635,7 @@ default: postgres
 example: db-user=db_owner
 ```
 
-##### `db-path` key
+##### <a name="db-path-key"></a>`db-path` key
 
 Cluster data directory.
 
@@ -553,7 +647,7 @@ required: y
 example: db-path=/data/db
 ```
 
-##### `db-port` key
+##### <a name="db-port-key"></a>`db-port` key
 
 Cluster port.
 
@@ -563,7 +657,7 @@ default: 5432
 example: db-port=6543
 ```
 
-##### `db-socket-path` key
+##### <a name="db-socket-path-key"></a>`db-socket-path` key
 
 cluster unix socket path.
 
@@ -572,13 +666,13 @@ The unix socket directory that was specified when PostgreSQL was started.  pgBac
 example: db-socket-path=/var/run/postgresql
 ```
 
-## Commands
+## <a name="commands"></a>Commands
 
-### General Options
+### <a name="general-options"></a>General Options
 
 These options are either global or used by all commands.
 
-#### `config` option
+#### <a name="config-option"></a>`config` option
 
 pgBackRest configuration file.
 
@@ -588,7 +682,7 @@ default: /etc/pg_backrest.conf
 example: config=/var/lib/backrest/pg_backrest.conf
 ```
 
-#### `stanza` option
+#### <a name="stanza-option"></a>`stanza` option
 
 Command stanza.
 
@@ -600,15 +694,15 @@ required: y
 example: stanza=main
 ```
 
-### Commands
+### <a name="commands-inner"></a>Commands
 
-#### `backup` command
+#### <a name="backup-command"></a>`backup` command
 
 Backup a database cluster.
 
 pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.
 
-##### `type` option
+##### <a name="type-option"></a>`type` option
 
 Backup type.
 
@@ -623,7 +717,7 @@ default: incr
 example: --type=full
 ```
 
-##### `no-start-stop` option
+##### <a name="no-start-stop-option"></a>`no-start-stop` option
 
 Perform cold backup.
 
@@ -634,7 +728,7 @@ The purpose of this option is to allow cold backups.  The `pg_xlog` directory is
 default: n
 ```
 
-##### `force` option
+##### <a name="force-option"></a>`force` option
 
 Force a cold backup.
 
@@ -645,59 +739,59 @@ There are some scenarios where a backup might still be desirable under these con
 default: n
 ```
 
-##### Example: Full Backup
+##### <a name="example-full-backup"></a>Example: Full Backup
 
 ```
 pg_backrest --stanza=db --type=full backup
 ```
 Run a `full` backup on the `db` stanza.  `--type` can also be set to `incr` or `diff` for incremental or differential backups.  However, if no `full` backup exists then a `full` backup will be forced even if `incr` or `diff` is requested.
 
-#### `archive-push` command
+#### <a name="archive-push-command"></a>`archive-push` command
 
 Push a WAL segment to the archive.
 
 The WAL segment may be pushed immediately to the archive or stored locally depending on the value of `archive-async`
 
-##### Example
+##### <a name="archive-push-command-example"></a>Example
 
 ```
 pg_backrest --stanza=db archive-push %p
 ```
 Accepts a WAL segment from PostgreSQL and archives it in the repository defined by `repo-path`.  `%p` is how PostgreSQL specifies the location of the WAL segment to be archived.
 
-#### `archive-get` command
+#### <a name="archive-get-command"></a>`archive-get` command
 
 Get a WAL segment from the archive.
 
 WAL segments are required for restoring a PostgreSQL cluster or maintaining a replica.
 
-##### Example
+##### <a name="archive-get-command-example"></a>Example
 
 ```
 pg_backrest --stanza=db archive-get %f %p
 ```
 Retrieves a WAL segment from the repository.  This command is used in `recovery.conf` to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  `%f` is how PostgreSQL specifies the WAL segment it needs and `%p` is the location where it should be copied.
 
-#### `expire` command
+#### <a name="expire-command"></a>`expire` command
 
 Expire backups that exceed retention.
 
 pgBackRest does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, pgBackRest will keep two full backups no matter whether they occur two hours or two weeks apart.
 
-##### Example
+##### <a name="expire-command-example"></a>Example
 
 ```
 pg_backrest --stanza=db expire
 ```
 Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.
 
-#### `restore` command
+#### <a name="restore-command"></a>`restore` command
 
 Restore a database cluster.
 
 This command is generally run manually, but there are instances where it might be automated.
 
-##### `set` option
+##### <a name="set-option"></a>`set` option
 
 Backup set to restore.
 
@@ -707,7 +801,7 @@ default: latest
 example: --set=20150131-153358F_20150131-153401I
 ```
 
-##### `delta` option
+##### <a name="delta-option"></a>`delta` option
 
 Restore using delta.
 
@@ -716,7 +810,7 @@ By default the PostgreSQL data and tablespace directories are expected to be pre
 default: n
 ```
 
-##### `force` option
+##### <a name="force-option"></a>`force` option
 
 Force a restore.
 
@@ -725,7 +819,7 @@ By itself this option forces the PostgreSQL data and tablespace paths to be comp
 default: n
 ```
 
-##### `type` option
+##### <a name="type-option"></a>`type` option
 
 Recovery type.
 
@@ -743,7 +837,7 @@ default: default
 example: --type=xid
 ```
 
-##### `target` option
+##### <a name="target-option"></a>`target` option
 
 Recovery target.
 
@@ -753,7 +847,7 @@ required: y
 example: "--target=2015-01-30 14:15:11 EST"
 ```
 
-##### `target-exclusive` option
+##### <a name="target-exclusive-option"></a>`target-exclusive` option
 
 Stop just before the recovery target is reached.
 
@@ -762,7 +856,7 @@ Defines whether recovery to the target would be exclusive (the default is inclus
 default: n
 ```
 
-##### `target-resume` option
+##### <a name="target-resume-option"></a>`target-resume` option
 
 Resume when recovery target is reached.
 
@@ -771,7 +865,7 @@ Specifies whether recovery should resume when the recovery target is reached.  S
 default: n
 ```
 
-##### `target-timeline` option
+##### <a name="target-timeline-option"></a>`target-timeline` option
 
 Recover along a timeline.
 
@@ -780,7 +874,7 @@ See `recovery_target_timeline` in the PostgreSQL docs for more information.
 example: --target-timeline=3
 ```
 
-##### `recovery-option` option
+##### <a name="recovery-option-option"></a>`recovery-option` option
 
 Set an option in `recovery.conf`.
 
@@ -799,7 +893,7 @@ Since pgBackRest does not start PostgreSQL after writing the `recovery.conf` fil
 example: --recovery-option primary_conninfo=db.mydomain.com
 ```
 
-##### `tablespace-map` option
+##### <a name="tablespace-map-option"></a>`tablespace-map` option
 
 Modify a tablespace path.
 
@@ -810,14 +904,14 @@ Since PostgreSQL 9.2 tablespace locations are not stored in pg_tablespace so mov
 example: --tablespace-map ts_01=/db/ts_01
 ```
 
-##### Example: Restore Latest
+##### <a name="restore-latest-example"></a>Example: Restore Latest
 
 ```
 pg_backrest --stanza=db --type=name --target=release restore
 ```
 Restores the latest database cluster backup and then recovers to the `release` restore point.
 
-#### `info` command
+#### <a name="info-command"></a>`info` command
 
 Retrieve information about backups.
 
@@ -825,7 +919,7 @@ The `info` command operates on a single stanza or all stanzas.  Text output is t
 
 For machine-readable output use `--output=json`.  The JSON output contains far more information than the text output, however **this feature is currently experimental so the format may change between versions**.
 
-##### `output` option
+##### <a name="info-output-option"></a>`output` option
 
 Output format.
 
@@ -839,7 +933,7 @@ default: text
 example: --output=json
 ```
 
-##### Example: Information for a single stanza
+##### <a name="info-single-stanza-example"></a>Example: Information for a single stanza
 
 ```
 pg_backrest --stanza=db --output=json info
@@ -847,7 +941,7 @@ pg_backrest --stanza=db --output=json info
 
 Get information about backups in the `db` stanza.
 
-##### Example: Information for all stanzas
+##### <a name="info-all-stanza-example"></a>Example: Information for all stanzas
 
 ```
 pg_backrest --output=json info
@@ -855,13 +949,13 @@ pg_backrest --output=json info
 
 Get information about backups for all stanzas in the repository.
 
-#### `help` command
+#### <a name="help-command"></a>`help` command
 
 Get help.
 
 Three levels of help are provided.  If no command is specified then general help will be displayed.  If a command is specified then a full description of the command will be displayed along with a list of valid options.  If an option is specified in addition to a command then the a full description of the option as it applies to the command will be displayed.
 
-##### Example: Help for the backup command
+##### <a name="help-backup-command-example"></a>Example: Help for the backup command
 
 ```
 pg_backrest help backup
@@ -869,7 +963,7 @@ pg_backrest help backup
 
 Get help for the backup command.
 
-##### Example: Help for backup command, --force option
+##### <a name="help-backup-command-force-example"></a>Example: Help for backup command, --force option
 
 ```
 pg_backrest help backup force
@@ -877,13 +971,13 @@ pg_backrest help backup force
 
 Get help for the force option of the backup command.
 
-#### `version` command
+#### <a name="version-command"></a>`version` command
 
 Get version.
 
 Displays installed pgBackRest version.
 
-##### Example: Get version
+##### <a name="get-version-example"></a>Example: Get version
 
 ```
 pg_backrest version
