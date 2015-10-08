@@ -6,7 +6,15 @@
 	</intro>
 
 	<changelog>
-		<changelog-release date="XXXX-XX-XX" version="0.85" title="VIENNA MILESTONE - UNDER DEVELOPMENT">
+		<changelog-release date="XXXX-XX-XX" version="0.87" title="VIENNA MILESTONE - UNDER DEVELOPMENT">
+			<release-feature-bullet-list>
+				<release-feature>
+					<text></text>
+				</release-feature>
+			</release-feature-bullet-list>
+		</changelog-release>
+
+		<changelog-release date="2015-10-08" version="0.85" title="Start/Stop Commands and Minor Bug Fixes">
 			<release-feature-bullet-list>
 				<release-feature>
 					<text>Added new feature to allow all <backrest/> operations to be stopped or started using the <cmd>stop</cmd> and <cmd>start</cmd> commands.  This prevents any <backrest/> processes from running on a system where <postgres/> is shutdown or the system needs to be quiesced for some reason.</text>

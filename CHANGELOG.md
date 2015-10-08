@@ -1,7 +1,12 @@
 # pgBackRest - Change Log
 
-## v0.85: VIENNA MILESTONE - UNDER DEVELOPMENT
+## v0.87: VIENNA MILESTONE - UNDER DEVELOPMENT
 __No Release Date Set__
+
+* 
+
+## v0.85: Start/Stop Commands and Minor Bug Fixes
+__Released October 8, 2015__
 
 * Added new feature to allow all pgBackRest operations to be stopped or started using the `stop` and `start` commands.  This prevents any pgBackRest processes from running on a system where PostgreSQL is shutdown or the system needs to be quiesced for some reason.
 
