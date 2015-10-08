@@ -34,8 +34,9 @@ use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;
 
 use BackRestTest::BackupCommonTest;
-use BackRestTest::ExpireCommonTest;
+use BackRestTest::Common::ExecuteTest;
 use BackRestTest::CommonTest;
+use BackRestTest::ExpireCommonTest;
 
 ####################################################################################################################################
 # BackRestTestBackup_Test
@@ -66,6 +67,7 @@ sub BackRestTestBackup_Test
     my $strThisTest;
     my $bCreate;
     my $strStanza = BackRestTestCommon_StanzaGet();
+    my $oLogTest;
 
     my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
     my $iArchiveMax = 3;
@@ -85,19 +87,21 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     my $oRemote = new BackRest::Protocol::RemoteMaster
     (
-        BackRestTestCommon_CommandRemoteFullGet(),  # Command
+        BackRestTestCommon_CommandRemoteFullGet(),  # Remote command
         OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
         $strHost,                                   # Host
-        $strUserBackRest                            # User
+        $strUserBackRest,                           # User
+        PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
     );
 
     my $oLocal = new BackRest::Protocol::Common
     (
-        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK   # Compress network level
+        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
+        PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -124,7 +128,8 @@ sub BackRestTestBackup_Test
                                             "rmt ${bRemote}, cmp ${bCompress}, " .
                                             "arc_async ${bArchiveAsync}",
                                             $iThreadMax == 1 ? $strModule : undef,
-                                            $iThreadMax == 1 ? $strThisTest: undef)) {next}
+                                            $iThreadMax == 1 ? $strThisTest: undef,
+                                            \$oLogTest)) {next}
 
                 # Create the file object
                 if ($bCreate)
@@ -142,8 +147,9 @@ sub BackRestTestBackup_Test
 
                 # Create the test directory
                 BackRestTestBackup_Create($bRemote, false);
+                BackRestTestBackup_Init($bRemote, $oFile, true, $oLogTest);
 
-                BackRestTestCommon_ConfigCreate('db',
+                BackRestTestCommon_ConfigCreate(DB,
                                                 ($bRemote ? BACKUP : undef),
                                                 $bCompress,
                                                 undef,       # checksum
@@ -151,6 +157,9 @@ sub BackRestTestBackup_Test
                                                 undef,       # thread-max
                                                 $bArchiveAsync,
                                                 undef);
+
+                BackRestTestCommon_ConfigCreate(BACKUP,
+                                                ($bRemote ? DB : undef));
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --no-fork --stanza=db archive-push';
@@ -186,7 +195,7 @@ sub BackRestTestBackup_Test
                                      undef, undef, undef,                   # Unused params
                                      true);                                 # Create path if it does not exist
 
-                        BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+                        executeTest($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
 
                         if ($iArchive == $iBackup)
                         {
@@ -203,8 +212,8 @@ sub BackRestTestBackup_Test
 
                             &log(INFO, '        test db version mismatch error');
 
-                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
-                                                       ERROR_ARCHIVE_MISMATCH);
+                            executeTest($strCommand . " ${strSourceFile}",
+                                        {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
                             # Break the system id
                             $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = $strDbVersion;
@@ -213,17 +222,48 @@ sub BackRestTestBackup_Test
 
                             &log(INFO, '        test db system-id mismatch error');
 
-                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
-                                                       ERROR_ARCHIVE_MISMATCH);
+                            executeTest($strCommand . " ${strSourceFile}",
+                                        {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
                             # Move settings back to original
                             $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
                             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
+                            # Fail because the process was killed
+                            if ($iBackup == 1 && !$bCompress)
+                            {
+                                &log(INFO, '        test stop');
+
+                                if ($bArchiveAsync)
+                                {
+                                    my $oExecArchive = new BackRestTest::Common::ExecuteTest(
+                                        $strCommand . ' --test --test-delay=5 --test-point=' . lc(TEST_ARCHIVE_PUSH_ASYNC_START) .
+                                        "=y ${strSourceFile}",
+                                        {oLogTest => $oLogTest, iExpectedExitStatus => ERROR_TERM});
+                                    $oExecArchive->begin();
+                                    $oExecArchive->end(TEST_ARCHIVE_PUSH_ASYNC_START);
+
+                                    BackRestTestBackup_Stop(undef, undef, true);
+
+                                    $oExecArchive->end();
+
+                                }
+                                else
+                                {
+                                    BackRestTestBackup_Stop($strStanza);
+                                }
+
+                                executeTest($strCommand . " ${strSourceFile}",
+                                            {oLogTest => $oLogTest, iExpectedExitStatus => ERROR_STOP});
+
+
+                                BackRestTestBackup_Start($bArchiveAsync ? undef : $strStanza);
+                            }
+
                             # Should succeed because checksum is the same
                             &log(INFO, '        test archive duplicate ok');
 
-                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}");
+                            executeTest($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
 
                             # Now it should break on archive duplication (because checksum is different
                             &log(INFO, '        test archive duplicate error');
@@ -235,8 +275,8 @@ sub BackRestTestBackup_Test
                                          undef, undef, undef,                    # Unused params
                                          true);                                  # Create path if it does not exist
 
-                            BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
-                                                       ERROR_ARCHIVE_DUPLICATE);
+                            executeTest($strCommand . " ${strSourceFile}",
+                                        {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
 
                             if ($bArchiveAsync)
                             {
@@ -272,10 +312,13 @@ sub BackRestTestBackup_Test
                         }
                     }
 
-                    # !!! Need to put in tests for .backup files here
+                    # Might be nice to add tests for .backup files here (but this is already tested in full backup)
                 }
 
-                BackRestTestCommon_TestLogAppendFile($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
+                if (defined($oLogTest))
+                {
+                    $oLogTest->supplementalAdd($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
+                }
             }
             }
 
@@ -283,7 +326,7 @@ sub BackRestTestBackup_Test
             $bCreate = true;
         }
 
-        if (BackRestTestCommon_Cleanup())
+        if (BackRestTestCommon_Cleanup(\$oLogTest))
         {
             &log(INFO, 'cleanup');
             BackRestTestBackup_Drop(true);
@@ -314,7 +357,8 @@ sub BackRestTestBackup_Test
                                             "rmt ${bRemote}, cmp ${bCompress}" .
                                             ', error ' . ($iError ? 'connect' : 'version'),
                                             $iThreadMax == 1 ? $strModule : undef,
-                                            $iThreadMax == 1 ? $strThisTest: undef)) {next}
+                                            $iThreadMax == 1 ? $strThisTest: undef,
+                                            \$oLogTest)) {next}
 
                 # Create the file object
                 if ($bCreate)
@@ -333,7 +377,7 @@ sub BackRestTestBackup_Test
                 # Create the test directory
                 BackRestTestBackup_Create($bRemote, false);
 
-                BackRestTestCommon_ConfigCreate('db',
+                BackRestTestCommon_ConfigCreate(DB,
                                                 ($bRemote ? BACKUP : undef),
                                                 $bCompress,
                                                 undef,      # checksum
@@ -342,9 +386,13 @@ sub BackRestTestBackup_Test
                                                 true,       # archive-async
                                                 undef);
 
+                BackRestTestCommon_ConfigCreate(BACKUP,
+                                                ($bRemote ? DB : undef));
+
                 # Helper function to push archive logs
                 sub archivePush
                 {
+                    my $oLogTest = shift;
                     my $oFile = shift;
                     my $strXlogPath = shift;
                     my $strArchiveTestFile = shift;
@@ -365,12 +413,12 @@ sub BackRestTestBackup_Test
                                      (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ?
                                       "  --backup-host=bogus" : '');
 
-                    BackRestTestCommon_Execute($strCommand . " ${strSourceFile}", undef, undef, undef,
-                                               $iExpectedError);
+                    executeTest($strCommand . " ${strSourceFile}",
+                                {iExpectedExitStatus => $iExpectedError, oLogTest => $oLogTest});
                 }
 
                 # Push a WAL segment
-                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 1);
+                archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 1);
 
                 # load the archive info file so it can be munged for testing
                 my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
@@ -387,14 +435,14 @@ sub BackRestTestBackup_Test
                 }
 
                 # Push two more segments with errors to exceed archive-max-mb
-                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 2,
+                archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 2,
                             $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
 
-                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 3,
+                archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 3,
                             $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
 
                 # Now this segment will get dropped
-                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 4);
+                archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 4);
 
                 # Fix the database version
                 if ($iError == 0)
@@ -411,15 +459,15 @@ sub BackRestTestBackup_Test
                     or die "unable to remove stop file ${strStopFile}";
 
                 # Push two more segments - only #4 should be missing from the archive at the end
-                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 5);
-                archivePush($oFile, $strXlogPath, $strArchiveTestFile, 6);
+                archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 5);
+                archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 6);
             }
             }
 
             $bCreate = true;
         }
 
-        if (BackRestTestCommon_Cleanup())
+        if (BackRestTestCommon_Cleanup(\$oLogTest))
         {
             &log(INFO, 'cleanup');
             BackRestTestBackup_Drop(true);
@@ -449,7 +497,8 @@ sub BackRestTestBackup_Test
                 if (!BackRestTestCommon_Run(++$iRun,
                                             "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}",
                                             $iThreadMax == 1 ? $strModule : undef,
-                                            $iThreadMax == 1 ? $strThisTest: undef)) {next}
+                                            $iThreadMax == 1 ? $strThisTest: undef,
+                                            \$oLogTest)) {next}
 
                 # Create the test directory
                 if ($bCreate)
@@ -464,6 +513,13 @@ sub BackRestTestBackup_Test
                     ))->clone();
 
                     BackRestTestBackup_Create($bRemote, false);
+                    BackRestTestBackup_Init($bRemote, $oFile, true, $oLogTest);
+
+                    BackRestTestCommon_ConfigCreate(DB,
+                                                    ($bRemote ? BACKUP : undef));
+
+                    BackRestTestCommon_ConfigCreate(BACKUP,
+                                                    ($bRemote ? DB : undef));
 
                     # Create the db/common/pg_xlog directory
                     BackRestTestCommon_PathCreate($strXlogPath);
@@ -484,22 +540,29 @@ sub BackRestTestBackup_Test
                                  '/pg_backrest.conf --stanza=db archive-get';
 
 
-                BackRestTestCommon_Execute($strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
-                                           undef, undef, undef, ERROR_FILE_MISSING);
+                executeTest($strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
+                            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $oLogTest});
 
                 # Create the archive info file
                 if ($bRemote)
                 {
-                    BackRestTestCommon_Execute("chmod g+r,g+x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+                    executeTest("chmod g+r,g+x " . BackRestTestCommon_RepoPathGet(),
+                                {bRemote => true});
                 }
 
-                BackRestTestCommon_Execute('mkdir -p -m 770 ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE), $bRemote);
+                executeTest('mkdir -p -m 770 ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE),
+                            {bRemote => $bRemote});
                 (new BackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check('9.3', 1234567890123456789);
-                BackRestTestCommon_TestLogAppendFile($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info', $bRemote);
+
+                if (defined($oLogTest))
+                {
+                    $oLogTest->supplementalAdd($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info');
+                }
 
                 if ($bRemote)
                 {
-                    BackRestTestCommon_Execute("chmod g-r,g-x " . BackRestTestCommon_RepoPathGet(), $bRemote);
+                    executeTest("chmod g-r,g-x " . BackRestTestCommon_RepoPathGet(),
+                                {bRemote => true});
                 }
 
                 if ($bExists)
@@ -536,7 +599,7 @@ sub BackRestTestBackup_Test
 
                         my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
 
-                        BackRestTestCommon_Execute($strCommand . " ${strArchiveFile} ${strDestinationFile}");
+                        executeTest($strCommand . " ${strArchiveFile} ${strDestinationFile}", {oLogTest => $oLogTest});
 
                         # Check that the destination file exists
                         if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
@@ -554,8 +617,15 @@ sub BackRestTestBackup_Test
                 }
                 else
                 {
-                    BackRestTestCommon_Execute($strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
-                                               undef, undef, undef, 1);
+                    BackRestTestBackup_Stop();
+
+                    executeTest($strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
+                                {iExpectedExitStatus => ERROR_STOP, oLogTest => $oLogTest});
+
+                    BackRestTestBackup_Start();
+
+                    executeTest($strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
+                                {iExpectedExitStatus => 1, oLogTest => $oLogTest});
                 }
 
                 $bCreate = true;
@@ -563,7 +633,7 @@ sub BackRestTestBackup_Test
             }
         }
 
-        if (BackRestTestCommon_Cleanup())
+        if (BackRestTestCommon_Cleanup(\$oLogTest))
         {
             &log(INFO, 'cleanup');
             BackRestTestBackup_Drop(true);
@@ -585,7 +655,8 @@ sub BackRestTestBackup_Test
         if (BackRestTestCommon_Run(++$iRun,
                                     "local",
                                     $iThreadMax == 1 ? $strModule : undef,
-                                    $iThreadMax == 1 ? $strThisTest: undef))
+                                    $iThreadMax == 1 ? $strThisTest: undef,
+                                    \$oLogTest))
         {
             # Create the file object
             $oFile = (BackRest::File->new
@@ -611,7 +682,7 @@ sub BackRestTestBackup_Test
                                             undef);         # compress-async
 
             # Create the test object
-            my $oExpireTest = new BackRestTest::ExpireCommonTest($oFile);
+            my $oExpireTest = new BackRestTest::ExpireCommonTest($oFile, $oLogTest);
 
             $oExpireTest->stanzaCreate($strStanza, '9.2');
             use constant SECONDS_PER_DAY => 86400;
@@ -659,7 +730,7 @@ sub BackRestTestBackup_Test
             $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_INCR, 1, $strDescription);
 
             # Cleanup
-            if (BackRestTestCommon_Cleanup())
+            if (BackRestTestCommon_Cleanup(\$oLogTest))
             {
                 &log(INFO, 'cleanup');
                 BackRestTestBackup_Drop(true);
@@ -690,7 +761,12 @@ sub BackRestTestBackup_Test
             if (!BackRestTestCommon_Run(++$iRun,
                                         "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardlink}",
                                         $iThreadMax == 1 ? $strModule : undef,
-                                        $iThreadMax == 1 ? $strThisTest: undef)) {next}
+                                        $iThreadMax == 1 ? $strThisTest: undef,
+                                        \$oLogTest)) {next}
+
+            # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
+            # that options such as compression and hardlinks are disabled
+            my $bNeutralTest = !$bCompress && !$bHardlink;
 
             # Get base time
             my $lTime = time() - 100000;
@@ -726,6 +802,8 @@ sub BackRestTestBackup_Test
                 $bRemote ? $oRemote : $oLocal
             );
 
+            BackRestTestBackup_Init($bRemote, $oFile, true, $oLogTest, $iThreadMax);
+
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'PG_VERSION', '9.3',
                                                   'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
@@ -740,8 +818,8 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'global/pg_control', '[replaceme]',
                                                   '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
-            BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() . '/pg_control ' .
-                                       BackRestTestCommon_DbCommonPathGet() . '/global/pg_control');
+            executeTest('cp ' . BackRestTestCommon_DataPathGet() . '/pg_control ' .
+                        BackRestTestCommon_DbCommonPathGet() . '/global/pg_control');
             utime($lTime - 100, $lTime - 100, BackRestTestCommon_DbCommonPathGet() . '/global/pg_control')
                 or confess &log(ERROR, "unable to set time");
             $oManifest{'base:file'}{'global/pg_control'}{'size'} = 8192;
@@ -775,8 +853,60 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestLinkCreate(\%oManifest, 'base', 'link-test', '/test');
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'path-test');
 
-            my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                                   undef, undef, undef, undef, '--manifest-save-threshold=3');
+            my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, undef,
+                                                                   {strOptionalParam => '--manifest-save-threshold=3'});
+
+            # Stop operations and make sure the correct error occurs
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bNeutralTest)
+            {
+                # Test a backup abort
+                BackRestTestBackup_BackupBegin($strType, $strStanza, 'abort backup - local',
+                                               {strTest => TEST_BACKUP_START, fTestDelay => 5, iExpectedExitStatus => ERROR_TERM});
+
+                BackRestTestBackup_Stop(undef, undef, true);
+
+                BackRestTestBackup_BackupEnd();
+
+                # Test global stop
+                BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'global stop',
+                                                   {iExpectedExitStatus => ERROR_STOP});
+
+                # Test stanza stop
+                BackRestTestBackup_Stop($strStanza);
+
+                # This time a warning should be generated
+                BackRestTestBackup_Stop($strStanza);
+
+                BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'stanza stop',
+                                                   {iExpectedExitStatus => ERROR_STOP});
+
+                BackRestTestBackup_Start($strStanza);
+                BackRestTestBackup_Start();
+
+                # This time a warning should be generated
+                BackRestTestBackup_Start();
+
+                # If the backup is remote then test remote stops
+                if ($bRemote)
+                {
+                    BackRestTestBackup_BackupBegin($strType, $strStanza, 'abort backup - remote',
+                                                   {strTest => TEST_BACKUP_START, fTestDelay => 5,
+                                                    iExpectedExitStatus => ERROR_TERM});
+
+                    BackRestTestBackup_Stop(undef, $bRemote, true);
+
+                    BackRestTestBackup_BackupEnd();
+
+                    BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'global stop',
+                                                       {iExpectedExitStatus => ERROR_STOP});
+
+                    BackRestTestBackup_Start(undef, $bRemote, true);
+                }
+            }
+
+            # Cleanup any garbage left in the temp backup path
+            executeTest('rm -rf ' . BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp", {bRemote => $bRemote});
 
             # Backup Info
             #-----------------------------------------------------------------------------------------------------------------------
@@ -796,8 +926,12 @@ sub BackRestTestBackup_Test
             $oMungeManifest->remove('base:file', 'PG_VERSION', 'checksum');
             BackRestTestCommon_manifestSave("$strTmpPath/backup.manifest", $oMungeManifest, $bRemote);
 
-            $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                                'resume', TEST_BACKUP_RESUME);
+            # Create a temp file in backup temp root to be sure it's deleted correctly
+            executeTest("touch ${strTmpPath}/file.tmp" . ($bCompress ? '.gz' : ''),
+                        {bRemote => $bRemote});
+
+            $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'resume',
+                                                                {strTest => TEST_BACKUP_RESUME});
 
             # Restore - tests various mode, extra files/paths, missing files/paths
             #-----------------------------------------------------------------------------------------------------------------------
@@ -839,8 +973,8 @@ sub BackRestTestBackup_Test
             $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
-            my $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                               'invalid database version', undef, undef, ERROR_BACKUP_MISMATCH);
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'invalid database version',
+                                               {iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
             $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
 
             # Break the database system id
@@ -848,8 +982,8 @@ sub BackRestTestBackup_Test
             $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'invalid system id', undef, undef, ERROR_BACKUP_MISMATCH);
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'invalid system id',
+                                               {iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
             $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
 
             # Break the control version
@@ -857,8 +991,8 @@ sub BackRestTestBackup_Test
             $oInfo{db}{&MANIFEST_KEY_CONTROL} = 842;
             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'invalid control version', undef, undef, ERROR_BACKUP_MISMATCH);
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'invalid control version',
+                                               {iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
             $oInfo{db}{&MANIFEST_KEY_CONTROL} = $iControlVersion;
 
             # Break the catalog version
@@ -866,8 +1000,8 @@ sub BackRestTestBackup_Test
             $oInfo{db}{&MANIFEST_KEY_CATALOG} = 197208141;
             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'invalid catalog version', undef, undef, ERROR_BACKUP_MISMATCH);
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, undef, 'invalid catalog version',
+                                               {iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
             # Fix up info file for next test
             $oInfo{db}{&MANIFEST_KEY_CATALOG} = $iCatalogVersion;
@@ -885,8 +1019,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "base", 'badchecksum.txt', 'BADCHECKSUM',
                                                   'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'add tablespace 1');
+            my $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'add tablespace 1');
 
             # Resume Incr Backup
             #
@@ -910,8 +1043,8 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2.txt', 'TBLSPC2',
                                                   'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'resume and add tablespace 2', TEST_BACKUP_RESUME);
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'resume and add tablespace 2',
+                                                            {strTest => TEST_BACKUP_RESUME});
 
             # Resume Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -922,8 +1055,8 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'cannot resume - new diff', TEST_BACKUP_NORESUME);
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'cannot resume - new diff',
+                                                            {strTest => TEST_BACKUP_NORESUME});
 
             # Resume Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -934,9 +1067,8 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strBackup}",
                                         $strTmpPath, $bRemote);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'cannot resume - disabled', TEST_BACKUP_NORESUME, undef, undef,
-                                                            '--no-resume');
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'cannot resume - disabled',
+                                                            {strTest => TEST_BACKUP_NORESUME, strOptionalParam => '--no-resume'});
 
             # Restore
             #-----------------------------------------------------------------------------------------------------------------------
@@ -990,8 +1122,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
                                              '0.00');
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
-                                                            'add files and remove tablespace 2');
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'add files and remove tablespace 2');
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1001,27 +1132,26 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT',
                                                   '9a53d532e27785e681766c98516a5e93f096a501', $lTime);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'update files');
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'update files');
 
             # Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'diff';
             BackRestTestBackup_ManifestReference(\%oManifest, $strFullBackup, true);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'no updates');
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'no updates');
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';
             BackRestTestBackup_ManifestReference(\%oManifest, $strBackup);
 
-            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files - but won't affect manifest",
-                                           true, true, 1);
-            BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
+            BackRestTestBackup_BackupBegin($strType, $strStanza, "remove files - but won't affect manifest",
+                                           {strTest => TEST_MANIFEST_BUILD, fTestDelay => 1});
 
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
 
-            $strBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, \%oManifest, true);
+            $strBackup = BackRestTestBackup_BackupEnd(\%oManifest);
 
             # Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1035,15 +1165,15 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2c.txt', 'TBLSPC2C',
                                                   'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime);
 
-            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, "remove files during backup", true, true, 1);
-            BackRestTestCommon_ExecuteEnd(TEST_MANIFEST_BUILD);
+            BackRestTestBackup_BackupBegin($strType, $strStanza, 'remove files during backup',
+                                           {strTest => TEST_MANIFEST_BUILD, fTestDelay => 1});
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, "tablespace/2", 'tablespace2c.txt', 'TBLSPCBIGGER',
                                                   'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime);
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, 'base', 'base/base2.txt', true);
 
-            $strBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, \%oManifest, true);
+            $strBackup = BackRestTestBackup_BackupEnd(\%oManifest);
 
             # Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1053,7 +1183,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base1.txt', 'BASEUPDT2',
                                                   '7579ada0808d7f98087a0a586d0df9de009cdc33', $lTime);
 
-            $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest);
+            $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest);
 
             # Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1063,7 +1193,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ManifestFileCreate(\%oManifest, 'base', 'base/base2.txt', 'BASE2UPDT',
                                                   'cafac3c59553f2cfde41ce2e62e7662295f108c0', $lTime);
 
-            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest, 'add files');
+            $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'add files');
 
             # Restore
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1075,7 +1205,8 @@ sub BackRestTestBackup_Test
 
             # Backup Info (with an empty stanza)
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestCommon_Execute('mkdir ' . BackRestTestCommon_RepoPathGet . '/backup/db_empty', $bRemote);
+            executeTest('mkdir ' . BackRestTestCommon_RepoPathGet . '/backup/db_empty',
+                        {bRemote => $bRemote});
 
             BackRestTestBackup_Info(undef, undef, false);
             BackRestTestBackup_Info(undef, INFO_OUTPUT_JSON, false);
@@ -1084,7 +1215,8 @@ sub BackRestTestBackup_Test
 
             # Backup Info (with no stanzas)
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestCommon_Execute('rm -rf ' . BackRestTestCommon_RepoPathGet . '/backup/*', $bRemote);
+            executeTest('rm -rf ' . BackRestTestCommon_RepoPathGet . '/backup/*',
+                        {bRemote => $bRemote});
 
             BackRestTestBackup_Info(undef, undef, false);
             BackRestTestBackup_Info(undef, INFO_OUTPUT_JSON, false);
@@ -1092,7 +1224,7 @@ sub BackRestTestBackup_Test
         }
         }
 
-        if (BackRestTestCommon_Cleanup())
+        if (BackRestTestCommon_Cleanup(\$oLogTest))
         {
             &log(INFO, 'cleanup');
             BackRestTestBackup_Drop(true);
@@ -1167,9 +1299,11 @@ sub BackRestTestBackup_Test
                 $bCreate = false;
             }
 
+            BackRestTestBackup_Init($bRemote, $oFile, false, undef, $iThreadMax);
+
             # Static backup parameters
-            my $bSynthetic = false;
-            my $fTestDelay = .1;
+            # my $bSynthetic = false;
+            my $fTestDelay = 1;
 
             # Variable backup parameters
             my $bDelta = true;
@@ -1180,7 +1314,7 @@ sub BackRestTestBackup_Test
             my $bTargetResume = false;
             my $strTargetTimeline = undef;
             my $oRecoveryHashRef = undef;
-            my $strTestPoint = undef;
+            # my $strTestPoint = undef;
             my $strComment = undef;
             my $iExpectedExitStatus = undef;
 
@@ -1196,7 +1330,6 @@ sub BackRestTestBackup_Test
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
-            $strTestPoint = TEST_MANIFEST_BUILD;
 
             # Create the table where test messages will be stored
             BackRestTestBackup_PgExecute("create table test (message text not null)");
@@ -1210,7 +1343,8 @@ sub BackRestTestBackup_Test
             }
 
             $strComment = 'fail on backup lock exists';
-            BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, $strComment, undef, undef, ERROR_LOCK_ACQUIRE);
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment,
+                                      {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
 
             # Release the backup advisory lock so the next backup will succeed
             if (!BackRestTestBackup_PgSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
@@ -1219,14 +1353,28 @@ sub BackRestTestBackup_Test
             }
 
             $strComment = 'update during backup';
-            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
-                                           defined($strTestPoint), $fTestDelay);
-
-            BackRestTestCommon_ExecuteEnd($strTestPoint);
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment,
+                                           {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay});
 
             BackRestTestBackup_PgExecute("update test set message = '$strFullMessage'", false);
 
-            my $strFullBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, undef, $bSynthetic);
+            my $strFullBackup = BackRestTestBackup_BackupEnd();
+
+            # Execute stop and make sure the backup fails
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strComment = 'attempt backup when stopped';
+
+            # Stop the cluster to check for any errors before continuing since the stop tests will definitely create errors and
+            # the logs will to be deleted to avoid causing issues further down the line.
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart();
+
+            BackRestTestBackup_Stop();
+
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment,
+                                      {iExpectedExitStatus => ERROR_STOP});
+
+            BackRestTestBackup_Start();
 
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1238,7 +1386,6 @@ sub BackRestTestBackup_Test
             # Incr backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
-            $strTestPoint = TEST_MANIFEST_BUILD;
 
             BackRestTestBackup_PgExecuteNoTrans("create tablespace ts1 location '" .
                                                 BackRestTestCommon_DbTablespacePathGet(1) . "'");
@@ -1260,15 +1407,15 @@ sub BackRestTestBackup_Test
             # BackRestTestBackup_Backup($strType, $strStanza, $bRemote, $oFile, $strComment, undef, undef, ERROR_DB_QUERY);
 
             $strComment = 'update during backup';
-            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
-                                           defined($strTestPoint), $fTestDelay, '--' . OPTION_STOP_AUTO);
-            BackRestTestCommon_ExecuteEnd($strTestPoint);
+            BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment,
+                                           {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
+                                            strOptionalParam => '--' . OPTION_STOP_AUTO});
 
             BackRestTestBackup_PgExecute("drop table test_remove", false);
             BackRestTestBackup_PgSwitchXlog();
             BackRestTestBackup_PgExecute("update test set message = '$strIncrMessage'", false);
 
-            my $strIncrBackup = BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, undef, $bSynthetic);
+            my $strIncrBackup = BackRestTestBackup_BackupEnd();
 
             # Setup the xid target
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1389,7 +1536,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStop();
 
-            # Restore recovery file that was save in last test
+            # Restore recovery file that was saved in last test
             $oFile->move(PATH_ABSOLUTE, BackRestTestCommon_TestPathGet() . '/recovery.conf',
                          PATH_ABSOLUTE, BackRestTestCommon_DbCommonPathGet() . '/recovery.conf');
 
@@ -1508,22 +1655,19 @@ sub BackRestTestBackup_Test
             # Incr backup - make sure a --no-stop-start backup fails
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
-            $strTestPoint = TEST_MANIFEST_BUILD;
 
             $strComment = 'fail on --' . OPTION_NO_START_STOP;
-            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
-                                           defined($strTestPoint), $fTestDelay, '--' . OPTION_NO_START_STOP);
-            BackRestTestCommon_ExecuteEnd(undef, undef, undef, ERROR_POSTMASTER_RUNNING);
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment,
+                                      {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING,
+                                       strOptionalParam => '--' . OPTION_NO_START_STOP});
 
             # Incr backup - allow --no-start-stop backup to succeed with --force
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
-            $strTestPoint = TEST_MANIFEST_BUILD;
 
             $strComment = 'succeed on --' . OPTION_NO_START_STOP . ' with --' . OPTION_FORCE;
-            BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, $bSynthetic,
-                                           defined($strTestPoint), $fTestDelay, '--' . OPTION_NO_START_STOP . ' --' . OPTION_FORCE);
-            BackRestTestCommon_ExecuteEnd();
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment,
+                                      {strOptionalParam => '--' . OPTION_NO_START_STOP . ' --' . OPTION_FORCE});
 
             $bCreate = true;
         }
@@ -1714,7 +1858,7 @@ sub BackRestTestBackup_Test
 
             # Rsync
             &log(INFO, "rsync 1st time");
-            BackRestTestCommon_Execute($strCommand, false, false, true);
+            executeTest($strCommand, {bShowOutput => true});
 
             # Sleep for a while to show there is a large window where this can happen
             &log(INFO, 'time ' . gettimeofday());
@@ -1729,7 +1873,7 @@ sub BackRestTestBackup_Test
 
             # Rsync again
             &log(INFO, "rsync 2nd time");
-            BackRestTestCommon_Execute($strCommand, false, false, true);
+            excuteTest($strCommand, {bShowOutput => true});
 
             my $strTestChecksum = $oFile->hash(PATH_DB_ABSOLUTE, "${strPathRsync2}/test.txt");
 

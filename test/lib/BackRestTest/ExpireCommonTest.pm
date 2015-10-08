@@ -22,6 +22,7 @@ use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
 
+use BackRestTest::Common::ExecuteTest;
 use BackRestTest::CommonTest;
 
 ####################################################################################################################################
@@ -50,12 +51,14 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{oFile}
+        $self->{oFile},
+        $self->{oLogTest}
     ) =
         logDebugParam
         (
             OP_EXPIRE_COMMON_TEST_NEW, \@_,
-            {name => 'oFile'}
+            {name => 'oFile', trace => true},
+            {name => 'oLogTest', required => false, trace => true}
         );
 
     # Return from function and log return values if any
@@ -373,8 +376,12 @@ sub process
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
 
-    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
-                                         "/backup/${strStanza}/backup.info", false, $$oStanza{strBackupDescription});
+    if (defined($self->{oLogTest}))
+    {
+        $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
+                                           "/backup/${strStanza}/backup.info", undef, $$oStanza{strBackupDescription});
+    }
+
     undef($$oStanza{strBackupDescription});
 
     my $strCommand = BackRestTestCommon_CommandMainGet() .
@@ -400,28 +407,13 @@ sub process
 
     $strCommand .= ' expire';
 
-    BackRestTestCommon_Execute($strCommand, undef, undef, undef, undef, $strDescription);
+    executeTest($strCommand, {strComment => $strDescription, oLogTest => $self->{oLogTest}});
 
-    # # Check that the correct backups were expired
-    # my @stryBackupActual = $oFile->list(PATH_BACKUP_CLUSTER);
-    #
-    # if (join(",", @stryBackupActual) ne join(",", @{$stryBackupExpectedRef}))
-    # {
-    #     confess "expected backup list:\n    " . join("\n    ", @{$stryBackupExpectedRef}) .
-    #             "\n\nbut actual was:\n    " . join("\n    ", @stryBackupActual) . "\n";
-    # }
-    #
-    # # Check that the correct archive logs were expired
-    # my @stryArchiveActual = $oFile->list(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000100000000');
-    #
-    # if (join(",", @stryArchiveActual) ne join(",", @{$stryArchiveExpectedRef}))
-    # {
-    #     confess "expected archive list:\n    " . join("\n    ", @{$stryArchiveExpectedRef}) .
-    #             "\n\nbut actual was:\n    " . join("\n    ", @stryArchiveActual) . "\n";
-    # }
-
-    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
-                                         "/backup/${strStanza}/backup.info", false);
+    if (defined($self->{oLogTest}))
+    {
+        $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
+                                           "/backup/${strStanza}/backup.info");
+    }
 
     # Return from function and log return values if any
     return logDebugReturn

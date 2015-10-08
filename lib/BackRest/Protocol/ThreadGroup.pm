@@ -85,7 +85,7 @@ sub threadGroupThread
             optionGet(OPTION_STANZA),
             optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
             optionRemoteType(),
-            protocolGet(undef, false),
+            protocolGet(undef, false, $iThreadIdx + 1),
             undef, undef,
             $iThreadIdx + 1
         );
@@ -275,7 +275,7 @@ sub threadGroupComplete
     my $strFirstError;
     my $iFirstErrorThreadIdx;
 
-    &log(DEBUG, "waiting for " . @oyThread . " threads to complete");
+    &log(TRACE, "waiting for " . @oyThread . " threads to complete");
 
     # Rejoin the threads
     # while ($iThreadComplete < @oyThread)
@@ -295,6 +295,16 @@ sub threadGroupComplete
         {
             if ($byThreadRunning[$iThreadIdx])
             {
+                if (threadMessageExpect($oyResultQueue[$iThreadIdx], 'shutdown', $iThreadIdx, true))
+                {
+                    threadMessage($oyMessageQueue[$iThreadIdx], 'continue', $iThreadIdx);
+                    threadMessageExpect($oyResultQueue[$iThreadIdx], 'complete', $iThreadIdx);
+
+                    $byThreadRunning[$iThreadIdx] = false;
+                    $iThreadComplete++;
+                }
+
+                # Check for errors
                 my $oError = $oyThread[$iThreadIdx]->error();
 
                 if (defined($oError))
@@ -317,15 +327,11 @@ sub threadGroupComplete
                         $iFirstErrorThreadIdx = $iThreadIdx;
                     }
 
-                    $byThreadRunning[$iThreadIdx] = false;
-                    $iThreadComplete++;
-                }
-                elsif (threadMessageExpect($oyResultQueue[$iThreadIdx], 'shutdown', $iThreadIdx, true))
-                {
-                    threadMessage($oyMessageQueue[$iThreadIdx], 'continue', $iThreadIdx);
-                    threadMessageExpect($oyResultQueue[$iThreadIdx], 'complete', $iThreadIdx);
-                    $byThreadRunning[$iThreadIdx] = false;
-                    $iThreadComplete++;
+                    if ($byThreadRunning[$iThreadIdx])
+                    {
+                        $byThreadRunning[$iThreadIdx] = false;
+                        $iThreadComplete++;
+                    }
                 }
             }
             else
@@ -364,24 +370,27 @@ sub threadGroupDestroy
 
     for (my $iThreadIdx = 0; $iThreadIdx < @oyThread; $iThreadIdx++)
     {
-        my %oCommand;
-        $oCommand{function} = 'exit';
-
-        $oyCommandQueue[$iThreadIdx]->enqueue(\%oCommand);
-        waitHiRes(.1);
-
-        if ($oyThread[$iThreadIdx]->is_running())
+        if (defined($oyThread[$iThreadIdx]))
         {
-            $oyThread[$iThreadIdx]->kill('KILL')->join();
-            &log(TRACE, "thread ${iThreadIdx} killed");
-        }
-        elsif ($oyThread[$iThreadIdx]->is_joinable())
-        {
-            $oyThread[$iThreadIdx]->join();
-            &log(TRACE, "thread ${iThreadIdx} joined");
-        }
+            my %oCommand;
+            $oCommand{function} = 'exit';
 
-        undef($oyThread[$iThreadIdx]);
+            $oyCommandQueue[$iThreadIdx]->enqueue(\%oCommand);
+            waitHiRes(.1);
+
+            if ($oyThread[$iThreadIdx]->is_running())
+            {
+                $oyThread[$iThreadIdx]->kill('KILL')->join();
+                &log(TRACE, "thread ${iThreadIdx} killed");
+            }
+            elsif ($oyThread[$iThreadIdx]->is_joinable())
+            {
+                $oyThread[$iThreadIdx]->join();
+                &log(TRACE, "thread ${iThreadIdx} joined");
+            }
+
+            undef($oyThread[$iThreadIdx]);
+        }
     }
 
     &log(TRACE, @oyThread . " threads destroyed");

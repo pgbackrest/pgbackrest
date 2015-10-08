@@ -310,7 +310,7 @@ sub nodeGetById
 
     if (!defined($oNode) && $bRequired)
     {
-        confess "unable to find child ${strName} in node $$oDoc{name}";
+        confess "unable to find child ${strName} (${strId}) in node $$oDoc{name}";
     }
 
     # Return from function and log return values if any

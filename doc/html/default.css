@@ -108,13 +108,13 @@ Menu
 /*******************************************************************************
 Section
 *******************************************************************************/
-doc-install, doc-configure, doc-intro
+.section1
 {
 	display:block;
 	margin-top: 8px;
 }
 
-doc-install-header, doc-configure-header
+section1-header
 {
 	display:block;
 	background-color: #dddddd;

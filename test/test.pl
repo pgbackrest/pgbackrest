@@ -147,12 +147,12 @@ logLevelSet(undef, uc($strLogLevel));
 
 if ($strModuleTest ne 'all' && $strModule eq 'all')
 {
-    confess "--module must be provided for test \"${strModuleTest}\"";
+    confess "--module must be provided for --test=\"${strModuleTest}\"";
 }
 
 if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 {
-    confess "--module-test must be provided for run \"${iModuleTestRun}\"";
+    confess "--test must be provided for --run=\"${iModuleTestRun}\"";
 }
 
 # Search for psql bin

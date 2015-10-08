@@ -1,5 +1,18 @@
 # pgBackRest - Change Log
 
+## v0.85: Start/Stop Commands and Minor Bug Fixes
+__Released October 8, 2015__
+
+* Added new feature to allow all pgBackRest operations to be stopped or started using the `stop` and `start` commands.  This prevents any pgBackRest processes from running on a system where PostgreSQL is shutdown or the system needs to be quiesced for some reason.
+
+* Removed dependency on `IO::String` module.
+
+* Fixed an issue where an error could be returned after a backup or restore completely successfully.
+
+* Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.
+
+* Experimental support for PostgreSQL 9.5 beta1.  This may break when the control version or WAL magic changes in future versions but will be updated in each pgBackRest release to keep pace.  All regression tests pass except for `--target-resume` tests (this functionality has changed in 9.5) and there is no testing yet for `.partial` WAL segments.
+
 ## v0.82: Refactoring, Command-line Help, and Minor Bug Fixes
 __Released September 14, 2015__
 

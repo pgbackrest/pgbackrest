@@ -39,25 +39,31 @@ sub new
     (
         $strOperation,
         $strName,                                   # Name of the protocol
-        $iBlockSize,                                # Buffer size
+        $strCommand,                                # Command the master process is running
+        $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
-        $iCompressLevelNetwork                      # Set compression level for network only compression
+        $iCompressLevelNetwork,                     # Set compression level for network only compression
+        $iProtocolTimeout                           # Protocol timeout
     ) =
         logDebugParam
         (
             OP_PROTOCOL_COMMON_MINION_NEW, \@_,
             {name => 'strName'},
-            {name => 'iBlockSize'},
+            {name => 'strCommand'},
+            {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
-            {name => 'iCompressLevelNetwork'}
+            {name => 'iCompressLevelNetwork'},
+            {name => 'iProtocolTimeout'}
         );
 
     # Create the class hash
-    my $self = $class->SUPER::new($iBlockSize, $iCompressLevel, $iCompressLevelNetwork, $strName);
+    my $self = $class->SUPER::new($iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout, $strName);
     bless $self, $class;
 
+    $self->{strCommand} = $strCommand;
+
     # Create the IO object with std io
-    $self->{io} = new BackRest::Protocol::IO(*STDIN, *STDOUT, *STDERR);
+    $self->{io} = new BackRest::Protocol::IO(*STDIN, *STDOUT, *STDERR, undef, $iProtocolTimeout, $iBufferMax);
 
     # Write the greeting so master process knows who we are
     $self->greetingWrite();
@@ -130,15 +136,13 @@ sub errorWrite
         # Else terminate the process with an error
         else
         {
-            $self->{io}->errorWrite('unknown error object');
-            exit ERROR_UNKNOWN;
+            confess &log(ERROR, 'unknown error object', ERROR_UNKNOWN);
         }
     }
     # Else terminate the process with an error
     else
     {
-        $self->{io}->errorWrite('unknown error: ' . $oMessage);
-        exit ERROR_UNKNOWN;
+        confess &log(ERROR, 'unknown error: ' . $oMessage, ERROR_UNKNOWN);
     }
 
     # Write the message text into protocol

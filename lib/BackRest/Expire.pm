@@ -25,6 +25,7 @@ use BackRest::Manifest;
 ####################################################################################################################################
 use constant OP_EXPIRE                                              => 'Expire';
 
+use constant OP_EXPIRE_DESTROY                                      => OP_EXPIRE . '->DESTROY';
 use constant OP_EXPIRE_NEW                                          => OP_EXPIRE . '->new';
 use constant OP_EXPIRE_PROCESS                                      => OP_EXPIRE . '->process';
 
@@ -40,21 +41,48 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(OP_EXPIRE_NEW);
+
+    # Initialize file object
+    $self->{oFile} = new BackRest::File
     (
-        my $strOperation,
-        $self->{oFile}
-    ) =
-        logDebugParam
-        (
-            OP_EXPIRE_NEW, \@_,
-            {name => 'oFile'}
-        );
+        optionGet(OPTION_STANZA),
+        optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
+        optionRemoteType(),
+        protocolGet()
+    );
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
+    );
+}
+
+####################################################################################################################################
+# DESTROY
+####################################################################################################################################
+sub DESTROY
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_EXPIRE_DESTROY
+    );
+
+    undef($self->{oFile});
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
     );
 }
 

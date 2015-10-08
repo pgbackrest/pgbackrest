@@ -188,6 +188,18 @@ my $oConfigHelpData =
                 "Use this option to specify a different configuration file than the default."
         },
 
+        # CONFIG-REMOTE Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'config-remote' =>
+        {
+            section => 'general',
+            summary =>
+                "pgBackRest remote configuration file.",
+            description =>
+                "Sets the location of the remote configuration file.  This is only required if the remote configuration file is " .
+                    "in a different location than the local configuration file."
+        },
+
         # DB-HOST Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'db-host' =>
@@ -567,7 +579,9 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
+                'config-remote' => 'section',
                 'db-path' => 'section',
+                'db-timeout' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'neutral-umask' => 'section',
@@ -599,7 +613,9 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
+                'config-remote' => 'section',
                 'db-path' => 'section',
+                'db-timeout' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'neutral-umask' => 'section',
@@ -629,6 +645,7 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
+                'config-remote' => 'section',
                 'db-host' => 'section',
                 'db-path' => 'section',
                 'db-port' => 'section',
@@ -717,6 +734,7 @@ my $oConfigHelpData =
 
             option =>
             {
+                'config-remote' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'repo-path' => 'section',
@@ -765,6 +783,8 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
+                'config-remote' => 'section',
+                'db-timeout' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
 
@@ -806,6 +826,8 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
+                'config-remote' => 'section',
+                'db-timeout' => 'section',
 
                 # DELTA Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -957,6 +979,57 @@ my $oConfigHelpData =
                             "segments present in pg_xlog.  Provide the required WAL segments or use the archive-copy setting to " .
                             "include them with the backup."
                 }
+            }
+        },
+
+        # START Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'start' =>
+        {
+            summary =>
+                "Allow pgBackRest processes to run.",
+            description =>
+                "If the pgBackRest processes were previously stopped using the stop command then they can be started again " .
+                    "using the start command.  Note that this will not immediately start up any pgBackRest processes but they " .
+                    "are allowed to run.",
+
+            option =>
+            {
+                'repo-path' => 'section',
+                'stanza' => 'default'
+            }
+        },
+
+        # STOP Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'stop' =>
+        {
+            summary =>
+                "Stop pgBackRest processes from running.",
+            description =>
+                "Does not allow any new pgBackRest processes to run.  By default running processes will be allowed to complete " .
+                    "successfully.  Use the --force option to terminate running processes.\n" .
+                "\n" .
+                "pgBackRest processes will return an error if they are run after the stop command completes.",
+
+            option =>
+            {
+                # FORCE Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'force' =>
+                {
+                    summary =>
+                        "Force all pgBackRest processes to stop.",
+                    description =>
+                        "This option will send TERM signals to all running pgBackRest processes to effect a graceful but " .
+                            "immediate shutdown.  Note that this will also shutdown processes that were initiated on another " .
+                            "system but have remotes running on the current system.  For instance, if a backup was started on " .
+                            "the backup server then running stop --force on the database server will shutdown the backup " .
+                            "process on the backup server."
+                },
+
+                'repo-path' => 'section',
+                'stanza' => 'default'
             }
         },
 

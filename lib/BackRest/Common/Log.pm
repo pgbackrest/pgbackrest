@@ -42,6 +42,8 @@ use constant ERROR                                                  => 'ERROR';
     push @EXPORT, qw(ERROR);
 use constant ASSERT                                                 => 'ASSERT';
     push @EXPORT, qw(ASSERT);
+use constant REMOTE                                                 => 'REMOTE';
+    push @EXPORT, qw(REMOTE);
 use constant OFF                                                    => 'OFF';
     push @EXPORT, qw(OFF);
 
@@ -50,12 +52,13 @@ use constant OFF                                                    => 'OFF';
 ####################################################################################################################################
 my %oLogLevelRank;
 
-$oLogLevelRank{TRACE}{rank} = 6;
-$oLogLevelRank{DEBUG}{rank} = 5;
-$oLogLevelRank{INFO}{rank} = 4;
-$oLogLevelRank{WARN}{rank} = 3;
-$oLogLevelRank{ERROR}{rank} = 2;
-$oLogLevelRank{ASSERT}{rank} = 1;
+$oLogLevelRank{TRACE}{rank} = 7;
+$oLogLevelRank{DEBUG}{rank} = 6;
+$oLogLevelRank{INFO}{rank} = 5;
+$oLogLevelRank{WARN}{rank} = 4;
+$oLogLevelRank{ERROR}{rank} = 3;
+$oLogLevelRank{ASSERT}{rank} = 2;
+$oLogLevelRank{REMOTE}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
 
 ####################################################################################################################################
@@ -63,11 +66,12 @@ $oLogLevelRank{OFF}{rank} = 0;
 ####################################################################################################################################
 my $hLogFile;
 my $strLogLevelFile = ERROR;
-my $strLogLevelConsole = ERROR;
+my $strLogLevelConsole = REMOTE;
 
 # Test globals
 my $bTest = false;
 my $fTestDelay;
+my $oTestPoint;
 
 ####################################################################################################################################
 # Test constants
@@ -77,12 +81,16 @@ use constant TEST                                                   => 'TEST';
 use constant TEST_ENCLOSE                                           => 'PgBaCkReStTeSt';
     push @EXPORT, qw(TEST_ENCLOSE);
 
-use constant TEST_MANIFEST_BUILD                                    => 'MANIFEST_BUILD';
+use constant TEST_MANIFEST_BUILD                                    => 'MANIFEST-BUILD';
     push @EXPORT, qw(TEST_MANIFEST_BUILD);
-use constant TEST_BACKUP_RESUME                                     => 'BACKUP_RESUME';
+use constant TEST_BACKUP_RESUME                                     => 'BACKUP-RESUME';
     push @EXPORT, qw(TEST_BACKUP_RESUME);
-use constant TEST_BACKUP_NORESUME                                   => 'BACKUP_NORESUME';
+use constant TEST_BACKUP_NORESUME                                   => 'BACKUP-NORESUME';
     push @EXPORT, qw(TEST_BACKUP_NORESUME);
+use constant TEST_BACKUP_START                                      => 'BACKUP-START';
+    push @EXPORT, qw(TEST_BACKUP_START);
+use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-PUSH-ASYNC-START';
+    push @EXPORT, qw(TEST_ARCHIVE_PUSH_ASYNC_START);
 
 ####################################################################################################################################
 # logFileSet - set the file messages will be logged to
@@ -94,7 +102,7 @@ sub logFileSet
     unless (-e dirname($strFile))
     {
         mkdir(dirname($strFile), oct('0770'))
-            or die "unable to create directory for log file ${strFile}";
+            or die "unable to create directory " . dirname($strFile) . " for log file ${strFile}";
     }
 
     $strFile .= '-' . timestampFormat('%4d%02d%02d') . '.log';
@@ -422,6 +430,11 @@ sub log
     # If test message
     if ($strLevel eq TEST)
     {
+        if (!defined($oTestPoint) || !defined($$oTestPoint{lc($strMessage)}))
+        {
+            return;
+        }
+
         $iLogLevelRank = $oLogLevelRank{TRACE}{rank} + 1;
         $strMessageFormat = TEST_ENCLOSE . '-' . $strMessageFormat . '-' . TEST_ENCLOSE;
     }
@@ -484,6 +497,10 @@ sub log
             usleep($fTestDelay * 1000000);
         }
     }
+    elsif ($strLogLevelConsole eq REMOTE && ($strLevel eq ASSERT || $strLevel eq ERROR))
+    {
+        syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ": $strMessage\n");
+    }
 
     # Output to file depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
@@ -527,10 +544,12 @@ sub testSet
 {
     my $bTestParam = shift;
     my $fTestDelayParam = shift;
+    my $oTestPointParam = shift;
 
     # Set defaults
     $bTest = defined($bTestParam) ? $bTestParam : false;
     $fTestDelay = defined($bTestParam) ? $fTestDelayParam : $fTestDelay;
+    $oTestPoint = $oTestPointParam;
 
     # Make sure that a delay is specified in test mode
     if ($bTest && !defined($fTestDelay))

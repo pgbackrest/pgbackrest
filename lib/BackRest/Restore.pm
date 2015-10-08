@@ -29,6 +29,7 @@ use constant OP_RESTORE                                             => 'Restore'
 
 use constant OP_RESTORE_BUILD                                       => OP_RESTORE . '->build';
 use constant OP_RESTORE_CLEAN                                       => OP_RESTORE . '->clean';
+use constant OP_RESTORE_DESTROY                                     => OP_RESTORE . '->destroy';
 use constant OP_RESTORE_MANIFEST_LOAD                               => OP_RESTORE . '->manifestLoad';
 use constant OP_RESTORE_MANIFEST_OWNERSHIP_CHECK                    => OP_RESTORE . '->manifestOwnershipCheck';
 use constant OP_RESTORE_NEW                                         => OP_RESTORE . '->new';
@@ -56,15 +57,16 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(OP_RESTORE_NEW);
+
+    # Initialize default file object
+    $self->{oFile} = new BackRest::File
     (
-        my $strOperation,
-        $self->{oFile}
-    ) =
-        logDebugParam
-        (
-            OP_RESTORE_NEW, \@_,
-            {name => 'oFile', trace => true}
-        );
+        optionGet(OPTION_STANZA),
+        optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
+        optionRemoteType(),
+        protocolGet()
+    );
 
     # Initialize variables
     $self->{strDbClusterPath} = optionGet(OPTION_DB_PATH);
@@ -75,6 +77,32 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
+    );
+}
+
+####################################################################################################################################
+# DESTROY
+####################################################################################################################################
+sub DESTROY
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_RESTORE_DESTROY
+    );
+
+    undef($self->{oFile});
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
     );
 }
 
