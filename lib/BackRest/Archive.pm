@@ -257,7 +257,7 @@ sub walInfo
     my $strDbVersion;
     my $iSysIdOffset;
 
-    if ($iMagic == hex('0xD085'))
+    if ($iMagic == hex('0xD087'))
     {
         $strDbVersion = '9.5';
         $iSysIdOffset = 20;

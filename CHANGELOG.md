@@ -11,6 +11,8 @@ __No Release Date Set__
 
 * Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.
 
+* Experimental support for PostgreSQL 9.5 beta1.  This may break when the control version or WAL magic changes in future versions but will be updated in each pgBackRest release to keep pace.  All regression tests pass except for `--target-resume` tests (this functionality has changed in 9.5) and there is no testing yet for `.partial` WAL segments.
+
 ## v0.82: Refactoring, Command-line Help, and Minor Bug Fixes
 __Released September 14, 2015__
 
