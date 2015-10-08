@@ -15,14 +15,14 @@ apt-get install libdbd-pg-perl
 
 * Install Perl and required modules:
 ```
-yum install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
+yum install perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 ```
 
 ### CentOS 7 Setup
 
 * Install Perl and required modules:
 ```
-yum install perl perl-IO-String perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
+yum install perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
 ```
 
 ### Software Installation

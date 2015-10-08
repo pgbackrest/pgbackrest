@@ -19,14 +19,14 @@
 			<install-system title="CentOS 6 Setup">
 				<text>* Install Perl and required modules:
 				<code-block>
-					yum install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
+					yum install perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 				</code-block></text>
 			</install-system>
 
 			<install-system title="CentOS 7 Setup">
 				<text>* Install Perl and required modules:
 				<code-block>
-					yum install perl perl-IO-String perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
+					yum install perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
 				</code-block></text>
 			</install-system>
 
