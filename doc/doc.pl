@@ -241,9 +241,9 @@ sub docProcess
 }
 
 my $oRender = new BackRestDoc::DocRender('text', $strProjectName, $strExeName);
-my $oDocConfig = new BackRestDoc::DocConfig(new BackRestDoc::Doc("${strBasePath}/xml/userguide.xml"), $oRender);
+my $oDocConfig = new BackRestDoc::DocConfig(new BackRestDoc::Doc("${strBasePath}/xml/reference.xml"), $oRender);
 $oDocConfig->helpDataWrite();
 
 docProcess("${strBasePath}/xml/readme.xml", "${strBasePath}/../README.md");
-docProcess("${strBasePath}/xml/userguide.xml", "${strBasePath}/../USERGUIDE.md", true);
+docProcess("${strBasePath}/xml/reference.xml", "${strBasePath}/../USERGUIDE.md", true);
 docProcess("${strBasePath}/xml/changelog.xml", "${strBasePath}/../CHANGELOG.md");
