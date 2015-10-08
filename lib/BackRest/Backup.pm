@@ -16,6 +16,7 @@ use Thread::Queue;
 
 use lib dirname($0);
 use BackRest::Common::Exception;
+use BackRest::Common::Exit;
 use BackRest::Common::Ini;
 use BackRest::Common::Log;
 use BackRest::Archive;
@@ -53,16 +54,18 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    (
-        my $strOperation,
-        $self->{oFile}
-    ) =
-        logDebugParam
-        (
-            OP_BACKUP_NEW, \@_,
-            {name => 'oFile', trace => true}
-        );
+    my ($strOperation) = logDebugParam(OP_BACKUP_NEW);
 
+    # Initialize default file object
+    $self->{oFile} = new BackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
+        optionRemoteType(),
+        protocolGet()
+    );
+
+    # Initialize variables
     $self->{oDb} = new BackRest::Db();
 
     # Return from function and log return values if any
@@ -92,7 +95,6 @@ sub DESTROY
 
     undef($self->{oFile});
     undef($self->{oDb});
-
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -535,8 +537,14 @@ sub processManifest
             $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
         }
 
+        if (optionGet(OPTION_THREAD_MAX) == 1)
+        {
+            # Start backup test point
+            &log(TEST, TEST_BACKUP_START);
+        }
+
         # Iterate all backup files
-        foreach my $strPathKey (sort (keys %oFileCopyMap))
+        foreach my $strPathKey (sort(keys(%oFileCopyMap)))
         {
             if (optionGet(OPTION_THREAD_MAX) > 1)
             {
@@ -584,6 +592,9 @@ sub processManifest
 
                 threadGroupRun($iThreadIdx, 'backup', \%oParam);
             }
+
+            # Start backup test point
+            &log(TEST, TEST_BACKUP_START);
 
             # Complete thread queues
             my $bDone = false;

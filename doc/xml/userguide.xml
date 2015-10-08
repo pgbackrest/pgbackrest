@@ -263,6 +263,15 @@
 						<example>1</example>
 					</config-key>
 
+					<!-- CONFIG - GENERAL SECTION - CONFIG_REMOTE KEY -->
+					<config-key id="config-remote">
+						<summary><text><backrest/> remote configuration file.</text></summary>
+
+						<text>Sets the location of the remote configuration file.  This is only required if the remote configuration file is in a different location than the local configuration file.</text>
+
+						<example>/etc/pg_backrest_remote.conf</example>
+					</config-key>
+
 					<!-- CONFIG - GENERAL SECTION - DB-TIMEOUT KEY -->
 					<config-key id="db-timeout">
 						<summary><text>Database query timeout.</text></summary>
@@ -880,6 +889,51 @@
 						</code-block>
 
 						Get help for the force option of the backup command.</text>
+					</command-example>
+				</command-example-list>
+			</command>
+
+			<!-- OPERATION - START COMMAND -->
+			<command id="start">
+				<summary><text>Allow <backrest/> processes to run.</text></summary>
+
+				<text>If the <backrest/> processes were previously stopped using the <cmd>stop</cmd> command then they can be started again using the <cmd>start</cmd> command.  Note that this will not immediately start up any <backrest/> processes but they are allowed to run.</text>
+
+				<command-example-list>
+					<command-example title="Start processes for stanza main">
+						<text><code-block>
+							<exe/> --stanza=main start
+						</code-block>
+
+						Allows <backrest/> processes to run for the <id>main</id> stanza.</text>
+					</command-example>
+				</command-example-list>
+			</command>
+
+			<!-- OPERATION - STOP COMMAND -->
+			<command id="stop">
+				<summary><text>Stop <backrest/> processes from running.</text></summary>
+
+				<text>Does not allow any new <backrest/> processes to run.  By default running processes will be allowed to complete successfully.  Use the <setting>--force</setting> option to terminate running processes.
+
+				<backrest/> processes will return an error if they are run after the stop command completes.</text>
+
+				<option-list>
+					<!-- OPERATION - STOP COMMAND - FORCE OPTION -->
+					<option id="force">
+						<summary><text>Force all <backrest/> processes to stop.</text></summary>
+
+						<text>This option will send TERM signals to all running <backrest/> processes to effect a graceful but immediate shutdown.  Note that this will also shutdown processes that were initiated on another system but have remotes running on the current system.  For instance, if a backup was started on the backup server then running <cmd>stop --force</cmd> on the database server will shutdown the backup process on the backup server.</text>
+					</option>
+				</option-list>
+
+				<command-example-list>
+					<command-example title="Stop processes for all stanzas">
+						<text><code-block>
+							<exe/> stop
+						</code-block>
+
+						Stop new <backrest/> processes for all stanzas but allow any current process to complete.</text>
 					</command-example>
 				</command-example-list>
 			</command>

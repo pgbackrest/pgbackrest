@@ -1758,11 +1758,7 @@ sub copy
             $strOperation = OP_FILE_COPY_OUT;
             $strRemote = 'in';
 
-            if ($strSourcePathType eq PIPE_STDIN)
-            {
-                $hIn = *STDIN;
-            }
-            else
+            if ($strSourcePathType ne PIPE_STDIN)
             {
                 $oParamHash{source_file} = $strSourceOp;
                 $oParamHash{source_compressed} = $bSourceCompressed;
@@ -1776,11 +1772,7 @@ sub copy
             $strOperation = OP_FILE_COPY_IN;
             $strRemote = 'out';
 
-            if ($strDestinationPathType eq PIPE_STDOUT)
-            {
-                $hOut = *STDOUT;
-            }
-            else
+            if ($strDestinationPathType ne PIPE_STDOUT)
             {
                 $oParamHash{destination_file} = $strDestinationOp;
                 $oParamHash{source_compressed} = $bSourceCompressed;

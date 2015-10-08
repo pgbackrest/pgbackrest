@@ -14,6 +14,7 @@ use File::Basename qw(dirname basename);
 
 use lib dirname($0);
 use BackRest::Common::Exception;
+use BackRest::Common::Lock;
 use BackRest::Common::Log;
 use BackRest::ArchiveInfo;
 use BackRest::Common::String;
@@ -366,6 +367,8 @@ sub get
             {name => 'strDestinationFile'}
         );
 
+    lockStopTest();
+
     # Create the file object
     my $oFile = new BackRest::File
     (
@@ -541,10 +544,6 @@ sub pushProcess
         # Start the async archive push
         logDebugMisc($strOperation, 'start async archive-push');
 
-        # Load module dynamically
-        require BackRest::Common::Lock;
-        BackRest::Common::Lock->import();
-
         # Create a lock file to make sure async archive-push does not run more than once
         if (!lockAcquire(commandGet(), false))
         {
@@ -614,6 +613,8 @@ sub push
         $bAsync ? NONE : optionRemoteType(),
         protocolGet($bAsync)
     );
+
+    lockStopTest();
 
     # If the source file path is not absolute then it is relative to the data path
     if (index($strSourceFile, '/',) != 0)
@@ -836,6 +837,9 @@ sub xfer
     {
         eval
         {
+            # Start backup test point
+            &log(TEST, TEST_ARCHIVE_PUSH_ASYNC_START);
+
             # If the archive repo is remote create a new file object to do the copies
             if (!optionRemoteTypeTest(NONE))
             {

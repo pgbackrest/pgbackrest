@@ -44,7 +44,7 @@ sub BackRestTestCompare_BuildDb
 
         for (my $iTableSizeIdx = 0; $iTableSizeIdx < $iTableSize; $iTableSizeIdx++)
         {
-            BackRestTestCommon_Execute("cat ${strSourceFile} >> ${strTableFile}");
+            executeTest("cat ${strSourceFile} >> ${strTableFile}");
         }
     }
 }
@@ -75,7 +75,7 @@ sub BackRestTestCompare_Test
         BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc');
 
         BackRestTestCompare_BuildDb(48, 10);
-        BackRestTestCommon_Execute('sync');
+        executeTest('sync');
 
         for (my $bRemote = true; $bRemote <= true; $bRemote++)
         {
@@ -109,8 +109,8 @@ sub BackRestTestCompare_Test
             }
 
             my $fTimeBegin = gettimeofday();
-            BackRestTestCommon_Execute($strCommand, $bRemote);
-            BackRestTestCommon_Execute('sync');
+            executeTest($strCommand, $bRemote);
+            executeTest('sync');
             my $fTimeEnd = gettimeofday();
 
             &log(INFO, "    time = " . (int(($fTimeEnd - $fTimeBegin) * 100) / 100));

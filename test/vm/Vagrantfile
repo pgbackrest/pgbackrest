@@ -104,7 +104,7 @@ Vagrant.configure(2) do |config|
             yum -y install postgresql94-server
 
             # Install Perl and required modules
-            yum -y install perl perl-Time-HiRes perl-IO-String perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
+            yum -y install perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
 
             # Setup SSH
             adduser -gvagrant -n backrest
@@ -130,7 +130,7 @@ Vagrant.configure(2) do |config|
             yum -y install postgresql95-server
 
             # Install Perl and required modules
-            yum -y install perl perl-IO-String perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
+            yum -y install perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
 
             # Setup SSH
             adduser -gvagrant -n backrest

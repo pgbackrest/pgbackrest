@@ -257,6 +257,16 @@ allow: 0-9
 example: compress-level-network=1
 ```
 
+##### `config-remote` key
+
+pgBackRest remote configuration file.
+
+Sets the location of the remote configuration file.  This is only required if the remote configuration file is in a different location than the local configuration file.
+```
+default: /etc/doc.pl.conf
+example: config-remote=/etc/pg_backrest_remote.conf
+```
+
 ##### `db-timeout` key
 
 Database query timeout.
@@ -876,6 +886,45 @@ pg_backrest help backup force
 ```
 
 Get help for the force option of the backup command.
+
+#### `start` command
+
+Allow pgBackRest processes to run.
+
+If the pgBackRest processes were previously stopped using the `stop` command then they can be started again using the `start` command.  Note that this will not immediately start up any pgBackRest processes but they are allowed to run.
+
+##### Example: Start processes for stanza main
+
+```
+pg_backrest --stanza=main start
+```
+
+Allows pgBackRest processes to run for the `main` stanza.
+
+#### `stop` command
+
+Stop pgBackRest processes from running.
+
+Does not allow any new pgBackRest processes to run.  By default running processes will be allowed to complete successfully.  Use the `--force` option to terminate running processes.
+
+pgBackRest processes will return an error if they are run after the stop command completes.
+
+##### `force` option
+
+Force all pgBackRest processes to stop.
+
+This option will send TERM signals to all running pgBackRest processes to effect a graceful but immediate shutdown.  Note that this will also shutdown processes that were initiated on another system but have remotes running on the current system.  For instance, if a backup was started on the backup server then running `stop --force` on the database server will shutdown the backup process on the backup server.
+```
+default: n
+```
+
+##### Example: Stop processes for all stanzas
+
+```
+pg_backrest stop
+```
+
+Stop new pgBackRest processes for all stanzas but allow any current process to complete.
 
 #### `version` command
 

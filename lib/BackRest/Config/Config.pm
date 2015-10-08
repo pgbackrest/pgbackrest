@@ -67,6 +67,12 @@ use constant CMD_REMOTE                                             => 'remote';
 use constant CMD_RESTORE                                            => 'restore';
     push @EXPORT, qw(CMD_RESTORE);
     $oCommandHash{&CMD_RESTORE} = true;
+use constant CMD_START                                              => 'start';
+    push @EXPORT, qw(CMD_START);
+    $oCommandHash{&CMD_START} = true;
+use constant CMD_STOP                                               => 'stop';
+    push @EXPORT, qw(CMD_STOP);
+    $oCommandHash{&CMD_STOP} = true;
 use constant CMD_VERSION                                            => 'version';
     push @EXPORT, qw(CMD_VERSION);
     $oCommandHash{&CMD_VERSION} = true;
@@ -220,6 +226,13 @@ use constant OPTION_HELP                                            => 'help';
 use constant OPTION_VERSION                                         => 'version';
     push @EXPORT, qw(OPTION_VERSION);
 
+# Command-line only remote
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_COMMAND                                          => 'command';
+    push @EXPORT, qw(OPTION_COMMAND);
+use constant OPTION_PROCESS                                          => 'process';
+    push @EXPORT, qw(OPTION_PROCESS);
+
 # Command-line only test
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_TEST                                            => 'test';
@@ -228,11 +241,15 @@ use constant OPTION_TEST_DELAY                                      => 'test-del
     push @EXPORT, qw(OPTION_TEST_DELAY);
 use constant OPTION_TEST_NO_FORK                                    => 'no-fork';
     push @EXPORT, qw(OPTION_TEST_NO_FORK);
+use constant OPTION_TEST_POINT                                      => 'test-point';
+    push @EXPORT, qw(OPTION_TEST_POINT);
 
 # GENERAL Section
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_BUFFER_SIZE                                     => 'buffer-size';
     push @EXPORT, qw(OPTION_BUFFER_SIZE);
+use constant OPTION_CONFIG_REMOTE                                   => 'config-remote';
+    push @EXPORT, qw(OPTION_CONFIG_REMOTE);
 use constant OPTION_DB_TIMEOUT                                      => 'db-timeout';
     push @EXPORT, qw(OPTION_DB_TIMEOUT);
 use constant OPTION_COMPRESS                                        => 'compress';
@@ -392,6 +409,10 @@ use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib
     push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
 use constant OPTION_DEFAULT_THREAD_MAX                              => 1;
     push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX);
+use constant OPTION_DEFAULT_THREAD_MAX_MIN                          => 1;
+    push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX_MIN);
+use constant OPTION_DEFAULT_THREAD_MAX_MAX                          => 256;
+    push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX_MAX);
 
 # COMMAND Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -440,6 +461,11 @@ use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_DEFAULT_RESTORE_TABLESPACE                      => true;
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TABLESPACE);
+
+# START/STOP SECTION
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_STOP_FORCE                              => false;
+    push @EXPORT, qw(OPTION_DEFAULT_STOP_FORCE);
 
 # EXPIRE Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -497,11 +523,6 @@ my %oOptionRule =
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_FORCE,
-            },
-
             &CMD_BACKUP =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_FORCE,
@@ -510,6 +531,16 @@ my %oOptionRule =
                     &OPTION_RULE_DEPEND_OPTION  => OPTION_NO_START_STOP,
                     &OPTION_RULE_DEPEND_VALUE   => true
                 }
+            },
+
+            &CMD_RESTORE =>
+            {
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_FORCE,
+            },
+
+            &CMD_STOP =>
+            {
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STOP_FORCE
             }
         }
     },
@@ -570,6 +601,14 @@ my %oOptionRule =
             &CMD_RESTORE =>
             {
                 &OPTION_RULE_REQUIRED => true
+            },
+            &CMD_START =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
+            &CMD_STOP =>
+            {
+                &OPTION_RULE_REQUIRED => false
             }
         }
     },
@@ -712,10 +751,37 @@ my %oOptionRule =
 
     # Command-line only test
     #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_COMMAND =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_REMOTE => true
+        }
+    },
+
+    &OPTION_PROCESS =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_THREAD_MAX_MIN, OPTION_DEFAULT_THREAD_MAX_MAX],
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_REMOTE => true
+        }
+    },
+
+    # Command-line only test
+    #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_TEST =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true
+        }
     },
 
     &OPTION_TEST_DELAY =>
@@ -726,6 +792,27 @@ my %oOptionRule =
         {
             &OPTION_RULE_DEPEND_OPTION => OPTION_TEST,
             &OPTION_RULE_DEPEND_VALUE => true
+        },
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true
+        }
+    },
+
+    &OPTION_TEST_POINT =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST,
+            &OPTION_RULE_DEPEND_VALUE => true
+        },
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true
         }
     },
 
@@ -733,9 +820,9 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_NO_FORK,
-        &OPTION_RULE_DEPEND =>
+        &OPTION_RULE_COMMAND =>
         {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST
+            &CMD_ARCHIVE_PUSH => true
         }
     },
 
@@ -768,8 +855,13 @@ my %oOptionRule =
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_COMMAND =>
         {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
-            &CMD_REMOTE => true
+            &CMD_EXPIRE => false,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
         }
     },
 
@@ -827,6 +919,22 @@ my %oOptionRule =
         }
     },
 
+    &OPTION_CONFIG_REMOTE =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GENERAL,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
+            &CMD_EXPIRE => true
+        },
+    },
+
     &OPTION_NEUTRAL_UMASK =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
@@ -840,7 +948,9 @@ my %oOptionRule =
             &CMD_INFO => false,
             &CMD_EXPIRE => false,
             &CMD_REMOTE => true,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => true,
+            &CMD_START => false,
+            &CMD_STOP => false
         }
     },
 
@@ -855,7 +965,10 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_INFO => true,
+            &CMD_REMOTE => true,
             &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
             &CMD_EXPIRE => true
         },
     },
@@ -880,6 +993,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_THREAD_MAX,
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_THREAD_MAX_MIN, OPTION_DEFAULT_THREAD_MAX_MAX],
         &OPTION_RULE_SECTION => true,
         &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_GENERAL,
         &OPTION_RULE_COMMAND =>
@@ -1186,7 +1300,6 @@ my %oOptionRule =
 
     # RESTORE Section
     #-------------------------------------------------------------------------------------------------------------------------------
-
     &OPTION_TABLESPACE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
@@ -2018,6 +2131,7 @@ sub protocolGet
 {
     my $bForceLocal = shift;
     my $bStore = shift;
+    my $iProcessIdx = shift;
 
     # If force local or remote = NONE then create a local remote and return it
     if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
@@ -2026,7 +2140,8 @@ sub protocolGet
         (
             optionGet(OPTION_BUFFER_SIZE),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-            commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK)
+            commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
+            protocolTimeoutGet()
         );
     }
 
@@ -2039,12 +2154,16 @@ sub protocolGet
     # Return the remote when required
     my $oProtocolTemp = new BackRest::Protocol::RemoteMaster
     (
-        commandWrite(CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE)),
+        commandWrite(CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE), undef,
+                     {&OPTION_COMMAND => {value => commandGet()}, &OPTION_PROCESS => {value => $iProcessIdx}, &OPTION_CONFIG =>
+                     {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
+                     &OPTION_REPO_PATH => {}}),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
-        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER)
+        optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
+        protocolTimeoutGet()
     );
 
     if (!defined($bStore) || $bStore)
@@ -2058,6 +2177,18 @@ sub protocolGet
 push @EXPORT, qw(protocolGet);
 
 ####################################################################################################################################
+# protocolTimeoutGet
+#
+# Get the protocol time - for the moment this is based on the db timeout + 30 seconds.
+####################################################################################################################################
+sub protocolTimeoutGet
+{
+    return optionGet(OPTION_DB_TIMEOUT) + 30;
+}
+
+push @EXPORT, qw(protocolTimeoutGet);
+
+####################################################################################################################################
 # protocolDestroy
 #
 # Undefine the protocol if it is stored locally.
@@ -2066,6 +2197,7 @@ sub protocolDestroy
 {
     if (defined($oProtocol))
     {
+        $oProtocol->close();
         undef($oProtocol);
     }
 }
@@ -2155,38 +2287,79 @@ sub commandWrite
     my $bIncludeConfig = shift;
     my $strExeString = shift;
     my $bIncludeCommand = shift;
+    my $oOptionOverride = shift;
 
     # Set defaults
     $strExeString = defined($strExeString) ? $strExeString : abs_path($0);
     $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
     $bIncludeCommand = defined($bIncludeCommand) ? $bIncludeCommand : true;
 
-    if ($bIncludeConfig && $strExeString ne '')
+    # if ($bIncludeConfig && $strExeString ne '')
+    # {
+    #     $strExeString .= ' --no-config';
+    # }
+
+    # Function to correctly format options for command-line usage
+    sub optionFormat
     {
-        $strExeString .= ' --no-config';
+        my $strOption = shift;
+        my $bMulti = shift;
+        my $oValue = shift;
+
+        # Loops though all keys in the hash
+        my $strOptionFormat = '';
+        my $strParam;
+
+        foreach my $strKey (sort(keys(%$oValue)))
+        {
+            # Get the value - if the original value was a hash then the key must be prefixed
+            my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
+
+            # Handle the no- prefix for boolean values
+            if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+            {
+                $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
+            }
+            else
+            {
+                $strParam = "--${strOption}=${strValue}";
+            }
+
+            # Add quotes if the value has spaces in it
+            $strOptionFormat .= ' ' . (index($strValue, " ") != -1 ? "\"${strParam}\"" : $strParam);
+        }
+
+        return $strOptionFormat;
     }
 
-    foreach my $strOption (sort(keys(%oOption)))
+    # Iterate the options to figure out which ones are not default and need to be written out to the new command string
+    foreach my $strOption (sort(keys(%oOptionRule)))
     {
-        next if ($bIncludeConfig && $strOption eq OPTION_CONFIG);
+        # Skip the config option if it's already included
+        # next if ($bIncludeConfig && $strOption eq OPTION_CONFIG);
 
-        # &log(WARN, "option ${strOption} = " . (defined($oOption{$strOption}{source}) ? $oOption{$strOption}{source} : 'undef') .
-        #            ", " . (defined($oOption{$strOption}{value}) ? $oOption{$strOption}{value} : 'undef'));
-
-        if ((!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
-             defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strNewCommand})) &&
-             defined($oOption{$strOption}{value}) &&
-            ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
+        # Process any option overrides first
+        if (defined($$oOptionOverride{$strOption}))
         {
-            my $strParam;
+            if (defined($$oOptionOverride{$strOption}{value}))
+            {
+                $strExeString .= optionFormat($strOption, false, {value => $$oOptionOverride{$strOption}{value}});
+            }
+        }
+        # else look for non-default options in the current configuration
+        elsif ((!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
+                defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strNewCommand})) &&
+               defined($oOption{$strOption}{value}) &&
+               ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
+        {
             my $oValue;
-            my $bHash = false;
+            my $bMulti = false;
 
             # If this is a hash then it will break up into multple command-line options
             if (ref($oOption{$strOption}{value}) eq 'HASH')
             {
                 $oValue = $oOption{$strOption}{value};
-                $bHash = true;
+                $bMulti = true;
             }
             # Else a single value but store it in a hash anyway to make processing below simpler
             else
@@ -2194,25 +2367,7 @@ sub commandWrite
                 $oValue = {value => $oOption{$strOption}{value}};
             }
 
-            # Loops though all keys in the hash
-            foreach my $strKey (sort(keys(%$oValue)))
-            {
-                # Get the value - if the original value was a hash then the key must be prefixed
-                my $strValue = ($bHash ?  "${strKey}=" : '') . $$oValue{$strKey};
-
-                # Handle the no- prefix for boolean values
-                if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
-                {
-                    $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
-                }
-                else
-                {
-                    $strParam = "--${strOption}=${strValue}";
-                }
-
-                # Add quotes if the value has spaces in it
-                $strExeString .= ' ' . (index($strValue, " ") != -1 ? "\"${strParam}\"" : $strParam);
-            }
+            $strExeString .= optionFormat($strOption, $bMulti, $oValue);
         }
     }
 

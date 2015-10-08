@@ -9,6 +9,15 @@
 		<changelog-release date="XXXX-XX-XX" version="0.85" title="VIENNA MILESTONE - UNDER DEVELOPMENT">
 			<release-feature-bullet-list>
 				<release-feature>
+					<text>Added new feature to allow all <backrest/> operations to be stopped or started using the <cmd>stop</cmd> and <cmd>start</cmd> commands.  This prevents any <backrest/> processes from running on a system where <postgres/> is shutdown or the system needs to be quiesced for some reason.</text>
+				</release-feature>
+				<release-feature>
+					<text>Removed dependency on <code>IO::String</code> module.</text>
+				</release-feature>
+				<release-feature>
+					<text>Fixed an issue where an error could be returned after a backup or restore completely successfully.</text>
+				</release-feature>
+				<release-feature>
 					<text>Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.</text>
 				</release-feature>
 			</release-feature-bullet-list>

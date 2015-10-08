@@ -30,6 +30,7 @@ use BackRest::Config::Config;
 use BackRest::File;
 use BackRest::Manifest;
 
+use BackRestTest::Common::ExecuteTest;
 use BackRestTest::CommonTest;
 
 my $hDb;
@@ -270,8 +271,8 @@ sub BackRestTestBackup_ClusterStop
     if ((!defined($bNoError) || !$bNoError) &&
         -e BackRestTestCommon_DbCommonPathGet() . '/postgresql.log')
     {
-        BackRestTestCommon_Execute('grep ERROR ' . BackRestTestCommon_DbCommonPathGet() . '/postgresql.log',
-                                   undef, undef, undef, 1);
+        executeTest('grep ERROR ' . BackRestTestCommon_DbCommonPathGet() . '/postgresql.log',
+                    {iExpectedExitStatus => 1});
     }
 }
 
@@ -336,7 +337,7 @@ sub BackRestTestBackup_ClusterStart
                    BackRestTestCommon_DbPathGet() . "'\" " .
                    "-D ${strPath} -l ${strPath}/postgresql.log -s";
 
-    BackRestTestCommon_Execute($strCommand);
+    executeTest($strCommand);
 
     # Connect user session
     BackRestTestBackup_PgConnect();
@@ -357,7 +358,7 @@ sub BackRestTestBackup_ClusterRestart
     # If postmaster process is running them stop the cluster
     if (-e $strPath . '/postmaster.pid')
     {
-        BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl restart -D ${strPath} -w -s");
+        executeTest(BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl restart -D ${strPath} -w -s");
     }
 
     # Connect user session
@@ -378,7 +379,7 @@ sub BackRestTestBackup_ClusterCreate
     # Defaults
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
 
-    BackRestTestCommon_Execute(BackRestTestCommon_PgSqlBinPathGet() . "/initdb -D ${strPath} -A trust");
+    executeTest(BackRestTestCommon_PgSqlBinPathGet() . "/initdb -D ${strPath} -A trust");
 
     BackRestTestBackup_ClusterStart($strPath, $iPort, undef, $bArchive);
 
@@ -913,35 +914,76 @@ sub BackRestTestBackup_LastBackup
 ####################################################################################################################################
 # BackRestTestBackup_BackupBegin
 ####################################################################################################################################
-push @EXPORT, qw(BackRestTestBackup_BackupBegin);
+my $oExecuteBackup;
+my $bBackupRemote;
+my $oBackupFile;
+my $bBackupSynthetic;
+my $strBackupType;
+my $strBackupStanza;
+my $oBackupLogTest;
+my $iBackupThreadMax;
+
+sub BackRestTestBackup_Init
+{
+    my $bRemote = shift;
+    my $oFile = shift;
+    my $bSynthetic = shift;
+    my $oLogTest = shift;
+    my $iThreadMax = shift;
+
+    $bBackupRemote = $bRemote;
+    $oBackupFile = $oFile;
+    $bBackupSynthetic = $bSynthetic;
+    $oBackupLogTest = $oLogTest;
+    $iBackupThreadMax = defined($iThreadMax) ? $iThreadMax : 1;
+}
+
+push @EXPORT, qw(BackRestTestBackup_Init);
 
 sub BackRestTestBackup_BackupBegin
 {
     my $strType = shift;
     my $strStanza = shift;
-    my $bRemote = shift;
     my $strComment = shift;
-    my $bSynthetic = shift;
-    my $bTestPoint = shift;
-    my $fTestDelay = shift;
-    my $strOptionalParam = shift;
+    my $oParam = shift;
+
+    $strBackupType = $strType;
+    $strBackupStanza = $strStanza;
 
     # Set defaults
-    $bTestPoint = defined($bTestPoint) ? $bTestPoint : false;
-    $fTestDelay = defined($fTestDelay) ? $fTestDelay : 0;
+    my $strTest = defined($$oParam{strTest}) ? $$oParam{strTest} : undef;
+    my $fTestDelay = defined($$oParam{fTestDelay}) ? $$oParam{fTestDelay} : 0;
 
-    $strComment = "${strType} backup" . (defined($strComment) ? " (${strComment})" : '');
+    if (!defined($$oParam{iExpectedExitStatus}) && $iBackupThreadMax > 1)
+    {
+        $$oParam{iExpectedExitStatus} = -1;
+    }
+
+    $strComment = "${strBackupType} backup" . (defined($strComment) ? " (${strComment})" : '');
     &log(INFO, "    $strComment");
 
-    BackRestTestCommon_ExecuteBegin(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
-                                    ' --config=' .
-                                    ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
-                                    "/pg_backrest.conf" . ($bSynthetic ? " --no-start-stop" : '') .
-                                    (defined($strOptionalParam) ? " ${strOptionalParam}" : '') .
-                                    ($strType ne 'incr' ? " --type=${strType}" : '') .
-                                    " --stanza=${strStanza} backup" . ($bTestPoint ? " --test --test-delay=${fTestDelay}": ''),
-                                    $bRemote, $strComment);
+    # Execute the backup command
+    $oExecuteBackup = new BackRestTest::Common::ExecuteTest(
+        ($bBackupRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+        ' --config=' . ($bBackupRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) . '/pg_backrest.conf' .
+        ($bBackupSynthetic ? " --no-start-stop" : '') .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        ($strBackupType ne 'incr' ? " --type=${strBackupType}" : '') .
+        " --stanza=${strBackupStanza} backup" .
+        (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
+        {bRemote => $bBackupRemote, strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
+         oLogTest => $oBackupLogTest});
+
+    $oExecuteBackup->begin();
+
+    # Return at the test point if one was defined
+    if (defined($strTest))
+    {
+        $oExecuteBackup->end($strTest);
+    }
 }
+
+push @EXPORT, qw(BackRestTestBackup_BackupBegin);
 
 ####################################################################################################################################
 # BackRestTestBackup_BackupEnd
@@ -950,45 +992,43 @@ push @EXPORT, qw(BackRestTestBackup_BackupEnd);
 
 sub BackRestTestBackup_BackupEnd
 {
-    my $strType = shift;
-    my $strStanza = shift;
-    my $oFile = shift;
-    my $bRemote = shift;
-    my $strBackup = shift;
     my $oExpectedManifestRef = shift;
-    my $bSynthetic = shift;
-    my $iExpectedExitStatus = shift;
 
-    my $iExitStatus = BackRestTestCommon_ExecuteEnd(undef, undef, undef, $iExpectedExitStatus);
+    my $iExitStatus = $oExecuteBackup->end();
 
-    if (defined($iExpectedExitStatus))
+    if ($oExecuteBackup->{iExpectedExitStatus} != 0 && $oExecuteBackup->{iExpectedExitStatus} != -1)
     {
         return undef;
     }
 
-    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
+    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strBackupType;
 
-    if (!defined($strBackup))
+    my $strBackup = BackRestTestBackup_LastBackup($oBackupFile);
+
+    if ($bBackupSynthetic)
     {
-        $strBackup = BackRestTestBackup_LastBackup($oFile);
+        if (!defined($oExpectedManifestRef))
+        {
+            confess 'must pass oExpectedManifestRef to BackupEnd for synthetic backups when no error is expected';
+        }
+
+        BackRestTestBackup_BackupCompare($oBackupFile, $bBackupRemote, $strBackup, $oExpectedManifestRef);
     }
 
-    if ($bSynthetic)
+    if (defined($oBackupLogTest))
     {
-        BackRestTestBackup_BackupCompare($oFile, $bRemote, $strBackup, $oExpectedManifestRef);
+        $oBackupLogTest->supplementalAdd(BackRestTestCommon_DbPathGet() . "/pg_backrest.conf", $bBackupRemote);
+
+        if ($bBackupRemote)
+        {
+            $oBackupLogTest->supplementalAdd(BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf", true);
+        }
+
+        $oBackupLogTest->supplementalAdd(BackRestTestCommon_RepoPathGet() .
+                                         "/backup/${strBackupStanza}/${strBackup}/backup.manifest", $bBackupRemote);
+        $oBackupLogTest->supplementalAdd(BackRestTestCommon_RepoPathGet() .
+                                         "/backup/${strBackupStanza}/backup.info", $bBackupRemote);
     }
-
-    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_DbPathGet() . "/pg_backrest.conf", $bRemote);
-
-    if ($bRemote)
-    {
-        BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() . "/pg_backrest.conf", $bRemote);
-    }
-
-    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
-                                         "/backup/${strStanza}/${strBackup}/backup.manifest", $bRemote);
-    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
-                                         "/backup/${strStanza}/backup.info", $bRemote);
 
     return $strBackup;
 }
@@ -1002,25 +1042,12 @@ sub BackRestTestBackup_BackupSynthetic
 {
     my $strType = shift;
     my $strStanza = shift;
-    my $bRemote = shift;
-    my $oFile = shift;
     my $oExpectedManifestRef = shift;
     my $strComment = shift;
-    my $strTestPoint = shift;
-    my $fTestDelay = shift;
-    my $iExpectedExitStatus = shift;
-    my $strOptionalParam = shift;
+    my $oParam = shift;
 
-    BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, true, defined($strTestPoint), $fTestDelay,
-                                   $strOptionalParam);
-
-    if (defined($strTestPoint))
-    {
-        BackRestTestCommon_ExecuteEnd($strTestPoint);
-    }
-
-    return BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, $oExpectedManifestRef, true,
-                                        $iExpectedExitStatus);
+    BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment, $oParam);
+    return BackRestTestBackup_BackupEnd($oExpectedManifestRef);
 }
 
 ####################################################################################################################################
@@ -1032,21 +1059,11 @@ sub BackRestTestBackup_Backup
 {
     my $strType = shift;
     my $strStanza = shift;
-    my $bRemote = shift;
-    my $oFile = shift;
     my $strComment = shift;
-    my $strTestPoint = shift;
-    my $fTestDelay = shift;
-    my $iExpectedExitStatus = shift;
+    my $oParam = shift;
 
-    BackRestTestBackup_BackupBegin($strType, $strStanza, $bRemote, $strComment, false, defined($strTestPoint), $fTestDelay);
-
-    if (defined($strTestPoint))
-    {
-        BackRestTestCommon_ExecuteEnd($strTestPoint);
-    }
-
-    return BackRestTestBackup_BackupEnd($strType, $strStanza, $oFile, $bRemote, undef, undef, false, $iExpectedExitStatus);
+    BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment, $oParam);
+    return BackRestTestBackup_BackupEnd();
 }
 
 ####################################################################################################################################
@@ -1064,12 +1081,56 @@ sub BackRestTestBackup_Info
     $strComment = "info" . (defined($strStanza) ? " ${strStanza}" : '');
     &log(INFO, "    $strComment");
 
-    BackRestTestCommon_Execute(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
-                              ' --config=' .
-                              ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
-                              '/pg_backrest.conf' . (defined($strStanza) ? " --stanza=${strStanza}" : '') . ' info' .
-                              (defined($strOutput) ? " --output=${strOutput}" : ''),
-                              $bRemote, undef, undef, undef, $strComment);
+    executeTest(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                ' --config=' .
+                ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
+                '/pg_backrest.conf' . (defined($strStanza) ? " --stanza=${strStanza}" : '') . ' info' .
+                (defined($strOutput) ? " --output=${strOutput}" : ''),
+                {bRemote => $bRemote, strComment => $strComment, oLogTest => $oBackupLogTest});
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Stop
+####################################################################################################################################
+push @EXPORT, qw(BackRestTestBackup_Stop);
+
+sub BackRestTestBackup_Stop
+{
+    my $strStanza = shift;
+    my $bRemote = shift;
+    my $bForce = shift;
+
+    my $strComment = "stop" . (defined($strStanza) ? " ${strStanza}" : '') .
+                     (defined($bRemote) && $bRemote ? ' (remote)' : ' (local)');
+    &log(INFO, "    $strComment");
+
+    executeTest(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                ' --config=' . ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
+                    '/pg_backrest.conf' .
+                (defined($strStanza) ? " --stanza=${strStanza}" : '') .
+                (defined($bForce) && $bForce ? ' --force' : '') . ' stop',
+                {bRemote => $bRemote, oLogTest => $oBackupLogTest});
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Start
+####################################################################################################################################
+push @EXPORT, qw(BackRestTestBackup_Start);
+
+sub BackRestTestBackup_Start
+{
+    my $strStanza = shift;
+    my $bRemote = shift;
+
+    my $strComment = "start" . (defined($strStanza) ? " ${strStanza}" : '') .
+                     (defined($bRemote) && $bRemote ? ' (remote)' : ' (local)');
+    &log(INFO, "    $strComment");
+
+    executeTest(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                ' --config=' .
+                ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
+                '/pg_backrest.conf' . (defined($strStanza) ? " --stanza=${strStanza}" : '') . ' start',
+                {bRemote => $bRemote, strComment => $strComment, oLogTest => $oBackupLogTest});
 }
 
 ####################################################################################################################################
@@ -1089,7 +1150,8 @@ sub BackRestTestBackup_BackupCompare
     # Change mode on the backup path so it can be read
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
+        executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(),
+                    {bRemote => true});
     }
 
     my %oActualManifest;
@@ -1110,12 +1172,13 @@ sub BackRestTestBackup_BackupCompare
     iniSave("${strTestPath}/actual.manifest", \%oActualManifest);
     iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);
 
-    BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
+    executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
     # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
+        executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(),
+                    {bRemote => true});
     }
 
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
@@ -1125,8 +1188,8 @@ sub BackRestTestBackup_BackupCompare
 ####################################################################################################################################
 # BackRestTestBackup_ManifestMunge
 #
-# Allows for munging of the manifest while make it appear to be valid.  This is used to create various error conditions that should
-# be caught by the unit tests.
+# Allows for munging of the manifest while making it appear to be valid.  This is used to create various error conditions that
+# should be caught by the unit tests.
 ####################################################################################################################################
 push @EXPORT, qw(BackRestTestBackup_ManifestMunge);
 
@@ -1149,8 +1212,10 @@ sub BackRestTestBackup_ManifestMunge
     # Change mode on the backup path so it can be read/written
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
-        BackRestTestCommon_Execute('chmod 770 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
+        executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(),
+                    {bRemote => true});
+        executeTest('chmod 770 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST,
+                    {bRemote => true});
     }
 
     # Read the manifest
@@ -1197,8 +1262,10 @@ sub BackRestTestBackup_ManifestMunge
     # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
-        BackRestTestCommon_Execute('chmod 750 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST, true);
-        BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
+        executeTest('chmod 750 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST,
+                    {bRemote => true});
+        executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(),
+                    {bRemote => true});
     }
 }
 
@@ -1254,7 +1321,8 @@ sub BackRestTestBackup_Restore
         # Change mode on the backup path so it can be read
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
+            executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(),
+                        {bRemote => true});
         }
 
         my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
@@ -1265,7 +1333,8 @@ sub BackRestTestBackup_Restore
         # Change mode on the backup path back before unit tests continue
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
+            executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(),
+                        {bRemote => true});
         }
     }
 
@@ -1280,26 +1349,30 @@ sub BackRestTestBackup_Restore
     }
 
     # Create the backup command
-    BackRestTestCommon_Execute(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
-                               ' --config=' . BackRestTestCommon_DbPathGet() .
-                               '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
-                               (defined($bForce) && $bForce ? ' --force' : '') .
-                               ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .
-                               (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
-                               (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
-                               (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
-                               (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
-                               (defined($bTargetExclusive) && $bTargetExclusive ? " --target-exclusive" : '') .
-                               (defined($bTargetResume) && $bTargetResume ? " --target-resume" : '') .
-                               " --stanza=${strStanza} restore",
-                               undef, undef, undef, $iExpectedExitStatus, $strComment);
+    executeTest(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                ' --config=' . BackRestTestCommon_DbPathGet() .
+                '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
+                (defined($bForce) && $bForce ? ' --force' : '') .
+                ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .
+                (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
+                (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
+                (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
+                (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
+                (defined($bTargetExclusive) && $bTargetExclusive ? " --target-exclusive" : '') .
+                (defined($bTargetResume) && $bTargetResume ? " --target-resume" : '') .
+                " --stanza=${strStanza} restore",
+                {iExpectedExitStatus => $iExpectedExitStatus, strComment => $strComment, oLogTest => $oBackupLogTest});
 
     if (!defined($iExpectedExitStatus) && (!defined($bCompare) || $bCompare))
     {
         BackRestTestBackup_RestoreCompare($oFile, $strStanza, $bRemote, $strBackup, $bSynthetic, $oExpectedManifestRef);
-        BackRestTestCommon_TestLogAppendFile(
-            $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_PATH}{&MANIFEST_KEY_BASE}{&MANIFEST_SUBKEY_PATH} .
-            "/recovery.conf");
+
+        if (defined($oBackupLogTest))
+        {
+            $oBackupLogTest->supplementalAdd(
+                $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_PATH}{&MANIFEST_KEY_BASE}{&MANIFEST_SUBKEY_PATH} .
+                "/recovery.conf");
+        }
     }
 }
 
@@ -1327,7 +1400,8 @@ sub BackRestTestBackup_RestoreCompare
         # Change mode on the backup path so it can be read
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 750 ' . BackRestTestCommon_RepoPathGet(), true);
+            executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(),
+                        {bRemote => true});
         }
 
         my $oExpectedManifest = new BackRest::Manifest(BackRestTestCommon_RepoPathGet() .
@@ -1341,7 +1415,8 @@ sub BackRestTestBackup_RestoreCompare
         # Change mode on the backup path back before unit tests continue
         if ($bRemote)
         {
-            BackRestTestCommon_Execute('chmod 700 ' . BackRestTestCommon_RepoPathGet(), true);
+            executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(),
+                        {bRemote => true});
         }
 
     }
@@ -1452,7 +1527,7 @@ sub BackRestTestBackup_RestoreCompare
     iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
     iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);
 
-    BackRestTestCommon_Execute("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
+    executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/actual.manifest");
@@ -1493,7 +1568,7 @@ sub BackRestTestBackup_Expire
                        ' --retention-archive=' . $iExpireArchive;
     }
 
-    BackRestTestCommon_Execute($strCommand);
+    executeTest($strCommand);
 
     # Check that the correct backups were expired
     my @stryBackupActual = $oFile->list(PATH_BACKUP_CLUSTER);
@@ -1513,8 +1588,11 @@ sub BackRestTestBackup_Expire
                 "\n\nbut actual was:\n    " . join("\n    ", @stryArchiveActual) . "\n";
     }
 
-    BackRestTestCommon_TestLogAppendFile(BackRestTestCommon_RepoPathGet() .
-                                         "/backup/${strStanza}/backup.info", false);
+    if (defined($oBackupLogTest))
+    {
+        $oBackupLogTest->supplementalAdd(BackRestTestCommon_RepoPathGet() .
+                                         "/backup/${strStanza}/backup.info");
+    }
 }
 
 1;

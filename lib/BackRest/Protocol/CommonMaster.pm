@@ -40,22 +40,24 @@ sub new
         $strOperation,
         $strName,                                   # Name of the protocol
         $strCommand,                                # Command to execute on local/remote
-        $iBlockSize,                                # Buffer size
+        $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
-        $iCompressLevelNetwork                      # Set compression level for network only compression
+        $iCompressLevelNetwork,                     # Set compression level for network only compression
+        $iProtocolTimeout                           # Protocol timeout
     ) =
         logDebugParam
         (
             OP_PROTOCOL_COMMON_MASTER_NEW, \@_,
             {name => 'strName'},
             {name => 'strCommand'},
-            {name => 'iBlockSize'},
+            {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
-            {name => 'iCompressLevelNetwork'}
+            {name => 'iCompressLevelNetwork'},
+            {name => 'iProtocolTimeout'}
         );
 
     # Create the class hash
-    my $self = $class->SUPER::new($iBlockSize, $iCompressLevel, $iCompressLevelNetwork, $strName);
+    my $self = $class->SUPER::new($iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout, $strName);
     bless $self, $class;
 
     # Set command
@@ -65,7 +67,7 @@ sub new
     }
 
     # Execute the command
-    $self->{io} = BackRest::Protocol::IO->new3($strCommand);
+    $self->{io} = BackRest::Protocol::IO->new3($strCommand, $iProtocolTimeout, $iBufferMax);
 
     # Check greeting to be sure the protocol matches
     $self->greetingRead();
@@ -79,9 +81,9 @@ sub new
 }
 
 ####################################################################################################################################
-# DESTROY
+# close
 ####################################################################################################################################
-sub DESTROY
+sub close
 {
     my $self = shift;
 
@@ -92,6 +94,8 @@ sub DESTROY
 
         $self->cmdWrite('exit');
 
+        undef($self->{io});
+
         # &log(TRACE, "waiting for remote process");
         # if (!$self->waitPid(5, false))
         # {
@@ -99,6 +103,16 @@ sub DESTROY
         #     kill('KILL', $self->{pId});
         # }
     }
+}
+
+####################################################################################################################################
+# DESTROY
+####################################################################################################################################
+sub DESTROY
+{
+    my $self = shift;
+
+    $self->close();
 }
 
 ####################################################################################################################################
@@ -154,7 +168,7 @@ sub outputRead
     my $strError;
 
     # Read output lines
-    while ($strLine = $self->{io}->lineRead(false))
+    while ($strLine = $self->{io}->lineRead())
     {
         # Exit if an error is found
         if ($strLine =~ /^ERROR.*/)
@@ -278,7 +292,11 @@ sub cmdWrite
         {name => 'strCommand', value => $strCommand, trace => true}
     );
 
+    # Write out the command
     $self->{io}->lineWrite($strCommand);
+
+    # Return from function and log return values if any
+    logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

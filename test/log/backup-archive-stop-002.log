@@ -3,7 +3,7 @@ run 002 - rmt 0, cmp 1, error version
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -14,6 +14,9 @@ DEBUG:     File->exists=>: bExists = false
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
 DEBUG:     Archive->pushProcess: start async archive-push
+DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
+DEBUG:     Common:::Lock::lockAquire=>: bResult = true
 DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -48,12 +51,14 @@ DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/ba
 DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
 DEBUG:     Archive->xfer: no WAL segments to archive
 DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
-DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
+DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: archive-push stop
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -61,6 +66,9 @@ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, b
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
 DEBUG:     Archive->pushProcess: start async archive-push
+DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
+DEBUG:     Common:::Lock::lockAquire=>: bResult = true
 DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -76,12 +84,13 @@ DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TES
 DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
-DEBUG:     Main::safeExit(): iExitCode = 119
+DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
  INFO: archive-push stop
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -89,6 +98,9 @@ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, b
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
 DEBUG:     Archive->pushProcess: start async archive-push
+DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
+DEBUG:     Common:::Lock::lockAquire=>: bResult = true
 DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -105,19 +117,21 @@ DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 59479699905018
 ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
               HINT: are you archiving to the correct stanza?
 ERROR: local archive queue has exceeded limit of 24MB - WAL segments will be discarded until the stop file ([TEST_PATH]/backrest/lock/db-archive.stop) is removed
-DEBUG:     Main::safeExit(): iExitCode = 119
+DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
  INFO: archive-push stop
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
 ERROR: discarding 000000010000000100000004 due to the archive store max size exceeded - remove the archive stop file ([TEST_PATH]/backrest/lock/db-archive.stop) to resume archiving and be sure to take a new backup as soon as possible
-DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: archive-push stop
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -125,6 +139,9 @@ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, b
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
 DEBUG:     Archive->pushProcess: start async archive-push
+DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
+DEBUG:     Common:::Lock::lockAquire=>: bResult = true
 DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -189,12 +206,14 @@ DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/ba
 DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
 DEBUG:     Archive->xfer: no WAL segments to archive
 DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
-DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
+DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: archive-push stop
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -202,6 +221,9 @@ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, b
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
 DEBUG:     Archive->pushProcess: start async archive-push
+DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
+DEBUG:     Common:::Lock::lockAquire=>: bResult = true
 DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -232,5 +254,7 @@ DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/ba
 DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
 DEBUG:     Archive->xfer: no WAL segments to archive
 DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
-DEBUG:     Main::safeExit(): iExitCode = 0
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
+DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: archive-push stop
+DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false

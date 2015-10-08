@@ -34,28 +34,30 @@ sub new
     (
         $strOperation,
         $strCommand,                                # Command to execute on local/remote
-        $iBlockSize,                                # Buffer size
+        $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
         $iCompressLevelNetwork,                     # Set compression level for network only compression
         $strHost,                                   # Host to connect to for remote (optional as this can also be used for local)
-        $strUser                                    # User to connect to for remote (must be set if strHost is set)
+        $strUser,                                   # User to connect to for remote (must be set if strHost is set)
+        $iProtocolTimeout                           # Protocol timeout
     ) =
         logDebugParam
         (
             OP_PROTOCOL_REMOTE_MASTER_NEW, \@_,
             {name => 'strCommand'},
-            {name => 'iBlockSize'},
+            {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
             {name => 'iCompressLevelNetwork'},
             {name => 'strHost'},
-            {name => 'strUser'}
+            {name => 'strUser'},
+            {name => 'iProtocolTimeout'}
         );
 
     # Create SSH command
     $strCommand = "ssh -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
-    my $self = $class->SUPER::new('remote', $strCommand, $iBlockSize, $iCompressLevel, $iCompressLevelNetwork);
+    my $self = $class->SUPER::new('remote', $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
 
     # Return from function and log return values if any
@@ -63,24 +65,6 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
-    );
-}
-
-####################################################################################################################################
-# CLONE
-####################################################################################################################################
-sub clone
-{
-    my $self = shift;
-
-    return BackRest::Protocol::RemoteMaster->new
-    (
-        $self->{strCommand},
-        $self->{iBlockSize},
-        $self->{iCompressLevel},
-        $self->{iCompressLevelNetwork},
-        $self->{strHost},
-        $self->{strUser}
     );
 }
 

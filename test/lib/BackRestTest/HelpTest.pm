@@ -18,6 +18,7 @@ use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Config::Config;
 
+use BackRestTest::Common::ExecuteTest;
 use BackRestTest::CommonTest;
 
 ####################################################################################################################################
@@ -27,7 +28,7 @@ sub BackRestTestHelp_ExecuteHelp
 {
     my $strCommand = shift;
 
-    BackRestTestCommon_Execute(BackRestTestCommon_CommandMainAbsGet() . ' --no-config ' . $strCommand);
+    executeTest(BackRestTestCommon_CommandMainAbsGet() . ' --no-config ' . $strCommand);
 }
 
 ####################################################################################################################################

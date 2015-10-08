@@ -3,6 +3,12 @@
 ## v0.85: VIENNA MILESTONE - UNDER DEVELOPMENT
 __No Release Date Set__
 
+* Added new feature to allow all pgBackRest operations to be stopped or started using the `stop` and `start` commands.  This prevents any pgBackRest processes from running on a system where PostgreSQL is shutdown or the system needs to be quiesced for some reason.
+
+* Removed dependency on `IO::String` module.
+
+* Fixed an issue where an error could be returned after a backup or restore completely successfully.
+
 * Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.
 
 ## v0.82: Refactoring, Command-line Help, and Minor Bug Fixes

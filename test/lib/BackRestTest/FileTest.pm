@@ -11,7 +11,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Cwd qw(abs_path);
+use Cwd qw(abs_path cwd);
 use Exporter qw(import);
 use Fcntl qw(:mode);
 use File::Basename;
@@ -27,6 +27,7 @@ use BackRest::File;
 use BackRest::Protocol::Common;
 use BackRest::Protocol::RemoteMaster;
 
+use BackRestTest::Common::ExecuteTest;
 use BackRestTest::CommonTest;
 
 my $strTestPath;
@@ -97,21 +98,26 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
+    executeTest('rm -rf ' . cwd() . '/log_remote');
+    mkdir(cwd() . '/log_remote', oct('0770')) or confess 'Unable to create test log directory';
+
     my $oRemote = new BackRest::Protocol::RemoteMaster
     (
-        BackRestTestCommon_CommandRemoteFullGet(),  # Command
+        BackRestTestCommon_CommandRemoteFullGet() . ' --repo-path=' . cwd() . '/log_remote',  # Remote command
         OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
         $strHost,                                   # Host
-        $strUserBackRest                            # User
+        $strUserBackRest,                           # User
+        PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
     );
 
     my $oLocal = new BackRest::Protocol::Common
     (
-        OPTION_DEFAULT_BUFFER_SIZE,             # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,          # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK   # Compress network level
+        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
+        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
+        PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
     );
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -1130,15 +1136,13 @@ sub BackRestTestFile_Test
 
                         if ($iLarge < 3)
                         {
-                            BackRestTestCommon_Execute('cp ' . BackRestTestCommon_DataPathGet() .
-                                                       "/test.archive${iLarge}.bin ${strSourceFile}");
+                            executeTest('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive${iLarge}.bin ${strSourceFile}");
                         }
                         else
                         {
                             for (my $iTableSizeIdx = 0; $iTableSizeIdx < 100; $iTableSizeIdx++)
                             {
-                                BackRestTestCommon_Execute('cat ' . BackRestTestCommon_DataPathGet() .
-                                                           "/test.table.bin >> ${strSourceFile}");
+                                executeTest('cat ' . BackRestTestCommon_DataPathGet() . "/test.table.bin >> ${strSourceFile}");
                             }
                         }
                     }
@@ -1185,6 +1189,8 @@ sub BackRestTestFile_Test
 
                 # Run file copy in an eval block because some errors are expected
                 my $bReturn;
+                #
+                # exit;
 
                 eval
                 {
@@ -1210,7 +1216,7 @@ sub BackRestTestFile_Test
                                 next;
                             }
 
-                            confess $oMessage->message();
+                            confess $oMessage->message() . "\n" . $oMessage->trace();
                         }
                         else
                         {

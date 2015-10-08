@@ -9,7 +9,6 @@ use Carp qw(confess);
 
 use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
-use IO::String qw();
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Exception;
@@ -39,17 +38,19 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{iBlockSize},
+        $self->{iBufferMax},
         $self->{iCompressLevel},
         $self->{iCompressLevelNetwork},
+        $self->{iProtocolTimeout},
         $self->{strName}
     ) =
         logDebugParam
         (
             OP_PROTOCOL_COMMON_NEW, \@_,
-            {name => 'iBlockSize', trace => true},
+            {name => 'iBufferMax', trace => true},
             {name => 'iCompressLevel', trace => true},
             {name => 'iCompressNetworkLevel', trace => true},
+            {name => 'iProtocolTimeout', trace => true},
             {name => 'strName', required => false, trace => true}
         );
 
@@ -68,23 +69,6 @@ sub new
 }
 
 ####################################################################################################################################
-# pipeToString
-#
-# Copies data from a file handle into a string.
-####################################################################################################################################
-sub pipeToString
-{
-    my $self = shift;
-    my $hOut = shift;
-
-    my $strBuffer;
-    my $hString = IO::String->new($strBuffer);
-    $self->binaryXfer($hOut, $hString);
-
-    return $strBuffer;
-}
-
-####################################################################################################################################
 # blockRead
 #
 # Read a block from the protocol layer.
@@ -92,7 +76,7 @@ sub pipeToString
 sub blockRead
 {
     my $self = shift;
-    my $io = shift;
+    my $oIn = shift;
     my $strBlockRef = shift;
     my $bProtocol = shift;
 
@@ -102,12 +86,11 @@ sub blockRead
     if ($bProtocol)
     {
         # Read the block header and make sure it's valid
-        my $strBlockHeader = $self->{io}->lineRead();
+        my $strBlockHeader = $oIn->lineRead();
 
         if ($strBlockHeader !~ /^block -{0,1}[0-9]+( .*){0,1}$/)
         {
-            $self->{io}->waitPid();
-            confess "unable to read block header ${strBlockHeader}";
+            confess &log(ERROR, "invalid block header ${strBlockHeader}", ERROR_FILE_READ);
         }
 
         # Get block size from the header
@@ -123,24 +106,12 @@ sub blockRead
         # Else read the block
         else
         {
-            my $iBlockRead = 0;
-            my $iBlockIn = 0;
-            my $iOffset = defined($$strBlockRef) ? length($$strBlockRef) : 0;
-
-            # !!! Would be nice to modify this with a non-blocking read
-            # http://docstore.mik.ua/orelly/perl/cookbook/ch07_15.htm
-
-            # Read as many chunks as it takes to get the full block
-            while ($iBlockRead != $iBlockSize)
-            {
-                $iBlockIn = $io->bufferRead($strBlockRef, $iBlockSize - $iBlockRead, $iBlockRead + $iOffset);
-                $iBlockRead += $iBlockIn;
-            }
+            $oIn->bufferRead($strBlockRef, $iBlockSize, undef, true);
         }
     }
     else
     {
-        $iBlockSize = $io->bufferRead($strBlockRef, $self->{iBlockSize}, defined($$strBlockRef) ? length($$strBlockRef) : undef);
+        $iBlockSize = $oIn->bufferRead($strBlockRef, $self->{iBufferMax}, defined($$strBlockRef) ? length($$strBlockRef) : undef);
     }
 
     # Return the block size
@@ -155,7 +126,7 @@ sub blockRead
 sub blockWrite
 {
     my $self = shift;
-    my $io = shift;
+    my $oOut = shift;
     my $tBlockRef = shift;
     my $iBlockSize = shift;
     my $bProtocol = shift;
@@ -167,13 +138,13 @@ sub blockWrite
     # Write block header to the protocol stream
     if ($bProtocol)
     {
-        $io->lineWrite("block ${iBlockSize}" . (defined($strMessage) ? " ${strMessage}" : ''));
+        $oOut->lineWrite("block ${iBlockSize}" . (defined($strMessage) ? " ${strMessage}" : ''));
     }
 
     # Write block if size > 0
     if ($iBlockSize > 0)
     {
-        $io->bufferWrite($tBlockRef, $iBlockSize);
+        $oOut->bufferWrite($tBlockRef, $iBlockSize);
     }
 }
 
@@ -194,33 +165,29 @@ sub binaryXfer
     my $bProtocol = shift;
 
     # The input stream must be defined
+    my $oIn;
+
     if (!defined($hIn))
     {
-        if (defined($self->{io}))
-        {
-            $hIn = $self->{io}->hInGet();
-        }
-        else
-        {
-            confess &log(ASSERT, 'hIn is not defined');
-        }
+        $oIn = $self->{io};
+    }
+    else
+    {
+        $oIn = new BackRest::Protocol::IO($hIn, undef, $self->{io}->{hErr}, $self->{io}->{pid},
+                                          $self->{iProtocolTimeout}, $self->{iBufferMax});
     }
 
     # The output stream must be defined unless 'none' is passed
+    my $oOut;
+
     if (!defined($hOut))
     {
-        if (defined($self->{io}))
-        {
-            $hOut = $self->{io}->hOutGet();
-        }
-        else
-        {
-            confess &log(ASSERT, 'hOut is not defined');
-        }
+        $oOut = $self->{io};
     }
-    elsif ($hOut eq 'none')
+    elsif ($hOut ne 'none')
     {
-        undef($hOut);
+        $oOut = new BackRest::Protocol::IO(undef, $hOut, $self->{io}->{hErr}, $self->{io}->{pid},
+                                           $self->{iProtocolTimeout}, $self->{iBufferMax});
     }
 
     # If no remote is defined then set to none
@@ -238,9 +205,6 @@ sub binaryXfer
     # Default protocol to true
     $bProtocol = defined($bProtocol) ? $bProtocol : true;
     my $strMessage = undef;
-
-    # Create IO object for this transfer
-    my $io = new BackRest::Protocol::IO($hIn, $hOut, $self->{io}->{hErr}, $self->{io}->{pid});
 
     # Checksum and size
     my $strChecksum = undef;
@@ -268,7 +232,7 @@ sub binaryXfer
             # Initialize inflate object and check for errors
             my ($oZLib, $iZLibStatus) =
                 new Compress::Raw::Zlib::Inflate(WindowBits => 15 & $bSourceCompressed ? WANT_GZIP : 0,
-                                                 Bufsize => $self->{iBlockSize}, LimitOutput => 1);
+                                                 Bufsize => $self->{iBufferMax}, LimitOutput => 1);
 
             if ($iZLibStatus != Z_OK)
             {
@@ -279,7 +243,7 @@ sub binaryXfer
             do
             {
                 # Read a block from the input stream
-                ($iBlockSize, $strMessage) = $self->blockRead($io, \$tCompressedBuffer, $bProtocol);
+                ($iBlockSize, $strMessage) = $self->blockRead($oIn, \$tCompressedBuffer, $bProtocol);
 
                 # Process protocol messages
                 if (defined($strMessage) && $strMessage eq 'nochecksum')
@@ -310,9 +274,9 @@ sub binaryXfer
                                 }
 
                                 # Write data if hOut is defined
-                                if (defined($hOut))
+                                if (defined($oOut))
                                 {
-                                    $io->bufferWrite(\$tUncompressedBuffer, $iUncompressedBufferSize);
+                                    $oOut->bufferWrite(\$tUncompressedBuffer, $iUncompressedBufferSize);
                                 }
                             }
                         }
@@ -359,7 +323,7 @@ sub binaryXfer
             do
             {
                 # Read a block from the protocol stream
-                ($iBlockSize, $strMessage) = $self->blockRead($io, \$tBuffer, $bProtocol);
+                ($iBlockSize, $strMessage) = $self->blockRead($oIn, \$tBuffer, $bProtocol);
 
                 # If the block contains data, write it
                 if ($iBlockSize > 0)
@@ -371,7 +335,7 @@ sub binaryXfer
                         $iFileSize += $iBlockSize;
                     }
 
-                    $io->bufferWrite(\$tBuffer, $iBlockSize);
+                    $oOut->bufferWrite(\$tBuffer, $iBlockSize);
                     undef($tBuffer);
                 }
             }
@@ -396,7 +360,7 @@ sub binaryXfer
             my $tUncompressedBuffer;
 
             # Initialize message to indicate that a checksum will be sent
-            if ($bProtocol && defined($hOut))
+            if ($bProtocol && defined($oOut))
             {
                 $strMessage = 'checksum';
             }
@@ -409,7 +373,7 @@ sub binaryXfer
                 new Compress::Raw::Zlib::Deflate(WindowBits => 15 & $bDestinationCompress ? WANT_GZIP : 0,
                                                  Level => $bDestinationCompress ? $self->{iCompressLevel} :
                                                                                   $self->{iCompressLevelNetwork},
-                                                 Bufsize => $self->{iBlockSize}, AppendOutput => 1);
+                                                 Bufsize => $self->{iBufferMax}, AppendOutput => 1);
 
             if ($iZLibStatus != Z_OK)
             {
@@ -419,7 +383,7 @@ sub binaryXfer
             do
             {
                 # Read a block from the stream
-                $iBlockSize = $io->bufferRead(\$tUncompressedBuffer, $self->{iBlockSize});
+                $iBlockSize = $oIn->bufferRead(\$tUncompressedBuffer, $self->{iBufferMax});
 
                 # If block size > 0 then compress
                 if ($iBlockSize > 0)
@@ -435,9 +399,9 @@ sub binaryXfer
                     if ($iZLibStatus == Z_OK)
                     {
                         # The compressed data is larger than block size, then write
-                        if ($iCompressedBufferSize > $self->{iBlockSize})
+                        if ($iCompressedBufferSize > $self->{iBufferMax})
                         {
-                            $self->blockWrite($io, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
+                            $self->blockWrite($oOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
                             undef($tCompressedBuffer);
                             undef($strMessage);
                         }
@@ -468,17 +432,17 @@ sub binaryXfer
             $iFileSize = $oZLib->total_in();
 
             # Write out the last block
-            if (defined($hOut))
+            if (defined($oOut))
             {
                 $iCompressedBufferSize = length($tCompressedBuffer);
 
                 if ($iCompressedBufferSize > 0)
                 {
-                    $self->blockWrite($io, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
+                    $self->blockWrite($oOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
                     undef($strMessage);
                 }
 
-                $self->blockWrite($io, undef, 0, $bProtocol, "${strChecksum}-${iFileSize}");
+                $self->blockWrite($oOut, undef, 0, $bProtocol, "${strChecksum}-${iFileSize}");
             }
         }
         # If source is already compressed or transfer is not compressed then just read the stream
@@ -507,7 +471,7 @@ sub binaryXfer
 
                 # Initialize inflate object and check for errors
                 ($oZLib, $iZLibStatus) =
-                    new Compress::Raw::Zlib::Inflate(WindowBits => WANT_GZIP, Bufsize => $self->{iBlockSize}, LimitOutput => 1);
+                    new Compress::Raw::Zlib::Inflate(WindowBits => WANT_GZIP, Bufsize => $self->{iBufferMax}, LimitOutput => 1);
 
                 if ($iZLibStatus != Z_OK)
                 {
@@ -523,12 +487,12 @@ sub binaryXfer
             # Read input
             do
             {
-                $iBlockSize = $io->bufferRead(\$tBuffer, $self->{iBlockSize});
+                $iBlockSize = $oIn->bufferRead(\$tBuffer, $self->{iBufferMax});
 
                 # Write a block if size > 0
                 if ($iBlockSize > 0)
                 {
-                    $self->blockWrite($io, \$tBuffer, $iBlockSize, $bProtocol, $strMessage);
+                    $self->blockWrite($oOut, \$tBuffer, $iBlockSize, $bProtocol, $strMessage);
                     undef($strMessage);
                 }
 
@@ -599,7 +563,7 @@ sub binaryXfer
             if ($bProtocol)
             {
                 # Write 0 block to indicate end of stream
-                $self->blockWrite($io, undef, 0, $bProtocol, $strMessage);
+                $self->blockWrite($oOut, undef, 0, $bProtocol, $strMessage);
             }
         }
     }
