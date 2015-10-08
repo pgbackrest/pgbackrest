@@ -83,10 +83,10 @@ Vagrant.configure(2) do |config|
     end
 
     config.vm.define "co6" do |co6|
-        co6.vm.box = "chef/centos-6.6"
+        co6.vm.box = "boxcutter/centos67"
 
         co6.vm.provider :virtualbox do |vb|
-            vb.name = "backrest-test-centos-6.6"
+            vb.name = "backrest-test-centos-6.7"
         end
 
         # Provision the VM
@@ -113,7 +113,7 @@ Vagrant.configure(2) do |config|
     end
 
     config.vm.define "co7" do |co7|
-        co7.vm.box = "chef/centos-7.1"
+        co7.vm.box = "boxcutter/centos71"
 
         co7.vm.provider :virtualbox do |vb|
             vb.name = "backrest-test-centos-7.1"
