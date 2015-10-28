@@ -25,7 +25,7 @@
         </variable>
         <variable>
             <variable-name>backrest-url-base</variable-name>
-            <variable-value>http://www.pgbackrest.org/backrest</variable-value>
+            <variable-value>http://www.pgbackrest.org</variable-value>
         </variable>
         <variable>
             <variable-name>backrest-page-user-guide</variable-name>
