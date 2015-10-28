@@ -1,0 +1,349 @@
+/*******************************************************************************
+Html and body
+*******************************************************************************/
+html
+{
+    background-color: #f8f8f8;
+    font-family: Avenir, Corbel, sans-serif;
+    font-size: 12pt;
+    margin-top: 8px;
+    margin-left: 1%;
+    margin-right: 1%;
+    width: 98%;
+}
+
+body
+{
+    margin: 0px auto;
+    padding: 0px;
+    width: 100%;
+}
+
+@media (min-width: 1000px)
+{
+    body
+    {
+        width: 1000px;
+    }
+}
+
+/*******************************************************************************
+Link default styling
+*******************************************************************************/
+a:link, a:visited, a:hover, a:active
+{
+    text-decoration: underline;
+    color: black;
+}
+
+/*******************************************************************************
+Header
+*******************************************************************************/
+.page-header
+{
+    width:100%;
+    text-align:center;
+    /*float:left;*/
+}
+
+.page-header-title
+{
+    font-size: xx-large;
+    font-weight: bolder;
+}
+
+.page-header-subtitle
+{
+    position: relative;
+    top: -.25em;
+    font-size: large;
+    font-weight: bold;
+}
+
+/*******************************************************************************
+Menu
+*******************************************************************************/
+.page-menu
+{
+    /*margin-top: .25em;*/
+    /*font-size: 14pt;*/
+}
+
+.menu-body
+{
+    text-align: center;
+    /*font-weight: 600;*/
+    /*border-bottom: 2px #dddddd solid;*/
+}
+
+.menu
+{
+    white-space: nowrap;
+    display: inline;
+    margin-left: 6px;
+}
+
+.menu:first-of-type
+{
+    margin-left: 0px;
+}
+
+.menu:before
+{
+    content: "[";
+    /*margin-right: .5em;*/
+}
+
+.menu:after
+{
+    content: "]";
+    /*margin-left: .5em;*/
+}
+
+.menu-link
+{
+    /*margin-left: 2px;
+    margin-right: 2px;*/
+}
+
+a.menu-link:link, a.menu-link:visited, a.menu-link:active
+{
+    text-decoration: none;
+}
+
+a.menu-link:hover
+{
+    text-decoration: underline;
+}
+
+/*******************************************************************************
+Table of Contents
+*******************************************************************************/
+.page-toc-body
+{
+    margin-top: .25em;
+}
+
+.section1-toc:first-of-type
+{
+    margin-top: 0;
+}
+
+.section1-toc
+{
+    margin-top: .5em;
+}
+
+.section1-toc-title
+{
+    /*margin-top: .25em;*/
+    font-size: 14pt;
+}
+
+.section2-toc-title
+{
+    font-size: 12pt;
+    margin-left: 2em;
+}
+
+.section3-toc-title
+{
+    margin-left: 4em;
+}
+
+/*******************************************************************************
+Section
+*******************************************************************************/
+.section1
+{
+    /*display:block;*/
+    margin-top: 1em;
+}
+
+.section2, .section3
+{
+    /*display:block;*/
+    margin-top: .5em;
+}
+
+.section1-title, .section2-title, .section3-title, .page-toc-title
+{
+    /*display:block;*/
+    margin-top: .5em;
+    font-weight: 500;
+}
+
+.section1-title, .page-toc-title
+{
+    background-color: #dddddd;
+    font-size: 16pt;
+    padding-left: .5em;
+}
+
+.section2
+{
+    /*margin-left: 2em;*/
+}
+
+.section2-title
+{
+    border-bottom: 2px #cccccc solid;
+    font-size: 14pt;
+}
+
+.section3
+{
+    margin-left: 1em;
+    margin-top: 1em;
+    /*border-top: 1px #cccccc solid;*/
+}
+
+.section3:first-of-type
+{
+    border-top: none;
+}
+
+.section3-title
+{
+    display: inline;
+    font-size: 13pt;
+    /*text-decoration: underline;*/
+    border-bottom: 1px #bbbbbb solid;
+}
+
+.section-intro
+{
+    margin-top: .75em;
+}
+
+.section-body
+{
+}
+
+/*******************************************************************************
+Config, Execute, and Code Block Elements
+*******************************************************************************/
+.section-body-text
+{
+    margin-top: 1em;
+}
+
+.section-body-text:first-of-type
+{
+    margin-top: .75em;
+}
+
+.execute,
+.config,
+.code-block
+{
+    /*white-space: nowrap;*/
+    margin-left: 1em;
+    margin-right: 1em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.execute-title,
+.config-title
+{
+    font-size: 11pt;
+    margin-bottom: .125em;
+}
+
+.execute-body,
+.config-body,
+.code-block
+{
+    background-color: #444444;
+    /*overflow-x:auto;*/
+    font-family: monospace;
+    unicode-bidi: embed;
+    color: white;
+    font-size: 10pt;
+}
+
+.execute-body-cmd-first, .execute-body-cmd,
+.execute-body-output, .execute-body-output-highlight,
+.config-body-title,
+.code-block
+{
+    padding-left: .5em;
+    padding-right: .5em;
+}
+
+.execute-body-cmd-first, .execute-body-output,
+.config-body-title, .config-body-output,
+.code-block
+{
+    padding-top: .25em;
+}
+
+.execute-body-cmd-first, .execute-body-cmd, .execute-body-output,
+.config-body-title, .config-body-output,
+.code-block
+{
+    padding-bottom: .25em;
+}
+
+.execute-body-output,
+.config-body-output,
+.code-block
+{
+    background-color: #606060;
+}
+
+.execute-body-output-highlight
+{
+    background-color: green;
+}
+
+.execute-body-output-highlight-error
+{
+    background-color: firebrick;
+}
+
+.execute-body-output, .execute-body-output-highlight, .execute-body-output-highlight-error,
+.config-body-output
+{
+    padding-left: 2em;
+}
+
+.code-block
+{
+}
+
+.section-body-execute-output
+{
+}
+
+/*******************************************************************************
+Keywords
+*******************************************************************************/
+.backrest, .cmd, .postgres
+{
+    font-weight: 500;
+}
+
+.path, .br-option, .br-setting, .pg-option, .pg-setting, .id, .user, .file, .path
+{
+    /*font-weight: 600;*/
+    /*background-color: #e8e8e8;*/
+    unicode-bidi: embed;
+    font-family: monospace;
+    white-space: nowrap;
+    /*font-size: 11pt;*/
+}
+
+/*******************************************************************************
+Footer
+*******************************************************************************/
+.page-footer
+{
+    border-top: 2px #cccccc solid;
+    margin-top: 1em;
+    padding-top: .25em;
+    font-size: x-small;
+    white-space: nowrap;
+    text-align: center;
+}

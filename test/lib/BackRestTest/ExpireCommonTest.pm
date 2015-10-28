@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# ExpireCommonTest.pl - Common code for expire tests
+# ExpireCommonTest.pm - Common code for expire tests
 ####################################################################################################################################
 package BackRestTest::ExpireCommonTest;
 

@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # DOC RENDER MODULE
 ####################################################################################################################################
-package BackRestDoc::DocRender;
+package BackRestDoc::Common::DocRender;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -38,8 +38,8 @@ my $oRenderTag =
         'b' => ['**', '**'],
         'i' => ['_', '_'],
         'bi' => ['_**', '**_'],
-        'ul' => ["\n", ''],
-        'ol' => ["\n", ''],
+        'ul' => ["\n", "\n"],
+        'ol' => ["\n", "\n"],
         'li' => ['- ', "\n"],
         'id' => ['`', '`'],
         'file' => ['`', '`'],
@@ -59,13 +59,14 @@ my $oRenderTag =
         'b' => ['', ''],
         'i' => ['', ''],
         'bi' => ['', ''],
-        'ul' => ["\n", ''],
-        'ol' => ["\n", ''],
+        'ul' => ["\n", "\n"],
+        'ol' => ["\n", "\n"],
         'li' => ['* ', "\n"],
         'id' => ['', ''],
         'file' => ['', ''],
         'path' => ['', ''],
         'cmd' => ['', ''],
+        'br-option' => ['', ''],
         'param' => ['', ''],
         'setting' => ['', ''],
         'code' => ['', ''],
@@ -77,7 +78,27 @@ my $oRenderTag =
 
     'html' =>
     {
-        'b' => ['<b>', '</b>']
+        'b' => ['<b>', '</b>'],
+        'i' => ['<i>', '</i>'],
+        'bi' => ['<i><b>', '</b></i>'],
+        'ul' => ['<ul>', '</ul>'],
+        'ol' => ['<ol>', '</ol>'],
+        'li' => ['<li>', '</li>'],
+        'id' => ['<span class="id">', '</span>'],
+        'file' => ['<span class="file">', '</span>'],
+        'path' => ['<span class="path">', '</span>'],
+        'cmd' => ['<span class="cmd">', '</span>'],
+        'user' => ['<span class="user">', '</span>'],
+        'br-option' => ['<span class="br-option">', '</span>'],
+        'br-setting' => ['<span class="br-setting">', '</span>'],
+        'pg-option' => ['<span class="pg-option">', '</span>'],
+        'pg-setting' => ['<span class="pg-setting">', '</span>'],
+        'code' => ['<id>', '</id>'],
+        'code-block' => ['<code-block>', '</code-block>'],
+        'exe' => ['<id>', '</id>'],
+        'setting' => ['<span class="br-setting">', '</span>'], # !!! This will need to be fixed
+        'backrest' => [undef, ''],
+        'postgres' => ['<span class="postgres">PostgreSQL</span>', '']
     }
 };
 
@@ -111,6 +132,7 @@ sub new
     $$oRenderTag{markdown}{exe}[0] = $self->{strExeName};
     $$oRenderTag{text}{backrest}[0] = $self->{strProjectName};
     $$oRenderTag{text}{exe}[0] = $self->{strExeName};
+    $$oRenderTag{html}{backrest}[0] = "<span class=\"backrest\">$self->{strProjectName}</span>";
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -166,7 +188,21 @@ sub process
             $strBuffer = ('#' x $iDepth) . ' `' . $oDoc->paramGet('id') . '` ' . $strTitle;
         }
 
-        if (defined($oDoc->paramGet('title', false)))
+        # Try to get the title param from the element (!!! this is the old style and should be removed)
+        my $strTitle = $oDoc->paramGet('title', false);
+
+        if (!defined($strTitle))
+        {
+            $strTitle = $oDoc->paramGet('subtitle', false);
+        }
+
+        # If not found then get the title element
+        if (!defined($strTitle) && defined($oDoc->nodeGet('title', false)))
+        {
+            $strTitle = $self->processText($oDoc->nodeGet('title')->textGet());
+        }
+
+        if (defined($strTitle))
         {
             $strBuffer = ('#' x $iDepth) . ' ';
 
@@ -175,7 +211,7 @@ sub process
                 $strBuffer .= 'v' . $oDoc->paramGet('version') . ': ';
             }
 
-            $strBuffer .= ($iDepth == 1 ? "${strProjectName} - " : '') . $oDoc->paramGet('title');
+            $strBuffer .= ($iDepth == 1 ? "${strProjectName}<br/>" : '') . $strTitle;
 
             if (defined($oDoc->paramGet('date', false)))
             {
@@ -233,56 +269,6 @@ sub process
             $strBuffer .= $self->processText($oDoc->textGet());
         }
 
-        if ($oDoc->nameGet() eq 'config-key' || $oDoc->nameGet() eq 'option')
-        {
-            my $strError = 'config section ?, key ' . $oDoc->paramGet('id') . 'requires';
-
-            my $bRequired = defined($oDoc->fieldGet('required', false)) && $oDoc->fieldGet('required');
-            my $strDefault = $oDoc->fieldGet('default', false);
-            my $strAllow = $oDoc->fieldGet('allow', false);
-            my $strOverride = $oDoc->fieldGet('override', false);
-            my $strExample = $oDoc->fieldGet('example', false);
-
-            # !!! Temporary hack to make docs generate correctly.  This should be replace with a parameter so that it can be
-            # changed based on the build.  Maybe check the exe name by default?
-            if ($oDoc->paramGet('id') eq 'config')
-            {
-                $strDefault = '/etc/pg_backrest.conf';
-            }
-
-            if (defined($strExample))
-            {
-                if (index($strExample, '=') == -1)
-                {
-                    $strExample = "=${strExample}";
-                }
-                else
-                {
-                    $strExample = " ${strExample}";
-                }
-
-                $strExample = $oDoc->paramGet('id') . $strExample;
-
-                if (defined($oDoc->fieldGet('cmd', false)) && $oDoc->fieldGet('cmd'))
-                {
-                    $strExample = '--' . $strExample;
-
-                    if (index($oDoc->fieldGet('example'), ' ') != -1)
-                    {
-                        $strExample = "\"${strExample}\"";
-                    }
-                }
-            }
-
-            $strBuffer .= "\n```\n" .
-                          ($bRequired ? "required: " . ($bRequired ? 'y' : 'n') . "\n" : '') .
-                          (defined($strDefault) ? "default: ${strDefault}\n" : '') .
-                          (defined($strAllow) ? "allow: ${strAllow}\n" : '') .
-                          (defined($strOverride) ? "override: ${strOverride}\n" : '') .
-                          (defined($strExample) ? "example: ${strExample}\n" : '') .
-                          "```";
-        }
-
         if ($strBuffer ne "" && $iDepth != 1 && !$bList)
         {
             $strBuffer = "\n\n" . $strBuffer;
@@ -297,7 +283,7 @@ sub process
 
     foreach my $oChild ($oDoc->nodeList(undef, false))
     {
-        if ($oChild->nameGet() ne 'summary')
+        if ($oChild->nameGet() ne 'summary' && $oChild->nameGet() ne 'title')
         {
             if ($strType eq 'markdown' || $strType eq 'text')
             {
@@ -354,33 +340,70 @@ sub processTag
 
     my $strType = $self->{strType};
     my $strTag = $oTag->nameGet();
-    my $strStart = $$oRenderTag{$strType}{$strTag}[0];
-    my $strStop = $$oRenderTag{$strType}{$strTag}[1];
 
-    if (!defined($strStart) || !defined($strStop))
+    if (!defined($strTag))
     {
-        confess "invalid type ${strType} or tag ${strTag}";
+        use Data::Dumper;
+        confess Dumper($oTag);
     }
 
-    $strBuffer .= $strStart;
+    if ($strTag eq 'link')
+    {
+        my $strUrl = $oTag->paramGet('url', false);
 
-    if ($strTag eq 'li' || $strTag eq 'code-block')
-    {
-        $strBuffer .= $self->processText($oTag);
-    }
-    elsif (defined($oTag->valueGet()))
-    {
-        $strBuffer .= $oTag->valueGet();
+        if ($strType eq 'markdown')
+        {
+            if (!defined($strUrl))
+            {
+                $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page');
+            }
+
+            $strBuffer = '[' . $oTag->valueGet() . '](' . $strUrl . ')';
+        }
+        elsif ($strType eq 'html')
+        {
+            if (!defined($strUrl))
+            {
+                $strUrl = $oTag->paramGet('page');
+            }
+
+            $strBuffer = '<a href="' . $strUrl . '">' . $oTag->valueGet() . '</a>';
+        }
+        else
+        {
+            confess "tag link not valid for type ${strType}";
+        }
     }
     else
     {
-        foreach my $oSubTag ($oTag->nodeList(undef, false))
-        {
-            $strBuffer .= $self->processTag($oSubTag);
-        }
-    }
+        my $strStart = $$oRenderTag{$strType}{$strTag}[0];
+        my $strStop = $$oRenderTag{$strType}{$strTag}[1];
 
-    $strBuffer .= $strStop;
+        if (!defined($strStart) || !defined($strStop))
+        {
+            confess "invalid type ${strType} or tag ${strTag}";
+        }
+
+        $strBuffer .= $strStart;
+
+        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary')
+        {
+            $strBuffer .= $self->processText($oTag);
+        }
+        elsif (defined($oTag->valueGet()))
+        {
+            $strBuffer .= $oTag->valueGet();
+        }
+        else
+        {
+            foreach my $oSubTag ($oTag->nodeList(undef, false))
+            {
+                $strBuffer .= $self->processTag($oSubTag);
+            }
+        }
+
+        $strBuffer .= $strStop;
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -423,6 +446,21 @@ sub processText
             $strBuffer .= $self->processTag($oNode);
         }
     }
+    #
+    # if ($strType eq 'html')
+    # {
+    #         # $strBuffer =~ s/^\s+|\s+$//g;
+    #
+    #     $strBuffer =~ s/\n/\<br\/\>\n/g;
+    # }
+
+    # if ($strType eq 'markdown')
+    # {
+            # $strBuffer =~ s/^\s+|\s+$//g;
+
+        $strBuffer =~ s/ +/ /g;
+        $strBuffer =~ s/^ //smg;
+    # }
 
     # Return from function and log return values if any
     return logDebugReturn

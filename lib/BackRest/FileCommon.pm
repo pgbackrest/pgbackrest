@@ -23,6 +23,7 @@ use BackRest::Common::Log;
 use constant OP_FILE_COMMON                                         => 'FileCommon';
 
 use constant OP_FILE_COMMON_PATH_SYNC                               => OP_FILE_COMMON . '::filePathSync';
+use constant OP_FILE_COMMON_STRING_READ                             => OP_FILE_COMMON . '::fileStringRead';
 use constant OP_FILE_COMMON_STRING_WRITE                            => OP_FILE_COMMON . '::fileStringWrite';
 
 ####################################################################################################################################
@@ -62,6 +63,59 @@ sub filePathSync
 push @EXPORT, qw(filePathSync);
 
 ####################################################################################################################################
+# fileStringRead
+#
+# Read the specified file as a string.
+####################################################################################################################################
+sub fileStringRead
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileName
+    ) =
+        logDebugParam
+        (
+            OP_FILE_COMMON_STRING_READ, \@_,
+            {name => 'strFileName', trace => true}
+        );
+
+    # Open the file for writing
+    sysopen(my $hFile, $strFileName, O_RDONLY)
+        or confess &log(ERROR, "unable to open ${strFileName}");
+
+    # Read the string
+    my $iBytesRead;
+    my $iBytesTotal = 0;
+    my $strContent;
+
+    do
+    {
+        $iBytesRead = sysread($hFile, $strContent, 65536, $iBytesTotal);
+
+        if (!defined($iBytesRead))
+        {
+            confess &log(ERROR, "unable to read string from ${strFileName}: $!", ERROR_FILE_READ);
+        }
+
+        $iBytesTotal += $iBytesRead;
+    }
+    while ($iBytesRead != 0);
+
+    close($hFile);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strContent', value => $strContent, trace => true}
+    );
+}
+
+push @EXPORT, qw(fileStringRead);
+
+####################################################################################################################################
 # fileStringWrite
 #
 # Write a string to the specified file.
@@ -90,7 +144,7 @@ sub fileStringWrite
 
     # Write the string
     syswrite($hFile, $strContent)
-        or confess "unable to write string: $!";
+        or confess &log(ERROR, "unable to write string to ${strFileName}: $!", ERROR_FILE_WRITE);
 
     # Sync and close ini file
     if ($bSync)

@@ -1,15 +1,16 @@
 ####################################################################################################################################
 # DOC MODULE
 ####################################################################################################################################
-package BackRestDoc::Doc;
+package BackRestDoc::Common::Doc;
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use Exporter qw(import);
-    our @EXPORT = qw();
+# use Exporter qw(import);
+#     our @EXPORT = qw();
 use File::Basename qw(dirname);
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
@@ -30,6 +31,7 @@ use constant OP_DOC_PARAM_GET                                       => OP_DOC . 
 use constant OP_DOC_PARAM_SET                                       => OP_DOC . '->paramSet';
 use constant OP_DOC_PARSE                                           => OP_DOC . '->parse';
 use constant OP_DOC_VALUE_GET                                       => OP_DOC . '->valueGet';
+use constant OP_DOC_VALUE_SET                                       => OP_DOC . '->valueSet';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -52,35 +54,46 @@ sub new
         logDebugParam
         (
             OP_DOC_NEW, \@_,
-            {name => 'strFileName'}
+            {name => 'strFileName', required => false}
         );
 
-    my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-    $oParser->set_sgml_search_path(dirname($self->{strFileName}) . '/dtd');
-
-    my $oTree;
-
-    eval
+    # Load the doc from a file if one has been defined
+    if (defined($self->{strFileName}))
     {
-        local $XML::Checker::FAIL = sub
-        {
-            my $iCode = shift;
+        my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
+        $oParser->set_sgml_search_path(dirname($self->{strFileName}) . '/dtd');
 
-            die XML::Checker::error_string($iCode, @_);
+        my $oTree;
+
+        eval
+        {
+            local $XML::Checker::FAIL = sub
+            {
+                my $iCode = shift;
+
+                die XML::Checker::error_string($iCode, @_);
+            };
+
+            $oTree = $oParser->parsefile($self->{strFileName});
         };
 
-        $oTree = $oParser->parsefile($self->{strFileName});
-    };
+        # Report any error that stopped parsing
+        if ($@)
+        {
+            $@ =~ s/at \/.*?$//s;               # remove module line number
+            die "malformed xml in '$self->{strFileName}':\n" . trim($@);
+        }
 
-    # Report any error that stopped parsing
-    if ($@)
+        # Parse and build the doc
+        $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
+
+    }
+    # Else create a blank doc
+    else
     {
-        $@ =~ s/at \/.*?$//s;               # remove module line number
-        die "malformed xml in '$self->{strFileName}':\n" . trim($@);
+        $self->{oDoc} = {name => 'doc', children => []};
     }
 
-    # Parse and build the doc
-    $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
     $self->{strName} = 'root';
 
     # Return from function and log return values if any
@@ -116,7 +129,8 @@ sub parse
 
     my %oOut;
     my $iIndex = 0;
-    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'code-block';
+    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'code-block' || $strName eq 'p' || $strName eq 'title' ||
+                $strName eq 'summary';
 
     # Store the node name
     $oOut{name} = $strName;
@@ -218,7 +232,7 @@ sub build
         );
 
     # Initialize the node object
-    my $oOut = {name => $$oDoc{name}, children => []};
+    my $oOut = {name => $$oDoc{name}, children => [], value => $$oDoc{value}};
     my $strError = "in node $$oDoc{name}";
 
     # Get all params
@@ -230,7 +244,11 @@ sub build
         }
     }
 
-    if (defined($$oDoc{children}))
+    if ($$oDoc{name} eq 'p' || $$oDoc{name} eq 'title' || $$oDoc{name} eq 'summary')
+    {
+        $$oOut{field}{text} = $oDoc;
+    }
+    elsif (defined($$oDoc{children}))
     {
         for (my $iIndex = 0; $iIndex < @{$$oDoc{children}}; $iIndex++)
         {
@@ -241,11 +259,11 @@ sub build
             {
                 $$oOut{field}{text} = $oSub;
             }
-            elsif (defined($$oSub{value}))
+            elsif (defined($$oSub{value}) && !defined($$oSub{param}))
             {
                 $$oOut{field}{$strName} = $$oSub{value};
             }
-            elsif (!defined($$oSub{children}))
+            elsif (!defined($$oSub{children}) && !defined($$oSub{value}) && !defined($$oSub{param}))
             {
                 $$oOut{field}{$strName} = true;
             }
@@ -310,7 +328,7 @@ sub nodeGetById
 
     if (!defined($oNode) && $bRequired)
     {
-        confess "unable to find child ${strName} (${strId}) in node $$oDoc{name}";
+        confess "unable to find child ${strName}" . (defined($strId) ? " (${strId})" : '') . " in node $$oDoc{name}";
     }
 
     # Return from function and log return values if any
@@ -331,6 +349,27 @@ sub nodeGet
     my $self = shift;
 
     return $self->nodeGetById(shift, undef, shift);
+}
+
+####################################################################################################################################
+# nodeAdd
+#
+# Add a node to to the current doc's child list
+####################################################################################################################################
+sub nodeAdd
+{
+    my $self = shift;
+    my $strName = shift;
+    my $strValue = shift;
+    my $oParam = shift;
+    my $oField = shift;
+
+    my $oDoc = $self->{oDoc};
+    my $oNode = {name => $strName, value => $strValue, param => $oParam, field => $oField};
+
+    push(@{$$oDoc{children}}, $oNode);
+
+    return $self->nodeBless($oNode);
 }
 
 ####################################################################################################################################
@@ -468,6 +507,24 @@ sub valueGet
 }
 
 ####################################################################################################################################
+# valueSet
+####################################################################################################################################
+sub valueSet
+{
+    my $self = shift;
+    my $strValue = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my $strOperation = logDebugParam(OP_DOC_VALUE_SET);
+
+    # Set the value
+    ${$self->{oDoc}}{value} = $strValue;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # paramGet
 #
 # Get a parameter from a node.
@@ -560,6 +617,28 @@ sub textGet
     my $self = shift;
 
     return $self->nodeBless($self->paramGet('text', shift, 'field'));
+}
+
+####################################################################################################################################
+# textSet
+#
+# Get a field from a node.
+####################################################################################################################################
+sub textSet
+{
+    my $self = shift;
+    my $oText = shift;
+
+    if (blessed($oText) && $oText->isa('BackRestDoc::Common::Doc'))
+    {
+        $oText = $oText->{oDoc};
+    }
+    elsif (ref($oText) ne 'HASH')
+    {
+        $oText = {name => 'text', children => [$oText]};
+    }
+
+    return $self->paramSet('text', $oText, 'field');
 }
 
 ####################################################################################################################################

@@ -21,28 +21,28 @@ use BackRest::Config::Config;
 ####################################################################################################################################
 # Help types
 ####################################################################################################################################
-use constant CONFIG_HELP_COMMAND                                         => 'command';
+use constant CONFIG_HELP_COMMAND                                    => 'command';
      push @EXPORT, qw(CONFIG_HELP_COMMAND);
-use constant CONFIG_HELP_CURRENT                                         => 'current';
+use constant CONFIG_HELP_CURRENT                                    => 'current';
      push @EXPORT, qw(CONFIG_HELP_CURRENT);
-use constant CONFIG_HELP_DEFAULT                                         => 'default';
+use constant CONFIG_HELP_DEFAULT                                    => 'default';
      push @EXPORT, qw(CONFIG_HELP_DEFAULT);
-use constant CONFIG_HELP_DESCRIPTION                                     => 'description';
+use constant CONFIG_HELP_DESCRIPTION                                => 'description';
      push @EXPORT, qw(CONFIG_HELP_DESCRIPTION);
-use constant CONFIG_HELP_OPTION                                          => 'option';
+use constant CONFIG_HELP_OPTION                                     => 'option';
      push @EXPORT, qw(CONFIG_HELP_OPTION);
-use constant CONFIG_HELP_SECTION                                         => 'section';
+use constant CONFIG_HELP_SECTION                                    => 'section';
      push @EXPORT, qw(CONFIG_HELP_SECTION);
-use constant CONFIG_HELP_SUMMARY                                         => 'summary';
+use constant CONFIG_HELP_SUMMARY                                    => 'summary';
      push @EXPORT, qw(CONFIG_HELP_SUMMARY);
 
-use constant CONFIG_HELP_SOURCE                                          => 'source';
+use constant CONFIG_HELP_SOURCE                                     => 'source';
      push @EXPORT, qw(CONFIG_HELP_SOURCE);
-use constant CONFIG_HELP_SOURCE_DEFAULT                                  => 'default';
+use constant CONFIG_HELP_SOURCE_DEFAULT                             => 'default';
      push @EXPORT, qw(CONFIG_HELP_SOURCE_DEFAULT);
-use constant CONFIG_HELP_SOURCE_SECTION                                  => CONFIG_HELP_SECTION;
+use constant CONFIG_HELP_SOURCE_SECTION                             => CONFIG_HELP_SECTION;
      push @EXPORT, qw(CONFIG_HELP_SOURCE_SECTION);
-use constant CONFIG_HELP_SOURCE_COMMAND                                  => CONFIG_HELP_COMMAND;
+use constant CONFIG_HELP_SOURCE_COMMAND                             => CONFIG_HELP_COMMAND;
      push @EXPORT, qw(CONFIG_HELP_SOURCE_COMMAND);
 
 ####################################################################################################################################

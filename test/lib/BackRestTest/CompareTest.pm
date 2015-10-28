@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# CompareTest.pl - Performance comparison tests between rsync and backrest
+# CompareTest.pm - Performance comparison tests between rsync and backrest
 ####################################################################################################################################
 package BackRestTest::CompareTest;
 

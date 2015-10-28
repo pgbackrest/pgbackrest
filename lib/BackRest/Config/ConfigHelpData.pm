@@ -30,7 +30,7 @@ my $oConfigHelpData =
                 "Archive WAL segments asynchronously.",
             description =>
                 "WAL segments will be copied to the local repo, then a process will be forked to compress the segment and " .
-                    "transfer it to the remote repo if configured.  Control will be returned to PostgreSQL as soon as the WAL " .
+                    "transfer it to the remote repo if configured. Control will be returned to PostgreSQL as soon as the WAL " .
                     "segment is copied locally."
         },
 
@@ -42,7 +42,7 @@ my $oConfigHelpData =
             summary =>
                 "Check that WAL segments are present in the archive before backup completes.",
             description =>
-                "Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a " .
+                "Checks that all WAL segments required to make the backup consistent are present in the WAL archive. It's a " .
                     "good idea to leave this as the default unless you are using another method for archiving."
         },
 
@@ -55,13 +55,13 @@ my $oConfigHelpData =
                 "Copy WAL segments needed for consistency to the backup.",
             description =>
                 "This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive " .
-                    "by storing the WAL segments directly in the backup.  PITR won't be possible without the WAL segment " .
-                    "archive and this option also consumes more space.\n" .
+                    "by storing the WAL segments directly in the backup. PITR won't be possible without the WAL segment archive " .
+                    "and this option also consumes more space.\n" .
                 "\n" .
                 "Even though WAL segments will be restored with the backup, PostgreSQL will ignore them if a recovery.conf file " .
-                    "exists and instead use archive_command to fetch WAL segments.  Specifying type=none when restoring will " .
-                    "not create recovery.conf and force PostgreSQL to use the WAL segments in pg_xlog.  This will get the " .
-                    "database cluster to a consistent state."
+                    "exists and instead use archive_command to fetch WAL segments. Specifying type=none when restoring will not " .
+                    "create recovery.conf and force PostgreSQL to use the WAL segments in pg_xlog. This will get the database " .
+                    "cluster to a consistent state."
         },
 
         # ARCHIVE-MAX-MB Option Help
@@ -79,11 +79,11 @@ my $oConfigHelpData =
                 "* A stop file will be written in the lock directory and no more archive files will be backed up until it is " .
                     "removed.\n" .
                 "\n" .
-                "If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  " .
-                    "A new backup will be required to regain full restore capability.\n" .
+                "If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point. " .
+                    "A ne backup will be required to regain full restore capability.\n" .
                 "\n" .
                 "The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop " .
-                    "completely.  Better to lose the backup than have PostgreSQL go down.\n" .
+                    "completely. Better to lose the backup than have PostgreSQL go down.\n" .
                 "\n" .
                 "To start normal archiving again you'll need to remove the stop file which will be located at " .
                     "\${repo-path}/lock/\${stanza}-archive.stop where \${repo-path} is the path set in the general section, and " .
@@ -111,8 +111,8 @@ my $oConfigHelpData =
             summary =>
                 "Backup host user when backup-host is set.",
             description =>
-                "Defines the user that will be used for operations on the backup server.  Preferably this is not the postgres " .
-                    "user but rather some other user like backrest.  If PostgreSQL runs on the backup server the postgres user " .
+                "Defines the user that will be used for operations on the backup server. Preferably this is not the postgres " .
+                    "user but rather some other user like backrest. If PostgreSQL runs on the backup server the postgres user " .
                     "can be placed in the backrest group so it has read permissions on the repository without being able to " .
                     "damage the contents accidentally."
         },
@@ -125,8 +125,8 @@ my $oConfigHelpData =
             summary =>
                 "Buffer size for file operations.",
             description =>
-                "Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use " .
-                    "at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers."
+                "Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use " .
+                    "at a time per thread. An additional maximum of 256K per thread may be used for zlib buffers."
         },
 
         # CMD-REMOTE Option Help
@@ -137,7 +137,7 @@ my $oConfigHelpData =
             summary =>
                 "pgBackRest exe path on the remote host.",
             description =>
-                "Required only if the path to pg_backrest is different on the local and remote systems.  If not defined, the " .
+                "Required only if the path to pg_backrest is different on the local and remote systems. If not defined, the " .
                     "remote exe path will be set the same as the local exe path."
         },
 
@@ -147,9 +147,9 @@ my $oConfigHelpData =
         {
             section => 'general',
             summary =>
-                "Use file compression.",
+                "Use gzip file compression.",
             description =>
-                "Enable gzip compression.  Backup files are compatible with command-line gzip tools."
+                "Backup files are compatible with command-line gzip tools."
         },
 
         # COMPRESS-LEVEL Option Help
@@ -172,10 +172,9 @@ my $oConfigHelpData =
                 "Compression level for network transfer when compress=n.",
             description =>
                 "Sets the zlib level to be used for protocol compression when compress=n and the database cluster is not on the " .
-                    "same host as the backup.  Protocol compression is used to reduce network traffic but can be disabled by " .
-                    "setting compress-level-network=0.  When compress=y the compress-level-network setting is ignored and " .
-                    "compress-level is used instead so that the file is only compressed once.  SSH compression is always " .
-                    "disabled."
+                    "same host as the backup. Protocol compression is used to reduce network traffic but can be disabled by " .
+                    "setting compress-level-network=0. When compress=y the compress-level-network setting is ignored and " .
+                    "compress-level is used instead so that the file is only compressed once. SSH compression is always disabled."
         },
 
         # CONFIG Option Help
@@ -196,7 +195,7 @@ my $oConfigHelpData =
             summary =>
                 "pgBackRest remote configuration file.",
             description =>
-                "Sets the location of the remote configuration file.  This is only required if the remote configuration file is " .
+                "Sets the location of the remote configuration file. This is only required if the remote configuration file is " .
                     "in a different location than the local configuration file."
         },
 
@@ -219,7 +218,7 @@ my $oConfigHelpData =
             summary =>
                 "Cluster data directory.",
             description =>
-                "This should be the same as the data_directory setting in postgresql.conf.  Even though this value can be read " .
+                "This should be the same as the data_directory setting in postgresql.conf. Even though this value can be read " .
                     "from postgresql.conf or the database cluster it is prudent to set it in case those resources are not " .
                     "available during a restore or cold backup scenario.\n" .
                 "\n" .
@@ -235,7 +234,7 @@ my $oConfigHelpData =
             summary =>
                 "Cluster port.",
             description =>
-                "Port that PostgreSQL is running on.  This usually does not need to be specified as most database clusters run " .
+                "Port that PostgreSQL is running on. This usually does not need to be specified as most database clusters run " .
                     "on the default port."
         },
 
@@ -245,9 +244,9 @@ my $oConfigHelpData =
         {
             section => 'stanza',
             summary =>
-                "cluster unix socket path.",
+                "Cluster unix socket path.",
             description =>
-                "The unix socket directory that was specified when PostgreSQL was started.  pgBackRest will automatically look " .
+                "The unix socket directory that was specified when PostgreSQL was started. pgBackRest will automatically look " .
                     "in the standard location for your OS so there usually no need to specify this setting unless the socket " .
                     "directory was explicitly modified with the unix_socket_directory setting in postgressql.conf."
         },
@@ -260,8 +259,8 @@ my $oConfigHelpData =
             summary =>
                 "Database query timeout.",
             description =>
-                "Sets the timeout for queries against the database.  This includes the pg_start_backup() and pg_stop_backup() " .
-                    "functions which can each take a substantial amount of time.  Because of this the timeout should be kept " .
+                "Sets the timeout for queries against the database. This includes the pg_start_backup() and pg_stop_backup() " .
+                    "functions which can each take a substantial amount of time. Because of this the timeout should be kept " .
                     "high unless you know that these functions will return quickly (i.e. if you have set startfast=y and you " .
                     "know that the database cluster will not generate many WAL segments during the backup)."
         },
@@ -274,9 +273,9 @@ my $oConfigHelpData =
             summary =>
                 "Cluster host logon user when db-host is set.",
             description =>
-                "This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL.  For this " .
-                    "to work correctly the user should be the PostgreSQL database cluster owner which is generally postgres, " .
-                    "the default."
+                "This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL. For this to " .
+                    "work correctly the user should be the PostgreSQL database cluster owner which is generally postgres, the " .
+                    "default."
         },
 
         # HARDLINK Option Help
@@ -287,8 +286,8 @@ my $oConfigHelpData =
             summary =>
                 "Hardlink files between backups.",
             description =>
-                "Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the " .
-                    "appearance that each backup is a full backup.  Be careful, though, because modifying files that are " .
+                "Enable hard-linking of files in differential and incremental backups to their full backups. This gives the " .
+                    "appearance that each backup is a full backup. Be careful, though, because modifying files that are " .
                     "hard-linked can affect all the backups in the set."
         },
 
@@ -336,8 +335,8 @@ my $oConfigHelpData =
             summary =>
                 "Manifest save threshold during backup.",
             description =>
-                "Defines how often the manifest will be saved during a backup (in bytes).  Saving the manifest is important " .
-                    "because it stores the checksums and allows the resume function to work efficiently.  The actual threshold " .
+                "Defines how often the manifest will be saved during a backup (in bytes). Saving the manifest is important " .
+                    "because it stores the checksums and allows the resume function to work efficiently. The actual threshold " .
                     "used is 1% of the backup size or manifest-save-threshold, whichever is greater."
         },
 
@@ -349,8 +348,8 @@ my $oConfigHelpData =
             summary =>
                 "Use a neutral umask.",
             description =>
-                "Sets the umask to 0000 so modes in the repository as created in a sensible way.  The default directory mode is " .
-                    "0750 and default file mode is 0640.  The lock and log directories set the directory and file mode to 0770 " .
+                "Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is " .
+                    "0750 and default file mode is 0640. The lock and log directories set the directory and file mode to 0770 " .
                     "and 0660 respectively.\n" .
                 "\n" .
                 "To use the executing user's umask instead specify neutral-umask=n in the config file or --no-neutral-umask on " .
@@ -365,25 +364,25 @@ my $oConfigHelpData =
             summary =>
                 "Repository path where WAL segments, backups, logs, etc are stored.",
             description =>
-                "The repository serves as both storage and working area for pgBackRest.  In a simple installation where the " .
-                    "backups are stored locally to the database server there will be only one repository which will contain " .
+                "The repository serves as both storage and working area for pgBackRest. In a simple installation where the " .
+                    "backups are stored locally on the database server there will be only one repository which will contain " .
                     "everything: backups, archives, logs, locks, etc.\n" .
                 "\n" .
                 "If the backups are being done remotely then the backup server's repository will contain backups, archives, " .
-                    "locks and logs while the database server's repository will contain only locks and logs.  However, if " .
+                    "locks and logs while the database server's repository will contain only locks and logs. However, if " .
                     "asynchronous archiving is enabled then the database server's repository will also contain a spool " .
                     "directory for archive logs that have not yet been pushed to the remote repository.\n" .
                 "\n" .
-                "Each system where pgBackRest is installed should have a repository directory configured.  Storage requirements " .
-                    "vary based on usage.  The main backup repository will need the most space as it contains both backups and " .
-                    "WAL segments for whatever retention you have specified.  The database repository only needs significant " .
+                "Each system where pgBackRest is installed should have a repository directory configured. Storage requirements " .
+                    "vary based on usage. The main backup repository will need the most space as it contains both backups and " .
+                    "WAL segments for whatever retention you have specified. The database repository only needs significant " .
                     "space if asynchronous archiving is enabled and then it will act as an overflow for WAL segments and might " .
                     "need to be large depending on your database activity.\n" .
                 "\n" .
-                "If you are new to backup then it will be difficult to estimate in advance how much space you'll need.  The " .
-                    "best thing to do it take some backups then record the size of different types of backups (full/incr/diff) " .
-                    "and measure the amount of WAL generated per day.  This will give you a general idea of how much space " .
-                    "you'll need, though of course requirements will change over time as your database evolves."
+                "If you are new to backup then it will be difficult to estimate in advance how much space you'll need. The best " .
+                    "thing to do is take some backups then record the size of different types of backups (full/incr/diff) and " .
+                    "measure the amount of WAL generated per day. This will give you a general idea of how much space you'll " .
+                    "need, though of course requirements will change over time as your database evolves."
         },
 
         # REPO-REMOTE-PATH Option Help
@@ -394,8 +393,8 @@ my $oConfigHelpData =
             summary =>
                 "Remote repository path where WAL segments, backups, logs, etc are stored.",
             description =>
-                "The remote repository is relative to the current installation of pgBackRest.  On a database server the backup " .
-                    "server will be remote and visa versa for the backup server where the database server will be remote.  This " .
+                "The remote repository is relative to the current installation of pgBackRest. On a database server the backup " .
+                    "server will be remote and vice versa for the backup server where the database server will be remote. This " .
                     "option is only required if the remote repository has a different path than the local repository."
         },
 
@@ -407,8 +406,8 @@ my $oConfigHelpData =
             summary =>
                 "Allow resume of failed backup.",
             description =>
-                "Defines whether the resume feature is enabled.  Resume can greatly reduce the amount of time required to run a " .
-                    "backup after a previous backup of the same type has failed.  It adds complexity, however, so it may be " .
+                "Defines whether the resume feature is enabled. Resume can greatly reduce the amount of time required to run a " .
+                    "backup after a previous backup of the same type has failed. It adds complexity, however, so it may be " .
                     "desirable to disable in environments that do not require the feature."
         },
 
@@ -420,12 +419,12 @@ my $oConfigHelpData =
             summary =>
                 "Number of backups worth of WAL to retain.",
             description =>
-                "Number of backups worth of archive log to keep.  If this is set less than your backup retention then be sure " .
+                "Number of backups worth of archive log to keep. If this is set less than your backup retention then be sure " .
                     "you set archive-copy=y or you won't be able to restore some older backups.\n" .
                 "\n" .
                 "For example, if retention-archive=2 and retention-full=4, then any backups older than the most recent two full " .
-                    "backups will not have WAL segments in the archive to make them consistent.  To solve this, set " .
-                    "archive-copy=y and use type=none when restoring.  This issue will be addressed in a future release but for " .
+                    "backups will not have WAL segments in the archive to make them consistent. To solve this, set " .
+                    "archive-copy=y and use type=none when restoring. This issue will be addressed in a future release but for " .
                     "now be careful with this setting."
         },
 
@@ -438,10 +437,10 @@ my $oConfigHelpData =
                 "Backup type for WAL retention.",
             description =>
                 "If set to full, then pgBackRest will keep archive logs for the number of full backups defined by " .
-                    "retention-archive.  If set to diff (differential), then pgBackRest will keep archive logs for the number " .
-                    "of differential backups defined by retention-archive.\n" .
+                    "retention-archive. If set to diff (differential), then pgBackRest will keep archive logs for the number of " .
+                    "differential backups defined by retention-archive.\n" .
                 "\n" .
-                "If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs " .
+                "If not defined then archive logs will be kept indefinitely. In general it is not useful to keep archive logs " .
                     "that are older than the oldest backup but there may occasionally be reasons for doing so."
         },
 
@@ -454,7 +453,7 @@ my $oConfigHelpData =
                 "Number of differential backups to retain.",
             description =>
                 "When a differential backup expires, all incremental backups associated with the differential backup will also " .
-                    "expire.  When not defined all differential backups will be kept."
+                    "expire. When not defined all differential backups will be kept."
         },
 
         # RETENTION-FULL Option Help
@@ -466,7 +465,7 @@ my $oConfigHelpData =
                 "Number of full backups to retain.",
             description =>
                 "When a full backup expires, all differential and incremental backups associated with the full backup will also " .
-                    "expire.  When not defined then all full backups will be kept."
+                    "expire. When not defined then all full backups will be kept."
         },
 
         # STANZA Option Help
@@ -477,11 +476,14 @@ my $oConfigHelpData =
                 "Command stanza.",
             description =>
                 "A stanza is the configuration for a PostgreSQL database cluster that defines where it is located, how it will " .
-                    "be backed up, archiving options, etc.  Most db servers will only have one Postgres database cluster and " .
+                    "be backed up, archiving options, etc. Most db servers will only have one Postgres database cluster and " .
                     "therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to " .
                     "be backed up.\n" .
                 "\n" .
-                "Examples of how to configure a stanza can be found in the `configuration examples` section."
+                "It is tempting to name the stanza after the primary cluster but a better name describes the databases " .
+                    "contained in the cluster. Because the stanza name will be used for the primary and all replicas it is more " .
+                    "appropriate to choose a name that describes the actual function of the cluster, such as app or dw, rather " .
+                    "than the local cluster name, such as main or prod."
         },
 
         # START-FAST Option Help
@@ -492,8 +494,8 @@ my $oConfigHelpData =
             summary =>
                 "Force a checkpoint to start backup quickly.",
             description =>
-                "Forces a checkpoint (by passing true to the fast parameter of pg_start_backup()) so the backup begins " .
-                    "immediately.  Otherwise the backup will start after the next regular checkpoint.\n" .
+                "Forces a checkpoint (by passing y to the fast parameter of pg_start_backup()) so the backup begins " .
+                    "immediately. Otherwise the backup will start after the next regular checkpoint.\n" .
                 "\n" .
                 "This feature only works in PostgreSQL <= 8.3."
         },
@@ -512,8 +514,8 @@ my $oConfigHelpData =
                 "This feature relies on pg_is_in_backup() so only works on PostgreSQL >= 9.3.\n" .
                 "\n" .
                 "The setting is disabled by default because it assumes that pgBackRest is the only process doing exclusive " .
-                    "online backups.  It depends on an advisory lock that only pgBackRest sets so it may abort other processes " .
-                    "that do exclusive online backups.  Note that base_backup and pg_dump are safe to use with this setting " .
+                    "online backups. It depends on an advisory lock that only pgBackRest sets so it may abort other processes " .
+                    "that do exclusive online backups. Note that base_backup and pg_dump are safe to use with this setting " .
                     "because they do not call pg_start_backup() so are not exclusive."
         },
 
@@ -526,8 +528,8 @@ my $oConfigHelpData =
                 "Restore tablespaces into original or remapped paths.",
             description =>
                 "Defines whether tablespaces will be be restored into their original (or remapped) paths or stored directly " .
-                    "under the pg_tblspc path.  Disabling this setting produces compact restores that are convenient for " .
-                    "development, staging, etc.  Currently these restores cannot be backed up as pgBackRest expects only links " .
+                    "under the pg_tblspc path. Disabling this setting produces compact restores that are convenient for " .
+                    "development, staging, etc. Currently these restores cannot be backed up as pgBackRest expects only links " .
                     "in the pg_tblspc path. If no tablespaces are present this this setting has no effect."
         },
 
@@ -552,7 +554,7 @@ my $oConfigHelpData =
                 "Max time a thread can run.",
             description =>
                 "This limits the amount of time (in seconds) that a thread might be stuck due to unforeseen issues executing " .
-                    "the command.  Has no affect when thread-max=1."
+                    "the command. Has no affect when thread-max=1."
         }
     },
 
@@ -661,11 +663,11 @@ my $oConfigHelpData =
                         "Force a cold backup.",
                     description =>
                         "When used with --no-start-stop a backup will be run even if pgBackRest thinks that PostgreSQL is " .
-                            "running.  This option should be used with extreme care as it will likely result in a bad backup.\n" .
+                            "running. This option should be used with extreme care as it will likely result in a bad backup.\n" .
                         "\n" .
-                        "There are some scenarios where a backup might still be desirable under these conditions.  For example, " .
+                        "There are some scenarios where a backup might still be desirable under these conditions. For example, " .
                             "if a server crashes and the database cluster volume can only be mounted read-only, it would be a " .
-                            "good idea to take a backup even if postmaster.pid is present.  In this case it would be better to " .
+                            "good idea to take a backup even if postmaster.pid is present. In this case it would be better to " .
                             "revert to the prior backup and replay WAL, but possibly there is a very important transaction in a " .
                             "WAL segment that did not get archived."
                 },
@@ -684,10 +686,10 @@ my $oConfigHelpData =
                         "Perform cold backup.",
                     description =>
                         "This option prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the database " .
-                            "cluster.  In order for this to work PostgreSQL should be shut down and pgBackRest will generate an " .
+                            "cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will generate an " .
                             "error if it is not.\n" .
                         "\n" .
-                        "The purpose of this option is to allow cold backups.  The pg_xlog directory is copied as-is and " .
+                        "The purpose of this option is to allow cold backups. The pg_xlog directory is copied as-is and " .
                             "archive-check is automatically disabled for the backup."
                 },
 
@@ -728,13 +730,12 @@ my $oConfigHelpData =
             summary =>
                 "Expire backups that exceed retention.",
             description =>
-                "pgBackRest does backup rotation but is not concerned with when the backups were created.  If two full backups " .
+                "pgBackRest does backup rotation but is not concerned with when the backups were created. If two full backups " .
                     "are configured for retention, pgBackRest will keep two full backups no matter whether they occur two hours " .
                     "or two weeks apart.",
 
             option =>
             {
-                'config-remote' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'repo-path' => 'section',
@@ -753,9 +754,9 @@ my $oConfigHelpData =
             summary =>
                 "Get help.",
             description =>
-                "Three levels of help are provided.  If no command is specified then general help will be displayed.  If a " .
+                "Three levels of help are provided. If no command is specified then general help will be displayed. If a " .
                     "command is specified then a full description of the command will be displayed along with a list of valid " .
-                    "options.  If an option is specified in addition to a command then the a full description of the option as " .
+                    "options. If an option is specified in addition to a command then the a full description of the option as " .
                     "it applies to the command will be displayed.",
 
         },
@@ -767,11 +768,11 @@ my $oConfigHelpData =
             summary =>
                 "Retrieve information about backups.",
             description =>
-                "The info command operates on a single stanza or all stanzas.  Text output is the default and gives a " .
-                    "human-readable summary of backups for the stanza(s) requested.  This format is subject to change with any " .
+                "The info command operates on a single stanza or all stanzas. Text output is the default and gives a " .
+                    "human-readable summary of backups for the stanza(s) requested. This format is subject to change with any " .
                     "release.\n" .
                 "\n" .
-                "For machine-readable output use --output=json.  The JSON output contains far more information than the text " .
+                "For machine-readable output use --output=json. The JSON output contains far more information than the text " .
                     "output, however this feature is currently experimental so the format may change between versions.",
 
             option =>
@@ -836,7 +837,7 @@ my $oConfigHelpData =
                     summary =>
                         "Restore using delta.",
                     description =>
-                        "By default the PostgreSQL data and tablespace directories are expected to be present but empty.  This " .
+                        "By default the PostgreSQL data and tablespace directories are expected to be present but empty. This " .
                             "option performs a delta restore using checksums."
                 },
 
@@ -847,8 +848,8 @@ my $oConfigHelpData =
                     summary =>
                         "Force a restore.",
                     description =>
-                        "By itself this option forces the PostgreSQL data and tablespace paths to be completely overwritten.  " .
-                            "In combination with --delta a timestamp/size delta will be performed instead of using checksums."
+                        "By itself this option forces the PostgreSQL data and tablespace paths to be completely overwritten. In " .
+                            "combination with --delta a timestamp/size delta will be performed instead of using checksums."
                 },
 
                 'log-level-console' => 'section',
@@ -863,14 +864,14 @@ my $oConfigHelpData =
                         "Set an option in recovery.conf.",
                     description =>
                         "See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on recovery.conf " .
-                            "options (replace X.X with your PostgreSQL version).  This option can be used multiple times.\n" .
+                            "options (replace X.X with your PostgreSQL version). This option can be used multiple times.\n" .
                         "\n" .
                         "Note: The restore_command option will be automatically generated but can be overridden with this " .
-                            "option.  Be careful about specifying your own restore_command as pgBackRest is designed to handle " .
-                            "this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are " .
+                            "option. Be careful about specifying your own restore_command as pgBackRest is designed to handle " .
+                            "this for you. Target Recovery options (recovery_target_name, recovery_target_time, etc.) are " .
                             "generated automatically by pgBackRest and should not be set with this option.\n" .
                         "\n" .
-                        "Recovery settings can also be set in the restore:recovery-option section of pg_backrest.conf.  For " .
+                        "Recovery settings can also be set in the restore:recovery-option section of pg_backrest.conf. For " .
                             "example:\n" .
                         "\n" .
                         "[restore:recovery-option]\n" .
@@ -891,7 +892,7 @@ my $oConfigHelpData =
                     summary =>
                         "Backup set to restore.",
                     description =>
-                        "The backup set to be restored.  latest will restore the latest backup, otherwise provide the name of " .
+                        "The backup set to be restored. latest will restore the latest backup, otherwise provide the name of " .
                             "the backup to restore."
                 },
 
@@ -905,12 +906,12 @@ my $oConfigHelpData =
                     summary =>
                         "Modify a tablespace path.",
                     description =>
-                        "Moves a tablespace to a new location during the restore.  This is useful when tablespace locations are " .
+                        "Moves a tablespace to a new location during the restore. This is useful when tablespace locations are " .
                             "not the same on a replica, or an upgraded system has different mount points.\n" .
                         "\n" .
                         "Since PostgreSQL 9.2 tablespace locations are not stored in pg_tablespace so moving tablespaces can be " .
-                            "done with impunity.  However, moving a tablespace to the data_directory is not recommended and may " .
-                            "cause problems.  For more information on moving tablespaces " .
+                            "done with impunity. However, moving a tablespace to the data_directory is not recommended and may " .
+                            "cause problems. For more information on moving tablespaces " .
                             "http://www.databasesoup.com/2013/11/moving-tablespaces.html is a good resource."
                 },
 
@@ -932,8 +933,8 @@ my $oConfigHelpData =
                         "Stop just before the recovery target is reached.",
                     description =>
                         "Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid " .
-                            "when --type is time or xid.  For example, using --target-exclusive would exclude the contents of " .
-                            "transaction 1007 when --type=xid and --target=1007.  See the recovery_target_inclusive option in " .
+                            "when --type is time or xid. For example, using --target-exclusive would exclude the contents of " .
+                            "transaction 1007 when --type=xid and --target=1007. See the recovery_target_inclusive option in " .
                             "the PostgreSQL docs for more information."
                 },
 
@@ -944,7 +945,7 @@ my $oConfigHelpData =
                     summary =>
                         "Resume when recovery target is reached.",
                     description =>
-                        "Specifies whether recovery should resume when the recovery target is reached.  See " .
+                        "Specifies whether recovery should resume when the recovery target is reached. See " .
                             "pause_at_recovery_target in the PostgreSQL docs for more information."
                 },
 
@@ -976,7 +977,7 @@ my $oConfigHelpData =
                         "* time - recover to the time specified in --target.\n" .
                         "* preserve - preserve the existing recovery.conf file.\n" .
                         "* none - no recovery.conf file is written so PostgreSQL will attempt to achieve consistency using WAL " .
-                            "segments present in pg_xlog.  Provide the required WAL segments or use the archive-copy setting to " .
+                            "segments present in pg_xlog. Provide the required WAL segments or use the archive-copy setting to " .
                             "include them with the backup."
                 }
             }
@@ -990,7 +991,7 @@ my $oConfigHelpData =
                 "Allow pgBackRest processes to run.",
             description =>
                 "If the pgBackRest processes were previously stopped using the stop command then they can be started again " .
-                    "using the start command.  Note that this will not immediately start up any pgBackRest processes but they " .
+                    "using the start command. Note that this will not immediately start up any pgBackRest processes but they " .
                     "are allowed to run.",
 
             option =>
@@ -1007,8 +1008,8 @@ my $oConfigHelpData =
             summary =>
                 "Stop pgBackRest processes from running.",
             description =>
-                "Does not allow any new pgBackRest processes to run.  By default running processes will be allowed to complete " .
-                    "successfully.  Use the --force option to terminate running processes.\n" .
+                "Does not allow any new pgBackRest processes to run. By default running processes will be allowed to complete " .
+                    "successfully. Use the --force option to terminate running processes.\n" .
                 "\n" .
                 "pgBackRest processes will return an error if they are run after the stop command completes.",
 
@@ -1022,8 +1023,8 @@ my $oConfigHelpData =
                         "Force all pgBackRest processes to stop.",
                     description =>
                         "This option will send TERM signals to all running pgBackRest processes to effect a graceful but " .
-                            "immediate shutdown.  Note that this will also shutdown processes that were initiated on another " .
-                            "system but have remotes running on the current system.  For instance, if a backup was started on " .
+                            "immediate shutdown. Note that this will also shutdown processes that were initiated on another " .
+                            "system but have remotes running on the current system. For instance, if a backup was started on " .
                             "the backup server then running stop --force on the database server will shutdown the backup " .
                             "process on the backup server."
                 },

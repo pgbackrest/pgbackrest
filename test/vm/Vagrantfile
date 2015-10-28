@@ -5,7 +5,7 @@ Vagrant.configure(2) do |config|
     end
 
     config.vm.define "u12" do |u12|
-        u12.vm.box = "ubuntu/precise64"
+        u12.vm.box = "boxcutter/ubuntu1204"
 
         u12.vm.provider :virtualbox do |vb|
             vb.name = "backrest-test-ubuntu-12.04"
@@ -36,15 +36,15 @@ Vagrant.configure(2) do |config|
             /backrest/test/vm/ssh/setup-cm.sh
 
             # Install required Perl modules
-            apt-get install -y libdbd-pg-perl
+            apt-get install libdbi-perl libdbd-pg-perl
 
             # Install Perl modules required for building the docs
-            apt-get install -y libxml-checker-perl
+            apt-get install -y libxml-checker-perl libxml-writer-perl
         SHELL
     end
 
     config.vm.define "u14" do |u14|
-        u14.vm.box = "ubuntu/trusty64"
+        u14.vm.box = "boxcutter/ubuntu1404"
 
         u14.vm.provider :virtualbox do |vb|
             vb.name = "backrest-test-ubuntu-14.04"
@@ -75,10 +75,10 @@ Vagrant.configure(2) do |config|
             /backrest/test/vm/ssh/setup-cm.sh
 
             # Install required Perl modules
-            apt-get install -y libdbd-pg-perl
+            apt-get install libdbi-perl libdbd-pg-perl
 
             # Install Perl modules required for building the docs
-            apt-get install -y libxml-checker-perl
+            apt-get install -y libxml-checker-perl libxml-writer-perl
         SHELL
     end
 

@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# BackupCommonTest.pl - Common code for backup unit tests
+# BackupCommonTest.pm - Common code for backup unit tests
 ####################################################################################################################################
 package BackRestTest::BackupCommonTest;
 

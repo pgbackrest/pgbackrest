@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# LogTest.pl - Capture the output of commands to compare them with an expected version
+# LogTest.pm - Capture the output of commands to compare them with an expected version
 ####################################################################################################################################
 package BackRestTest::Common::LogTest;
 

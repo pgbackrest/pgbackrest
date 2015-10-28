@@ -930,8 +930,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_INFO => true,
-            &CMD_RESTORE => true,
-            &CMD_EXPIRE => true
+            &CMD_RESTORE => true
         },
     },
 
@@ -1994,6 +1993,35 @@ sub optionRequired
 push @EXPORT, qw(optionRequired);
 
 ####################################################################################################################################
+# optionType
+#
+# Get the option type.
+####################################################################################################################################
+sub optionType
+{
+    my $strOption = shift;
+
+    return $oOptionRule{$strOption}{&OPTION_RULE_TYPE};
+}
+
+push @EXPORT, qw(optionType);
+
+####################################################################################################################################
+# optionTypeTest
+#
+# Test the option type.
+####################################################################################################################################
+sub optionTypeTest
+{
+    my $strOption = shift;
+    my $strType = shift;
+
+    return optionType($strOption) eq $strType;
+}
+
+push @EXPORT, qw(optionTypeTest);
+
+####################################################################################################################################
 # optionDefault
 #
 # Does the option have a default for this command?
@@ -2014,6 +2042,31 @@ sub optionDefault
 }
 
 push @EXPORT, qw(optionDefault);
+
+####################################################################################################################################
+# optionRange
+#
+# Gets the allowed setting range for the option if it exists.
+####################################################################################################################################
+sub optionRange
+{
+    my $strOption = shift;
+    my $strCommand = shift;
+
+    # Get the command rule
+    my $oCommandRule = optionCommandRule($strOption, $strCommand);
+
+    # Check for default in command
+    if (defined($oCommandRule) && defined($$oCommandRule{&OPTION_RULE_ALLOW_RANGE}))
+    {
+        return $$oCommandRule{&OPTION_RULE_ALLOW_RANGE}[0], $$oCommandRule{&OPTION_RULE_ALLOW_RANGE}[1];
+    }
+
+    # If defined return, else try to grab the global default
+    return $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE}[0], $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE}[1];
+}
+
+push @EXPORT, qw(optionRange);
 
 ####################################################################################################################################
 # optionSource
@@ -2388,7 +2441,9 @@ push @EXPORT, qw(commandWrite);
 ####################################################################################################################################
 sub commandHashGet
 {
-    use Storable qw(dclone);
+    require Storable;
+    Storable->import();
+
     return dclone(\%oCommandHash);
 }
 

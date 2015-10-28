@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
+    <variable-list>
+        <!-- Variables used by the rest of the script -->
+        <variable>
+            <variable-name>github-url-base</variable-name>
+            <variable-value>https://github.com/pgmasters/backrest</variable-value>
+        </variable>
+        <variable>
+            <variable-name>github-url-master</variable-name>
+            <variable-value>{[github-url-base]}/blob/master</variable-value>
+        </variable>
+        <variable>
+            <variable-name>github-url-issues</variable-name>
+            <variable-value>{[github-url-base]}/issues</variable-value>
+        </variable>
+        <variable>
+            <variable-name>github-url-change-log</variable-name>
+            <variable-value>{[github-url-master]}/CHANGELOG.md</variable-value>
+        </variable>
+        <variable>
+            <variable-name>github-url-license</variable-name>
+            <variable-value>{[github-url-master]}/LICENSE</variable-value>
+        </variable>
+        <variable>
+            <variable-name>backrest-url-base</variable-name>
+            <variable-value>http://www.pgbackrest.org</variable-value>
+        </variable>
+        <variable>
+            <variable-name>backrest-page-user-guide</variable-name>
+            <variable-value>user-guide.html</variable-value>
+        </variable>
+        <variable>
+            <variable-name>backrest-page-configuration</variable-name>
+            <variable-value>configuration.html</variable-value>
+        </variable>
+        <variable>
+            <variable-name>backrest-page-command</variable-name>
+            <variable-value>command.html</variable-value>
+        </variable>
+        <variable>
+            <variable-name>crunchy-url-base</variable-name>
+            <variable-value>http://www.crunchydatasolutions.com</variable-value>
+        </variable>
+        <variable>
+            <variable-name>crunchy-url-cbm</variable-name>
+            <variable-value>{[crunchy-url-base]}/crunchy-backup-manager</variable-value>
+        </variable>
+        <variable>
+            <variable-name>resonate-url-base</variable-name>
+            <variable-value>http://www.resonate.com</variable-value>
+        </variable>
+    </variable-list>
+
+    <section id="introduction">
+        <title>Introduction</title>
+
+        <p><backrest/> aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.
+
+        Primary <backrest/> features:
+        <ul>
+            <li>Local or remote backup</li>
+            <li>Multi-threaded backup/restore for performance</li>
+            <li>Checksums</li>
+            <li>Safe backups (checks that logs required for consistency are present before backup completes)</li>
+            <li>Full, differential, and incremental backups</li>
+            <li>Backup rotation (and minimum retention rules with optional separate retention for archive)</li>
+            <li>In-stream compression/decompression</li>
+            <li>Archiving and retrieval of logs for replicas/restores built in</li>
+            <li>Async archiving for very busy systems (including space limits)</li>
+            <li>Backup directories are consistent <postgres/> clusters (when hardlinks are on and compression is off)</li>
+            <li>Tablespace support</li>
+            <li>Restore delta option</li>
+            <li>Restore using timestamp/size or checksum</li>
+            <li>Restore remapping base/tablespaces</li>
+            <li>Support for <postgres/> >= 8.3</li>
+        </ul>Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
+
+        <backrest/> is hosted at <link url="{[github-url-base]}">GitHub</link> and follows the gitflow model of development.  This means that the master branch contains only the release history, i.e. each commit represents a single release and release tags are always from the master branch.  The dev branch contains a single commit for each feature or fix and more accurately depicts the development history.  Actual development is done on feature (dev_*) branches and squashed into dev after regression tests have passed.  In this model dev is considered stable and can be released at any time.  As such, the dev branch does not have any special version modifiers.</p>
+    </section>
+
+    <section id="getting-started">
+        <title>Getting Started</title>
+
+        <p><backrest/> strives to be easy to configure and operate:
+        <ul>
+          <li><link page="{[backrest-page-user-guide]}">User guide</link> for Ubuntu 12.04 &amp; 14.04 / <postgres/> 9.4.</li>
+          <li><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</li>
+          <li><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating rich <backrest/> configurations.</li>
+        </ul></p>
+    </section>
+
+    <section id="contributing">
+        <title>Contributing</title>
+
+        <p>Contributions to <backrest/> are always welcome!
+
+        Code fixes or new features can be submitted via pull requests.  Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>.
+
+        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
+
+        You will always receive credit in the <link url="{[github-url-change-log]}">change log</link> for your contributions.</p>
+    </section>
+
+    <section id="support">
+        <title>Support</title>
+
+        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license.  You may use it for personal or commercial purposes without any restrictions whatsoever.  Bug reports are taken very seriously and will be addressed as quickly as possible.
+
+        Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task.  You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
+
+        <link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>.  <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in so cross-compatibility with the community version of <backrest/> is always strictly maintained.
+
+        Please visit <link url="{[crunchy-url-cbm]}">Crunchy Backup Manager</link> for more information.</p>
+    </section>
+
+    <section id="recognition">
+        <title>Recognition</title>
+
+        <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.
+
+        <link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
+    </section>
+</doc>
