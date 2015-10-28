@@ -746,7 +746,7 @@
             <p>Using an earlier backup will allow <postgres/> to play forward to the correct time again.  The default behavior for restore is to use the most recent backup but an earlier backup can be specified with the <br-option>--set</br-option> option.</p>
 
             <execute-list>
-                <title>Stop <postgres/>, YADA YADA! </title>
+                <title>Stop <postgres/>, restore from the previous backup, and start <postgres/></title>
 
                 <execute>
                     <exe-cmd>pg_ctlcluster 9.4 {[postgres-cluster-demo]} stop</exe-cmd>
@@ -768,7 +768,7 @@
                 <execute>
                     <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                     <exe-output/>
-                    <!-- <exe-highlight>{[message-cluster-before-time]}</exe-highlight> -->
+                    <exe-highlight>{[test-table-data]}</exe-highlight>
                 </execute>
             </execute-list>
 
