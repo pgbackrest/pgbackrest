@@ -6,7 +6,15 @@
     </intro>
 
     <changelog>
-        <changelog-release date="XXXX-XX-XX" version="0.87" title="VIENNA MILESTONE - UNDER DEVELOPMENT">
+        <changelog-release date="XXXX-XX-XX" version="0.90" title="UNDER DEVELOPMENT">
+            <release-feature-bullet-list>
+                <release-feature>
+                    <text></text>
+                </release-feature>
+            </release-feature-bullet-list>
+        </changelog-release>
+
+        <changelog-release date="2015-10-28" version="0.87" title="Website and User Guide">
             <release-feature-bullet-list>
                 <release-feature>
                     <text>Added a new user guide that covers <backrest/> basics and some advanced topics including PITR.  Much more to come, but it's a start.</text>

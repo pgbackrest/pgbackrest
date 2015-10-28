@@ -1,7 +1,12 @@
 # pgBackRest<br/>Change Log
 
-## v0.87: VIENNA MILESTONE - UNDER DEVELOPMENT
+## v0.90: UNDER DEVELOPMENT
 __No Release Date Set__
+
+* 
+
+## v0.87: Website and User Guide
+__Released October 28, 2015__
 
 * Added a new user guide that covers pgBackRest basics and some advanced topics including PITR. Much more to come, but it's a start.
 
