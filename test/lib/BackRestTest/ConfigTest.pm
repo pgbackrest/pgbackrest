@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# ConfigTest.pl - Unit Tests for BackRest::Param and BackRest::Config::Config
+# ConfigTest.pm - Unit Tests for BackRest::Param and BackRest::Config::Config
 ####################################################################################################################################
 package BackRestTest::ConfigTest;
 

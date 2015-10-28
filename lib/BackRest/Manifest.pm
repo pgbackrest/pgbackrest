@@ -457,6 +457,8 @@ sub build
         # Skip certain files during backup
         if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) || # pg_xlog/ - this will be reconstructed
             $strName =~ /^postmaster\.pid$/ ||                 # postmaster.pid - to avoid confusing postgres when restoring
+            $strName =~ /^backup\_label\.old$/ ||              # backup_label.old - old backup labels are not useful
+            $strName =~ /^recovery\.done$/ ||                  # recovery.done - doesn't make sense to backup this file
             $strName =~ /^recovery\.conf$/)                    # recovery.conf - doesn't make sense to backup this file
         {
             next;

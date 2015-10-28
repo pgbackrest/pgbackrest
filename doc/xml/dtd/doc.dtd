@@ -1,61 +1,95 @@
-<!ELEMENT doc ((intro, changelog)|(intro, start, contribute, support, recognition)|(intro, install, config, operation))>
-	<!ATTLIST doc title CDATA #REQUIRED>
+<!ELEMENT doc ((intro, changelog)|(config, operation)|(variable-list?, cleanup?, section+))>
+    <!ATTLIST doc title CDATA "">
+    <!ATTLIST doc subtitle CDATA "">
+    <!ATTLIST doc toc CDATA "y">
 
 <!ELEMENT intro (text)>
 
-<!ELEMENT start (text)>
-	<!ATTLIST start title CDATA #REQUIRED>
-
-<!ELEMENT install (text, install-system-list)>
-	<!ATTLIST install title CDATA #REQUIRED>
-
-<!ELEMENT install-system-list (text?, install-system+)>
-
-<!ELEMENT install-system (text)>
-	<!ATTLIST install-system title CDATA #REQUIRED>
-
 <!ELEMENT operation (text?, operation-general, command-list)>
-	<!ATTLIST operation title CDATA #REQUIRED>
+    <!ATTLIST operation title CDATA #REQUIRED>
 
-<!ELEMENT operation-general (text, option-list)>
-	<!ATTLIST operation-general title CDATA #REQUIRED>
+<!ELEMENT operation-general (option-list)>
+    <!ATTLIST operation-general title CDATA #REQUIRED>
 
 <!ELEMENT command-list (text?, command+)>
-	<!ATTLIST command-list title CDATA #REQUIRED>
+    <!ATTLIST command-list title CDATA #REQUIRED>
 
 <!ELEMENT command (summary, text, option-list?, command-example-list)>
-	<!ATTLIST command id CDATA #REQUIRED>
+    <!ATTLIST command id CDATA #REQUIRED>
+    <!ATTLIST command name CDATA #REQUIRED>
 
 <!ELEMENT command-example-list (text?, command-example+)>
-	<!ATTLIST command-example-list title CDATA "Examples">
+    <!ATTLIST command-example-list title CDATA "Examples">
 
 <!ELEMENT command-example (text)>
-	<!ATTLIST command-example title CDATA "Example">
+    <!ATTLIST command-example title CDATA "Example">
 
 <!ELEMENT option-list (option+)>
 
-<!ELEMENT option (summary, text, example?)>
-	<!ATTLIST option id CDATA #REQUIRED>
+<!ELEMENT option (summary, text, example)>
+    <!ATTLIST option id CDATA #REQUIRED>
+    <!ATTLIST option name CDATA #REQUIRED>
 
-<!ELEMENT config (text, config-example-list, config-section-list)>
-	<!ATTLIST config title CDATA #REQUIRED>
-
-<!ELEMENT config-example-list (text?, config-example+)>
-	<!ATTLIST config-example-list title CDATA #REQUIRED>
+<!ELEMENT config (text, config-section-list)>
+    <!ATTLIST config title CDATA #REQUIRED>
 
 <!ELEMENT config-example (text)>
-	<!ATTLIST config-example title CDATA #REQUIRED>
+    <!ATTLIST config-example title CDATA #REQUIRED>
 
 <!ELEMENT config-section-list (text?, config-section+)>
-	<!ATTLIST config-section-list title CDATA #REQUIRED>
+    <!ATTLIST config-section-list title CDATA #REQUIRED>
 
 <!ELEMENT config-section (text, config-key-list?)>
-	<!ATTLIST config-section id CDATA #REQUIRED>
+    <!ATTLIST config-section id CDATA #REQUIRED>
+    <!ATTLIST config-section name CDATA #REQUIRED>
 
 <!ELEMENT config-key-list (config-key+)>
 
 <!ELEMENT config-key (summary, text, default?, allow?, example)>
-	<!ATTLIST config-key id CDATA #REQUIRED>
+    <!ATTLIST config-key id CDATA #REQUIRED>
+    <!ATTLIST config-key name CDATA #REQUIRED>
+
+<!ELEMENT execute-list (title, execute+)>
+<!ELEMENT execute (exe-cmd, exe-user?,  exe-var?, exe-retry?, exe-output?, exe-no-show?, exe-highlight?, exe-skip?,
+                   exe-err-expect?, exe-err-suppress?, exe-err-suppress-stderr?)>
+<!ELEMENT exe-cmd (#PCDATA)>
+<!ELEMENT exe-user (#PCDATA)>
+<!ELEMENT exe-highlight (#PCDATA)>
+<!ELEMENT exe-var (#PCDATA)>
+<!ELEMENT exe-output EMPTY>
+<!ELEMENT exe-skip EMPTY>
+<!ELEMENT exe-no-show EMPTY>
+<!ELEMENT exe-retry EMPTY>
+<!ELEMENT exe-err-expect (#PCDATA)>
+<!ELEMENT exe-err-suppress EMPTY>
+<!ELEMENT exe-err-suppress-stderr EMPTY>
+
+<!ELEMENT cleanup (execute+)>
+
+<!ELEMENT variable-list (variable+)>
+<!ELEMENT variable (variable-name, variable-value)>
+<!ELEMENT variable-name (#PCDATA)>
+<!ELEMENT variable-value (#PCDATA)>
+
+<!ELEMENT backrest-config (title, backrest-config-option+)>
+    <!ATTLIST backrest-config file CDATA #REQUIRED>
+<!ELEMENT backrest-config-option (backrest-config-option-section?, backrest-config-option-key, backrest-config-option-value?)>
+<!ELEMENT backrest-config-option-section (#PCDATA)>
+<!ELEMENT backrest-config-option-key (#PCDATA)>
+<!ELEMENT backrest-config-option-value (#PCDATA)>
+
+<!ELEMENT postgres-config (title, postgres-config-option+)>
+    <!ATTLIST postgres-config file CDATA #REQUIRED>
+<!ELEMENT postgres-config-option (#PCDATA)>
+    <!ATTLIST postgres-config-option key CDATA #REQUIRED>
+
+<!ELEMENT option-description EMPTY>
+    <!ATTLIST option-description key CDATA #REQUIRED>
+
+<!ELEMENT section (title,((p|execute-list|backrest-config|postgres-config|option-description)+|(p*, section+)|p*))>
+    <!ATTLIST section id CDATA #REQUIRED>
+<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+                 pg-option|pg-setting|link|user)*>
 
 <!ELEMENT default (#PCDATA)>
 <!ELEMENT allow (#PCDATA)>
@@ -64,39 +98,52 @@
 <!ELEMENT changelog (text?, changelog-release+)>
 
 <!ELEMENT changelog-release (text?, release-feature-bullet-list)>
-	<!ATTLIST changelog-release date CDATA #REQUIRED>
-	<!ATTLIST changelog-release version CDATA #REQUIRED>
-	<!ATTLIST changelog-release title CDATA #REQUIRED>
+    <!ATTLIST changelog-release date CDATA #REQUIRED>
+    <!ATTLIST changelog-release version CDATA #REQUIRED>
+    <!ATTLIST changelog-release title CDATA #REQUIRED>
 
 <!ELEMENT release-feature-bullet-list (release-feature+)>
 
 <!ELEMENT release-feature (text)>
 
 <!ELEMENT contribute (text)>
-	<!ATTLIST contribute title CDATA #REQUIRED>
+    <!ATTLIST contribute title CDATA #REQUIRED>
 
 <!ELEMENT recognition (text)>
-	<!ATTLIST recognition title CDATA #REQUIRED>
+    <!ATTLIST recognition title CDATA #REQUIRED>
 
 <!ELEMENT support (text)>
-	<!ATTLIST support title CDATA #REQUIRED>
+    <!ATTLIST support title CDATA #REQUIRED>
 
-<!ELEMENT summary (text)>
-<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres)*>
+<!ELEMENT summary (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+                   pg-option|pg-setting|link|user)*>
+<!ELEMENT p (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+             pg-option|pg-setting|link|user)*>
+<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+                pg-option|pg-setting|link|user)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>
 <!ELEMENT bi (#PCDATA)>
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
-<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres)*>
+<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+              pg-option|pg-setting|link|user)*>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA|exe)*>
 <!ELEMENT file (#PCDATA)>
 <!ELEMENT path (#PCDATA)>
 <!ELEMENT cmd (#PCDATA)>
+<!ELEMENT user (#PCDATA)>
 <!ELEMENT param (#PCDATA)>
 <!ELEMENT setting (#PCDATA)>
+<!ELEMENT br-option (#PCDATA)>
+<!ELEMENT br-setting (#PCDATA)>
+<!ELEMENT pg-option (#PCDATA)>
+<!ELEMENT pg-setting (#PCDATA)>
 <!ELEMENT exe EMPTY>
 <!ELEMENT backrest EMPTY>
 <!ELEMENT postgres EMPTY>
+<!ELEMENT link (#PCDATA)>
+    <!ATTLIST link url CDATA "">
+    <!ATTLIST link page CDATA "">

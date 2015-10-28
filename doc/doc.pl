@@ -19,9 +19,10 @@ use Pod::Usage qw(pod2usage);
 use XML::Checker::Parser;
 
 use lib dirname($0) . '/lib';
-use BackRestDoc::Doc;
-use BackRestDoc::DocConfig;
-use BackRestDoc::DocRender;
+use BackRestDoc::Common::Doc;
+use BackRestDoc::Common::DocConfig;
+use BackRestDoc::Html::DocHtmlSite;
+use BackRestDoc::Common::DocRender;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
@@ -51,72 +52,6 @@ doc.pl [options] [operation]
 use constant OP_MAIN                                                => 'Main';
 
 use constant OP_MAIN_DOC_PROCESS                                    => OP_MAIN . '::docProcess';
-use constant OP_MAIN_OPTION_LIST_PROCESS                            => OP_MAIN . '::optionListProcess';
-
-####################################################################################################################################
-# optionListProcess
-####################################################################################################################################
-sub optionListProcess
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oOptionListOut,
-        $strCommand,
-        $oOptionRuleRef
-    ) =
-        logDebugParam
-        (
-            OP_MAIN_OPTION_LIST_PROCESS, \@_,
-            {name => 'oOptionListOut'},
-            {name => 'strCommand', required => false},
-            {name => 'oOptionRuleRef'}
-        );
-
-    foreach my $oOptionOut ($oOptionListOut->nodeList())
-    {
-        my $strOption = $oOptionOut->paramGet('id');
-
-        if ($strOption eq 'help' || $strOption eq 'version')
-        {
-            next;
-        }
-
-        if (!defined($$oOptionRuleRef{$strOption}{&OPTION_RULE_TYPE}))
-        {
-            confess "unable to find option $strOption";
-        }
-
-        if (defined(optionDefault($strOption, $strCommand)))
-        {
-            $oOptionOut->fieldSet('required', false);
-
-            if ($$oOptionRuleRef{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-            {
-                $oOptionOut->fieldSet('default', optionDefault($strOption, $strCommand) ? 'y' : 'n');
-            }
-            else
-            {
-                $oOptionOut->fieldSet('default', optionDefault($strOption, $strCommand));
-            }
-        }
-        else
-        {
-            $oOptionOut->fieldSet('required', optionRequired($strOption, $strCommand));
-        }
-
-        if (defined($strCommand))
-        {
-            $oOptionOut->fieldSet('cmd', true);
-        }
-
-        if ($strOption eq 'cmd-remote')
-        {
-            $oOptionOut->fieldSet('default', 'same as local');
-        }
-    }
-}
 
 ####################################################################################################################################
 # Load command line parameters and config
@@ -127,11 +62,17 @@ my $bQuiet = false;                                 # Sets log level to ERROR
 my $strLogLevel = 'info';                           # Log level for tests
 my $strProjectName = 'pgBackRest';                  # Project name to use in docs
 my $strExeName = 'pg_backrest';                     # Exe name to use in docs
+my $bHtml = false;                                  # Generate full html documentation
+my $strHtmlRoot = '/';                              # Root html page
+my $bNoExe = false;                                 # Should commands be executed when buildng help? (for testing only)
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
             'quiet' => \$bQuiet,
-            'log-level=s' => \$strLogLevel)
+            'log-level=s' => \$strLogLevel,
+            'html' => \$bHtml,
+            'html-root=s' => \$strHtmlRoot,
+            'no-exe', \$bNoExe)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -167,83 +108,47 @@ sub docProcess
         $strOperation,
         $strXmlIn,
         $strMdOut,
-        $bManual
+        $oHtmlSite
     ) =
         logDebugParam
         (
             OP_MAIN_DOC_PROCESS, \@_,
             {name => 'strXmlIn'},
             {name => 'strMdOut'},
-            {name => 'bManual', default => false}
+            {name => 'oHtmlSite'}
         );
 
     # Build the document from xml
-    my $oDoc = new BackRestDoc::Doc($strXmlIn);
-
-    # Build commands pulled from the code
-    if ($bManual)
-    {
-        # Get the option rules
-        my $oOptionRule = optionRuleGet();
-
-        # Ouput general options
-        my $oOperationGeneralOptionListOut =
-            $oDoc->nodeGet('operation')->nodeGet('operation-general')->nodeGet('option-list');
-
-        optionListProcess($oOperationGeneralOptionListOut, undef, $oOptionRule);
-
-        # Ouput commands
-        my $oCommandListOut = $oDoc->nodeGet('operation')->nodeGet('command-list');
-
-        foreach my $oCommandOut ($oCommandListOut->nodeList())
-        {
-            my $strCommand = $oCommandOut->paramGet('id');
-
-            my $oOptionListOut = $oCommandOut->nodeGet('option-list', false);
-
-            if (defined($oOptionListOut))
-            {
-                optionListProcess($oOptionListOut, $strCommand, $oOptionRule);
-            }
-
-            my $oExampleListOut = $oCommandOut->nodeGet('command-example-list');
-
-            foreach my $oExampleOut ($oExampleListOut->nodeList())
-            {
-                if (defined($oExampleOut->paramGet('title', false)))
-                {
-                    $oExampleOut->paramSet('title', 'Example: ' . $oExampleOut->paramGet('title'));
-                }
-                else
-                {
-                    $oExampleOut->paramSet('title', 'Example');
-                }
-            }
-        }
-
-        # Ouput config section
-        my $oConfigSectionListOut = $oDoc->nodeGet('config')->nodeGet('config-section-list');
-
-        foreach my $oConfigSectionOut ($oConfigSectionListOut->nodeList())
-        {
-            my $oOptionListOut = $oConfigSectionOut->nodeGet('config-key-list', false);
-
-            if (defined($oOptionListOut))
-            {
-                optionListProcess($oOptionListOut, undef, $oOptionRule);
-            }
-        }
-    }
+    my $oDoc = new BackRestDoc::Common::Doc($strXmlIn);
 
     # Write markdown
-    my $oRender = new BackRestDoc::DocRender('markdown', $strProjectName, $strExeName);
-    $oRender->save($strMdOut, $oRender->process($oDoc));
+    my $oRender = new BackRestDoc::Common::DocRender('markdown', $strProjectName, $strExeName);
+    $oRender->save($strMdOut, $oHtmlSite->variableReplace($oRender->process($oDoc)));
 }
 
-my $oRender = new BackRestDoc::DocRender('text', $strProjectName, $strExeName);
-my $oDocConfig = new BackRestDoc::DocConfig(new BackRestDoc::Doc("${strBasePath}/xml/reference.xml"), $oRender);
+my $oRender = new BackRestDoc::Common::DocRender('text', $strProjectName, $strExeName);
+my $oDocConfig = new BackRestDoc::Common::DocConfig(new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
 $oDocConfig->helpDataWrite();
 
-docProcess("${strBasePath}/xml/readme.xml", "${strBasePath}/../README.md");
-docProcess("${strBasePath}/xml/reference.xml", "${strBasePath}/../USERGUIDE.md", true);
-docProcess("${strBasePath}/xml/changelog.xml", "${strBasePath}/../CHANGELOG.md");
+# !!! Create Html Site Object to perform variable replacements on markdown and test
+# !!! This should be replaced with a more generic site object in the future
+my $oHtmlSite =
+    new BackRestDoc::Html::DocHtmlSite
+    (
+        new BackRestDoc::Common::DocRender('html', $strProjectName, $strExeName),
+        $oDocConfig,
+        "${strBasePath}/xml",
+        "${strBasePath}/html",
+        "${strBasePath}/css/default.css",
+        $strHtmlRoot,
+        !$bNoExe
+    );
+
+docProcess("${strBasePath}/xml/index.xml", "${strBasePath}/../README.md", $oHtmlSite);
+docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oHtmlSite);
+
+# Only generate the HTML site when requested
+if ($bHtml)
+{
+    $oHtmlSite->process();
+}

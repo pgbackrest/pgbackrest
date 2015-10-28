@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# BackupTest.pl - Unit Tests for BackRest::Backup and BackRest::Restore
+# BackupTest.pm - Unit Tests for BackRest::Backup and BackRest::Restore
 ####################################################################################################################################
 package BackRestTest::BackupTest;
 

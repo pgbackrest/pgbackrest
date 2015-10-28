@@ -1,6 +1,5 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# ExecuteTest.pl - Module to execute external commands
+# ExecuteTest.pm - Module to execute external commands
 ####################################################################################################################################
 package BackRestTest::Common::ExecuteTest;
 
@@ -64,6 +63,7 @@ sub new
     # Set defaults
     $self->{bRemote} = defined($self->{bRemote}) ? $self->{bRemote} : false;
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
+    $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
 
@@ -233,7 +233,7 @@ sub end
         }
     }
 
-    if ($self->{strErrorLog} ne '')
+    if ($self->{strErrorLog} ne '' && !$self->{bSuppressStdErr} && !$self->{bSuppressError})
     {
         confess &log(ERROR, "output found on STDERR:\n$self->{strErrorLog}");
     }
