@@ -122,6 +122,7 @@ Table of Contents
 .page-toc-body
 {
     margin-top: .25em;
+    margin-bottom: 2em;
 }
 
 .section1-toc:first-of-type
@@ -156,19 +157,21 @@ Section
 *******************************************************************************/
 .section1
 {
-    /*display:block;*/
+    margin-top: 2em;
+}
+
+.section1:first-of-type
+{
     margin-top: 1em;
 }
 
 .section2, .section3
 {
-    /*display:block;*/
-    margin-top: .5em;
+    margin-top: 1em;
 }
 
 .section1-title, .section2-title, .section3-title, .page-toc-title
 {
-    /*display:block;*/
     margin-top: .5em;
     font-weight: 500;
 }
@@ -176,19 +179,20 @@ Section
 .section1-title, .page-toc-title
 {
     background-color: #dddddd;
-    font-size: 16pt;
+    font-size: 22pt;
     padding-left: .5em;
+    margin-bottom: .5em;
 }
 
 .section2
 {
-    /*margin-left: 2em;*/
+    margin-top: 1em;
 }
 
 .section2-title
 {
     border-bottom: 2px #cccccc solid;
-    font-size: 14pt;
+    font-size: 16pt;
 }
 
 .section3
@@ -206,7 +210,7 @@ Section
 .section3-title
 {
     display: inline;
-    font-size: 13pt;
+    font-size: 14pt;
     /*text-decoration: underline;*/
     border-bottom: 1px #bbbbbb solid;
 }
