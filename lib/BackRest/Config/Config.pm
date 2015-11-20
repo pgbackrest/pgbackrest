@@ -502,7 +502,9 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true
         }
     },
 
@@ -1047,7 +1049,8 @@ my %oOptionRule =
             lc(INFO)   => true,
             lc(DEBUG)  => true,
             lc(TRACE)  => true
-        },
+        }
+        ,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
@@ -1055,7 +1058,9 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true
         }
     },
 
@@ -1080,7 +1085,9 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true
         }
     },
 
