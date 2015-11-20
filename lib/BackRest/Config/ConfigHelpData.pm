@@ -996,6 +996,9 @@ my $oConfigHelpData =
 
             option =>
             {
+                'config' => 'default',
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }
@@ -1015,6 +1018,8 @@ my $oConfigHelpData =
 
             option =>
             {
+                'config' => 'default',
+
                 # FORCE Option Help
                 #-------------------------------------------------------------------------------------------------------------------
                 'force' =>
@@ -1029,6 +1034,8 @@ my $oConfigHelpData =
                             "process on the backup server."
                 },
 
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }

@@ -3,7 +3,11 @@
 ## v0.90: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Fixed an issue where the `start`/`stop` commands required the `--config` option.
+
+* Fixed an issue the logs files were being overwritten instead of appended.
+
+* Symlinks are no longer created in backup directories in the repository. These symlinks could point virtually anywhere and potentially be dangerous. Symlinks are still recreated during a restore.
 
 ## v0.87: Website and User Guide
 __Released October 28, 2015__

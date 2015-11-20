@@ -9,7 +9,13 @@
         <changelog-release date="XXXX-XX-XX" version="0.90" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text></text>
+                    <text>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>--config</setting> option.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Fixed an issue the logs files were being overwritten instead of appended.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Symlinks are no longer created in backup directories in the repository.  These symlinks could point virtually anywhere and potentially be dangerous.  Symlinks are still recreated during a restore.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
