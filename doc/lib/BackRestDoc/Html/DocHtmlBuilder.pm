@@ -44,13 +44,15 @@ sub new
     (
         my $strOperation,
         $self->{strName},
-        $self->{strTitle}
+        $self->{strTitle},
+        $self->{bPretty}
     ) =
         logDebugParam
         (
             OP_DOC_HTML_BUILDER_NEW, \@_,
             {name => 'strName'},
-            {name => 'strTitle'}
+            {name => 'strTitle'},
+            {name => 'bPretty', default => false}
         );
 
     $self->{oBody} = new BackRestDoc::Html::DocHtmlElement(HTML_BODY);
@@ -73,7 +75,7 @@ sub indent
     my $self = shift;
     my $iDepth = shift;
 
-    return ('  ' x $iDepth);
+    return $self->{bPretty} ? ('  ' x $iDepth) : '';
 }
 
 ####################################################################################################################################
@@ -85,7 +87,7 @@ sub lf
 {
     my $self = shift;
 
-    return "\n";
+    return $self->{bPretty} ? "\n" : '';
 }
 
 ####################################################################################################################################
@@ -118,8 +120,8 @@ sub htmlRender
         logDebugParam
         (
             OP_DOC_HTML_BUILDER_HTML_RENDER, \@_,
-            {name => 'oElement'},
-            {name => 'iDepth'}
+            {name => 'oElement', trace => true},
+            {name => 'iDepth', trace => true}
         );
 
     # Build the header
@@ -131,8 +133,19 @@ sub htmlRender
 
     if (defined($oElement->{strContent}))
     {
-        $oElement->{strContent} =~ s/\n/\<br\/>\n/g;
-        $strHtml .= $self->lf() . trim($oElement->{strContent}) . $self->lf() . $self->indent($iDepth);
+        if (!defined($oElement->{bPre}) || !$oElement->{bPre})
+        {
+            $oElement->{strContent} =~ s/\n/\<br\/>\n/g;
+            $oElement->{strContent} = trim($oElement->{strContent});
+            $strHtml .= $self->lf();
+        }
+
+        $strHtml .= $oElement->{strContent};
+
+        if (!defined($oElement->{bPre}) || !$oElement->{bPre})
+        {
+            $strHtml .= $self->lf() . $self->indent($iDepth);
+        }
     }
     else
     {

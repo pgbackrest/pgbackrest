@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# DOC HTML SITE MODULE
+# DOC LATEX MODULE
 ####################################################################################################################################
-package BackRestDoc::Html::DocHtmlSite;
+package BackRestDoc::Latex::DocLatex;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -26,15 +26,15 @@ use BackRestTest::Common::ExecuteTest;
 
 use BackRestDoc::Common::DocConfig;
 use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Html::DocHtmlPage;
+use BackRestDoc::Latex::DocLatexSection;
 
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_DOC_HTML_SITE                                       => 'DocHtmlSite';
+use constant OP_DOC_LATEX                                           => 'DocLatex';
 
-use constant OP_DOC_HTML_SITE_NEW                                   => OP_DOC_HTML_SITE . '->new';
-use constant OP_DOC_HTML_SITE_PROCESS                               => OP_DOC_HTML_SITE . '->process';
+use constant OP_DOC_LATEX_NEW                                       => OP_DOC_LATEX . '->new';
+use constant OP_DOC_LATEX_PROCESS                                   => OP_DOC_LATEX . '->process';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -54,30 +54,30 @@ sub new
         my $strOperation,
         $self->{oManifest},
         $self->{strXmlPath},
-        $self->{strHtmlPath},
-        $self->{strCssFile},
+        $self->{strLatexPath},
+        $self->{strPreambleFile},
         $self->{bExe}
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_SITE_NEW, \@_,
+            OP_DOC_LATEX_NEW, \@_,
             {name => 'oManifest'},
             {name => 'strXmlPath'},
-            {name => 'strHtmlPath'},
-            {name => 'strCssFile'},
+            {name => 'strLatexPath'},
+            {name => 'strPreambleFile'},
             {name => 'bExe'}
         );
 
     # Remove the current html path if it exists
-    if (-e $self->{strHtmlPath})
+    if (-e $self->{strLatexPath})
     {
-        executeTest("rm -rf $self->{strHtmlPath}/*");
+        executeTest("rm -rf $self->{strLatexPath}/*");
     }
     # Else create the html path
     else
     {
-        mkdir($self->{strHtmlPath})
-            or confess &log(ERROR, "unable to create path $self->{strHtmlPath}");
+        mkdir($self->{strLatexPath})
+            or confess &log(ERROR, "unable to create path $self->{strLatexPath}");
     }
 
     # Return from function and log return values if any
@@ -98,23 +98,37 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_HTML_SITE_PROCESS);
+    my $strOperation = logDebugParam(OP_DOC_LATEX_PROCESS);
 
-    # Copy the css file
-    my $strCssFileDestination = "$self->{strHtmlPath}/default.css";
-    copy($self->{strCssFile}, $strCssFileDestination)
-        or confess &log(ERROR, "unable to copy $self->{strCssFile} to ${strCssFileDestination}");
+    my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_PDF);
 
-    foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
+    # Copy the logo
+    copy('/backrest/doc/resource/latex/cds-logo.eps', "$self->{strLatexPath}/logo.eps")
+        or confess &log(ERROR, "unable to copy logo");
+
+    my $strLatex = $self->{oManifest}->variableReplace(fileStringRead($self->{strPreambleFile}), 'latex') . "\n";
+
+    foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_PDF))
     {
         &log(INFO, "    render out: ${strPageId}");
 
+        my $oDocLatexSection =
+            new BackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
+
         # Save the html page
-        fileStringWrite("$self->{strHtmlPath}/${strPageId}.html",
-                        $self->{oManifest}->variableReplace((new BackRestDoc::Html::DocHtmlPage($self->{oManifest},
-                            $strPageId, $self->{bExe}))->process()),
-                        false);
+        $strLatex .= $oDocLatexSection->process();
     }
+
+    $strLatex .= "\n% " . ('-' x 130) . "\n% End document\n% " . ('-' x 130) . "\n\\end{document}\n";
+
+    my $strLatexFileName = $self->{oManifest}->variableReplace("$self->{strLatexPath}/" . $$oRender{file} . '.tex');
+
+    fileStringWrite($strLatexFileName, $strLatex, false);
+
+    executeTest("pdflatex -output-directory=$self->{strLatexPath} -shell-escape $strLatexFileName",
+                {bSuppressStdErr => true});
+    executeTest("pdflatex -output-directory=$self->{strLatexPath} -shell-escape $strLatexFileName",
+                {bSuppressStdErr => true});
 
     # Return from function and log return values if any
     logDebugReturn($strOperation);

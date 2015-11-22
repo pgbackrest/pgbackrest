@@ -32,7 +32,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = base/global/pg_control.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/temp/db.tmp/base/global/pg_control.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/temp/db.tmp/file.tmp, strSourcePathType = absolute
  INFO: backup file [TEST_PATH]/db/common/global/pg_control (8KB, 99%) checksum 56fe5780b8dca9705e0c22032a83828860a21235
@@ -55,7 +54,7 @@ DEBUG:     File->remove=>: bRemoved = false
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -301,16 +300,14 @@ DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPa
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/base, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/global, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/path-test, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
-DEBUG:     Backup->fileNotInManifest=>: stryFile = (base/PG_VERSION.gz, base/link-test, file.tmp.gz)
+DEBUG:     Backup->fileNotInManifest=>: stryFile = (base/PG_VERSION.gz, file.tmp.gz)
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/file.tmp.gz
-DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/link-test
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz
 DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], strType = full
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/base, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     File->hashSize(): bCompressed = true, strFile = base/global/pg_control.gz, strHashType = <sha1>, strPathType = backup:tmp
 DEBUG:     File->hashSize=>: iSize = 8192, strHash = 56fe5780b8dca9705e0c22032a83828860a21235
  INFO: checksum resumed file [TEST_PATH]/db/common/global/pg_control (8KB, 99%) checksum 56fe5780b8dca9705e0c22032a83828860a21235
@@ -330,7 +327,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -700,7 +697,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -731,7 +727,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -926,8 +922,7 @@ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPa
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/path-test, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
 DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = tablespace, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
 DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = tablespace/1, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
-DEBUG:     Backup->fileNotInManifest=>: stryFile = (base/PG_VERSION.gz, base/base/base1.txt.gz, base/global/pg_control.gz, base/link-test)
-DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/link-test
+DEBUG:     Backup->fileNotInManifest=>: stryFile = (base/PG_VERSION.gz, base/base/base1.txt.gz, base/global/pg_control.gz)
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/global/pg_control.gz
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/base/base1.txt.gz
 DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/base/PG_VERSION.gz
@@ -936,7 +931,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -975,7 +969,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1176,7 +1170,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -1215,7 +1208,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-1], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1417,7 +1410,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -1456,7 +1448,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-2], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -1850,7 +1842,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common-2/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -1884,7 +1875,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-3], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2072,7 +2063,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common-2/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -2106,7 +2096,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-4], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2296,7 +2286,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common-2/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -2333,7 +2322,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-3], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2525,7 +2514,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common-2/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -2559,7 +2547,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-5], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2753,7 +2741,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common-2/PG_VERSION to [BACKUP-FULL-2]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -2786,7 +2773,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-4], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -2975,7 +2962,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     File->linkCreate(): bHard = false, bPathCreate = true, bRelative = true, strDestinationFile = base/pg_tblspc/2, strDestinationPathType = backup:tmp, strSourceFile = tablespace/2, strSourcePathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base/pg_tblspc, strPathType = backup:absolute
 DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = base/global/pg_control.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common-2/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
@@ -3009,7 +2995,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-3], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired
@@ -3205,7 +3191,6 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/global, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/path-test, strPathType = backup:tmp
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = base/pg_tblspc, strPathType = backup:tmp
-DEBUG:     File->linkCreate(): bHard = false, bPathCreate = false, bRelative = false, strDestinationFile = base/link-test, strDestinationPathType = backup:tmp, strSourceFile = /test, strSourcePathType = backup:absolute
 DEBUG:     Backup->processManifest: hardlink [TEST_PATH]/db/common-2/PG_VERSION to [BACKUP-FULL-3]
 DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = base/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-3]/base/PG_VERSION, strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/temp/db.tmp/base, strPathType = backup:absolute
@@ -3239,7 +3224,7 @@ DEBUG:     File->remove=>: bRemoved = true
 DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-DIFF-5], strSourcePathType = backup:cluster
 DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [TEST_PATH]/backrest/backup/db, strPathType = backup:absolute
  INFO: backup stop
- INFO: expire start: --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+ INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  INFO: archive retention type not set - archive logs will not be expired

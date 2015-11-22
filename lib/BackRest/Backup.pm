@@ -434,24 +434,27 @@ sub processManifest
             }
 
             # Create links
-            my $strSectionLink = "$strPathKey:link";
-
-            if ($oBackupManifest->test($strSectionLink))
-            {
-                foreach my $strLink ($oBackupManifest->keys($strSectionLink))
-                {
-                    # Create links except in pg_tblspc because they have already been created
-                    if (!($strPathKey eq 'base' && $strLink =~ /^pg_tblspc\/.*/))
-                    {
-                        $self->{oFile}->linkCreate(PATH_BACKUP_ABSOLUTE,
-                                            $oBackupManifest->get($strSectionLink, $strLink, MANIFEST_SUBKEY_DESTINATION),
-                                            PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strLink}",
-                                            false, false, false);
-                    }
-                }
-            }
+            #
+            # Non-tablespace links are no longer created in backup directories because they are potentially dangerous.
+            # This feature may be brought back at a later date but more likely that it will be rethought completely.
+            #
+            # my $strSectionLink = "$strPathKey:link";
+            #
+            # if ($oBackupManifest->test($strSectionLink))
+            # {
+            #     foreach my $strLink ($oBackupManifest->keys($strSectionLink))
+            #     {
+            #         # Create links except in pg_tblspc because they have already been created
+            #         if (!($strPathKey eq 'base' && $strLink =~ /^pg_tblspc\/.*/))
+            #         {
+            #             $self->{oFile}->linkCreate(PATH_BACKUP_ABSOLUTE,
+            #                                 $oBackupManifest->get($strSectionLink, $strLink, MANIFEST_SUBKEY_DESTINATION),
+            #                                 PATH_BACKUP_TMP, "${strBackupDestinationPath}/${strLink}",
+            #                                 false, false, false);
+            #         }
+            #     }
+            # }
         }
-
 
         # Possible for the file section to exist with no files (i.e. empty tablespace)
         my $strSectionFile = "$strPathKey:file";

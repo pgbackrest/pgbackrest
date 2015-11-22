@@ -15,6 +15,8 @@ use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Common::String;
 
+use BackRestDoc::Common::DocManifest;
+
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
@@ -26,8 +28,6 @@ use constant OP_DOC_RENDER_PROCESS_TEXT                             => OP_DOC_RE
 use constant OP_DOC_RENDER_NEW                                      => OP_DOC_RENDER . '->new';
 use constant OP_DOC_RENDER_SAVE                                     => OP_DOC_RENDER . '->save';
 
-# use HTML::HTML5::Builder qw[:standard JQUERY];
-
 ####################################################################################################################################
 # Render tags for various output types
 ####################################################################################################################################
@@ -35,9 +35,10 @@ my $oRenderTag =
 {
     'markdown' =>
     {
+        'quote' => ['"', '"'],
         'b' => ['**', '**'],
         'i' => ['_', '_'],
-        'bi' => ['_**', '**_'],
+        # 'bi' => ['_**', '**_'],
         'ul' => ["\n", "\n"],
         'ol' => ["\n", "\n"],
         'li' => ['- ', "\n"],
@@ -48,17 +49,18 @@ my $oRenderTag =
         'param' => ['`', '`'],
         'setting' => ['`', '`'],
         'code' => ['`', '`'],
-        'code-block' => ['```', '```'],
-        'exe' => [undef, ''],
+        # 'code-block' => ['```', '```'],
+        # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
         'postgres' => ['PostgreSQL', '']
     },
 
     'text' =>
     {
+        'quote' => ['"', '"'],
         'b' => ['', ''],
         'i' => ['', ''],
-        'bi' => ['', ''],
+        # 'bi' => ['', ''],
         'ul' => ["\n", "\n"],
         'ol' => ["\n", "\n"],
         'li' => ['* ', "\n"],
@@ -76,15 +78,47 @@ my $oRenderTag =
         'postgres' => ['PostgreSQL', '']
     },
 
+    'latex' =>
+    {
+        'quote' => ['``', '"'],
+        'b' => ['\textbf{', '}'],
+        'i' => ['\textit{', '}'],
+        # 'bi' => ['', ''],
+        # 'ul' => ["\n", "\n"],
+        # 'ol' => ["\n", "\n"],
+        # 'li' => ['* ', "\n"],
+        'id' => ['\textnormal{\texttt{', '}}'],
+        'host' => ['\textnormal{\textbf{', '}}'],
+        'file' => ['\textnormal{\texttt{', '}}'],
+        'path' => ['\textnormal{\texttt{', '}}'],
+        'cmd' => ['\textnormal{\texttt{', "}}"],
+        'user' => ['\textnormal{\texttt{', '}}'],
+        'br-option' => ['', ''],
+        # 'param' => ['\texttt{', '}'],
+        # 'setting' => ['\texttt{', '}'],
+        'br-option' => ['\textnormal{\texttt{', '}}'],
+        'br-setting' => ['\textnormal{\texttt{', '}}'],
+        'pg-option' => ['\textnormal{\texttt{', '}}'],
+        'pg-setting' => ['\textnormal{\texttt{', '}}'],
+        'code' => ['\textnormal{\texttt{', '}}'],
+        # 'code' => ['\texttt{', '}'],
+        # 'code-block' => ['', ''],
+        # 'exe' => [undef, ''],
+        'backrest' => [undef, ''],
+        'postgres' => ['PostgreSQL', '']
+    },
+
     'html' =>
     {
+        'quote' => ['<q>', '</q>'],
         'b' => ['<b>', '</b>'],
         'i' => ['<i>', '</i>'],
-        'bi' => ['<i><b>', '</b></i>'],
+        # 'bi' => ['<i><b>', '</b></i>'],
         'ul' => ['<ul>', '</ul>'],
         'ol' => ['<ol>', '</ol>'],
         'li' => ['<li>', '</li>'],
         'id' => ['<span class="id">', '</span>'],
+        'host' => ['<span class="host">', '</span>'],
         'file' => ['<span class="file">', '</span>'],
         'path' => ['<span class="path">', '</span>'],
         'cmd' => ['<span class="cmd">', '</span>'],
@@ -93,9 +127,9 @@ my $oRenderTag =
         'br-setting' => ['<span class="br-setting">', '</span>'],
         'pg-option' => ['<span class="pg-option">', '</span>'],
         'pg-setting' => ['<span class="pg-setting">', '</span>'],
-        'code' => ['<id>', '</id>'],
+        'code' => ['<span class="id">', '</span>'],
         'code-block' => ['<code-block>', '</code-block>'],
-        'exe' => ['<id>', '</id>'],
+        'exe' => [undef, ''],
         'setting' => ['<span class="br-setting">', '</span>'], # !!! This will need to be fixed
         'backrest' => [undef, ''],
         'postgres' => ['<span class="postgres">PostgreSQL</span>', '']
@@ -117,22 +151,76 @@ sub new
     (
         my $strOperation,
         $self->{strType},
-        $self->{strProjectName},
-        $self->{strExeName}
+        $self->{oManifest},
+        $self->{strRenderOutKey},
     ) =
         logDebugParam
         (
             OP_DOC_RENDER_NEW, \@_,
             {name => 'strType'},
-            {name => 'strProjectName'},
-            {name => 'strExeName'}
+            {name => 'oManifest'},
+            {name => 'strRenderOutKey', required => false}
         );
 
-    $$oRenderTag{markdown}{backrest}[0] = $self->{strProjectName};
-    $$oRenderTag{markdown}{exe}[0] = $self->{strExeName};
-    $$oRenderTag{text}{backrest}[0] = $self->{strProjectName};
-    $$oRenderTag{text}{exe}[0] = $self->{strExeName};
-    $$oRenderTag{html}{backrest}[0] = "<span class=\"backrest\">$self->{strProjectName}</span>";
+    # Initialize project tags
+    $$oRenderTag{markdown}{backrest}[0] = "{[project]}";
+    $$oRenderTag{markdown}{exe}[0] = "{[project-exe]}";
+
+    $$oRenderTag{text}{backrest}[0] = "{[project]}";
+    $$oRenderTag{text}{exe}[0] = "{[project-exe]}";
+
+    $$oRenderTag{latex}{backrest}[0] = "{[project]}";
+    $$oRenderTag{latex}{exe}[0] = "\\textnormal\{\\texttt\{[project-exe]}}\}\}";
+
+    $$oRenderTag{html}{backrest}[0] = "<span class=\"backrest\">{[project]}</span>";
+    $$oRenderTag{html}{exe}[0] = "<span class=\"file\">{[project-exe]}</span>";
+
+    if (defined($self->{strRenderOutKey}))
+    {
+        # Copy page data to self
+        my $oRenderOut = $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
+
+        # Get the reference if this is the backrest project
+        if ($self->{oManifest}->isBackRest())
+        {
+            $self->{oReference} = new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+        }
+
+        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference')
+        {
+            if ($self->{strRenderOutKey} eq 'configuration')
+            {
+                $self->{oDoc} = $self->{oReference}->helpConfigDocGet();
+            }
+            elsif ($self->{strRenderOutKey} eq 'command')
+            {
+                $self->{oDoc} = $self->{oReference}->helpCommandDocGet();
+            }
+            else
+            {
+                confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
+            }
+        }
+        else
+        {
+            $self->{oDoc} = ${$self->{oManifest}->sourceGet($self->{strRenderOutKey})}{doc};
+        }
+    }
+
+    if (defined($self->{strRenderOutKey}))
+    {
+        # Build the doc
+        $self->build($self->{oDoc});
+
+        # Get required sections
+        foreach my $strPath (@{$self->{oManifest}->{stryRequire}})
+        {
+            if (defined(${$self->{oSection}}{$strPath}))
+            {
+                $self->required($strPath);
+            }
+        }
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -140,6 +228,183 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# variableReplace
+#
+# Replace variables in the string.
+####################################################################################################################################
+sub variableReplace
+{
+    my $self = shift;
+
+    return $self->{oManifest}->variableReplace(shift, $self->{strType});
+}
+
+####################################################################################################################################
+# variableSet
+#
+# Set a variable to be replaced later.
+####################################################################################################################################
+sub variableSet
+{
+    my $self = shift;
+
+    return $self->{oManifest}->variableSet(shift, shift);
+}
+
+####################################################################################################################################
+# variableGet
+#
+# Get the current value of a variable.
+####################################################################################################################################
+sub variableGet
+{
+    my $self = shift;
+
+    return $self->{oManifest}->variableGet(shift);
+}
+
+####################################################################################################################################
+# build
+#
+# Build the section map and perform keyword matching.
+####################################################################################################################################
+sub build
+{
+    my $self = shift;
+    my $oNode = shift;
+    my $oParent = shift;
+    my $strPath = shift;
+
+    # &log(INFO, "        node " . $oNode->nameGet());
+
+    my $strName = $oNode->nameGet();
+
+    if (defined($oParent))
+    {
+        if (!$self->{oManifest}->keywordMatch($oNode->paramGet('keyword', false)))
+        {
+            my $strDescription;
+
+            if (defined($oNode->nodeGet('title', false)))
+            {
+                $strDescription = $self->processText($oNode->nodeGet('title')->textGet());
+            }
+
+            &log(DEBUG, "            filtered ${strName}" . (defined($strDescription) ? ": ${strDescription}" : ''));
+
+            $oParent->nodeRemove($oNode);
+        }
+    }
+    else
+    {
+            &log(DEBUG, '        build document');
+            $self->{oSection} = {};
+    }
+
+    if ($strName eq 'section')
+    {
+        if (defined($strPath))
+        {
+            $oNode->paramSet('path-parent', $strPath);
+        }
+
+        $strPath .= '/' . $oNode->paramGet('id');
+
+        &log(DEBUG, "            path ${strPath}");
+        ${$self->{oSection}}{$strPath} = $oNode;
+        $oNode->paramSet('path', $strPath);
+    }
+
+    # Iterate all nodes
+    foreach my $oChild ($oNode->nodeList(undef, false))
+    {
+        $self->build($oChild, $oNode, $strPath);
+    }
+}
+
+####################################################################################################################################
+# required
+#
+# Build a list of required sections
+####################################################################################################################################
+sub required
+{
+    my $self = shift;
+    my $strPath = shift;
+    my $bDepend = shift;
+
+    # If node is not found that means the path is invalid
+    my $oNode = ${$self->{oSection}}{$strPath};
+
+    if (!defined($oNode))
+    {
+        confess &log(ERROR, "invalid path ${strPath}");
+    }
+
+    # Only add sections that are listed dependencies
+    if (!defined($bDepend) || $bDepend)
+    {
+        # Match section and all child sections
+        foreach my $strChildPath (sort(keys($self->{oSection})))
+        {
+            if ($strChildPath =~ /^$strPath$/ || $strChildPath =~ /^$strPath\/.*$/)
+            {
+                &log(INFO, "        require section: ${strChildPath}");
+
+                ${$self->{oSectionRequired}}{$strChildPath} = true;
+            }
+        }
+    }
+
+    # Get the path of the current section's parent
+    my $strParentPath = $oNode->paramGet('path-parent', false);
+
+    if ($oNode->paramTest('depend'))
+    {
+        foreach my $strDepend (split(',', $oNode->paramGet('depend')))
+        {
+            if ($strDepend !~ /^\//)
+            {
+                if (!defined($strParentPath))
+                {
+                    $strDepend = "/${strDepend}";
+                }
+                else
+                {
+                    $strDepend = "${strParentPath}/${strDepend}";
+                }
+            }
+
+            $self->required($strDepend, true);
+        }
+    }
+    elsif (defined($strParentPath))
+    {
+        $self->required($strParentPath, false);
+    }
+}
+
+####################################################################################################################################
+# isRequired
+#
+# Is it required to execute the section statements?
+####################################################################################################################################
+sub isRequired
+{
+    my $self = shift;
+    my $oSection = shift;
+
+    if (!defined($self->{oSectionRequired}))
+    {
+        return true;
+    }
+
+    my $strPath = $oSection->paramGet('path');
+
+    defined(${$self->{oSectionRequired}}{$strPath}) ? true : false;
 }
 
 ####################################################################################################################################
@@ -168,7 +433,6 @@ sub process
         );
 
     my $strType = $self->{strType};
-    my $strProjectName = $self->{strProjectName};
 
     my $strBuffer = "";
     my $bList = $oDoc->nameGet() =~ /.*-bullet-list$/;
@@ -211,7 +475,7 @@ sub process
                 $strBuffer .= 'v' . $oDoc->paramGet('version') . ': ';
             }
 
-            $strBuffer .= ($iDepth == 1 ? "${strProjectName}<br/>" : '') . $strTitle;
+            $strBuffer .= ($iDepth == 1 ? "{[project]}<br/>" : '') . $strTitle;
 
             if (defined($oDoc->paramGet('date', false)))
             {
@@ -369,6 +633,10 @@ sub processTag
 
             $strBuffer = '<a href="' . $strUrl . '">' . $oTag->valueGet() . '</a>';
         }
+        elsif ($strType eq 'latex')
+        {
+            $strBuffer = $oTag->valueGet();
+        }
         else
         {
             confess "tag link not valid for type ${strType}";
@@ -439,6 +707,11 @@ sub processText
     {
         if (ref(\$oNode) eq "SCALAR")
         {
+            if ($oNode =~ /\"/)
+            {
+                confess &log(ERROR, "unable to process quotes in string (use <quote> instead):\n${oNode}");
+            }
+
             $strBuffer .= $oNode;
         }
         else
@@ -461,6 +734,17 @@ sub processText
         $strBuffer =~ s/ +/ /g;
         $strBuffer =~ s/^ //smg;
     # }
+
+    if ($strType eq 'latex')
+    {
+        $strBuffer =~ s/\&mdash\;/---/g;
+        $strBuffer =~ s/\&lt\;/\</g;
+        $strBuffer =~ s/\<\=/\$\\leq\$/g;
+        $strBuffer =~ s/\>\=/\$\\geq\$/g;
+        # $strBuffer =~ s/\_/\\_/g;
+    }
+
+    $strBuffer = $self->variableReplace($strBuffer);
 
     # Return from function and log return values if any
     return logDebugReturn

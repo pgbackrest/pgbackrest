@@ -1,5 +1,22 @@
 # pgBackRest<br/>Change Log
 
+## v0.88: Documentation and Minor Bug Fixes
+__Released November 22, 2015__
+
+* Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping pgBackRest, and replication.
+
+* Fixed an issue where the `start`/`stop` commands required the `--config` option.
+
+* Fixed an issue where log files were being overwritten instead of appended.
+
+* Fixed an issue where `backup-user` was not optional.
+
+* Symlinks are no longer created in backup directories in the repository. These symlinks could point virtually anywhere and potentially be dangerous. Symlinks are still recreated during a restore.
+
+* Added better messaging for backup expiration. Full and differential backup expirations are logged on a single line along with a list of all dependent backups expired.
+
+* Archive retention is automatically set to full backup retention if not explicitly configured.
+
 ## v0.87: Website and User Guide
 __Released October 28, 2015__
 

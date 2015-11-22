@@ -33,9 +33,8 @@ db-version="9.2"
 Nothing to expire
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
- INFO: archive retention based on backup [BACKUP-FULL-1]
- INFO: archive retention starts at 000000010000000000000000
+ INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+ INFO: archive retention from backup [BACKUP-FULL-1], start = 000000010000000000000000
  INFO: no WAL segments to expire
  INFO: expire stop
 
@@ -97,11 +96,10 @@ db-version="9.2"
 Expire oldest full backup, archive expire falls on segment major boundary
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
- INFO: remove expired full backup: [BACKUP-FULL-1]
- INFO: archive retention based on backup [BACKUP-FULL-2]
- INFO: archive retention starts at 000000010000000100000000
- INFO: expired WAL segments: start = 0000000100000000, stop = 0000000100000000
+ INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+ INFO: remove expired full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
+ INFO: archive retention from backup [BACKUP-FULL-2], start = 000000010000000100000000
+ INFO: expire WAL segments: start = 0000000100000000, stop = 0000000100000000
  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
@@ -165,10 +163,9 @@ db-version="9.2"
 Expire oldest diff backup
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
- INFO: remove expired diff/incr backup [BACKUP-DIFF-1]
- INFO: archive retention based on backup [BACKUP-FULL-2]
- INFO: archive retention starts at 000000010000000100000000
+ INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+ INFO: remove expired diff backup [BACKUP-DIFF-1]
+ INFO: archive retention from backup [BACKUP-FULL-2], start = 000000010000000100000000
  INFO: no WAL segments to expire
  INFO: expire stop
 
@@ -242,11 +239,10 @@ db-version="9.2"
 Expire oldest full backup, archive expire does not fall on major segment boundary
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
- INFO: remove expired full backup: [BACKUP-FULL-2]
- INFO: archive retention based on backup [BACKUP-DIFF-3]
- INFO: archive retention starts at 000000010000000200000016
- INFO: expired WAL segments: start = 0000000100000001, stop = 000000010000000200000015-0000000000000000000000000000000000000000.gz
+ INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
+ INFO: remove expired full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2]
+ INFO: archive retention from backup [BACKUP-DIFF-3], start = 000000010000000200000016
+ INFO: expire WAL segments: start = 0000000100000001, stop = 000000010000000200000015
  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
@@ -321,12 +317,10 @@ db-version="9.2"
 Expire oldest diff backup (cascade to incr)
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
- INFO: remove expired diff/incr backup [BACKUP-INCR-2]
- INFO: remove expired diff/incr backup [BACKUP-DIFF-3]
- INFO: archive retention based on backup [BACKUP-DIFF-4]
- INFO: archive retention starts at 00000001000000020000001E
- INFO: expired WAL segments: start = 000000010000000200000016-0000000000000000000000000000000000000000.gz, stop = 00000001000000020000001D-0000000000000000000000000000000000000000.gz
+ INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
+ INFO: remove expired diff backup set: [BACKUP-DIFF-3], [BACKUP-INCR-2]
+ INFO: archive retention from backup [BACKUP-DIFF-4], start = 00000001000000020000001E
+ INFO: expire WAL segments: start = 000000010000000200000016, stop = 00000001000000020000001D
  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
@@ -401,10 +395,9 @@ db-version="9.2"
 Expire archive based on newest incr backup
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=incr --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config-remote=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=incr --retention-diff=1 --retention-full=1 --stanza=db
- INFO: archive retention based on backup [BACKUP-INCR-3]
- INFO: archive retention starts at 000000010000000200000024
- INFO: expired WAL segments: start = 00000001000000020000001E-0000000000000000000000000000000000000000.gz, stop = 000000010000000200000023-0000000000000000000000000000000000000000.gz
+ INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=incr --retention-diff=1 --retention-full=1 --stanza=db
+ INFO: archive retention from backup [BACKUP-INCR-3], start = 000000010000000200000024
+ INFO: expire WAL segments: start = 00000001000000020000001E, stop = 000000010000000200000023
  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info

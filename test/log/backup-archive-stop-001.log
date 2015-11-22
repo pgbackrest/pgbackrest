@@ -7,6 +7,7 @@ run 001 - rmt 0, cmp 0, error version
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
 DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000001, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
 DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = absolute
 DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = absolute
@@ -62,6 +63,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
 DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000002, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
@@ -94,6 +96,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
 DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000003, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
@@ -135,6 +138,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
 DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000005, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strSourcePathType = db:absolute, strUser = [undef]
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
@@ -217,6 +221,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
 DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000006, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006, strSourcePathType = db:absolute, strUser = [undef]
 DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006.tmp, strSourcePathType = absolute
 DEBUG:     Archive->pushProcess: no fork on archive local for TESTING

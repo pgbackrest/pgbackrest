@@ -36,7 +36,7 @@ Vagrant.configure(2) do |config|
             /backrest/test/vm/ssh/setup-cm.sh
 
             # Install required Perl modules
-            apt-get install libdbi-perl libdbd-pg-perl
+            apt-get install -y libdbi-perl libdbd-pg-perl
 
             # Install Perl modules required for building the docs
             apt-get install -y libxml-checker-perl libxml-writer-perl
@@ -79,6 +79,59 @@ Vagrant.configure(2) do |config|
 
             # Install Perl modules required for building the docs
             apt-get install -y libxml-checker-perl libxml-writer-perl
+        SHELL
+    end
+
+    config.vm.define "u14doc" do |u14doc|
+        u14doc.vm.box = "boxcutter/ubuntu1404"
+
+        u14doc.vm.provider :virtualbox do |vb|
+            vb.name = "backrest-doc-test-ubuntu-14.04"
+        end
+
+        # Provision the VM
+        u14doc.vm.provision "shell", inline: <<-SHELL
+            # Install docker
+            apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+            echo 'deb https://apt.dockerproject.org/repo ubuntu-trusty main' > /etc/apt/sources.list.d/docker.list
+            sudo apt-get update
+            sudo apt-get -y install linux-image-extra-$(uname -r)
+            sudo apt-get -y install docker-engine
+            sudo usermod -aG docker vagrant
+
+            # This requires a reboot - maybe don't do it - see how it goes first
+            # sed -i 's/^GRUB_CMDLINE_LINUX\=.*$/GRUB_CMDLINE_LINUX\=\"cgroup_enable=memory swapaccount=1\"/' /etc/default/grub
+
+            # Install Perl modules
+            apt-get install -y libxml-checker-perl ghostscript
+
+            # Install texlive
+            mkdir /root/texlive
+            wget -q -O - http://mirror.hmc.edu/ctan/systems/texlive/tlnet/install-tl-unx.tar.gz | tar zxv -C /root//texlive --strip-components=1
+            echo "collection-basic 1" >> /root/texlive/texlive.profile
+            echo "collection-latex 1" >> /root/texlive/texlive.profile
+            /root/texlive/install-tl -profile=/root/texlive/texlive.profile
+
+            echo 'PATH=/usr/local/texlive/2015/bin/x86_64-linux:$PATH' >> /etc/profile
+            echo 'export PATH' >> /etc/profile
+
+            /usr/local/texlive/2015/bin/x86_64-linux/tlmgr install caption xcolor listings parskip helvetic ltablex titlesec \
+                epstopdf courier
+
+            # Build images
+            docker build -f /backrest/test/vm/docker/u14-base -t vagrant/u14-base /backrest/test/vm
+            docker build -f /backrest/test/vm/docker/u14-db -t vagrant/u14-db /backrest/test/vm
+            docker build -f /backrest/test/vm/docker/u14-backup -t vagrant/u14-backup /backrest/test/vm
+
+            docker build -f /backrest/test/vm/docker/co6-base -t vagrant/co6-base /backrest/test/vm
+            docker build -f /backrest/test/vm/docker/co6-db -t vagrant/co6-db /backrest/test/vm
+            docker build -f /backrest/test/vm/docker/co6-backup -t vagrant/co6-backup /backrest/test/vm
+
+            # Sample docker commands
+            # docker inspect --format '{{ .NetworkSettings.IPAddress }}' db-master
+            # docker run -itd --name=db-master -v /backrest:/backrest vagrant/u14-db
+            # docker run -itd --name=backup -v /backrest:/backrest vagrant/u14-backup
+            # docker exec -it db-master bash
         SHELL
     end
 

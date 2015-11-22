@@ -113,7 +113,7 @@ sub logFileSet
         $bExists = true;
     }
 
-    sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT, 0660)
+    sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, 0660)
         or confess &log(ERROR, "unable to open log file ${strFile}", ERROR_FILE_OPEN);
 
     if ($bExists)

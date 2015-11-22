@@ -16,18 +16,22 @@ use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
+use Storable;
 use XML::Checker::Parser;
 
 use lib dirname($0) . '/lib';
 use BackRestDoc::Common::Doc;
 use BackRestDoc::Common::DocConfig;
-use BackRestDoc::Html::DocHtmlSite;
+use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Common::DocRender;
+use BackRestDoc::Html::DocHtmlSite;
+use BackRestDoc::Latex::DocLatex;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Common::String;
 use BackRest::Config::Config;
+use BackRest::FileCommon;
 
 ####################################################################################################################################
 # Usage
@@ -60,19 +64,25 @@ my $bHelp = false;                                  # Display usage
 my $bVersion = false;                               # Display version
 my $bQuiet = false;                                 # Sets log level to ERROR
 my $strLogLevel = 'info';                           # Log level for tests
-my $strProjectName = 'pgBackRest';                  # Project name to use in docs
-my $strExeName = 'pg_backrest';                     # Exe name to use in docs
-my $bHtml = false;                                  # Generate full html documentation
-my $strHtmlRoot = '/';                              # Root html page
 my $bNoExe = false;                                 # Should commands be executed when buildng help? (for testing only)
+my $bUseCache = false;                              # Use cached data to generate the docs (for testing code changes only)
+my $oVariableOverride = {};                         # Override variables
+my $strDocPath;                                     # Document path to render
+my @stryOutput;                                     # Output types
+my @stryKeyword;                                    # Keyword used to filter output
+my @stryRequire;                                    # Required sections of the document (to speed testing)
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
             'quiet' => \$bQuiet,
             'log-level=s' => \$strLogLevel,
-            'html' => \$bHtml,
-            'html-root=s' => \$strHtmlRoot,
-            'no-exe', \$bNoExe)
+            'out=s@' => \@stryOutput,
+            'keyword=s@' => \@stryKeyword,
+            'require=s@' => \@stryRequire,
+            'no-exe', \$bNoExe,
+            'use-cache', \$bUseCache,
+            'var=s%', $oVariableOverride,
+            'doc-path=s', \$strDocPath)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -89,16 +99,29 @@ if ($bHelp || $bVersion)
     exit 0;
 }
 
+# Set no-exe if use-cache is set
+if ($bUseCache)
+{
+    $bNoExe = true;
+}
+
 # Set console log level
 if ($bQuiet)
 {
-    $strLogLevel = 'off';
+    $strLogLevel = 'error';
+}
+
+# If no keyword we passed then use default
+if (@stryKeyword == 0)
+{
+    @stryKeyword = ('default')
 }
 
 logLevelSet(undef, uc($strLogLevel));
 
 # Get the base path
 my $strBasePath = abs_path(dirname($0));
+my $strOutputPath = "${strBasePath}/output";
 
 sub docProcess
 {
@@ -108,7 +131,7 @@ sub docProcess
         $strOperation,
         $strXmlIn,
         $strMdOut,
-        $oHtmlSite
+        $oManifest
     ) =
         logDebugParam
         (
@@ -122,33 +145,98 @@ sub docProcess
     my $oDoc = new BackRestDoc::Common::Doc($strXmlIn);
 
     # Write markdown
-    my $oRender = new BackRestDoc::Common::DocRender('markdown', $strProjectName, $strExeName);
-    $oRender->save($strMdOut, $oHtmlSite->variableReplace($oRender->process($oDoc)));
+    my $oRender = new BackRestDoc::Common::DocRender('markdown', $oManifest);
+    $oRender->save($strMdOut, $oManifest->variableReplace($oRender->process($oDoc)));
 }
 
-my $oRender = new BackRestDoc::Common::DocRender('text', $strProjectName, $strExeName);
-my $oDocConfig = new BackRestDoc::Common::DocConfig(new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
-$oDocConfig->helpDataWrite();
-
-# !!! Create Html Site Object to perform variable replacements on markdown and test
-# !!! This should be replaced with a more generic site object in the future
-my $oHtmlSite =
-    new BackRestDoc::Html::DocHtmlSite
-    (
-        new BackRestDoc::Common::DocRender('html', $strProjectName, $strExeName),
-        $oDocConfig,
-        "${strBasePath}/xml",
-        "${strBasePath}/html",
-        "${strBasePath}/css/default.css",
-        $strHtmlRoot,
-        !$bNoExe
-    );
-
-docProcess("${strBasePath}/xml/index.xml", "${strBasePath}/../README.md", $oHtmlSite);
-docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oHtmlSite);
-
-# Only generate the HTML site when requested
-if ($bHtml)
+# Create the out path if it does not exist
+if (!-e $strOutputPath)
 {
-    $oHtmlSite->process();
+    mkdir($strOutputPath)
+        or confess &log(ERROR, "unable to create path ${strOutputPath}");
+}
+
+# Load the manifest
+my $oManifest;
+my $strManifestCache = "${strOutputPath}/manifest.cache";
+
+if ($bUseCache && -e $strManifestCache)
+{
+    $oManifest = retrieve($strManifestCache);
+}
+else
+{
+    $oManifest = new BackRestDoc::Common::DocManifest(\@stryKeyword, \@stryRequire, $oVariableOverride, $strDocPath);
+}
+
+# If no outputs were given
+if (@stryOutput == 0)
+{
+    @stryOutput = $oManifest->renderList();
+
+    if ($oManifest->isBackRest())
+    {
+        push(@stryOutput, 'help');
+        push(@stryOutput, 'markdown');
+    }
+}
+
+for my $strOutput (@stryOutput)
+{
+    if (!(($strOutput eq 'help' || $strOutput eq 'markdown') && $oManifest->isBackRest()))
+    {
+        $oManifest->renderGet($strOutput);
+    }
+
+    &log(INFO, "render ${strOutput} output");
+
+    if ($strOutput eq 'markdown' && $oManifest->isBackRest())
+    {
+        # Generate the markdown
+        docProcess("${strBasePath}/xml/index.xml", "${strBasePath}/../README.md", $oManifest);
+        docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oManifest);
+    }
+    elsif ($strOutput eq 'help' && $oManifest->isBackRest())
+    {
+        # Generate the command-line help
+        my $oRender = new BackRestDoc::Common::DocRender('text', $oManifest);
+        my $oDocConfig =
+            new BackRestDoc::Common::DocConfig(
+                new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
+        $oDocConfig->helpDataWrite($oManifest);
+    }
+    elsif ($strOutput eq 'html')
+    {
+        my $oHtmlSite =
+            new BackRestDoc::Html::DocHtmlSite
+            (
+                $oManifest,
+                "${strBasePath}/xml",
+                "${strOutputPath}/html",
+                "${strBasePath}/resource/html/default.css",
+                !$bNoExe
+            );
+
+        $oHtmlSite->process();
+    }
+    elsif ($strOutput eq 'pdf')
+    {
+        my $oLatex =
+            new BackRestDoc::Latex::DocLatex
+            (
+                $oManifest,
+                "${strBasePath}/xml",
+                "${strOutputPath}/latex",
+                "${strBasePath}/resource/latex/preamble.tex",
+                !$bNoExe
+            );
+
+        $oLatex->process();
+    }
+}
+
+# Cache the manifest (mostly useful for testing rendering changes in the code)
+if (!$bUseCache)
+{
+    store($oManifest, $strManifestCache);
 }

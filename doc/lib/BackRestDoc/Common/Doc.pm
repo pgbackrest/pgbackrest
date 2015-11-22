@@ -15,6 +15,7 @@ use Scalar::Util qw(blessed);
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Common::String;
+use BackRest::FileCommon;
 
 ####################################################################################################################################
 # Operation constants
@@ -27,8 +28,10 @@ use constant OP_DOC_NEW                                             => OP_DOC . 
 use constant OP_DOC_NODE_BLESS                                      => OP_DOC . '->nodeBless';
 use constant OP_DOC_NODE_GET                                        => OP_DOC . '->nodeGet';
 use constant OP_DOC_NODE_LIST                                       => OP_DOC . '->nodeList';
+use constant OP_DOC_NODE_REMOVE                                     => OP_DOC . '->nodeRemove';
 use constant OP_DOC_PARAM_GET                                       => OP_DOC . '->paramGet';
 use constant OP_DOC_PARAM_SET                                       => OP_DOC . '->paramSet';
+use constant OP_DOC_PARAM_TEST                                      => OP_DOC . '->paramSet';
 use constant OP_DOC_PARSE                                           => OP_DOC . '->parse';
 use constant OP_DOC_VALUE_GET                                       => OP_DOC . '->valueGet';
 use constant OP_DOC_VALUE_SET                                       => OP_DOC . '->valueSet';
@@ -49,44 +52,60 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{strFileName}
+        $self->{strFileName},
+        my $bCached
     ) =
         logDebugParam
         (
             OP_DOC_NEW, \@_,
-            {name => 'strFileName', required => false}
+            {name => 'strFileName', required => false},
+            {name => 'bCached', default => false}
         );
 
     # Load the doc from a file if one has been defined
     if (defined($self->{strFileName}))
     {
-        my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-        $oParser->set_sgml_search_path(dirname($self->{strFileName}) . '/dtd');
-
-        my $oTree;
-
-        eval
+        if ($bCached)
         {
-            local $XML::Checker::FAIL = sub
-            {
-                my $iCode = shift;
+            $self->oDoc = XMLin(fileStringRead($self->{strFileName}));
+        }
+        else
+        {
+            my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
 
-                die XML::Checker::error_string($iCode, @_);
+            if (-e dirname($0) . '/dtd')
+            {
+                $oParser->set_sgml_search_path(dirname($0) . '/dtd')
+            }
+            else
+            {
+                $oParser->set_sgml_search_path(dirname($0) . '/xml/dtd');
+            }
+
+            my $oTree;
+
+            eval
+            {
+                local $XML::Checker::FAIL = sub
+                {
+                    my $iCode = shift;
+
+                    die XML::Checker::error_string($iCode, @_);
+                };
+
+                $oTree = $oParser->parsefile($self->{strFileName});
             };
 
-            $oTree = $oParser->parsefile($self->{strFileName});
-        };
+            # Report any error that stopped parsing
+            if ($@)
+            {
+                $@ =~ s/at \/.*?$//s;               # remove module line number
+                die "malformed xml in '$self->{strFileName}':\n" . trim($@);
+            }
 
-        # Report any error that stopped parsing
-        if ($@)
-        {
-            $@ =~ s/at \/.*?$//s;               # remove module line number
-            die "malformed xml in '$self->{strFileName}':\n" . trim($@);
+            # Parse and build the doc
+            $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
         }
-
-        # Parse and build the doc
-        $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
-
     }
     # Else create a blank doc
     else
@@ -129,8 +148,8 @@ sub parse
 
     my %oOut;
     my $iIndex = 0;
-    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'code-block' || $strName eq 'p' || $strName eq 'title' ||
-                $strName eq 'summary';
+    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'p' || $strName eq 'title' ||
+                $strName eq 'summary' || $strName eq 'table-cell' || $strName eq 'table-column';
 
     # Store the node name
     $oOut{name} = $strName;
@@ -244,7 +263,8 @@ sub build
         }
     }
 
-    if ($$oDoc{name} eq 'p' || $$oDoc{name} eq 'title' || $$oDoc{name} eq 'summary')
+    if ($$oDoc{name} eq 'p' || $$oDoc{name} eq 'title' || $$oDoc{name} eq 'summary' ||
+        $$oDoc{name} eq 'table-cell' || $$oDoc{name} eq 'table-column')
     {
         $$oOut{field}{text} = $oDoc;
     }
@@ -255,7 +275,7 @@ sub build
             my $oSub = $$oDoc{children}[$iIndex];
             my $strName = $$oSub{name};
 
-            if ($strName eq 'text' || $strName eq 'code-block')
+            if ($strName eq 'text')
             {
                 $$oOut{field}{text} = $oSub;
             }
@@ -349,6 +369,18 @@ sub nodeGet
     my $self = shift;
 
     return $self->nodeGetById(shift, undef, shift);
+}
+
+####################################################################################################################################
+# nodeTest
+#
+# Test that a node exists
+####################################################################################################################################
+sub nodeTest
+{
+    my $self = shift;
+
+    return defined($self->nodeGetById(shift, undef, false));
 }
 
 ####################################################################################################################################
@@ -471,6 +503,55 @@ sub nodeList
 }
 
 ####################################################################################################################################
+# nodeRemove
+#
+# Remove a child node.
+####################################################################################################################################
+sub nodeRemove
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oChildRemove
+    ) =
+        logDebugParam
+        (
+            OP_DOC_NODE_REMOVE, \@_,
+            {name => 'oChildRemove', required => false, trace => true}
+        );
+
+    my $bRemove = false;
+    my $oDoc = $self->{oDoc};
+
+    # Error if there are no children
+    if (!defined($$oDoc{children}))
+    {
+        confess &log(ERROR, "node has no children");
+    }
+
+    for (my $iIndex = 0; $iIndex < @{$$oDoc{children}}; $iIndex++)
+    {
+        if ($$oDoc{children}[$iIndex] == $oChildRemove->{oDoc})
+        {
+            splice(@{$$oDoc{children}}, $iIndex, 1);
+            $bRemove = true;
+            last;
+        }
+    }
+
+    if (!$bRemove)
+    {
+        confess &log(ERROR, "child was not found in node");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # nameGet
 ####################################################################################################################################
 sub nameGet
@@ -539,6 +620,7 @@ sub paramGet
         $strOperation,
         $strName,
         $bRequired,
+        $strDefault,
         $strType
     ) =
         logDebugParam
@@ -546,14 +628,20 @@ sub paramGet
             OP_DOC_PARAM_GET, \@_,
             {name => 'strName', trace => true},
             {name => 'bRequired', default => true, trace => true},
+            {name => 'strDefault', required => false, trace => true},
             {name => 'strType', default => 'param', trace => true}
         );
 
     my $strValue = ${$self->{oDoc}}{$strType}{$strName};
 
-    if (!defined($strValue) && $bRequired)
+    if (!defined($strValue))
     {
-        confess "${strType} '${strName}' in required in node '$self->{strName}'";
+        if ($bRequired)
+        {
+            confess "${strType} '${strName}' in required in node '$self->{strName}'";
+        }
+
+        $strValue = $strDefault;
     }
 
     # Return from function and log return values if any
@@ -561,6 +649,51 @@ sub paramGet
     (
         $strOperation,
         {name => 'strValue', value => $strValue, trace => true}
+    );
+}
+
+####################################################################################################################################
+# paramTest
+#
+# Test that a parameter exists or has a certain value.
+####################################################################################################################################
+sub paramTest
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strName,
+        $strExpectedValue,
+        $strType
+    ) =
+        logDebugParam
+        (
+            OP_DOC_PARAM_TEST, \@_,
+            {name => 'strName', trace => true},
+            {name => 'strExpectedValue', required => false, trace => true},
+            {name => 'strType', default => 'param', trace => true}
+        );
+
+    my $bResult = true;
+    my $strValue = $self->paramGet($strName, false, undef, $strType);
+
+    if (!defined($strValue))
+    {
+        $bResult = false;
+    }
+    elsif (defined($strExpectedValue) && $strValue ne $strExpectedValue)
+    {
+        $bResult = false;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $bResult, trace => true}
     );
 }
 
@@ -585,7 +718,7 @@ sub paramSet
         (
             OP_DOC_PARAM_SET, \@_,
             {name => 'strName', trace => true},
-            {name => 'strValue', trace => true},
+            {name => 'strValue', required => false, trace => true},
             {name => 'strType', default => 'param', trace => true}
         );
 
@@ -604,7 +737,19 @@ sub fieldGet
 {
     my $self = shift;
 
-    return $self->paramGet(shift, shift, 'field');
+    return $self->paramGet(shift, shift, shift, 'field');
+}
+
+####################################################################################################################################
+# fieldTest
+#
+# Test if a field exists.
+####################################################################################################################################
+sub fieldTest
+{
+    my $self = shift;
+
+    return $self->paramTest(shift, shift, 'field');
 }
 
 ####################################################################################################################################
@@ -616,7 +761,7 @@ sub textGet
 {
     my $self = shift;
 
-    return $self->nodeBless($self->paramGet('text', shift, 'field'));
+    return $self->nodeBless($self->paramGet('text', shift, shift, 'field'));
 }
 
 ####################################################################################################################################

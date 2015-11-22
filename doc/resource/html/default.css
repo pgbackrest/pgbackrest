@@ -17,6 +17,7 @@ body
     margin: 0px auto;
     padding: 0px;
     width: 100%;
+    text-align: justify;
 }
 
 @media (min-width: 1000px)
@@ -43,7 +44,6 @@ Header
 {
     width:100%;
     text-align:center;
-    /*float:left;*/
 }
 
 .page-header-title
@@ -63,24 +63,19 @@ Header
 /*******************************************************************************
 Menu
 *******************************************************************************/
-.page-menu
-{
-    /*margin-top: .25em;*/
-    /*font-size: 14pt;*/
-}
+/*.page-menu*/
 
 .menu-body
 {
     text-align: center;
-    /*font-weight: 600;*/
-    /*border-bottom: 2px #dddddd solid;*/
 }
 
 .menu
 {
     white-space: nowrap;
     display: inline;
-    margin-left: 6px;
+    margin-left: .5em;
+    font-size: 13pt;
 }
 
 .menu:first-of-type
@@ -91,20 +86,14 @@ Menu
 .menu:before
 {
     content: "[";
-    /*margin-right: .5em;*/
 }
 
 .menu:after
 {
     content: "]";
-    /*margin-left: .5em;*/
 }
 
-.menu-link
-{
-    /*margin-left: 2px;
-    margin-right: 2px;*/
-}
+/*.menu-link*/
 
 a.menu-link:link, a.menu-link:visited, a.menu-link:active
 {
@@ -122,6 +111,7 @@ Table of Contents
 .page-toc-body
 {
     margin-top: .25em;
+    margin-bottom: 2em;
 }
 
 .section1-toc:first-of-type
@@ -156,46 +146,51 @@ Section
 *******************************************************************************/
 .section1
 {
-    /*display:block;*/
+    margin-top: 2.5em;
+}
+
+.section1:first-of-type
+{
     margin-top: 1em;
 }
 
 .section2, .section3
 {
-    /*display:block;*/
-    margin-top: .5em;
+    margin-top: 1em;
 }
 
 .section1-title, .section2-title, .section3-title, .page-toc-title
 {
-    /*display:block;*/
     margin-top: .5em;
     font-weight: 500;
 }
 
 .section1-title, .page-toc-title
 {
-    background-color: #dddddd;
-    font-size: 16pt;
+    border-radius: 3px;
+    background-color: #396a93;
+    color: #f8f8f8;
+    font-size: 22pt;
     padding-left: .5em;
+    margin-bottom: .5em;
 }
 
 .section2
 {
-    /*margin-left: 2em;*/
+    margin-top: 1em;
 }
 
 .section2-title
 {
-    border-bottom: 2px #cccccc solid;
-    font-size: 14pt;
+    border-bottom: 2px #396a93 solid;
+    color: #396a93;
+    font-size: 16pt;
 }
 
 .section3
 {
     margin-left: 1em;
     margin-top: 1em;
-    /*border-top: 1px #cccccc solid;*/
 }
 
 .section3:first-of-type
@@ -206,9 +201,9 @@ Section
 .section3-title
 {
     display: inline;
-    font-size: 13pt;
-    /*text-decoration: underline;*/
-    border-bottom: 1px #bbbbbb solid;
+    font-size: 14pt;
+    color: #396a93;
+    border-bottom: 1px #396a93 solid;
 }
 
 .section-intro
@@ -216,9 +211,7 @@ Section
     margin-top: .75em;
 }
 
-.section-body
-{
-}
+/*.section-body*/
 
 /*******************************************************************************
 Config, Execute, and Code Block Elements
@@ -240,7 +233,7 @@ Config, Execute, and Code Block Elements
     /*white-space: nowrap;*/
     margin-left: 1em;
     margin-right: 1em;
-    margin-top: 1em;
+    margin-top: .8em;
     margin-bottom: 1em;
 }
 
@@ -255,15 +248,16 @@ Config, Execute, and Code Block Elements
 .config-body,
 .code-block
 {
+    border-radius: 3px;
     background-color: #444444;
-    /*overflow-x:auto;*/
     font-family: monospace;
     unicode-bidi: embed;
-    color: white;
+    color: #f8f8f8;
+    /*color: white;*/
     font-size: 10pt;
 }
 
-.execute-body-cmd-first, .execute-body-cmd,
+.execute-body-cmd,
 .execute-body-output, .execute-body-output-highlight,
 .config-body-title,
 .code-block
@@ -272,16 +266,31 @@ Config, Execute, and Code Block Elements
     padding-right: .5em;
 }
 
-.execute-body-cmd-first, .execute-body-output,
+/* Would rather not use pre at all, but Firefox won't copy code samples correctly without it */
+pre
+{
+    margin: 0px;
+    padding: 0px;
+    white-space: pre-wrap;
+}
+
+.execute-body-cmd:before
+{
+    content: "$ ";
+}
+
+.execute-body-cmd:first-of-type, .execute-body-output,
 .config-body-title, .config-body-output,
-.code-block
+.code-block,
+.execute-body-output-highlight, .execute-body-output-highlight-error
 {
     padding-top: .25em;
 }
 
-.execute-body-cmd-first, .execute-body-cmd, .execute-body-output,
+.execute-body-cmd, .execute-body-output,
 .config-body-title, .config-body-output,
-.code-block
+.code-block,
+.execute-body-output-highlight, .execute-body-output-highlight-error
 {
     padding-bottom: .25em;
 }
@@ -290,32 +299,31 @@ Config, Execute, and Code Block Elements
 .config-body-output,
 .code-block
 {
+    border-radius: 3px;
     background-color: #606060;
 }
 
 .execute-body-output-highlight
 {
-    background-color: green;
+    border-radius: 3px;
+    background-color: #1e7b1e;
 }
 
 .execute-body-output-highlight-error
 {
-    background-color: firebrick;
+    border-radius: 3px;
+    background-color: #a32929;
 }
 
 .execute-body-output, .execute-body-output-highlight, .execute-body-output-highlight-error,
 .config-body-output
 {
-    padding-left: 2em;
+    padding-left: 1.75em;
 }
 
-.code-block
-{
-}
+/*.code-block*/
 
-.section-body-execute-output
-{
-}
+/*.section-body-execute-output*/
 
 /*******************************************************************************
 Keywords
@@ -325,14 +333,16 @@ Keywords
     font-weight: 500;
 }
 
+.host
+{
+    font-weight: 700;
+}
+
 .path, .br-option, .br-setting, .pg-option, .pg-setting, .id, .user, .file, .path
 {
-    /*font-weight: 600;*/
-    /*background-color: #e8e8e8;*/
     unicode-bidi: embed;
     font-family: monospace;
     white-space: nowrap;
-    /*font-size: 11pt;*/
 }
 
 /*******************************************************************************

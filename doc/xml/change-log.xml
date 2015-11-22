@@ -6,6 +6,32 @@
     </intro>
 
     <changelog>
+        <changelog-release date="2015-11-22" version="0.88" title="Documentation and Minor Bug Fixes">
+            <release-feature-bullet-list>
+                <release-feature>
+                    <text>Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping <backrest/>, and replication.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>--config</setting> option.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Fixed an issue where log files were being overwritten instead of appended.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Fixed an issue where <setting>backup-user</setting> was not optional.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Symlinks are no longer created in backup directories in the repository.  These symlinks could point virtually anywhere and potentially be dangerous.  Symlinks are still recreated during a restore.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Added better messaging for backup expiration.  Full and differential backup expirations are logged on a single line along with a list of all dependent backups expired.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Archive retention is automatically set to full backup retention if not explicitly configured.</text>
+                </release-feature>
+            </release-feature-bullet-list>
+        </changelog-release>
+
         <changelog-release date="2015-10-28" version="0.87" title="Website and User Guide">
             <release-feature-bullet-list>
                 <release-feature>
@@ -120,7 +146,7 @@
                     <text>Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to "database" in the user guide to "database cluster" for clarity.</text>
+                    <text>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to <quote>database</quote> in the user guide to <quote>database cluster</quote> for clarity.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>

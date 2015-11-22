@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "manifest.dtd">
+<doc>
+    <!-- System-wide variables  -->
+    <variable-list>
+        <variable key="project">pgBackRest</variable>
+        <variable key="version" eval="y">use BackRest::Version; $VERSION</variable>
+        <variable key="project-exe">pg_backrest</variable>
+        <variable key="project-url-root">/</variable>
+        <variable key="postgres">PostgreSQL</variable>
+        <variable key="dash">-</variable>
+
+        <!-- Logo locations -->
+        <variable key="logo">/backrest/doc/output/latex/logo</variable>
+
+        <!-- HTML variables  -->
+        <variable key="html-footer" eval='y'>
+        use POSIX qw(strftime); 'Copyright &amp;copy; 2015' . (strftime('%Y', localtime) ne '2015' ?  '-' . strftime('%Y', localtime) : '') .
+        ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
+        strftime('%B ', localtime) . trim(strftime('%e,', localtime)) . strftime(' %Y.', localtime)</variable>
+
+        <!-- PDF variables  -->
+        <variable key="pdf-title">{[project]} User Guide</variable>
+        <variable key="pdf-subtitle">Open Source PostgreSQL Backup and Restore Utility</variable>
+        <variable key="pdf-file">CrunchyBackRest-UserGuide-{[version]}</variable>
+    </variable-list>
+
+    <source-list>
+        <source key="index"/>
+        <source key="user-guide"/>
+        <source key="reference" type="custom"/>
+    </source-list>
+
+    <render-list>
+        <render type="html">
+            <render-source key="index" menu="Home"/>
+            <render-source key="user-guide" menu="User Guide"/>
+            <render-source key="configuration" source="reference" menu="Configuration"/>
+            <render-source key="command" source="reference" menu="Commands"/>
+        </render>
+
+        <render type="pdf" file="{[pdf-file]}">
+            <render-source key="user-guide"/>
+        </render>
+    </render-list>
+</doc>
