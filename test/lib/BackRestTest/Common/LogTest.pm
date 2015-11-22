@@ -210,9 +210,12 @@ sub logWrite
              default => sprintf("log/$self->{strModule}-$self->{strTest}-%03d.log", $self->{iRun}), trace => true}
         );
 
+    my $strReferenceLogFile = "${strBasePath}/test/${strFileName}";
+    my $strTestLogFile;
+
     if ($self->{bForce})
     {
-        $strFileName = "${strBasePath}/test/${strFileName}";
+        $strTestLogFile = $strReferenceLogFile;
     }
     else
     {
@@ -224,16 +227,21 @@ sub logWrite
                 confess "unable to create test log path ${strTestLogPath}";
         }
 
-        $strFileName = "${strTestPath}/${strFileName}";
+        $strTestLogFile = "${strTestPath}/${strFileName}";
     }
 
-    open(my $hFile, '>', $strFileName)
-        or confess "could not open test log file '${strFileName}': $!";
+    open(my $hFile, '>', $strTestLogFile)
+        or confess "could not open test log file '${strTestLogFile}': $!";
 
     syswrite($hFile, $self->{strLog})
-        or confess "could not write to test log file '${strFileName}': $!";
+        or confess "could not write to test log file '${strTestLogFile}': $!";
 
     close($hFile);
+
+    if (!$self->{bForce})
+    {
+        executeTest("diff ${strReferenceLogFile} ${strTestLogFile}");
+    }
 
     # Return from function and log return values if any
     logDebugReturn($strOperation);
@@ -363,6 +371,10 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-STR', "est backup timestamp: $strTimestampRegExp",
                                                 "${strTimestampRegExp}\$", false);
     $strLine = $self->regExpReplace($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
+
+    $strLine = $self->regExpReplace($strLine, 'REMOTE-PROCESS-TERMINATED-MESSAGE',
+        'remote process terminated: (ssh.*|no output from terminated process)$',
+        '(ssh.*|no output from terminated process)$', false);
 
     return $strLine;
 }

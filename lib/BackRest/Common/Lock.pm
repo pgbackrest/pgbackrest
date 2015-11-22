@@ -238,7 +238,8 @@ sub lockStop
     # If the stop file already exists then warn
     if (-e $strStopFile)
     {
-        &log(WARN, 'stop file already exists' . (optionTest(OPTION_STANZA) ? ' for stanza ' . optionGet(OPTION_STANZA) : ''));
+        &log(WARN, 'stop file already exists' .
+                   (optionTest(OPTION_STANZA) ? ' for stanza ' . optionGet(OPTION_STANZA) : ' for all stanzas'));
         return false;
     }
 

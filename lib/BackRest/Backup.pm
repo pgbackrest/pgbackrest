@@ -456,7 +456,6 @@ sub processManifest
             # }
         }
 
-
         # Possible for the file section to exist with no files (i.e. empty tablespace)
         my $strSectionFile = "$strPathKey:file";
 

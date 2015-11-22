@@ -456,6 +456,8 @@ use constant OPTION_DEFAULT_BACKUP_STOP_AUTO                        => false;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STOP_AUTO);
 use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_START_FAST);
+use constant OPTION_DEFAULT_BACKUP_USER                             => 'backrest';
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_USER);
 
 # RESTORE SECTION
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -500,6 +502,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
@@ -1040,7 +1043,8 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_LEVEL_CONSOLE,
-        &OPTION_RULE_SECTION => CONFIG_SECTION_LOG,
+        &OPTION_RULE_SECTION => true,
+        &OPTION_RULE_SECTION_INHERIT => CONFIG_SECTION_LOG,
         &OPTION_RULE_ALLOW_LIST =>
         {
             lc(OFF)    => true,
@@ -1170,6 +1174,7 @@ my %oOptionRule =
     &OPTION_BACKUP_USER =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_USER,
         &OPTION_RULE_SECTION => CONFIG_SECTION_BACKUP,
         &OPTION_RULE_COMMAND =>
         {

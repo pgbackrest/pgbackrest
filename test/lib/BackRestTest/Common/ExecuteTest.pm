@@ -20,6 +20,7 @@ use Symbol 'gensym';
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
+use BackRest::Common::Wait;
 
 ####################################################################################################################################
 # Operation constants
@@ -28,6 +29,7 @@ use constant OP_EXECUTE_TEST                                        => 'ExecuteT
 
 use constant OP_EXECUTE_TEST_BEGIN                                  => OP_EXECUTE_TEST . "->begin";
 use constant OP_EXECUTE_TEST_END                                    => OP_EXECUTE_TEST . "->end";
+use constant OP_EXECUTE_TEST_END_RETRY                              => OP_EXECUTE_TEST . "->endRetry";
 use constant OP_EXECUTE_TEST_NEW                                    => OP_EXECUTE_TEST . "->new";
 
 ####################################################################################################################################
@@ -66,6 +68,7 @@ sub new
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
+    $self->{iRetrySeconds} = defined($self->{iRetrySeconds}) ? $self->{iRetrySeconds} : undef;
 
     $self->{strUserBackRest} = 'backrest'; #BackRestTestCommon_UserBackRestGet();
     $self->{strHost} = '127.0.0.1'; #BackRestTestCommon_HostGet();
@@ -125,9 +128,9 @@ sub begin
 }
 
 ####################################################################################################################################
-# end
+# endRetry
 ####################################################################################################################################
-sub end
+sub endRetry
 {
     my $self = shift;
 
@@ -139,8 +142,8 @@ sub end
     ) =
         logDebugParam
         (
-            OP_EXECUTE_TEST_END, \@_,
-            {name => 'strTest', required => false}
+            OP_EXECUTE_TEST_END_RETRY, \@_,
+            {name => 'strTest', required => false, trace => true}
         );
 
     # Create select objects
@@ -225,11 +228,19 @@ sub end
         }
         else
         {
-            confess &log(ERROR, "command '$self->{strCommand}' returned " . $iExitStatus .
-                         ($self->{iExpectedExitStatus} != 0 ? ", but $self->{iExpectedExitStatus} was expected" : '') . "\n" .
-                         ($self->{strOutLog} ne '' ? "STDOUT (last 10,000 characters):\n" . substr($self->{strOutLog},
-                             length($self->{strOutLog}) - 10000) : '') .
-                         ($self->{strErrorLog} ne '' ? "STDERR:\n$self->{strErrorLog}" : ''));
+            if (defined($self->{iRetrySeconds}))
+            {
+                $self->{bRetry} = true;
+                return;
+            }
+            else
+            {
+                confess &log(ERROR, "command '$self->{strCommand}' returned " . $iExitStatus .
+                             ($self->{iExpectedExitStatus} != 0 ? ", but $self->{iExpectedExitStatus} was expected" : '') . "\n" .
+                             ($self->{strOutLog} ne '' ? "STDOUT (last 10,000 characters):\n" . substr($self->{strOutLog},
+                                 length($self->{strOutLog}) - 10000) : '') .
+                             ($self->{strErrorLog} ne '' ? "STDERR:\n$self->{strErrorLog}" : ''));
+            }
         }
     }
 
@@ -246,6 +257,60 @@ sub end
     if (defined($strTest))
     {
         confess &log(ASSERT, "test point ${strTest} was not found");
+    }
+
+    return $iExitStatus;
+}
+
+####################################################################################################################################
+# end
+####################################################################################################################################
+sub end
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strTest
+    ) =
+        logDebugParam
+        (
+            OP_EXECUTE_TEST_END, \@_,
+            {name => 'strTest', required => false}
+        );
+
+    # If retry is not defined then run endRetry() one time
+    my $iExitStatus;
+
+    if (!defined($self->{iRetrySeconds}))
+    {
+        $iExitStatus = $self->endRetry($strTest);
+    }
+    # Else loop until success or timeout
+    else
+    {
+        my $oWait = waitInit($self->{iRetrySeconds});
+
+        do
+        {
+            $self->{bRetry} = false;
+            $self->begin();
+            $iExitStatus = $self->endRetry($strTest);
+
+            if ($self->{bRetry})
+            {
+                &log(TRACE, 'error executing statement - retry');
+            }
+        }
+        while ($self->{bRetry} && waitMore($oWait));
+
+        if ($self->{bRetry})
+        {
+            $self->begin();
+            $iExitStatus = $self->endRetry($strTest);
+        }
     }
 
     return $iExitStatus;

@@ -557,7 +557,7 @@ sub waitPid
                     confess &log(ERROR, 'remote process terminated' .
                                  ($iExitStatus < ERROR_MINIMUM && $iExitStatus > ERROR_MAXIMUM ?
                                     " (exit status ${iExitStatus}" : '') .
-                                 " : ${strError}",
+                                 ": ${strError}",
                                  $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_HOST_CONNECT);
                 }
 

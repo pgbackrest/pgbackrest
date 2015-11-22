@@ -5,4 +5,5 @@ test/test
 test/vm/.vagrant
 test/nytprof.out
 test/nytprof/*
-doc/html/*
+doc/output/*
+test/vm/package/*

@@ -736,6 +736,7 @@ my $oConfigHelpData =
 
             option =>
             {
+                'config' => 'default',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'repo-path' => 'section',

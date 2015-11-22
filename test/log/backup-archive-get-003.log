@@ -33,7 +33,7 @@ db-version="9.3"
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: stop start: --repo-path=[TEST_PATH]/backrest
+ INFO: stop start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: stop stop
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -52,7 +52,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 start (local)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: start start: --repo-path=[TEST_PATH]/backrest
+ INFO: start start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: start stop
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
