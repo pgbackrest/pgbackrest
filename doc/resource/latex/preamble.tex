@@ -1,0 +1,135 @@
+% ----------------------------------------------------------------------------------------------------------------------------------
+% pgBackRest User Guide
+% ----------------------------------------------------------------------------------------------------------------------------------
+\documentclass[letterpaper,12pt]{article}
+
+% Add hyperlinks to TOC
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{hyperref}
+
+% Allow EPS files
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{epstopdf}
+
+% Use the caption package to enable captions that are not numbered (caption*)
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage[font=small,textfont=it,justification=justified,singlelinecheck=false]{caption}
+
+% Create a light gray color to use for source code listings
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage[table]{xcolor}
+\definecolor{ltgray}{HTML}{E8E8E8}
+
+% Use listings package instead of verbatim for displaying code
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{courier}
+
+\usepackage{textcomp}
+\usepackage{listings}
+\lstset
+{
+    basicstyle=\small\ttfamily,
+    columns=flexible,
+    breaklines=true,
+    frame=tb,
+    backgroundcolor=\color{ltgray},
+    upquote=true
+}
+
+% Use tabularx for tables
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{tabularx}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}%
+\renewcommand{\arraystretch}{1.3}
+
+% \usepackage{ltablex}
+
+% Allow four section levels (The fourth is implemented with paragraph)
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{titlesec}
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Define source code highlighting
+% ----------------------------------------------------------------------------------------------------------------------------------
+\newcommand{\Hilight}{\makebox[0pt][l]{\color{cyan}\rule[-4pt]{0.65\linewidth}{14pt}}}
+
+% Set the font to Helvetica
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Set margins
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage[top=.9in, bottom=1in, left=.5in, right=.5in]{geometry}
+
+% Sections start a new page
+% ----------------------------------------------------------------------------------------------------------------------------------
+\let\stdsection\section
+\renewcommand\section{\newpage\stdsection}
+
+% Format paragraphs with no indent and a blank line between paragraphs
+% ----------------------------------------------------------------------------------------------------------------------------------
+\setlength\parindent{0pt}
+\usepackage{parskip}
+
+% Add page headers and footers
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{fancyhdr}
+
+\fancyhead[LE,RO]{\slshape \rightmark}
+\fancyhead[LO,RE]{\slshape \leftmark}
+
+\fancypagestyle{plain}
+{
+    \fancyhead{}
+    \lhead[]{TABLE OF CONTENTS}
+}
+
+\lfoot[]{{[pdf-title]}\\
+         Version {[version]}}
+\cfoot[]{\ \\-\ \thepage\ -}
+\rfoot[]{Crunchy Data Solutions, Inc.\\\today}
+\pagestyle{fancy}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ----------------------------------------------------------------------------------------------------------------------------------
+% Begin document
+% ----------------------------------------------------------------------------------------------------------------------------------
+\begin{document}
+
+% Create the title page
+% ----------------------------------------------------------------------------------------------------------------------------------
+\makeatletter
+    \begin{titlepage}
+        \begin{center}
+            {\large \ }\\[18ex]
+            {\huge \bfseries {[pdf-title]}}\\[1ex]
+            {\large \bfseries Version {[version]}}\\[4ex]
+            {\large {[pdf-subtitle]}}\\[12ex]
+            \includegraphics[width=6in]{{[logo]}}\\[12ex]
+            {\large Crunchy Data Solutions, Inc.}\\[1ex]
+            {\large \today}
+        \end{center}
+    \end{titlepage}
+\makeatother
+\thispagestyle{empty}
+\newpage
+
+% Generate TOC
+% ----------------------------------------------------------------------------------------------------------------------------------
+\setcounter{tocdepth}{3}
+\topskip0in
+\thispagestyle{plain}
+\renewcommand\contentsname{Table of Contents}
+\tableofcontents
+
+% ----------------------------------------------------------------------------------------------------------------------------------
+% Content
+% ----------------------------------------------------------------------------------------------------------------------------------

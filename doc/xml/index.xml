@@ -3,54 +3,21 @@
 <doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
     <variable-list>
         <!-- Variables used by the rest of the script -->
-        <variable>
-            <variable-name>github-url-base</variable-name>
-            <variable-value>https://github.com/pgmasters/backrest</variable-value>
-        </variable>
-        <variable>
-            <variable-name>github-url-master</variable-name>
-            <variable-value>{[github-url-base]}/blob/master</variable-value>
-        </variable>
-        <variable>
-            <variable-name>github-url-issues</variable-name>
-            <variable-value>{[github-url-base]}/issues</variable-value>
-        </variable>
-        <variable>
-            <variable-name>github-url-change-log</variable-name>
-            <variable-value>{[github-url-master]}/CHANGELOG.md</variable-value>
-        </variable>
-        <variable>
-            <variable-name>github-url-license</variable-name>
-            <variable-value>{[github-url-master]}/LICENSE</variable-value>
-        </variable>
-        <variable>
-            <variable-name>backrest-url-base</variable-name>
-            <variable-value>http://www.pgbackrest.org</variable-value>
-        </variable>
-        <variable>
-            <variable-name>backrest-page-user-guide</variable-name>
-            <variable-value>user-guide.html</variable-value>
-        </variable>
-        <variable>
-            <variable-name>backrest-page-configuration</variable-name>
-            <variable-value>configuration.html</variable-value>
-        </variable>
-        <variable>
-            <variable-name>backrest-page-command</variable-name>
-            <variable-value>command.html</variable-value>
-        </variable>
-        <variable>
-            <variable-name>crunchy-url-base</variable-name>
-            <variable-value>http://www.crunchydatasolutions.com</variable-value>
-        </variable>
-        <variable>
-            <variable-name>crunchy-url-cbm</variable-name>
-            <variable-value>{[crunchy-url-base]}/crunchy-backup-manager</variable-value>
-        </variable>
-        <variable>
-            <variable-name>resonate-url-base</variable-name>
-            <variable-value>http://www.resonate.com</variable-value>
-        </variable>
+        <variable key="github-url-base">https://github.com/pgmasters/backrest</variable>
+        <variable key="github-url-master">{[github-url-base]}/blob/master</variable>
+        <variable key="github-url-issues">{[github-url-base]}/issues</variable>
+        <variable key="github-url-change-log">{[github-url-master]}/CHANGELOG.md</variable>
+        <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
+
+        <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
+        <variable key="backrest-page-user-guide">user-guide.html</variable>
+        <variable key="backrest-page-configuration">configuration.html</variable>
+        <variable key="backrest-page-command">command.html</variable>
+
+        <variable key="crunchy-url-base">http://www.crunchydatasolutions.com</variable>
+        <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
+
+        <variable key="resonate-url-base">http://www.resonate.com</variable>
     </variable-list>
 
     <section id="introduction">

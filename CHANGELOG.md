@@ -3,6 +3,8 @@
 ## v0.90: UNDER DEVELOPMENT
 __No Release Date Set__
 
+* Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping pgBackRest, and replication.
+
 * Fixed an issue where the `start`/`stop` commands required the `--config` option.
 
 * Fixed an issue where log files were being overwritten instead of appended.

@@ -1,0 +1,17 @@
+# Ubuntu 14.04 Database Container
+FROM vagrant/u14-base
+
+# Install Postgres
+RUN apt-get install -y postgresql-9.4
+RUN pg_dropcluster --stop 9.4 main
+
+# Create pg_backrest.conf
+RUN touch /etc/pg_backrest.conf
+RUN chmod 640 /etc/pg_backrest.conf
+RUN chown postgres:postgres /etc/pg_backrest.conf
+
+# Setup SSH
+RUN mkdir /home/postgres/.ssh
+RUN cp /root/resource/.ssh/* /home/postgres/.ssh
+RUN chown -R postgres:postgres /home/postgres/.ssh
+RUN chmod 700 /home/postgres/.ssh

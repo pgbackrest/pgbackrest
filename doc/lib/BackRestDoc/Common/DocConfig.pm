@@ -235,18 +235,28 @@ sub helpDataWrite
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_CONFIG_HELP_DATA_WRITE);
+    my
+    (
+        $strOperation,
+        $oManifest
+    ) =
+        logDebugParam
+        (
+            OP_DOC_CONFIG_HELP_DATA_WRITE, \@_,
+            {name => 'oManifest'}
+        );
 
     # Internal function used to format text by quoting it and splitting lines so it looks good in the module.
     sub formatText
     {
+        my $oManifest = shift;
         my $oDocRender = shift;
         my $oText = shift;
         my $iIndent = shift;
         my $iLength = shift;
 
         # Split the string into lines for processing
-        my @stryText = split("\n", trim($oDocRender->processText($oText)));
+        my @stryText = split("\n", trim($oManifest->variableReplace($oDocRender->processText($oText))));
         my $strText;
         my $iIndex = 0;
 
@@ -321,9 +331,9 @@ sub helpDataWrite
             (defined($$oOptionHash{&CONFIG_HELP_SECTION}) ? '            ' . &CONFIG_HELP_SECTION .
                 ' => \'' . $$oOptionHash{&CONFIG_HELP_SECTION} . "',\n" : '') .
             '            ' . &CONFIG_HELP_SUMMARY . " =>\n" .
-            formatText($self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
+            formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
             '            ' . &CONFIG_HELP_DESCRIPTION . " =>\n" .
-            formatText($self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . "\n" .
+            formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . "\n" .
             "        }";
     }
 
@@ -346,9 +356,9 @@ sub helpDataWrite
             "        '${strCommand}' =>\n" .
             "        {\n" .
             '            ' . &CONFIG_HELP_SUMMARY . " =>\n" .
-            formatText($self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
+            formatText($oManifest, $self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
             '            ' . &CONFIG_HELP_DESCRIPTION . " =>\n" .
-            formatText($self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . ",\n" .
+            formatText($oManifest, $self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . ",\n" .
             "\n";
 
         # Iterate options
@@ -385,9 +395,9 @@ sub helpDataWrite
                         "                '${strOption}' =>\n" .
                         "                {\n" .
                         '                    ' . &CONFIG_HELP_SUMMARY . " =>\n" .
-                        formatText($self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 24, 104) . ",\n" .
+                        formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 24, 104) . ",\n" .
                         '                    ' . &CONFIG_HELP_DESCRIPTION . " =>\n" .
-                        formatText($self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 24, 104) . "\n" .
+                        formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 24, 104) . "\n" .
                         "                }";
 
                     $bExtraLinefeed = true;
@@ -611,7 +621,6 @@ sub helpCommandDocGet
 
         return $oOption, $strSection;
     }
-
 
     # Working variables
     my $oConfigHash = $self->{oConfigHash};

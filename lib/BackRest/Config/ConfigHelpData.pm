@@ -872,12 +872,7 @@ my $oConfigHelpData =
                             "this for you. Target Recovery options (recovery_target_name, recovery_target_time, etc.) are " .
                             "generated automatically by pgBackRest and should not be set with this option.\n" .
                         "\n" .
-                        "Recovery settings can also be set in the restore:recovery-option section of pg_backrest.conf. For " .
-                            "example:\n" .
-                        "\n" .
-                        "[restore:recovery-option]\n" .
-                        "primary_conn_info=db.mydomain.com\n" .
-                        "standby_mode=on\n" .
+                        "Recovery settings can also be set in the restore:recovery-option section of pg_backrest.conf.\n" .
                         "\n" .
                         "Since pgBackRest does not start PostgreSQL after writing the recovery.conf file, it is always possible " .
                             "to edit/check recovery.conf before manually restarting."

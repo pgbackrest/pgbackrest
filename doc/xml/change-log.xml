@@ -9,6 +9,9 @@
         <changelog-release date="XXXX-XX-XX" version="0.90" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
                 <release-feature>
+                    <text>Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping <backrest/>, and replication.</text>
+                </release-feature>
+                <release-feature>
                     <text>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>--config</setting> option.</text>
                 </release-feature>
                 <release-feature>
@@ -143,7 +146,7 @@
                     <text>Added vagrant test configurations for Ubuntu 14.04 and CentOS 7.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to "database" in the user guide to "database cluster" for clarity.</text>
+                    <text>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to <quote>database</quote> in the user guide to <quote>database cluster</quote> for clarity.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>

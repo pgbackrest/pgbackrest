@@ -1,0 +1,21 @@
+<!ELEMENT doc (variable-list, source-list, render-list)>
+
+<!ELEMENT variable-list (variable+)>
+<!ELEMENT variable (#PCDATA)>
+    <!ATTLIST variable key CDATA #REQUIRED>
+    <!ATTLIST variable eval CDATA "n">
+    <!ATTLIST variable keyword CDATA "default">
+
+<!ELEMENT source-list (source+)>
+<!ELEMENT source EMPTY>
+    <!ATTLIST source key CDATA #REQUIRED>
+    <!ATTLIST source type CDATA "">
+
+<!ELEMENT render-list (render+)>
+<!ELEMENT render (render-source+)>
+    <!ATTLIST render type CDATA #REQUIRED>
+    <!ATTLIST render file CDATA "">
+<!ELEMENT render-source EMPTY>
+    <!ATTLIST render-source key CDATA #REQUIRED>
+    <!ATTLIST render-source source CDATA "">
+    <!ATTLIST render-source menu CDATA "">

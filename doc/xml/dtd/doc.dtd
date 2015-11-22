@@ -50,45 +50,65 @@
     <!ATTLIST config-key name CDATA #REQUIRED>
 
 <!ELEMENT execute-list (title, execute+)>
-<!ELEMENT execute (exe-cmd, exe-user?,  exe-var?, exe-retry?, exe-output?, exe-no-show?, exe-highlight?, exe-skip?,
+    <!ATTLIST execute-list host CDATA #REQUIRED>
+    <!ATTLIST execute-list keyword CDATA "">
+<!ELEMENT execute (exe-cmd, exe-user?,  exe-var?, exe-retry?, exe-output?, (exe-highlight-type?, exe-highlight)?,
                    exe-err-expect?, exe-err-suppress?, exe-err-suppress-stderr?)>
+    <!ATTLIST execute keyword CDATA "">
+    <!ATTLIST execute user CDATA "">
+    <!ATTLIST execute filter CDATA "">
+    <!ATTLIST execute filter-context CDATA "">
+    <!ATTLIST execute skip CDATA "">
+    <!ATTLIST execute show CDATA "">
+    <!ATTLIST execute output CDATA "">
+    <!ATTLIST execute err-suppress CDATA "">
+    <!ATTLIST execute err-expect CDATA "">
+    <!ATTLIST execute retry CDATA "">
+    <!ATTLIST execute variable-key CDATA "">
 <!ELEMENT exe-cmd (#PCDATA)>
-<!ELEMENT exe-user (#PCDATA)>
 <!ELEMENT exe-highlight (#PCDATA)>
-<!ELEMENT exe-var (#PCDATA)>
-<!ELEMENT exe-output EMPTY>
-<!ELEMENT exe-skip EMPTY>
-<!ELEMENT exe-no-show EMPTY>
-<!ELEMENT exe-retry EMPTY>
-<!ELEMENT exe-err-expect (#PCDATA)>
-<!ELEMENT exe-err-suppress EMPTY>
-<!ELEMENT exe-err-suppress-stderr EMPTY>
+<!ELEMENT exe-highlight-type (#PCDATA)>
 
 <!ELEMENT cleanup (execute+)>
 
 <!ELEMENT variable-list (variable+)>
-<!ELEMENT variable (variable-name, variable-value)>
-<!ELEMENT variable-name (#PCDATA)>
-<!ELEMENT variable-value (#PCDATA)>
+<!ELEMENT variable (#PCDATA)>
+    <!ATTLIST variable key CDATA #REQUIRED>
+    <!ATTLIST variable keyword CDATA "default">
+    <!ATTLIST variable eval CDATA "n">
 
 <!ELEMENT backrest-config (title, backrest-config-option+)>
+    <!ATTLIST backrest-config host CDATA #REQUIRED>
+    <!ATTLIST backrest-config owner CDATA "">
+    <!ATTLIST backrest-config show CDATA "">
+    <!ATTLIST backrest-config keyword CDATA "">
+    <!ATTLIST backrest-config reset CDATA "">
     <!ATTLIST backrest-config file CDATA #REQUIRED>
-<!ELEMENT backrest-config-option (backrest-config-option-section?, backrest-config-option-key, backrest-config-option-value?)>
-<!ELEMENT backrest-config-option-section (#PCDATA)>
-<!ELEMENT backrest-config-option-key (#PCDATA)>
-<!ELEMENT backrest-config-option-value (#PCDATA)>
+<!ELEMENT backrest-config-option (#PCDATA)>
+    <!ATTLIST backrest-config-option keyword CDATA "">
+    <!ATTLIST backrest-config-option section CDATA #REQUIRED>
+    <!ATTLIST backrest-config-option key CDATA #REQUIRED>
+    <!ATTLIST backrest-config-option remove CDATA "n">
 
 <!ELEMENT postgres-config (title, postgres-config-option+)>
+    <!ATTLIST postgres-config host CDATA #REQUIRED>
     <!ATTLIST postgres-config file CDATA #REQUIRED>
+    <!ATTLIST postgres-config keyword CDATA "">
+    <!ATTLIST postgres-config show CDATA "">
 <!ELEMENT postgres-config-option (#PCDATA)>
+    <!ATTLIST postgres-config-option keyword CDATA "">
     <!ATTLIST postgres-config-option key CDATA #REQUIRED>
 
 <!ELEMENT option-description EMPTY>
     <!ATTLIST option-description key CDATA #REQUIRED>
 
-<!ELEMENT section (title,((p|execute-list|backrest-config|postgres-config|option-description)+|(p*, section+)|p*))>
+<!ELEMENT section (title,
+                   ((p|table|host-add|execute-list|backrest-config|postgres-config|option-description|code-block)+|
+                   (p*, section+)|p*))>
     <!ATTLIST section id CDATA #REQUIRED>
-<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+    <!ATTLIST section keyword CDATA "">
+    <!ATTLIST section depend CDATA "">
+<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
                  pg-option|pg-setting|link|user)*>
 
 <!ELEMENT default (#PCDATA)>
@@ -115,26 +135,54 @@
 <!ELEMENT support (text)>
     <!ATTLIST support title CDATA #REQUIRED>
 
-<!ELEMENT summary (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
-                   pg-option|pg-setting|link|user)*>
-<!ELEMENT p (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+<!-- Host elements -->
+<!ELEMENT host-add (execute*)>
+    <!ATTLIST host-add name CDATA #REQUIRED>
+    <!ATTLIST host-add user CDATA #REQUIRED>
+    <!ATTLIST host-add image CDATA #REQUIRED>
+    <!ATTLIST host-add os CDATA "">
+    <!ATTLIST host-add mount CDATA "">
+
+<!-- Table elements -->
+<!ELEMENT table (title?, table-header, table-data)>
+
+<!ELEMENT table-header (table-column+)>
+    <!ATTLIST table-header width CDATA "">
+<!ELEMENT table-column (#PCDATA|quote|b|i|id|code|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+                        br-setting|pg-option|pg-setting|link|user)*>
+    <!ATTLIST table-column align CDATA "">
+    <!ATTLIST table-column fill CDATA "">
+
+<!ELEMENT table-data (table-row+)>
+<!ELEMENT table-row (table-cell+)>
+<!ELEMENT table-cell (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+                      br-setting|pg-option|pg-setting|link|user)*>
+
+<!-- Formatted elements -->
+<!ELEMENT summary (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+                   br-setting|pg-option|pg-setting|link|user)*>
+<!ELEMENT p (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
              pg-option|pg-setting|link|user)*>
-<!ELEMENT text (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
-                pg-option|pg-setting|link|user)*>
+    <!ATTLIST p keyword CDATA "">
+<!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+                br-setting|pg-option|pg-setting|link|user)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>
-<!ELEMENT bi (#PCDATA)>
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
-<!ELEMENT li (#PCDATA|b|i|bi|ul|ol|id|code|code-block|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
-              pg-option|pg-setting|link|user)*>
+<!ELEMENT li (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+              br-setting|pg-option|pg-setting|link|user)*>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA|exe)*>
+    <!ATTLIST code-block title CDATA #REQUIRED>
+
+<!ELEMENT host (#PCDATA)>
 <!ELEMENT file (#PCDATA)>
 <!ELEMENT path (#PCDATA)>
 <!ELEMENT cmd (#PCDATA)>
 <!ELEMENT user (#PCDATA)>
+<!ELEMENT quote (#PCDATA)>
 <!ELEMENT param (#PCDATA)>
 <!ELEMENT setting (#PCDATA)>
 <!ELEMENT br-option (#PCDATA)>

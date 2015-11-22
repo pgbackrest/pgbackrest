@@ -1,162 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="User Guide">
-    <!-- <intro>
-        <text></text>
-    </intro> -->
-
-    <!-- <install title="Installation">
-        <text><backrest/> is written entirely in Perl.  Some additional modules will need to be installed depending on the OS.</text>
-
-        <install-system-list>
-            <install-system title="Ubuntu 12.04/14.04 Setup">
-                <text>* Install required Perl modules:
-                <code-block>
-                    apt-get install libdbd-pg-perl
-                </code-block></text>
-            </install-system>
-
-            <install-system title="CentOS 6 Setup">
-                <text>* Install Perl and required modules:
-                <code-block>
-                    yum install perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg
-                </code-block></text>
-            </install-system>
-
-            <install-system title="CentOS 7 Setup">
-                <text>* Install Perl and required modules:
-                <code-block>
-                    yum install perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg
-                </code-block></text>
-            </install-system>
-
-            <install-system title="Software Installation">
-                <text><backrest/> can be installed by downloading the most recent release:
-
-                https://github.com/pgmasters/backrest/releases
-
-                <backrest/> can be installed anywhere but it's best (though not required) to install it in the same location on all systems.</text>
-            </install-system>
-
-            <install-system title="Regression Test Setup">
-                <text>* Create the backrest user
-
-                The backrest user must be created on the same system and in the same group as the user you will use for testing (which can be any user you prefer).  For example:
-                <code-block>
-                    adduser -g &lt;test-user-group&gt; backrest
-                </code-block>
-                * Setup password-less SSH login between the test user and the backrest user
-
-                The test user should be able to `ssh backrest@127.0.0.1` and the backrest user should be able to `ssh &lt;testuser&gt;@127.0.0.1` without requiring any passwords.  This article (http://archive.oreilly.com/pub/h/66) has details on how to accomplish this.  Do the logons both ways at the command line before running regression tests.
-
-                * Give group read and execute permissions to <path>~/backrest/test</path>:
-
-                Usually this can be accomplished by running the following as the test user:
-                <code-block>
-                    chmod 750 ~
-                </code-block>
-                * Running regression:
-
-                Running the full regression suite is generally not necessary.  Run the following first:
-                <code-block>
-                    ./test.pl {[dash]}-module=backup {[dash]}-test=full {[dash]}-db-version=all {[dash]}-thread-max=&lt;# threads&gt;
-                </code-block>
-                This will run full backup/restore regression with a variety of options on all installed versions of <postgres/>.  If you are only interested in one version then modify the <setting>db-version</setting> setting to X.X (e.g. 9.4).  <setting>{[dash]}-thread-max</setting> can be omitted if you are running single-threaded.
-
-                If there are errors in this test then run full regression to help isolate problems:
-                <code-block>
-                    ./test.pl {[dash]}-db-version=all {[dash]}-thread-max=&lt;# threads&gt;
-                </code-block>
-                Report regression test failures at https://github.com/pgmasters/backrest/issues.</text>
-            </install-system>
-        </install-system-list>
-    </install> -->
-
+    <!-- CONFIG -->
     <config title="Configuration Reference">
         <text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pg_backrest.conf</file>.</text>
-<!--
-        <config-example-list title="Examples">
-            <config-example title="Confguring Postgres for Archiving">
-                <text>Modify the following settings in <file>postgresql.conf</file>:
-                <code-block>
-                    wal_level = archive
-                    archive_mode = on
-                    archive_command = '/path/to/backrest/bin/<exe/> -stanza=db archive-push %p'
-                </code-block>
-                Replace the path with the actual location where <backrest/> was installed.  The stanza parameter should be changed to the actual stanza name for your database cluster.</text>
-            </config-example>
-
-            <config-example title="Minimal Configuration">
-                <text>The absolute minimum required to run <backrest/> (if all defaults are accepted) is the database cluster path.
-
-                <file>/etc/pg_backrest.conf</file>:
-                <code-block>
-                    [main]
-                    db-path=/data/db
-                </code-block>
-                    The <setting>db-path</setting> option could also be provided on the command line, but it's best to use a configuration file as options tend to pile up quickly.</text>
-            </config-example>
-
-            <config-example title="Simple Single Host Configuration">
-                <text>This configuration is appropriate for a small installation where backups are being made locally or to a remote file system that is mounted locally.  A number of additional options are set:
-                <ul>
-                    <li><setting>db-port</setting> - Custom port for <postgres/>.</li>
-                    <li><setting>compress</setting> - Disable compression (handy if the file system is already compressed).</li>
-                    <li><setting>repo-path</setting> - Path to the <backrest/> repository where backups and WAL archive are stored.</li>
-                    <li><setting>log-level-file</setting> - Set the file log level to debug (Lots of extra info if something is not working as expected).</li>
-                    <li><setting>hardlink</setting> - Create hardlinks between backups (but never between full backups).</li>
-                    <li><setting>thread-max</setting> - Use 2 threads for backup/restore operations.</li>
-                </ul>
-                <file>/etc/pg_backrest.conf</file>:
-                <code-block>
-                    [global:general]
-                    compress=n
-                    repo-path=/path/to/db/repo
-
-                    [global:log]
-                    log-level-file=debug
-
-                    [global:backup]
-                    hardlink=y
-                    thread-max=2
-
-                    [main]
-                    db-path=/data/db
-                    db-port=5555
-                </code-block></text>
-            </config-example>
-
-            <config-example title="Simple Multiple Host Configuration">
-                <text>This configuration is appropriate for a small installation where backups are being made remotely.  Make sure that postgres@db-host has trusted ssh to backrest@backup-host and vice versa.  This configuration assumes that you have <exe/> in the same path on both servers.
-
-                <file>/etc/pg_backrest.conf</file> on the db host:
-                <code-block>
-                    [global:general]
-                    repo-path=/path/to/db/repo
-                    repo-remote-path=/path/to/backup/repo
-
-                    [global:backup]
-                    backup-host=backup.mydomain.com
-                    backup-user=backrest
-
-                    [global:archive]
-                    archive-async=y
-
-                    [main]
-                    db-path=/data/db
-                </code-block>
-                <file>/etc/pg_backrest.conf</file> on the backup host:
-                <code-block>
-                    [global:general]
-                    repo-path=/path/to/backup/repo
-
-                    [main]
-                    db-host=db.mydomain.com
-                    db-path=/data/db
-                    db-user=postgres
-                </code-block></text>
-            </config-example>
-        </config-example-list> -->
 
         <config-section-list title="Settings">
             <!-- CONFIG - COMMAND SECTION -->
@@ -171,7 +18,7 @@
                         <text>Required only if the path to <exe/> is different on the local and remote systems.  If not defined, the remote exe path will be set the same as the local exe path.</text>
 
                         <default>same as local</default>
-                        <example>/usr/lib/backrest/bin/pg_backrest_remote.pl</example>
+                        <example>/usr/lib/backrest/bin/pg_backrest</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -583,6 +430,7 @@
         </config-section-list>
     </config>
 
+    <!-- COMMAND -->
     <operation title="Command Reference">
         <text>Commands are used to execute the various <backrest/> functions.  Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands.  This includes all the options that may also configured in <file>pg_backrest.conf</file>.</text>
 
@@ -657,8 +505,8 @@
 
                 <command-example-list>
                     <command-example title="Full Backup">
-                        <text><code-block>
-                            <exe/> --stanza=db --type=full backup
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db --type=full backup
                         </code-block>
                         Run a <id>full</id> backup on the <id>db</id> stanza.  <br-option>--type</br-option> can also be set to <id>incr</id> or <id>diff</id> for incremental or differential backups.  However, if no <id>full</id> backup exists then a <id>full</id> backup will be forced even if <id>incr</id> or <id>diff</id> is requested.</text>
                     </command-example>
@@ -673,8 +521,8 @@
 
                 <command-example-list>
                     <command-example>
-                        <text><code-block>
-                            <exe/> --stanza=db archive-push %p
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db archive-push %p
                         </code-block>
                         Accepts a WAL segment from <postgres/> and archives it in the repository defined by <setting>repo-path</setting>.  <id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived.</text>
                     </command-example>
@@ -689,8 +537,8 @@
 
                 <command-example-list>
                     <command-example>
-                        <text><code-block>
-                            <exe/> --stanza=db archive-get %f %p
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db archive-get %f %p
                         </code-block>
                         Retrieves a WAL segment from the repository.  This command is used in <file>recovery.conf</file> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied.</text>
                     </command-example>
@@ -705,8 +553,8 @@
 
                 <command-example-list>
                     <command-example>
-                        <text><code-block>
-                            <exe/> --stanza=db expire
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db expire
                         </code-block>
                         Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.</text>
                     </command-example>
@@ -793,6 +641,7 @@
                         <summary>Recover along a timeline.</summary>
 
                         <text>See <setting>recovery_target_timeline</setting> in the <postgres/> docs for more information.</text>
+
                         <example>3</example>
                     </option>
 
@@ -804,13 +653,16 @@
 
                         Note: The <setting>restore_command</setting> option will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.
 
-                        Recovery settings can also be set in the <setting>restore:recovery-option</setting> section of pg_backrest.conf.  For example:
-                        <code-block>
+                        Recovery settings can also be set in the <setting>restore:recovery-option</setting> section of pg_backrest.conf.
+                        <!-- For example:
+
+                        <code-block title="">
                             [restore:recovery-option]
                             primary_conn_info=db.mydomain.com
                             standby_mode=on
-                        </code-block>
+                        </code-block> -->
                         Since <backrest/> does not start <postgres/> after writing the <file>recovery.conf</file> file, it is always possible to edit/check <file>recovery.conf</file> before manually restarting.</text>
+
                         <example>primary_conninfo=db.mydomain.com</example>
                     </option>
 
@@ -821,14 +673,15 @@
                         <text>Moves a tablespace to a new location during the restore.  This is useful when tablespace locations are not the same on a replica, or an upgraded system has different mount points.
 
                         Since <postgres/> 9.2 tablespace locations are not stored in pg_tablespace so moving tablespaces can be done with impunity.  However, moving a tablespace to the <setting>data_directory</setting> is not recommended and may cause problems.  For more information on moving tablespaces http://www.databasesoup.com/2013/11/moving-tablespaces.html is a good resource.</text>
+
                         <example>ts_01=/db/ts_01</example>
                     </option>
                 </option-list>
 
                 <command-example-list>
                     <command-example title="Restore Latest">
-                        <text><code-block>
-                                <exe/> --stanza=db --type=name --target=release restore
+                        <text><code-block title="">
+                                {[backrest-exe]} --stanza=db --type=name --target=release restore
                             </code-block>
                             Restores the latest database cluster backup and then recovers to the <id>release</id> restore point.</text>
                     </command-example>
@@ -860,16 +713,16 @@
 
                 <command-example-list>
                     <command-example title="Information for a single stanza">
-                        <text><code-block>
-                            <exe/> --stanza=db --output=json info
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db --output=json info
                         </code-block>
 
                         Get information about backups in the <id>db</id> stanza.</text>
                     </command-example>
 
                     <command-example title="Information for all stanzas">
-                        <text><code-block>
-                            <exe/> --output=json info
+                        <text><code-block title="">
+                            {[backrest-exe]} --output=json info
                         </code-block>
 
                         Get information about backups for all stanzas in the repository.</text>
@@ -885,16 +738,16 @@
 
                 <command-example-list>
                     <command-example title="Help for the backup command">
-                        <text><code-block>
-                            <exe/> help backup
+                        <text><code-block title="">
+                            {[backrest-exe]} help backup
                         </code-block>
 
                         Get help for the backup command.</text>
                     </command-example>
 
                     <command-example title="Help for backup command, --force option">
-                        <text><code-block>
-                            <exe/> help backup force
+                        <text><code-block title="">
+                            {[backrest-exe]} help backup force
                         </code-block>
 
                         Get help for the force option of the backup command.</text>
@@ -910,8 +763,8 @@
 
                 <command-example-list>
                     <command-example title="Start processes for stanza main">
-                        <text><code-block>
-                            <exe/> --stanza=main start
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=main start
                         </code-block>
 
                         Allows <backrest/> processes to run for the <id>main</id> stanza.</text>
@@ -940,8 +793,8 @@
 
                 <command-example-list>
                     <command-example title="Stop processes for all stanzas">
-                        <text><code-block>
-                            <exe/> stop
+                        <text><code-block title="">
+                            {[backrest-exe]} stop
                         </code-block>
 
                         Stop new <backrest/> processes for all stanzas but allow any current process to complete.</text>
@@ -957,8 +810,8 @@
 
                 <command-example-list>
                     <command-example title="Get version">
-                        <text><code-block>
-                            <exe/> version
+                        <text><code-block title="">
+                            {[backrest-exe]} version
                         </code-block>
 
                         Get <backrest/> version.</text>
