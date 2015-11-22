@@ -3,6 +3,11 @@
 ## v0.90: UNDER DEVELOPMENT
 __No Release Date Set__
 
+* 
+
+## v0.88: Documentation and Minor Bug Fixes
+__Released November 22, 2015__
+
 * Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping pgBackRest, and replication.
 
 * Fixed an issue where the `start`/`stop` commands required the `--config` option.
