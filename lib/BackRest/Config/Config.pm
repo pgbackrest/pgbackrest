@@ -421,11 +421,6 @@ use constant OPTION_DEFAULT_COMMAND_REMOTE                          => abs_path(
 
 # LOG Section
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
-    push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
-use constant OPTION_LOG_LEVEL_FILE                                  => 'log-level-file';
-    push @EXPORT, qw(OPTION_LOG_LEVEL_FILE);
-
 use constant OPTION_DEFAULT_LOG_LEVEL_CONSOLE                       => lc(WARN);
     push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_CONSOLE);
 use constant OPTION_DEFAULT_LOG_LEVEL_FILE                          => lc(INFO);
