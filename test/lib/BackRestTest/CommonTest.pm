@@ -416,10 +416,18 @@ sub BackRestTestCommon_Setup
     $bNoCleanup = $bNoCleanupParam;
     $bLogForce = $bLogForceParam;
 
-    my $strOutLog = executeTest($strPgSqlBin . '/postgres --version');
+    # Check the exe for warnings
+    my $strWarning = trim(executeTest("perl -cW ${strCommonCommandRemote} 2>&1"));
+
+    if ($strWarning ne "${strCommonCommandRemote} syntax OK")
+    {
+        confess &log(ERROR, "${strCommonCommandRemote} failed syntax check:\n${strWarning}");
+    }
 
     # Get the Postgres version
     my $strVersionRegExp = '(devel|((alpha|beta)[0-9]+))$';
+    my $strOutLog = executeTest($strPgSqlBin . '/postgres --version');
+
     my @stryVersionToken = split(/ /, $strOutLog);
     @stryVersionToken = split(/\./, $stryVersionToken[2]);
     $strCommonDbVersion = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
