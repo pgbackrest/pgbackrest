@@ -425,7 +425,7 @@ sub BackRestTestCommon_Setup
     }
 
     # Get the Postgres version
-    my $strVersionRegExp = '(devel|((alpha|beta)[0-9]+))$';
+    my $strVersionRegExp = '(devel|((alpha|beta|rc)[0-9]+))$';
     my $strOutLog = executeTest($strPgSqlBin . '/postgres --version');
 
     my @stryVersionToken = split(/ /, $strOutLog);
