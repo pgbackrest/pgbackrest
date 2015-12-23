@@ -218,6 +218,8 @@ use constant OPTION_TYPE                                            => 'type';
     push @EXPORT, qw(OPTION_TYPE);
 use constant OPTION_OUTPUT                                          => 'output';
     push @EXPORT, qw(OPTION_OUTPUT);
+use constant OPTION_LOCK                                            => 'lock';
+    push @EXPORT, qw(OPTION_LOCK);
 
 # Command-line only help/version
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -363,6 +365,8 @@ use constant OPTION_DEFAULT_RESTORE_TARGET_RESUME                   => false;
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_RESUME);
 use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_TYPE_DEFAULT;
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
+use constant OPTION_DEFAULT_LOCK                                    => true;
+    push @EXPORT, qw(OPTION_DEFAULT_LOCK);
 
 # Command-line only test
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -542,6 +546,17 @@ my %oOptionRule =
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STOP_FORCE
             }
+        }
+    },
+
+    &OPTION_LOCK =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOCK,
+        &OPTION_RULE_NEGATE => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_RESTORE => true
         }
     },
 

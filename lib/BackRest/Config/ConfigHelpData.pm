@@ -853,6 +853,18 @@ my $oConfigHelpData =
                             "combination with --delta a timestamp/size delta will be performed instead of using checksums."
                 },
 
+                # LOCK Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'lock' =>
+                {
+                    summary =>
+                        "Create a lock so restores on a stanza cannot run simultaneously.",
+                    description =>
+                        "Locking during restores is enabled by default but can be disabled using --no-lock. Be very careful " .
+                            "when disabling this option because simultaneous restores to a single path might result in a " .
+                            "corrupt cluster."
+                },
+
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'neutral-umask' => 'section',

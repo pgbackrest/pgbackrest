@@ -99,29 +99,33 @@ sub logFileSet
 {
     my $strFile = shift;
 
-    unless (-e dirname($strFile))
+    # Only open the log file if file logging is enabled
+    if ($strLogLevelFile ne OFF)
     {
-        mkdir(dirname($strFile), oct('0770'))
-            or die "unable to create directory " . dirname($strFile) . " for log file ${strFile}";
+        unless (-e dirname($strFile))
+        {
+            mkdir(dirname($strFile), oct('0770'))
+                or die "unable to create directory " . dirname($strFile) . " for log file ${strFile}";
+        }
+
+        $strFile .= '-' . timestampFormat('%4d%02d%02d') . '.log';
+        my $bExists = false;
+
+        if (-e $strFile)
+        {
+            $bExists = true;
+        }
+
+        sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, 0660)
+            or confess &log(ERROR, "unable to open log file ${strFile}", ERROR_FILE_OPEN);
+
+        if ($bExists)
+        {
+            syswrite($hLogFile, "\n");
+        }
+
+        syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
     }
-
-    $strFile .= '-' . timestampFormat('%4d%02d%02d') . '.log';
-    my $bExists = false;
-
-    if (-e $strFile)
-    {
-        $bExists = true;
-    }
-
-    sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, 0660)
-        or confess &log(ERROR, "unable to open log file ${strFile}", ERROR_FILE_OPEN);
-
-    if ($bExists)
-    {
-        syswrite($hLogFile, "\n");
-    }
-
-    syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
 }
 
 push @EXPORT, qw(logFileSet);

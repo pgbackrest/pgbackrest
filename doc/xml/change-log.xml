@@ -9,7 +9,7 @@
         <changelog-release date="XXXX-XX-XX" version="0.90" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text></text>
+                    <text>Allow restores to be performed on a read-only repository by using <setting>--no-lock</setting> and <setting>--log-level-file=off</setting>.  The <setting>--no-lock</setting> option can only be used with restores.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
