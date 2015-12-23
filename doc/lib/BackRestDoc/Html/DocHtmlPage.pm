@@ -207,7 +207,7 @@ sub sectionProcess
     }
 
     # Working variables
-    $strAnchor = (defined($strAnchor) ? "${strAnchor}-" : '') . $oSection->paramGet('id');
+    $strAnchor = (defined($strAnchor) ? "${strAnchor}/" : '') . $oSection->paramGet('id');
 
     # Create the section toc element
     my $oSectionTocElement = new BackRestDoc::Html::DocHtmlElement(HTML_DIV, "section${iDepth}-toc");

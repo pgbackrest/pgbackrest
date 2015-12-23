@@ -600,7 +600,7 @@
 
                         <text>Locking during restores is enabled by default but can be disabled using --no-lock.  Be <i>very</i> careful when disabling this option because simultaneous restores to a single path might result in a corrupt cluster.</text>
 
-                        <example>--no-lock</example>
+                        <example>n</example>
                     </option>
 
                     <!-- OPERATION - RESTORE COMMAND - TYPE OPTION -->

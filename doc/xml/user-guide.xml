@@ -80,7 +80,7 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example the <link page="#backup">Backup</link> section relies on setup that is performed in the <link page="#quickstart">Quick Start</link> section.  Once you have <backrest/> up and running then skipping around is possible but it is recommended to follow the user guide in order the first time through.</p>
+        <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once you have <backrest/> up and running then skipping around is possible but it is recommended to follow the user guide in order the first time through.</p>
 
         <p>Although the examples are targeted at Ubuntu and <postgres/> 9.4 they will also work fine on Debian and it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version.  The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.  Configuring archiving is different on <postgres/> versions &amp;lt;= 8.4 and configuration information can be found in the <postgres/> documentation.</p>
 
@@ -119,11 +119,11 @@
         <section id="wal">
             <title>Write Ahead Log (WAL)</title>
 
-            <p>WAL is the mechanism by which <postgres/> ensures that no committed changes are lost. Transactions are written sequentially to the WAL and a transaction is considered to be committed when those writes are flushed to disk. Afterwards, a background process writes the changes into the main database cluster files (also known as the heap). In the event of a crash, the WAL is replayed to make the database consistent.</p>
+            <p>WAL is the mechanism that <postgres/> uses to ensure that no committed changes are lost. Transactions are written sequentially to the WAL and a transaction is considered to be committed when those writes are flushed to disk. Afterwards, a background process writes the changes into the main database cluster files (also known as the heap). In the event of a crash, the WAL is replayed to make the database consistent.</p>
 
             <p>WAL is conceptually infinite but in practice is broken up into individual 16MB files called segments.  WAL segments follow the naming convention <id>0000000100000A1E000000FE</id> where the first 8 hexadecimal digits represent the timeline and the next 16 digits are the logical sequence number (LSN).</p>
 
-            <p>A valid backup will always include <i>at least</i> one WAL segment even if no writes were made to the database between backups.</p>
+            <p>A valid backup will always include <i>at least</i> one WAL segment even if explicit writes were made to the database between backups.</p>
         </section>
     </section>
 
@@ -406,7 +406,7 @@
 
             <p>The oldest and newest backups are shown in the info output.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
-            <p>More information about the <cmd>backup</cmd> command can be found in the <link page="#backup">Backup</link> section.</p>
+            <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM RESTORE -->
@@ -476,7 +476,7 @@
 
             <p>This time the cluster started successfully since the restore replaced the missing <file>pg_control</file> file.</p>
 
-            <p>More information about the <cmd>restore</cmd> command can be found in the <link page="#restore">Restore</link> section.</p>
+            <p>More information about the <cmd>restore</cmd> command can be found in the <link section="/restore">Restore</link> section.</p>
         </section>
     </section>
 
@@ -589,7 +589,7 @@
     <section id="retention" depend="quick-start/perform-backup">
         <title>Retention</title>
 
-        <p>Generally it is best to retain as many backups as possible to provide a greater window for <link page="#pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
+        <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
 
         <!-- SECTION => RETENTION - FULL -->
         <section id="full">
@@ -688,7 +688,7 @@
         <section id="option-delta">
             <title>Delta Option</title>
 
-            <p><link page="#quickstart-perform-restore">Restore a Backup</link> in <link page="#quickstart">Quick Start</link> required the database cluster directory to be cleaned before the <cmd>restore</cmd> could be performed.  The <br-option>delta</br-option> allows <backrest/> to automatically determine which files in the database cluster directory can be preserved and which ones need to be restored from the backup.  This is accomplished by calculating a <link url="https://en.wikipedia.org/wiki/SHA-1">SHA-1</link> cryptographic hash for each file in the database cluster directory.  If the <id>SHA-1</id> hash does not match the hash stored in the backup then that file will be restored.  This operation is very efficient when combined with the <br-option>thread-max</br-option> option.  Since the <postgres/> process is shut down during the restore, a larger number of threads can be used than might be desirable during a backup when the <postgres/> process is running.</p>
+            <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> required the database cluster directory to be cleaned before the <cmd>restore</cmd> could be performed.  The <br-option>delta</br-option> allows <backrest/> to automatically determine which files in the database cluster directory can be preserved and which ones need to be restored from the backup.  This is accomplished by calculating a <link url="https://en.wikipedia.org/wiki/SHA-1">SHA-1</link> cryptographic hash for each file in the database cluster directory.  If the <id>SHA-1</id> hash does not match the hash stored in the backup then that file will be restored.  This operation is very efficient when combined with the <br-option>thread-max</br-option> option.  Since the <postgres/> process is shut down during the restore, a larger number of threads can be used than might be desirable during a backup when the <postgres/> process is running.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster, perform delta restore</title>
@@ -718,9 +718,9 @@
     <section id="pitr">
         <title>Point-in-Time Recovery</title>
 
-        <p><link page="#quickstart-perform-restore">Restore a Backup</link> in <link page="#quickstart">Quick Start</link> performed default recovery, which is to play all the way to the end of the WAL stream.  In the case of a hardware failure this is probably the most appropriate action but for data corruption scenarios (whether machine or human in origin) there is a better alternative called Point-in-Time Recovery (PITR).</p>
+        <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> performed default recovery, which is to play all the way to the end of the WAL stream.  In the case of a hardware failure this is probably the most appropriate action but for data corruption scenarios (whether machine or human in origin) there is a better alternative called Point-in-Time Recovery (PITR).</p>
 
-        <p>Point-in-Time Recovery (PITR) allows the WAL to be played from the last backup to a specified time, transaction id, or recovery point.  For common recovery scenarios time-based recovery is arguably the most useful.  A common recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted.  Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
+        <p>Point-in-Time Recovery (PITR) allows the WAL to be played from the last backup to a specified time, transaction id, or recovery point.  For common recovery scenarios time-based recovery is arguably the most useful.  A typical recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted.  Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
 
         <execute-list host="{[host-db-master]}">
             <title>Backup the {[postgres-cluster-demo]} cluster and create a table with very important data</title>
@@ -925,7 +925,7 @@
     <section id="backup-host" depend="/quickstart/configure-archiving">
         <title>Dedicated Backup Host</title>
 
-        <p>The configuration described in <link page="#quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>backup</host> host.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>backup</host> host.</p>
+        <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>backup</host> host.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>backup</host> host.</p>
 
         <!-- SECTION => BACKUP HOST - INSTALL/CONFIGURE -->
         <section id="install-config">
@@ -955,7 +955,7 @@
                 <backrest-config-option section="global:general" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link page="#installation">Installation</link> to install <backrest/> and <link page="#quickstart-create-repository">Create the Repository</link> to create the <backrest/> repository. The <host>backup</host> host must also be configured with the database host/user and database path.</p>
+            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository. The <host>backup</host> host must also be configured with the database host/user and database path.</p>
 
             <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>db-host</br-option>/<br-option>db-user</br-option> and <br-option>db-path</br-option></title>
@@ -1125,7 +1125,7 @@
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <p>A new host named <host>db-standby</host> will be created to run the standby.  Follow the instructions in <link page="#installation">Installation</link> to install <backrest/>, <link page="#quickstart-setup-demo-cluster">Setup Demo Cluster</link> to setup the demo cluster, and <link page="#quickstart-create-repository">Create the Repository</link> to create the <backrest/> repository on the <host>db-standby</host> host.</p>
+            <p>A new host named <host>db-standby</host> will be created to run the standby.  Follow the instructions in <link section="/installation">Installation</link> to install <backrest/>, <link section="/quickstart/setup-demo-cluster">Setup Demo Cluster</link> to setup the demo cluster, and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository on the <host>db-standby</host> host.</p>
 
             <host-add name="{[host-db-standby]}" user="{[host-db-standby-user]}" image="{[host-db-standby-image]}" os="{[host-os]}" mount="{[host-db-standby-mount]}">
                 <!-- Install packages -->

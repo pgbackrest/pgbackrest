@@ -195,3 +195,4 @@
 <!ELEMENT link (#PCDATA)>
     <!ATTLIST link url CDATA "">
     <!ATTLIST link page CDATA "">
+    <!ATTLIST link section CDATA "">

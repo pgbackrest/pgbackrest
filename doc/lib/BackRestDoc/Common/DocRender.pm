@@ -628,14 +628,29 @@ sub processTag
         {
             if (!defined($strUrl))
             {
-                $strUrl = $oTag->paramGet('page');
+                $strUrl = $oTag->paramGet('page', false);
+
+                if (!defined($strUrl))
+                {
+                    $strUrl = '#' . substr($oTag->paramGet('section'), 1);
+                }
             }
 
             $strBuffer = '<a href="' . $strUrl . '">' . $oTag->valueGet() . '</a>';
         }
         elsif ($strType eq 'latex')
         {
-            $strBuffer = $oTag->valueGet();
+            if (!defined($strUrl))
+            {
+                $strUrl = $oTag->paramGet('page', false);
+
+                if (!defined($strUrl))
+                {
+                    $strUrl = $oTag->paramGet('section');
+                }
+            }
+
+            $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
         }
         else
         {

@@ -180,7 +180,7 @@ use constant CONFIG_SECTION_GENERAL                                 => 'general'
     push @EXPORT, qw(CONFIG_SECTION_GENERAL);
 use constant CONFIG_SECTION_LOG                                     => 'log';
     push @EXPORT, qw(CONFIG_SECTION_LOG);
-use constant CONFIG_SECTION_RESTORE_RECOVERY_OPTION                => 'restore:recovery-option';
+use constant CONFIG_SECTION_RESTORE_RECOVERY_OPTION                 => 'restore:recovery-option';
     push @EXPORT, qw(CONFIG_SECTION_RESTORE_RECOVERY_OPTION);
 use constant CONFIG_SECTION_RESTORE_TABLESPACE_MAP                  => 'restore:tablespace-map';
     push @EXPORT, qw(CONFIG_SECTION_RESTORE_TABLESPACE_MAP);

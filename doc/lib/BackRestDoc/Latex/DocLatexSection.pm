@@ -149,7 +149,7 @@ sub sectionProcess
         confess &log(ASSERT, "section depth of ${iDepth} exceeds maximum");
     }
 
-    $strLatex .= "\{${strSectionTitle}\}\n";
+    $strLatex .= "\{${strSectionTitle}\}\\label{" . $oSection->paramGet('path', false) . "}\n";
 
     foreach my $oChild ($oSection->nodeList())
     {

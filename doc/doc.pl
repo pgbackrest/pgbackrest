@@ -26,6 +26,7 @@ use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Common::DocRender;
 use BackRestDoc::Html::DocHtmlSite;
 use BackRestDoc::Latex::DocLatex;
+use BackRestDoc::Markdown::DocMarkdown;
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
@@ -121,7 +122,13 @@ logLevelSet(undef, uc($strLogLevel));
 
 # Get the base path
 my $strBasePath = abs_path(dirname($0));
-my $strOutputPath = "${strBasePath}/output";
+
+if (!defined($strDocPath))
+{
+    $strDocPath = $strBasePath;
+}
+
+my $strOutputPath = "${strDocPath}/output";
 
 sub docProcess
 {
@@ -195,6 +202,19 @@ for my $strOutput (@stryOutput)
         # Generate the markdown
         docProcess("${strBasePath}/xml/index.xml", "${strBasePath}/../README.md", $oManifest);
         docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oManifest);
+    }
+    elsif ($strOutput eq 'markdown')
+    {
+        my $oMarkdown =
+            new BackRestDoc::Markdown::DocMarkdown
+            (
+                $oManifest,
+                "${strBasePath}/xml",
+                "${strOutputPath}/markdown",
+                !$bNoExe
+            );
+
+        $oMarkdown->process();
     }
     elsif ($strOutput eq 'help' && $oManifest->isBackRest())
     {

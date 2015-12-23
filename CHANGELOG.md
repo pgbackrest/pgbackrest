@@ -3,7 +3,7 @@
 ## v0.90: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Allow restores to be performed on a read-only repository by using `--no-lock` and `--log-level-file=off`. The `--no-lock` option can only be used with restores.
 
 ## v0.88: Documentation and Minor Bug Fixes
 __Released November 22, 2015__

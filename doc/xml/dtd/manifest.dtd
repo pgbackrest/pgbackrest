@@ -18,4 +18,5 @@
 <!ELEMENT render-source EMPTY>
     <!ATTLIST render-source key CDATA #REQUIRED>
     <!ATTLIST render-source source CDATA "">
+    <!ATTLIST render-source file CDATA "">
     <!ATTLIST render-source menu CDATA "">

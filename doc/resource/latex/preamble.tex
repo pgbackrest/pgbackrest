@@ -20,6 +20,17 @@
 % ----------------------------------------------------------------------------------------------------------------------------------
 \usepackage[table]{xcolor}
 \definecolor{ltgray}{HTML}{E8E8E8}
+\definecolor{dkblue}{HTML}{396A93}
+
+% Styling for hyperlinks
+% ----------------------------------------------------------------------------------------------------------------------------------
+\hypersetup{frenchlinks=true}
+% {
+%    colorlinks,
+%    linkcolor={dkblue},
+%    citecolor={dkblue},
+%    urlcolor={dkblue}
+%}
 
 % Use listings package instead of verbatim for displaying code
 % ----------------------------------------------------------------------------------------------------------------------------------
@@ -53,6 +64,11 @@
 \titleformat{\paragraph}
 {\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
 \titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Section styling
+% ----------------------------------------------------------------------------------------------------------------------------------
+\usepackage{sectsty}
+\allsectionsfont{\color{dkblue}}
 
 % Define source code highlighting
 % ----------------------------------------------------------------------------------------------------------------------------------
@@ -106,6 +122,8 @@
 
 % Create the title page
 % ----------------------------------------------------------------------------------------------------------------------------------
+\hypersetup{pageanchor=false}
+
 \makeatletter
     \begin{titlepage}
         \begin{center}
@@ -121,6 +139,8 @@
 \makeatother
 \thispagestyle{empty}
 \newpage
+
+\hypersetup{pageanchor=true}
 
 % Generate TOC
 % ----------------------------------------------------------------------------------------------------------------------------------

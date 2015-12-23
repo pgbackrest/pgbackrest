@@ -45,6 +45,8 @@ use constant RENDER_FILE                                            => 'file';
 use constant RENDER_TYPE                                            => 'type';
 use constant RENDER_TYPE_HTML                                       => 'html';
     push @EXPORT, qw(RENDER_TYPE_HTML);
+use constant RENDER_TYPE_MARKDOWN                                   => 'markdown';
+    push @EXPORT, qw(RENDER_TYPE_MARKDOWN);
 use constant RENDER_TYPE_PDF                                        => 'pdf';
     push @EXPORT, qw(RENDER_TYPE_PDF);
 
@@ -144,12 +146,35 @@ sub new
 
             $$oRenderOutHash{source} = $strSource;
 
-            # Get the filename if this is a pdf
-            $$oRenderOutHash{menu} = $oRenderOut->paramGet('menu', false);
-
-            if (defined($$oRenderOutHash{menu}) && $strType ne RENDER_TYPE_HTML)
+            # Get the menu caption
+            if (defined($oRenderOut->paramGet('menu', false)) && $strType ne RENDER_TYPE_HTML)
             {
-                confess &log(ERROR, 'only the html render type can have menu set')
+                confess &log(ERROR, "menu is only valid with html render type");
+            }
+
+            # Get the filename
+            if (defined($oRenderOut->paramGet('file', false)))
+            {
+                if ($strType eq RENDER_TYPE_HTML || $strType eq RENDER_TYPE_MARKDOWN)
+                {
+                    $$oRenderOutHash{file} = $oRenderOut->paramGet('file');
+                }
+                else
+                {
+                    confess &log(ERROR, "file is only valid with html or markdown render types");
+                }
+            }
+
+            if (defined($oRenderOut->paramGet('menu', false)))
+            {
+                if ($strType eq RENDER_TYPE_HTML)
+                {
+                    $$oRenderOutHash{menu} = $oRenderOut->paramGet('menu', false);
+                }
+                else
+                {
+                    confess &log(ERROR, 'only the html render type can have menu set');
+                }
             }
 
             logDebugMisc

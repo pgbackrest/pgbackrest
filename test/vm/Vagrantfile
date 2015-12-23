@@ -116,7 +116,7 @@ Vagrant.configure(2) do |config|
             echo 'export PATH' >> /etc/profile
 
             /usr/local/texlive/2015/bin/x86_64-linux/tlmgr install caption xcolor listings parskip helvetic ltablex titlesec \
-                epstopdf courier
+                epstopdf courier sectsty pgf ms
 
             # Build images
             docker build -f /backrest/test/vm/docker/u14-base -t vagrant/u14-base /backrest/test/vm
