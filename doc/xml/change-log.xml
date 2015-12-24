@@ -6,6 +6,14 @@
     </intro>
 
     <changelog>
+        <changelog-release date="XXXX-XX-XX" version="0.90dev" title="UNDER DEVELOPMENT">
+            <release-feature-bullet-list>
+                <release-feature>
+                    <text></text>
+                </release-feature>
+            </release-feature-bullet-list>
+        </changelog-release>
+
         <changelog-release date="2015-12-24" version="0.89" title="Timeout Bug Fix and Restore Read-Only Repositories">
             <release-feature-bullet-list>
                 <release-feature>

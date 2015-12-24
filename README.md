@@ -32,6 +32,8 @@ pgBackRest strives to be easy to configure and operate:
 - [Command reference](http://www.pgbackrest.org/command.html) for command-line operations.
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating rich pgBackRest configurations.
 
+
+
 ## Contributing
 
 Contributions to pgBackRest are always welcome!
