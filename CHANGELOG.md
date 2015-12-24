@@ -3,6 +3,8 @@
 ## v0.90: UNDER DEVELOPMENT
 __No Release Date Set__
 
+* Fixed an issue where longer-running backups/restores would timeout when remote and threaded. Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work. The error messages for timeouts was also improved to make debugging easier.
+
 * Allow restores to be performed on a read-only repository by using `--no-lock` and `--log-level-file=off`. The `--no-lock` option can only be used with restores.
 
 ## v0.88: Documentation and Minor Bug Fixes

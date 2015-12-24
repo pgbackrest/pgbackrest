@@ -89,6 +89,8 @@ use constant TEST_BACKUP_NORESUME                                   => 'BACKUP-N
     push @EXPORT, qw(TEST_BACKUP_NORESUME);
 use constant TEST_BACKUP_START                                      => 'BACKUP-START';
     push @EXPORT, qw(TEST_BACKUP_START);
+use constant TEST_KEEP_ALIVE                                        => 'KEEP_ALIVE';
+    push @EXPORT, qw(TEST_KEEP_ALIVE);
 use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-PUSH-ASYNC-START';
     push @EXPORT, qw(TEST_ARCHIVE_PUSH_ASYNC_START);
 

@@ -540,11 +540,8 @@ sub processManifest
             $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
         }
 
-        if (optionGet(OPTION_THREAD_MAX) == 1)
-        {
-            # Start backup test point
-            &log(TEST, TEST_BACKUP_START);
-        }
+        # Start backup test point
+        &log(TEST, TEST_BACKUP_START);
 
         # Iterate all backup files
         foreach my $strPathKey (sort(keys(%oFileCopyMap)))
@@ -593,8 +590,14 @@ sub processManifest
                 $oParam{queue} = \@oyBackupQueue;
                 $oParam{result_queue} = $oResultQueue;
 
+                # Keep the protocol layer from timing out
+                protocolGet()->keepAlive();
+
                 threadGroupRun($iThreadIdx, 'backup', \%oParam);
             }
+
+            # Keep the protocol layer from timing out
+            protocolGet()->keepAlive();
 
             # Start backup test point
             &log(TEST, TEST_BACKUP_START);
@@ -616,6 +619,9 @@ sub processManifest
                                                           $$oMessage{copied}, $$oMessage{size}, $$oMessage{checksum},
                                                           $lManifestSaveSize, $lManifestSaveCurrent);
                 }
+
+                # Keep the protocol layer from timing out
+                protocolGet()->keepAlive();
             }
             while (!$bDone);
         }

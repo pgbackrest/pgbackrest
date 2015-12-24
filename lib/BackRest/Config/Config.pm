@@ -2258,7 +2258,8 @@ push @EXPORT, qw(protocolGet);
 ####################################################################################################################################
 sub protocolTimeoutGet
 {
-    return optionGet(OPTION_DB_TIMEOUT) + 30;
+    return optionGet(OPTION_DB_TIMEOUT) >= OPTION_DEFAULT_DB_TIMEOUT ?
+               optionGet(OPTION_DB_TIMEOUT) + 30 : optionGet(OPTION_DB_TIMEOUT);
 }
 
 push @EXPORT, qw(protocolTimeoutGet);

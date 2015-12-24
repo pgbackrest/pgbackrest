@@ -840,7 +840,11 @@ sub process
         }
 
         # Complete thread queues
-        while (!threadGroupComplete()) {};
+        while (!threadGroupComplete())
+        {
+            # Keep the protocol layer from timing out
+            protocolGet()->keepAlive();
+        };
     }
     else
     {

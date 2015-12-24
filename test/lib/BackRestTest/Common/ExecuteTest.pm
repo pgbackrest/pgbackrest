@@ -214,9 +214,14 @@ sub endRetry
     }
 
     # This is a hack to make regression tests pass even when threaded backup/restore sometimes return 255
-    if ($self->{iExpectedExitStatus} == -1 && ($iExitStatus == 0 || $iExitStatus == 255))
+    if ($self->{iExpectedExitStatus} == -1)
     {
-        return 0;
+        if ($iExitStatus == 0 || $iExitStatus == 255)
+        {
+            return 0;
+        }
+
+        $self->{iExpectedExitStatus}  = 0;
     }
 
     if ($iExitStatus != 0 || ($self->{iExpectedExitStatus} != 0 && $iExitStatus != $self->{iExpectedExitStatus}))

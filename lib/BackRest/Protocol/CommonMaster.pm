@@ -9,6 +9,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use File::Basename qw(dirname);
+use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Exception;
@@ -71,6 +72,10 @@ sub new
 
     # Check greeting to be sure the protocol matches
     $self->greetingRead();
+
+    # Setup the keepalive timer
+    $self->{fKeepAliveTimeout} = $iProtocolTimeout / 2 > 120 ? 120 : $iProtocolTimeout / 2;
+    $self->{fKeepAliveTime} = gettimeofday();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -198,6 +203,9 @@ sub outputRead
                             (defined($strOutput) ? "${strOutput}" : ''), $iErrorCode, $bSuppressLog);
     }
 
+    # Reset the keep alive time
+    $self->{fKeepAliveTime} = gettimeofday();
+
     # If output is required and there is no output, raise exception
     if (defined($bOutputRequired) && $bOutputRequired && !defined($strOutput))
     {
@@ -315,6 +323,25 @@ sub cmdExecute
     $self->cmdWrite($strCommand, $oParamRef);
 
     return $self->outputRead($bOutputRequired, $strErrorPrefix);
+}
+
+####################################################################################################################################
+# keepAlive
+#
+# Send periodic noops so the remote does not time out.
+####################################################################################################################################
+sub keepAlive
+{
+    my $self = shift;
+
+    if (gettimeofday() - $self->{fKeepAliveTimeout} > $self->{fKeepAliveTime})
+    {
+        $self->cmdExecute(OP_NOOP, undef, false);
+        $self->{fKeepAliveTime} = gettimeofday();
+
+        # Keep alive test point
+        &log(TEST, TEST_KEEP_ALIVE);
+    }
 }
 
 1;

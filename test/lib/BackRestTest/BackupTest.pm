@@ -848,12 +848,40 @@ sub BackRestTestBackup_Test
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             my $strType = 'full';
+            my $strOptionalParam = '--manifest-save-threshold=3';
+            my $strTestPoint;
+
+            if ($bNeutralTest && $bRemote)
+            {
+                $strOptionalParam .= ' --db-timeout=2';
+
+                if ($iThreadMax > 1)
+                {
+                    $strTestPoint = TEST_KEEP_ALIVE;
+                }
+            }
 
             BackRestTestBackup_ManifestLinkCreate(\%oManifest, 'base', 'link-test', '/test');
             BackRestTestBackup_ManifestPathCreate(\%oManifest, 'base', 'path-test');
 
-            my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, undef,
-                                                                   {strOptionalParam => '--manifest-save-threshold=3'});
+            my $strFullBackup = BackRestTestBackup_BackupSynthetic(
+                                    $strType, $strStanza, \%oManifest, undef,
+                                    {strOptionalParam => $strOptionalParam, strTest => $strTestPoint, fTestDelay => 0});
+
+            # Test protocol timeout
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bNeutralTest && $bRemote)
+            {
+                BackRestTestBackup_BackupSynthetic(
+                    $strType, $strStanza, \%oManifest, 'protocol timeout',
+                    {strOptionalParam => '--db-timeout=1',
+                     strTest => TEST_BACKUP_START,
+                     fTestDelay => 1,
+                     iExpectedExitStatus => ERROR_PROTOCOL_TIMEOUT});
+
+                # Remove the aborted backup so the next backup is not a resume
+                BackRestTestCommon_PathRemove(BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp", $bRemote);
+            }
 
             # Stop operations and make sure the correct error occurs
             #-----------------------------------------------------------------------------------------------------------------------

@@ -100,6 +100,8 @@ use constant ERROR_FILE_WRITE                                       => ERROR_MIN
     push @EXPORT, qw(ERROR_FILE_WRITE);
 use constant ERROR_UNHANDLED_EXCEPTION                              => ERROR_MINIMUM + 40;
     push @EXPORT, qw(ERROR_UNHANDLED_EXCEPTION);
+use constant ERROR_PROTOCOL_TIMEOUT                                 => ERROR_MINIMUM + 41;
+    push @EXPORT, qw(ERROR_PROTOCOL_TIMEOUT);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

@@ -18,6 +18,7 @@ use BackRest::Config::Config;
 use BackRest::Db;
 use BackRest::File;
 use BackRest::Info;
+use BackRest::Protocol::Common;
 use BackRest::Protocol::CommonMinion;
 
 ####################################################################################################################################
@@ -26,15 +27,6 @@ use BackRest::Protocol::CommonMinion;
 use constant OP_PROTOCOL_REMOTE_MINION                              => 'Protocol::RemoteMinion';
 
 use constant OP_PROTOCOL_REMOTE_MINION_NEW                          => OP_PROTOCOL_REMOTE_MINION . "->new";
-
-####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant
-{
-    OP_NOOP        => 'noop',
-    OP_EXIT        => 'exit'
-};
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -281,8 +273,12 @@ sub process
                 $self->outputWrite($oDb->executeSql(paramGet(\%oParamHash, 'script'),
                                                     paramGet(\%oParamHash, 'ignore-error', false)));
             }
-            # Continue if noop or exit
-            elsif ($strCommand ne OP_NOOP && $strCommand ne OP_EXIT)
+            elsif ($strCommand eq OP_NOOP)
+            {
+                $self->outputWrite();
+            }
+            # Continue if exit
+            elsif ($strCommand ne OP_EXIT)
             {
                 confess "invalid command: ${strCommand}";
             }

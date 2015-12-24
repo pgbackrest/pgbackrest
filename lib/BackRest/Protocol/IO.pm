@@ -165,6 +165,7 @@ sub lineRead
     my $self = shift;
     my $iTimeout = shift;
     my $bInRead = shift;
+    my $bError = shift;
 
     # If there's already data in the buffer try to find the next linefeed
     my $iLineFeedPos = defined($self->{strBuffer}) ? index($self->{strBuffer}, "\n", $self->{iBufferPos}) : -1;
@@ -286,6 +287,11 @@ sub lineRead
         # If not linefeed was found within the time return undef
         if ($iLineFeedPos == -1)
         {
+            if (!defined($bError) || $bError)
+            {
+                confess &log(ERROR, "unable to read line after $self->{iProtocolTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
+            }
+
             return undef;
         }
     }
@@ -435,7 +441,7 @@ sub bufferRead
         while ($fRemaining > 0);
 
         # Throw an error if timeout happened before required bytes were read
-        confess &log(ERROR, "unable to read ${iRequestSize} bytes after $self->{iProtocolTimeout} seconds");
+        confess &log(ERROR, "unable to read ${iRequestSize} bytes after $self->{iProtocolTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
     }
 
     # Otherwise do a non-blocking read and return whatever bytes are ready
@@ -531,7 +537,7 @@ sub waitPid
                         {
                             $strError = undef;
 
-                            while (my $strLine = $self->lineRead(0, false))
+                            while (my $strLine = $self->lineRead(0, false, false))
                             {
                                 if (defined($strError))
                                 {

@@ -7,6 +7,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Exporter qw(import);
+    our @EXPORT = qw();
 use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
 
@@ -23,6 +25,14 @@ use BackRest::Protocol::IO;
 use constant OP_PROTOCOL_COMMON                                     => 'Protocol::Common';
 
 use constant OP_PROTOCOL_COMMON_NEW                                 => OP_PROTOCOL_COMMON . "->new";
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_NOOP                                                => 'noop';
+    push @EXPORT, qw(OP_NOOP);
+use constant OP_EXIT                                                => 'exit';
+    push @EXPORT, qw(OP_EXIT);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -66,6 +76,15 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# keepAlive
+#
+# Don't do anything for keep alive if there is no remote.
+####################################################################################################################################
+sub keepAlive
+{
 }
 
 ####################################################################################################################################
