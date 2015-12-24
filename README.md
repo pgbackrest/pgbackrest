@@ -24,8 +24,6 @@ Primary pgBackRest features:
 
 Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup issues. The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
 
-pgBackRest is hosted at [GitHub](https://github.com/pgmasters/backrest) and follows the gitflow model of development. This means that the master branch contains only the release history, i.e. each commit represents a single release and release tags are always from the master branch. The dev branch contains a single commit for each feature or fix and more accurately depicts the development history. Actual development is done on feature (dev_*) branches and squashed into dev after regression tests have passed. In this model dev is considered stable and can be released at any time. As such, the dev branch does not have any special version modifiers.
-
 ## Getting Started
 
 pgBackRest strives to be easy to configure and operate:
@@ -33,8 +31,6 @@ pgBackRest strives to be easy to configure and operate:
 - [User guide](http://www.pgbackrest.org/user-guide.html) for Ubuntu 12.04 & 14.04 / PostgreSQL 9.4.
 - [Command reference](http://www.pgbackrest.org/command.html) for command-line operations.
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating rich pgBackRest configurations.
-
-
 
 ## Contributing
 

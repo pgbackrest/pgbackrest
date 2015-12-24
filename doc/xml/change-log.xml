@@ -6,13 +6,19 @@
     </intro>
 
     <changelog>
-        <changelog-release date="XXXX-XX-XX" version="0.90" title="UNDER DEVELOPMENT">
+        <changelog-release date="2015-12-24" version="0.89" title="Timeout Bug Fix and Restore Read-Only Repositories">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text>Fixed an issue where longer-running backups/restores would timeout when remote and threaded.  Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work.  The error messages for timeouts was also improved to make debugging easier.</text>
+                    <text>Fixed an issue where longer-running backups/restores would timeout when remote and threaded.  Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work.  The error message for timeouts was also improved to make debugging easier.</text>
                 </release-feature>
                 <release-feature>
                     <text>Allow restores to be performed on a read-only repository by using <setting>--no-lock</setting> and <setting>--log-level-file=off</setting>.  The <setting>--no-lock</setting> option can only be used with restores.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Minor styling changes, clarifications and rewording in the user guide.</text>
+                </release-feature>
+                <release-feature>
+                    <text>The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point -- thus ends the gitflow experiment for <backrest/>.  It is recommended that any forks get re-forked and clones get re-cloned.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>

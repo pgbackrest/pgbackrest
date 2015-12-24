@@ -1,11 +1,15 @@
 # pgBackRest<br/>Change Log
 
-## v0.90: UNDER DEVELOPMENT
-__No Release Date Set__
+## v0.89: Timeout Bug Fix and Restore Read-Only Repositories
+__Released December 24, 2015__
 
-* Fixed an issue where longer-running backups/restores would timeout when remote and threaded. Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work. The error messages for timeouts was also improved to make debugging easier.
+* Fixed an issue where longer-running backups/restores would timeout when remote and threaded. Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work. The error message for timeouts was also improved to make debugging easier.
 
 * Allow restores to be performed on a read-only repository by using `--no-lock` and `--log-level-file=off`. The `--no-lock` option can only be used with restores.
+
+* Minor styling changes, clarifications and rewording in the user guide.
+
+* The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point -- thus ends the gitflow experiment for pgBackRest. It is recommended that any forks get re-forked and clones get re-cloned.
 
 ## v0.88: Documentation and Minor Bug Fixes
 __Released November 22, 2015__
