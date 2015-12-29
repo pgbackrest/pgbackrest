@@ -98,7 +98,6 @@ sub BackRestTestFile_Test
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
     executeTest('rm -rf ' . cwd() . '/log_remote');
-    mkdir(cwd() . '/log_remote', oct('0770')) or confess 'Unable to create test log directory';
 
     my $oRemote = new BackRest::Protocol::RemoteMaster
     (

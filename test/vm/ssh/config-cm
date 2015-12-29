@@ -1,5 +1,0 @@
-Host 127.0.0.1
-    StrictHostKeyChecking no
-    ControlMaster auto
-    ControlPath /tmp/%r@%h:%p
-    ControlPersist 30

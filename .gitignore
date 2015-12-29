@@ -2,9 +2,8 @@
 *~
 *.swp
 test/test
-test/vm/.vagrant
+test/.vagrant
 test/nytprof.out
 test/nytprof/*
 doc/output/*
 doc/doc/output/*
-test/vm/package/*

@@ -36,21 +36,21 @@
 
         <variable key="host-user">vagrant</variable>
         <variable key="host-mount">/backrest:/backrest</variable>
-        <variable key="image-user">{[host-user]}</variable>
+        <variable key="image-user">backrest</variable>
 
         <variable key="host-db-master">db-master</variable>
         <variable key="host-db-master-user">{[host-user]}</variable>
-        <variable key="host-db-master-image">{[image-user]}/{[host-os]}-db</variable>
+        <variable key="host-db-master-image">{[image-user]}/{[host-os]}-db-doc</variable>
         <variable key="host-db-master-mount">{[host-mount]}</variable>
 
         <variable key="host-db-standby">db-standby</variable>
         <variable key="host-db-standby-user">{[host-user]}</variable>
-        <variable key="host-db-standby-image">{[image-user]}/{[host-os]}-db</variable>
+        <variable key="host-db-standby-image">{[image-user]}/{[host-os]}-db-doc</variable>
         <variable key="host-db-standby-mount">{[host-mount]}</variable>
 
         <variable key="host-backup">backup</variable>
         <variable key="host-backup-user">{[host-user]}</variable>
-        <variable key="host-backup-image">{[image-user]}/{[host-os]}-backup</variable>
+        <variable key="host-backup-image">{[image-user]}/{[host-os]}-backup-doc</variable>
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
@@ -132,14 +132,14 @@
         <title>Installation</title>
 
         <host-add name="{[host-db-master]}" user="{[host-db-master-user]}" image="{[host-db-master-image]}" os="{[host-os]}" mount="{[host-db-master-mount]}">
-            <execute user="vagrant">
-                <exe-cmd>mkdir /home/vagrant/backrest-release-{[version]}</exe-cmd>
+            <execute user="{[host-user]}">
+                <exe-cmd>mkdir /home/{[host-user]}/backrest-release-{[version]}</exe-cmd>
             </execute>
-            <execute user="vagrant">
-                <exe-cmd>cp -r /backrest/bin /home/vagrant/backrest-release-{[version]}</exe-cmd>
+            <execute user="{[host-user]}">
+                <exe-cmd>cp -r /backrest/bin /home/{[host-user]}/backrest-release-{[version]}</exe-cmd>
             </execute>
-            <execute user="vagrant">
-                <exe-cmd>cp -r /backrest/lib /home/vagrant/backrest-release-{[version]}</exe-cmd>
+            <execute user="{[host-user]}">
+                <exe-cmd>cp -r /backrest/lib /home/{[host-user]}/backrest-release-{[version]}</exe-cmd>
             </execute>
         </host-add>
 
@@ -171,7 +171,7 @@
         <execute-list host="{[host-db-master]}">
             <title>Download version <id>{[version]}</id> of <backrest/></title>
 
-            <execute user="vagrant" skip="y">
+            <execute user="{[host-user]}" skip="y">
                 <exe-cmd>wget -q -O -
                     https://github.com/pgmasters/backrest/archive/release/{[version]}.tar.gz |
                     tar zx -C ~</exe-cmd>
@@ -182,7 +182,8 @@
             <title>Install <backrest/></title>
 
             <execute user="root">
-                <exe-cmd>cp -r ~/backrest-release-{[version]}/lib/BackRest {[perl-lib-path]}</exe-cmd>
+                <exe-cmd>cp -r ~/backrest-release-{[version]}/lib/BackRest
+                    {[perl-lib-path]}</exe-cmd>
             </execute>
             <execute user="root">
                 <exe-cmd>find {[perl-lib-path]}/BackRest -type f -exec chmod 644 {} +</exe-cmd>
@@ -1150,7 +1151,8 @@
                     <exe-cmd>find {[perl-lib-path]}/BackRest -type d -exec chmod 755 {} +</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>cp /backrest/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+                    <exe-cmd>cp /backrest/bin/{[project-exe]}
+                        {[perl-bin-path]}/{[project-exe]}</exe-cmd>
                 </execute>
                 <execute user="root">
                     <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>

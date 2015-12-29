@@ -113,7 +113,7 @@ sub execute
     }
 
     my $oExec = new BackRestTest::Common::ExecuteTest(
-        'docker exec ' . ($strUser eq 'root' ? "-u ${strUser} " : '') . "$self->{strName} ${strCommand}" , $oParam);
+        "docker exec -u ${strUser} $self->{strName} ${strCommand}" , $oParam);
 
     # Return from function and log return values if any
     return logDebugReturn

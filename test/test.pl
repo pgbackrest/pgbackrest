@@ -26,6 +26,7 @@ use BackRest::Db;
 
 use lib dirname($0) . '/lib';
 use BackRestTest::BackupTest;
+use BackRestTest::Common::ExecuteTest;
 use BackRestTest::CommonTest;
 use BackRestTest::CompareTest;
 use BackRestTest::ConfigTest;
@@ -72,6 +73,7 @@ test.pl [options]
 # Command line parameters
 ####################################################################################################################################
 my $strLogLevel = 'info';
+my $strOS = undef;
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
@@ -88,6 +90,8 @@ my $bInfinite = false;
 my $strDbVersion = 'all';
 my $bLogForce = false;
 
+my $strCommandLine = join(' ', @ARGV);
+
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
             'help' => \$bHelp,
@@ -95,6 +99,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'exes=s' => \$strExe,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
+            'os=s' => \$strOS,
             'module=s' => \$strModule,
             'test=s' => \$strModuleTest,
             'run=s' => \$iModuleTestRun,
@@ -124,6 +129,27 @@ if (@ARGV > 0)
 {
     syswrite(*STDOUT, "invalid parameter\n\n");
     pod2usage();
+}
+
+####################################################################################################################################
+# Start OS VM and run
+####################################################################################################################################
+if (defined($strOS))
+{
+    executeTest("docker rm -f ${strOS}-test", {bSuppressError => true});
+    executeTest("docker run -itd -h ${strOS}-test --name=${strOS}-test -v /backrest:/backrest backrest/${strOS}-test");
+
+    $strCommandLine =~ s/\-\-os\=\S*//g;
+    $strCommandLine =~ s/\-\-test-path\=\S*//g;
+
+    system("docker exec -it -u vagrant ${strOS}-test $0 ${strCommandLine} --test-path=/home/vagrant/test");
+
+    if (!$bNoCleanup)
+    {
+        executeTest("docker rm -f ${strOS}-test");
+    }
+
+    exit 0;
 }
 
 ####################################################################################################################################

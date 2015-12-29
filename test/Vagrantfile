@@ -1,0 +1,42 @@
+Vagrant.configure(2) do |config|
+    config.vm.provider :virtualbox do |vb|
+        vb.memory = 2048
+        vb.cpus = 8
+    end
+
+    config.vm.box = "boxcutter/ubuntu1404-docker"
+
+    config.vm.provider :virtualbox do |vb|
+        vb.name = "backrest-test"
+    end
+
+    # Provision the VM
+    config.vm.provision "shell", inline: <<-SHELL
+        # Install Perl modules
+        sudo apt-get update
+        apt-get install -y libdbi-perl libdbd-pg-perl libxml-checker-perl ghostscript
+
+        # Install texlive
+        mkdir /root/texlive
+        wget -q -O - http://mirror.hmc.edu/ctan/systems/texlive/tlnet/install-tl-unx.tar.gz \
+            | tar zxv -C /root//texlive --strip-components=1
+        echo "collection-basic 1" >> /root/texlive/texlive.profile
+        echo "collection-latex 1" >> /root/texlive/texlive.profile
+        /root/texlive/install-tl -profile=/root/texlive/texlive.profile
+
+        echo 'PATH=/usr/local/texlive/2015/bin/x86_64-linux:$PATH' >> /etc/profile
+        echo 'export PATH' >> /etc/profile
+
+        /usr/local/texlive/2015/bin/x86_64-linux/tlmgr install caption xcolor listings parskip helvetic ltablex titlesec \
+            epstopdf courier sectsty pgf ms
+
+        # Build docker images
+        /backrest/test/container.pl
+    SHELL
+
+  # Don't share the default vagrant folder
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Mount backrest path for testing
+  config.vm.synced_folder "..", "/backrest"
+end

@@ -113,13 +113,13 @@ sub execute
     {
         # Command variables
         $strCommand = trim($oCommand->fieldGet('exe-cmd'));
-        my $strUser = $oCommand->paramGet('user', false, 'postgres');
+        my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
         my $bExeOutput = $oCommand->paramTest('output', 'y');
         my $strVariableKey = $oCommand->paramGet('variable-key', false);
         my $iExeExpectedError = $oCommand->paramGet('err-expect', false);
 
         $strCommand = $self->{oManifest}->variableReplace(
-            (defined($strUser) && $strUser eq 'vagrant' ? '' :
+            ($strUser eq 'vagrant' ? '' :
                 ('sudo ' . ($strUser eq 'root' ? '' : "-u ${strUser} "))) . $strCommand);
 
         # Add continuation chars and proper spacing
@@ -132,7 +132,7 @@ sub execute
             {
                 if (length(trim($strLine)) > 80)
                 {
-                    confess &log(ERROR, "command has a line > 80 characters:\n${strCommand}");
+                    confess &log(ERROR, "command has a line > 80 characters:\n${strCommand}\noffending line: ${strLine}");
                 }
             }
         }
@@ -577,8 +577,8 @@ sub sectionChildProcess
                 $self->execute($oSection, $strName, $oExecute, $iDepth + 1);
             }
 
-            $oHost->executeSimple("sh -c 'echo \"\" >> /etc/hosts\'");
-            $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'");
+            $oHost->executeSimple("sh -c 'echo \"\" >> /etc/hosts\'", undef, 'root');
+            $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'", undef, 'root');
 
             # Add all other host IPs to this host
             foreach my $strOtherHostName (sort(keys($self->{host})))
@@ -587,7 +587,7 @@ sub sectionChildProcess
                 {
                     my $oOtherHost = $self->{host}{$strOtherHostName};
 
-                    $oHost->executeSimple("sh -c 'echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts'");
+                    $oHost->executeSimple("sh -c 'echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts'", undef, 'root');
                 }
             }
 
@@ -598,7 +598,7 @@ sub sectionChildProcess
                 {
                     my $oOtherHost = $self->{host}{$strOtherHostName};
 
-                    $oOtherHost->executeSimple("sh -c 'echo \"$oHost->{strIP} ${strName}\" >> /etc/hosts'");
+                    $oOtherHost->executeSimple("sh -c 'echo \"$oHost->{strIP} ${strName}\" >> /etc/hosts'", undef, 'root');
                 }
             }
 
