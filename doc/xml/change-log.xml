@@ -9,7 +9,7 @@
         <changelog-release date="XXXX-XX-XX" version="0.90dev" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text></text>
+                    <text>Fixed an issue where specifying <setting>--no-archive-check</setting> would throw a configuration error.  <i>Reported by Jason O'Donnell</i>.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>

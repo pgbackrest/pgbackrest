@@ -732,7 +732,8 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_START_STOP, undef, !optionGet(OPTION_NO_START_STOP));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
-                              optionGet(OPTION_NO_START_STOP) || optionGet(OPTION_BACKUP_ARCHIVE_COPY));
+                              optionGet(OPTION_NO_START_STOP) ||
+                              (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_COPY)));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               optionGet(OPTION_NO_START_STOP) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 

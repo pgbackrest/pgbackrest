@@ -1436,7 +1436,7 @@ sub BackRestTestBackup_Test
             $strComment = 'update during backup';
             BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment,
                                            {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                                            strOptionalParam => '--' . OPTION_STOP_AUTO});
+                                            strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK});
 
             BackRestTestBackup_PgExecute("drop table test_remove", false);
             BackRestTestBackup_PgSwitchXlog();

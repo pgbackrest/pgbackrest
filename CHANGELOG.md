@@ -3,7 +3,7 @@
 ## v0.90dev: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Fixed an issue where specifying `--no-archive-check` would throw a configuration error. _Reported by Jason O'Donnell_.
 
 ## v0.89: Timeout Bug Fix and Restore Read-Only Repositories
 __Released December 24, 2015__
