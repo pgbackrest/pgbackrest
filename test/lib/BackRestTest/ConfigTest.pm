@@ -32,7 +32,7 @@ sub optionSetTest
     $$oOption{option}{$strKey} = $strValue;
 }
 
-sub optionboolSetTest
+sub optionBoolSetTest
 {
     my $oOption = shift;
     my $strKey = shift;
@@ -272,7 +272,7 @@ sub BackRestTestConfig_Test
 
         if (BackRestTestCommon_Run(++$iRun, 'backup with boolean stanza'))
         {
-            optionboolSetTest($oOption, OPTION_STANZA);
+            optionBoolSetTest($oOption, OPTION_STANZA);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_COMMAND_REQUIRED);
         }
@@ -309,7 +309,7 @@ sub BackRestTestConfig_Test
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionboolSetTest($oOption, OPTION_FORCE);
+            optionBoolSetTest($oOption, OPTION_FORCE);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_FORCE, OPTION_NO_START_STOP);
         }
@@ -319,8 +319,8 @@ sub BackRestTestConfig_Test
             # $oOption = {};
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionboolSetTest($oOption, OPTION_NO_START_STOP);
-            optionboolSetTest($oOption, OPTION_FORCE);
+            optionBoolSetTest($oOption, OPTION_NO_START_STOP);
+            optionBoolSetTest($oOption, OPTION_FORCE);
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_NO_START_STOP, true);
@@ -331,7 +331,7 @@ sub BackRestTestConfig_Test
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionboolSetTest($oOption, OPTION_TEST);
+            optionBoolSetTest($oOption, OPTION_TEST);
             optionSetTest($oOption, OPTION_TEST_DELAY, BOGUS);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_TEST_DELAY);
@@ -408,7 +408,7 @@ sub BackRestTestConfig_Test
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionboolSetTest($oOption, OPTION_TEST);
+            optionBoolSetTest($oOption, OPTION_TEST);
             optionSetTest($oOption, OPTION_TEST_DELAY, '0.25');
 
             configLoadExpect($oOption, CMD_BACKUP);
@@ -418,7 +418,7 @@ sub BackRestTestConfig_Test
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionboolSetTest($oOption, OPTION_TEST);
+            optionBoolSetTest($oOption, OPTION_TEST);
             optionSetTest($oOption, OPTION_TEST_DELAY, 3);
 
             configLoadExpect($oOption, CMD_BACKUP);
@@ -555,7 +555,7 @@ sub BackRestTestConfig_Test
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_CONFIG, '/dude/dude.conf');
-            optionboolSetTest($oOption, OPTION_CONFIG, false);
+            optionBoolSetTest($oOption, OPTION_CONFIG, false);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_NEGATE, OPTION_CONFIG);
         }
@@ -564,7 +564,7 @@ sub BackRestTestConfig_Test
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionboolSetTest($oOption, OPTION_CONFIG, false);
+            optionBoolSetTest($oOption, OPTION_CONFIG, false);
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_CONFIG);
@@ -782,6 +782,21 @@ sub BackRestTestConfig_Test
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_DB_PATH, '/path/to/db');
+        }
+
+        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' option ' . OPTION_BACKUP_ARCHIVE_CHECK))
+        {
+            $oConfig = {};
+            $$oConfig{$strStanza}{&OPTION_DB_PATH} = '/path/to/db';
+            iniSave($strConfigFile, $oConfig, true);
+
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
+            optionBoolSetTest($oOption, OPTION_BACKUP_ARCHIVE_CHECK, false);
+
+            configLoadExpect($oOption, CMD_BACKUP);
+            optionTestExpect(OPTION_NO_START_STOP, false);
+            optionTestExpect(OPTION_BACKUP_ARCHIVE_CHECK, false);
         }
 
         if (BackRestTestCommon_Run(++$iRun, CMD_ARCHIVE_PUSH . ' option ' . OPTION_DB_PATH))
