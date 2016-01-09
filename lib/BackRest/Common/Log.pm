@@ -425,6 +425,7 @@ sub log
     my $strMessage = shift;
     my $iCode = shift;
     my $bSuppressLog = shift;
+    my $iIndent = shift;
 
     # Set defaults
     $bSuppressLog = defined($bSuppressLog) ? $bSuppressLog : false;
@@ -459,7 +460,15 @@ sub log
     $strMessageFormat = (defined($iCode) ? "[${iCode}]: " : '') . $strMessageFormat;
 
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
-    $strMessageFormat =~ s/\n/\n                                    /g;
+    if (defined($iIndent))
+    {
+        my $strIndent = ' ' x $iIndent;
+        $strMessageFormat =~ s/\n/\n${strIndent}/g;
+    }
+    else
+    {
+        $strMessageFormat =~ s/\n/\n                                    /g;
+    }
 
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {

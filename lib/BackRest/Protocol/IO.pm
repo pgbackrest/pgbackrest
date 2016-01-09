@@ -251,7 +251,7 @@ sub lineRead
                     $self->waitPid();
 
                     # Only error if reading from the input stream
-                    if (!defined($bInRead) || $bInRead)
+                    if (defined($bError) && $bError)
                     {
                         confess &log(ERROR, "unexpected EOF", ERROR_FILE_READ);
                     }
@@ -297,7 +297,8 @@ sub lineRead
     }
 
     # Return the line that was found and adjust the buffer position
-    my $strLine = substr($self->{strBuffer}, $self->{iBufferPos}, $iLineFeedPos - $self->{iBufferPos});
+    my $strLine = $iLineFeedPos - $self->{iBufferPos} == 0 ? '' :
+                      substr($self->{strBuffer}, $self->{iBufferPos}, $iLineFeedPos - $self->{iBufferPos});
     $self->{iBufferPos} = $iLineFeedPos + 1;
 
     return $strLine;

@@ -184,7 +184,6 @@ if (@stryOutput == 0)
     if ($oManifest->isBackRest())
     {
         push(@stryOutput, 'help');
-        push(@stryOutput, 'markdown');
     }
 }
 
@@ -203,7 +202,8 @@ for my $strOutput (@stryOutput)
         docProcess("${strBasePath}/xml/index.xml", "${strBasePath}/../README.md", $oManifest);
         docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oManifest);
     }
-    elsif ($strOutput eq 'markdown')
+
+    if ($strOutput eq 'markdown')
     {
         my $oMarkdown =
             new BackRestDoc::Markdown::DocMarkdown

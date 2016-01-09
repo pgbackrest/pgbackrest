@@ -1,7 +1,7 @@
-#!/usr/bin/perl
 ####################################################################################################################################
-# container.pl - Build docker containers for testing and documentation
+# Container.pm - Build docker containers for testing and documentation
 ####################################################################################################################################
+package BackRestTest::Docker::Container;
 
 ####################################################################################################################################
 # Perl includes
@@ -10,112 +10,18 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
 
-# Convert die to confess to capture the stack trace
-$SIG{__DIE__} = sub { Carp::confess @_ };
-
 use Cwd qw(abs_path);
+use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Scalar::Util qw(blessed);
-# use Cwd qw(abs_path);
-# use Pod::Usage qw(pod2usage);
-# use Scalar::Util qw(blessed);
 
-use lib dirname($0) . '/../lib';
 use BackRest::Common::Ini;
-# use BackRest::Common::Ini;
 use BackRest::Common::Log;
 use BackRest::FileCommon;
-# use BackRest::Db;
 
-use lib dirname($0) . '/lib';
 use BackRestTest::Common::ExecuteTest;
-# use BackRestTest::CommonTest;
-# use BackRestTest::CompareTest;
-# use BackRestTest::ConfigTest;
-# use BackRestTest::FileTest;
-# use BackRestTest::HelpTest;
-
-####################################################################################################################################
-# Usage
-####################################################################################################################################
-
-=head1 NAME
-
-container.pl - Docker Container Build
-
-=head1 SYNOPSIS
-
-container.pl [options]
-
- Build Options:
-   --os                 os to build (defaults to all)
-
- Configuration Options:
-   --log-level          log level to use for tests (defaults to info)
-   --quiet, -q          equivalent to --log-level=off
-
- General Options:
-   --version            display version and exit
-   --help               display usage and exit
-=cut
-
-####################################################################################################################################
-# Command line parameters
-####################################################################################################################################
-my $strLogLevel = 'info';
-my $bVersion = false;
-my $bHelp = false;
-my $bQuiet = false;
-
-GetOptions ('q|quiet' => \$bQuiet,
-            'version' => \$bVersion,
-            'help' => \$bHelp,
-            'log-level=s' => \$strLogLevel)
-    or pod2usage(2);
-
-# Display version and exit if requested
-if ($bVersion || $bHelp)
-{
-    syswrite(*STDOUT, 'pgBackRest ' . BACKREST_VERSION . " Docker Container Build\n");
-
-    if ($bHelp)
-    {
-        syswrite(*STDOUT, "\n");
-        pod2usage();
-    }
-
-    exit 0;
-}
-
-if (@ARGV > 0)
-{
-    syswrite(*STDOUT, "invalid parameter\n\n");
-    pod2usage();
-}
-
-####################################################################################################################################
-# Setup
-####################################################################################################################################
-# Set a neutral umask so tests work as expected
-umask(0);
-
-# Set console log level
-if ($bQuiet)
-{
-    $strLogLevel = 'off';
-}
-
-logLevelSet(undef, uc($strLogLevel));
-
-# Create temp path
-my $strTempPath = dirname(abs_path($0)) . '/.vagrant/docker';
-
-if (!-e $strTempPath)
-{
-    mkdir $strTempPath
-        or confess &log(ERROR, "unable to create ${strTempPath}");
-}
 
 ####################################################################################################################################
 # Valid OS list
@@ -285,8 +191,17 @@ sub perlInstall
 ####################################################################################################################################
 # Build containers
 ####################################################################################################################################
-eval
+sub containerBuild
 {
+    # Create temp path
+    my $strTempPath = dirname(abs_path($0)) . '/.vagrant/docker';
+
+    if (!-e $strTempPath)
+    {
+        mkdir $strTempPath
+            or confess &log(ERROR, "unable to create ${strTempPath}");
+    }
+
     # Create SSH key (if it does not already exist)
     if (-e "${strTempPath}/id_rsa")
     {
@@ -296,7 +211,7 @@ eval
     {
         &log(INFO, "Building SSH keys...");
 
-        executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 768 -N ''");
+        executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 768 -N ''", {bSuppressStdErr => true});
     }
 
     foreach my $strOS (@stryOS)
@@ -337,7 +252,9 @@ eval
         }
         elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
         {
-            $strImage .= "RUN apt-get -y install openssh-server\n";
+            $strImage .=
+                "RUN apt-get update\n" .
+                "RUN apt-get -y install openssh-server\n";
         }
 
         $strImage .=
@@ -441,7 +358,8 @@ eval
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "$strImage\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}");
+        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                    {bSuppressStdErr => true});
 
         # Db image
         ###########################################################################################################################
@@ -512,7 +430,9 @@ eval
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}");
+        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                    {bSuppressStdErr => true});
+
 
         # Db Doc image
         ###########################################################################################################################
@@ -527,7 +447,9 @@ eval
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}");
+        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                    {bSuppressStdErr => true});
+
 
         # Backup image
         ###########################################################################################################################
@@ -545,7 +467,9 @@ eval
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}");
+        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                    {bSuppressStdErr => true});
+
 
         # Backup Doc image
         ###########################################################################################################################
@@ -568,7 +492,9 @@ eval
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}");
+        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                    {bSuppressStdErr => true});
+
 
         # Test image
         ###########################################################################################################################
@@ -605,21 +531,12 @@ eval
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}");
+        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                    {bSuppressStdErr => true});
+
     }
-};
-
-if ($@)
-{
-    my $oMessage = $@;
-
-    # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('BackRest::Common::Exception'))
-    {
-        syswrite(*STDOUT, $oMessage->trace());
-        exit $oMessage->code();
-    }
-
-    syswrite(*STDOUT, $oMessage);
-    exit 255;;
 }
+
+push @EXPORT, qw(containerBuild);
+
+1;

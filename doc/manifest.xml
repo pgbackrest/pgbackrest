@@ -29,6 +29,7 @@
         <source key="index"/>
         <source key="user-guide"/>
         <source key="reference" type="custom"/>
+        <source key="test"/>
     </source-list>
 
     <render-list>
@@ -41,6 +42,10 @@
 
         <render type="pdf" file="{[pdf-file]}">
             <render-source key="user-guide"/>
+        </render>
+
+        <render type="markdown">
+            <render-source key="test" file="../../../test/README.md"/>
         </render>
     </render-list>
 </doc>

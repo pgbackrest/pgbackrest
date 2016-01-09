@@ -258,10 +258,13 @@ sub BackRestTestConfig_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test command-line options
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($strTest eq 'all' || $strTest eq 'option')
+    my $strThisTest = 'option';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
     {
         $iRun = 0;
-        &log(INFO, "Option module\n");
+
+        &log(INFO, "Test ${strThisTest}\n");
 
         if (BackRestTestCommon_Run(++$iRun, 'backup with no stanza'))
         {
@@ -543,10 +546,13 @@ sub BackRestTestConfig_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test mixed command-line/config
     #-------------------------------------------------------------------------------------------------------------------------------
-    if ($strTest eq 'all' || $strTest eq 'config')
+    $strThisTest = 'config';
+
+    if ($strTest eq 'all' || $strTest eq $strThisTest)
     {
         $iRun = 0;
-        &log(INFO, "Config module\n");
+
+        &log(INFO, "Test ${strThisTest}\n");
 
         BackRestTestCommon_Create();
 

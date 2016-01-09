@@ -21,6 +21,7 @@ use Symbol 'gensym';
 use lib dirname($0) . '/../lib';
 use BackRest::Common::Log;
 use BackRest::Common::Wait;
+use BackRest::Protocol::IO;
 
 ####################################################################################################################################
 # Operation constants
@@ -121,6 +122,9 @@ sub begin
 
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
+    # Create select objects
+    $self->{oIO} = new BackRest::Protocol::IO($self->{hOut}, undef, $self->{hError}, undef, 30, 65536);
+
     if (!defined($self->{hError}))
     {
         confess 'STDERR handle is undefined';
@@ -138,67 +142,67 @@ sub endRetry
     my
     (
         $strOperation,
-        $strTest
+        $strTest,
+        $bWait
     ) =
         logDebugParam
         (
             OP_EXECUTE_TEST_END_RETRY, \@_,
-            {name => 'strTest', required => false, trace => true}
+            {name => 'strTest', required => false, trace => true},
+            {name => 'bWait', required => false, default => true, trace => true}
         );
 
-    # Create select objects
-    my $oErrorSelect = IO::Select->new();
-    $oErrorSelect->add($self->{hError});
-    my $oOutSelect = IO::Select->new();
-    $oOutSelect->add($self->{hOut});
-
     # Drain the output and error streams and look for test points
+    # my $iWait = $bWait ? .05 : 0;
+
     while(waitpid($self->{pId}, WNOHANG) == 0)
     {
-        # Drain the stderr stream
-        if ($oErrorSelect->can_read(0))
+        my $bFound = false;
+        # # Drain the stderr stream
+        # !!! This is a good idea but can only be done with the IO object has separate buffers for stdin and stderr
+        # while (my $strLine = $self->{oIO}->lineRead(0, false, false))
+        # {
+        #     $bFound = true;
+        #     $self->{strErrorLog} .= "$strLine\n";
+        # }
+
+        # Drain the stdout stream and look for test points
+        while (defined(my $strLine = $self->{oIO}->lineRead(0, true, false)))
         {
-            while (my $strLine = readline($self->{hError}))
+            $self->{strOutLog} .= "$strLine\n";
+            $bFound = true;
+
+            if (defined($strTest) && testCheck($strLine, $strTest))
             {
-                $self->{strErrorLog} .= $strLine;
+                &log(DEBUG, "Found test ${strTest}");
+                return true;
             }
         }
 
-        # Drain the stdout stream and look for test points
-        if ($oOutSelect->can_read(.05))
+        if (!$bWait)
         {
-            while (my $strLine = readline($self->{hOut}))
-            {
-                $self->{strOutLog} .= $strLine;
+            return undef;
+        }
 
-                if (defined($strTest) && testCheck($strLine, $strTest))
-                {
-                    &log(DEBUG, "Found test ${strTest}");
-                    return true;
-                }
-            }
+        if (!$bFound)
+        {
+            waitHiRes(.05);
         }
     }
 
     # Check the exit status
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
-    # Drain the stderr stream
-    if ($oErrorSelect->can_read(0))
+    # Drain the stdout stream
+    while (defined(my $strLine = $self->{oIO}->lineRead(0, true, false)))
     {
-        while (my $strLine = readline($self->{hError}))
-        {
-            $self->{strErrorLog} .= $strLine;
-        }
+        $self->{strOutLog} .= "$strLine\n";
     }
 
-    # Drain the stdout stream
-    if ($oOutSelect->can_read(0))
+    # Drain the stderr stream
+    while (defined(my $strLine = $self->{oIO}->lineRead(0, false, false)))
     {
-        while (my $strLine = readline($self->{hOut}))
-        {
-            $self->{strOutLog} .= $strLine;
-        }
+        $self->{strErrorLog} .= "$strLine\n";
     }
 
     # Pass the log to the LogTest object
@@ -278,12 +282,14 @@ sub end
     my
     (
         $strOperation,
-        $strTest
+        $strTest,
+        $bWait
     ) =
         logDebugParam
         (
             OP_EXECUTE_TEST_END, \@_,
-            {name => 'strTest', required => false}
+            {name => 'strTest', required => false, trace => true},
+            {name => 'bWait', required => false, default => true, trace => true}
         );
 
     # If retry is not defined then run endRetry() one time
@@ -291,7 +297,7 @@ sub end
 
     if (!defined($self->{iRetrySeconds}))
     {
-        $iExitStatus = $self->endRetry($strTest);
+        $iExitStatus = $self->endRetry($strTest, $bWait);
     }
     # Else loop until success or timeout
     else
@@ -302,7 +308,7 @@ sub end
         {
             $self->{bRetry} = false;
             $self->begin();
-            $iExitStatus = $self->endRetry($strTest);
+            $iExitStatus = $self->endRetry($strTest, $bWait);
 
             if ($self->{bRetry})
             {
@@ -314,7 +320,7 @@ sub end
         if ($self->{bRetry})
         {
             $self->begin();
-            $iExitStatus = $self->endRetry($strTest);
+            $iExitStatus = $self->endRetry($strTest, $bWait);
         }
     }
 

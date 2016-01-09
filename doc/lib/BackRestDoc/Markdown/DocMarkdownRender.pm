@@ -198,6 +198,8 @@ sub sectionProcess
 
     my $strMarkdown = '#' . ('#' x $iDepth) . ' ' . $self->processText($oSection->nodeGet('title')->textGet());
 
+    my $strLastChild = undef;
+
     foreach my $oChild ($oSection->nodeList())
     {
         &log(DEBUG, ('    ' x ($iDepth + 2)) . 'process child ' . $oChild->nameGet());
@@ -288,14 +290,22 @@ sub sectionProcess
         # Add code block
         elsif ($oChild->nameGet() eq 'code-block')
         {
-            # $oSectionBodyElement->
-            #     addNew(HTML_DIV, 'code-block',
-            #            {strContent => $oChild->valueGet()});
+            if ($oChild->paramTest('title'))
+            {
+                $strMarkdown .= "\n\n_" . $oChild->paramGet('title') . "_:";
+            }
+
+            $strMarkdown .= "\n```\n" . trim($oChild->valueGet()) . "\n```";
         }
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
         {
-            $strMarkdown .= "\n\n" . $self->processText($oChild->textGet());
+            if (defined($strLastChild) && $strLastChild ne 'code-block')
+            {
+                $strMarkdown .= "\n";
+            }
+
+            $strMarkdown .= "\n" . $self->processText($oChild->textGet());
         }
         # Add option descriptive text
         elsif ($oChild->nameGet() eq 'option-description')
@@ -342,6 +352,8 @@ sub sectionProcess
         {
             # $self->sectionChildProcess($oSection, $oChild, $iDepth + 1);
         }
+
+        $strLastChild = $oChild->nameGet();
     }
 
     # Return from function and log return values if any

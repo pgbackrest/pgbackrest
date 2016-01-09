@@ -30,8 +30,8 @@ Vagrant.configure(2) do |config|
         /usr/local/texlive/2015/bin/x86_64-linux/tlmgr install caption xcolor listings parskip helvetic ltablex titlesec \
             epstopdf courier sectsty pgf ms
 
-        # Build docker images
-        /backrest/test/container.pl
+        # Build vm images
+        /backrest/test/test.pl --vm-build
     SHELL
 
   # Don't share the default vagrant folder
