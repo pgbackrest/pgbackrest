@@ -274,7 +274,8 @@ sub containerBuild
                 "RUN rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm";
+                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-2.noarch.rpm";
         }
         elsif ($strOS eq OS_CO7)
         {
@@ -294,7 +295,7 @@ sub containerBuild
             $strImage .=
                 "RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
                     ($strOS eq OS_U12 ? 'precise' : 'trusty') .
-                    "-pgdg main 9.5' >> /etc/apt/sources.list.d/pgdg.list\n" .
+                    "-pgdg main' >> /etc/apt/sources.list.d/pgdg.list\n" .
                 "RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -\n" .
                 "RUN apt-get update";
         }
@@ -386,7 +387,8 @@ sub containerBuild
                 "RUN yum -y install postgresql91-server\n" .
                 "RUN yum -y install postgresql92-server\n" .
                 "RUN yum -y install postgresql93-server\n" .
-                "RUN yum -y install postgresql94-server";
+                "RUN yum -y install postgresql94-server\n" .
+                "RUN yum -y install postgresql95-server";
         }
         elsif ($strOS eq OS_CO7)
         {
@@ -398,6 +400,8 @@ sub containerBuild
         elsif ($strOS eq OS_U12)
         {
             $strImage .=
+                "RUN apt-get install -y postgresql-9.5\n" .
+                "RUN pg_dropcluster --stop 9.5 main\n" .
                 "RUN apt-get install -y postgresql-9.4\n" .
                 "RUN pg_dropcluster --stop 9.4 main\n" .
                 "RUN apt-get install -y postgresql-9.3\n" .

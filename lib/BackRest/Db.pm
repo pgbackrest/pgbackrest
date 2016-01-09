@@ -452,14 +452,13 @@ sub info
         close($hFile);
 
         # Make sure the control version is supported
-        if ($iControlVersion == 942 && $iCatalogVersion == 201409291)
-        {
-            $fDbVersion = '9.4';
-        }
-        # Leave 9.5 catalog version out until it stabilizes (then move 9.5 to the top of the list)
-        elsif ($iControlVersion == 942) # && $iCatalogVersion == 201505311)
+        if ($iControlVersion == 942 && $iCatalogVersion == 201510051)
         {
             $fDbVersion = '9.5';
+        }
+        elsif ($iControlVersion == 942 && $iCatalogVersion == 201409291)
+        {
+            $fDbVersion = '9.4';
         }
         elsif ($iControlVersion == 937 && $iCatalogVersion == 201306121)
         {

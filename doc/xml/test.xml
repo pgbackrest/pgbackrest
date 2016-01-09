@@ -23,7 +23,7 @@ vagrant up
 vagrant ssh
         </code-block>
 
-        <p>The <code>vagrant up</code> step could take some time as a number of Docker containers must also be built.  The <code>vagrant up</code> command automatically logs onto the VM.</p>
+        <p>The <code>vagrant up</code> command may take some time as a number of Docker containers must also be built.  The <code>vagrant ssh</code> command automatically logs onto the VM.</p>
 
         <code-block title="Run All Tests">
 /backrest/test/test.pl

@@ -18,7 +18,7 @@ cd test
 vagrant up
 vagrant ssh
 ```
-The `vagrant up` step could take some time as a number of Docker containers must also be built. The `vagrant up` command automatically logs onto the VM.
+The `vagrant up` command may take some time as a number of Docker containers must also be built. The `vagrant ssh` command automatically logs onto the VM.
 
 _Run All Tests_:
 ```
