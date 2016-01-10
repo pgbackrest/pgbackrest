@@ -243,6 +243,7 @@ sub process
             {
                 my ($strArchiveId, $strChecksum) = $oArchive->pushCheck($oFile,
                                                                         paramGet(\%oParamHash, 'wal-segment'),
+                                                                        paramGet(\%oParamHash, 'partial'),
                                                                         undef,
                                                                         paramGet(\%oParamHash, 'db-version'),
                                                                         paramGet(\%oParamHash, 'db-sys-id'));

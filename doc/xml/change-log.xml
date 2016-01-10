@@ -12,7 +12,7 @@
                     <text>Fixed an issue where specifying <setting>--no-archive-check</setting> would throw a configuration error.  <i>Reported by Jason O'Donnell</i>.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Provisional support for <postgres/> 9.5.  No support for <setting>archive_mode = 'always'</setting> or <file>.partial</file> WAL on a standby.</text>
+                    <text>Provisional support for <postgres/> 9.5 including partial WAL segments.  No support for <setting>archive_mode = 'always'</setting>.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>

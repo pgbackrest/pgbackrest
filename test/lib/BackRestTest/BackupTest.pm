@@ -163,6 +163,60 @@ sub BackRestTestBackup_Test
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --no-fork --stanza=db archive-push';
 
+                sub archiveGenerate
+                {
+                    my $oFile = shift;
+                    my $strXlogPath = shift;
+                    my $iSourceNo = shift;
+                    my $iArchiveNo = shift;
+                    my $bPartial = shift;
+
+                    my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
+                                         (defined($bPartial) && $bPartial ? '.partial' : '');
+                    my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . "/test.archive${iSourceNo}.bin";
+
+                    my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
+
+                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                                 false,                                 # Source is not compressed
+                                 false,                                 # Destination is not compressed
+                                 undef, undef, undef,                   # Unused params
+                                 true);                                 # Create path if it does not exist
+
+                    return $strArchiveFile, $strSourceFile;
+                }
+
+                sub archiveCheck
+                {
+                    my $oFile = shift;
+                    my $strArchiveFile = shift;
+                    my $strArchiveChecksum = shift;
+                    my $bCompress = shift;
+
+                    # Build the archive name to check for at the destination
+                    my $strArchiveCheck = "9.3-1/${strArchiveFile}-${strArchiveChecksum}";
+
+                    if ($bCompress)
+                    {
+                        $strArchiveCheck .= '.gz';
+                    }
+
+                    my $oWait = waitInit(5);
+                    my $bFound = false;
+
+                    do
+                    {
+                        $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+                    }
+                    while (!$bFound && waitMore($oWait));
+
+                    if (!$bFound)
+                    {
+                        confess 'unable to find ' . $strArchiveCheck;
+                    }
+                }
+
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
                 {
@@ -171,6 +225,8 @@ sub BackRestTestBackup_Test
                     # Loop through archive files
                     for (my $iArchive = 1; $iArchive <= $iArchiveMax; $iArchive++)
                     {
+                        my $strSourceFile;
+
                         # Construct the archive filename
                         my $iArchiveNo = (($iBackup - 1) * $iArchiveMax + ($iArchive - 1)) + 1;
 
@@ -179,20 +235,10 @@ sub BackRestTestBackup_Test
                             confess 'backup total * archive total cannot be greater than 255';
                         }
 
-                        $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
-
+                        ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo);
                         &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
                                    ', archive ' .sprintf('%02x', $iArchive) .
                                    " - ${strArchiveFile}");
-
-                        my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
-
-                        $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                                     PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                                     false,                                 # Source is not compressed
-                                     false,                                 # Destination is not compressed
-                                     undef, undef, undef,                   # Unused params
-                                     true);                                 # Create path if it does not exist
 
                         executeTest($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
 
@@ -245,7 +291,6 @@ sub BackRestTestBackup_Test
                                     BackRestTestBackup_Stop(undef, undef, true);
 
                                     $oExecArchive->end();
-
                                 }
                                 else
                                 {
@@ -267,13 +312,33 @@ sub BackRestTestBackup_Test
                             # Now it should break on archive duplication (because checksum is different
                             &log(INFO, '        test archive duplicate error');
 
-                            $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile2, # Source file
-                                         PATH_DB_ABSOLUTE, $strSourceFile,       # Destination file
-                                         false,                                  # Source is not compressed
-                                         false,                                  # Destination is not compressed
-                                         undef, undef, undef,                    # Unused params
-                                         true);                                  # Create path if it does not exist
+                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo);
+                            executeTest($strCommand . " ${strSourceFile}",
+                                        {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
 
+                            if ($bArchiveAsync)
+                            {
+                                my $strDuplicateWal =
+                                    ($bRemote ? BackRestTestCommon_LocalPathGet() : BackRestTestCommon_RepoPathGet()) .
+                                    "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
+
+                                unlink ($strDuplicateWal)
+                                        or confess "unable to remove duplicate WAL segment created for testing: ${strDuplicateWal}";
+                            }
+
+                            # Test .partial archive
+                            &log(INFO, '        test .partial archive');
+                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, true);
+                            executeTest($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
+                            archiveCheck($oFile, $strArchiveFile, $strArchiveChecksum, $bCompress);
+
+                            # Test .partial archive duplicate
+                            &log(INFO, '        test .partial archive duplicate');
+                            executeTest($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
+
+                            # Test .partial archive with different checksum
+                            &log(INFO, '        test .partial archive with different checksum');
+                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, true);
                             executeTest($strCommand . " ${strSourceFile}",
                                         {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
 
@@ -288,27 +353,7 @@ sub BackRestTestBackup_Test
                             }
                         }
 
-                        # Build the archive name to check for at the destination
-                        my $strArchiveCheck = "9.3-1/${strArchiveFile}-${strArchiveChecksum}";
-
-                        if ($bCompress)
-                        {
-                            $strArchiveCheck .= '.gz';
-                        }
-
-                        my $oWait = waitInit(5);
-                        my $bFound = false;
-
-                        do
-                        {
-                            $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
-                        }
-                        while (!$bFound && waitMore($oWait));
-
-                        if (!$bFound)
-                        {
-                            confess 'unable to find ' . $strArchiveCheck;
-                        }
+                        archiveCheck($oFile, $strArchiveFile, $strArchiveChecksum, $bCompress);
                     }
 
                     # Might be nice to add tests for .backup files here (but this is already tested in full backup)

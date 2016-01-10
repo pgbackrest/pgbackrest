@@ -173,6 +173,7 @@ sub walFileName
         $oFile,
         $strArchiveId,
         $strWalSegment,
+        $bPartial,
         $iWaitSeconds
     ) =
         logDebugParam
@@ -181,6 +182,7 @@ sub walFileName
             {name => 'oFile'},
             {name => 'strArchiveId'},
             {name => 'strWalSegment'},
+            {name => 'bPartial'},
             {name => 'iWaitSeconds', required => false}
         );
 
@@ -195,7 +197,8 @@ sub walFileName
     {
         # Get the name of the requested WAL segment (may have hash info and compression extension)
         @stryWalFileName = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
-            "^${strWalSegment}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", undef, true);
+            "^${strWalSegment}" . ($bPartial ? '\\.partial' : '') .
+            "(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", undef, true);
 
         # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
         if (@stryWalFileName > 1)
@@ -634,7 +637,10 @@ sub push
     my $bCompress = $bAsync ? false : optionGet(OPTION_COMPRESS);
 
     # Determine if this is an archive file (don't do compression or checksum on .backup, .history, etc.)
-    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}$/ ? true : false;
+    my $bArchiveFile = basename($strSourceFile) =~ /^[0-F]{24}(\.partial){0,1}$/ ? true : false;
+
+    # Determine if this is a partial archive file
+    my $bPartial = $bArchiveFile && basename($strSourceFile) =~ /\.partial/ ? true : false;
 
     # Check that there are no issues with pushing this WAL segment
     my $strArchiveId;
@@ -645,8 +651,8 @@ sub push
         if ($bArchiveFile)
         {
             my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
-            ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $strSourceFile,
-                                                             $strDbVersion, $ullDbSysId);
+            ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $bPartial,
+                                                             $strSourceFile, $strDbVersion, $ullDbSysId);
         }
         else
         {
@@ -696,6 +702,7 @@ sub pushCheck
         $strOperation,
         $oFile,
         $strWalSegment,
+        $bPartial,
         $strWalFile,
         $strDbVersion,
         $ullDbSysId
@@ -705,6 +712,7 @@ sub pushCheck
             OP_ARCHIVE_PUSH_CHECK, \@_,
             {name => 'oFile'},
             {name => 'strWalSegment'},
+            {name => 'bPartial'},
             {name => 'strWalFile', required => false},
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'}
@@ -720,6 +728,7 @@ sub pushCheck
         my %oParamHash;
 
         $oParamHash{'wal-segment'} = $strWalSegment;
+        $oParamHash{'partial'} = $bPartial;
         $oParamHash{'db-version'} = $strDbVersion;
         $oParamHash{'db-sys-id'} = $ullDbSysId;
 
@@ -746,11 +755,11 @@ sub pushCheck
         $strArchiveId = (new BackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive
-        $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment);
+        $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment, $bPartial);
 
         if (defined($strChecksum))
         {
-            $strChecksum = substr($strChecksum, 25, 40);
+            $strChecksum = substr($strChecksum, $bPartial ? 33 : 25, 40);
         }
     }
 
@@ -760,10 +769,12 @@ sub pushCheck
 
         if ($strChecksumNew ne $strChecksum)
         {
-            confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
+            confess &log(ERROR, "WAL segment ${strWalSegment}" . ($bPartial ? '.partial' : '') .
+                                ' already exists in the archive', ERROR_ARCHIVE_DUPLICATE);
         }
 
-        &log(WARN, "WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
+        &log(WARN, "WAL segment ${strWalSegment}" . ($bPartial ? '.partial' : '') .
+                   " already exists in the archive with the same checksum\n" .
                    "HINT: this is valid in some recovery scenarios but may also indicate a problem");
     }
 
@@ -817,7 +828,7 @@ sub xfer
 
     foreach my $strFile (sort(keys(%{$oManifestHash{name}})))
     {
-        if ($strFile =~ "^[0-F]{24}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
+        if ($strFile =~ "^[0-F]{24}(\\.partial){0,1}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
             $strFile =~ /^[0-F]{8}\.history$/ || $strFile =~ /^[0-F]{24}\.[0-F]{8}\.backup$/)
         {
             CORE::push(@stryFile, $strFile);
@@ -870,7 +881,10 @@ sub xfer
 
                 # Determine if this is an archive file (don't want to do compression or checksum on .backup files)
                 my $bArchiveFile = basename($strFile) =~
-                    "^[0-F]{24}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
+                    "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$" ? true : false;
+
+                # Determine if this is a partial archive file
+                my $bPartial = $bArchiveFile && basename($strFile) =~ /\.partial/ ? true : false;
 
                 # Figure out whether the compression extension needs to be added or removed
                 my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
@@ -901,7 +915,7 @@ sub xfer
                 if ($bArchiveFile)
                 {
                     my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-                    ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24),
+                    ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $bPartial,
                                                                      $strArchiveFile, $strDbVersion, $ullDbSysId);
                 }
                 else
