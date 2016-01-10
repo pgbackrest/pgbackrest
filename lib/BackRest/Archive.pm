@@ -396,7 +396,7 @@ sub get
 
     # Get the wal segment filename
     my $strArchiveId = $self->getCheck($oFile);
-    my $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strSourceArchive);
+    my $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strSourceArchive, false);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned

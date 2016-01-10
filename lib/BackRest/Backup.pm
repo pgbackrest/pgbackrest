@@ -944,7 +944,7 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, 600);
+            my $strArchiveFile = $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, false, 600);
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {

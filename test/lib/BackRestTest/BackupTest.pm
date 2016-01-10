@@ -1455,6 +1455,25 @@ sub BackRestTestBackup_Test
             my $strTimeTarget = BackRestTestBackup_PgSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
             &log(INFO, "        time target is ${strTimeTarget}");
 
+            # Incr backup - fail on archive_mode=always when version >= 9.5
+            #-----------------------------------------------------------------------------------------------------------------------
+            if (BackRestTestCommon_DbVersion() >= 9.5)
+            {
+                $strType = BACKUP_TYPE_INCR;
+
+                $strComment = 'fail on archive_mode=always';
+
+                # Set archive_mode=always
+                BackRestTestBackup_ClusterStop();
+                BackRestTestBackup_ClusterStart(undef, undef, undef, undef, true);
+
+                BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_FEATURE_NOT_SUPPORTED});
+
+                # Reset the cluster to a normal state so the next test will work
+                BackRestTestBackup_ClusterStop();
+                BackRestTestBackup_ClusterStart();
+            }
+
             # Incr backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;

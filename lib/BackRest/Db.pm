@@ -611,6 +611,14 @@ sub backupStart
         $bStartFast = false;
     }
 
+    # Error if archive_mode = always (support has not been added yet)
+    my $strArchiveMode = trim($self->executeSql('show archive_mode'));
+
+    if ($strArchiveMode eq 'always')
+    {
+        confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
+    }
+
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))

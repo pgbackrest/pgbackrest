@@ -286,12 +286,14 @@ sub BackRestTestBackup_ClusterStart
     my $iPort = shift;
     my $bHotStandby = shift;
     my $bArchive = shift;
+    my $bArchiveAlways = shift;
 
     # Set default
     $iPort = defined($iPort) ? $iPort : BackRestTestCommon_DbPortGet();
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
     $bHotStandby = defined($bHotStandby) ? $bHotStandby : false;
     $bArchive = defined($bArchive) ? $bArchive : true;
+    $bArchiveAlways = defined($bArchiveAlways) ? $bArchiveAlways : false;
 
     # Make sure postgres is not running
     if (-e $strPath . '/postmaster.pid')
@@ -311,7 +313,14 @@ sub BackRestTestBackup_ClusterStart
     {
         if (BackRestTestCommon_DbVersion() >= '8.3')
         {
-            $strCommand .= " -c archive_mode=on";
+            if (BackRestTestCommon_DbVersion() >= '9.5' && $bArchiveAlways)
+            {
+                $strCommand .= " -c archive_mode=always";
+            }
+            else
+            {
+                $strCommand .= " -c archive_mode=on";
+            }
         }
 
         $strCommand .= " -c archive_command='${strArchive}'";
