@@ -104,6 +104,8 @@ use constant ERROR_PROTOCOL_TIMEOUT                                 => ERROR_MIN
     push @EXPORT, qw(ERROR_PROTOCOL_TIMEOUT);
 use constant ERROR_FEATURE_NOT_SUPPORTED                            => ERROR_MINIMUM + 42;
     push @EXPORT, qw(ERROR_FEATURE_NOT_SUPPORTED);
+use constant ERROR_ARCHIVE_COMMAND_NOT_SET                          => ERROR_MINIMUM + 43;
+    push @EXPORT, qw(ERROR_ARCHIVE_COMMAND_NOT_SET);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

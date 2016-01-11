@@ -1448,6 +1448,20 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Start();
 
+            $strType = BACKUP_TYPE_INCR;
+
+            $strComment = 'archive_command not set';
+
+            # Check archive_command_not_set error
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart(undef, undef, false);
+
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_NOT_SET});
+            
+            # Reset the cluster to a normal state so the next test will work
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart();
+
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_PgExecute("update test set message = '$strTimeMessage'", false);
