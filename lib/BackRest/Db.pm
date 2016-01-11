@@ -620,11 +620,11 @@ sub backupStart
     }
 
     # Check if archive_command is set
-    my $strArchiveCommand = $self->executeSql('SHOW archive_command');
+    my $strArchiveCommand = $self->executeSql('show archive_command');
 
-    if(index($strArchiveCommand, BACKREST_EXE) == -1)
+    if (index($strArchiveCommand, BACKREST_EXE) == -1)
     {
-        confess &log(ERROR, "archive_command must be set", ERROR_ARCHIVE_COMMAND_NOT_SET);
+        confess &log(ERROR, "archive_command must be set", ERROR_ARCHIVE_COMMAND_INVALID);
     }
 
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same

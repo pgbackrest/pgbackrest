@@ -1403,6 +1403,20 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
 
+            $strComment = 'archive_command invalid';
+
+            # Check archive_command_not_set error
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart(undef, undef, undef, false);
+
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+            
+            # Reset the cluster to a normal state so the next test will work
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart();
+            
+            $strType = BACKUP_TYPE_FULL;
+
             # Create the table where test messages will be stored
             BackRestTestBackup_PgExecute("create table test (message text not null)");
             BackRestTestBackup_PgSwitchXlog();
@@ -1447,20 +1461,6 @@ sub BackRestTestBackup_Test
                                       {iExpectedExitStatus => ERROR_STOP});
 
             BackRestTestBackup_Start();
-
-            $strType = BACKUP_TYPE_INCR;
-
-            $strComment = 'archive_command not set';
-
-            # Check archive_command_not_set error
-            BackRestTestBackup_ClusterStop();
-            BackRestTestBackup_ClusterStart(undef, undef, undef, false);
-
-            BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_NOT_SET});
-            
-            # Reset the cluster to a normal state so the next test will work
-            BackRestTestBackup_ClusterStop();
-            BackRestTestBackup_ClusterStart();
 
             # Setup the time target
             #-----------------------------------------------------------------------------------------------------------------------
