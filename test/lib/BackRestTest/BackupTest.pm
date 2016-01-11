@@ -1399,10 +1399,9 @@ sub BackRestTestBackup_Test
             my $strNameMessage = 'name';
             my $strTimelineMessage = 'timeline3';
 
-            # Full backup
+            # Test invalid archive command
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
-
             $strComment = 'archive_command invalid';
 
             # Check archive_command_not_set error
@@ -1415,6 +1414,8 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_ClusterStop();
             BackRestTestBackup_ClusterStart();
             
+            # Full backup
+            #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
 
             # Create the table where test messages will be stored
