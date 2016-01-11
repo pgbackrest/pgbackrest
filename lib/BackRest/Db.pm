@@ -619,6 +619,14 @@ sub backupStart
         confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
     }
 
+    # Check if archive_command is set
+    my $strArchiveCommand = $self->executeSql('show archive_command');
+
+    if (index($strArchiveCommand, BACKREST_EXE) == -1)
+    {
+        confess &log(ERROR, "archive_command must be set", ERROR_ARCHIVE_COMMAND_INVALID);
+    }
+
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))

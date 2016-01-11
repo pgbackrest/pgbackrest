@@ -5,6 +5,8 @@ __No Release Date Set__
 
 * Fixed an issue where specifying `--no-archive-check` would throw a configuration error. _Reported by Jason O'Donnell_.
 
+* Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_
+
 * Provisional support for PostgreSQL 9.5 including partial WAL segments. The `archive_mode = 'always'` setting is not yet supported.
 
 ## v0.89: Timeout Bug Fix and Restore Read-Only Repositories

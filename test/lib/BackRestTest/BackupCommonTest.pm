@@ -309,35 +309,35 @@ sub BackRestTestBackup_ClusterStart
     my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}" .
                      (BackRestTestCommon_DbVersion() < 9.5 ? ' -c checkpoint_segments=1' : '');
 
+    if (BackRestTestCommon_DbVersion() >= '8.3')
+    {
+        if (BackRestTestCommon_DbVersion() >= '9.5' && $bArchiveAlways)
+        {
+            $strCommand .= " -c archive_mode=always";
+        }
+        else
+        {
+            $strCommand .= " -c archive_mode=on";
+        }
+    }
+
     if ($bArchive)
     {
-        if (BackRestTestCommon_DbVersion() >= '8.3')
-        {
-            if (BackRestTestCommon_DbVersion() >= '9.5' && $bArchiveAlways)
-            {
-                $strCommand .= " -c archive_mode=always";
-            }
-            else
-            {
-                $strCommand .= " -c archive_mode=on";
-            }
-        }
-
         $strCommand .= " -c archive_command='${strArchive}'";
-
-        if (BackRestTestCommon_DbVersion() >= '9.0')
-        {
-            $strCommand .= " -c wal_level=hot_standby";
-
-            if ($bHotStandby)
-            {
-                $strCommand .= ' -c hot_standby=on';
-            }
-        }
     }
     else
     {
-        $strCommand .= " -c archive_mode=on -c wal_level=archive -c archive_command=true";
+        $strCommand .= " -c archive_command=true";
+    }
+
+    if (BackRestTestCommon_DbVersion() >= '9.0')
+    {
+        $strCommand .= " -c wal_level=hot_standby";
+
+        if ($bHotStandby)
+        {
+            $strCommand .= ' -c hot_standby=on';
+        }
     }
 
     $strCommand .= " -c log_error_verbosity=verbose" .
