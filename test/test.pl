@@ -31,10 +31,11 @@ use BackRest::Db;
 use lib dirname($0) . '/lib';
 use BackRestTest::BackupTest;
 use BackRestTest::Common::ExecuteTest;
+use BackRestTest::Common::VmTest;
 use BackRestTest::CommonTest;
 use BackRestTest::CompareTest;
 use BackRestTest::ConfigTest;
-use BackRestTest::Docker::Container;
+use BackRestTest::Docker::ContainerTest;
 use BackRestTest::FileTest;
 use BackRestTest::HelpTest;
 
@@ -316,7 +317,8 @@ eval
                     {
                         name => 'full',
                         total => 8,
-                        thread => true
+                        thread => true,
+                        db => true
                     }
                 ]
             }
@@ -330,66 +332,89 @@ eval
     ################################################################################################################################
     if ($strOS ne 'none')
     {
+        my $oyVm = vmGet();
+
+        if ($strOS ne 'all' && !defined($${oyVm}{$strOS}))
+        {
+            confess &log(ERROR, "${strOS} is not a valid VM");
+        }
+
         # Determine which tests to run
         my $iTestsToRun = 0;
 
-        foreach my $oModule (@{$$oTestDefinition{module}})
+        my $stryTestOS = [];
+
+        if ($strOS eq 'all')
         {
-            if ($strModule eq $$oModule{name} || $strModule eq 'all')
+            $stryTestOS = ['co6', 'u12', 'co7', 'u14'];
+        }
+        else
+        {
+            $stryTestOS = [$strOS];
+        }
+
+        foreach my $strTestOS (@{$stryTestOS})
+        {
+            foreach my $oModule (@{$$oTestDefinition{module}})
             {
-                &log(DEBUG, "Select Module $$oModule{name}");
-
-                foreach my $oTest (@{$$oModule{test}})
+                if ($strModule eq $$oModule{name} || $strModule eq 'all')
                 {
-                    if ($strModuleTest eq $$oTest{name} || $strModuleTest eq 'all')
+                    foreach my $oTest (@{$$oModule{test}})
                     {
-                        &log(DEBUG, "    Select Test $$oTest{name}");
-
-                        my $iTestRunMin = defined($iModuleTestRun) ? $iModuleTestRun : (defined($$oTest{total}) ? 1 : -1);
-                        my $iTestRunMax = defined($iModuleTestRun) ? $iModuleTestRun : (defined($$oTest{total}) ? $$oTest{total} : -1);
-
-                        if (defined($$oTest{total}) && $iTestRunMax > $$oTest{total})
+                        if ($strModuleTest eq $$oTest{name} || $strModuleTest eq 'all')
                         {
-                            confess &log(ERROR, "invalid run - must be >= 1 and <= $$oTest{total}")
-                        }
+                            my $iDbVersionMin = -1;
+                            my $iDbVersionMax = -1;
 
-                        for (my $iTestRunIdx = $iTestRunMin; $iTestRunIdx <= $iTestRunMax; $iTestRunIdx++)
-                        {
-                            &log(DEBUG, "        Select Run $iTestRunIdx");
-
-                            my $stryTestOS = [];
-
-                            if ($strOS eq 'all')
+                            if (defined($$oTest{db}) && $$oTest{db})
                             {
-                                $stryTestOS = ['u12', 'u14', 'co6', 'co7'];
-                            }
-                            else
-                            {
-                                $stryTestOS = [$strOS];
+                                $iDbVersionMin = 0;
+                                $iDbVersionMax = @{$$oyVm{$strTestOS}{db}} - 1;
                             }
 
-                            my $iyThreadMax = [defined($iThreadMax) ? $iThreadMax : 1];
+                            my $bFirstDbVersion = true;
 
-                            if (defined($$oTest{thread}) && $$oTest{thread} && !defined($iThreadMax))
+                            for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
                             {
-                                $iyThreadMax = [1, 4];
-                            }
-
-                            foreach my $iThreadTestMax (@{$iyThreadMax})
-                            {
-                                foreach my $strTestOS (@{$stryTestOS})
+                                if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' ||
+                                    ($strDbVersion ne 'all' && $strDbVersion eq ${$$oyVm{$strTestOS}{db}}[$iDbVersionIdx]))
                                 {
-                                    my $oTestRun =
-                                    {
-                                        os => $strTestOS,
-                                        module => $$oModule{name},
-                                        test => $$oTest{name},
-                                        run => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
-                                        thread => $iThreadTestMax
-                                    };
+                                    my $iTestRunMin = defined($iModuleTestRun) ? $iModuleTestRun : (defined($$oTest{total}) ? 1 : -1);
+                                    my $iTestRunMax = defined($iModuleTestRun) ? $iModuleTestRun : (defined($$oTest{total}) ? $$oTest{total} : -1);
 
-                                    push(@{$oyTestRun}, $oTestRun);
-                                    $iTestsToRun++;
+                                    if (defined($$oTest{total}) && $iTestRunMax > $$oTest{total})
+                                    {
+                                        confess &log(ERROR, "invalid run - must be >= 1 and <= $$oTest{total}")
+                                    }
+
+                                    for (my $iTestRunIdx = $iTestRunMin; $iTestRunIdx <= $iTestRunMax; $iTestRunIdx++)
+                                    {
+                                        my $iyThreadMax = [defined($iThreadMax) ? $iThreadMax : 1];
+
+                                        if (defined($$oTest{thread}) && $$oTest{thread} &&
+                                            !defined($iThreadMax) && $bFirstDbVersion)
+                                        {
+                                            $iyThreadMax = [1, 4];
+                                        }
+
+                                        foreach my $iThreadTestMax (@{$iyThreadMax})
+                                        {
+                                            my $oTestRun =
+                                            {
+                                                os => $strTestOS,
+                                                module => $$oModule{name},
+                                                test => $$oTest{name},
+                                                run => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
+                                                thread => $iThreadTestMax,
+                                                db => $iDbVersionIdx == -1 ? undef : ${$$oyVm{$strTestOS}{db}}[$iDbVersionIdx]
+                                            };
+
+                                            push(@{$oyTestRun}, $oTestRun);
+                                            $iTestsToRun++;
+                                        }
+                                    }
+
+                                    $bFirstDbVersion = false;
                                 }
                             }
                         }
@@ -487,7 +512,8 @@ eval
                                           length($iTestMax) . "d - ", $iProcessIdx, $iTestIdx, $iTestMax) .
                                           "vm=$$oTest{os}, module=$$oTest{module}, test=$$oTest{test}" .
                                           (defined($$oTest{run}) ? ", run=$$oTest{run}" : '') .
-                                          (defined($$oTest{thread}) ? ", thread-max=$$oTest{thread}" : '');
+                                          (defined($$oTest{thread}) ? ", thread-max=$$oTest{thread}" : '') .
+                                          (defined($$oTest{db}) ? ", db=$$oTest{db}" : '');
 
                     my $strImage = 'test-' . $iProcessIdx;
 
@@ -504,11 +530,13 @@ eval
                     $strCommandLine =~ s/\-\-module\=\S*//g;
                     $strCommandLine =~ s/\-\-test\=\S*//g;
                     $strCommandLine =~ s/\-\-run\=\S*//g;
+                    $strCommandLine =~ s/\-\-db\-version\=\S*//g;
 
                     my $strCommand = "docker exec -i -u vagrant ${strImage} $0 ${strCommandLine} --test-path=/home/vagrant/test" .
                                      " --vm=none --module=$$oTest{module} --test=$$oTest{test}" .
                                      (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
                                      (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
+                                     (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
                                      " --no-cleanup";
 
                     &log(DEBUG, $strCommand);

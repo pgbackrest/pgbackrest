@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# Container.pm - Build docker containers for testing and documentation
+# ContainerTest.pm - Build docker containers for testing and documentation
 ####################################################################################################################################
-package BackRestTest::Docker::Container;
+package BackRestTest::Docker::ContainerTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -22,22 +22,7 @@ use BackRest::Common::Log;
 use BackRest::FileCommon;
 
 use BackRestTest::Common::ExecuteTest;
-
-####################################################################################################################################
-# Valid OS list
-####################################################################################################################################
-use constant OS_CO6                                                 => 'co6';
-use constant OS_CO7                                                 => 'co7';
-use constant OS_U12                                                 => 'u12';
-use constant OS_U14                                                 => 'u14';
-
-my @stryOS =
-(
-    OS_CO6,                                 # CentOS 6
-    OS_CO7,                                 # CentOS 7
-    OS_U12,                                 # Ubuntu 12.04
-    OS_U14                                  # Ubuntu 14.04
-);
+use BackRestTest::Common::VmTest;
 
 use constant TEST_GROUP                                             => 'admin';
 use constant TEST_GROUP_ID                                          => 1000;
@@ -214,8 +199,11 @@ sub containerBuild
         executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 768 -N ''", {bSuppressStdErr => true});
     }
 
-    foreach my $strOS (@stryOS)
+    my $oyVm = vmGet();
+
+    foreach my $strOS (sort(keys(%$oyVm)))
     {
+        my $oOS = $$oyVm{$strOS};
         my $strImage;
         my $strImageName;
 
@@ -378,65 +366,37 @@ sub containerBuild
 
         # Install PostgreSQL
         $strImage .=
-            "\n\n# Install PostgreSQL\n";
+            "\n\n# Install PostgreSQL";
 
-        if ($strOS eq OS_CO6)
+        foreach my $strDbVersion (@{$$oOS{db}})
         {
-            $strImage .=
-                "RUN yum -y install postgresql90-server\n" .
-                "RUN yum -y install postgresql91-server\n" .
-                "RUN yum -y install postgresql92-server\n" .
-                "RUN yum -y install postgresql93-server\n" .
-                "RUN yum -y install postgresql94-server\n" .
-                "RUN yum -y install postgresql95-server";
-        }
-        elsif ($strOS eq OS_CO7)
-        {
-            $strImage .=
-                "RUN yum -y install postgresql93-server\n" .
-                "RUN yum -y install postgresql94-server\n" .
-                "RUN yum -y install postgresql95-server";
-        }
-        elsif ($strOS eq OS_U12)
-        {
-            $strImage .=
-                "RUN apt-get install -y postgresql-9.5\n" .
-                "RUN pg_dropcluster --stop 9.5 main\n" .
-                "RUN apt-get install -y postgresql-9.4\n" .
-                "RUN pg_dropcluster --stop 9.4 main\n" .
-                "RUN apt-get install -y postgresql-9.3\n" .
-                "RUN pg_dropcluster --stop 9.3 main\n" .
-                "RUN apt-get install -y postgresql-9.2\n" .
-                "RUN pg_dropcluster --stop 9.2 main\n" .
-                "RUN apt-get install -y postgresql-9.1\n" .
-                "RUN pg_dropcluster --stop 9.1 main\n" .
-                "RUN apt-get install -y postgresql-9.0\n" .
-                "RUN pg_dropcluster --stop 9.0 main\n" .
-                "RUN apt-get install -y postgresql-8.4\n" .
-                "RUN pg_dropcluster --stop 8.4 main";
-        }
-        elsif ($strOS eq OS_U14)
-        {
-            $strImage .=
-                "RUN apt-get install -y postgresql-9.5\n" .
-                "RUN pg_dropcluster --stop 9.5 main\n" .
-                "RUN apt-get install -y postgresql-9.4\n" .
-                "RUN pg_dropcluster --stop 9.4 main\n" .
-                "RUN apt-get install -y postgresql-9.3\n" .
-                "RUN pg_dropcluster --stop 9.3 main\n" .
-                "RUN apt-get install -y postgresql-9.2\n" .
-                "RUN pg_dropcluster --stop 9.2 main\n" .
-                "RUN apt-get install -y postgresql-9.1\n" .
-                "RUN pg_dropcluster --stop 9.1 main\n" .
-                "RUN apt-get install -y postgresql-9.0\n" .
-                "RUN pg_dropcluster --stop 9.0 main";
+            if ($strOS eq OS_CO6 || $strOS eq OS_CO7)
+            {
+                $strDbVersion =~ s/\.//;
+            }
+
+            if ($strOS eq OS_CO6)
+            {
+                $strImage .=
+                    "\nRUN yum -y install postgresql${strDbVersion}-server";
+            }
+            elsif ($strOS eq OS_CO7)
+            {
+                $strImage .=
+                    "\nRUN yum -y install postgresql${strDbVersion}-server";
+            }
+            elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+            {
+                $strImage .=
+                    "\nRUN apt-get install -y postgresql-${strDbVersion}" .
+                    "\nRUN pg_dropcluster --stop ${strDbVersion} main";
+            }
         }
 
         # Write the image
         fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
         executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
                     {bSuppressStdErr => true});
-
 
         # Db Doc image
         ###########################################################################################################################
