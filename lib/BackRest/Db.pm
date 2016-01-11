@@ -624,7 +624,7 @@ sub backupStart
 
     if(index($strArchiveCommand, BACKREST_EXE) == -1)
     {
-        confess &log(ERROR, "archive_command must be set");
+        confess &log(ERROR, "archive_command must be set", ERROR_ARCHIVE_COMMAND_NOT_SET);
     }
 
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same

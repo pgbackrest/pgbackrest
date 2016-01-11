@@ -1454,7 +1454,7 @@ sub BackRestTestBackup_Test
 
             # Check archive_command_not_set error
             BackRestTestBackup_ClusterStop();
-            BackRestTestBackup_ClusterStart(undef, undef, false);
+            BackRestTestBackup_ClusterStart(undef, undef, undef, false);
 
             BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_NOT_SET});
             
