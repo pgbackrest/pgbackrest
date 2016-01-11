@@ -1399,6 +1399,21 @@ sub BackRestTestBackup_Test
             my $strNameMessage = 'name';
             my $strTimelineMessage = 'timeline3';
 
+            # Test invalid archive command
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_FULL;
+            $strComment = 'archive_command invalid';
+
+            # Check archive_command_not_set error
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart(undef, undef, undef, false);
+
+            BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+            
+            # Reset the cluster to a normal state so the next test will work
+            BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart();
+            
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
