@@ -577,6 +577,7 @@ sub build
 sub recovery
 {
     my $self = shift;       # Class hash
+    my $fDbVersion = shift; # Version to restore
 
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam (OP_RESTORE_RECOVERY);
@@ -634,8 +635,13 @@ sub recovery
                 $strRecovery .=  "restore_command = '" . commandWrite(CMD_ARCHIVE_GET) . " %f \"%p\"'\n";
             }
 
-            # If RECOVERY_TYPE_DEFAULT do not write target options
-            if (!optionTest(OPTION_TYPE, RECOVERY_TYPE_DEFAULT))
+            # If type is RECOVERY_TYPE_IMMEDIATE
+            if (optionTest(OPTION_TYPE, RECOVERY_TYPE_IMMEDIATE))
+            {
+                $strRecovery .= "recovery_target = '" . RECOVERY_TYPE_IMMEDIATE . "'\n";
+            }
+            # If type is not RECOVERY_TYPE_DEFAULT write target options
+            elsif (!optionTest(OPTION_TYPE, RECOVERY_TYPE_DEFAULT))
             {
                 # Write the recovery target
                 $strRecovery .= "recovery_target_" . optionGet(OPTION_TYPE) . " = '" . optionGet(OPTION_TARGET) . "'\n";
@@ -648,9 +654,25 @@ sub recovery
             }
 
             # Write pause_at_recovery_target
-            if (optionGet(OPTION_TARGET_RESUME, false))
+            if (optionTest(OPTION_TARGET_ACTION))
             {
-                $strRecovery .= "pause_at_recovery_target = 'false'\n";
+                my $strTargetAction = optionGet(OPTION_TARGET_ACTION);
+
+                if ($strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION)
+                {
+                    if ($fDbVersion >= 9.5)
+                    {
+                        $strRecovery .= "recovery_target_action = '${strTargetAction}'\n";
+                    }
+                    elsif  ($fDbVersion >= 9.1)
+                    {
+                        $strRecovery .= "pause_at_recovery_target = 'false'\n";
+                    }
+                    else
+                    {
+                        confess &log(ERROR, OPTION_TARGET_ACTION .  ' option is only available in PostgreSQL >= 9.1')
+                    }
+                }
             }
 
             # Write recovery_target_timeline
@@ -866,7 +888,7 @@ sub process
     }
 
     # Create recovery.conf file
-    $self->recovery();
+    $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 
     # Copy pg_control last
     &log(INFO, 'restore ' . FILE_PG_CONTROL . ' (copied last to ensure aborted restores cannot be started)');

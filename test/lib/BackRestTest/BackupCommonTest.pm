@@ -1295,7 +1295,7 @@ sub BackRestTestBackup_Restore
     my $strType = shift;
     my $strTarget = shift;
     my $bTargetExclusive = shift;
-    my $bTargetResume = shift;
+    my $strTargetAction = shift;
     my $strTargetTimeline = shift;
     my $oRecoveryHashRef = shift;
     my $strComment = shift;
@@ -1317,7 +1317,8 @@ sub BackRestTestBackup_Restore
                   ($strTarget ? ", target '${strTarget}'" : '') .
                   ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
                   (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
-                  (defined($bTargetResume) && $bTargetResume ? ', resume' : '') .
+                  (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
+                      ? ', ' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
                   (defined($oRemapHashRef) ? ', remap' : '') .
                   (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
                   (defined($strComment) ? " (${strComment})" : '');
@@ -1367,7 +1368,8 @@ sub BackRestTestBackup_Restore
                 (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
                 (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
                 (defined($bTargetExclusive) && $bTargetExclusive ? " --target-exclusive" : '') .
-                (defined($bTargetResume) && $bTargetResume ? " --target-resume" : '') .
+                (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
+                    ? ' --' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
                 " --stanza=${strStanza} restore",
                 {iExpectedExitStatus => $iExpectedExitStatus, strComment => $strComment, oLogTest => $oBackupLogTest});
 

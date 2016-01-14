@@ -98,25 +98,37 @@ use constant INFO_OUTPUT_JSON                                       => 'json';
 ####################################################################################################################################
 # SOURCE Constants
 ####################################################################################################################################
-use constant SOURCE_CONFIG       => 'config';
-use constant SOURCE_PARAM        => 'param';
-use constant SOURCE_DEFAULT      => 'default';
+use constant SOURCE_CONFIG                                          => 'config';
+use constant SOURCE_PARAM                                           => 'param';
+use constant SOURCE_DEFAULT                                         => 'default';
 
 ####################################################################################################################################
 # RECOVERY Type Constants
 ####################################################################################################################################
-use constant RECOVERY_TYPE_NAME          => 'name';
+use constant RECOVERY_TYPE_NAME                                     => 'name';
     push @EXPORT, qw(RECOVERY_TYPE_NAME);
-use constant RECOVERY_TYPE_TIME          => 'time';
+use constant RECOVERY_TYPE_TIME                                     => 'time';
     push @EXPORT, qw(RECOVERY_TYPE_TIME);
-use constant RECOVERY_TYPE_XID           => 'xid';
+use constant RECOVERY_TYPE_XID                                      => 'xid';
     push @EXPORT, qw(RECOVERY_TYPE_XID);
-use constant RECOVERY_TYPE_PRESERVE      => 'preserve';
+use constant RECOVERY_TYPE_PRESERVE                                 => 'preserve';
     push @EXPORT, qw(RECOVERY_TYPE_PRESERVE);
-use constant RECOVERY_TYPE_NONE          => 'none';
+use constant RECOVERY_TYPE_NONE                                     => 'none';
     push @EXPORT, qw(RECOVERY_TYPE_NONE);
-use constant RECOVERY_TYPE_DEFAULT       => 'default';
+use constant RECOVERY_TYPE_IMMEDIATE                                => 'immediate';
+    push @EXPORT, qw(RECOVERY_TYPE_IMMEDIATE);
+use constant RECOVERY_TYPE_DEFAULT                                  => 'default';
     push @EXPORT, qw(RECOVERY_TYPE_DEFAULT);
+
+####################################################################################################################################
+# RECOVERY Action Constants
+####################################################################################################################################
+use constant RECOVERY_ACTION_PAUSE                                  => 'pause';
+    push @EXPORT, qw(RECOVERY_ACTION_PAUSE);
+use constant RECOVERY_ACTION_PROMOTE                                => 'promote';
+    push @EXPORT, qw(RECOVERY_ACTION_PROMOTE);
+use constant RECOVERY_ACTION_SHUTDOWN                               => 'shutdown';
+    push @EXPORT, qw(RECOVERY_ACTION_SHUTDOWN);
 
 ####################################################################################################################################
 # Option Rules
@@ -153,15 +165,15 @@ use constant OPTION_RULE_TYPE                                       => 'type';
 ####################################################################################################################################
 # Option Types
 ####################################################################################################################################
-use constant OPTION_TYPE_BOOLEAN      => 'boolean';
+use constant OPTION_TYPE_BOOLEAN                                    => 'boolean';
     push @EXPORT, qw(OPTION_TYPE_BOOLEAN);
-use constant OPTION_TYPE_FLOAT        => 'float';
+use constant OPTION_TYPE_FLOAT                                      => 'float';
     push @EXPORT, qw(OPTION_TYPE_FLOAT);
-use constant OPTION_TYPE_HASH         => 'hash';
+use constant OPTION_TYPE_HASH                                       => 'hash';
     push @EXPORT, qw(OPTION_TYPE_HASH);
-use constant OPTION_TYPE_INTEGER      => 'integer';
+use constant OPTION_TYPE_INTEGER                                    => 'integer';
     push @EXPORT, qw(OPTION_TYPE_INTEGER);
-use constant OPTION_TYPE_STRING       => 'string';
+use constant OPTION_TYPE_STRING                                     => 'string';
     push @EXPORT, qw(OPTION_TYPE_STRING);
 
 ####################################################################################################################################
@@ -210,8 +222,8 @@ use constant OPTION_TARGET                                          => 'target';
     push @EXPORT, qw(OPTION_TARGET);
 use constant OPTION_TARGET_EXCLUSIVE                                => 'target-exclusive';
     push @EXPORT, qw(OPTION_TARGET_EXCLUSIVE);
-use constant OPTION_TARGET_RESUME                                   => 'target-resume';
-    push @EXPORT, qw(OPTION_TARGET_RESUME);
+use constant OPTION_TARGET_ACTION                                   => 'target-action';
+    push @EXPORT, qw(OPTION_TARGET_ACTION);
 use constant OPTION_TARGET_TIMELINE                                 => 'target-timeline';
     push @EXPORT, qw(OPTION_TARGET_TIMELINE);
 use constant OPTION_TYPE                                            => 'type';
@@ -361,8 +373,8 @@ use constant OPTION_DEFAULT_RESTORE_SET                             => 'latest';
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_SET);
 use constant OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE                => false;
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE);
-use constant OPTION_DEFAULT_RESTORE_TARGET_RESUME                   => false;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_RESUME);
+use constant OPTION_DEFAULT_RESTORE_TARGET_ACTION                   => RECOVERY_ACTION_PAUSE;
+    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_ACTION);
 use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_TYPE_DEFAULT;
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
 use constant OPTION_DEFAULT_LOCK                                    => true;
@@ -670,14 +682,14 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_TARGET_RESUME =>
+    &OPTION_TARGET_ACTION =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_RESTORE =>
             {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TARGET_RESUME,
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TARGET_ACTION,
                 &OPTION_RULE_DEPEND =>
                 {
                     &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
@@ -736,12 +748,13 @@ my %oOptionRule =
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TYPE,
                 &OPTION_RULE_ALLOW_LIST =>
                 {
-                    &RECOVERY_TYPE_NAME     => true,
-                    &RECOVERY_TYPE_TIME     => true,
-                    &RECOVERY_TYPE_XID      => true,
-                    &RECOVERY_TYPE_PRESERVE => true,
-                    &RECOVERY_TYPE_NONE     => true,
-                    &RECOVERY_TYPE_DEFAULT  => true
+                    &RECOVERY_TYPE_NAME      => true,
+                    &RECOVERY_TYPE_TIME      => true,
+                    &RECOVERY_TYPE_XID       => true,
+                    &RECOVERY_TYPE_PRESERVE  => true,
+                    &RECOVERY_TYPE_NONE      => true,
+                    &RECOVERY_TYPE_IMMEDIATE => true,
+                    &RECOVERY_TYPE_DEFAULT   => true
                 }
             }
         }

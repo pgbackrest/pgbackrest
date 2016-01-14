@@ -933,6 +933,22 @@ my $oConfigHelpData =
                         "Defines the recovery target when --type is name, xid, or time."
                 },
 
+                # TARGET-ACTION Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'target-action' =>
+                {
+                    summary =>
+                        "Action to take when recovery target is reached.",
+                    description =>
+                        "The following actions are supported:\n" .
+                        "\n" .
+                        "* pause - pause when recovery target is reached.\n" .
+                        "* promote - promote and switch timeline when recovery target is reached.\n" .
+                        "* shutdown - shutdown server when recovery target is reached.\n" .
+                        "\n" .
+                        "This option is only supported on PostgreSQL >= 9.5."
+                },
+
                 # TARGET-EXCLUSIVE Option Help
                 #-------------------------------------------------------------------------------------------------------------------
                 'target-exclusive' =>
@@ -944,17 +960,6 @@ my $oConfigHelpData =
                             "when --type is time or xid. For example, using --target-exclusive would exclude the contents of " .
                             "transaction 1007 when --type=xid and --target=1007. See the recovery_target_inclusive option in " .
                             "the PostgreSQL docs for more information."
-                },
-
-                # TARGET-RESUME Option Help
-                #-------------------------------------------------------------------------------------------------------------------
-                'target-resume' =>
-                {
-                    summary =>
-                        "Resume when recovery target is reached.",
-                    description =>
-                        "Specifies whether recovery should resume when the recovery target is reached. See " .
-                            "pause_at_recovery_target in the PostgreSQL docs for more information."
                 },
 
                 # TARGET-TIMELINE Option Help
@@ -980,6 +985,8 @@ my $oConfigHelpData =
                         "The following recovery types are supported:\n" .
                         "\n" .
                         "* default - recover to the end of the archive stream.\n" .
+                        "* immediate - recover only until the database becomes consistent. This option is only supported on " .
+                            "PostgreSQL >= 9.4.\n" .
                         "* name - recover the restore point specified in --target.\n" .
                         "* xid - recover to the transaction id specified in --target.\n" .
                         "* time - recover to the time specified in --target.\n" .

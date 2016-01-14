@@ -7,7 +7,9 @@ __No Release Date Set__
 
 * Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_
 
-* Provisional support for PostgreSQL 9.5 including partial WAL segments. The `archive_mode = 'always'` setting is not yet supported.
+* Support for PostgreSQL 9.5 partial WAL segments and `recovery_target_action` setting. The `archive_mode = 'always'` setting is not yet supported.
+
+* Support for `recovery_target = 'immediate'` recovery setting introduced in PostgreSQL 9.4.
 
 ## v0.89: Timeout Bug Fix and Restore Read-Only Repositories
 __Released December 24, 2015__

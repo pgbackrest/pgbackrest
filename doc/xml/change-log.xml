@@ -15,7 +15,10 @@
                     <text>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>. <i>Contributed by Jason O'Donnell</i></text>
                 </release-feature>
                 <release-feature>
-                    <text>Provisional support for <postgres/> 9.5 including partial WAL segments. The <setting>archive_mode = 'always'</setting> setting is not yet supported.</text>
+                    <text>Support for <postgres/> 9.5 partial WAL segments and <setting>recovery_target_action</setting> setting. The <setting>archive_mode = 'always'</setting> setting is not yet supported.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Support for <setting>recovery_target = 'immediate'</setting> recovery setting introduced in <postgres/> 9.4.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
