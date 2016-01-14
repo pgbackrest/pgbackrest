@@ -50,12 +50,12 @@ pgBackRest is completely free and open source under the [MIT](https://github.com
 
 Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
 
-[Crunchy Data](http://www.crunchydatasolutions.com) provides packaged versions of pgBackRest for major operating systems and expert full life-cycle commercial support for pgBackRest and all things PostgreSQL. [Crunchy Data](http://www.crunchydatasolutions.com) is committed to providing open source solutions with no vendor lock-in so cross-compatibility with the community version of pgBackRest is always strictly maintained.
+[Crunchy Data](http://www.crunchydata.com) provides packaged versions of pgBackRest for major operating systems and expert full life-cycle commercial support for pgBackRest and all things PostgreSQL. [Crunchy Data](http://www.crunchydata.com) is committed to providing open source solutions with no vendor lock-in so cross-compatibility with the community version of pgBackRest is always strictly maintained.
 
-Please visit [Crunchy Backup Manager](http://www.crunchydatasolutions.com/crunchy-backup-manager) for more information.
+Please visit [Crunchy Backup Manager](http://www.crunchydata.com/crunchy-backup-manager) for more information.
 
 ## Recognition
 
 Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of pgBackRest.
 
-[Crunchy Data](http://www.crunchydatasolutions.com) has contributed significant time and resources to pgBackRest and continues to actively support development. [Resonate](http://www.resonate.com) also contributed to the development of pgBackRest and allowed early (but well tested) versions to be installed as their primary PostgreSQL backup solution.
+[Crunchy Data](http://www.crunchydata.com) has contributed significant time and resources to pgBackRest and continues to actively support development. [Resonate](http://www.resonate.com) also contributed to the development of pgBackRest and allowed early (but well tested) versions to be installed as their primary PostgreSQL backup solution.

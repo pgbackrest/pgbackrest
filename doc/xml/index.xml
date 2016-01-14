@@ -14,7 +14,7 @@
         <variable key="backrest-page-configuration">configuration.html</variable>
         <variable key="backrest-page-command">command.html</variable>
 
-        <variable key="crunchy-url-base">http://www.crunchydatasolutions.com</variable>
+        <variable key="crunchy-url-base">http://www.crunchydata.com</variable>
         <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
 
         <variable key="resonate-url-base">http://www.resonate.com</variable>
