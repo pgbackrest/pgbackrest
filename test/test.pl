@@ -379,8 +379,10 @@ eval
                                 if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' ||
                                     ($strDbVersion ne 'all' && $strDbVersion eq ${$$oyVm{$strTestOS}{db}}[$iDbVersionIdx]))
                                 {
-                                    my $iTestRunMin = defined($iModuleTestRun) ? $iModuleTestRun : (defined($$oTest{total}) ? 1 : -1);
-                                    my $iTestRunMax = defined($iModuleTestRun) ? $iModuleTestRun : (defined($$oTest{total}) ? $$oTest{total} : -1);
+                                    my $iTestRunMin = defined($iModuleTestRun) ?
+                                                          $iModuleTestRun : (defined($$oTest{total}) ? 1 : -1);
+                                    my $iTestRunMax = defined($iModuleTestRun) ?
+                                                          $iModuleTestRun : (defined($$oTest{total}) ? $$oTest{total} : -1);
 
                                     if (defined($$oTest{total}) && $iTestRunMax > $$oTest{total})
                                     {
@@ -431,7 +433,7 @@ eval
         my $iTestFail = 0;
         my $oyProcess = [];
 
-        if (!$bDryRun)
+        if (!$bDryRun || $bVmOut)
         {
             for (my $iProcessIdx = 0; $iProcessIdx < 8; $iProcessIdx++)
             {
@@ -441,12 +443,17 @@ eval
             }
         }
 
+        if ($bDryRun)
+        {
+            $iProcessMax = 1;
+        }
+
         my $iTestIdx = 0;
         my $iProcessTotal;
         my $iTestMax = @{$oyTestRun};
         my $lStartTime = time();
+        my $bShowOutputAsync = $bVmOut && (@{$oyTestRun} == 1 || $iProcessMax == 1) && ! $bDryRun ? true : false;
 
-        # foreach my $oTest (@{$oyTestRun})
         do
         {
             do
@@ -465,19 +472,25 @@ eval
 
                         if (defined($iExitStatus))
                         {
+                            if ($bShowOutputAsync)
+                            {
+                                syswrite(*STDOUT, "\n");
+                            }
+
                             my $fTestElapsedTime = ceil((gettimeofday() - $$oyProcess[$iProcessIdx]{start_time}) * 100) / 100;
 
                             if (!($iExitStatus == 0 || $iExitStatus == 255))
                             {
                                 &log(ERROR, "${strTestDone} (err${iExitStatus}-${fTestElapsedTime}s)" .
-                                     (defined($oExecDone->{strOutLog}) ? ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''),
-                                     undef, undef, 4);
+                                     (defined($oExecDone->{strOutLog}) && !$bShowOutputAsync ?
+                                        ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
                                 $iTestFail++;
                             }
                             else
                             {
-                                &log( INFO, "${strTestDone} (${fTestElapsedTime}s)".
-                                            ($bVmOut ? ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
+                                &log(INFO, "${strTestDone} (${fTestElapsedTime}s)".
+                                     ($bVmOut && !$bShowOutputAsync ?
+                                         ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
                             }
 
                             if (!$bNoCleanup)
@@ -517,9 +530,10 @@ eval
 
                     my $strImage = 'test-' . $iProcessIdx;
 
-                    &log($bDryRun ? INFO : DEBUG, $strTest);
+                    &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DEBUG, "${strTest}" .
+                         ($bVmOut || $bShowOutputAsync ? "\n" : ''));
 
-                    if (!$bDryRun)
+                    if (!$bDryRun || $bVmOut)
                     {
                         executeTest("docker run -itd -h $$oTest{os}-test --name=${strImage}" .
                                     " -v /backrest:/backrest backrest/$$oTest{os}-test");
@@ -537,14 +551,17 @@ eval
                                      (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
                                      (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
                                      (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
-                                     " --no-cleanup";
+                                     ($bDryRun ? " --dry-run" : '') .
+                                     " --no-cleanup --vm-out";
 
                     &log(DEBUG, $strCommand);
 
-                    if (!$bDryRun)
+                    if (!$bDryRun || $bVmOut)
                     {
                         my $fTestStartTime = gettimeofday();
-                        my $oExec = new BackRestTest::Common::ExecuteTest($strCommand, {bSuppressError => true});
+                        my $oExec = new BackRestTest::Common::ExecuteTest(
+                            $strCommand,
+                            {bSuppressError => true, bShowOutputAsync => $bShowOutputAsync});
 
                         $oExec->begin();
 
@@ -565,8 +582,15 @@ eval
         }
         while ($iProcessTotal > 0);
 
-        &log(INFO, 'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' : "WITH ${iTestFail} FAILURE(S)") .
-                   ' (' . (time() - $lStartTime) . 's)');
+        if ($bDryRun)
+        {
+            &log(INFO, 'DRY RUN COMPLETED');
+        }
+        else
+        {
+            &log(INFO, 'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' : "WITH ${iTestFail} FAILURE(S)") .
+                       ' (' . (time() - $lStartTime) . 's)');
+        }
 
         exit 0;
     }
@@ -600,7 +624,7 @@ eval
 
                     if (-e "${strVersionPath}/initdb")
                     {
-                        &log(INFO, "FOUND pgsql-bin at ${strVersionPath}");
+                        &log(DEBUG, "FOUND pgsql-bin at ${strVersionPath}");
                         push @stryTestVersion, $strVersionPath;
                     }
                 }
@@ -641,7 +665,13 @@ eval
         if (BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[0], $iModuleTestRun,
                                      $bDryRun, $bNoCleanup, $bLogForce))
         {
-            &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
+            if (!$bVmOut &&
+                ($strModule eq 'all' ||
+                 $strModule eq 'backup' && $strModuleTest eq 'all' ||
+                 $strModule eq 'backup' && $strModuleTest eq 'full'))
+            {
+                &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
+            }
 
             if ($bInfinite)
             {
@@ -656,29 +686,29 @@ eval
 
             if ($strModule eq 'all' || $strModule eq 'help')
             {
-                BackRestTestHelp_Test($strModuleTest);
+                BackRestTestHelp_Test($strModuleTest, undef, $bVmOut);
             }
 
             if ($strModule eq 'all' || $strModule eq 'config')
             {
-                BackRestTestConfig_Test($strModuleTest);
+                BackRestTestConfig_Test($strModuleTest, undef, $bVmOut);
             }
 
             if ($strModule eq 'all' || $strModule eq 'file')
             {
-                BackRestTestFile_Test($strModuleTest);
+                BackRestTestFile_Test($strModuleTest, undef, $bVmOut);
             }
 
             if ($strModule eq 'all' || $strModule eq 'backup')
             {
                 if (!defined($iThreadMax) || $iThreadMax == 1)
                 {
-                    BackRestTestBackup_Test($strModuleTest, 1);
+                    BackRestTestBackup_Test($strModuleTest, 1, $bVmOut);
                 }
 
                 if (!defined($iThreadMax) || $iThreadMax > 1)
                 {
-                    BackRestTestBackup_Test($strModuleTest, defined($iThreadMax) ? $iThreadMax : 4);
+                    BackRestTestBackup_Test($strModuleTest, defined($iThreadMax) ? $iThreadMax : 4, $bVmOut);
                 }
 
                 if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
@@ -688,7 +718,7 @@ eval
                         BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[$iVersionIdx],
                                                  $iModuleTestRun, $bDryRun, $bNoCleanup);
                         &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
-                        BackRestTestBackup_Test('full', defined($iThreadMax) ? $iThreadMax : 4);
+                        BackRestTestBackup_Test('full', defined($iThreadMax) ? $iThreadMax : 4, $bVmOut);
                     }
                 }
             }
@@ -717,7 +747,7 @@ if ($@)
     exit 250;
 }
 
-if (!$bDryRun)
+if (!$bDryRun && !$bVmOut)
 {
     &log(INFO, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
 }

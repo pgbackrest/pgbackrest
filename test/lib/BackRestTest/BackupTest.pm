@@ -46,6 +46,7 @@ sub BackRestTestBackup_Test
 {
     my $strTest = shift;
     my $iThreadMax = shift;
+    my $bVmOut = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -75,8 +76,11 @@ sub BackRestTestBackup_Test
     my $strArchiveTestFile2 = BackRestTestCommon_DataPathGet() . '/test.archive1.bin';
 
     # Print test banner
-    &log(INFO, 'BACKUP MODULE ******************************************************************');
-    &log(INFO, "THREAD-MAX: ${iThreadMax}\n");
+    if (!$bVmOut)
+    {
+        &log(INFO, 'BACKUP MODULE ******************************************************************');
+        &log(INFO, "THREAD-MAX: ${iThreadMax}\n");
+    }
 
     # Drop any existing cluster
     BackRestTestBackup_Drop(true, true);
@@ -114,7 +118,10 @@ sub BackRestTestBackup_Test
         $bCreate = true;
         my $oFile;
 
-        &log(INFO, "Test ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strThisTest}\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -388,7 +395,10 @@ sub BackRestTestBackup_Test
         $bCreate = true;
         my $oFile;
 
-        &log(INFO, "Test ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strThisTest}\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -529,7 +539,10 @@ sub BackRestTestBackup_Test
         $bCreate = true;
         my $oFile;
 
-        &log(INFO, "Test ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strThisTest}\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -694,7 +707,10 @@ sub BackRestTestBackup_Test
         $iRun = 0;
         my $oFile;
 
-        &log(INFO, "Test ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strThisTest}\n");
+        }
 
         if (BackRestTestCommon_Run(++$iRun,
                                     "local",
@@ -793,7 +809,10 @@ sub BackRestTestBackup_Test
     {
         $iRun = 0;
 
-        &log(INFO, "Test ${strModule} - ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strModule} - ${strThisTest}\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -1314,7 +1333,10 @@ sub BackRestTestBackup_Test
         $iRun = 0;
         $bCreate = true;
 
-        &log(INFO, "Test Full Backup\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test Full Backup\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -1822,7 +1844,10 @@ sub BackRestTestBackup_Test
         $iRun = 0;
         my $iRunMax = 1000;
 
-        &log(INFO, "Test Backup Collision\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test Backup Collision\n");
+        }
 
         # Create the file object
         my $oFile = (BackRest::File->new
@@ -1949,7 +1974,10 @@ sub BackRestTestBackup_Test
         $iRun = 0;
         my $iRunMax = 1000;
 
-        &log(INFO, "Test Rsync Collision\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test Rsync Collision\n");
+        }
 
         # Create the file object
         my $oFile = (BackRest::File->new

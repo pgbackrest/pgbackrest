@@ -175,13 +175,18 @@ sub BackRestTestCommon_Run
     }
 
     # Return if this test should not be run
-    if ((defined($iModuleTestRunOnly) && $iModuleTestRunOnly != $iRun) || $bDryRun)
+    if (defined($iModuleTestRunOnly) && $iModuleTestRunOnly != $iRun)
     {
         return false;
     }
 
     # Output information about test to run
     &log(INFO, 'run ' . sprintf('%03d', $iRun) . ' - ' . $strLog);
+
+    if ($bDryRun)
+    {
+        return false;
+    }
 
     # If the module is defined then create a LogTest object
     if (defined($strModuleParam))

@@ -68,6 +68,7 @@ sub new
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
+    $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
     $self->{iRetrySeconds} = defined($self->{iRetrySeconds}) ? $self->{iRetrySeconds} : undef;
 
@@ -169,8 +170,13 @@ sub endRetry
         # Drain the stdout stream and look for test points
         while (defined(my $strLine = $self->{oIO}->lineRead(0, true, false)))
         {
-            $self->{strOutLog} .= "$strLine\n";
+            $self->{strOutLog} .= "${strLine}\n";
             $bFound = true;
+
+            if ($self->{bShowOutputAsync})
+            {
+                syswrite(*STDOUT, "    ${strLine}\n")
+            }
 
             if (defined($strTest) && testCheck($strLine, $strTest))
             {
@@ -196,13 +202,18 @@ sub endRetry
     # Drain the stdout stream
     while (defined(my $strLine = $self->{oIO}->lineRead(0, true, false)))
     {
-        $self->{strOutLog} .= "$strLine\n";
+        $self->{strOutLog} .= "${strLine}\n";
+
+        if ($self->{bShowOutputAsync})
+        {
+            syswrite(*STDOUT, "    ${strLine}\n")
+        }
     }
 
     # Drain the stderr stream
     while (defined(my $strLine = $self->{oIO}->lineRead(0, false, false)))
     {
-        $self->{strErrorLog} .= "$strLine\n";
+        $self->{strErrorLog} .= "${strLine}\n";
     }
 
     # Pass the log to the LogTest object

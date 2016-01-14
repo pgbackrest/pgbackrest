@@ -75,6 +75,8 @@ our @EXPORT = qw(BackRestTestFile_Test);
 sub BackRestTestFile_Test
 {
     my $strTest = shift;
+    my $iThreadMax = shift;
+    my $bVmOut = shift;
 
     # If no test was specified, then run them all
     if (!defined($strTest))
@@ -92,7 +94,10 @@ sub BackRestTestFile_Test
     $strUserBackRest = BackRestTestCommon_UserBackRestGet();
 
     # Print test banner
-    &log(INFO, 'FILE MODULE ********************************************************************');
+    if (!$bVmOut)
+    {
+        &log(INFO, 'FILE MODULE ********************************************************************');
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
@@ -125,7 +130,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, "Test File->pathCreate()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->pathCreate()\n");
+        }
 
         # Loop through local/remote
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
@@ -234,8 +242,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "Test File->move()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->move()\n");
+        }
 
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
@@ -333,8 +343,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "Test File->compress()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->compress()\n");
+        }
 
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
@@ -425,8 +437,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "Test File->wait()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->wait()\n");
+        }
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
@@ -482,8 +496,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "Test File->manifest()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->manifest()\n");
+        }
 
         my $strManifestCompare =
             ".,d,${strUser},${strGroup},0770,,,,\n" .
@@ -636,8 +652,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "Test File->list()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->list()\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -763,8 +781,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "Test File->remove()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test File->remove()\n");
+        }
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {
@@ -866,8 +886,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "test File->hash()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "test File->hash()\n");
+        }
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
@@ -957,8 +979,10 @@ sub BackRestTestFile_Test
     {
         $iRun = 0;
 
-        &log(INFO, '--------------------------------------------------------------------------------');
-        &log(INFO, "test File->exists()\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "test File->exists()\n");
+        }
 
         for (my $bRemote = 0; $bRemote <= 1; $bRemote++)
         {

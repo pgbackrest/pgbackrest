@@ -239,6 +239,8 @@ our @EXPORT = qw(BackRestTestConfig_Test);
 sub BackRestTestConfig_Test
 {
     my $strTest = shift;
+    my $iThreadMax = shift;
+    my $bVmOut = shift;
 
     # Setup test variables
     my $iRun;
@@ -252,7 +254,11 @@ sub BackRestTestConfig_Test
     use constant BOGUS => 'bogus';
 
     # Print test banner
-    &log(INFO, 'CONFIG MODULE ******************************************************************');
+    if (!$bVmOut)
+    {
+        &log(INFO, 'CONFIG MODULE ******************************************************************');
+    }
+
     BackRestTestCommon_Drop();
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -264,7 +270,10 @@ sub BackRestTestConfig_Test
     {
         $iRun = 0;
 
-        &log(INFO, "Test ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strThisTest}\n");
+        }
 
         if (BackRestTestCommon_Run(++$iRun, 'backup with no stanza'))
         {
@@ -552,7 +561,10 @@ sub BackRestTestConfig_Test
     {
         $iRun = 0;
 
-        &log(INFO, "Test ${strThisTest}\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test ${strThisTest}\n");
+        }
 
         BackRestTestCommon_Create();
 

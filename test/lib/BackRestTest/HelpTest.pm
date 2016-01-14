@@ -38,13 +38,18 @@ our @EXPORT = qw(BackRestTestHelp_Test);
 sub BackRestTestHelp_Test
 {
     my $strTest = shift;
+    my $iThreadMax = shift;
+    my $bVmOut = shift;
 
     # Setup test variables
     my $iRun;
     my $strModule = 'help';
 
     # Print test banner
-    &log(INFO, 'HELP MODULE *****************************************************************');
+    if (!$bVmOut)
+    {
+        &log(INFO, 'HELP MODULE *****************************************************************');
+    }
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test config
@@ -55,7 +60,10 @@ sub BackRestTestHelp_Test
     {
         $iRun = 0;
 
-        &log(INFO, "Test help\n");
+        if (!$bVmOut)
+        {
+            &log(INFO, "Test help\n");
+        }
 
         BackRestTestCommon_Drop(true);
         BackRestTestCommon_Create();
