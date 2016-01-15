@@ -15,7 +15,7 @@ $SIG{__DIE__} = sub { Carp::confess @_ };
 
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
-use Cwd qw(abs_path);
+use Cwd qw(abs_path cwd);
 use Pod::Usage qw(pod2usage);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
@@ -165,7 +165,7 @@ if ($bQuiet)
     $strLogLevel = 'off';
 }
 
-logLevelSet(undef, uc($strLogLevel));
+logLevelSet(uc($strLogLevel), uc($strLogLevel));
 
 if ($strModuleTest ne 'all' && $strModule eq 'all')
 {
@@ -332,6 +332,11 @@ eval
     ################################################################################################################################
     if ($strOS ne 'none')
     {
+        if (!$bDryRun)
+        {
+            logFileSet(cwd() . "/test");
+        }
+
         my $oyVm = vmGet();
 
         if ($strOS ne 'all' && !defined($${oyVm}{$strOS}))
