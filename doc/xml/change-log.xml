@@ -20,6 +20,9 @@
                 <release-feature>
                     <text>Support for <setting>recovery_target = 'immediate'</setting> recovery setting introduced in <postgres/> 9.4.</text>
                 </release-feature>
+                <release-feature>
+                    <text>The following tablespace checks have been added: paths or files in pg_tblspc, relative links in pg_tblspc, tablespaces in $PGDATA. All three will generate errors.</text>
+                </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
 

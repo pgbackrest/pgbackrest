@@ -106,6 +106,12 @@ use constant ERROR_FEATURE_NOT_SUPPORTED                            => ERROR_MIN
     push @EXPORT, qw(ERROR_FEATURE_NOT_SUPPORTED);
 use constant ERROR_ARCHIVE_COMMAND_INVALID                          => ERROR_MINIMUM + 43;
     push @EXPORT, qw(ERROR_ARCHIVE_COMMAND_INVALID);
+use constant ERROR_LINK_EXPECTED                                    => ERROR_MINIMUM + 44;
+    push @EXPORT, qw(ERROR_LINK_EXPECTED);
+use constant ERROR_ABSOLUTE_LINK_EXPECTED                           => ERROR_MINIMUM + 45;
+    push @EXPORT, qw(ERROR_ABSOLUTE_LINK_EXPECTED);
+use constant ERROR_TABLESPACE_IN_PGDATA                             => ERROR_MINIMUM + 46;
+    push @EXPORT, qw(ERROR_TABLESPACE_IN_PGDATA);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

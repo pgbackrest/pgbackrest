@@ -433,11 +433,6 @@ sub build
                     next;
                 }
 
-                if ($oTablespaceManifestHash{name}{$strName}{type} ne 'l')
-                {
-                    confess &log(ERROR, PATH_PG_TBLSPC . "/${strName} is not a link");
-                }
-
                 logDebugMisc($strOperation, "found tablespace ${strName}");
 
                 ${$oTablespaceMapRef}{oid}{$strName}{name} = $strName;
@@ -464,8 +459,8 @@ sub build
             next;
         }
 
-        my $cType = $oManifestHash{name}{"${strName}"}{type};
-        my $strLinkDestination = $oManifestHash{name}{"${strName}"}{link_destination};
+        my $cType = $oManifestHash{name}{$strName}{type};
+        my $strLinkDestination = $oManifestHash{name}{$strName}{link_destination};
         my $strSection = "${strLevel}:path";
 
         if ($cType eq 'f')
@@ -481,29 +476,53 @@ sub build
             confess &log(ASSERT, "unrecognized file type $cType for file $strName");
         }
 
+        # Make sure that pg_tblspc contains only absolute links that do not point inside PGDATA
+        if (index($strName, PATH_PG_TBLSPC . '/') == 0 && $strLevel eq MANIFEST_KEY_BASE)
+        {
+            # Check for files in pg_tblspc that are not links
+            if ($oManifestHash{name}{$strName}{type} ne 'l')
+            {
+                confess &log(ERROR, "/${strName} is not a symlink - pg_tblspc should contain only symlinks", ERROR_LINK_EXPECTED);
+            }
+
+            # Check for relative link targets
+            if (index($oManifestHash{name}{$strName}{link_destination}, '/') != 0)
+            {
+                confess &log(ERROR, 'tablespace symlink ' . $oManifestHash{name}{$strName}{link_destination} .
+                             ' must be absolute', ERROR_ABSOLUTE_LINK_EXPECTED);
+            }
+
+            # Check for tablespaces in PGDATA
+            if (index($oManifestHash{name}{$strName}{link_destination}, $strDbClusterPath) == 0)
+            {
+                confess &log(ERROR, 'tablespace symlink ' . $oManifestHash{name}{$strName}{link_destination} .
+                             ' must not be in \$PGDATA', ERROR_TABLESPACE_IN_PGDATA);
+            }
+        }
+
         # User and group required for all types
-        $self->set($strSection, $strName, MANIFEST_SUBKEY_USER, $oManifestHash{name}{"${strName}"}{user});
-        $self->set($strSection, $strName, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{"${strName}"}{group});
+        $self->set($strSection, $strName, MANIFEST_SUBKEY_USER, $oManifestHash{name}{$strName}{user});
+        $self->set($strSection, $strName, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{$strName}{group});
 
         # Mode for required file and path type only
         if ($cType eq 'f' || $cType eq 'd')
         {
-            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{"${strName}"}{mode});
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{$strName}{mode});
         }
 
         # Modification time and size required for file type only
         if ($cType eq 'f')
         {
             $self->set($strSection, $strName, MANIFEST_SUBKEY_TIMESTAMP,
-                       $oManifestHash{name}{"${strName}"}{modification_time} + 0);
-            $self->set($strSection, $strName, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{"${strName}"}{size} + 0);
+                       $oManifestHash{name}{$strName}{modification_time} + 0);
+            $self->set($strSection, $strName, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{$strName}{size} + 0);
         }
 
         # Link destination required for link type only
         if ($cType eq 'l')
         {
             $self->set($strSection, $strName, MANIFEST_SUBKEY_DESTINATION,
-                       $oManifestHash{name}{"${strName}"}{link_destination});
+                       $oManifestHash{name}{$strName}{link_destination});
 
             # If this is a tablespace then follow the link
             if (index($strName, PATH_PG_TBLSPC . '/') == 0 && $strLevel eq MANIFEST_KEY_BASE)

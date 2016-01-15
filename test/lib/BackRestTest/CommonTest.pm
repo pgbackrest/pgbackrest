@@ -46,7 +46,7 @@ our @EXPORT = qw(BackRestTestCommon_Create BackRestTestCommon_Drop BackRestTestC
                  BackRestTestCommon_DbPortGet BackRestTestCommon_iniLoad BackRestTestCommon_iniSave BackRestTestCommon_DbVersion
                  BackRestTestCommon_CommandPsqlGet BackRestTestCommon_DropRepo BackRestTestCommon_CreateRepo
                  BackRestTestCommon_manifestLoad BackRestTestCommon_manifestSave BackRestTestCommon_CommandMainAbsGet
-                 BackRestTestCommon_CommandRemoteFullGet BackRestTestCommon_BasePathGet);
+                 BackRestTestCommon_CommandRemoteFullGet BackRestTestCommon_BasePathGet BackRestTestCommon_LinkCreate);
 
 my $strPgSqlBin;
 my $strCommonStanza;
@@ -218,6 +218,21 @@ sub BackRestTestCommon_Cleanup
 
     # Return false if there is no cleanup or if this was a test run (this prevents cleanup from being run)
     return !$bNoCleanup && !$bDryRun;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_LinkCreate
+#
+# Create a symlink
+####################################################################################################################################
+sub BackRestTestCommon_LinkCreate
+{
+    my $strLink = shift;
+    my $strDestination = shift;
+
+    # Create the file
+    symlink($strDestination, $strLink)
+        or confess "unable to link ${strLink} to ${strDestination}";
 }
 
 ####################################################################################################################################

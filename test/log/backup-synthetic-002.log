@@ -594,6 +594,30 @@ DEBUG:     Exit::exitSafe(): iExitCode = 126, strSignal = [undef]
  INFO: backup stop
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
+incr backup (invalid path in pg_tblspc)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --log-level-console=info --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=info --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ERROR: [144]: /pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
+ INFO: backup stop
+
+incr backup (invalid relative link in pg_tblspc)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --log-level-console=info --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=info --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ERROR: [145]: tablespace symlink ../invalid_tblspc must be absolute
+ INFO: backup stop
+
+incr backup (invalid tablespace in $PGDATA)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --log-level-console=info --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --log-level-console=info --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ERROR: [146]: tablespace symlink [TEST_PATH]/db/common/invalid_tblspc must not be in \$PGDATA
+ INFO: backup stop
+
 incr backup (add tablespace 1)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------

@@ -859,8 +859,7 @@ sub BackRestTestBackup_LinkCreate
     my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
 
     # Create the file
-    symlink($strDestination, $strPathFile)
-        or confess "unable to link ${strPathFile} to ${strDestination}";
+    BackRestTestCommon_LinkCreate($strPathFile, $strDestination);
 
     # Return path to created file
     return $strPathFile;

@@ -1098,6 +1098,40 @@ sub BackRestTestBackup_Test
             $oInfo{db}{&MANIFEST_KEY_CATALOG} = $iCatalogVersion;
             BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
 
+            # Test broken tablespace configuration
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = 'incr';
+            my $strTblSpcPath = BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc';
+
+            # Create a directory in pg_tablespace
+            BackRestTestCommon_PathCreate("${strTblSpcPath}/path");
+
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'invalid path in pg_tblspc',
+                                               {iExpectedExitStatus => ERROR_LINK_EXPECTED,
+                                               strOptionalParam => '--log-level-console=info'});
+
+            BackRestTestCommon_PathRemove("${strTblSpcPath}/path");
+
+            # Create a relative link
+            BackRestTestCommon_LinkCreate("${strTblSpcPath}/99999", '../invalid_tblspc');
+
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'invalid relative link in pg_tblspc',
+                                               {iExpectedExitStatus => ERROR_ABSOLUTE_LINK_EXPECTED,
+                                                strOptionalParam => '--log-level-console=info'});
+
+            BackRestTestCommon_FileRemove("${strTblSpcPath}/99999");
+
+            # Create tablespace in PGDATA
+            BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/invalid_tblspc');
+            BackRestTestCommon_LinkCreate("${strTblSpcPath}/99999", BackRestTestCommon_DbCommonPathGet() . '/invalid_tblspc');
+
+            BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'invalid tablespace in $PGDATA',
+                                               {iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
+                                                strOptionalParam => '--log-level-console=info'});
+
+            BackRestTestCommon_PathRemove(BackRestTestCommon_DbCommonPathGet() . '/invalid_tblspc');
+            BackRestTestCommon_FileRemove("${strTblSpcPath}/99999");
+
             # Incr backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'incr';

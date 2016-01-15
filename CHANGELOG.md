@@ -11,6 +11,8 @@ __No Release Date Set__
 
 * Support for `recovery_target = 'immediate'` recovery setting introduced in PostgreSQL 9.4.
 
+* The following tablespace checks have been added: paths or files in pg_tblspc, relative links in pg_tblspc, tablespaces in $PGDATA. All three will generate errors.
+
 ## v0.89: Timeout Bug Fix and Restore Read-Only Repositories
 __Released December 24, 2015__
 
