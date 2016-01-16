@@ -611,7 +611,7 @@ incr backup (invalid tablespace in $PGDATA)
 ------------------------------------------------------------------------------------------------------------------------------------
  INFO: backup start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-start-stop --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-ERROR: [146]: tablespace symlink [TEST_PATH]/db/common/invalid_tblspc must not be in \$PGDATA
+ERROR: [146]: tablespace symlink [TEST_PATH]/db/common/invalid_tblspc must not be in $PGDATA
  INFO: backup stop
 
 incr backup (add tablespace 1)

@@ -300,7 +300,7 @@
                             <li><backrest/> will notify Postgres that the archive was successfully backed up, then DROP IT.</li>
                             <li>An error will be logged to the console and also to the Postgres log.</li>
                             <li>A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.</li>
-                        </ol>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A ne backup will be required to regain full restore capability.
+                        </ol>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.
 
                         The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.
 

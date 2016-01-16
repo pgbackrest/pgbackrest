@@ -496,7 +496,7 @@ sub build
             if (index($oManifestHash{name}{$strName}{link_destination}, $strDbClusterPath) == 0)
             {
                 confess &log(ERROR, 'tablespace symlink ' . $oManifestHash{name}{$strName}{link_destination} .
-                             ' must not be in \$PGDATA', ERROR_TABLESPACE_IN_PGDATA);
+                             ' must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
             }
         }
 
