@@ -435,6 +435,13 @@ eval
             confess &log(ERROR, 'no tests were selected');
         }
 
+        &log(INFO, $iTestsToRun . ' test' . ($iTestsToRun > 1 ? 's': '') . " selected\n");
+
+        if ($bNoCleanup && $iTestsToRun > 1)
+        {
+            confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
+        }
+
         my $iTestFail = 0;
         my $oyProcess = [];
 
