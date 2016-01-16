@@ -1550,16 +1550,20 @@ push @EXPORT, qw(BackRestTestBackup_Expire);
 sub BackRestTestBackup_Expire
 {
     my $strStanza = shift;
+    my $strComment = shift;
     my $oFile = shift;
-    my $stryBackupExpectedRef = shift;
-    my $stryArchiveExpectedRef = shift;
     my $iExpireFull = shift;
     my $iExpireDiff = shift;
-    my $strExpireArchiveType = shift;
-    my $iExpireArchive = shift;
+
+    $strComment = 'expire' .
+                  (defined($iExpireFull) ? " full=$iExpireFull" : '') .
+                  (defined($iExpireDiff) ? " diff=$iExpireDiff" : '') .
+                  (defined($strComment) ? " (${strComment})" : '');
+
+    &log(INFO, "        ${strComment}");
 
     my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               "/pg_backrest.conf --stanza=${strStanza} expire";
+                               "/pg_backrest.conf --stanza=${strStanza} expire --log-level-console=info";
 
     if (defined($iExpireFull))
     {
@@ -1571,37 +1575,8 @@ sub BackRestTestBackup_Expire
         $strCommand .= ' --retention-diff=' . $iExpireDiff;
     }
 
-    if (defined($strExpireArchiveType))
-    {
-        $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType .
-                       ' --retention-archive=' . $iExpireArchive;
-    }
-
-    executeTest($strCommand);
-
-    # Check that the correct backups were expired
-    my @stryBackupActual = $oFile->list(PATH_BACKUP_CLUSTER);
-
-    if (join(",", @stryBackupActual) ne join(",", @{$stryBackupExpectedRef}))
-    {
-        confess "expected backup list:\n    " . join("\n    ", @{$stryBackupExpectedRef}) .
-                "\n\nbut actual was:\n    " . join("\n    ", @stryBackupActual) . "\n";
-    }
-
-    # Check that the correct archive logs were expired
-    my @stryArchiveActual = $oFile->list(PATH_BACKUP_ARCHIVE, BackRestTestCommon_DbVersion() . '-1/0000000100000000');
-
-    if (join(",", @stryArchiveActual) ne join(",", @{$stryArchiveExpectedRef}))
-    {
-        confess "expected archive list:\n    " . join("\n    ", @{$stryArchiveExpectedRef}) .
-                "\n\nbut actual was:\n    " . join("\n    ", @stryArchiveActual) . "\n";
-    }
-
-    if (defined($oBackupLogTest))
-    {
-        $oBackupLogTest->supplementalAdd(BackRestTestCommon_RepoPathGet() .
-                                         "/backup/${strStanza}/backup.info");
-    }
+    executeTest($strCommand, {oLogTest => $oBackupLogTest,
+                iExpectedExitStatus => $bBackupRemote ? ERROR_HOST_INVALID : undef});
 }
 
 1;

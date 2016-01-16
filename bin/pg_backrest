@@ -174,7 +174,7 @@ eval
         ############################################################################################################################
         if (optionRemoteTypeTest(BACKUP))
         {
-            confess &log(ERROR, 'backup and expire commands must run on the backup host');
+            confess &log(ERROR, 'backup and expire commands must run on the backup host', ERROR_HOST_INVALID);
         }
 
         ############################################################################################################################

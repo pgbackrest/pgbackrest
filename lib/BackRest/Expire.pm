@@ -280,77 +280,76 @@ sub process
                 # backup even though they are also in the pg_xlog directory (since they have been copied more than once).
                 my $oManifest = new BackRest::Manifest($oFile->pathGet(PATH_BACKUP_CLUSTER) .
                                                        "/${strArchiveRetentionBackup}/backup.manifest");
-                my $strArchiveLast = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START);
 
-                if (!defined($strArchiveLast))
+                if ($oManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
                 {
-                    confess &log(ERROR, "invalid archive location retrieved ${strArchiveRetentionBackup}");
-                }
+                    my $strArchiveLast = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START);
 
-                &log(INFO, "archive retention from backup ${strArchiveRetentionBackup}, start = ${strArchiveLast}");
+                    &log(INFO, "archive retention from backup ${strArchiveRetentionBackup}, start = ${strArchiveLast}");
 
-                # Get archive info
-                my $oArchive = new BackRest::Archive();
-                my $strArchiveId = $oArchive->getCheck($oFile);
+                    # Get archive info
+                    my $oArchive = new BackRest::Archive();
+                    my $strArchiveId = $oArchive->getCheck($oFile);
 
-                # Remove any archive directories or files that are out of date
-                foreach $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
-                {
-                    logDebugMisc($strOperation, "found major WAL path: ${strPath}");
-
-                    # If less than first 16 characters of current archive file, then remove the directory
-                    if ($strPath lt substr($strArchiveLast, 0, 16))
+                    # Remove any archive directories or files that are out of date
+                    foreach $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
                     {
-                        my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId) . "/${strPath}";
+                        logDebugMisc($strOperation, "found major WAL path: ${strPath}");
 
-                        remove_tree($strFullPath) > 0 or confess &log(ERROR, "unable to remove ${strFullPath}");
-
-                        logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
-
-                        # Record expire start and stop location for info
-                        if (!defined($strArchiveExpireStart))
+                        # If less than first 16 characters of current archive file, then remove the directory
+                        if ($strPath lt substr($strArchiveLast, 0, 16))
                         {
-                            $strArchiveExpireStart = $strPath;
-                        }
+                            my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId) . "/${strPath}";
 
-                        $strArchiveExpireStop = $strPath;
-                    }
-                    # If equals the first 16 characters of the current archive file, then delete individual files instead
-                    elsif ($strPath eq substr($strArchiveLast, 0, 16))
-                    {
-                        my $strSubPath;
+                            remove_tree($strFullPath) > 0 or confess &log(ERROR, "unable to remove ${strFullPath}");
 
-                        # Look for archive files in the archive directory
-                        foreach $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strPath}", "^[0-F]{24}.*\$"))
-                        {
-                            # Delete if the first 24 characters less than the current archive file
-                            if ($strSubPath lt substr($strArchiveLast, 0, 24))
+                            logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
+
+                            # Record expire start and stop location for info
+                            if (!defined($strArchiveExpireStart))
                             {
-                                unlink($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"))
-                                    or confess &log(ERROR, 'unable to remove ' . $strSubPath);
+                                $strArchiveExpireStart = $strPath;
+                            }
 
-                                logDebugMisc($strOperation, "remove expired WAL segment: ${strSubPath}");
+                            $strArchiveExpireStop = $strPath;
+                        }
+                        # If equals the first 16 characters of the current archive file, then delete individual files instead
+                        elsif ($strPath eq substr($strArchiveLast, 0, 16))
+                        {
+                            my $strSubPath;
 
-                                # Record expire start and stop location for info
-                                if (!defined($strArchiveExpireStart))
+                            # Look for archive files in the archive directory
+                            foreach $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strPath}", "^[0-F]{24}.*\$"))
+                            {
+                                # Delete if the first 24 characters less than the current archive file
+                                if ($strSubPath lt substr($strArchiveLast, 0, 24))
                                 {
-                                    $strArchiveExpireStart = $strSubPath;
-                                }
+                                    unlink($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"))
+                                        or confess &log(ERROR, 'unable to remove ' . $strSubPath);
 
-                                $strArchiveExpireStop = $strSubPath;
+                                    logDebugMisc($strOperation, "remove expired WAL segment: ${strSubPath}");
+
+                                    # Record expire start and stop location for info
+                                    if (!defined($strArchiveExpireStart))
+                                    {
+                                        $strArchiveExpireStart = $strSubPath;
+                                    }
+
+                                    $strArchiveExpireStop = $strSubPath;
+                                }
                             }
                         }
                     }
-                }
 
-                if (!defined($strArchiveExpireStart))
-                {
-                    &log(INFO, 'no WAL segments to expire');
-                }
-                else
-                {
-                    &log(INFO, 'expire WAL segments: start = ' . substr($strArchiveExpireStart, 0, 24) .
-                               ', stop = ' . substr($strArchiveExpireStop, 0, 24));
+                    if (!defined($strArchiveExpireStart))
+                    {
+                        &log(INFO, 'no WAL segments to expire');
+                    }
+                    else
+                    {
+                        &log(INFO, 'expire WAL segments: start = ' . substr($strArchiveExpireStart, 0, 24) .
+                                   ', stop = ' . substr($strArchiveExpireStop, 0, 24));
+                    }
                 }
             }
         }

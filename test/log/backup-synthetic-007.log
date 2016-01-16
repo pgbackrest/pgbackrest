@@ -3057,6 +3057,12 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --log-level-console=info --retention-full=1
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: expire start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/local --retention-full=1 --stanza=db
+ERROR: [147]: backup and expire commands must run on the backup host
+ INFO: expire stop
+
 diff backup (add files)
 > [BACKREST_BIN] --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------

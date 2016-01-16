@@ -112,6 +112,8 @@ use constant ERROR_ABSOLUTE_LINK_EXPECTED                           => ERROR_MIN
     push @EXPORT, qw(ERROR_ABSOLUTE_LINK_EXPECTED);
 use constant ERROR_TABLESPACE_IN_PGDATA                             => ERROR_MINIMUM + 46;
     push @EXPORT, qw(ERROR_TABLESPACE_IN_PGDATA);
+use constant ERROR_HOST_INVALID                                     => ERROR_MINIMUM + 47;
+    push @EXPORT, qw(ERROR_HOST_INVALID);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

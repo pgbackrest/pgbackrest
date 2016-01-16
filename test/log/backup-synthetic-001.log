@@ -2855,6 +2855,12 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db expire --log-level-console=info --retention-full=1
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: expire start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-full=1 --stanza=db
+ INFO: remove expired full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
+ INFO: expire stop
+
 diff backup (add files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2871,7 +2877,7 @@ DEBUG:     Backup->typeFind(): strBackupClusterPath = [TEST_PATH]/backrest/backu
 DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = <false>, bFull = true, bIncremental = <false>
 DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
-DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-3], [BACKUP-FULL-2])
+DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-3])
 DEBUG:     Backup->typeFind=>: strLabel = [BACKUP-FULL-3]
  INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common-2
@@ -3015,13 +3021,6 @@ backrest-format=4
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
-[BACKUP-INCR-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
-[BACKUP-INCR-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
-[BACKUP-INCR-5]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
 [BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
 [BACKUP-DIFF-5]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":false,"option-hardlink":false,"option-start-stop":false}
 
@@ -3164,7 +3163,7 @@ DEBUG:     Info->backupList(): oFile = [object], strStanza = db_empty
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db_empty
 stanza db
    status: ok
-   oldest backup label: [BACKUP-FULL-2]
+   oldest backup label: [BACKUP-FULL-3]
    oldest backup timestamp: [TIMESTAMP-STR]
    latest backup label: [BACKUP-DIFF-5]
    latest backup timestamp: [TIMESTAMP-STR]
@@ -3190,225 +3189,6 @@ DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup
 [
    {
        "backup" : [
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-FULL-2]",
-               "prior" : null,
-               "reference" : null,
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "full"
-           },
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-DIFF-2]",
-               "prior" : "[BACKUP-FULL-2]",
-               "reference" : [
-                   "[BACKUP-FULL-2]"
-               ],
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "diff"
-           },
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-INCR-3]",
-               "prior" : "[BACKUP-DIFF-2]",
-               "reference" : [
-                   "[BACKUP-FULL-2]",
-                   "[BACKUP-DIFF-2]"
-               ],
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "incr"
-           },
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-INCR-4]",
-               "prior" : "[BACKUP-INCR-3]",
-               "reference" : [
-                   "[BACKUP-FULL-2]",
-                   "[BACKUP-DIFF-2]",
-                   "[BACKUP-INCR-3]"
-               ],
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "incr"
-           },
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-DIFF-3]",
-               "prior" : "[BACKUP-FULL-2]",
-               "reference" : [
-                   "[BACKUP-FULL-2]"
-               ],
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "diff"
-           },
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-INCR-5]",
-               "prior" : "[BACKUP-DIFF-3]",
-               "reference" : [
-                   "[BACKUP-FULL-2]",
-                   "[BACKUP-DIFF-3]"
-               ],
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "incr"
-           },
-           {
-               "archive" : {
-                   "start" : null,
-                   "stop" : null
-               },
-               "backrest" : {
-                   "format" : 4,
-                   "version" : "[VERSION-1]"
-               },
-               "database" : {
-                   "id" : 1
-               },
-               "info" : {
-                   "delta" : [DELTA],
-                   "repository" : {
-                       "delta" : [DELTA],
-                       "size" : [SIZE]
-                   },
-                   "size" : [SIZE]
-               },
-               "label" : "[BACKUP-DIFF-4]",
-               "prior" : "[BACKUP-FULL-2]",
-               "reference" : [
-                   "[BACKUP-FULL-2]"
-               ],
-               "timestamp" : {
-                   "start" : [TIMESTAMP],
-                   "stop" : [TIMESTAMP]
-               },
-               "type" : "diff"
-           },
            {
                "archive" : {
                    "start" : null,

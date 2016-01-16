@@ -1310,6 +1310,10 @@ sub BackRestTestBackup_Test
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest);
 
+            # Call expire
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_Expire($strStanza, undef, $oFile, 1);
+
             # Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'diff';
