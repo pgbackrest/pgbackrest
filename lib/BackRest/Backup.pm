@@ -319,13 +319,15 @@ sub tmpClean
     # Remove the pg_xlog directory since it contains nothing useful for the new backup
     if (-e $self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_xlog'))
     {
-        remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_xlog')) or confess &log(ERROR, 'unable to delete tmp pg_xlog path');
+        remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_xlog'))
+            or confess &log(ERROR, 'unable to delete tmp pg_xlog path');
     }
 
     # Remove the pg_tblspc directory since it is trivial to rebuild, but hard to compare
     if (-e $self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_tblspc'))
     {
-        remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_tblspc')) or confess &log(ERROR, 'unable to delete tmp pg_tblspc path');
+        remove_tree($self->{oFile}->pathGet(PATH_BACKUP_TMP, 'base/pg_tblspc'))
+            or confess &log(ERROR, 'unable to delete tmp pg_tblspc path');
     }
 
     # Get the list of files that should be deleted from temp

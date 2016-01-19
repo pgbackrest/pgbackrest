@@ -28,7 +28,9 @@ use constant OP_BACKUP_INFO                                         => 'BackupIn
 
 use constant OP_INFO_BACKUP_ADD                                     => OP_BACKUP_INFO . "->add";
 use constant OP_INFO_BACKUP_CHECK                                   => OP_BACKUP_INFO . "->check";
+use constant OP_INFO_BACKUP_CURRENT                                 => OP_BACKUP_INFO . "->current";
 use constant OP_INFO_BACKUP_DELETE                                  => OP_BACKUP_INFO . "->delete";
+use constant OP_INFO_BACKUP_LIST                                    => OP_BACKUP_INFO . "->list";
 use constant OP_INFO_BACKUP_NEW                                     => OP_BACKUP_INFO . "->new";
 
 ####################################################################################################################################
@@ -172,10 +174,7 @@ sub validate
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -245,10 +244,7 @@ sub check
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -386,14 +382,81 @@ sub add
     $self->save();
 
     # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# current
+#
+# Test if a backup is current.
+####################################################################################################################################
+sub current
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strBackup
+    ) =
+        logDebugParam
+        (
+            OP_INFO_BACKUP_CURRENT, \@_,
+            {name => 'strBackup'}
+        );
+
+    # Return from function and log return values if any
     return logDebugReturn
     (
-        $strOperation
+        $strOperation,
+        {name => 'bTest', value => $self->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup)}
     );
 }
 
 ####################################################################################################################################
-# Delete
+# list
+#
+# Get backup keys.
+####################################################################################################################################
+sub list
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFilter
+    ) =
+        logDebugParam
+        (
+            OP_INFO_BACKUP_LIST, \@_,
+            {name => 'strFilter'}
+        );
+
+    # List of backups
+    my @stryBackup;
+
+    # Iterate through the backups and filter
+    for my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
+    {
+        if ($strBackup =~ $strFilter)
+        {
+            push(@stryBackup, $strBackup)
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryBackup', value => \@stryBackup}
+    );
+}
+
+####################################################################################################################################
+# delete
 #
 # Delete a backup from the info file.
 ####################################################################################################################################
@@ -414,13 +477,9 @@ sub delete
         );
 
     $self->remove(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel);
-    $self->save();
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 1;

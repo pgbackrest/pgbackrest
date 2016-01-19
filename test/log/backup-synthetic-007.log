@@ -57,6 +57,12 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-1])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -329,6 +335,12 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -743,6 +755,14 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-INCR-1], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-1]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -964,6 +984,14 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-INCR-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -1191,6 +1219,14 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-DIFF-1], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-1]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -1419,6 +1455,14 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -1835,6 +1879,16 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -2040,6 +2094,18 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-INCR-4], [BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -2261,6 +2327,20 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-DIFF-3], [BACKUP-INCR-4], [BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -2465,6 +2545,22 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-INCR-5], [BACKUP-DIFF-3], [BACKUP-INCR-4], [BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-5]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -2683,6 +2779,24 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-DIFF-4], [BACKUP-INCR-5], [BACKUP-DIFF-3], [BACKUP-INCR-4], [BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-5]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -2904,6 +3018,26 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-3], [BACKUP-DIFF-4], [BACKUP-INCR-5], [BACKUP-DIFF-3], [BACKUP-INCR-4], [BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-5]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
@@ -3123,6 +3257,28 @@ DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPat
  INFO: expire start: --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
 DEBUG:     BackupInfo->new(): strBackupClusterPath = [TEST_PATH]/backrest/backup/db
+DEBUG:     BackupCommon::backupRegExpGet(): bDifferential = true, bFull = true, bIncremental = true
+DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+DEBUG:     File->list=>: stryFileList = ([BACKUP-DIFF-5], [BACKUP-FULL-3], [BACKUP-DIFF-4], [BACKUP-INCR-5], [BACKUP-DIFF-3], [BACKUP-INCR-4], [BACKUP-INCR-3], [BACKUP-DIFF-2], [BACKUP-FULL-2])
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-5]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-5]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-4]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-INCR-3]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-DIFF-2]
+DEBUG:     BackupInfo->current=>: bTest = true
+DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
+DEBUG:     BackupInfo->current=>: bTest = true
  INFO: archive retention type not set - archive logs will not be expired
 DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]

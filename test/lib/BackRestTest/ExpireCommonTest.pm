@@ -35,6 +35,7 @@ use constant OP_EXPIRE_COMMON_TEST_BACKUP_CREATE                    => OP_EXPIRE
 use constant OP_EXPIRE_COMMON_TEST_NEW                              => OP_EXPIRE_COMMON_TEST . "->new";
 use constant OP_EXPIRE_COMMON_TEST_PROCESS                          => OP_EXPIRE_COMMON_TEST . "->process";
 use constant OP_EXPIRE_COMMON_TEST_STANZA_CREATE                    => OP_EXPIRE_COMMON_TEST . "->stanzaCreate";
+use constant OP_EXPIRE_COMMON_TEST_SUPPLEMENTAL_LOG                 => OP_EXPIRE_COMMON_TEST . "->supplementalLog";
 
 ####################################################################################################################################
 # new
@@ -345,6 +346,41 @@ sub archiveCreate
 }
 
 ####################################################################################################################################
+# supplementalLog
+####################################################################################################################################
+sub supplementalLog
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strStanza
+    ) =
+        logDebugParam
+        (
+            OP_EXPIRE_COMMON_TEST_SUPPLEMENTAL_LOG, \@_,
+            {name => 'strStanza'}
+        );
+
+    my $oStanza = $self->{oStanzaHash}{$strStanza};
+
+    if (defined($self->{oLogTest}))
+    {
+        $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
+                                           "/backup/${strStanza}/backup.info", undef, $$oStanza{strBackupDescription});
+
+        executeTest('ls ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza} | grep -v \"backup.info\"",
+                    {oLogTest => $self->{oLogTest}});
+        executeTest('ls -R ' . BackRestTestCommon_RepoPathGet() . "/archive/${strStanza} | grep -v \"archive.info\"",
+                    {oLogTest => $self->{oLogTest}});
+    }
+
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # process
 ####################################################################################################################################
 sub process
@@ -375,11 +411,7 @@ sub process
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
 
-    if (defined($self->{oLogTest}))
-    {
-        $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
-                                           "/backup/${strStanza}/backup.info", undef, $$oStanza{strBackupDescription});
-    }
+    $self->supplementalLog($strStanza);
 
     undef($$oStanza{strBackupDescription});
 
@@ -408,17 +440,10 @@ sub process
 
     executeTest($strCommand, {strComment => $strDescription, oLogTest => $self->{oLogTest}});
 
-    if (defined($self->{oLogTest}))
-    {
-        $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
-                                           "/backup/${strStanza}/backup.info");
-    }
+    $self->supplementalLog($strStanza);
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 1;

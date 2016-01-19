@@ -128,21 +128,17 @@ sub process
             confess &log(ERROR, 'retention-full must be a number >= 1');
         }
 
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(true));
+        @stryPath = $oBackupInfo->list(backupRegExpGet(true));
 
         if (@stryPath > $iFullRetention)
         {
-            # Delete all backups that depend on the full backup.  Done in reverse order so that remaining backups will still
-            # be consistent if the process dies
+            # Expire all backups that depend on the full backup
             for (my $iFullIdx = 0; $iFullIdx < @stryPath - $iFullRetention; $iFullIdx++)
             {
                 my @stryRemoveList;
 
-                foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, '^' . $stryPath[$iFullIdx] . '.*'))
+                foreach $strPath ($oBackupInfo->list('^' . $stryPath[$iFullIdx] . '.*'))
                 {
-                    system("rm -rf ${strBackupClusterPath}/${strPath}") == 0
-                        or confess &log(ERROR, "unable to delete backup ${strPath}");
-
                     $oBackupInfo->delete($strPath);
 
                     if ($strPath ne $stryPath[$iFullIdx])
@@ -151,7 +147,7 @@ sub process
                     }
                 }
 
-                &log(INFO, 'remove expired full backup ' . (@stryRemoveList > 0 ? 'set: ' : '')  . $stryPath[$iFullIdx] .
+                &log(INFO, 'expire full backup ' . (@stryRemoveList > 0 ? 'set: ' : '')  . $stryPath[$iFullIdx] .
                            (@stryRemoveList > 0 ? ', ' . join(', ', @stryRemoveList) : ''));
             }
         }
@@ -166,41 +162,48 @@ sub process
             confess &log(ERROR, 'retention-diff must be a number >= 1');
         }
 
-        @stryPath = $oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(false, true));
+        @stryPath = $oBackupInfo->list(backupRegExpGet(false, true));
 
         if (@stryPath > $iDifferentialRetention)
         {
-            # $strDiffRetain = $stryPath[@stryPath - $iDifferentialRetention];
-
-            # logDebugMisc($strOperation,  'differential expiration based on ' . $strDiffRetain);
-
             for (my $iDiffIdx = 0; $iDiffIdx < @stryPath - $iDifferentialRetention; $iDiffIdx++)
             {
                 # Get a list of all differential and incremental backups
                 my @stryRemoveList;
 
-                foreach $strPath ($oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(false, true, true)))
+                foreach $strPath ($oBackupInfo->list(backupRegExpGet(false, true, true)))
                 {
                     logDebugMisc($strOperation, "checking ${strPath} for differential expiration");
 
                     # Remove all differential and incremental backups before the oldest valid differential
                     if ($strPath lt $stryPath[$iDiffIdx + 1])
                     {
-                        system("rm -rf ${strBackupClusterPath}/${strPath}") == 0
-                            or confess &log(ERROR, "unable to delete backup ${strPath}");
                         $oBackupInfo->delete($strPath);
 
                         if ($strPath ne $stryPath[$iDiffIdx])
                         {
                             push(@stryRemoveList, $strPath);
                         }
-                        # &log(INFO, "remove expired diff/incr backup ${strPath}");
                     }
                 }
 
-                &log(INFO, 'remove expired diff backup ' . (@stryRemoveList > 0 ? 'set: ' : '')  . $stryPath[$iDiffIdx] .
+                &log(INFO, 'expire diff backup ' . (@stryRemoveList > 0 ? 'set: ' : '')  . $stryPath[$iDiffIdx] .
                            (@stryRemoveList > 0 ? ', ' . join(', ', @stryRemoveList) : ''));
             }
+        }
+    }
+
+    $oBackupInfo->save();
+
+    # Remove backups from disk
+    foreach my $strBackup ($oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(true, true, true), 'reverse'))
+    {
+        if (!$oBackupInfo->current($strBackup))
+        {
+            &log(INFO, "remove expired backup ${strBackup}");
+
+            system("rm -rf ${strBackupClusterPath}/${strBackup}") == 0
+                or confess &log(ERROR, "unable to delete backup ${strBackup}");
         }
     }
 
