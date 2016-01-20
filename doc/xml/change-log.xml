@@ -18,6 +18,9 @@
                     <text>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>. <i>Contributed by Jason O'Donnell</i>.</text>
                 </release-feature>
                 <release-feature>
+                    <text>When restore <setting>--set=latest</setting> (the default) the actual backup restored will be output to the log.</text>
+                </release-feature>
+                <release-feature>
                     <text>Support for <postgres/> 9.5 partial WAL segments and <setting>recovery_target_action</setting> setting. The <setting>archive_mode = 'always'</setting> setting is not yet supported.</text>
                 </release-feature>
                 <release-feature>

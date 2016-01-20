@@ -242,6 +242,9 @@ sub manifestLoad
     # Remove the manifest now that it is in memory
     $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
+    # Log the backup set to restore
+    &log(INFO, "restore backup set " . $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+
     # If backup is latest then set it equal to backup label, else verify that requested backup and label match
     my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
@@ -718,9 +721,6 @@ sub process
     {
         confess &log(ERROR, 'unable to restore while Postgres is running', ERROR_POSTMASTER_RUNNING);
     }
-
-    # Log the backup set to restore
-    &log(INFO, "restore backup set " . $self->{strBackupSet});
 
     # Make sure the backup path is valid and load the manifest
     my $oManifest = $self->manifestLoad();

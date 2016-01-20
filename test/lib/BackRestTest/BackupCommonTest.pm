@@ -1311,7 +1311,7 @@ sub BackRestTestBackup_Restore
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
-                  ($strBackup ne 'latest' ? ", backup '${strBackup}'" : '') .
+                  ($strBackup ne OPTION_DEFAULT_RESTORE_SET ? ", backup '${strBackup}'" : '') .
                   ($strType ? ", type '${strType}'" : '') .
                   ($strTarget ? ", target '${strTarget}'" : '') .
                   ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
@@ -1361,7 +1361,7 @@ sub BackRestTestBackup_Restore
                 ' --config=' . BackRestTestCommon_DbPathGet() .
                 '/pg_backrest.conf'  . (defined($bDelta) && $bDelta ? ' --delta' : '') .
                 (defined($bForce) && $bForce ? ' --force' : '') .
-                ($strBackup ne 'latest' ? " --set=${strBackup}" : '') .
+                ($strBackup ne OPTION_DEFAULT_RESTORE_SET ? " --set=${strBackup}" : '') .
                 (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
                 (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
                 (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .

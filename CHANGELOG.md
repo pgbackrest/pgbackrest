@@ -9,6 +9,8 @@ __No Release Date Set__
 
 * Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_.
 
+* When restore `--set=latest` (the default) the actual backup restored will be output to the log.
+
 * Support for PostgreSQL 9.5 partial WAL segments and `recovery_target_action` setting. The `archive_mode = 'always'` setting is not yet supported.
 
 * Support for `recovery_target = 'immediate'` recovery setting introduced in PostgreSQL 9.4.
