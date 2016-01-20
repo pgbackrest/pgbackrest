@@ -345,7 +345,7 @@
                     <config-key id="retention-diff" name="Differential Retention">
                         <summary>Number of differential backups to retain.</summary>
 
-                        <text>When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept.</text>
+                        <text>When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept until the full backups they depend on expire.</text>
 
                         <example>3</example>
                     </config-key>
@@ -354,9 +354,7 @@
                     <config-key id="retention-archive-type" name="Archive Retention Type">
                         <summary>Backup type for WAL retention.</summary>
 
-                        <text>If set to full, then <backrest/> will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to diff (differential), then <backrest/> will keep archive logs for the number of differential backups defined by <setting>retention-archive</setting>.
-
-                        If not defined then archive logs will be kept indefinitely.  In general it is not useful to keep archive logs that are older than the oldest backup but there may occasionally be reasons for doing so.</text>
+                        <text>If set to <setting>full</setting> <backrest/> will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to <setting>diff</setting> (differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>retention-archive</setting>.  If set to <setting>incr</setting> (incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>retention-archive</setting>.</text>
 
                         <example>diff</example>
                     </config-key>
@@ -365,9 +363,7 @@
                     <config-key id="retention-archive" name="Archive Retention">
                         <summary>Number of backups worth of WAL to retain.</summary>
 
-                        <text>Number of backups worth of archive log to keep.  If this is set less than your backup retention then be sure you set <setting>archive-copy=y</setting> or you won't be able to restore some older backups.
-
-                        For example, if <setting>retention-archive=2</setting> and <setting>retention-full=4</setting>, then any backups older than the most recent two full backups will not have WAL segments in the archive to make them consistent.  To solve this, set <setting>archive-copy=y</setting> and use <setting>type=none</setting> when restoring.  This issue will be addressed in a future release but for now be careful with this setting.</text>
+                        <text>Number of backups worth of archive log to keep.</text>
 
                         <example>2</example>
                     </config-key>

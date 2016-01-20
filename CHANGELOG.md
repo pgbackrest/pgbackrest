@@ -5,7 +5,9 @@ __No Release Date Set__
 
 * Fixed an issue where specifying `--no-archive-check` would throw a configuration error. _Reported by Jason O'Donnell_.
 
-* Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_
+* The `retention-archive` option can now be be safely set to less than backup retention (`retention-full` or `retention-diff`) without also specifying `archive-copy=n`. The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive. However, in this case PITR will still not be possible for the backups that fall outside of archive retention.
+
+* Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_.
 
 * Support for PostgreSQL 9.5 partial WAL segments and `recovery_target_action` setting. The `archive_mode = 'always'` setting is not yet supported.
 

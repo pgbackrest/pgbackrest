@@ -80,7 +80,7 @@ my $oConfigHelpData =
                     "removed.\n" .
                 "\n" .
                 "If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point. " .
-                    "A ne backup will be required to regain full restore capability.\n" .
+                    "A new backup will be required to regain full restore capability.\n" .
                 "\n" .
                 "The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop " .
                     "completely. Better to lose the backup than have PostgreSQL go down.\n" .
@@ -419,13 +419,7 @@ my $oConfigHelpData =
             summary =>
                 "Number of backups worth of WAL to retain.",
             description =>
-                "Number of backups worth of archive log to keep. If this is set less than your backup retention then be sure " .
-                    "you set archive-copy=y or you won't be able to restore some older backups.\n" .
-                "\n" .
-                "For example, if retention-archive=2 and retention-full=4, then any backups older than the most recent two full " .
-                    "backups will not have WAL segments in the archive to make them consistent. To solve this, set " .
-                    "archive-copy=y and use type=none when restoring. This issue will be addressed in a future release but for " .
-                    "now be careful with this setting."
+                "Number of backups worth of archive log to keep."
         },
 
         # RETENTION-ARCHIVE-TYPE Option Help
@@ -436,12 +430,10 @@ my $oConfigHelpData =
             summary =>
                 "Backup type for WAL retention.",
             description =>
-                "If set to full, then pgBackRest will keep archive logs for the number of full backups defined by " .
-                    "retention-archive. If set to diff (differential), then pgBackRest will keep archive logs for the number of " .
-                    "differential backups defined by retention-archive.\n" .
-                "\n" .
-                "If not defined then archive logs will be kept indefinitely. In general it is not useful to keep archive logs " .
-                    "that are older than the oldest backup but there may occasionally be reasons for doing so."
+                "If set to full pgBackRest will keep archive logs for the number of full backups defined by retention-archive. " .
+                    "If set to diff (differential) pgBackRest will keep archive logs for the number of full and differential " .
+                    "backups defined by retention-archive. If set to incr (incremental) pgBackRest will keep archive logs for " .
+                    "the number of full, differential, and incremental backups defined by retention-archive."
         },
 
         # RETENTION-DIFF Option Help
@@ -453,7 +445,7 @@ my $oConfigHelpData =
                 "Number of differential backups to retain.",
             description =>
                 "When a differential backup expires, all incremental backups associated with the differential backup will also " .
-                    "expire. When not defined all differential backups will be kept."
+                    "expire. When not defined all differential backups will be kept until the full backups they depend on expire."
         },
 
         # RETENTION-FULL Option Help

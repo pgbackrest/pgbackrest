@@ -427,12 +427,14 @@ sub list
     my
     (
         $strOperation,
-        $strFilter
+        $strFilter,
+        $strOrder
     ) =
         logDebugParam
         (
             OP_INFO_BACKUP_LIST, \@_,
-            {name => 'strFilter'}
+            {name => 'strFilter', required => false},
+            {name => 'strOrder', default => 'forward'}
         );
 
     # List of backups
@@ -441,9 +443,16 @@ sub list
     # Iterate through the backups and filter
     for my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
     {
-        if ($strBackup =~ $strFilter)
+        if (!defined($strFilter) || $strBackup =~ $strFilter)
         {
-            push(@stryBackup, $strBackup)
+            if ($strOrder eq 'reverse')
+            {
+                unshift(@stryBackup, $strBackup)
+            }
+            else
+            {
+                push(@stryBackup, $strBackup)
+            }
         }
     }
 

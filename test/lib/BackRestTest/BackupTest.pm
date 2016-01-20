@@ -763,14 +763,14 @@ sub BackRestTestBackup_Test
             $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
 
             #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Expire oldest diff backup';
+            $strDescription = 'Expire oldest full backup';
 
             $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 256);
             $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
 
             #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Expire oldest full backup, archive expire does not fall on major segment boundary';
+            $strDescription = 'Expire oldest diff backup, archive expire does not fall on major segment boundary';
 
             $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, undef, 0);

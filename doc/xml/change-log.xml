@@ -12,7 +12,10 @@
                     <text>Fixed an issue where specifying <setting>--no-archive-check</setting> would throw a configuration error.  <i>Reported by Jason O'Donnell</i>.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>. <i>Contributed by Jason O'Donnell</i></text>
+                    <text>The <setting>retention-archive</setting> option can now be be safely set to less than backup retention (<setting>retention-full</setting> or <setting>retention-diff</setting>) without also specifying <setting>archive-copy=n</setting>.  The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive.  However, in this case PITR will still not be possible for the backups that fall outside of archive retention.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>. <i>Contributed by Jason O'Donnell</i>.</text>
                 </release-feature>
                 <release-feature>
                     <text>Support for <postgres/> 9.5 partial WAL segments and <setting>recovery_target_action</setting> setting. The <setting>archive_mode = 'always'</setting> setting is not yet supported.</text>
