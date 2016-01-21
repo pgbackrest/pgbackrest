@@ -9,7 +9,7 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use Fcntl qw(:mode :flock O_RDONLY O_WRONLY O_CREAT O_EXCL O_TRUNC);
+use Fcntl qw(:mode :flock O_RDONLY O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname);
 use IO::Handle;
 

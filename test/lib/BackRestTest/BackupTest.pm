@@ -247,6 +247,17 @@ sub BackRestTestBackup_Test
                                    ', archive ' .sprintf('%02x', $iArchive) .
                                    " - ${strArchiveFile}");
 
+                        if ($iBackup == 1 && $iArchive == 2)
+                        {
+                            # Should succeed when temp file already exists
+                            &log(INFO, '        test archive when tmp file exists');
+
+                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo);
+                            executeTest('touch ' . BackRestTestCommon_RepoPathGet() . "/archive/${strStanza}/9.3-1/" .
+                                        substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.tmp",
+                                        {bRemote => $bRemote});
+                        }
+
                         executeTest($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
 
                         if ($iArchive == $iBackup)

@@ -10,7 +10,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 use Digest::SHA;
-use Fcntl qw(:mode :flock O_RDONLY O_WRONLY O_CREAT O_EXCL);
+use Fcntl qw(:mode :flock O_RDONLY O_WRONLY O_CREAT);
 use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
@@ -1700,7 +1700,7 @@ sub copy
 
     if (!$bDestinationRemote)
     {
-        my $iCreateFlag = O_WRONLY | O_CREAT | O_EXCL;
+        my $iCreateFlag = O_WRONLY | O_CREAT;
 
         # Open the destination temp file
         if (!sysopen($hDestinationFile, $strDestinationTmpOp, $iCreateFlag))
