@@ -612,7 +612,7 @@
                 <execute output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>archive retention from backup {[backup-full-first]}|expire WAL segments</exe-highlight>
+                    <exe-highlight>archive retention on backup {[backup-full-first]}|remove archive</exe-highlight>
                 </execute>
 
                 <execute show="n" variable-key="backup-full-second">
@@ -628,7 +628,7 @@
                 <execute output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>remove expired full backup set\: {[backup-full-first]}|archive retention from backup {[backup-full-second]}|expire WAL segments</exe-highlight>
+                    <exe-highlight>expire full backup set\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -673,7 +673,7 @@
                 <execute output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>remove expired diff backup set: {[backup-diff-second]}</exe-highlight>
+                    <exe-highlight>expire diff backup set: {[backup-diff-second]}</exe-highlight>
                 </execute>
             </execute-list>
         </section>
