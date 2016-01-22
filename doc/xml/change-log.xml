@@ -15,6 +15,9 @@
                     <text>Fixed an issue where a temp WAL file left over after a well-timed system crash could cause the next <cmd>archive-push</cmd> to fail.</text>
                 </release-feature>
                 <release-feature>
+                    <text>Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of <postgres/>.  A separate VM is now created for each version.  Also added a sleep after database starts during document generation to ensure the database is running before the next command runs. <i>Reported by John Harvey</i>.</text>
+                </release-feature>
+                <release-feature>
                     <text>The <setting>retention-archive</setting> option can now be be safely set to less than backup retention (<setting>retention-full</setting> or <setting>retention-diff</setting>) without also specifying <setting>archive-copy=n</setting>.  The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive.  However, in this case PITR will still not be possible for the backups that fall outside of archive retention.</text>
                 </release-feature>
                 <release-feature>

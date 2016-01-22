@@ -352,58 +352,56 @@ sub containerBuild
 
         # Db image
         ###########################################################################################################################
-        $strImageName = "${strOS}-db";
-        &log(INFO, "Building ${strImageName} image...");
-
-        $strImage = "# Database Container\nFROM backrest/${strOS}-base";
-
-        # Create PostgreSQL User
-        $strImage .= "\n\n" . postgresUserCreate($strOS);
-
-        # Install SSH key
-        $strImage .=
-            "\n\n" . sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP);
-
-        # Install PostgreSQL
-        $strImage .=
-            "\n\n# Install PostgreSQL";
-
         foreach my $strDbVersion (@{$$oOS{db}})
         {
-            if ($strOS eq OS_CO6 || $strOS eq OS_CO7)
-            {
-                $strDbVersion =~ s/\.//;
-            }
+            my $strDbVersionNoDot = $strDbVersion;
+            $strDbVersionNoDot =~ s/\.//;
 
-            if ($strOS eq OS_CO6)
-            {
-                $strImage .=
-                    "\nRUN yum -y install postgresql${strDbVersion}-server";
-            }
-            elsif ($strOS eq OS_CO7)
-            {
-                $strImage .=
-                    "\nRUN yum -y install postgresql${strDbVersion}-server";
-            }
-            elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+            $strImageName = "${strOS}-db-${strDbVersionNoDot}";
+            &log(INFO, "Building ${strImageName} image...");
+
+            $strImage = "# Database Container\nFROM backrest/${strOS}-base";
+
+            # Create PostgreSQL User
+            $strImage .= "\n\n" . postgresUserCreate($strOS);
+
+            # Install SSH key
+            $strImage .=
+                "\n\n" . sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP);
+
+            # Install PostgreSQL
+            $strImage .=
+                "\n\n# Install PostgreSQL";
+
+            if ($strOS eq OS_U12 || $strOS eq OS_U14)
             {
                 $strImage .=
                     "\nRUN apt-get install -y postgresql-${strDbVersion}" .
                     "\nRUN pg_dropcluster --stop ${strDbVersion} main";
             }
-        }
+            elsif ($strOS eq OS_CO6)
+            {
+                $strImage .=
+                    "\nRUN yum -y install postgresql${strDbVersionNoDot}-server";
+            }
+            elsif ($strOS eq OS_CO7)
+            {
+                $strImage .=
+                    "\nRUN yum -y install postgresql${strDbVersionNoDot}-server";
+            }
 
-        # Write the image
-        fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                    {bSuppressStdErr => true});
+            # Write the image
+            fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
+            executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                        {bSuppressStdErr => true});
+        }
 
         # Db Doc image
         ###########################################################################################################################
         $strImageName = "${strOS}-db-doc";
         &log(INFO, "Building ${strImageName} image...");
 
-        $strImage = "# Database Doc Container\nFROM backrest/${strOS}-db";
+        $strImage = "# Database Doc Container\nFROM backrest/${strOS}-db-94";
 
         # Create pg_backrest.conf
         $strImage .=
@@ -462,42 +460,47 @@ sub containerBuild
 
         # Test image
         ###########################################################################################################################
-        $strImageName = "${strOS}-test";
-        &log(INFO, "Building ${strImageName} image...");
+        foreach my $strDbVersion (@{$$oOS{db}})
+        {
+            my $strDbVersionNoDot = $strDbVersion;
+            $strDbVersionNoDot =~ s/\.//;
 
-        $strImage = "# Test Container\nFROM backrest/${strOS}-db";
+            $strImageName = "${strOS}-test-${strDbVersionNoDot}";
+            &log(INFO, "Building ${strImageName} image...");
 
-        # Create BackRest User
-        $strImage .= "\n\n" . backrestUserCreate($strOS);
+            $strImage = "# Test Container\nFROM backrest/${strOS}-db-${strDbVersionNoDot}";
 
-        # Install SSH key
-        $strImage .=
-            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
+            # Create BackRest User
+            $strImage .= "\n\n" . backrestUserCreate($strOS);
 
-        # Install SSH key for vagrant user
-        $strImage .=
-            "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
+            # Install SSH key
+            $strImage .=
+                "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
 
-        # Put vagrant user in postgres group so tests work properly (this will be removed in the future)
-        $strImage .=
-            "\n\n# Add postgres group to vagrant user\n" .
-            "RUN usermod -g " . BACKREST_GROUP . " -G " . TEST_GROUP . " " . TEST_USER;
+            # Install SSH key for vagrant user
+            $strImage .=
+                "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
 
-        # Install Perl packages
-        $strImage .=
-            "\n\n" . perlInstall($strOS) . "\n";
+            # Put vagrant user in postgres group so tests work properly (this will be removed in the future)
+            $strImage .=
+                "\n\n# Add postgres group to vagrant user\n" .
+                "RUN usermod -g " . BACKREST_GROUP . " -G " . TEST_GROUP . " " . TEST_USER;
 
-        # Make PostgreSQL home group readable
-        $strImage .=
-            "\n\n# Make vagrant home dir readable\n" .
-            "RUN chown -R vagrant:postgres /home/vagrant\n" .
-            "RUN chmod g+r,g+x /home/vagrant";
+            # Install Perl packages
+            $strImage .=
+                "\n\n" . perlInstall($strOS) . "\n";
 
-        # Write the image
-        fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                    {bSuppressStdErr => true});
+            # Make PostgreSQL home group readable
+            $strImage .=
+                "\n\n# Make vagrant home dir readable\n" .
+                "RUN chown -R vagrant:postgres /home/vagrant\n" .
+                "RUN chmod g+r,g+x /home/vagrant";
 
+            # Write the image
+            fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
+            executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                        {bSuppressStdErr => true});
+        }
     }
 }
 

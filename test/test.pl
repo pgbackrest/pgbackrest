@@ -541,6 +541,8 @@ eval
                                           (defined($$oTest{db}) ? ", db=$$oTest{db}" : '');
 
                     my $strImage = 'test-' . $iProcessIdx;
+                    my $strDbVersion = (defined($$oTest{db}) ? $$oTest{db} : '9.4');
+                    $strDbVersion =~ s/\.//;
 
                     &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DEBUG, "${strTest}" .
                          ($bVmOut || $bShowOutputAsync ? "\n" : ''));
@@ -548,7 +550,7 @@ eval
                     if (!$bDryRun || $bVmOut)
                     {
                         executeTest("docker run -itd -h $$oTest{os}-test --name=${strImage}" .
-                                    " -v /backrest:/backrest backrest/$$oTest{os}-test");
+                                    " -v /backrest:/backrest backrest/$$oTest{os}-test-${strDbVersion}");
                     }
 
                     $strCommandLine =~ s/\-\-os\=\S*//g;

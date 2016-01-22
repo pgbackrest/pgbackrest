@@ -60,6 +60,8 @@
         <variable key="test-table-data">Important Data</variable>
 
         <!-- Database cluster commmands -->
+        <variable key="db-cluster-wait">sleep 1</variable>
+
         <variable key="db-cluster-create" keyword="default">pg_createcluster 9.4 {[postgres-cluster-demo]}</variable>
         <variable key="db-cluster-create" keyword="co6">service postgresql-9.4 initdb</variable>
 
@@ -341,6 +343,10 @@
                 <execute user="root">
                     <exe-cmd>{[db-cluster-restart]}</exe-cmd>
                 </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+                </execute>
             </execute-list>
 
 <!--        It would be good if the info command showed xlogs so we don't have to examine directories
@@ -438,6 +444,10 @@
                     <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
 
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+                </execute>
+
                 <execute keyword="co6" user="root" show="n">
                     <exe-cmd>rm -f {[postgres-log-pgstartup-demo]}</exe-cmd>
                 </execute>
@@ -472,6 +482,10 @@
 
                 <execute user="root">
                     <exe-cmd>{[db-cluster-start]}</exe-cmd>
+                </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -711,6 +725,10 @@
                 <execute user="root">
                     <exe-cmd>{[db-cluster-start]}</exe-cmd>
                 </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+                </execute>
             </execute-list>
         </section>
     </section>
@@ -801,6 +819,10 @@
                 <exe-cmd>{[db-cluster-start]}</exe-cmd>
             </execute>
 
+            <execute show="n">
+                <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+            </execute>
+
             <execute output="y">
                 <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
@@ -862,6 +884,10 @@
                 <exe-cmd>{[db-cluster-start]}</exe-cmd>
             </execute>
 
+            <execute show="n">
+                <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+            </execute>
+
             <execute output="y" err-expect="1">
                 <exe-cmd>psql -c "select * from important_table"</exe-cmd>
                 <exe-highlight>does not exist</exe-highlight>
@@ -902,6 +928,10 @@
 
             <execute user="root">
                 <exe-cmd>{[db-cluster-start]}</exe-cmd>
+            </execute>
+
+            <execute show="n">
+                <exe-cmd>{[db-cluster-wait]}</exe-cmd>
             </execute>
 
             <execute output="y">
@@ -1023,6 +1053,10 @@
 
                 <execute user="root">
                     <exe-cmd>{[db-cluster-start]}</exe-cmd>
+                </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -1234,6 +1268,10 @@
                 <execute user="root">
                     <exe-cmd>{[db-cluster-start]}</exe-cmd>
                 </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+                </execute>
             </execute-list>
 
             <p>The <postgres/> log gives valuable information about the recovery.  Note especially that the cluster has entered standby mode and is ready to accept read-only connections.</p>
@@ -1416,6 +1454,10 @@
 
                 <execute user="root">
                     <exe-cmd>{[db-cluster-start]}</exe-cmd>
+                </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
                 </execute>
             </execute-list>
 
