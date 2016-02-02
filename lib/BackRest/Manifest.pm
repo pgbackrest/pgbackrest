@@ -377,6 +377,19 @@ sub valid
 }
 
 ####################################################################################################################################
+# tablespacePathGet
+#
+# Get the unique path assigned by Postgres for the tablespace.
+####################################################################################################################################
+sub tablespacePathGet
+{
+    my $self = shift;
+
+    return('PG_' . $self->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) .
+           '_' . $self->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG));
+}
+
+####################################################################################################################################
 # build
 #
 # Build the manifest object.
@@ -408,6 +421,8 @@ sub build
         );
 
     # If no level is defined then it must be base
+    my $strTablespacePath;
+
     if (!defined($strLevel))
     {
         $strLevel = MANIFEST_KEY_BASE;
@@ -439,10 +454,15 @@ sub build
             }
         }
     }
+    elsif ($self->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
+    {
+        $strTablespacePath = $self->tablespacePathGet();
+    }
 
     # Get the manifest for this level
     my %oManifestHash;
-    $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath, \%oManifestHash);
+    $oFile->manifest(PATH_DB_ABSOLUTE, $strDbClusterPath .
+                     (defined($strTablespacePath) ? "/${strTablespacePath}" : ''), \%oManifestHash);
 
     $self->set(MANIFEST_SECTION_BACKUP_PATH, $strLevel, MANIFEST_SUBKEY_PATH, $strDbClusterPath);
 

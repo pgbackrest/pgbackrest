@@ -11,6 +11,8 @@ __No Release Date Set__
 
 * The `retention-archive` option can now be be safely set to less than backup retention (`retention-full` or `retention-diff`) without also specifying `archive-copy=n`. The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive. However, in this case PITR will still not be possible for the backups that fall outside of archive retention.
 
+* When backing up and restoring tablespaces pgBackRest only operates on the subdirectory created for the version of PostgreSQL being run against. Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a `--delta` restore. This only applies to PostgreSQL >= 9.0 -- before that only one PostgreSQL version could use a tablespace.
+
 * Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_.
 
 * When restore `--set=latest` (the default) the actual backup restored will be output to the log.

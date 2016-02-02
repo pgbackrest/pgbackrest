@@ -360,6 +360,13 @@ sub clean
     {
         my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
 
+        # Update path if this is a tablespace
+        if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
+            $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+        {
+            $strPath .= '/' . $oManifest->tablespacePathGet();
+        }
+
         &log(INFO, "check/clean db path ${strPath}");
 
         if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strPath))
@@ -515,11 +522,24 @@ sub build
     # Build paths/links in each restore path
     foreach my $strSectionPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
+        my $strSection = "${strSectionPathKey}:path";
         my $strSectionPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_PATH);
 
-        # Create all paths in the manifest that do not already exist
-        my $strSection = "${strSectionPathKey}:path";
+        # Update path if this is a tablespace
+        if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
+            $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_LINK))
+        {
+            $strSectionPath .= '/' . $oManifest->tablespacePathGet();
 
+            # Create the tablespace if it doesn't exist
+            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strSectionPath))
+            {
+                $self->{oFile}->pathCreate(PATH_DB_ABSOLUTE, $strSectionPath,
+                                           $oManifest->get($strSection, '.', MANIFEST_SUBKEY_MODE));
+            }
+        }
+
+        # Create all paths in the manifest that do not already exist
         foreach my $strName ($oManifest->keys($strSection))
         {
             # Skip the root path
@@ -751,6 +771,14 @@ sub process
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
         my $strSection = "${strPathKey}:file";
+        my $strDestinationPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
+
+        # Update path if this is a tablespace
+        if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
+            $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+        {
+            $strDestinationPath .= '/' . $oManifest->tablespacePathGet();
+        }
 
         if ($oManifest->test($strSection))
         {
@@ -788,8 +816,7 @@ sub process
                 $oRestoreHash{$strPathKey}{$strFileKey}{file} = $strFile;
                 $oRestoreHash{$strPathKey}{$strFileKey}{size} = $lSize;
                 $oRestoreHash{$strPathKey}{$strFileKey}{source_path} = $strPathKey;
-                $oRestoreHash{$strPathKey}{$strFileKey}{destination_path} =
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
+                $oRestoreHash{$strPathKey}{$strFileKey}{destination_path} = $strDestinationPath;
                 $oRestoreHash{$strPathKey}{$strFileKey}{reference} =
                     $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
                     $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_REFERENCE, false);

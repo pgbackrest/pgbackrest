@@ -605,6 +605,19 @@ sub BackRestTestBackup_ManifestTablespaceCreate
         confess 'unable to stat path ${strPath}';
     }
 
+    my $strPathCreate = $strPath;
+
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0)
+    {
+        my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
+        $strPathCreate .= '/PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
+    }
+
+    if (!-e $strPathCreate)
+    {
+        BackRestTestCommon_PathCreate($strPathCreate, $strMode);
+    }
+
     # Load path into manifest
     my $strSection = MANIFEST_TABLESPACE . "/${iOid}:" . MANIFEST_PATH;
 
@@ -683,8 +696,20 @@ sub BackRestTestBackup_FileCreate
     my $lTime = shift;
     my $strMode = shift;
 
+    # Get tablespace path if this is a tablespace
+    my $strPgPath;
+
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0 &&
+        defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_LINK}))
+    {
+        my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
+
+        $strPgPath = 'PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
+    }
+
     # Create actual file location
-    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
+    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} .
+                      (defined($strPgPath) ? "/${strPgPath}" : '') . "/${strFile}";
 
     # Create the file
     BackRestTestCommon_FileCreate($strPathFile, $strContent, $lTime, $strMode);
@@ -752,8 +777,20 @@ sub BackRestTestBackup_FileRemove
     my $strFile = shift;
     my $bIgnoreMissing = shift;
 
+    # Get tablespace path if this is a tablespace
+    my $strPgPath;
+
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0 &&
+        defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_LINK}))
+    {
+        my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
+
+        $strPgPath = 'PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
+    }
+
     # Create actual file location
-    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} . "/${strFile}";
+    my $strPathFile = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{$strPath}{&MANIFEST_SUBKEY_PATH} .
+                      (defined($strPgPath) ? "/${strPgPath}" : '') . "/${strFile}";
 
     # Remove the file
     if (!(defined($bIgnoreMissing) && $bIgnoreMissing && !(-e $strPathFile)))
@@ -959,7 +996,7 @@ sub BackRestTestBackup_BackupBegin
 
     # Set defaults
     my $strTest = defined($$oParam{strTest}) ? $$oParam{strTest} : undef;
-    my $fTestDelay = defined($$oParam{fTestDelay}) ? $$oParam{fTestDelay} : 0;
+    my $fTestDelay = defined($$oParam{fTestDelay}) ? $$oParam{fTestDelay} : .2;
 
     if (!defined($$oParam{iExpectedExitStatus}) && $iBackupThreadMax > 1)
     {
@@ -1456,6 +1493,11 @@ sub BackRestTestBackup_RestoreCompare
     # Generate the actual manifest
     my $oActualManifest = new BackRest::Manifest("${strTestPath}/" . FILE_MANIFEST, false);
 
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
+        $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION});
+    $oActualManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
+        $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
+
     my $oTablespaceMapRef = undef;
     $oActualManifest->build($oFile,
         ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_PATH}{&MANIFEST_KEY_BASE}{&MANIFEST_SUBKEY_PATH},
@@ -1465,11 +1507,17 @@ sub BackRestTestBackup_RestoreCompare
     # Also fudge size if this is a synthetic test - sizes may change during backup.
     foreach my $strSectionPathKey ($oActualManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
+        my $strSection = "${strSectionPathKey}:" . MANIFEST_FILE;
         my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_PATH);
 
-        # Create all paths in the manifest that do not already exist
-        my $strSection = "${strSectionPathKey}:" . MANIFEST_FILE;
+        # Update path if this is a tablespace
+        if ($oActualManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
+            $oActualManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_LINK))
+        {
+            $strSectionPath .= '/' . $oActualManifest->tablespacePathGet();
+        }
 
+        # Create all paths in the manifest that do not already exist
         if ($oActualManifest->test($strSection))
         {
             foreach my $strName ($oActualManifest->keys($strSection))

@@ -409,13 +409,21 @@ sub processManifest
         $strBackupDestinationPath = $strPathKey;
 
         # Create links for tablespaces
-        if ($oBackupManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK) && $bFullCreate)
+        if ($oBackupManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
         {
-            $self->{oFile}->linkCreate(PATH_BACKUP_TMP, $strBackupDestinationPath,
-                                PATH_BACKUP_TMP,
-                                'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_PATH,
-                                                                          $strPathKey, MANIFEST_SUBKEY_LINK),
-                                false, true, true);
+            if ($bFullCreate)
+            {
+                $self->{oFile}->linkCreate(PATH_BACKUP_TMP, $strBackupDestinationPath,
+                                    PATH_BACKUP_TMP,
+                                    'base/pg_tblspc/' . $oBackupManifest->get(MANIFEST_SECTION_BACKUP_PATH,
+                                                                              $strPathKey, MANIFEST_SUBKEY_LINK),
+                                    false, true, true);
+            }
+
+            if ($oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
+            {
+                $strBackupSourcePath .= '/' . $oBackupManifest->tablespacePathGet();
+            }
         }
 
         # If this is a full backup or hard-linked then create all paths and links

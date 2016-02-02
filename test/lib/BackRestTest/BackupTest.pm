@@ -1019,6 +1019,15 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'full';
 
+            # Create files in root tblspc paths that should not be copied or deleted.
+            # This will be checked later after a --force restore.
+            my $strDoNotDeleteFile = BackRestTestCommon_DbTablespacePathGet(1, 2) . '/donotdelete.txt';
+            BackRestTestCommon_FileCreate($strDoNotDeleteFile, 'DONOTDELETE-1-2');
+
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbTablespacePathGet(1) . '/donotdelete.txt', 'DONOTDELETE-1');
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbTablespacePathGet(2) . '/donotdelete.txt', 'DONOTDELETE-2');
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbTablespacePathGet(2, 2) . '/donotdelete.txt', 'DONOTDELETE-2-2');
+
             my $strTmpPath = BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp";
 
             BackRestTestCommon_PathMove(BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/${strFullBackup}",
@@ -1240,6 +1249,19 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
                                        'remap all paths');
+
+            # Restore (make sure file in root tablespace path is not deleted by --delta)
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = true;
+
+            BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, \%oRemapHash, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
+                                       'ensure file in tblspc root remains after --delta', undef, '--log-level-console=info');
+
+            if (!-e $strDoNotDeleteFile)
+            {
+                confess "${strDoNotDeleteFile} was deleted by --delta";
+            }
 
             # Incr Backup
             #-----------------------------------------------------------------------------------------------------------------------
