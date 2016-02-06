@@ -1620,7 +1620,7 @@ sub optionValid
         $strCommandSection = $strCommand;
     }
 
-    # Hash to store contents of the config file.  The file will be loaded one the config dependency is resolved unless all options
+    # Hash to store contents of the config file.  The file will be loaded once the config dependency is resolved unless all options
     # are set on the command line or --no-config is specified.
     my $oConfig;
     my $bConfigExists = true;

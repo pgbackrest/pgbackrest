@@ -530,6 +530,13 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
+full backup (invalid repo)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-start-stop --repo-path=/bogus_path  --log-level-console=info --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-start-stop --repo-path=/bogus_path --repo-remote-path=/bogus_path --stanza=db --start-fast --type=full
+ERROR: [148]: repo-path '/bogus_path' does not exist
+ INFO: backup stop
+
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------

@@ -102,11 +102,12 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    executeTest('rm -rf ' . cwd() . '/log_remote');
+    mkdir($strTestPath, oct('0770')) or confess 'Unable to create test directory';
+    mkdir($strTestPath . '/backrest', oct('0770')) or confess 'Unable to create test directory';
 
     my $oRemote = new BackRest::Protocol::RemoteMaster
     (
-        BackRestTestCommon_CommandRemoteFullGet() . ' --repo-path=' . cwd() . '/log_remote',  # Remote command
+        BackRestTestCommon_CommandRemoteFullGet(),  # Remote command
         OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
         OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level

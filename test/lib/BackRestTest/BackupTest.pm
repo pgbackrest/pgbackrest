@@ -88,6 +88,8 @@ sub BackRestTestBackup_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
+    BackRestTestBackup_Create(true, false);
+
     my $oRemote = new BackRest::Protocol::RemoteMaster
     (
         BackRestTestCommon_CommandRemoteFullGet(),  # Remote command
@@ -98,6 +100,8 @@ sub BackRestTestBackup_Test
         $strUserBackRest,                           # User
         PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
     );
+
+    BackRestTestBackup_Drop();
 
     my $oLocal = new BackRest::Protocol::Common
     (
@@ -1043,6 +1047,15 @@ sub BackRestTestBackup_Test
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'resume',
                                                                 {strTest => TEST_BACKUP_RESUME});
+
+            # Misconfigure repo-path and check errors
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bNeutralTest)
+            {
+                BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'invalid repo',
+                    {strOptionalParam => '--' . ($bRemote ? OPTION_REPO_REMOTE_PATH : OPTION_REPO_PATH) . '=/bogus_path' .
+                     '  --log-level-console=info', iExpectedExitStatus => ERROR_PATH_MISSING});
+            }
 
             # Restore - tests various mode, extra files/paths, missing files/paths
             #-----------------------------------------------------------------------------------------------------------------------

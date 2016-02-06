@@ -27,6 +27,9 @@
                     <text>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>. <i>Contributed by Jason O'Donnell</i>.</text>
                 </release-feature>
                 <release-feature>
+                    <text>Improved error message when <setting>repo-path</setting> or <setting>repo-remote-path</setting> does not exist.</text>
+                </release-feature>
+                <release-feature>
                     <text>Added checks for <setting>--delta</setting> and <setting>--force</setting> restore options to ensure that the destination is a valid $PGDATA directory.  <backrest/> will check for the presence of <file>PG_VERSION</file> or <file>backup.manifest</file> (left over from an aborted restore).  If neither is found then <setting>--delta</setting> and <setting>--force</setting> will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.</text>
                 </release-feature>
                 <release-feature>
