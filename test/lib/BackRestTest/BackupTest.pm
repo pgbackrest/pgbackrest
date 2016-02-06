@@ -1060,14 +1060,35 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_FileRemove(\%oManifest, 'base', 'link-test');
             BackRestTestBackup_LinkCreate(\%oManifest, 'base', 'link-test', '/wrong');
 
-            # Remove an path
+            # Remove a path
             BackRestTestBackup_PathRemove(\%oManifest, 'base', 'path-test');
 
             # Remove a file
-            BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
+            BackRestTestBackup_FileRemove(\%oManifest, 'base', 'base/base1.txt');
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
                                        'add and delete files');
+
+            # Restore - test errors when $PGDATA cannot be verified
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = true;
+            $bForce = true;
+
+            # Remove PG_VERSION
+            BackRestTestBackup_FileRemove(\%oManifest, 'base', 'PG_VERSION');
+
+            # Attempt the restore
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
+                                       'fail on missing PG_VERSION', ERROR_RESTORE_PATH_NOT_EMPTY, '--log-level-console=info');
+
+            # Write a backup.manifest file to make $PGDATA valid
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbCommonPathGet() . '/backup.manifest', 'BOGUS');
+
+            # Restore succeeds
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
+                                       'restore succeeds with backup.manifest file', undef, '--log-level-console=info');
 
             # Various broken info tests
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1218,6 +1239,7 @@ sub BackRestTestBackup_Test
             # Restore
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
+            $bForce = false;
 
             # Fail on used path
             BackRestTestBackup_Restore($oFile, $strBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,

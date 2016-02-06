@@ -239,9 +239,6 @@ sub manifestLoad
     my $oManifest = new BackRest::Manifest($self->{oFile}->pathGet(PATH_DB_ABSOLUTE,
                                                                    $self->{strDbClusterPath} . '/' . FILE_MANIFEST));
 
-    # Remove the manifest now that it is in memory
-    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
-
     # Log the backup set to restore
     &log(INFO, "restore backup set " . $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
 
@@ -359,10 +356,10 @@ sub clean
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
         my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
+        my $bTablespace = $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
 
         # Update path if this is a tablespace
-        if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
-            $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+        if ($bTablespace && $oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
         {
             $strPath .= '/' . $oManifest->tablespacePathGet();
         }
@@ -381,7 +378,7 @@ sub clean
         foreach my $strName (sort {$b cmp $a} (keys(%{$oPathManifest{name}})))
         {
             # Skip the root path
-            if ($strName eq '.')
+            if ($strName eq '.' || (!$bTablespace && $strName eq FILE_MANIFEST))
             {
                 next;
             }
@@ -742,6 +739,20 @@ sub process
         confess &log(ERROR, 'unable to restore while Postgres is running', ERROR_POSTMASTER_RUNNING);
     }
 
+    # If the restore will be destructive attempt to verify that $PGDATA is valid
+    if ((optionGet(OPTION_DELTA) || optionGet(OPTION_FORCE)) &&
+        !($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_PG_VERSION) ||
+          $self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST)))
+    {
+        &log(WARN, '--delta or --force specified but unable to find \'' . FILE_PG_VERSION . '\' or \'' . FILE_MANIFEST .
+                   '\' in \'' . $self->{strDbClusterPath} . '\' to confirm that this is a valid $PGDATA directory.' .
+                   '  --delta and --force have been disabled and if any files exist in the destination directories the restore' .
+                   ' will be aborted.');
+
+        optionSet(OPTION_DELTA, false);
+        optionSet(OPTION_FORCE, false);
+    }
+
     # Make sure the backup path is valid and load the manifest
     my $oManifest = $self->manifestLoad();
 
@@ -923,6 +934,9 @@ sub process
     restoreFile($oRestoreHash{&MANIFEST_KEY_BASE}{&FILE_PG_CONTROL}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
                 optionGet(OPTION_FORCE), $self->{strBackupSet}, $bSourceCompression, $strCurrentUser, $strCurrentGroup,
                 $self->{oFile}, $lSizeTotal, $lSizeCurrent);
+
+    # Finally remove the manifest to indicate the restore is complete
+    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST, undef, false);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

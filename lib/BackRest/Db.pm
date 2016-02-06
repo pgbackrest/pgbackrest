@@ -42,10 +42,13 @@ use constant OP_DB_VERSION_GET                                      => OP_DB . "
 use constant OP_DB_VERSION_SUPPORT                                  => OP_DB . "->versionSupport";
 
 ####################################################################################################################################
-# Postmaster process Id file
+# Postgres filename constants
 ####################################################################################################################################
 use constant FILE_POSTMASTER_PID                                    => 'postmaster.pid';
     push @EXPORT, qw(FILE_POSTMASTER_PID);
+
+use constant FILE_PG_VERSION                                        => 'PG_VERSION';
+    push @EXPORT, qw(FILE_PG_VERSION);
 
 ####################################################################################################################################
 # Backup advisory lock

@@ -340,6 +340,7 @@ sub regExpReplaceAll
 
     $strLine = $self->regExpReplace($strLine, 'PROCESS-ID', 'process [0-9]+', '[0-9]+$', false);
     $strLine = $self->regExpReplace($strLine, 'MODIFICATION-TIME', 'lModificationTime = [0-9]+', '[0-9]+$');
+    $strLine = $self->regExpReplace($strLine, 'MODIFICATION-TIME', 'and modification time [0-9]+', '[0-9]+$');
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]+$');
 
     $strLine = $self->regExpReplace($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');

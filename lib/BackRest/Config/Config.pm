@@ -2138,6 +2138,26 @@ sub optionGet
 push @EXPORT, qw(optionGet);
 
 ####################################################################################################################################
+# optionSet
+#
+# Set option value.
+####################################################################################################################################
+sub optionSet
+{
+    my $strOption = shift;
+    my $oValue = shift;
+
+    if (!defined($oOption{$strOption}{value}))
+    {
+        confess &log(ASSERT, "option ${strOption} is not defined");
+    }
+
+    $oOption{$strOption}{value} = $oValue;
+}
+
+push @EXPORT, qw(optionSet);
+
+####################################################################################################################################
 # optionTest
 #
 # Test a option value.
