@@ -6,6 +6,14 @@
     </intro>
 
     <changelog>
+        <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
+            <release-feature-bullet-list>
+                <release-feature>
+                    <text></text>
+                </release-feature>
+            </release-feature-bullet-list>
+        </changelog-release>
+
         <changelog-release date="2016-02-07" version="0.90" title="9.5 Support, Various Enhancements, and Minor Bug Fixes">
             <release-feature-bullet-list>
                 <release-feature>
