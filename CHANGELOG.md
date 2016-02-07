@@ -1,7 +1,7 @@
 # pgBackRest<br/>Change Log
 
-## v0.90dev: UNDER DEVELOPMENT
-__No Release Date Set__
+## v0.90: 9.5 Support, Various Enhancements, and Minor Bug Fixes
+__Released February 7, 2016__
 
 * Fixed an issue where specifying `--no-archive-check` would throw a configuration error. _Reported by Jason O'Donnell_.
 
@@ -9,15 +9,15 @@ __No Release Date Set__
 
 * Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of PostgreSQL. A separate VM is now created for each version. Also added a sleep after database starts during document generation to ensure the database is running before the next command runs. _Reported by John Harvey_.
 
-* The `retention-archive` option can now be be safely set to less than backup retention (`retention-full` or `retention-diff`) without also specifying `archive-copy=n`. The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive. However, in this case PITR will still not be possible for the backups that fall outside of archive retention.
+* The `retention-archive` option can now be be safely set to less than backup retention (`retention-full` or `retention-diff`) without also specifying `archive-copy=n`. The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive. However, in this case PITR will not be possible for the backups that fall outside of archive retention.
 
-* When backing up and restoring tablespaces pgBackRest only operates on the subdirectory created for the version of PostgreSQL being run against. Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a `--delta` restore. This only applies to PostgreSQL >= 9.0 -- before that only one PostgreSQL version could use a tablespace.
+* When backing up and restoring tablespaces pgBackRest only operates on the subdirectory created for the version of PostgreSQL being run against. Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a restore. This only applies to PostgreSQL >= 9.0 -- prior versions of PostgreSQL could not share a tablespace directory.
 
 * Generate an error when `archive-check=y` but `archive_command` does not execute `pg_backrest`. _Contributed by Jason O'Donnell_.
 
 * Improved error message when `repo-path` or `repo-remote-path` does not exist.
 
-* Added checks for `--delta` and `--force` restore options to ensure that the destination is a valid $PGDATA directory. pgBackRest will check for the presence of `PG_VERSION` or `backup.manifest` (left over from an aborted restore). If neither is found then `--delta` and `--force` will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.
+* Added checks for `--delta` and `--force` restore options to ensure that the destination is a valid $PGDATA directory. pgBackRest will check for the presence of `PG_VERSION` or `backup.manifest` (left over from an aborted restore). If neither file is found then `--delta` and `--force` will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.
 
 * When restore `--set=latest` (the default) the actual backup restored will be output to the log.
 
