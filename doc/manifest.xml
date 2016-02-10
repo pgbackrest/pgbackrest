@@ -15,7 +15,7 @@
 
         <!-- HTML variables  -->
         <variable key="html-footer" eval='y'>
-        use POSIX qw(strftime); 'Copyright &amp;copy; 2015' . '-' . strftime('%Y', localtime) .
+        use POSIX qw(strftime); 'Copyright &amp;copy; 2016' . '-' . strftime('%Y', localtime) .
         ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
         strftime('%B ', localtime) . trim(strftime('%e,', localtime)) . strftime(' %Y.', localtime)</variable>
 
