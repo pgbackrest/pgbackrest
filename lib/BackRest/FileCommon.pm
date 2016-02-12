@@ -146,14 +146,14 @@ sub fileStringWrite
     syswrite($hFile, $strContent)
         or confess &log(ERROR, "unable to write string to ${strFileName}: $!", ERROR_FILE_WRITE);
 
-    # Sync and close ini file
-    if ($bSync)
-    {
-        $hFile->sync();
-        filePathSync(dirname($strFileName));
-    }
+    # Sync file
+    $hFile->sync() if $bSync;
 
+    # Close file
     close($hFile);
+
+    # Sync directory
+    filePathSync(dirname($strFileName)) if $bSync;
 
     # Return from function and log return values if any
     return logDebugReturn

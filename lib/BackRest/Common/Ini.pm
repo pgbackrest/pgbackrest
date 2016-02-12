@@ -210,7 +210,7 @@ sub save
     my $self = shift;
 
     $self->hash();
-    iniSave($self->{strFileName}, $self->{oContent});
+    iniSave($self->{strFileName}, $self->{oContent}, false, true);
 }
 
 ####################################################################################################################################
@@ -228,22 +228,25 @@ sub iniSave
         $strOperation,
         $strFileName,
         $oContent,
-        $bRelaxed
+        $bRelaxed,
+        $bTemp
     ) =
         logDebugParam
         (
             OP_INI_INI_SAVE, \@_,
             {name => 'strFileName', trace => true},
             {name => 'oContent', trace => true},
-            {name => 'bRelaxed', required => false, trace => true}
+            {name => 'bRelaxed', required => false, trace => true},
+            {name => 'bTemp', required => false, trace => true}
         );
 
     # Open the ini file for writing
+    my $strFileTemp = $bTemp ? "${strFileName}.new" : $strFileName;
     my $hFile;
     my $bFirst = true;
 
-    sysopen($hFile, $strFileName, O_WRONLY | O_CREAT | O_TRUNC, 0640)
-        or confess &log(ERROR, "unable to open ${strFileName}");
+    sysopen($hFile, $strFileTemp, O_WRONLY | O_CREAT | O_TRUNC, 0640)
+        or confess &log(ERROR, "unable to open ${strFileTemp}");
 
     # Create the JSON object canonical so that fields are alpha ordered to pass unit tests
     my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
@@ -304,10 +307,19 @@ sub iniSave
         $bFirst = false;
     }
 
-    # Sync and close ini file
+    # Sync and close temp file
     $hFile->sync();
-    filePathSync(dirname($strFileName));
     close($hFile);
+
+    # Rename temp file to ini file
+    if ($bTemp && !rename($strFileTemp, $strFileName))
+    {
+        unlink($strFileTemp);
+        confess &log(ERROR, "unable to move ${strFileTemp} to ${strFileName}", ERROR_FILE_MOVE);
+    }
+
+    # Sync the directory to make sure the changes stick
+    filePathSync(dirname($strFileName));
 
     # Return from function and log return values if any
     return logDebugReturn
