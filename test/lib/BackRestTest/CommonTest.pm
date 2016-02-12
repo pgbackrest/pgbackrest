@@ -516,20 +516,14 @@ sub BackRestTestCommon_manifestSave
 
     if ($bRemote)
     {
-        executeTest("chmod g+x " . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
-        executeTest("chmod g+w " . $strFileName,
-                    {bRemote => true});
+        executeTest('chmod g+x ' . BackRestTestCommon_RepoPathGet() . ' && chmod g+w ' . dirname($strFileName), {bRemote => true});
     }
 
     $oManifest->save();
 
     if ($bRemote)
     {
-        executeTest("chmod g-w " . $strFileName,
-                    {bRemote => true});
-        executeTest("chmod g-x " . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
+        executeTest('chmod g-w ' . dirname($strFileName) . ' && chmod g-x ' . BackRestTestCommon_RepoPathGet(), {bRemote => true});
     }
 }
 
@@ -547,16 +541,14 @@ sub BackRestTestCommon_iniLoad
 
     if ($bRemote)
     {
-        executeTest("chmod g+x " . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
+        executeTest("chmod g+x " . BackRestTestCommon_RepoPathGet(), {bRemote => true});
     }
 
     iniLoad($strFileName, $oIniRef);
 
     if ($bRemote)
     {
-        executeTest("chmod g-x " . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
+        executeTest("chmod g-x " . BackRestTestCommon_RepoPathGet(), {bRemote => true});
     }
 }
 
@@ -575,10 +567,7 @@ sub BackRestTestCommon_iniSave
 
     if ($bRemote)
     {
-        executeTest("chmod g+x " . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
-        executeTest("chmod g+w " . $strFileName,
-                    {bRemote => true});
+        executeTest('chmod g+x ' . BackRestTestCommon_RepoPathGet() . ' && chmod g+w ' . $strFileName, {bRemote => true});
     }
 
     # Calculate a new checksum if requested
@@ -597,10 +586,7 @@ sub BackRestTestCommon_iniSave
 
     if ($bRemote)
     {
-        executeTest("chmod g-w " . $strFileName,
-                    {bRemote => true});
-        executeTest("chmod g-x " . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
+        executeTest("chmod g-w " . $strFileName . ' && chmod g-x ' . BackRestTestCommon_RepoPathGet(), {bRemote => true});
     }
 }
 

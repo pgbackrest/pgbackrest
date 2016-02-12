@@ -1194,8 +1194,7 @@ sub BackRestTestBackup_BackupCompare
     # Change mode on the backup path so it can be read
     if ($bRemote)
     {
-        executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
+        executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(), {bRemote => true});
     }
 
     my %oActualManifest;
@@ -1221,8 +1220,7 @@ sub BackRestTestBackup_BackupCompare
     # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
-        executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
+        executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(), {bRemote => true});
     }
 
     $oFile->remove(PATH_ABSOLUTE, "${strTestPath}/expected.manifest");
@@ -1256,9 +1254,8 @@ sub BackRestTestBackup_ManifestMunge
     # Change mode on the backup path so it can be read/written
     if ($bRemote)
     {
-        executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet(),
-                    {bRemote => true});
-        executeTest('chmod 770 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST,
+        executeTest('chmod 750 ' . BackRestTestCommon_RepoPathGet() .
+                    ' && chmod 770 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST,
                     {bRemote => true});
     }
 
@@ -1306,9 +1303,8 @@ sub BackRestTestBackup_ManifestMunge
     # Change mode on the backup path back before unit tests continue
     if ($bRemote)
     {
-        executeTest('chmod 750 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST,
-                    {bRemote => true});
-        executeTest('chmod 700 ' . BackRestTestCommon_RepoPathGet(),
+        executeTest('chmod 750 ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, $strBackup) . '/' . FILE_MANIFEST .
+                    ' && chmod 700 ' . BackRestTestCommon_RepoPathGet(),
                     {bRemote => true});
     }
 }
