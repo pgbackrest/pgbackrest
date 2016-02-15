@@ -99,8 +99,11 @@ use constant INFO_OUTPUT_JSON                                       => 'json';
 # SOURCE Constants
 ####################################################################################################################################
 use constant SOURCE_CONFIG                                          => 'config';
+    push @EXPORT, qw(SOURCE_CONFIG);
 use constant SOURCE_PARAM                                           => 'param';
+    push @EXPORT, qw(SOURCE_PARAM);
 use constant SOURCE_DEFAULT                                         => 'default';
+    push @EXPORT, qw(SOURCE_DEFAULT);
 
 ####################################################################################################################################
 # RECOVERY Type Constants

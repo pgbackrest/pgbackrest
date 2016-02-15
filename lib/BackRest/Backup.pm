@@ -501,11 +501,26 @@ sub processManifest
             {
                 my $lFileSize = $oBackupManifest->numericGet($strSectionFile, $strFile, MANIFEST_SUBKEY_SIZE);
 
-                # Setup variables needed for threaded copy
+                # Increment file total
                 $lFileTotal++;
-                $lSizeTotal += $lFileSize;
 
-                my $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
+                my $strFileKey;
+
+                # Certain files are not copied until the end
+                if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_PG_CONTROL)
+                {
+                    $strFileKey = $strFile;
+                    $oFileCopyMap{$strPathKey}{$strFileKey}{skip} = true;
+                }
+                # Else continue normally
+                else
+                {
+                    $strFileKey = sprintf("%016d-${strFile}", $lFileSize);
+                    $oFileCopyMap{$strPathKey}{$strFileKey}{skip} = false;
+
+                    # Add file size to total size
+                    $lSizeTotal += $lFileSize;
+                }
 
                 $oFileCopyMap{$strPathKey}{$strFileKey}{db_file} = $strBackupSourceFile;
                 $oFileCopyMap{$strPathKey}{$strFileKey}{file_section} = $strSectionFile;
@@ -520,13 +535,20 @@ sub processManifest
         }
     }
 
+    # pg_control should always be in the backup (unless this is an offline backup)
+    if (!defined($oFileCopyMap{&MANIFEST_KEY_BASE}{&FILE_PG_CONTROL}) && !optionGet(OPTION_NO_START_STOP))
+    {
+        confess &log(ERROR, "global/pg_control must be present in all online backups\n" .
+                     'HINT: Is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
+    }
+
     # If there are no files to backup then we'll exit with a warning unless in test mode.  The other way this could happen is if
     # the database is down and backup is called with --no-start-stop twice in a row.
     if ($lFileTotal == 0)
     {
         if (!optionGet(OPTION_TEST))
         {
-            confess &log(ERROR, "no files have changed since the last backup - this seems unlikely");
+            confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
         }
     }
     else
@@ -545,7 +567,8 @@ sub processManifest
         my $lManifestSaveCurrent = 0;
         my $lManifestSaveSize = int($lSizeTotal / 100);
 
-        if ($lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
+        if (optionSource(OPTION_MANIFEST_SAVE_THRESHOLD) ne SOURCE_DEFAULT ||
+            $lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
         {
             $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
         }
@@ -564,6 +587,9 @@ sub processManifest
             foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oFileCopyMap{$strPathKey}})))
             {
                 my $oFileCopy = $oFileCopyMap{$strPathKey}{$strFileKey};
+
+                # Skip files marked to be copied later
+                next if $$oFileCopy{skip};
 
                 if (optionGet(OPTION_THREAD_MAX) > 1)
                 {
@@ -635,6 +661,23 @@ sub processManifest
             }
             while (!$bDone);
         }
+    }
+
+    # Copy pg_control last - this is required for backups taken during recovery
+    my $oFileCopy = $oFileCopyMap{&MANIFEST_KEY_BASE}{&FILE_PG_CONTROL};
+
+    if (defined($oFileCopy))
+    {
+        my ($bCopied, $lSizeCurrent, $lCopySize, $strCopyChecksum) =
+            backupFile($self->{oFile}, $$oFileCopy{db_file}, $$oFileCopy{backup_file}, $bCompress,
+                       $$oFileCopy{checksum}, $$oFileCopy{modification_time},
+                       $$oFileCopy{size});
+
+
+        backupManifestUpdate($oBackupManifest, $$oFileCopy{file_section}, $$oFileCopy{file},
+                             $bCopied, $lCopySize, $strCopyChecksum);
+
+        $lSizeTotal += $$oFileCopy{size};
     }
 
     # Return from function and log return values if any

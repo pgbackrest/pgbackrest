@@ -9,7 +9,10 @@
         <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text></text>
+                    <text>Copy <file>global/pg_control</file> last during backups.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Write <id>.info</id> and <id>.manifest</id> files to temp before moving them to their final locations and fsync'ing.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>

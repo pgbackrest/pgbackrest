@@ -57,8 +57,8 @@ sub backupFile
             {name => 'strChecksum', required => false, trace => true},
             {name => 'lModificationTime', trace => true},
             {name => 'lSizeFile', trace => true},
-            {name => 'lSizeTotal', trace => true},
-            {name => 'lSizeCurrent', trace => true}
+            {name => 'lSizeTotal', default => 0, trace => true},
+            {name => 'lSizeCurrent', required => false, trace => true}
         );
 
     my $bCopyResult = true;                         # Copy result
@@ -157,8 +157,8 @@ sub backupManifestUpdate
             {name => 'bCopied', trace => true},
             {name => 'lSize', required => false, trace => true},
             {name => 'strChecksum', required => false, trace => true},
-            {name => 'lManifestSaveSize', trace => true},
-            {name => 'lManifestSaveCurrent', trace => true}
+            {name => 'lManifestSaveSize', required => false, trace => true},
+            {name => 'lManifestSaveCurrent', required => false, trace => true}
         );
 
     # If copy was successful store the checksum and size
@@ -172,19 +172,22 @@ sub backupManifestUpdate
         }
 
         # Determine whether to save the manifest
-        $lManifestSaveCurrent += $lSize;
-
-        if ($lManifestSaveCurrent >= $lManifestSaveSize)
+        if (defined($lManifestSaveSize))
         {
-            $oManifest->save();
-            logDebugMisc
-            (
-                $strOperation, 'save manifest',
-                {name => 'lManifestSaveSize', value => $lManifestSaveSize},
-                {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
-            );
+            $lManifestSaveCurrent += $lSize;
 
-            $lManifestSaveCurrent = 0;
+            if ($lManifestSaveCurrent >= $lManifestSaveSize)
+            {
+                $oManifest->save();
+                logDebugMisc
+                (
+                    $strOperation, 'save manifest',
+                    {name => 'lManifestSaveSize', value => $lManifestSaveSize},
+                    {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
+                );
+
+                $lManifestSaveCurrent = 0;
+            }
         }
     }
     # Else the file was removed during backup so remove from manifest
