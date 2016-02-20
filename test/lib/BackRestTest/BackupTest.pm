@@ -857,7 +857,7 @@ sub BackRestTestBackup_Test
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardlink ? JSON::PP::true : JSON::PP::false;
-            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_START_STOP} = JSON::PP::false;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
 
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201306121;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 937;
@@ -1911,22 +1911,22 @@ sub BackRestTestBackup_Test
                 BackRestTestBackup_PgSelectOneTest('select message from test', $strTimelineMessage, 120);
             }
 
-            # Incr backup - make sure a --no-stop-start backup fails
+            # Incr backup - make sure a --no-online backup fails
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
 
-            $strComment = 'fail on --' . OPTION_NO_START_STOP;
+            $strComment = 'fail on --no-' . OPTION_ONLINE;
             BackRestTestBackup_Backup($strType, $strStanza, $strComment,
                                       {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING,
-                                       strOptionalParam => '--' . OPTION_NO_START_STOP});
+                                       strOptionalParam => '--no-' . OPTION_ONLINE});
 
-            # Incr backup - allow --no-start-stop backup to succeed with --force
+            # Incr backup - allow --no-online backup to succeed with --force
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
 
-            $strComment = 'succeed on --' . OPTION_NO_START_STOP . ' with --' . OPTION_FORCE;
+            $strComment = 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE;
             BackRestTestBackup_Backup($strType, $strStanza, $strComment,
-                                      {strOptionalParam => '--' . OPTION_NO_START_STOP . ' --' . OPTION_FORCE});
+                                      {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             $bCreate = true;
         }

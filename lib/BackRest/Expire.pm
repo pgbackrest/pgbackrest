@@ -305,7 +305,7 @@ sub process
             {
                 my $bRemove;
 
-                # Only expire if the selected backup has archive info - backups performed with --no-start-stop will
+                # Only expire if the selected backup has archive info - backups performed with --no-online will
                 # not have archive info and cannot be used for expiration.
                 if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                        $strArchiveRetentionBackup, INFO_BACKUP_KEY_ARCHIVE_START))

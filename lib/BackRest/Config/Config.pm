@@ -215,8 +215,8 @@ use constant OPTION_DELTA                                           => 'delta';
     push @EXPORT, qw(OPTION_DELTA);
 use constant OPTION_FORCE                                           => 'force';
     push @EXPORT, qw(OPTION_FORCE);
-use constant OPTION_NO_START_STOP                                   => 'no-start-stop';
-    push @EXPORT, qw(OPTION_NO_START_STOP);
+use constant OPTION_ONLINE                                          => 'online';
+    push @EXPORT, qw(OPTION_ONLINE);
 use constant OPTION_SET                                             => 'set';
     push @EXPORT, qw(OPTION_SET);
 use constant OPTION_STANZA                                          => 'stanza';
@@ -460,8 +460,8 @@ use constant OPTION_DEFAULT_BACKUP_FORCE                            => false;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_FORCE);
 use constant OPTION_DEFAULT_BACKUP_HARDLINK                         => false;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_HARDLINK);
-use constant OPTION_DEFAULT_BACKUP_NO_START_STOP                    => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_NO_START_STOP);
+use constant OPTION_DEFAULT_BACKUP_ONLINE                           => true;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_ONLINE);
 use constant OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD          => 1073741824;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD);
 use constant OPTION_DEFAULT_BACKUP_RESUME                           => true;
@@ -547,8 +547,8 @@ my %oOptionRule =
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_FORCE,
                 &OPTION_RULE_DEPEND =>
                 {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_NO_START_STOP,
-                    &OPTION_RULE_DEPEND_VALUE   => true
+                    &OPTION_RULE_DEPEND_OPTION  => OPTION_ONLINE,
+                    &OPTION_RULE_DEPEND_VALUE   => false
                 }
             },
 
@@ -575,14 +575,15 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_NO_START_STOP =>
+    &OPTION_ONLINE =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_NEGATE => true,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP =>
             {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_NO_START_STOP
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ONLINE
             }
         }
     },
@@ -1158,8 +1159,8 @@ my %oOptionRule =
             {
                 &OPTION_RULE_DEPEND =>
                 {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_NO_START_STOP,
-                    &OPTION_RULE_DEPEND_VALUE   => false
+                    &OPTION_RULE_DEPEND_OPTION  => OPTION_ONLINE,
+                    &OPTION_RULE_DEPEND_VALUE   => true
                 }
             }
         }
@@ -1831,11 +1832,11 @@ sub optionValid
 
             if (defined($oDepend) && !$bDependResolved && defined($strValue))
             {
-                my $strError = "option '${strOption}' not valid without option '${strDependOption}'";
+                my $strError = "option '${strOption}' not valid without option ";
 
                 if ($strDependType eq 'source')
                 {
-                    confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
+                    confess &log(ERROR, "${strError}'${strDependOption}'", ERROR_OPTION_INVALID);
                 }
 
                 # If a depend value exists, make sure the option value matches
@@ -1843,18 +1844,17 @@ sub optionValid
                 {
                     if ($oOptionRule{$strDependOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
                     {
-                        if (!$$oDepend{&OPTION_RULE_DEPEND_VALUE})
-                        {
-                            confess &log(ASSERT, "no error has been created for unused case where depend value = false");
-                        }
+                        $strError .= "'" . ($$oDepend{&OPTION_RULE_DEPEND_VALUE} ? '' : 'no-') . "${strDependOption}'";
                     }
                     else
                     {
-                        $strError .= " = '$$oDepend{&OPTION_RULE_DEPEND_VALUE}'";
+                        $strError .= "'${strDependOption}' = '$$oDepend{&OPTION_RULE_DEPEND_VALUE}'";
                     }
 
                     confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
                 }
+
+                $strError .= "'${strDependOption}'";
 
                 # If a depend list exists, make sure the value is in the list
                 if ($strDependType eq 'list')

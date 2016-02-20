@@ -323,7 +323,7 @@ sub BackRestTestConfig_Test
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionBoolSetTest($oOption, OPTION_FORCE);
 
-            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_FORCE, OPTION_NO_START_STOP);
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_FORCE, 'no-' . OPTION_ONLINE);
         }
 
         if (BackRestTestCommon_Run(++$iRun, 'backup valid force'))
@@ -331,11 +331,11 @@ sub BackRestTestConfig_Test
             # $oOption = {};
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionBoolSetTest($oOption, OPTION_NO_START_STOP);
+            optionBoolSetTest($oOption, OPTION_ONLINE, false);
             optionBoolSetTest($oOption, OPTION_FORCE);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_NO_START_STOP, true);
+            optionTestExpect(OPTION_ONLINE, false);
             optionTestExpect(OPTION_FORCE, true);
         }
 
@@ -813,7 +813,7 @@ sub BackRestTestConfig_Test
             optionBoolSetTest($oOption, OPTION_BACKUP_ARCHIVE_CHECK, false);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_NO_START_STOP, false);
+            optionTestExpect(OPTION_ONLINE, true);
             optionTestExpect(OPTION_BACKUP_ARCHIVE_CHECK, false);
         }
 

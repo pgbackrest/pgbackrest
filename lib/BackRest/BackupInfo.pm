@@ -91,8 +91,8 @@ use constant INFO_BACKUP_KEY_PRIOR                                  => MANIFEST_
     push @EXPORT, qw(INFO_BACKUP_KEY_PRIOR);
 use constant INFO_BACKUP_KEY_REFERENCE                              => 'backup-reference';
     push @EXPORT, qw(INFO_BACKUP_KEY_REFERENCE);
-use constant INFO_BACKUP_KEY_START_STOP                             => MANIFEST_KEY_START_STOP;
-    push @EXPORT, qw(INFO_BACKUP_KEY_START_STOP);
+use constant INFO_BACKUP_KEY_ONLINE                                 => MANIFEST_KEY_ONLINE;
+    push @EXPORT, qw(INFO_BACKUP_KEY_ONLINE);
 use constant INFO_BACKUP_KEY_SYSTEM_ID                              => MANIFEST_KEY_SYSTEM_ID;
     push @EXPORT, qw(INFO_BACKUP_KEY_SYSTEM_ID);
 use constant INFO_BACKUP_KEY_TIMESTAMP_START                        => MANIFEST_KEY_TIMESTAMP_START;
@@ -352,8 +352,8 @@ sub add
         $oBackupManifest->numericGet(INI_SECTION_BACKREST, INI_KEY_FORMAT));
     $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HARDLINK,
         $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK));
-    $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_START_STOP,
-        $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_START_STOP));
+    $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_ONLINE,
+        $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE));
     $self->numericSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_TIMESTAMP_START,
         $oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START));
     $self->numericSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_TIMESTAMP_STOP,

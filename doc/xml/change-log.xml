@@ -14,6 +14,9 @@
                 <release-feature>
                     <text>Write <id>.info</id> and <id>.manifest</id> files to temp before moving them to their final locations and fsync'ing.</text>
                 </release-feature>
+                <release-feature>
+                    <text>Rename <setting>--no-start-stop</setting> option to <setting>--no-online</setting>.</text>
+                </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
 

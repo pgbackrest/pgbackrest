@@ -670,16 +670,16 @@ my $oConfigHelpData =
                 'manifest-save-threshold' => 'section',
                 'neutral-umask' => 'section',
 
-                # NO-START-STOP Option Help
+                # ONLINE Option Help
                 #-------------------------------------------------------------------------------------------------------------------
-                'no-start-stop' =>
+                'online' =>
                 {
                     summary =>
-                        "Perform cold backup.",
+                        "Perform hot backup.",
                     description =>
-                        "This option prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the database " .
-                            "cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will generate an " .
-                            "error if it is not.\n" .
+                        "Specifying --no-online prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the " .
+                            "database cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will " .
+                            "generate an error if it is not.\n" .
                         "\n" .
                         "The purpose of this option is to allow cold backups. The pg_xlog directory is copied as-is and " .
                             "archive-check is automatically disabled for the backup."

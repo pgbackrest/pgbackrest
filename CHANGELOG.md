@@ -7,6 +7,8 @@ __No Release Date Set__
 
 * Write `.info` and `.manifest` files to temp before moving them to their final locations and fsync'ing.
 
+* Rename `--no-start-stop` option to `--no-online`.
+
 ## v0.90: 9.5 Support, Various Enhancements, and Minor Bug Fixes
 __Released February 7, 2016__
 

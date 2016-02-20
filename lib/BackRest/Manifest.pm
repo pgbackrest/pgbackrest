@@ -93,8 +93,8 @@ use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-a
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_COPY);
 use constant MANIFEST_KEY_COMPRESS                                  => 'option-compress';
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
-use constant MANIFEST_KEY_START_STOP                                => 'option-start-stop';
-    push @EXPORT, qw(MANIFEST_KEY_START_STOP);
+use constant MANIFEST_KEY_ONLINE                                    => 'option-online';
+    push @EXPORT, qw(MANIFEST_KEY_ONLINE);
 
 # Information about the database that was backed up
 use constant MANIFEST_KEY_SYSTEM_ID                                 => 'db-system-id';
@@ -350,7 +350,7 @@ sub valid
             $strKey eq MANIFEST_KEY_ARCHIVE_COPY ||
             $strKey eq MANIFEST_KEY_COMPRESS ||
             $strKey eq MANIFEST_KEY_HARDLINK ||
-            $strKey eq MANIFEST_KEY_START_STOP)
+            $strKey eq MANIFEST_KEY_ONLINE)
         {
             return true;
         }
@@ -369,7 +369,6 @@ sub valid
         {
             return true;
         }
-
     }
 
     confess &log(ASSERT, "manifest section '${strSection}', key '${strKey}'" .
@@ -405,7 +404,7 @@ sub build
         $oFile,
         $strDbClusterPath,
         $oLastManifest,
-        $bNoStartStop,
+        $bOnline,
         $oTablespaceMapRef,
         $strLevel
     ) =
@@ -415,7 +414,7 @@ sub build
             {name => 'oFile'},
             {name => 'strDbClusterPath'},
             {name => 'oLastManifest', required => false},
-            {name => 'bNoStartStop'},
+            {name => 'bOnline'},
             {name => 'oTablespaceMapRef', required => false},
             {name => 'strLevel', required => false}
         );
@@ -433,8 +432,8 @@ sub build
                        $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
         }
 
-        # If bNoStartStop then build the tablespace map from pg_tblspc path
-        if ($bNoStartStop && !defined($oTablespaceMapRef))
+        # If not online then build the tablespace map from pg_tblspc path
+        if (!$bOnline && !defined($oTablespaceMapRef))
         {
             $oTablespaceMapRef = {};
 
@@ -470,7 +469,7 @@ sub build
     foreach my $strName (sort(CORE::keys(%{$oManifestHash{name}})))
     {
         # Skip certain files during backup
-        if (($strName =~ /^pg\_xlog\/.*/ && !$bNoStartStop) || # pg_xlog/ - this will be reconstructed
+        if (($strName =~ /^pg\_xlog\/.*/ && $bOnline) ||       # pg_xlog/ - this will be reconstructed
             $strName =~ /^postmaster\.pid$/ ||                 # postmaster.pid - to avoid confusing postgres when restoring
             $strName =~ /^backup\_label\.old$/ ||              # backup_label.old - old backup labels are not useful
             $strName =~ /^recovery\.done$/ ||                  # recovery.done - doesn't make sense to backup this file
@@ -555,7 +554,7 @@ sub build
                 $self->set(MANIFEST_SECTION_BACKUP_PATH, $strTablespaceName,
                            MANIFEST_SUBKEY_PATH, $strLinkDestination);
 
-                $self->build($oFile, $strLinkDestination, $oLastManifest, $bNoStartStop, $oTablespaceMapRef,
+                $self->build($oFile, $strLinkDestination, $oLastManifest, $bOnline, $oTablespaceMapRef,
                              $strTablespaceName);
             }
         }
