@@ -276,7 +276,8 @@ sub variableListParse
 
                 if ($oVariable->paramTest('eval', 'y'))
                 {
-                    $strValue = eval $strValue;
+                    # In this case we really do want to evaluate the contents of strValue and not treat it as a literal.
+                    $strValue = eval($strValue);                    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
                     if ($@)
                     {

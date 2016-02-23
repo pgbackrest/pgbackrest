@@ -43,9 +43,6 @@ severity = 5
 # Provisional Exceptions for Test & Documentation Code
 #-----------------------------------------------------------------------------------------------------------------------------------
 
-# S5 - Required to make eval in DocManifest.pm work.  Would prefer a line exception for this but can't get it working yet.
-[-BuiltinFunctions::ProhibitStringyEval]
-
 # S2 - Requires complete POD sections but these are being removed anyway in favor of Config.pm.
 [-Documentation::RequirePodSections]
 [-Documentation::RequirePodAtEnd]
