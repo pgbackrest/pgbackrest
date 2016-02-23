@@ -60,7 +60,7 @@ sub waitInit
     # If wait seconds is not defined or 0 then return undef
     if (!defined($fWaitTime) || $fWaitTime == 0)
     {
-        return undef;
+        return;
     }
 
     # Wait seconds can be a minimum of .1

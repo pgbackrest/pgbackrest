@@ -246,69 +246,6 @@ sub helpDataWrite
             {name => 'oManifest'}
         );
 
-    # Internal function used to format text by quoting it and splitting lines so it looks good in the module.
-    sub formatText
-    {
-        my $oManifest = shift;
-        my $oDocRender = shift;
-        my $oText = shift;
-        my $iIndent = shift;
-        my $iLength = shift;
-
-        # Split the string into lines for processing
-        my @stryText = split("\n", trim($oManifest->variableReplace($oDocRender->processText($oText))));
-        my $strText;
-        my $iIndex = 0;
-
-        foreach my $strLine (@stryText)
-        {
-            # Add a linefeed if this is not the first line
-            if (defined($strText))
-            {
-                $strText .= " .\n";
-            }
-
-            # Escape perl special characters
-            $strLine =~ s/\@/\\@/g;
-            $strLine =~ s/\$/\\\$/g;
-            $strLine =~ s/\"/\\"/g;
-
-            my $strPart;
-            my $bFirst = true;
-
-            # Split the line for output if it's too long
-            do
-            {
-                ($strPart, $strLine) = stringSplit($strLine, ' ', defined($strPart) ? $iLength - 4 : $iLength);
-
-                $strText .= ' ' x $iIndent;
-
-                if (!$bFirst)
-                {
-                    $strText .= "    ";
-                }
-
-                $strText .= "\"${strPart}";
-
-                if (defined($strLine))
-                {
-                    $strText .= "\" .\n";
-                }
-                else
-                {
-                    $strText .= ($iIndex + 1 < @stryText ? '\n' : '') . '"';
-                }
-
-                $bFirst = false;
-            }
-            while (defined($strLine));
-
-            $iIndex++;
-        }
-
-        return $strText;
-    }
-
     # Iterate options
     my $oConfigHash = $self->{oConfigHash};
     my $strOptionData;
@@ -331,9 +268,9 @@ sub helpDataWrite
             (defined($$oOptionHash{&CONFIG_HELP_SECTION}) ? '            ' . &CONFIG_HELP_SECTION .
                 ' => \'' . $$oOptionHash{&CONFIG_HELP_SECTION} . "',\n" : '') .
             '            ' . &CONFIG_HELP_SUMMARY . " =>\n" .
-            formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
+            helpDataWriteFormatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
             '            ' . &CONFIG_HELP_DESCRIPTION . " =>\n" .
-            formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . "\n" .
+            helpDataWriteFormatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . "\n" .
             "        }";
     }
 
@@ -356,9 +293,9 @@ sub helpDataWrite
             "        '${strCommand}' =>\n" .
             "        {\n" .
             '            ' . &CONFIG_HELP_SUMMARY . " =>\n" .
-            formatText($oManifest, $self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
+            helpDataWriteFormatText($oManifest, $self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_SUMMARY}, 16, 112) . ",\n" .
             '            ' . &CONFIG_HELP_DESCRIPTION . " =>\n" .
-            formatText($oManifest, $self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . ",\n" .
+            helpDataWriteFormatText($oManifest, $self->{oDocRender}, $$oCommandHash{&CONFIG_HELP_DESCRIPTION}, 16, 112) . ",\n" .
             "\n";
 
         # Iterate options
@@ -395,9 +332,11 @@ sub helpDataWrite
                         "                '${strOption}' =>\n" .
                         "                {\n" .
                         '                    ' . &CONFIG_HELP_SUMMARY . " =>\n" .
-                        formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_SUMMARY}, 24, 104) . ",\n" .
+                        helpDataWriteFormatText($oManifest, $self->{oDocRender},
+                                                $$oOptionHash{&CONFIG_HELP_SUMMARY}, 24, 104) . ",\n" .
                         '                    ' . &CONFIG_HELP_DESCRIPTION . " =>\n" .
-                        formatText($oManifest, $self->{oDocRender}, $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 24, 104) . "\n" .
+                        helpDataWriteFormatText($oManifest, $self->{oDocRender},
+                                                $$oOptionHash{&CONFIG_HELP_DESCRIPTION}, 24, 104) . "\n" .
                         "                }";
 
                     $bExtraLinefeed = true;
@@ -480,6 +419,69 @@ sub helpDataWrite
     logDebugReturn($strOperation);
 }
 
+# Helper function for helpDataWrite() used to format text by quoting it and splitting lines so it looks good in the module.
+sub helpDataWriteFormatText
+{
+    my $oManifest = shift;
+    my $oDocRender = shift;
+    my $oText = shift;
+    my $iIndent = shift;
+    my $iLength = shift;
+
+    # Split the string into lines for processing
+    my @stryText = split("\n", trim($oManifest->variableReplace($oDocRender->processText($oText))));
+    my $strText;
+    my $iIndex = 0;
+
+    foreach my $strLine (@stryText)
+    {
+        # Add a linefeed if this is not the first line
+        if (defined($strText))
+        {
+            $strText .= " .\n";
+        }
+
+        # Escape perl special characters
+        $strLine =~ s/\@/\\@/g;
+        $strLine =~ s/\$/\\\$/g;
+        $strLine =~ s/\"/\\"/g;
+
+        my $strPart;
+        my $bFirst = true;
+
+        # Split the line for output if it's too long
+        do
+        {
+            ($strPart, $strLine) = stringSplit($strLine, ' ', defined($strPart) ? $iLength - 4 : $iLength);
+
+            $strText .= ' ' x $iIndent;
+
+            if (!$bFirst)
+            {
+                $strText .= "    ";
+            }
+
+            $strText .= "\"${strPart}";
+
+            if (defined($strLine))
+            {
+                $strText .= "\" .\n";
+            }
+            else
+            {
+                $strText .= ($iIndex + 1 < @stryText ? '\n' : '') . '"';
+            }
+
+            $bFirst = false;
+        }
+        while (defined($strLine));
+
+        $iIndex++;
+    }
+
+    return $strText;
+}
+
 ####################################################################################################################################
 # helpConfigDocGet
 #
@@ -552,76 +554,6 @@ sub helpCommandDocGet
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(OP_DOC_CONFIG_HELP_CONFIG_DOC_GET);
 
-    # Internal option find function
-    #
-    # The option may be stored with the command or in the option list depending on whether it's generic or command-specific
-    sub optionFind
-    {
-        my $oConfigHelpData = shift;
-        my $oOptionRule = shift;
-        my $strCommand = shift;
-        my $strOption = shift;
-
-        my $strSection = CONFIG_HELP_COMMAND;
-        my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
-
-        if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_DEFAULT)
-        {
-            $strSection = CONFIG_SECTION_GENERAL;
-        }
-        elsif ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
-        {
-            $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
-
-            if (defined($$oOption{&CONFIG_HELP_SECTION}))
-            {
-                $strSection = $$oOption{&CONFIG_HELP_SECTION};
-
-                if ($strSection eq CONFIG_SECTION_COMMAND)
-                {
-                    $strSection = CONFIG_SECTION_GENERAL;
-                }
-            }
-            else
-            {
-                $strSection = CONFIG_SECTION_GENERAL;
-            }
-
-            if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-                 $strSection ne CONFIG_SECTION_STANZA && $strSection ne CONFIG_SECTION_EXPIRE) ||
-                 $strSection eq $strCommand)
-            {
-                $strSection = CONFIG_HELP_COMMAND;
-            }
-        }
-
-        # if (defined(optionDefault($strOption, $strCommand)))
-        # {
-        #     if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-        #     {
-        #         $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand) ? 'y' : 'n';
-        #     }
-        #     else
-        #     {
-        #         $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand);
-        #     }
-        # }
-        #
-        # if (optionTest($strOption) && optionSource($strOption) ne CONFIG_HELP_SOURCE_DEFAULT)
-        # {
-        #     if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-        #     {
-        #         $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption) ? 'y' : 'n';
-        #     }
-        #     else
-        #     {
-        #         $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption);
-        #     }
-        # }
-
-        return $oOption, $strSection;
-    }
-
     # Working variables
     my $oConfigHash = $self->{oConfigHash};
     my $oOperationDoc = $self->{oDoc}->nodeGet('operation');
@@ -658,7 +590,7 @@ sub helpCommandDocGet
 
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
-                my ($oOption, $strCategory) = optionFind($oConfigHash, $oOptionRule, $strCommand, $strOption);
+                my ($oOption, $strCategory) = helpCommandDocGetOptionFind($oConfigHash, $oOptionRule, $strCommand, $strOption);
 
                 $$oCategory{$strCategory}{$strOption} = $oOption;
             }
@@ -687,6 +619,51 @@ sub helpCommandDocGet
         $strOperation,
         {name => 'oDoc', value => $oDoc}
     );
+}
+
+# Helper function for helpCommandDocGet() to find options. The option may be stored with the command or in the option list depending
+# on whether it's generic or command-specific
+sub helpCommandDocGetOptionFind
+{
+    my $oConfigHelpData = shift;
+    my $oOptionRule = shift;
+    my $strCommand = shift;
+    my $strOption = shift;
+
+    my $strSection = CONFIG_HELP_COMMAND;
+    my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
+
+    if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_DEFAULT)
+    {
+        $strSection = CONFIG_SECTION_GENERAL;
+    }
+    elsif ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
+    {
+        $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
+
+        if (defined($$oOption{&CONFIG_HELP_SECTION}))
+        {
+            $strSection = $$oOption{&CONFIG_HELP_SECTION};
+
+            if ($strSection eq CONFIG_SECTION_COMMAND)
+            {
+                $strSection = CONFIG_SECTION_GENERAL;
+            }
+        }
+        else
+        {
+            $strSection = CONFIG_SECTION_GENERAL;
+        }
+
+        if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
+             $strSection ne CONFIG_SECTION_STANZA && $strSection ne CONFIG_SECTION_EXPIRE) ||
+             $strSection eq $strCommand)
+        {
+            $strSection = CONFIG_HELP_COMMAND;
+        }
+    }
+
+    return $oOption, $strSection;
 }
 
 ####################################################################################################################################

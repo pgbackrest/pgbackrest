@@ -575,14 +575,14 @@ sub keys
     {
         if ($self->test($strSection, $strKey))
         {
-            return sort(keys(%{$self->get($strSection, $strKey)}));
+            return (sort(keys(%{$self->get($strSection, $strKey)})));
         }
 
         my @stryEmptyArray;
         return @stryEmptyArray;
     }
 
-    return sort(keys(%{$self->{oContent}}));
+    return (sort(keys(%{$self->{oContent}})));
 }
 
 ####################################################################################################################################

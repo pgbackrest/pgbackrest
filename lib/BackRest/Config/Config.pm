@@ -2004,7 +2004,7 @@ sub optionCommandRule
                $oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand} : undef;
     }
 
-    return undef;
+    return;
 }
 
 ####################################################################################################################################
@@ -2411,39 +2411,6 @@ sub commandWrite
     #     $strExeString .= ' --no-config';
     # }
 
-    # Function to correctly format options for command-line usage
-    sub optionFormat
-    {
-        my $strOption = shift;
-        my $bMulti = shift;
-        my $oValue = shift;
-
-        # Loops though all keys in the hash
-        my $strOptionFormat = '';
-        my $strParam;
-
-        foreach my $strKey (sort(keys(%$oValue)))
-        {
-            # Get the value - if the original value was a hash then the key must be prefixed
-            my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
-
-            # Handle the no- prefix for boolean values
-            if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
-            {
-                $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
-            }
-            else
-            {
-                $strParam = "--${strOption}=${strValue}";
-            }
-
-            # Add quotes if the value has spaces in it
-            $strOptionFormat .= ' ' . (index($strValue, " ") != -1 ? "\"${strParam}\"" : $strParam);
-        }
-
-        return $strOptionFormat;
-    }
-
     # Iterate the options to figure out which ones are not default and need to be written out to the new command string
     foreach my $strOption (sort(keys(%oOptionRule)))
     {
@@ -2455,7 +2422,7 @@ sub commandWrite
         {
             if (defined($$oOptionOverride{$strOption}{value}))
             {
-                $strExeString .= optionFormat($strOption, false, {value => $$oOptionOverride{$strOption}{value}});
+                $strExeString .= commandWriteOptionFormat($strOption, false, {value => $$oOptionOverride{$strOption}{value}});
             }
         }
         # else look for non-default options in the current configuration
@@ -2479,7 +2446,7 @@ sub commandWrite
                 $oValue = {value => $oOption{$strOption}{value}};
             }
 
-            $strExeString .= optionFormat($strOption, $bMulti, $oValue);
+            $strExeString .= commandWriteOptionFormat($strOption, $bMulti, $oValue);
         }
     }
 
@@ -2492,6 +2459,39 @@ sub commandWrite
 }
 
 push @EXPORT, qw(commandWrite);
+
+# Helper function for commandWrite() to correctly format options for command-line usage
+sub commandWriteOptionFormat
+{
+    my $strOption = shift;
+    my $bMulti = shift;
+    my $oValue = shift;
+
+    # Loops though all keys in the hash
+    my $strOptionFormat = '';
+    my $strParam;
+
+    foreach my $strKey (sort(keys(%$oValue)))
+    {
+        # Get the value - if the original value was a hash then the key must be prefixed
+        my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
+
+        # Handle the no- prefix for boolean values
+        if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+        {
+            $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
+        }
+        else
+        {
+            $strParam = "--${strOption}=${strValue}";
+        }
+
+        # Add quotes if the value has spaces in it
+        $strOptionFormat .= ' ' . (index($strValue, " ") != -1 ? "\"${strParam}\"" : $strParam);
+    }
+
+    return $strOptionFormat;
+}
 
 ####################################################################################################################################
 # commandHashGet

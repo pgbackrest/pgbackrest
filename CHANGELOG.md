@@ -9,6 +9,8 @@ __No Release Date Set__
 
 * Rename `--no-start-stop` option to `--no-online`.
 
+* Static source analysis using Perl-Critic, currently passes on gentle.
+
 ## v0.90: 9.5 Support, Various Enhancements, and Minor Bug Fixes
 __Released February 7, 2016__
 

@@ -139,7 +139,7 @@ sub fileStringWrite
         );
 
     # Open the file for writing
-    sysopen(my $hFile, $strFileName, O_WRONLY | O_CREAT | O_TRUNC, 0640)
+    sysopen(my $hFile, $strFileName, O_WRONLY | O_CREAT | O_TRUNC, oct(640))
         or confess &log(ERROR, "unable to open ${strFileName}");
 
     # Write the string

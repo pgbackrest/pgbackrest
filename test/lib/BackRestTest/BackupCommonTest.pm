@@ -1042,7 +1042,7 @@ sub BackRestTestBackup_BackupEnd
 
     if ($oExecuteBackup->{iExpectedExitStatus} != 0 && $oExecuteBackup->{iExpectedExitStatus} != -1)
     {
-        return undef;
+        return;
     }
 
     ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strBackupType;

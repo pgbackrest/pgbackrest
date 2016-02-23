@@ -75,7 +75,7 @@ sub lockPathCreate
     # Create the lock path if it does not exist.  Use 770 so that members of the group can run read-only processes.
     if (! -e lockPathName($strRepoPath))
     {
-        mkdir (lockPathName($strRepoPath), 0770)
+        mkdir (lockPathName($strRepoPath), oct(770))
             or confess &log(ERROR, 'unable to create lock path ' . lockPathName($strRepoPath), ERROR_PATH_CREATE);
     }
 }
@@ -128,7 +128,7 @@ sub lockAcquire
         # Attempt to open the lock file
         $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA, false), $strRepoPath, $bRemote, $iProcessIdx);
 
-        sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, 0640)
+        sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640))
             or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
 
         # Attempt to lock the lock file
@@ -253,7 +253,7 @@ sub lockStop
     }
 
     # Create the stop file
-    sysopen(my $hStopHandle, $strStopFile, O_WRONLY | O_CREAT, 0640)
+    sysopen(my $hStopHandle, $strStopFile, O_WRONLY | O_CREAT, oct(640))
         or confess &log(ERROR, "unable to open stop file ${strStopFile}", ERROR_FILE_OPEN);
     close($hStopHandle);
 

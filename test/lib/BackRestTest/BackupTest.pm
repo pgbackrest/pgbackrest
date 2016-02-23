@@ -38,6 +38,93 @@ use BackRestTest::CommonTest;
 use BackRestTest::ExpireCommonTest;
 
 ####################################################################################################################################
+# Archive helper functions
+####################################################################################################################################
+# Generate an archive log for testing
+sub archiveGenerate
+{
+    my $oFile = shift;
+    my $strXlogPath = shift;
+    my $iSourceNo = shift;
+    my $iArchiveNo = shift;
+    my $bPartial = shift;
+
+    my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
+                         (defined($bPartial) && $bPartial ? '.partial' : '');
+    my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . "/test.archive${iSourceNo}.bin";
+
+    my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
+
+    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                 false,                                 # Source is not compressed
+                 false,                                 # Destination is not compressed
+                 undef, undef, undef,                   # Unused params
+                 true);                                 # Create path if it does not exist
+
+    return $strArchiveFile, $strSourceFile;
+}
+
+# Check that an archive log is present
+sub archiveCheck
+{
+    my $oFile = shift;
+    my $strArchiveFile = shift;
+    my $strArchiveChecksum = shift;
+    my $bCompress = shift;
+
+    # Build the archive name to check for at the destination
+    my $strArchiveCheck = "9.3-1/${strArchiveFile}-${strArchiveChecksum}";
+
+    if ($bCompress)
+    {
+        $strArchiveCheck .= '.gz';
+    }
+
+    my $oWait = waitInit(5);
+    my $bFound = false;
+
+    do
+    {
+        $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+    }
+    while (!$bFound && waitMore($oWait));
+
+    if (!$bFound)
+    {
+        confess 'unable to find ' . $strArchiveCheck;
+    }
+}
+
+# Push a log to the archive
+sub archivePush
+{
+    my $oLogTest = shift;
+    my $oFile = shift;
+    my $strXlogPath = shift;
+    my $strArchiveTestFile = shift;
+    my $iArchiveNo = shift;
+    my $iExpectedError = shift;
+
+    my $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
+
+    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                 false,                                 # Source is not compressed
+                 false,                                 # Destination is not compressed
+                 undef, undef, undef,                   # Unused params
+                 true);                                 # Create path if it does not exist
+
+    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
+                     '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push' .
+                     (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ?
+                      "  --backup-host=bogus" : '');
+
+    executeTest($strCommand . " ${strSourceFile}",
+                {iExpectedExitStatus => $iExpectedError, oLogTest => $oLogTest});
+}
+
+####################################################################################################################################
 # BackRestTestBackup_Test
 ####################################################################################################################################
 our @EXPORT = qw(BackRestTestBackup_Test);
@@ -173,60 +260,6 @@ sub BackRestTestBackup_Test
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
                                  '/pg_backrest.conf --no-fork --stanza=db archive-push';
-
-                sub archiveGenerate
-                {
-                    my $oFile = shift;
-                    my $strXlogPath = shift;
-                    my $iSourceNo = shift;
-                    my $iArchiveNo = shift;
-                    my $bPartial = shift;
-
-                    my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
-                                         (defined($bPartial) && $bPartial ? '.partial' : '');
-                    my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . "/test.archive${iSourceNo}.bin";
-
-                    my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
-
-                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                                 false,                                 # Source is not compressed
-                                 false,                                 # Destination is not compressed
-                                 undef, undef, undef,                   # Unused params
-                                 true);                                 # Create path if it does not exist
-
-                    return $strArchiveFile, $strSourceFile;
-                }
-
-                sub archiveCheck
-                {
-                    my $oFile = shift;
-                    my $strArchiveFile = shift;
-                    my $strArchiveChecksum = shift;
-                    my $bCompress = shift;
-
-                    # Build the archive name to check for at the destination
-                    my $strArchiveCheck = "9.3-1/${strArchiveFile}-${strArchiveChecksum}";
-
-                    if ($bCompress)
-                    {
-                        $strArchiveCheck .= '.gz';
-                    }
-
-                    my $oWait = waitInit(5);
-                    my $bFound = false;
-
-                    do
-                    {
-                        $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
-                    }
-                    while (!$bFound && waitMore($oWait));
-
-                    if (!$bFound)
-                    {
-                        confess 'unable to find ' . $strArchiveCheck;
-                    }
-                }
 
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
@@ -457,34 +490,6 @@ sub BackRestTestBackup_Test
 
                 BackRestTestCommon_ConfigCreate(BACKUP,
                                                 ($bRemote ? DB : undef));
-
-                # Helper function to push archive logs
-                sub archivePush
-                {
-                    my $oLogTest = shift;
-                    my $oFile = shift;
-                    my $strXlogPath = shift;
-                    my $strArchiveTestFile = shift;
-                    my $iArchiveNo = shift;
-                    my $iExpectedError = shift;
-
-                    my $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
-
-                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                                 false,                                 # Source is not compressed
-                                 false,                                 # Destination is not compressed
-                                 undef, undef, undef,                   # Unused params
-                                 true);                                 # Create path if it does not exist
-
-                    my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                                     '/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push' .
-                                     (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ?
-                                      "  --backup-host=bogus" : '');
-
-                    executeTest($strCommand . " ${strSourceFile}",
-                                {iExpectedExitStatus => $iExpectedError, oLogTest => $oLogTest});
-                }
 
                 # Push a WAL segment
                 archivePush($oLogTest, $oFile, $strXlogPath, $strArchiveTestFile, 1);

@@ -61,6 +61,7 @@ test.pl [options]
    --infinite           repeat selected tests forever
    --db-version         version of postgres to test (or all)
    --log-force          force overwrite of current test log files
+   --no-lint            Disable static source code analysis
 
  Configuration Options:
    --exe                pgBackRest executable
@@ -103,6 +104,7 @@ my $bInfinite = false;
 my $strDbVersion = 'all';
 my $bLogForce = false;
 my $bVmBuild = false;
+my $bNoLint = false;
 
 my $strCommandLine = join(' ', @ARGV);
 
@@ -125,7 +127,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-cleanup' => \$bNoCleanup,
             'infinite' => \$bInfinite,
             'db-version=s' => \$strDbVersion,
-            'log-force' => \$bLogForce)
+            'log-force' => \$bLogForce,
+            'no-lint' => \$bNoLint)
     or pod2usage(2);
 
 # Display version and exit if requested
@@ -334,6 +337,31 @@ eval
     {
         if (!$bDryRun)
         {
+            # Run Perl critic
+            if (!$bNoLint)
+            {
+                my $strBasePath = dirname(dirname(abs_path($0)));
+
+                &log(INFO, "Performing static code analysis using perl -cW");
+
+                # Check the exe for warnings
+                my $strWarning = trim(executeTest("perl -cW ${strBasePath}/bin/pg_backrest 2>&1"));
+
+                if ($strWarning ne "${strBasePath}/bin/pg_backrest syntax OK")
+                {
+                    confess &log(ERROR, "${strBasePath}/bin/pg_backrest failed syntax check:\n${strWarning}");
+                }
+
+                &log(INFO, "Performing static code analysis using perlcritic");
+
+                executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
+                            ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
+                            " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
+                            " ${strBasePath}/bin/pg_backrest ${strBasePath}/lib/*" .
+                            " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
+                            " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
+            }
+
             logFileSet(cwd() . "/test");
         }
 

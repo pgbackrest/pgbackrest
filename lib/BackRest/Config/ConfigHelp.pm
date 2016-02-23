@@ -115,120 +115,6 @@ sub configHelp
         }
     }
 
-    # Internal text format function to make output look good on a console
-    sub formatText
-    {
-        my $strTextIn = shift;
-        my $iIndent = shift;
-        my $bIndentFirst = shift;
-        my $iLength = shift;
-
-        my @stryText = split("\n", trim($strTextIn));
-        my $strText;
-        my $iIndex = 0;
-
-        foreach my $strLine (@stryText)
-        {
-            if (defined($strText))
-            {
-                $strText .= "\n";
-            }
-
-            my $strPart;
-            my $bFirst = true;
-
-            do
-            {
-                ($strPart, $strLine) = stringSplit($strLine, ' ', $iLength - $iIndent);
-
-                if (!$bFirst || $bIndentFirst)
-                {
-                    if (!$bFirst)
-                    {
-                        $strText .= "\n";
-                    }
-
-                    $strText .= ' ' x $iIndent;
-                }
-
-                $strText .= trim($strPart);
-
-                $bFirst = false;
-            }
-            while (defined($strLine));
-
-            $iIndex++;
-        }
-
-        return $strText;
-    }
-
-    # Internal option find function
-    #
-    # The option may be stored with the command or in the option list depending on whether it's generic or command-specific
-    sub optionFind
-    {
-        my $oConfigHelpData = shift;
-        my $oOptionRule = shift;
-        my $strCommand = shift;
-        my $strOption = shift;
-
-        my $strSection = CONFIG_HELP_COMMAND;
-        my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
-
-        if (ref(\$oOption) eq 'SCALAR')
-        {
-            $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
-
-            if (defined($$oOption{&CONFIG_HELP_SECTION}))
-            {
-                $strSection = $$oOption{&CONFIG_HELP_SECTION};
-
-                if ($strSection eq CONFIG_SECTION_COMMAND)
-                {
-                    $strSection = CONFIG_SECTION_GENERAL;
-                }
-            }
-            else
-            {
-                $strSection = CONFIG_SECTION_GENERAL;
-            }
-
-            if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-                 $strSection ne CONFIG_SECTION_STANZA && $strSection ne CONFIG_SECTION_EXPIRE) ||
-                 $strSection eq $strCommand)
-            {
-                $strSection = CONFIG_HELP_COMMAND;
-            }
-        }
-
-        if (defined(optionDefault($strOption, $strCommand)))
-        {
-            if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-            {
-                $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand) ? 'y' : 'n';
-            }
-            else
-            {
-                $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand);
-            }
-        }
-
-        if (optionTest($strOption) && optionSource($strOption) ne CONFIG_HELP_SOURCE_DEFAULT)
-        {
-            if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-            {
-                $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption) ? 'y' : 'n';
-            }
-            else
-            {
-                $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption);
-            }
-        }
-
-        return $oOption, $strSection;
-    }
-
     # Build the help
     my $strMore;
 
@@ -262,7 +148,8 @@ sub configHelp
 
                 $strHelp .= "    ${strCommand}" . (' ' x ($iCommandLength - length($strCommand)));
                 $strHelp .=
-                    '  ' . formatText($$oCommand{&CONFIG_HELP_SUMMARY}, 4 + $iCommandLength + 2, false, $iScreenWidth + 1) .
+                    '  ' .
+                    configHelpFormatText($$oCommand{&CONFIG_HELP_SUMMARY}, 4 + $iCommandLength + 2, false, $iScreenWidth + 1) .
                     "\n";
             }
 
@@ -274,7 +161,7 @@ sub configHelp
             my $oCommand = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand};
 
             $strHelp =
-                formatText($$oCommand{&CONFIG_HELP_SUMMARY} . "\n\n" .
+                configHelpFormatText($$oCommand{&CONFIG_HELP_SUMMARY} . "\n\n" .
                            $$oCommand{&CONFIG_HELP_DESCRIPTION}, 0, true, $iScreenWidth + 1);
 
             # Find longest option length and unique list of sections
@@ -290,7 +177,7 @@ sub configHelp
                         $iOptionLength = length($strOption);
                     }
 
-                    my ($oOption, $strSection) = optionFind($oConfigHelpData, $oOptionRule, $strCommand, $strOption);
+                    my ($oOption, $strSection) = configHelpOptionFind($oConfigHelpData, $oOptionRule, $strCommand, $strOption);
 
                     $$oSection{$strSection}{$strOption} = $oOption;
                 }
@@ -336,9 +223,9 @@ sub configHelp
 
                         # Output help
                         $strHelp .= "  --${strOption}" . (' ' x ($iOptionLength - length($strOption)));
-                        $strHelp .= '  ' . formatText(lcfirst(substr($$oOption{&CONFIG_HELP_SUMMARY}, 0,
-                                                                     length($$oOption{&CONFIG_HELP_SUMMARY}) - 1)) .
-                                                      $strDefault, $iIndent, false, $iScreenWidth + 1);
+                        $strHelp .= '  ' . configHelpFormatText(lcfirst(substr($$oOption{&CONFIG_HELP_SUMMARY}, 0,
+                                                                        length($$oOption{&CONFIG_HELP_SUMMARY}) - 1)) .
+                                                                $strDefault, $iIndent, false, $iScreenWidth + 1);
                     }
                 }
 
@@ -349,7 +236,7 @@ sub configHelp
         # Else option help
         else
         {
-            my ($oOption) = optionFind($oConfigHelpData, $oOptionRule, $strCommand, $strOption);
+            my ($oOption) = configHelpOptionFind($oConfigHelpData, $oOptionRule, $strCommand, $strOption);
 
             # Set current and default values
             my $strDefault = '';
@@ -378,8 +265,8 @@ sub configHelp
 
             # Output help
             $strHelp =
-                formatText($$oOption{&CONFIG_HELP_SUMMARY} . "\n\n" . $$oOption{&CONFIG_HELP_DESCRIPTION} .
-                           $strDefault, 0, true, $iScreenWidth + 1);
+                configHelpFormatText($$oOption{&CONFIG_HELP_SUMMARY} . "\n\n" . $$oOption{&CONFIG_HELP_DESCRIPTION} .
+                                     $strDefault, 0, true, $iScreenWidth + 1);
         }
     }
 
@@ -389,5 +276,118 @@ sub configHelp
 }
 
 push @EXPORT, qw(configHelp);
+
+# Helper function for configHelp() to make output look good on a console
+sub configHelpFormatText
+{
+    my $strTextIn = shift;
+    my $iIndent = shift;
+    my $bIndentFirst = shift;
+    my $iLength = shift;
+
+    my @stryText = split("\n", trim($strTextIn));
+    my $strText;
+    my $iIndex = 0;
+
+    foreach my $strLine (@stryText)
+    {
+        if (defined($strText))
+        {
+            $strText .= "\n";
+        }
+
+        my $strPart;
+        my $bFirst = true;
+
+        do
+        {
+            ($strPart, $strLine) = stringSplit($strLine, ' ', $iLength - $iIndent);
+
+            if (!$bFirst || $bIndentFirst)
+            {
+                if (!$bFirst)
+                {
+                    $strText .= "\n";
+                }
+
+                $strText .= ' ' x $iIndent;
+            }
+
+            $strText .= trim($strPart);
+
+            $bFirst = false;
+        }
+        while (defined($strLine));
+
+        $iIndex++;
+    }
+
+    return $strText;
+}
+
+# Helper function for configHelp() to find options.  The option may be stored with the command or in the option list depending on
+# whether it's generic or command-specific
+sub configHelpOptionFind
+{
+    my $oConfigHelpData = shift;
+    my $oOptionRule = shift;
+    my $strCommand = shift;
+    my $strOption = shift;
+
+    my $strSection = CONFIG_HELP_COMMAND;
+    my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
+
+    if (ref(\$oOption) eq 'SCALAR')
+    {
+        $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
+
+        if (defined($$oOption{&CONFIG_HELP_SECTION}))
+        {
+            $strSection = $$oOption{&CONFIG_HELP_SECTION};
+
+            if ($strSection eq CONFIG_SECTION_COMMAND)
+            {
+                $strSection = CONFIG_SECTION_GENERAL;
+            }
+        }
+        else
+        {
+            $strSection = CONFIG_SECTION_GENERAL;
+        }
+
+        if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
+             $strSection ne CONFIG_SECTION_STANZA && $strSection ne CONFIG_SECTION_EXPIRE) ||
+             $strSection eq $strCommand)
+        {
+            $strSection = CONFIG_HELP_COMMAND;
+        }
+    }
+
+    if (defined(optionDefault($strOption, $strCommand)))
+    {
+        if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+        {
+            $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand) ? 'y' : 'n';
+        }
+        else
+        {
+            $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand);
+        }
+    }
+
+    if (optionTest($strOption) && optionSource($strOption) ne CONFIG_HELP_SOURCE_DEFAULT)
+    {
+        if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+        {
+            $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption) ? 'y' : 'n';
+        }
+        else
+        {
+            $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption);
+        }
+    }
+
+    return $oOption, $strSection;
+}
 
 1;

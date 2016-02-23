@@ -258,7 +258,7 @@ sub lineRead
                     # If reading from error stream then just return undef
                     else
                     {
-                        return undef;
+                        return;
                     }
                 }
             }
@@ -292,7 +292,7 @@ sub lineRead
                 confess &log(ERROR, "unable to read line after $self->{iProtocolTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
             }
 
-            return undef;
+            return;
         }
     }
 

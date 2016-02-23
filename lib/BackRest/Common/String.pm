@@ -64,7 +64,7 @@ sub trim
 
     if (!defined($strBuffer))
     {
-        return undef;
+        return;
     }
 
     $strBuffer =~ s/^\s+|\s+$//g;

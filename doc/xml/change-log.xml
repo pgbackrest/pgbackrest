@@ -17,6 +17,9 @@
                 <release-feature>
                     <text>Rename <setting>--no-start-stop</setting> option to <setting>--no-online</setting>.</text>
                 </release-feature>
+                <release-feature>
+                    <text>Static source analysis using Perl-Critic, currently passes on gentle.</text>
+                </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
 

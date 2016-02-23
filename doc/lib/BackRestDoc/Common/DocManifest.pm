@@ -313,7 +313,7 @@ sub variableReplace
 
     if (!defined($strBuffer))
     {
-        return undef;
+        return;
     }
 
     foreach my $strName (sort(keys(%{$self->{oVariable}})))

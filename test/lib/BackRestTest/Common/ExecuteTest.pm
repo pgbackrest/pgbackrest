@@ -187,7 +187,7 @@ sub endRetry
 
         if (!$bWait)
         {
-            return undef;
+            return;
         }
 
         if (!$bFound)
