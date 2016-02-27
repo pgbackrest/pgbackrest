@@ -303,7 +303,6 @@ sub binaryXfer
                         else
                         {
                             $iBlockSize = 0;
-                            last;
                         }
                     }
                     while ($iZLibStatus != Z_STREAM_END && $iUncompressedBufferSize > 0 && $iBlockSize > 0);
