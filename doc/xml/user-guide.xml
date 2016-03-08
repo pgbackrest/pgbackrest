@@ -661,7 +661,7 @@
                 <backrest-config-option section="global:expire" key="retention-diff">1</backrest-config-option>
             </backrest-config>
 
-            <p>Backup <br-setting>retention-diff=2</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
+            <p>Backup <br-setting>retention-diff=1</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Perform differential and incremental backups</title>
