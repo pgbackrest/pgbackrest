@@ -648,9 +648,13 @@ sub processTag
                 {
                     $strUrl = $oTag->paramGet('section');
                 }
-            }
 
-            $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
+                $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
+            }
+            else
+            {
+                $strBuffer = "\\href{$strUrl}{" . $oTag->valueGet() . "}";
+            }
         }
         else
         {
