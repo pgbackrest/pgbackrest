@@ -17,7 +17,7 @@ use Exporter qw(import);
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
 our # 'our' keyword is on a separate line to make the ExtUtils::MakeMaker parser happy.
-$VERSION = '0.95dev';
+$VERSION = '0.91';
 
 push @EXPORT, qw($VERSION);
 

@@ -1,9 +1,9 @@
 # pgBackRest<br/>Change Log
 
-## v0.95dev: UNDER DEVELOPMENT
-__No Release Date Set__
+## v0.91: Tablespace Bug Fix and Minor Enhancements
+__Released March 22, 2016__
 
-* **IMPORTANT BUG FIX FOR TABLESPACES**: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid PostgreSQL cluster when the backup contained tablespaces. This only affected users who directly copied the backups to restore PostgreSQL clusters rather than using the restore command. However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (pgBackRest will throw errors and refuse to restore). New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces. If older backups need to be restored then use a version of pgBackRest that matches the backup version. _Reported by Evan Benoit_
+* **IMPORTANT BUG FIX FOR TABLESPACES**: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid PostgreSQL cluster when the backup contained tablespaces. This only affected users who directly copied the backups to restore PostgreSQL clusters rather than using the restore command. However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (pgBackRest will throw errors and refuse to restore). New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces. If older backups need to be restored then use a version of pgBackRest that matches the backup version. _Reported by Evan Benoit_.
 
 * Copy `global/pg_control` last during backups.
 
