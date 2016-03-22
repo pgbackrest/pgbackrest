@@ -6,6 +6,12 @@
     </intro>
 
     <changelog>
+        <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
+            <release-feature-bullet-list>
+                <release-feature><text></text></release-feature>
+            </release-feature-bullet-list>
+        </changelog-release>
+
         <changelog-release date="2016-03-22" version="0.91" title="Tablespace Bug Fix and Minor Enhancements">
             <release-feature-bullet-list>
                 <release-feature>
