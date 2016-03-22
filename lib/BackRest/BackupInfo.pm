@@ -288,6 +288,12 @@ sub add
         my $strPath = $strPathKey;
         $strPath =~ s/\:/\//g;
 
+        if ($oBackupManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK) &&
+            $oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
+        {
+            $strPath .= '/' . $oBackupManifest->tablespacePathGet();
+        }
+
         foreach my $strFileKey ($oBackupManifest->keys($strFileSection))
         {
             my $lFileSize = $oBackupManifest->get($strFileSection, $strFileKey, MANIFEST_SUBKEY_SIZE);

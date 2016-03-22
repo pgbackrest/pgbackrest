@@ -223,10 +223,16 @@ sub fileNotInManifest
             if ($strSection eq 'tablespace')
             {
                 my $strTablespace = (split('/', $strPath))[0];
+                my $strTablespacePath = (split('/', $strPath))[1];
+
+                if (defined($strTablespacePath) && $strTablespacePath ne $oManifest->tablespacePathGet())
+                {
+                    next;
+                }
 
                 $strSection = $strSection . '/' . $strTablespace;
 
-                if ($strTablespace eq $strPath)
+                if (($strTablespace eq $strPath) || "${strTablespace}/${strTablespacePath}" eq $strPath)
                 {
                     if ($oManifest->test("${strSection}:path"))
                     {
@@ -234,7 +240,7 @@ sub fileNotInManifest
                     }
                 }
 
-                $strPath = substr($strPath, length($strTablespace) + 1);
+                $strPath = substr($strPath, length($strTablespace) + length($oManifest->tablespacePathGet()) + 2);
             }
 
             # Get the file type (all links will be deleted since they are easy to recreate)
@@ -423,6 +429,7 @@ sub processManifest
             if ($oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
             {
                 $strBackupSourcePath .= '/' . $oBackupManifest->tablespacePathGet();
+                $strBackupDestinationPath .= '/' . $oBackupManifest->tablespacePathGet();
             }
         }
 

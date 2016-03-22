@@ -9,6 +9,9 @@
         <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
                 <release-feature>
+                    <text><b>IMPORTANT BUG FIX FOR TABLESPACES</b>: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid <postgres/> cluster when the backup contained tablespaces.  This only affected users who directly copied the backups to restore <postgres/> clusters rather than using the restore command.  However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (<backrest/> will throw errors and refuse to restore).  New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces.  If older backups need to be restored then use a version of <backrest/> that matches the backup version. <i>Reported by Evan Benoit</i></text>
+                </release-feature>
+                <release-feature>
                     <text>Copy <file>global/pg_control</file> last during backups.</text>
                 </release-feature>
                 <release-feature>

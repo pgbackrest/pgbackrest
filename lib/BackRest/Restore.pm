@@ -782,12 +782,14 @@ sub process
     foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
     {
         my $strSection = "${strPathKey}:file";
+        my $strSourcePath = $strPathKey;
         my $strDestinationPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
 
         # Update path if this is a tablespace
         if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
             $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
         {
+            $strSourcePath .= '/' . $oManifest->tablespacePathGet();
             $strDestinationPath .= '/' . $oManifest->tablespacePathGet();
         }
 
@@ -826,7 +828,7 @@ sub process
                 # Get restore information
                 $oRestoreHash{$strPathKey}{$strFileKey}{file} = $strFile;
                 $oRestoreHash{$strPathKey}{$strFileKey}{size} = $lSize;
-                $oRestoreHash{$strPathKey}{$strFileKey}{source_path} = $strPathKey;
+                $oRestoreHash{$strPathKey}{$strFileKey}{source_path} = $strSourcePath;
                 $oRestoreHash{$strPathKey}{$strFileKey}{destination_path} = $strDestinationPath;
                 $oRestoreHash{$strPathKey}{$strFileKey}{reference} =
                     $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
