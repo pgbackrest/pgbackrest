@@ -115,7 +115,7 @@ if ($bQuiet)
 # If no keyword we passed then use default
 if (@stryKeyword == 0)
 {
-    @stryKeyword = ('default')
+    @stryKeyword = ('default');
 }
 
 logLevelSet(undef, uc($strLogLevel));
