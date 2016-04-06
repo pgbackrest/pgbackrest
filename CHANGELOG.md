@@ -1,7 +1,7 @@
 # pgBackRest<br/>Change Log
 
-## v0.95dev: UNDER DEVELOPMENT
-__No Release Date Set__
+## v0.92: Command-line Repository Path Fix
+__Released April 6, 2016__
 
 * Fixed an issue where the master process was passing `--repo-remote-path` instead of `--repo-path` to the remote and causing the lock files to be created in the default repository directory (`/var/lib/backup`), generally ending in failure. This was only an issue when `--repo-remote-path` was defined on the command line rather than in `pg_backrest.conf`. _Reported by Jan Wieck_.
 
