@@ -207,7 +207,7 @@ sub logWrite
             {name => 'strBasePath', trace => true},
             {name => 'strTestPath', trace => true},
             {name => 'strFileName',
-             default => sprintf("log/$self->{strModule}-$self->{strTest}-%03d.log", $self->{iRun}), trace => true}
+             default => sprintf("expect/$self->{strModule}-$self->{strTest}-%03d.log", $self->{iRun}), trace => true}
         );
 
     my $strReferenceLogFile = "${strBasePath}/test/${strFileName}";
@@ -219,22 +219,22 @@ sub logWrite
     }
     else
     {
-        my $strTestLogPath = "${strTestPath}/log";
+        my $strTestLogPath = "${strTestPath}/expect";
 
         if (!-e $strTestLogPath)
         {
             mkdir($strTestLogPath) or
-                confess "unable to create test log path ${strTestLogPath}";
+                confess "unable to create expect log path ${strTestLogPath}";
         }
 
         $strTestLogFile = "${strTestPath}/${strFileName}";
     }
 
     open(my $hFile, '>', $strTestLogFile)
-        or confess "could not open test log file '${strTestLogFile}': $!";
+        or confess "unable to open expect log file '${strTestLogFile}': $!";
 
     syswrite($hFile, $self->{strLog})
-        or confess "could not write to test log file '${strTestLogFile}': $!";
+        or confess "unable to write expect log file '${strTestLogFile}': $!";
 
     close($hFile);
 
