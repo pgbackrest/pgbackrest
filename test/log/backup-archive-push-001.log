@@ -3,7 +3,7 @@ run 001 - rmt 0, cmp 0, arc_async 0
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -35,7 +35,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -55,7 +55,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -82,7 +82,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -102,7 +102,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -132,7 +132,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -160,7 +160,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -187,7 +187,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -217,7 +217,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -245,7 +245,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -272,7 +272,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -299,7 +299,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -326,7 +326,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -353,7 +353,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -373,7 +373,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -393,7 +393,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -423,7 +423,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -451,7 +451,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -478,7 +478,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -508,7 +508,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -536,7 +536,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -563,7 +563,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -590,7 +590,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -617,7 +617,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -644,7 +644,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -664,7 +664,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -684,7 +684,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -714,7 +714,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -742,7 +742,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -769,7 +769,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -799,7 +799,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db

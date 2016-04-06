@@ -8,7 +8,7 @@
     <changelog>
         <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
             <release-feature-bullet-list>
-                <release-feature><text></text></release-feature>
+                <release-feature><text>Fixed an issue where the master process was passing <setting>--repo-remote-path</setting> instead of <setting>--repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure.  This was only an issue when <setting>--repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.  <i>Reported by Jan Wieck</i>.</text></release-feature>
             </release-feature-bullet-list>
         </changelog-release>
 

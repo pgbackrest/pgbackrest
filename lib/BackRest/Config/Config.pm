@@ -1015,7 +1015,6 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_INFO => true,
-            &CMD_REMOTE => true,
             &CMD_RESTORE => true
         },
     },
@@ -1559,7 +1558,6 @@ sub configLoad
     # Set repo-remote-path to repo-path if it is not set
     if (optionTest(OPTION_REPO_PATH) && !optionTest(OPTION_REPO_REMOTE_PATH))
     {
-        $oOption{&OPTION_REPO_REMOTE_PATH}{source} = $oOption{&OPTION_REPO_PATH}{source};
         $oOption{&OPTION_REPO_REMOTE_PATH}{value} = optionGet(OPTION_REPO_PATH);
     }
 
@@ -2268,7 +2266,8 @@ sub protocolGet
         commandWrite(CMD_REMOTE, true, optionGet(OPTION_COMMAND_REMOTE), undef,
                      {&OPTION_COMMAND => {value => commandGet()}, &OPTION_PROCESS => {value => $iProcessIdx}, &OPTION_CONFIG =>
                      {value => optionSource(OPTION_CONFIG_REMOTE) eq SOURCE_DEFAULT ? undef : optionGet(OPTION_CONFIG_REMOTE)},
-                     &OPTION_REPO_PATH => {}}),
+                     &OPTION_REPO_PATH => {value => optionSource(OPTION_REPO_REMOTE_PATH) eq SOURCE_DEFAULT ?
+                        undef : optionGet(OPTION_REPO_REMOTE_PATH)}}),
         optionGet(OPTION_BUFFER_SIZE),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),

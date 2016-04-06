@@ -3,7 +3,7 @@ run 002 - rmt 0, cmp 1, error version
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -59,7 +59,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -92,7 +92,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -126,7 +126,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
 ERROR: discarding 000000010000000100000004 due to the archive store max size exceeded - remove the archive stop file ([TEST_PATH]/backrest/lock/db-archive.stop) to resume archiving and be sure to take a new backup as soon as possible
 DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
  INFO: archive-push stop
@@ -134,7 +134,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -217,7 +217,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-push start: --archive-async --archive-max-mb=24 --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
 DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db

@@ -4,7 +4,7 @@ run 001 - rmt 0, cmp 0, hardlink 0
 full backup
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --manifest-save-threshold=3 --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --manifest-save-threshold=3 --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -178,7 +178,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 full backup (abort backup - local)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=full --stanza=db backup --test --test-delay=5 --test-point=backup-start=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -218,7 +218,7 @@ ERROR: [138]: process terminated on a TERM signal
 full backup (global stop)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 ERROR: [137]: stop file exists for all stanzas
@@ -244,7 +244,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 full backup (stanza stop)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 ERROR: [137]: stop file exists for stanza db
@@ -280,7 +280,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info db
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = db
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -300,7 +300,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info db
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --stanza=db
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = db
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -361,7 +361,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 full backup (resume)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -534,14 +534,14 @@ db-version="9.3"
 full backup (invalid repo)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --repo-path=/bogus_path  --log-level-console=info --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=/bogus_path --repo-remote-path=/bogus_path --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=/bogus_path --stanza=db --start-fast --type=full
 ERROR: [148]: repo-path '/bogus_path' does not exist
  INFO: backup stop
 
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-FULL-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -620,7 +620,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --sta
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 115 (fail on missing PG_VERSION)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=info  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --force --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --force --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
  WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db/common' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
  INFO: restore backup set [BACKUP-FULL-2]
  INFO: check/clean db path [TEST_PATH]/db/common
@@ -630,7 +630,7 @@ ERROR: [115]: cannot restore to path '[TEST_PATH]/db/common' that contains files
 restore delta, force, backup '[BACKUP-FULL-2]' (restore succeeds with backup.manifest file)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=info  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --force --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --force --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
  INFO: restore backup set [BACKUP-FULL-2]
  INFO: check/clean db path [TEST_PATH]/db/common
  INFO: cleanup removed 1 file
@@ -648,7 +648,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --log
 incr backup (invalid database version)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -675,7 +675,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 incr backup (invalid system id)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -702,7 +702,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 incr backup (invalid control version)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -729,7 +729,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 incr backup (invalid catalog version)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -756,7 +756,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 incr backup (invalid path in pg_tblspc)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --log-level-console=info --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 ERROR: [144]: /pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
  INFO: backup stop
@@ -764,7 +764,7 @@ ERROR: [144]: /pg_tblspc/path is not a symlink - pg_tblspc should contain only s
 incr backup (invalid relative link in pg_tblspc)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --log-level-console=info --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 ERROR: [145]: tablespace symlink ../invalid_tblspc must be absolute
  INFO: backup stop
@@ -772,7 +772,7 @@ ERROR: [145]: tablespace symlink ../invalid_tblspc must be absolute
 incr backup (invalid tablespace in $PGDATA)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --log-level-console=info --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=info --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 ERROR: [146]: tablespace symlink [TEST_PATH]/db/common/invalid_tblspc must not be in $PGDATA
  INFO: backup stop
@@ -780,7 +780,7 @@ ERROR: [146]: tablespace symlink [TEST_PATH]/db/common/invalid_tblspc must not b
 incr backup (add tablespace 1)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -967,7 +967,7 @@ db-version="9.3"
 incr backup (resume and add tablespace 2)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1179,7 +1179,7 @@ db-version="9.3"
 diff backup (cannot resume - new diff)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1388,7 +1388,7 @@ db-version="9.3"
 diff backup (cannot resume - disabled)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --no-resume --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --no-resume --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --no-resume --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1598,7 +1598,7 @@ db-version="9.3"
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 (fail on used path)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1629,7 +1629,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1648,7 +1648,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1667,7 +1667,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --set=[BACKUP-DIFF-2] --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -1784,7 +1784,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --sta
 restore delta, backup '[BACKUP-DIFF-2]', remap (ensure file in tblspc root remains after --delta)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --delta --set=[BACKUP-DIFF-2] --log-level-console=info  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
  INFO: restore backup set [BACKUP-DIFF-2]
  INFO: remap base path to [TEST_PATH]/db/common-2
  INFO: remap tablespace 1 to [TEST_PATH]/db/tablespace/ts1-2
@@ -1810,7 +1810,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --log
 incr backup (add files and remove tablespace 2)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -2008,7 +2008,7 @@ db-version="9.3"
 incr backup (update files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -2205,7 +2205,7 @@ db-version="9.3"
 diff backup (no updates)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -2420,7 +2420,7 @@ db-version="9.3"
 incr backup (remove files - but won't affect manifest)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -2620,7 +2620,7 @@ db-version="9.3"
 diff backup (remove files during backup)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -2834,7 +2834,7 @@ db-version="9.3"
 full backup
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -3068,7 +3068,7 @@ db-version="9.3"
 diff backup (add files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-online --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
+ INFO: backup start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --log-level-console=debug --log-level-file=trace --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -3264,7 +3264,7 @@ db-version="9.3"
 restore delta (no tablespace remap)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --delta --no-tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db --no-tablespace --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+ INFO: restore start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --delta --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db --no-tablespace --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
 DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = [TEST_PATH]/backrest
 DEBUG:     Common:::Lock::lockAquire=>: bResult = true
@@ -3369,7 +3369,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = [undef]
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -3394,7 +3394,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = [undef]
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -3497,7 +3497,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info bogus
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=bogus
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = bogus
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = bogus
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -3511,7 +3511,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info bogus
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=bogus info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=bogus
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --stanza=bogus
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = bogus
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = bogus
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -3534,7 +3534,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = [undef]
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>
@@ -3547,7 +3547,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 info
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf info --output=json
 ------------------------------------------------------------------------------------------------------------------------------------
-DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest
+DEBUG:     info start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=debug --log-level-file=trace --output=json --repo-path=[TEST_PATH]/backrest
 DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = [undef]
 DEBUG:     Info->stanzaList(): oFile = [object], strStanza = [undef]
 DEBUG:     File->list(): bIgnoreMissing = true, strExpression = [undef], strPath = backup, strPathType = backup, strSortOrder = <forward>

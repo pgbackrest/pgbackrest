@@ -427,7 +427,7 @@ sub BackRestTestCommon_Setup
     $bCommandMainSet = defined($strExe) ? true : false;
     $strCommonCommandRemote = defined($strExe) ? $strExe : "${strCommonBasePath}/bin/pg_backrest";
     $strCommonCommandRemoteFull = "${strCommonCommandRemote} --stanza=${strCommonStanza}" .
-                                  " --repo-remote-path=${strCommonRepoPath} --no-config --command=test remote";
+                                  " --repo-path=${strCommonRepoPath} --no-config --command=test remote";
     $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;

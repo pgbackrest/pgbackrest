@@ -3,7 +3,7 @@
 ## v0.95dev: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Fixed an issue where the master process was passing `--repo-remote-path` instead of `--repo-path` to the remote and causing the lock files to be created in the default repository directory (`/var/lib/backup`), generally ending in failure. This was only an issue when `--repo-remote-path` was defined on the command line rather than in `pg_backrest.conf`. _Reported by Jan Wieck_.
 
 ## v0.91: Tablespace Bug Fix and Minor Enhancements
 __Released March 22, 2016__

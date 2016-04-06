@@ -3,7 +3,7 @@ run 001 - rmt 0, cmp 0, exists 0
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-get start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-get start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: get WAL segment 000000010000000100000001
 DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
@@ -40,7 +40,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-get start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-get start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: get WAL segment 000000090000000900000009
 DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
@@ -59,7 +59,7 @@ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-get start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --repo-remote-path=[TEST_PATH]/backrest --stanza=db
+ INFO: archive-get start: --no-compress --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
  INFO: get WAL segment 000000090000000900000009
 DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
 DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
