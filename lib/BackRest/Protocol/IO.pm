@@ -7,6 +7,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname);
 use IPC::Open3 qw(open3);
 use IO::Select;
@@ -27,6 +29,12 @@ use constant OP_IO_PROTOCOL                                                  => 
 
 use constant OP_IO_PROTOCOL_NEW                                              => OP_IO_PROTOCOL . "->new";
 use constant OP_IO_PROTOCOL_NEW3                                             => OP_IO_PROTOCOL . "->new3";
+
+####################################################################################################################################
+# Amount of time to attempt to retrieve errors when a process terminates unexpectedly
+####################################################################################################################################
+use constant IO_ERROR_TIMEOUT                                                => 5;
+    push @EXPORT, qw(IO_ERROR_TIMEOUT);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -248,7 +256,7 @@ sub lineRead
                 if ($iBufferRead == 0)
                 {
                     # Check if the remote process exited unexpectedly
-                    $self->waitPid();
+                    $self->waitPid(0);
 
                     # Only error if reading from the input stream
                     if (defined($bError) && $bError)
@@ -273,7 +281,7 @@ sub lineRead
             else
             {
                 # Check if the remote process exited unexpectedly
-                $self->waitPid();
+                $self->waitPid(0);
             }
 
             # Calculate time remaining before timeout
@@ -335,7 +343,7 @@ sub lineWrite
 
     # Check if the process has exited abnormally (doesn't seem like we should need this, but the next syswrite does a hard
     # abort if the remote process has already closed)
-    $self->waitPid();
+    $self->waitPid(0);
 
     # Write the data
     my $iLineOut = syswrite(defined($hOut) ? $hOut : $self->{hOut}, (defined($strBuffer) ? $strBuffer : '') . "\n");
@@ -500,7 +508,7 @@ sub waitPid
     my $bReportError = shift;
 
     # Record the start time and set initial sleep interval
-    my $oWait = waitInit($fWaitTime);
+    my $oWait = waitInit(defined($fWaitTime) ? $fWaitTime : IO_ERROR_TIMEOUT);
 
     if (defined($self->{pId}))
     {

@@ -193,9 +193,6 @@ sub outputRead
         $strOutput .= (defined($strOutput) ? "\n" : '') . substr($strLine, 1);
     }
 
-    # Check if the process has exited abnormally
-    $self->{io}->waitPid();
-
     # Raise any errors
     if ($bError)
     {
@@ -209,6 +206,7 @@ sub outputRead
     # If output is required and there is no output, raise exception
     if (defined($bOutputRequired) && $bOutputRequired && !defined($strOutput))
     {
+        $self->{io}->waitPid();
         confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') . 'output is not defined');
     }
 
