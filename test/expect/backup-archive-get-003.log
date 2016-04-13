@@ -3,18 +3,18 @@ run 003 - rmt 0, cmp 1, exists 0
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-get start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
- INFO: get WAL segment 000000010000000100000001
-DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
-DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
-DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
-DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
-ERROR: [130]: archive.info does not exist but is required to get WAL segments
-              HINT: Is archive_command configured in postgresql.conf?
-              HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
- INFO: archive-get stop
-DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+  INFO: archive-get start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: get WAL segment 000000010000000100000001
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
+ DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+ ERROR: [130]: archive.info does not exist but is required to get WAL segments
+               HINT: Is archive_command configured in postgresql.conf?
+               HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+ DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
+  INFO: archive-get stop
+ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
 -----------------------------------------------------------------
@@ -33,46 +33,46 @@ db-version="9.3"
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: stop start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
-DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
- INFO: stop stop
-DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+  INFO: stop start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
+ DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+  INFO: stop stop
+ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-get start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
- INFO: get WAL segment 000000090000000900000009
-DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
-DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
-ERROR: [137]: stop file exists for all stanzas
-DEBUG:     Exit::exitSafe(): iExitCode = 137, strSignal = [undef]
- INFO: archive-get stop
-DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+  INFO: archive-get start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: get WAL segment 000000090000000900000009
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
+ DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
+ ERROR: [137]: stop file exists for all stanzas
+ DEBUG:     Exit::exitSafe(): iExitCode = 137, strSignal = [undef]
+  INFO: archive-get stop
+ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 start (local)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: start start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
-DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
- INFO: start stop
-DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+  INFO: start start: --config=[TEST_PATH]/db/pg_backrest.conf --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest
+ DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+  INFO: start stop
+ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: archive-get start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
- INFO: get WAL segment 000000090000000900000009
-DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
-DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
-DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
-DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
-DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
-DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
-DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
-DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute
-DEBUG:     File->exists=>: bExists = false
-DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
- INFO: unable to find 000000090000000900000009 in the archive
-DEBUG:     Archive->get=>: iResult = 1
-DEBUG:     Exit::exitSafe(): iExitCode = 1, strSignal = [undef]
- INFO: archive-get stop
-DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+  INFO: archive-get start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: get WAL segment 000000090000000900000009
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
+ DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+ DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+ DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
+ DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
+ DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute
+ DEBUG:     File->exists=>: bExists = false
+ DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+  INFO: unable to find 000000090000000900000009 in the archive
+ DEBUG:     Archive->get=>: iResult = 1
+ DEBUG:     Exit::exitSafe(): iExitCode = 1, strSignal = [undef]
+  INFO: archive-get stop
+ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false

@@ -303,10 +303,10 @@ db-version="9.2"
 Nothing to expire
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
- INFO: archive retention on backup [BACKUP-FULL-1], start = 000000010000000000000000
- INFO: no archive to remove
- INFO: expire stop
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: archive retention on backup [BACKUP-FULL-1], start = 000000010000000000000000
+  INFO: no archive to remove
+  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
@@ -916,13 +916,13 @@ db-version="9.2"
 Expire oldest full backup, archive expire falls on segment major boundary
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
- INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
- INFO: remove expired backup [BACKUP-INCR-1]
- INFO: remove expired backup [BACKUP-FULL-1]
- INFO: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
- INFO: remove archive: start = 0000000100000000, stop = 0000000100000000
- INFO: expire stop
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
+  INFO: remove expired backup [BACKUP-INCR-1]
+  INFO: remove expired backup [BACKUP-FULL-1]
+  INFO: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
+  INFO: remove archive: start = 0000000100000000, stop = 0000000100000000
+  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
@@ -1295,12 +1295,12 @@ db-version="9.2"
 Expire oldest full backup
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
- INFO: expire diff backup [BACKUP-DIFF-1]
- INFO: remove expired backup [BACKUP-DIFF-1]
- INFO: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
- INFO: no archive to remove
- INFO: expire stop
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire diff backup [BACKUP-DIFF-1]
+  INFO: remove expired backup [BACKUP-DIFF-1]
+  INFO: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
+  INFO: no archive to remove
+  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
@@ -1967,15 +1967,15 @@ db-version="9.2"
 Expire oldest diff backup, archive expire does not fall on major segment boundary
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
- INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2]
- INFO: remove expired backup [BACKUP-DIFF-2]
- INFO: remove expired backup [BACKUP-FULL-2]
- INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
- INFO: archive retention on backup [BACKUP-DIFF-3], start = 000000010000000200000016
- INFO: remove archive: start = 0000000100000001, stop = 00000001000000020000000F
- INFO: remove archive: start = 000000010000000200000013, stop = 000000010000000200000015
- INFO: expire stop
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2]
+  INFO: remove expired backup [BACKUP-DIFF-2]
+  INFO: remove expired backup [BACKUP-FULL-2]
+  INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
+  INFO: archive retention on backup [BACKUP-DIFF-3], start = 000000010000000200000016
+  INFO: remove archive: start = 0000000100000001, stop = 00000001000000020000000F
+  INFO: remove archive: start = 000000010000000200000013, stop = 000000010000000200000015
+  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
@@ -2110,14 +2110,14 @@ db-version="9.2"
 Expire oldest diff backup (cascade to incr)
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
- INFO: expire diff backup set: [BACKUP-DIFF-3], [BACKUP-INCR-2]
- INFO: remove expired backup [BACKUP-INCR-2]
- INFO: remove expired backup [BACKUP-DIFF-3]
- INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
- INFO: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E
- INFO: remove archive: start = 000000010000000200000016, stop = 00000001000000020000001D
- INFO: expire stop
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire diff backup set: [BACKUP-DIFF-3], [BACKUP-INCR-2]
+  INFO: remove expired backup [BACKUP-INCR-2]
+  INFO: remove expired backup [BACKUP-DIFF-3]
+  INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
+  INFO: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E
+  INFO: remove archive: start = 000000010000000200000016, stop = 00000001000000020000001D
+  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
@@ -2246,12 +2246,12 @@ db-version="9.2"
 Expire archive based on newest incr backup
 > [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pg_backrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=incr --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
- INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=incr --retention-diff=1 --retention-full=1 --stanza=db
- INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
- INFO: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E, stop = 000000010000000200000020
- INFO: archive retention on backup [BACKUP-INCR-3], start = 000000010000000200000024
- INFO: remove archive: start = 000000010000000200000021, stop = 000000010000000200000023
- INFO: expire stop
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pg_backrest.conf --log-level-console=info --log-level-file=trace --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=incr --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
+  INFO: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E, stop = 000000010000000200000020
+  INFO: archive retention on backup [BACKUP-INCR-3], start = 000000010000000200000024
+  INFO: remove archive: start = 000000010000000200000021, stop = 000000010000000200000023
+  INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------

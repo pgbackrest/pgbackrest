@@ -129,7 +129,6 @@ sub logAdd
             if ($strLine !~ /^  TEST/)
             {
                 $strLine =~ s/^                            //;
-                $strLine =~ s/^ //;
                 $strLine =~ s/\r$//;
 
                 $strLine = $self->regExpReplaceAll($strLine);
