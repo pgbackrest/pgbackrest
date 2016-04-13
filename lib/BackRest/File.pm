@@ -312,7 +312,7 @@ sub pathTypeGet
 
 ####################################################################################################################################
 # pathGet
-# !!! Need ot tackle the return paths in this function
+# ??? Need to tackle the return paths in this function (i.e. there are to many ways to return)
 ####################################################################################################################################
 sub pathGet
 {
@@ -528,7 +528,7 @@ sub linkCreate
     else
     {
         # If the destination path is backup and does not exist, create it
-        # !!! This should only happen when the link create errors
+        # ??? This should only happen when the link create errors
         if ($bPathCreate && $self->pathTypeGet($strDestinationPathType) eq PATH_BACKUP)
         {
             $self->pathCreate(PATH_BACKUP_ABSOLUTE, dirname($strDestination));

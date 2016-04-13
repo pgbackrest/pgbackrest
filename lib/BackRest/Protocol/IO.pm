@@ -202,7 +202,7 @@ sub lineRead
             # Else the buffer is empty and data will need to be loaded
             else
             {
-                undef($self->{strBuffer});  # !!! Do we need this?
+                undef($self->{strBuffer});  # ??? Do we need this?
                 $self->{iBufferSize} = 0;
                 $self->{iBufferPos} = 0;
             }

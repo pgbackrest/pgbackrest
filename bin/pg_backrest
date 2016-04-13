@@ -80,7 +80,7 @@ eval
             protocolTimeoutGet()
         );
 
-        # !!! Would like to remove this check and allow a test lock
+        # ??? Would like to remove this check and allow a test lock
         if (optionGet(OPTION_COMMAND) ne 'test' && !optionTest(OPTION_PROCESS))
         {
             lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));

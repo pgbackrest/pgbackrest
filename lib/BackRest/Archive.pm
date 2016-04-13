@@ -384,8 +384,8 @@ sub get
     # If the destination file path is not absolute then it is relative to the db data path
     if (index($strDestinationFile, '/',) != 0)
     {
-        # !!! If db-path is required this is can be removed.
-        # !!! db-path should be added as a requirement for the remote settings work.
+        # ??? If db-path is required this is can be removed.
+        # ??? db-path should be added as a requirement for the remote settings work.
         if (!optionTest(OPTION_DB_PATH))
         {
             confess &log(ERROR, 'option db-path must be set when relative xlog paths are used');

@@ -286,7 +286,7 @@ sub logDebugProcess
         {
 
             # If the parameter is a hash but not blessed then represent it as a string
-            # !!! This should go away once the inputs to logDebug can be changed
+            # ??? This should go away once the inputs to logDebug can be changed
             if (ref($oValue) eq 'HASH' && !blessed($oValue))
             {
                 $$oParamHash{$strParamName}{value} = '[hash]';

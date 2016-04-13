@@ -452,7 +452,7 @@ sub process
             $strBuffer = ('#' x $iDepth) . ' `' . $oDoc->paramGet('id') . '` ' . $strTitle;
         }
 
-        # Try to get the title param from the element (!!! this is the old style and should be removed)
+        # Try to get the title param from the element (??? this is the old style and should be removed)
         my $strTitle = $oDoc->paramGet('title', false);
 
         if (!defined($strTitle))
