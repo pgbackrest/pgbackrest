@@ -68,8 +68,7 @@ start (local)
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
- DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute
- DEBUG:     File->exists=>: bExists = false
+ DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
   INFO: unable to find 000000090000000900000009 in the archive
  DEBUG:     Archive->get=>: iResult = 1

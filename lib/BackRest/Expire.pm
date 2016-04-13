@@ -20,6 +20,7 @@ use BackRest::BackupCommon;
 use BackRest::BackupInfo;
 use BackRest::Config::Config;
 use BackRest::File;
+use BackRest::FileCommon;
 use BackRest::Manifest;
 
 ####################################################################################################################################
@@ -401,8 +402,7 @@ sub process
                                 # Remove archive log if it is not used in a backup
                                 if ($bRemove)
                                 {
-                                    unlink($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"))
-                                        or confess &log(ERROR, 'unable to remove ' . $strSubPath, ERROR_FILE_REMOVE);
+                                    fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"));
 
                                     logDebugMisc($strOperation, "remove WAL segment: ${strSubPath}");
 

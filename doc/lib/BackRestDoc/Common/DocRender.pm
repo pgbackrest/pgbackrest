@@ -130,7 +130,7 @@ my $oRenderTag =
         'code' => ['<span class="id">', '</span>'],
         'code-block' => ['<code-block>', '</code-block>'],
         'exe' => [undef, ''],
-        'setting' => ['<span class="br-setting">', '</span>'], # !!! This will need to be fixed
+        'setting' => ['<span class="br-setting">', '</span>'], # ??? This will need to be fixed
         'backrest' => [undef, ''],
         'postgres' => ['<span class="postgres">PostgreSQL</span>', '']
     }

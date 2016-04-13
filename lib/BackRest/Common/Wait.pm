@@ -22,12 +22,18 @@ use BackRest::Common::Log;
 ####################################################################################################################################
 sub waitRemainder
 {
+    my $bWait = shift;
+
     my $lTimeBegin = gettimeofday();
-    my $lSleepMs = ceil(((int($lTimeBegin) + 1.05) - $lTimeBegin) * 1000);
 
-    usleep($lSleepMs * 1000);
+    if (!defined($bWait) || $bWait)
+    {
+        my $lSleepMs = ceil(((int($lTimeBegin) + 1.05) - $lTimeBegin) * 1000);
 
-    &log(TRACE, "WAIT_REMAINDER: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+        usleep($lSleepMs * 1000);
+
+        &log(TRACE, "WAIT_REMAINDER: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
+    }
 
     return int($lTimeBegin);
 }

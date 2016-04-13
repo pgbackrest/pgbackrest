@@ -551,7 +551,7 @@
                     <exe-cmd>chmod 550 {[backrest-repo-path]}/temp</exe-cmd>
                 </execute>
 
-                <execute output="y" err-expect="199">
+                <execute output="y" err-expect="122">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
                         --log-level-console=info backup</exe-cmd>
                     <exe-highlight>ERROR:</exe-highlight>

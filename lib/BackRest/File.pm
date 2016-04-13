@@ -9,7 +9,6 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use Digest::SHA;
 use Fcntl qw(:mode :flock O_RDONLY O_WRONLY O_CREAT);
 use File::Basename qw(dirname basename);
 use File::Copy qw(cp);
@@ -56,8 +55,6 @@ use constant OP_FILE_OWNER                                          => OP_FILE .
 use constant OP_FILE_PATH_CREATE                                    => OP_FILE . '->pathCreate';
     push @EXPORT, qw(OP_FILE_PATH_CREATE);
 use constant OP_FILE_PATH_GET                                       => OP_FILE . '->pathGet';
-use constant OP_FILE_PATH_SYNC                                      => OP_FILE . '->pathSync';
-use constant OP_FILE_PATH_SYNC_STATIC                               => OP_FILE . '::filePathSync';
 use constant OP_FILE_PATH_TYPE_GET                                  => OP_FILE . '->pathTypeGet';
 use constant OP_FILE_REMOVE                                         => OP_FILE . '->remove';
 use constant OP_FILE_STANZA                                         => OP_FILE . '->stanza';
@@ -531,7 +528,7 @@ sub linkCreate
         # ??? This should only happen when the link create errors
         if ($bPathCreate && $self->pathTypeGet($strDestinationPathType) eq PATH_BACKUP)
         {
-            $self->pathCreate(PATH_BACKUP_ABSOLUTE, dirname($strDestination));
+            filePathCreate(dirname($strDestination), undef, true, true);
         }
 
         unless (-e $strSource)
@@ -588,38 +585,6 @@ sub linkCreate
 }
 
 ####################################################################################################################################
-# pathSync
-#
-# Sync a directory.
-####################################################################################################################################
-sub pathSync
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathType,
-        $strPath,
-    ) =
-        logDebugParam
-        (
-            OP_FILE_PATH_SYNC, \@_,
-            {name => 'strPathType', trace => true},
-            {name => 'strPath', trace => true}
-        );
-
-    filePathSync($self->pathGet($strPathType, $strPath eq '.' ? undef : $strPath));
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
-}
-
-####################################################################################################################################
 # move
 #
 # Moves a file locally or remotely.
@@ -666,37 +631,7 @@ sub move
     # Run locally
     else
     {
-        if (!rename($strPathOpSource, $strPathOpDestination))
-        {
-            if ($bDestinationPathCreate)
-            {
-                $self->pathCreate(PATH_ABSOLUTE, dirname($strPathOpDestination), undef, true);
-            }
-
-            if (!$bDestinationPathCreate || !rename($strPathOpSource, $strPathOpDestination))
-            {
-                my $strError = "unable to move file ${strPathOpSource} to ${strPathOpDestination}: " . $!;
-                my $iErrorCode = COMMAND_ERR_FILE_READ;
-
-                if (!$self->exists(PATH_ABSOLUTE, dirname($strPathOpDestination)))
-                {
-                    $strError = dirname($strPathOpDestination) . " destination path does not exist";
-                    $iErrorCode = COMMAND_ERR_FILE_MISSING;
-                }
-
-                if (!($bDestinationPathCreate && $iErrorCode == COMMAND_ERR_FILE_MISSING))
-                {
-                    if ($strSourcePathType eq PATH_ABSOLUTE)
-                    {
-                        confess &log(ERROR, $strError, $iErrorCode);
-                    }
-
-                    confess &log(ERROR, $strError);
-                }
-            }
-        }
-
-        $self->pathSync($strDestinationPathType, dirname($strDestinationFile));
+        fileMove($strPathOpSource, $strPathOpDestination, $bDestinationPathCreate);
     }
 
     # Return from function and log return values if any
@@ -718,13 +653,15 @@ sub compress
     (
         $strOperation,
         $strPathType,
-        $strFile
+        $strFile,
+        $bRemoveSource
     ) =
         logDebugParam
         (
             OP_FILE_COMPRESS, \@_,
             {name => 'strPathType'},
-            {name => 'strFile'}
+            {name => 'strFile'},
+            {name => 'bRemoveSource', default => true}
         );
 
     # Set operation variables
@@ -742,8 +679,10 @@ sub compress
         $self->copy($strPathType, $strFile, $strPathType, "${strFile}.gz", false, true);
 
         # Remove the old file
-        unlink($strPathOp)
-            or die &log(ERROR, "unable to remove ${strPathOp}");
+        if ($bRemoveSource)
+        {
+            fileRemove($strPathOp);
+        }
     }
 
     # Return from function and log return values if any
@@ -800,35 +739,7 @@ sub pathCreate
     }
     else
     {
-        if (!($bIgnoreExists && $self->exists($strPathType, $strPath)))
-        {
-            # Attempt the create the directory
-            my $stryError;
-
-            if (defined($strMode))
-            {
-                make_path($strPathOp, {mode => oct($strMode), error => \$stryError});
-            }
-            else
-            {
-                make_path($strPathOp, {error => \$stryError});
-            }
-
-            if (@$stryError)
-            {
-                # Capture the error
-                my $strError = "${strPathOp} could not be created: " . $!;
-
-                # If running on command line the return directly
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    confess &log(ERROR, $strError, COMMAND_ERR_PATH_CREATE);
-                }
-
-                # Error the normal way
-                confess &log(ERROR, $strError); #, COMMAND_ERR_PATH_CREATE);
-            }
-        }
+        filePathCreate($strPathOp, $strMode, $bIgnoreExists, true, true);
     }
 
     # Return from function and log return values if any
@@ -881,27 +792,7 @@ sub exists
     # Run locally
     else
     {
-        # Stat the file/path to determine if it exists
-        my $oStat = lstat($strPathOp);
-
-        # Evaluate error
-        if (!defined($oStat))
-        {
-            # If the error is not entry missing, then throw error
-            if (!$!{ENOENT})
-            {
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    confess &log(ERROR, $!, COMMAND_ERR_FILE_READ);
-                }
-                else
-                {
-                    confess &log(ERROR, $!); #, COMMAND_ERR_FILE_READ);
-                }
-            }
-
-            $bExists = false;
-        }
+        $bExists = fileExists($strPathOp);
     }
 
     # Return from function and log return values if any
@@ -949,29 +840,7 @@ sub remove
     # Run locally
     else
     {
-        if (unlink($strPathOp) != 1)
-        {
-            $bRemoved = false;
-
-            my $strError = "${strPathOp} could not be removed: " . $!;
-            my $iErrorCode = COMMAND_ERR_PATH_READ;
-
-            if (!$self->exists($strPathType, $strPath))
-            {
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = COMMAND_ERR_PATH_MISSING;
-            }
-
-            if (!($iErrorCode == COMMAND_ERR_PATH_MISSING && $bIgnoreMissing))
-            {
-                if ($strPathType eq PATH_ABSOLUTE)
-                {
-                    confess &log(ERROR, $strError, $iErrorCode);
-                }
-
-                confess &log(ERROR, $strError);
-            }
-        }
+        $bRemoved = fileRemove($strPathOp, $bIgnoreMissing);
     }
 
     # Return from function and log return values if any
@@ -1053,58 +922,7 @@ sub hashSize
     }
     else
     {
-        my $hFile;
-
-        if (!sysopen($hFile, $strFileOp, O_RDONLY))
-        {
-            my $strError = "${strFileOp} could not be read: " . $!;
-            my $iErrorCode = 2;
-
-            if (!$self->exists($strPathType, $strFile))
-            {
-                $strError = "${strFileOp} does not exist";
-                $iErrorCode = 1;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
-
-            confess &log(ERROR, $strError);
-        }
-
-        my $oSHA = Digest::SHA->new($strHashType);
-
-        if ($bCompressed)
-        {
-            ($strHash, $iSize) =
-                $self->{oProtocol}->binaryXfer($hFile, 'none', 'in', true, false, false);
-        }
-        else
-        {
-            my $iBlockSize;
-            my $tBuffer;
-
-            do
-            {
-                # Read a block from the file
-                $iBlockSize = sysread($hFile, $tBuffer, 4194304);
-
-                if (!defined($iBlockSize))
-                {
-                    confess &log(ERROR, "${strFileOp} could not be read: " . $!);
-                }
-
-                $iSize += $iBlockSize;
-                $oSHA->add($tBuffer);
-            }
-            while ($iBlockSize > 0);
-
-            $strHash = $oSHA->hexdigest();
-        }
-
-        close($hFile);
+        ($strHash, $iSize) = fileHashSize($strFileOp, $bCompressed, $strHashType, $self->{oProtocol});
     }
 
     # Return from function and log return values if any
@@ -1250,52 +1068,7 @@ sub list
     # Run locally
     else
     {
-        my $hPath;
-
-        if (!opendir($hPath, $strPathOp))
-        {
-            my $strError = "${strPathOp} could not be read: " . $!;
-            my $iErrorCode = COMMAND_ERR_PATH_READ;
-
-            if (!$self->exists($strPathType, $strPath))
-            {
-                # If ignore missing is set then return an empty array
-                if ($bIgnoreMissing)
-                {
-                    return @stryFileList;
-                }
-
-                $strError = "${strPathOp} does not exist";
-                $iErrorCode = COMMAND_ERR_PATH_MISSING;
-            }
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
-
-            confess &log(ERROR, $strError);
-        }
-
-        @stryFileList = grep(!/^(\.)|(\.\.)$/i, readdir($hPath));
-
-        close($hPath);
-
-        if (defined($strExpression))
-        {
-            @stryFileList = grep(/$strExpression/i, @stryFileList);
-        }
-
-        # Reverse sort
-        if ($strSortOrder eq 'reverse')
-        {
-            @stryFileList = sort {$b cmp $a} @stryFileList;
-        }
-        # Normal sort
-        else
-        {
-            @stryFileList = sort @stryFileList;
-        }
+        @stryFileList = fileList($strPathOp, $strExpression, $strSortOrder, $bIgnoreMissing);
     }
 
     # Return from function and log return values if any
@@ -1322,12 +1095,14 @@ sub wait
     my
     (
         $strOperation,
-        $strPathType
+        $strPathType,
+        $bWait
     ) =
         logDebugParam
         (
             OP_FILE_WAIT, \@_,
-            {name => 'strPathType'}
+            {name => 'strPathType'},
+            {name => 'bWait', default => true}
         );
 
     # Second when the function was called
@@ -1336,14 +1111,18 @@ sub wait
     # Run remotely
     if ($self->isRemote($strPathType))
     {
+        # Build param hash
+        my %oParamHash;
+        $oParamHash{wait} = $bWait;
+
         # Execute the command
-        $lTimeBegin = $self->{oProtocol}->cmdExecute(OP_FILE_WAIT, undef, true);
+        $lTimeBegin = $self->{oProtocol}->cmdExecute(OP_FILE_WAIT, \%oParamHash, true);
     }
     # Run locally
     else
     {
         # Wait the remainder of the current second
-        $lTimeBegin = waitRemainder();
+        $lTimeBegin = waitRemainder($bWait);
     }
 
     # Return from function and log return values if any
@@ -1434,6 +1213,14 @@ sub manifestRecurse
     # Set operation and debug strings
     my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : '');
     my $hPath;
+    my $strFilter;
+
+    # If this is the top level stat the path to discover if it is actually a file
+    if ($iDepth == 0 && !S_ISDIR((fileStat($strPathRead))->mode))
+    {
+        $strFilter = basename($strPathRead);
+        $strPathRead = dirname($strPathRead);
+    }
 
     # Open the path
     if (!opendir($hPath, $strPathRead))
@@ -1470,6 +1257,12 @@ sub manifestRecurse
     # Loop through all subpaths/files in the path
     foreach my $strFile (sort(@stryFileList))
     {
+        # Skip this file if it does not match the filter
+        if (defined($strFilter) && $strFile ne $strFilter)
+        {
+            next;
+        }
+
         my $strPathFile = "${strPathRead}/$strFile";
         my $bCurrentDir = $strFile eq '.';
 
@@ -1707,7 +1500,7 @@ sub copy
         {
             if ($bDestinationPathCreate)
             {
-                $self->pathCreate(PATH_ABSOLUTE, dirname($strDestinationTmpOp), undef, true);
+                filePathCreate(dirname($strDestinationTmpOp), undef, true, true);
             }
 
             if (!$bDestinationPathCreate || !sysopen($hDestinationFile, $strDestinationTmpOp, $iCreateFlag))
@@ -1715,7 +1508,7 @@ sub copy
                 my $strError = "unable to open ${strDestinationTmpOp}: " . $!;
                 my $iErrorCode = COMMAND_ERR_FILE_READ;
 
-                if (!$self->exists(PATH_ABSOLUTE, dirname($strDestinationTmpOp)))
+                if (!fileExists(dirname($strDestinationTmpOp)))
                 {
                     $strError = dirname($strDestinationTmpOp) . ' destination path does not exist';
                     $iErrorCode = COMMAND_ERR_FILE_MISSING;
@@ -1736,7 +1529,7 @@ sub copy
         # Now lock the file to be sure nobody else is operating on it
         if (!flock($hDestinationFile, LOCK_EX | LOCK_NB))
         {
-            confess &log(ERROR, "unable to acquire exclusive lock on lock ${strDestinationTmpOp}", ERROR_LOCK_ACQUIRE);
+            confess &log(ERROR, "unable to acquire exclusive lock on ${strDestinationTmpOp}", ERROR_LOCK_ACQUIRE);
         }
     }
 
@@ -1911,8 +1704,9 @@ sub copy
                 if ($bIgnoreMissingSource && $strRemote eq 'in' && blessed($oMessage) && $oMessage->isa('BackRest::Common::Exception') &&
                     $oMessage->code() == COMMAND_ERR_FILE_MISSING)
                 {
-                    close($hDestinationFile) or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
-                    unlink($strDestinationTmpOp) or confess &log(ERROR, "cannot remove file ${strDestinationTmpOp}");
+                    close($hDestinationFile)
+                        or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
+                    fileRemove($strDestinationTmpOp);
 
                     return false, undef, undef;
                 }
@@ -2013,7 +1807,7 @@ sub copy
         }
 
         # Move the file from tmp to final destination
-        $self->move(PATH_ABSOLUTE, $strDestinationTmpOp, PATH_ABSOLUTE, $strDestinationOp, $bDestinationPathCreate);
+        fileMove($strDestinationTmpOp, $strDestinationOp, $bDestinationPathCreate);
     }
 
     # Return from function and log return values if any

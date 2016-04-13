@@ -210,7 +210,7 @@ sub process
             # Wait
             elsif ($strCommand eq OP_FILE_WAIT)
             {
-                $self->outputWrite($oFile->wait(PATH_ABSOLUTE));
+                $self->outputWrite($oFile->wait(PATH_ABSOLUTE, paramGet(\%oParamHash, 'wait')));
             }
             # Generate a manifest
             elsif ($strCommand eq OP_FILE_MANIFEST)

@@ -20,15 +20,10 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
- DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute
- DEBUG:     File->exists=>: bExists = false
+ DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->pathCreate(): bIgnoreExists = true, strMode = <0750>, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = absolute
- DEBUG:     File->exists(): strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = absolute
- DEBUG:     File->exists=>: bExists = false
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -153,7 +148,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000001.partial.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -238,7 +232,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000002.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000002.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -265,7 +258,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000003.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000003.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -292,7 +284,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000004.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000004.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -319,7 +310,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -444,7 +434,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000005.partial.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -529,7 +518,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000006.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000006.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -556,7 +544,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000007.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000007.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -583,7 +570,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000008.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000008.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -610,7 +596,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -735,7 +720,6 @@ run 003 - rmt 0, cmp 1, arc_async 0
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     File->move(): bDestinationPathCreate = true, strDestinationFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = absolute, strSourceFile = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001/000000010000000100000009.partial.gz.tmp, strSourcePathType = absolute
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
