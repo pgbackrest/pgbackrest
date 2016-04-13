@@ -71,8 +71,9 @@ test.pl [options]
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
+   --vm                 docker container to build/test (u12, u14, co6, co7)
    --vm-build           build Docker containers
-   --vm                 execute in a docker container (u12, u14, co6, co7)
+   --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
    --process-max        max VMs to run in parallel (default 1)
 
@@ -85,7 +86,6 @@ test.pl [options]
 # Command line parameters
 ####################################################################################################################################
 my $strLogLevel = 'info';
-my $strOS = 'all';
 my $bVmOut = false;
 my $strModule = 'all';
 my $strModuleTest = 'all';
@@ -103,7 +103,9 @@ my $bQuiet = false;
 my $bInfinite = false;
 my $strDbVersion = 'all';
 my $bLogForce = false;
+my $strVm = 'all';
 my $bVmBuild = false;
+my $bVmForce = false;
 my $bNoLint = false;
 
 my $strCommandLine = join(' ', @ARGV);
@@ -115,9 +117,10 @@ GetOptions ('q|quiet' => \$bQuiet,
             'exes=s' => \$strExe,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
-            'vm=s' => \$strOS,
+            'vm=s' => \$strVm,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
+            'vm-force' => \$bVmForce,
             'module=s' => \$strModule,
             'test=s' => \$strModuleTest,
             'run=s' => \$iModuleTestRun,
@@ -191,7 +194,7 @@ if (defined($iThreadMax) && ($iThreadMax < 1 || $iThreadMax > 32))
 ####################################################################################################################################
 if ($bVmBuild)
 {
-    containerBuild();
+    containerBuild($strVm, $bVmForce);
     exit 0;
 }
 
@@ -333,7 +336,7 @@ eval
     ################################################################################################################################
     # Start VM and run
     ################################################################################################################################
-    if ($strOS ne 'none')
+    if ($strVm ne 'none')
     {
         if (!$bDryRun)
         {
@@ -367,9 +370,9 @@ eval
 
         my $oyVm = vmGet();
 
-        if ($strOS ne 'all' && !defined($${oyVm}{$strOS}))
+        if ($strVm ne 'all' && !defined($${oyVm}{$strVm}))
         {
-            confess &log(ERROR, "${strOS} is not a valid VM");
+            confess &log(ERROR, "${strVm} is not a valid VM");
         }
 
         # Determine which tests to run
@@ -377,13 +380,13 @@ eval
 
         my $stryTestOS = [];
 
-        if ($strOS eq 'all')
+        if ($strVm eq 'all')
         {
             $stryTestOS = ['co6', 'u12', 'co7', 'u14'];
         }
         else
         {
-            $stryTestOS = [$strOS];
+            $stryTestOS = [$strVm];
         }
 
         foreach my $strTestOS (@{$stryTestOS})

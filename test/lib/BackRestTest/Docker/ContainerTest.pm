@@ -110,6 +110,23 @@ sub backrestConfigCreate
 }
 
 ####################################################################################################################################
+# Write the Docker container
+####################################################################################################################################
+sub containerWrite
+{
+    my $strTempPath = shift;
+    my $strImageName = shift;
+    my $strImage = shift;
+    my $bForce = shift;
+
+    # Write the image
+    fileStringWrite("${strTempPath}/${strImageName}", "$strImage\n", false);
+    executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
+                " -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                {bSuppressStdErr => true});
+}
+
+####################################################################################################################################
 # Setup SSH
 ####################################################################################################################################
 sub sshSetup
@@ -118,15 +135,19 @@ sub sshSetup
     my $strUser = shift;
     my $strGroup = shift;
 
-    return "# Setup SSH\n" .
-           "RUN mkdir /home/${strUser}/.ssh\n" .
-           "COPY id_rsa  /home/${strUser}/.ssh/id_rsa\n" .
-           "COPY id_rsa.pub  /home/${strUser}/.ssh/authorized_keys\n" .
-           "RUN chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh\n" .
-           "RUN chmod 700 /home/${strUser}/.ssh\n" .
-           "RUN echo 'Host *' > /home/${strUser}/.ssh/config\n" .
-           "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n" .
-           "RUN echo '    LogLevel quiet' >> /home/${strUser}/.ssh/config";
+    return
+        "# Setup SSH\n" .
+        "RUN mkdir /home/${strUser}/.ssh\n" .
+        "COPY id_rsa  /home/${strUser}/.ssh/id_rsa\n" .
+        "COPY id_rsa.pub  /home/${strUser}/.ssh/authorized_keys\n" .
+        "RUN chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh\n" .
+        "RUN chmod 700 /home/${strUser}/.ssh\n" .
+        "RUN echo 'Host *' > /home/${strUser}/.ssh/config\n" .
+        "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n" .
+        "RUN echo '    LogLevel quiet' >> /home/${strUser}/.ssh/config\n" .
+        "RUN echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config\n" .
+        "RUN echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config\n" .
+        "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config";
 }
 
 ####################################################################################################################################
@@ -178,6 +199,9 @@ sub perlInstall
 ####################################################################################################################################
 sub containerBuild
 {
+    my $strVm = shift;
+    my $bVmForce = shift;
+
     # Create temp path
     my $strTempPath = dirname(abs_path($0)) . '/.vagrant/docker';
 
@@ -203,6 +227,11 @@ sub containerBuild
 
     foreach my $strOS (sort(keys(%$oyVm)))
     {
+        if ($strVm ne 'all' && $strVm ne $strOS)
+        {
+            next;
+        }
+
         my $oOS = $$oyVm{$strOS};
         my $strImage;
         my $strImageName;
@@ -323,32 +352,26 @@ sub containerBuild
         $strImage .=
             "\n\n# Start SSH when container starts\n";
 
-        if ($strOS eq OS_CO6)
+        # This is required in newer versions of u12 containers - seems like a bug in the caontainer
+        if ($strOS eq OS_U12)
         {
             $strImage .=
-                "ENTRYPOINT service sshd restart && bash";
+                "RUN mkdir /var/run/sshd\n";
         }
-        elsif ($strOS eq OS_CO7)
-        {
-            $strImage .=
-                # "ENTRYPOINT systemctl start sshd.service && bash";
-                "ENTRYPOINT /usr/sbin/sshd -D && bash";
-        }
-        elsif ($strOS eq OS_U12)
-        {
-            $strImage .=
-                "ENTRYPOINT /etc/init.d/ssh start && bash";
-        }
-        elsif ($strOS eq OS_U14)
+
+        if ($strOS eq OS_U14)
         {
             $strImage .=
                 "ENTRYPOINT service ssh restart && bash";
         }
+        else
+        {
+            $strImage .=
+                "ENTRYPOINT /usr/sbin/sshd -D";
+        }
 
         # Write the image
-        fileStringWrite("${strTempPath}/${strImageName}", "$strImage\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                    {bSuppressStdErr => true});
+        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
 
         # Db image
         ###########################################################################################################################
@@ -391,9 +414,7 @@ sub containerBuild
             }
 
             # Write the image
-            fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-            executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                        {bSuppressStdErr => true});
+            containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
         }
 
         # Db Doc image
@@ -408,10 +429,7 @@ sub containerBuild
             "\n\n" . backrestConfigCreate($strOS, POSTGRES_USER, POSTGRES_GROUP);
 
         # Write the image
-        fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                    {bSuppressStdErr => true});
-
+        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
 
         # Backup image
         ###########################################################################################################################
@@ -428,10 +446,7 @@ sub containerBuild
             "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
 
         # Write the image
-        fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                    {bSuppressStdErr => true});
-
+        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
 
         # Backup Doc image
         ###########################################################################################################################
@@ -453,10 +468,7 @@ sub containerBuild
             "\n\n" . perlInstall($strOS) . "\n";
 
         # Write the image
-        fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-        executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                    {bSuppressStdErr => true});
-
+        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
 
         # Test image
         ###########################################################################################################################
@@ -497,9 +509,7 @@ sub containerBuild
                 "RUN chmod g+r,g+x /home/vagrant";
 
             # Write the image
-            fileStringWrite("${strTempPath}/${strImageName}", "${strImage}\n", false);
-            executeTest("docker build -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
-                        {bSuppressStdErr => true});
+            containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
         }
     }
 }
