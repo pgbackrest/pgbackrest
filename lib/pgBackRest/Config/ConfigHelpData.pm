@@ -522,7 +522,7 @@ my $oConfigHelpData =
                 "Forces a checkpoint (by passing y to the fast parameter of pg_start_backup()) so the backup begins " .
                     "immediately. Otherwise the backup will start after the next regular checkpoint.\n" .
                 "\n" .
-                "This feature only works in PostgreSQL <= 8.3."
+                "This feature only works in PostgreSQL >= 8.4."
         },
 
         # STOP-AUTO Option Help

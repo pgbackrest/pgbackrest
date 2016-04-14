@@ -273,7 +273,7 @@
 
                         <text>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately.  Otherwise the backup will start after the next regular checkpoint.
 
-                        This feature only works in <postgres/> &lt;= <id>8.3</id>.</text>
+                        This feature only works in <postgres/> &gt;= <id>8.4</id>.</text>
 
                         <example>y</example>
                     </config-key>

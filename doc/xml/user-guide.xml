@@ -125,7 +125,7 @@
 
             <p>WAL is conceptually infinite but in practice is broken up into individual 16MB files called segments.  WAL segments follow the naming convention <id>0000000100000A1E000000FE</id> where the first 8 hexadecimal digits represent the timeline and the next 16 digits are the logical sequence number (LSN).</p>
 
-            <p>A valid backup will always include <i>at least</i> one WAL segment even if explicit writes were made to the database between backups.</p>
+            <p>A valid backup will always include <i>at least</i> one WAL segment even if explicit writes were not made to the database between backups.</p>
         </section>
     </section>
 
