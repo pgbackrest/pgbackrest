@@ -22,22 +22,23 @@ use Time::HiRes qw(gettimeofday);
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Ini;
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::Common::Wait;
-use BackRest::Db;
+use pgBackRest::Common::Ini;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::Common::Wait;
+use pgBackRest::Db;
+use pgBackRest::Version;
 
 use lib dirname($0) . '/lib';
-use BackRestTest::BackupTest;
-use BackRestTest::Common::ExecuteTest;
-use BackRestTest::Common::VmTest;
-use BackRestTest::CommonTest;
-use BackRestTest::CompareTest;
-use BackRestTest::ConfigTest;
-use BackRestTest::Docker::ContainerTest;
-use BackRestTest::FileTest;
-use BackRestTest::HelpTest;
+use pgBackRestTest::BackupTest;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::CommonTest;
+use pgBackRestTest::CompareTest;
+use pgBackRestTest::ConfigTest;
+use pgBackRestTest::Docker::ContainerTest;
+use pgBackRestTest::FileTest;
+use pgBackRestTest::HelpTest;
 
 ####################################################################################################################################
 # Usage
@@ -137,7 +138,7 @@ GetOptions ('q|quiet' => \$bQuiet,
 # Display version and exit if requested
 if ($bVersion || $bHelp)
 {
-    syswrite(*STDOUT, 'pgBackRest ' . BACKREST_VERSION . " Unit Tests\n");
+    syswrite(*STDOUT, BACKREST_NAME . ' ' . $VERSION . " Test Engine\n");
 
     if ($bHelp)
     {
@@ -348,11 +349,11 @@ eval
                 &log(INFO, "Performing static code analysis using perl -cW");
 
                 # Check the exe for warnings
-                my $strWarning = trim(executeTest("perl -cW ${strBasePath}/bin/pg_backrest 2>&1"));
+                my $strWarning = trim(executeTest("perl -cW ${strBasePath}/bin/pgbackrest 2>&1"));
 
-                if ($strWarning ne "${strBasePath}/bin/pg_backrest syntax OK")
+                if ($strWarning ne "${strBasePath}/bin/pgbackrest syntax OK")
                 {
-                    confess &log(ERROR, "${strBasePath}/bin/pg_backrest failed syntax check:\n${strWarning}");
+                    confess &log(ERROR, "${strBasePath}/bin/pgbackrest failed syntax check:\n${strWarning}");
                 }
 
                 &log(INFO, "Performing static code analysis using perlcritic");
@@ -360,7 +361,7 @@ eval
                 executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
                             ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
                             " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
-                            " ${strBasePath}/bin/pg_backrest ${strBasePath}/lib/*" .
+                            " ${strBasePath}/bin/pgbackrest ${strBasePath}/lib/*" .
                             " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
                             " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
             }
@@ -604,7 +605,7 @@ eval
                     if (!$bDryRun || $bVmOut)
                     {
                         my $fTestStartTime = gettimeofday();
-                        my $oExec = new BackRestTest::Common::ExecuteTest(
+                        my $oExec = new pgBackRestTest::Common::ExecuteTest(
                             $strCommand,
                             {bSuppressError => true, bShowOutputAsync => $bShowOutputAsync});
 
@@ -688,7 +689,7 @@ eval
     ################################################################################################################################
     # Clean whitespace only if test.pl is being run from the test directory in the backrest repo
     ################################################################################################################################
-    # if (-e './test.pl' && -e '../bin/pg_backrest')
+    # if (-e './test.pl' && -e '../bin/pgbackrest)
     # {
     #     BackRestTestCommon_Execute(
     #         "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
@@ -782,7 +783,7 @@ if ($@)
     my $oMessage = $@;
 
     # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('BackRest::Common::Exception'))
+    if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
     {
         syswrite(*STDOUT, $oMessage->trace());
         exit $oMessage->code();

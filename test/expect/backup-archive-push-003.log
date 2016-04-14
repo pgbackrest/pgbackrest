@@ -1,13 +1,12 @@
 run 003 - rmt 0, cmp 1, arc_async 0
 ===================================
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -28,13 +27,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -48,13 +46,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -68,13 +65,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -98,13 +94,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -126,13 +121,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -152,13 +146,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -182,13 +175,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
@@ -210,13 +202,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strWalSegment = 000000010000000100000002, ullDbSysId = 5947969990501855219
@@ -236,13 +227,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strWalSegment = 000000010000000100000003, ullDbSysId = 5947969990501855219
@@ -262,13 +252,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004, strWalSegment = 000000010000000100000004, ullDbSysId = 5947969990501855219
@@ -288,13 +277,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -314,13 +302,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -334,13 +321,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -354,13 +340,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -384,13 +369,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -412,13 +396,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -438,13 +421,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -468,13 +450,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
@@ -496,13 +477,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006, strWalSegment = 000000010000000100000006, ullDbSysId = 5947969990501855219
@@ -522,13 +502,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007, strWalSegment = 000000010000000100000007, ullDbSysId = 5947969990501855219
@@ -548,13 +527,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008, strWalSegment = 000000010000000100000008, ullDbSysId = 5947969990501855219
@@ -574,13 +552,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -600,13 +577,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -620,13 +596,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -640,13 +615,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -670,13 +644,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -698,13 +671,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -724,13 +696,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
@@ -754,13 +725,12 @@ run 003 - rmt 0, cmp 1, arc_async 0
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pg_backrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --config=[TEST_PATH]/db/pg_backrest.conf --config-remote=[TEST_PATH]/backrest/pg_backrest.conf --db-path=[TEST_PATH]/db/common --log-level-console=debug --log-level-file=trace --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-push start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-fork --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     Common:::Lock::lockStopTest(): strRepoPath = <[TEST_PATH]/backrest>
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219

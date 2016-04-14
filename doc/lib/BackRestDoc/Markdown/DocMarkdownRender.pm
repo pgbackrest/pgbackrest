@@ -16,9 +16,9 @@ use File::Copy;
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::Config::ConfigHelp;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::Config::ConfigHelp;
 
 use BackRestDoc::Common::DocManifest;
 

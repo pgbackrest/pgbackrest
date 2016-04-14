@@ -16,13 +16,13 @@ use POSIX qw(strftime);
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::FileCommon;
-use BackRest::Version;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::FileCommon;
+use pgBackRest::Version;
 
 use lib dirname($0) . '/../test/lib';
-use BackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::ExecuteTest;
 
 use BackRestDoc::Common::DocConfig;
 use BackRestDoc::Common::DocManifest;

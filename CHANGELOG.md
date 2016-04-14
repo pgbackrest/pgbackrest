@@ -3,7 +3,19 @@
 ## v0.95dev: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* The `repo-path` option now always refers to the repository where backups and archive are stored, whether local or remote, so the `repo-remote-path` option has been removed. The new `spool-path` option can be used to define a location for queueing WAL segments when archiving asynchronously. Otherwise, a local repository is no longer required.
+
+* Implemented a new config format which should be far simpler to use. See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the `stanza` section. Options that are shared between stanzas can be placed in the `[global]` section. More complex configurations can still make use of command sections though this should be a rare use case.
+
+* The default configuration filename is now `pgbackrest.conf` instead of `pg_backrest.conf`. This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally.
+
+* The default repository name was changed from `/var/lib/backup` to `/var/lib/pgbackrest`.
+
+* Lock files are now stored in `/tmp/pgbackrest` by default. These days `/run/pgbackrest` would be the preferred location but that would require init scripts which are not part of this release. The `lock-path` option can be used to configure the lock directory.
+
+* Log files are now stored in `/var/log/pgbackrest` by default and no longer have the date appended so they can be managed with `logrotate`. The `log-path` option can be used to configure the lock directory.
+
+* Executable filename changed from `pg_backrest` to `pgbackrest`.
 
 ## v0.92: Command-line Repository Path Fix
 __Released April 6, 2016__

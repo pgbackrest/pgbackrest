@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# pg_backrest.pl - Simple Postgres Backup and Restore
+# doc.pl - PgBackRest Doc Builder
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -29,10 +29,11 @@ use BackRestDoc::Latex::DocLatex;
 use BackRestDoc::Markdown::DocMarkdown;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::Config::Config;
-use BackRest::FileCommon;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::Config::Config;
+use pgBackRest::FileCommon;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # Usage
@@ -44,7 +45,7 @@ doc.pl - Generate pgBackRest documentation
 
 =head1 SYNOPSIS
 
-doc.pl [options] [operation]
+doc.pl [options]
 
  General Options:
    --help           display usage and exit
@@ -89,7 +90,7 @@ GetOptions ('help' => \$bHelp,
 # Display version and exit if requested
 if ($bHelp || $bVersion)
 {
-    print 'pg_backrest ' . version_get() . " doc builder\n";
+    print BACKREST_NAME . ' ' . $VERSION . " Documentation Builder\n";
 
     if ($bHelp)
     {

@@ -1,0 +1,239 @@
+#!/usr/bin/perl
+####################################################################################################################################
+# pgBackRest - Simple PostgreSQL Backup and Restore
+####################################################################################################################################
+
+####################################################################################################################################
+# Perl includes
+####################################################################################################################################
+use strict;
+use warnings FATAL => qw(all);
+use Carp qw(confess);
+
+# Convert die to confess to capture the stack trace
+$SIG{__DIE__} = sub { Carp::confess @_ };
+
+use File::Basename qw(dirname);
+use Scalar::Util qw(blessed);
+
+use lib dirname($0) . '/../lib';
+use pgBackRest::Archive;
+use pgBackRest::Common::Exception;
+use pgBackRest::Common::Exit;
+use pgBackRest::Common::Lock;
+use pgBackRest::Common::Log;
+use pgBackRest::Config::Config;
+use pgBackRest::File;
+
+####################################################################################################################################
+# START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
+####################################################################################################################################
+eval
+{
+    ################################################################################################################################
+    # Load command line parameters and config
+    ################################################################################################################################
+    my $bConfigResult = configLoad();
+
+    # Display help and version
+    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
+    {
+        # Load module dynamically
+        require pgBackRest::Config::ConfigHelp;
+        pgBackRest::Config::ConfigHelp->import();
+
+        # Generate help and exit
+        configHelp($ARGV[1], $ARGV[2], commandTest(CMD_VERSION), $bConfigResult);
+        exitSafe(0);
+    }
+
+    # Set test options
+    !optionGet(OPTION_TEST, false) or
+        testSet(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY), optionGet(OPTION_TEST_POINT, false));
+
+    ################################################################################################################################
+    # Process remote commands
+    ################################################################################################################################
+    if (commandTest(CMD_REMOTE))
+    {
+        # Set log levels
+        logLevelSet(OFF, REMOTE);
+
+        # Check that the remote repo path exists
+        if (optionTest(OPTION_REPO_PATH) && !-e optionGet(OPTION_REPO_PATH))
+        {
+            confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist',
+                         ERROR_PATH_MISSING);
+        }
+
+        # Load module dynamically
+        require pgBackRest::Protocol::RemoteMinion;
+        pgBackRest::Protocol::RemoteMinion->import();
+
+        # Create the remote object
+        my $oRemote = new pgBackRest::Protocol::RemoteMinion
+        (
+            optionGet(OPTION_COMMAND),
+            optionGet(OPTION_BUFFER_SIZE),
+            optionGet(OPTION_COMPRESS_LEVEL),
+            optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
+            protocolTimeoutGet()
+        );
+
+        # ??? Would like to remove this check and allow a test lock
+        if (optionGet(OPTION_COMMAND) ne 'test' && !optionTest(OPTION_PROCESS))
+        {
+            lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
+        }
+
+        # Process remote requests
+        exitSafe($oRemote->process());
+    }
+
+    # Set the log levels
+    logLevelSet(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
+
+    # Log the command start
+    commandStart();
+
+    # Check that the repo path exists
+    if (optionTest(OPTION_REPO_PATH) && !-e optionGet(OPTION_REPO_PATH))
+    {
+        confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
+    }
+
+    ################################################################################################################################
+    # Process archive commands
+    ################################################################################################################################
+    if (commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET))
+    {
+        exitSafe(new pgBackRest::Archive()->process());
+    }
+
+    ################################################################################################################################
+    # Process start/stop commands
+    ################################################################################################################################
+    if (commandTest(CMD_START))
+    {
+        lockStart();
+        exitSafe(0);
+    }
+    elsif (commandTest(CMD_STOP))
+    {
+        lockStop();
+        exitSafe(0);
+    }
+
+    ################################################################################################################################
+    # Process info command
+    ################################################################################################################################
+    if (commandTest(CMD_INFO))
+    {
+        # Load module dynamically
+        require pgBackRest::Info;
+        pgBackRest::Info->import();
+
+        exitSafe(new pgBackRest::Info()->process());
+    }
+
+    ################################################################################################################################
+    # Acquire the command lock
+    ################################################################################################################################
+    lockAcquire(commandGet());
+
+    ################################################################################################################################
+    # Open the log file
+    ################################################################################################################################
+    logFileSet(optionGet(OPTION_LOG_PATH) . '/' . optionGet(OPTION_STANZA) . '-' . lc(commandGet()));
+
+    ################################################################################################################################
+    # Create the thread group that will be used for parallel processing
+    ################################################################################################################################
+    if (optionTest(OPTION_THREAD_MAX) && optionGet(OPTION_THREAD_MAX) > 1)
+    {
+        # Set local thread-max so exitSafe knows to stop them on exit
+        exitInit(optionGet(OPTION_THREAD_MAX));
+
+        # Load module dynamically
+        require pgBackRest::Protocol::ThreadGroup;
+        pgBackRest::Protocol::ThreadGroup->import();
+
+        threadGroupCreate();
+    }
+
+    ################################################################################################################################
+    # RESTORE
+    ################################################################################################################################
+    if (commandTest(CMD_RESTORE))
+    {
+        if (optionRemoteTypeTest(DB))
+        {
+            confess &log(ASSERT, 'restore command must be performed locally on the db server');
+        }
+
+        # Load module dynamically
+        require pgBackRest::Restore;
+        pgBackRest::Restore->import();
+
+        # Do the restore
+        new pgBackRest::Restore()->process();
+
+        exitSafe(0);
+    }
+    else
+    {
+        ############################################################################################################################
+        # Make sure backup and expire commands happen on the backup side
+        ############################################################################################################################
+        if (optionRemoteTypeTest(BACKUP))
+        {
+            confess &log(ERROR, 'backup and expire commands must run on the backup host', ERROR_HOST_INVALID);
+        }
+
+        ############################################################################################################################
+        # BACKUP
+        ############################################################################################################################
+        if (commandTest(CMD_BACKUP))
+        {
+            # Load module dynamically
+            require pgBackRest::Backup;
+            pgBackRest::Backup->import();
+
+            new pgBackRest::Backup()->process();
+
+            commandSet(CMD_EXPIRE);
+        }
+
+        ############################################################################################################################
+        # EXPIRE
+        ############################################################################################################################
+        if (commandTest(CMD_EXPIRE))
+        {
+            # Load module dynamically
+            require pgBackRest::Expire;
+            pgBackRest::Expire->import();
+
+            new pgBackRest::Expire()->process();
+        }
+    }
+
+    lockRelease();
+    exitSafe(0);
+};
+
+####################################################################################################################################
+# CHECK FOR ERRORS AND STOP THREADS
+####################################################################################################################################
+if ($@)
+{
+    my $oMessage = $@;
+
+    # If a backrest exception then return the code - don't confess
+    if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+    {
+        exitSafe($oMessage->code());
+    }
+
+    exitSafe(-1);
+    confess $oMessage;
+}

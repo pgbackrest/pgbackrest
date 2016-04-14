@@ -14,14 +14,15 @@ use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Ini;
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::FileCommon;
+use pgBackRest::Common::Ini;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::Config::Config;
+use pgBackRest::FileCommon;
 
 use lib dirname($0) . '/../test/lib';
-use BackRestTest::Common::ExecuteTest;
-use BackRestTest::Common::HostTest;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::HostTest;
 
 use BackRestDoc::Common::DocManifest;
 
@@ -165,7 +166,7 @@ sub execute
                     # Trim off extra linefeeds before and after
                     $strOutput =~ s/^\n+|\n$//g;
 
-                    if ($strCommand =~ / pg\_backrest /)
+                    if ($strCommand =~ / pgbackrest /)
                     {
                         $strOutput =~ s/^                             //smg;
                         $strOutput =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //smg;
@@ -363,12 +364,47 @@ sub backrestConfig
                 }
                 else
                 {
-                    ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey} = $strValue;
+                    # Get the config options hash
+                    my $oOption = optionRuleGet();
+
+                    # Make sure the specified option exists
+                    if (!defined($$oOption{$strKey}))
+                    {
+                        confess &log(ERROR, "option ${strKey} does not exist");
+                    }
+
+                    # If this option is a hash and the value is already set then append to the array
+                    if ($$oOption{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH &&
+                        defined(${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey}))
+                    {
+                        my @oValue = ();
+                        my $strHashValue = ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey};
+
+                        # If there is only one key/value
+                        if (ref(\$strHashValue) eq 'SCALAR')
+                        {
+                            push(@oValue, $strHashValue);
+                        }
+                        # Else if there is an array of values
+                        else
+                        {
+                            @oValue = @{$strHashValue};
+                        }
+
+                        push(@oValue, $strValue);
+                        ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey} = \@oValue;
+                    }
+                    # else just set the value
+                    else
+                    {
+                        ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey} = $strValue;
+                    }
+
                     &log(DEBUG, ('    ' x ($iDepth + 1)) . "set ${strSection}->${strKey} = ${strValue}");
                 }
             }
 
-            my $strLocalFile = "/home/vagrant/data/db-master/etc/pg_backrest.conf";
+            my $strLocalFile = "/home/vagrant/data/db-master/etc/pgbackrest.conf";
 
             # Save the ini file
             iniSave($strLocalFile, $self->{config}{$strHostName}{$strFile}, true);
@@ -567,7 +603,7 @@ sub sectionChildProcess
                 confess &log(ERROR, 'cannot add host ${strName} because the host already exists');
             }
 
-            my $oHost = new BackRestTest::Common::HostTest($strName, $strImage, $strUser, $strOS, $strMount);
+            my $oHost = new pgBackRestTest::Common::HostTest($strName, $strImage, $strUser, $strOS, $strMount);
             $self->{host}{$strName} = $oHost;
             $self->{oManifest}->variableSet("host-${strName}-ip", $oHost->{strIP});
 

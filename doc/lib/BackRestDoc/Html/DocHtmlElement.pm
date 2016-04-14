@@ -14,7 +14,7 @@ use File::Copy;
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Log;
+use pgBackRest::Common::Log;
 
 ####################################################################################################################################
 # Operation constants

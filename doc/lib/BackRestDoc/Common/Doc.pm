@@ -13,9 +13,9 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::FileCommon;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::FileCommon;
 
 ####################################################################################################################################
 # Operation constants

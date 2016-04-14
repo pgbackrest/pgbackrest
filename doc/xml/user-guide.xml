@@ -7,7 +7,7 @@
         <variable key="perl-lib-path" keyword="co6">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
 
-        <variable key="backrest-repo-path">/var/lib/backrest</variable>
+        <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
         <variable key="postgres-cluster-demo">demo</variable>
         <variable key="backrest-config-demo">/etc/{[project-exe]}.conf</variable>
 
@@ -54,7 +54,7 @@
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
-        <variable key="cmd-backup-last">ls -1 /var/lib/backrest/backup/demo | tail -3 | head -1</variable>
+        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -3 | head -1</variable>
 
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>
@@ -135,13 +135,13 @@
 
         <host-add name="{[host-db-master]}" user="{[host-db-master-user]}" image="{[host-db-master-image]}" os="{[host-os]}" mount="{[host-db-master-mount]}">
             <execute user="{[host-user]}">
-                <exe-cmd>mkdir /home/{[host-user]}/backrest-release-{[version]}</exe-cmd>
+                <exe-cmd>mkdir /home/{[host-user]}/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="{[host-user]}">
-                <exe-cmd>cp -r /backrest/bin /home/{[host-user]}/backrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r /backrest/bin /home/{[host-user]}/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="{[host-user]}">
-                <exe-cmd>cp -r /backrest/lib /home/{[host-user]}/backrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r /backrest/lib /home/{[host-user]}/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
         </host-add>
 
@@ -175,7 +175,7 @@
 
             <execute user="{[host-user]}" skip="y">
                 <exe-cmd>wget -q -O -
-                    https://github.com/pgmasters/backrest/archive/release/{[version]}.tar.gz |
+                    https://github.com/pgmasters/pgbackrest/archive/release/{[version]}.tar.gz |
                     tar zx -C ~</exe-cmd>
             </execute>
         </execute-list>
@@ -184,20 +184,26 @@
             <title>Install <backrest/></title>
 
             <execute user="root">
-                <exe-cmd>cp -r ~/backrest-release-{[version]}/lib/BackRest
+                <exe-cmd>cp -r ~/pgbackrest-release-{[version]}/lib/pgBackRest
                     {[perl-lib-path]}</exe-cmd>
             </execute>
             <execute user="root">
-                <exe-cmd>find {[perl-lib-path]}/BackRest -type f -exec chmod 644 {} +</exe-cmd>
+                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
             </execute>
             <execute user="root">
-                <exe-cmd>find {[perl-lib-path]}/BackRest -type d -exec chmod 755 {} +</exe-cmd>
+                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
             </execute>
             <execute user="root">
-                <exe-cmd>cp ~/backrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+                <exe-cmd>cp ~/pgbackrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
             </execute>
             <execute user="root">
                 <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
             </execute>
         </execute-list>
 
@@ -282,7 +288,7 @@
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Set the <br-option>log-level-console</br-option> option to <br-setting>info</br-setting></title>
 
-                <backrest-config-option section="global:log" key="log-level-console">info</backrest-config-option>
+                <backrest-config-option section="global" key="log-level-console">info</backrest-config-option>
                 <backrest-config-option section="global:archive" key="log-level-console">warn</backrest-config-option>
             </backrest-config> -->
         </section>
@@ -314,7 +320,7 @@
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the <backrest/> repository path</title>
 
-                <backrest-config-option section="global:general" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
         </section>
 
@@ -522,7 +528,7 @@
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Enable the <br-option>start-fast</br-option> option</title>
 
-                <backrest-config-option section="global:backup" key="start-fast">y</backrest-config-option>
+                <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
             </backrest-config>
 
             <execute-list host="{[host-db-master]}">
@@ -579,7 +585,7 @@
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Enable the <br-option>stop-auto</br-option> option</title>
 
-                <backrest-config-option section="global:backup" key="stop-auto">y</backrest-config-option>
+                <backrest-config-option section="global" key="stop-auto">y</backrest-config-option>
             </backrest-config>
 
             <p>Now <backrest/> will stop the old backup and start a new one so the process completes successfully.</p>
@@ -615,7 +621,7 @@
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>retention-full</br-option></title>
 
-                <backrest-config-option section="global:expire" key="retention-full">2</backrest-config-option>
+                <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
             </backrest-config>
 
             <p>Backup <br-setting>retention-full=2</br-setting> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
@@ -658,7 +664,7 @@
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>retention-diff</br-option></title>
 
-                <backrest-config-option section="global:expire" key="retention-diff">1</backrest-config-option>
+                <backrest-config-option section="global" key="retention-diff">1</backrest-config-option>
             </backrest-config>
 
             <p>Backup <br-setting>retention-diff=1</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
@@ -964,13 +970,13 @@
 
             <host-add name="{[host-backup]}" user="{[host-backup-user]}" image="{[host-backup-image]}" os="{[host-os]}" mount="{[host-backup-mount]}">
                 <execute user="root">
-                    <exe-cmd>cp -r /backrest/lib/BackRest {[perl-lib-path]}</exe-cmd>
+                    <exe-cmd>cp -r /backrest/lib/pgBackRest {[perl-lib-path]}</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/BackRest -type f -exec chmod 644 {} +</exe-cmd>
+                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/BackRest -type d -exec chmod 755 {} +</exe-cmd>
+                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
                 </execute>
                 <execute user="root">
                     <exe-cmd>cp /backrest/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
@@ -978,12 +984,18 @@
                 <execute user="root">
                     <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
                 </execute>
+                <execute user="root">
+                    <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown backrest:postgres /var/log/pgbackrest</exe-cmd>
+                </execute>
             </host-add>
 
             <backrest-config host="{[host-backup]}" show="n" owner="backrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure the <backrest/> repository path</title>
 
-                <backrest-config-option section="global:general" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
             <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository. The <host>backup</host> host must also be configured with the database host/user and database path.</p>
@@ -994,7 +1006,7 @@
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
                 <backrest-config-option section="demo" key="db-host">{[host-db-master]}</backrest-config-option>
 
-                <backrest-config-option section="global:backup" key="start-fast">y</backrest-config-option>
+                <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <!-- <backrest-config-option section="global:log" key="log-level-console">info</backrest-config-option> -->
             </backrest-config>
 
@@ -1005,13 +1017,13 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
-                <backrest-config-option section="global:general" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
 
-                <!-- <backrest-config-option section="global:log" key="log-level-console">info</backrest-config-option>
+                <!-- <backrest-config-option section="global" key="log-level-console">info</backrest-config-option>
 
-                <backrest-config-option section="global:archive" key="log-level-console">warn</backrest-config-option> -->
+                <backrest-config-option section="global" key="log-level-console">warn</backrest-config-option> -->
 
-                <backrest-config-option section="global:backup" key="backup-host">{[host-backup]}</backrest-config-option>
+                <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
             </backrest-config>
 
             <p>Commands are run the same as on a single host configuration except that the <cmd>backup</cmd> and <cmd>expire</cmd> command are run from the <host>backup</host> host and all other commands are run from the <host>database</host> host.</p>
@@ -1176,13 +1188,13 @@
 
                 <!-- Install backrest -->
                 <execute user="root">
-                    <exe-cmd>cp -r /backrest/lib/BackRest {[perl-lib-path]}</exe-cmd>
+                    <exe-cmd>cp -r /backrest/lib/pgBackRest {[perl-lib-path]}</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/BackRest -type f -exec chmod 644 {} +</exe-cmd>
+                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/BackRest -type d -exec chmod 755 {} +</exe-cmd>
+                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
                 </execute>
                 <execute user="root">
                     <exe-cmd>cp /backrest/bin/{[project-exe]}
@@ -1190,6 +1202,12 @@
                 </execute>
                 <execute user="root">
                     <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
                 </execute>
 
                 <!-- Create repository -->
@@ -1223,15 +1241,15 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
-                <backrest-config-option section="global:general" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
 
-                <!-- <backrest-config-option section="global:log" key="log-level-console">info</backrest-config-option>
+                <!-- <backrest-config-option section="global" key="log-level-console">info</backrest-config-option>
 
                 <backrest-config-option section="global:archive" key="log-level-console">warn</backrest-config-option> -->
 
-                <backrest-config-option section="global:backup" key="backup-host">{[host-backup]}</backrest-config-option>
+                <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
 
-                <backrest-config-option section="demo:restore:recovery-option" key="standby_mode">on</backrest-config-option>
+                <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
             </backrest-config>
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
@@ -1398,7 +1416,7 @@
             <backrest-config host="{[host-db-standby]}" file="{[backrest-config-demo]}">
                 <title>Set <pg-option>primary_conninfo</pg-option></title>
 
-                <backrest-config-option section="demo:restore:recovery-option" key="primary_conninfo">host={[host-db-master-ip]} port=5432 user=replicator</backrest-config-option>
+                <backrest-config-option section="demo" key="recovery-option">primary_conninfo=host={[host-db-master-ip]} port=5432 user=replicator</backrest-config-option>
             </backrest-config>
 
             <p>It is possible to configure a password in the <pg-option>primary_conninfo</pg-option> setting but using a <file>.pgpass</file> file is more flexible and secure.</p>

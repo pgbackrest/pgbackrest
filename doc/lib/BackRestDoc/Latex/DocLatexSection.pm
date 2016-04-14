@@ -16,11 +16,11 @@ use File::Copy;
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Ini;
-use BackRest::Common::Log;
-use BackRest::Common::String;
-use BackRest::Config::ConfigHelp;
-use BackRest::FileCommon;
+use pgBackRest::Common::Ini;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
+use pgBackRest::Config::ConfigHelp;
+use pgBackRest::FileCommon;
 
 use BackRestDoc::Common::DocManifest;
 

@@ -13,8 +13,8 @@ use File::Basename qw(dirname);
 use File::Copy;
 
 use lib dirname($0) . '/../lib';
-use BackRest::Common::Log;
-use BackRest::Common::String;
+use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 
 use BackRestDoc::Html::DocHtmlElement;
 

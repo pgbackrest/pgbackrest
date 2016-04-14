@@ -4,8 +4,8 @@
     <!-- System-wide variables  -->
     <variable-list>
         <variable key="project">pgBackRest</variable>
-        <variable key="version" eval="y">use BackRest::Version; $VERSION</variable>
-        <variable key="project-exe">pg_backrest</variable>
+        <variable key="version" eval="y">use pgBackRest::Version; $VERSION</variable>
+        <variable key="project-exe">pgbackrest</variable>
         <variable key="project-url-root">/</variable>
         <variable key="postgres">PostgreSQL</variable>
         <variable key="dash">-</variable>

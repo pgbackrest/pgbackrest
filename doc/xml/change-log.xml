@@ -8,7 +8,27 @@
     <changelog>
          <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
              <release-feature-bullet-list>
-                <release-feature><text></text></release-feature>
+                <release-feature>
+                    <text>The <setting>repo-path</setting> option now always refers to the repository where backups and archive are stored, whether local or remote, so the <setting>repo-remote-path</setting> option has been removed.  The new <setting>spool-path</setting> option can be used to define a location for queueing WAL segments when archiving asynchronously.  Otherwise, a local repository is no longer required.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Implemented a new config format which should be far simpler to use.  See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the <setting>stanza</setting> section. Options that are shared between stanzas can be placed in the <setting>[global]</setting> section.  More complex configurations can still make use of command sections though this should be a rare use case.</text>
+                </release-feature>
+                <release-feature>
+                    <text>The default configuration filename is now <file>pgbackrest.conf</file> instead of <file>pg_backrest.conf</file>.  This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally.</text>
+                </release-feature>
+                <release-feature>
+                    <text>The default repository name was changed from <path>/var/lib/backup</path> to <path>/var/lib/pgbackrest</path>.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Lock files are now stored in <path>/tmp/pgbackrest</path> by default. These days <path>/run/pgbackrest</path> would be the preferred location but that would require init scripts which are not part of this release.  The <setting>lock-path</setting> option can be used to configure the lock directory.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Log files are now stored in <path>/var/log/pgbackrest</path> by default and no longer have the date appended so they can be managed with <id>logrotate</id>.  The <setting>log-path</setting> option can be used to configure the lock directory.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Executable filename changed from <file>pg_backrest</file> to <file>pgbackrest</file>.</text>
+                </release-feature>
              </release-feature-bullet-list>
          </changelog-release>
 
