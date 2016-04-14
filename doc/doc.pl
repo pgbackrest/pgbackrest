@@ -113,7 +113,7 @@ if ($bQuiet)
     $strLogLevel = 'error';
 }
 
-# If no keyword we passed then use default
+# If no keyword was passed then use default
 if (@stryKeyword == 0)
 {
     @stryKeyword = ('default');
