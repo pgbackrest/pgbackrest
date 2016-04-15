@@ -35,7 +35,7 @@ push @EXPORT, qw($VERSION);
 # Defines format for info and manifest files as well as on-disk structure.  If this number changes then the repository will be
 # invalid unless migration functions are written.
 #-----------------------------------------------------------------------------------------------------------------------------------
-our $FORMAT = 4;
+our $FORMAT = 5;
 
 push @EXPORT, qw($FORMAT);
 

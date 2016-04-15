@@ -60,10 +60,9 @@ eval
         logLevelSet(OFF, REMOTE);
 
         # Check that the remote repo path exists
-        if (optionTest(OPTION_REPO_PATH) && !-e optionGet(OPTION_REPO_PATH))
+        if (optionRemoteTypeTest(DB) && !-e optionGet(OPTION_REPO_PATH))
         {
-            confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist',
-                         ERROR_PATH_MISSING);
+            confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }
 
         # Load module dynamically
@@ -97,7 +96,7 @@ eval
     commandStart();
 
     # Check that the repo path exists
-    if (optionTest(OPTION_REPO_PATH) && !-e optionGet(OPTION_REPO_PATH))
+    if ((optionRemoteTypeTest(DB) || optionRemoteTypeTest(NONE)) && !-e optionGet(OPTION_REPO_PATH))
     {
         confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }

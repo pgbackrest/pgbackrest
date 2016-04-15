@@ -108,6 +108,7 @@ sub stanzaCreate
 
     $strBackupClusterPath .= "/${strStanza}";
     BackRestTestCommon_PathCreate($strBackupClusterPath, undef, true);
+    BackRestTestCommon_PathCreate("${strBackupClusterPath}/" . PATH_BACKUP_HISTORY, undef, true);
 
     $$oStanza{strBackupClusterPath} = $strBackupClusterPath;
 
@@ -185,7 +186,10 @@ sub backupCreate
     my $strBackupClusterSetPath .= "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
     BackRestTestCommon_PathCreate($strBackupClusterSetPath);
 
-    my $oManifest = new pgBackRest::Manifest("$strBackupClusterSetPath/" . FILE_MANIFEST, false);
+    &log(INFO, "create backup ${strBackupLabel}");
+
+    my $strManifestFile = "$$oStanza{strBackupClusterPath}/${strBackupLabel}/" . FILE_MANIFEST;
+    my $oManifest = new pgBackRest::Manifest($strManifestFile, false);
 
     # Store information about the backup into the backup section
     $oManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
@@ -217,11 +221,14 @@ sub backupCreate
     $oManifest->save();
     $$oStanza{oManifest} = $oManifest;
 
+    # Create the compressed history manifest
+    $self->{oFile}->compress(PATH_BACKUP_ABSOLUTE, $strManifestFile, false);
+
     # Add the backup to info
-    my $oBackupInfo = new pgBackRest::BackupInfo($$oStanza{strBackupClusterPath});
+    my $oBackupInfo = new pgBackRest::BackupInfo($$oStanza{strBackupClusterPath}, false);
 
     $oBackupInfo->check($$oStanza{strDbVersion}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId});
-    $oBackupInfo->add($self->{oFile}, $oManifest);
+    $oBackupInfo->add($oManifest);
 
     # Create the backup description string
     if (defined($$oStanza{strBackupDescription}))
@@ -371,7 +378,7 @@ sub supplementalLog
         $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
                                            "/backup/${strStanza}/backup.info", undef, $$oStanza{strBackupDescription});
 
-        executeTest('ls ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza} | grep -v \"backup.info\"",
+        executeTest('ls ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza} | grep -v \"backup.*\"",
                     {oLogTest => $self->{oLogTest}});
         executeTest('ls -R ' . BackRestTestCommon_RepoPathGet() . "/archive/${strStanza} | grep -v \"archive.info\"",
                     {oLogTest => $self->{oLogTest}});
@@ -418,7 +425,7 @@ sub process
     my $strCommand = BackRestTestCommon_CommandMainGet() .
                      ' "--' . OPTION_CONFIG . '=' . BackRestTestCommon_RepoPathGet() . '/pgbackrest.conf"' .
                      ' --' . OPTION_STANZA . '=' . $strStanza .
-                     ' --' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(INFO);
+                     ' --' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(DETAIL);
 
     if (defined($iExpireFull))
     {

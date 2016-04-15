@@ -747,10 +747,7 @@ sub pushCheck
     else
     {
         # Create the archive path if it does not exist
-        if (!$oFile->exists(PATH_BACKUP_ARCHIVE))
-        {
-            $oFile->pathCreate(PATH_BACKUP_ARCHIVE);
-        }
+        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
 
         # If the info file exists check db version and system-id
         $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);

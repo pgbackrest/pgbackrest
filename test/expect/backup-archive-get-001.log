@@ -19,7 +19,7 @@ run 001 - rmt 0, cmp 0, exists 0
 -----------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [db]

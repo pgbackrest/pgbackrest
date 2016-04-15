@@ -523,7 +523,7 @@ sub BackRestTestConfig_Test
 
             my $strCommand = commandWrite(CMD_ARCHIVE_GET);
             my $strExpectedCommand = abs_path($0) . " --backup-host=db.mydomain.com \"--db-path=/db path/main\"" .
-                                     " --repo-path=/repo --repo-remote-path=/repo --stanza=main " . CMD_ARCHIVE_GET;
+                                     " --repo-path=/repo --stanza=main " . CMD_ARCHIVE_GET;
 
             if ($strCommand ne $strExpectedCommand)
             {

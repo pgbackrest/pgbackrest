@@ -354,6 +354,12 @@ sub regExpReplaceAll
 
     $strLine = $self->regExpReplace($strLine, 'PORT', 'db-port=[0-9]+', '[0-9]+$');
 
+    # Replace year when it falls on a single line when executing ls -1R
+    $strLine = $self->regExpReplace($strLine, 'YEAR', '^20[0-9]{2}$');
+
+    # Replace year when it is the last part of a path when executing ls -1R
+    $strLine = $self->regExpReplace($strLine, 'YEAR', 'history\/20[0-9]{2}\:$', '20[0-9]{2}');
+
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
     $strLine = $self->regExpReplace($strLine, 'TS_PATH', "PG\\_[0-9]\\.[0-9]\\_[0-9]{9}");

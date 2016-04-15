@@ -17,6 +17,7 @@ use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
+use pgBackRest::Manifest;
 
 use pgBackRestTest::BackupTest;
 use pgBackRestTest::CommonTest;
@@ -71,7 +72,7 @@ sub BackRestTestCompare_Test
 
         # Create the cluster and paths
         BackRestTestBackup_Create($bRemote, false);
-        BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/pg_tblspc');
+        BackRestTestCommon_PathCreate(BackRestTestCommon_DbCommonPathGet() . '/' . DB_PATH_PGTBLSPC);
 
         BackRestTestCompare_BuildDb(48, 10);
         executeTest('sync');

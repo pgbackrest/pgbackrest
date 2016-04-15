@@ -38,7 +38,8 @@
                             <li><id>error</id> - Log only errors</li>
                             <li><id>warn</id> - Log warnings and errors</li>
                             <li><id>info</id> - Log info, warnings, and errors</li>
-                            <li><id>debug</id> - Log debug, info, warnings, and errors</li>
+                            <li><id>detail</id> - Log detail, info, warnings, and errors</li>
+                            <li><id>debug</id> - Log debug, detail, info, warnings, and errors</li>
                             <li><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</li>
                         </ul></text>
 
@@ -55,7 +56,8 @@
                             <li><id>error</id> - Log only errors</li>
                             <li><id>warn</id> - Log warnings and errors</li>
                             <li><id>info</id> - Log info, warnings, and errors</li>
-                            <li><id>debug</id> - Log debug, info, warnings, and errors</li>
+                            <li><id>detail</id> - Log detail, info, warnings, and errors</li>
+                            <li><id>debug</id> - Log debug, detail, info, warnings, and errors</li>
                             <li><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</li>
                         </ul></text>
 
@@ -332,6 +334,24 @@
                 <text>The <setting>restore</setting> section defines settings used for restoring backups.</text>
 
                 <config-key-list>
+                    <!-- CONFIG - RESTORE SECTION - LINK-ALL KEY -->
+                    <config-key id="link-all" name="Link All">
+                        <summary>Restore all symlinks.</summary>
+
+                        <text>By default symlinked directories and files are restored as normal directories and files in $PGDATA.  This is because it may not be safe to restore symlinks to their original destinations on a system other than where the original backup was performed.  This option restores all the symlinks just as they were on the original system where the backup was performed.</text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <!-- CONFIG - RESTORE SECTION - LINK-MAP KEY -->
+                    <config-key id="link-map" name="Link Map">
+                        <summary>Modify the destination of a symlink.</summary>
+
+                        <text>Allows the destination file or path of a symlink to be changed on restore.  This is useful for restoring to systems that have a different storage layout than the original system where the backup was generated.</text>
+
+                        <example>pg_xlog=/data/xlog</example>
+                    </config-key>
+
                     <!-- CONFIG - RESTORE SECTION - RECOVERY-OPTION KEY -->
                     <config-key id="recovery-option" name="Recovery Option">
                         <summary>Set an option in <file>recovery.conf</file>.</summary>
@@ -347,7 +367,7 @@
 
                     <!-- CONFIG - RESTORE SECTION - TABLESPACE-MAP KEY -->
                     <config-key id="tablespace-map" name="Tablespace Map">
-                        <summary>Modify a tablespace path.</summary>
+                        <summary>Restore a tablespace into the specified directory.</summary>
 
                         <text>Moves a tablespace to a new location during the restore.  This is useful when tablespace locations are not the same on a replica, or an upgraded system has different mount points.
 
@@ -357,12 +377,14 @@
                     </config-key>
 
                     <!-- CONFIG - RESTORE SECTION - TABLESPACE KEY -->
-                    <config-key id="tablespace" name="Tablespace">
-                        <summary>Restore tablespaces into original or remapped paths.</summary>
+                    <config-key id="tablespace-map-all" name="Map All Tablespaces">
+                        <summary>Restore all tablespaces into the specified directory.</summary>
 
-                        <text>Defines whether tablespaces will be be restored into their original (or remapped) paths or stored directly under the <path>pg_tblspc</path> path.  Disabling this setting produces compact restores that are convenient for development, staging, etc.  Currently these restores cannot be backed up as <backrest/> expects only links in the <path>pg_tblspc</path> path. If no tablespaces are present this this setting has no effect.</text>
+                        <text>By default tablespaces are restored into their original locations and while this behavior can be modified by with the <setting>tablespace-map</setting> open it is sometime preferable to remap all tablespaces to a new directory all at once.  This is particularly useful for development or staging systems that may not have the same storage layout as the original system where the backup was generated.
 
-                        <example>n</example>
+                        The path specified will be the parent path used to create all the tablespaces in the backup.</text>
+
+                        <example>/data/tablespace</example>
                     </config-key>
                 </config-key-list>
             </config-section>

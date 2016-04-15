@@ -160,7 +160,7 @@ sub endRetry
     {
         my $bFound = false;
         # # Drain the stderr stream
-        # !!! This is a good idea but can only be done with the IO object has separate buffers for stdin and stderr
+        # ??? This is a good idea but can only be done when the IO object has separate buffers for stdin and stderr
         # while (my $strLine = $self->{oIO}->lineRead(0, false, false))
         # {
         #     $bFound = true;

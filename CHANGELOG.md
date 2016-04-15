@@ -3,19 +3,27 @@
 ## v0.95dev: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* The `repo-path` option now always refers to the repository where backups and archive are stored, whether local or remote, so the `repo-remote-path` option has been removed. The new `spool-path` option can be used to define a location for queueing WAL segments when archiving asynchronously. Otherwise, a local repository is no longer required.
+* **IMPORTANT NOTE**: This flag day release breaks compatibility with older versions of pgBackRest. The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed. You must create a new repository to hold backups for this version of pgBackRest and keep your older repository for a time in case you need to do a restore. Restores from the prior repository will require the prior version of pgBackRest but because of name changes it is possible to have `1.00` and a prior version of pgBackRest installed at the same time. See the notes below for more detailed information on what has changed.
 
-* Implemented a new config format which should be far simpler to use. See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the `stanza` section. Options that are shared between stanzas can be placed in the `[global]` section. More complex configurations can still make use of command sections though this should be a rare use case.
+* Implemented a new configuration scheme which should be far simpler to use. See the User Guide and Configuration Reference for details but for a simple configuration all options can now be placed in the `stanza` section. Options that are shared between stanzas can be placed in the `[global]` section. More complex configurations can still make use of command sections though this should be a rare use case.
 
-* The default configuration filename is now `pgbackrest.conf` instead of `pg_backrest.conf`. This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally.
+* The `repo-path` option now always refers to the repository where backups and archive are stored, whether local or remote, so the `repo-remote-path` option has been removed. The new `spool-path` option can be used to define a location for queueing WAL segments when archiving asynchronously. A local repository is no longer required.
+
+* The default configuration filename is now `pgbackrest.conf` instead of `pg_backrest.conf`. This was done for consistency with other naming changes but also to prevent old config files from being loaded accidentally when migrating to `1.00`.
 
 * The default repository name was changed from `/var/lib/backup` to `/var/lib/pgbackrest`.
 
-* Lock files are now stored in `/tmp/pgbackrest` by default. These days `/run/pgbackrest` would be the preferred location but that would require init scripts which are not part of this release. The `lock-path` option can be used to configure the lock directory.
+* Lock files are now stored in `/tmp/pgbackrest` by default. These days `/run/pgbackrest` is the preferred location but that would require init scripts which are not part of this release. The `lock-path` option can be used to configure the lock directory.
 
 * Log files are now stored in `/var/log/pgbackrest` by default and no longer have the date appended so they can be managed with `logrotate`. The `log-path` option can be used to configure the lock directory.
 
 * Executable filename changed from `pg_backrest` to `pgbackrest`.
+
+* All files and directories linked from PGDATA are now included in the backup. By default links will be restored directly into PGDATA as files or directories. The `--link-all` option can be used to restore all links to their original locations. The `--link-map` option can be used to remap a link to a new location.
+
+* Removed `--tablespace` option and replaced with `--tablespace-map-all` option which should more clearly indicate its function.
+
+* Added `detail` log level which will output more information than `info` without being as verbose as `debug`.
 
 ## v0.92: Command-line Repository Path Fix
 __Released April 6, 2016__

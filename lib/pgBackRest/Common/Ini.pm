@@ -42,7 +42,9 @@ use constant BACKREST_FORMAT                                        => "$FORMAT"
 # Boolean constants
 ####################################################################################################################################
 use constant INI_TRUE                                               => JSON::PP::true;
+    push @EXPORT, qw(INI_TRUE);
 use constant INI_FALSE                                              => JSON::PP::false;
+    push @EXPORT, qw(INI_FALSE);
 
 ####################################################################################################################################
 # Ini control constants

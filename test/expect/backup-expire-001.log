@@ -9,16 +9,12 @@ run 001 - local
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -30,7 +26,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-1]
 [BACKUP-INCR-1]
@@ -301,27 +297,23 @@ db-version="9.2"
 0000000100000000000000FE-0000000000000000000000000000000000000000.gz
 
 Nothing to expire
-> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
+> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=info --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
-  INFO: archive retention on backup [BACKUP-FULL-1], start = 000000010000000000000000
-  INFO: no archive to remove
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+DETAIL: archive retention on backup [BACKUP-FULL-1], start = 000000010000000000000000
+DETAIL: no archive to remove
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -333,7 +325,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-1]
 [BACKUP-INCR-1]
@@ -610,18 +602,13 @@ db-version="9.2"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -633,7 +620,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-1]
 [BACKUP-INCR-1]
@@ -914,30 +901,25 @@ db-version="9.2"
 000000010000000100000005-0000000000000000000000000000000000000000.gz
 
 Expire oldest full backup, archive expire falls on segment major boundary
-> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
+> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=info --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
   INFO: remove expired backup [BACKUP-INCR-1]
   INFO: remove expired backup [BACKUP-FULL-1]
-  INFO: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
-  INFO: remove archive: start = 0000000100000000, stop = 0000000100000000
+DETAIL: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
+DETAIL: remove archive: start = 0000000100000000, stop = 0000000100000000
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -949,7 +931,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-2]
 
@@ -977,20 +959,13 @@ db-version="9.2"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -1002,7 +977,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-2]
 [BACKUP-DIFF-1]
@@ -1293,32 +1268,25 @@ db-version="9.2"
 00000001000000020000000F-0000000000000000000000000000000000000000.gz
 
 Expire oldest full backup
-> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
+> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=1 --retention-diff=1 --retention-archive-type=full --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=info --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=full --retention-diff=1 --retention-full=1 --stanza=db
   INFO: expire diff backup [BACKUP-DIFF-1]
   INFO: remove expired backup [BACKUP-DIFF-1]
-  INFO: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
-  INFO: no archive to remove
+DETAIL: archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
+DETAIL: no archive to remove
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -1330,7 +1298,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-2]
 [BACKUP-DIFF-2]
@@ -1628,25 +1596,15 @@ db-version="9.2"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -1658,7 +1616,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-2]
 [BACKUP-DIFF-2]
@@ -1965,39 +1923,29 @@ db-version="9.2"
 00000001000000020000001D-0000000000000000000000000000000000000000.gz
 
 Expire oldest diff backup, archive expire does not fall on major segment boundary
-> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
+> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=info --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2]
   INFO: remove expired backup [BACKUP-DIFF-2]
   INFO: remove expired backup [BACKUP-FULL-2]
-  INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
-  INFO: archive retention on backup [BACKUP-DIFF-3], start = 000000010000000200000016
-  INFO: remove archive: start = 0000000100000001, stop = 00000001000000020000000F
-  INFO: remove archive: start = 000000010000000200000013, stop = 000000010000000200000015
+DETAIL: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
+DETAIL: archive retention on backup [BACKUP-DIFF-3], start = 000000010000000200000016
+DETAIL: remove archive: start = 0000000100000001, stop = 00000001000000020000000F
+DETAIL: remove archive: start = 000000010000000200000013, stop = 000000010000000200000015
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -2009,7 +1957,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-3]
 [BACKUP-DIFF-3]
@@ -2043,25 +1991,14 @@ db-version="9.2"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -2073,7 +2010,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-3]
 [BACKUP-DIFF-3]
@@ -2108,38 +2045,27 @@ db-version="9.2"
 000000010000000200000023-0000000000000000000000000000000000000000.gz
 
 Expire oldest diff backup (cascade to incr)
-> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
+> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=1 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=info --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=1 --stanza=db
   INFO: expire diff backup set: [BACKUP-DIFF-3], [BACKUP-INCR-2]
   INFO: remove expired backup [BACKUP-INCR-2]
   INFO: remove expired backup [BACKUP-DIFF-3]
-  INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
-  INFO: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E
-  INFO: remove archive: start = 000000010000000200000016, stop = 00000001000000020000001D
+DETAIL: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
+DETAIL: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E
+DETAIL: remove archive: start = 000000010000000200000016, stop = 00000001000000020000001D
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -2151,7 +2077,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-3]
 [BACKUP-DIFF-4]
@@ -2182,25 +2108,13 @@ db-version="9.2"
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000024","backup-archive-stop":"000000010000000200000026","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-4]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000024","backup-archive-stop":"000000010000000200000026","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-4]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000024","backup-archive-stop":"000000010000000200000026","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-4]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -2212,7 +2126,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-3]
 [BACKUP-DIFF-4]
@@ -2244,38 +2158,26 @@ db-version="9.2"
 000000010000000200000029-0000000000000000000000000000000000000000.gz
 
 Expire archive based on newest incr backup
-> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=info --retention-full=1 --retention-diff=1 --retention-archive-type=incr --retention-archive=1 expire
+> [BACKREST_BIN] "--config=[TEST_PATH]/backrest/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=1 --retention-diff=1 --retention-archive-type=incr --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=info --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=incr --retention-diff=1 --retention-full=1 --stanza=db
-  INFO: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
-  INFO: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E, stop = 000000010000000200000020
-  INFO: archive retention on backup [BACKUP-INCR-3], start = 000000010000000200000024
-  INFO: remove archive: start = 000000010000000200000021, stop = 000000010000000200000023
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-archive=1 --retention-archive-type=incr --retention-diff=1 --retention-full=1 --stanza=db
+DETAIL: archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
+DETAIL: archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E, stop = 000000010000000200000020
+DETAIL: archive retention on backup [BACKUP-INCR-3], start = 000000010000000200000024
+DETAIL: remove archive: start = 000000010000000200000021, stop = 000000010000000200000023
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/backrest/backup/db/backup.info
 ---------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000024","backup-archive-stop":"000000010000000200000026","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-4]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-
-[backup:history]
-[BACKUP-FULL-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"0000000100000000000000FB","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000000","backup-archive-stop":"000000010000000100000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-1]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000100000006","backup-archive-stop":"000000010000000100000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000010000000C","backup-archive-stop":"00000001000000020000000C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-1]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-FULL-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000016","backup-archive-stop":"000000010000000200000018","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-2]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001A","backup-archive-stop":"00000001000000020000001C","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-DIFF-4]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
-[BACKUP-INCR-3]={"backrest-format":4,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000024","backup-archive-stop":"000000010000000200000026","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-4]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000010","backup-archive-stop":"000000010000000200000012","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"00000001000000020000001E","backup-archive-stop":"000000010000000200000020","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-2]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000200000024","backup-archive-stop":"000000010000000200000026","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-4]","backup-reference":[],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":false,"option-compress":true,"option-hardlink":false,"option-online":true}
 
 [db]
 db-catalog-version=20920101
@@ -2287,7 +2189,7 @@ db-version="9.2"
 [db:history]
 1={"db-catalog-version":20920101,"db-control-version":921,"db-system-id":920000000000000001,"db-version":"9.2"}
 
-> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.info"
+> ls [TEST_PATH]/backrest/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKUP-FULL-3]
 [BACKUP-DIFF-4]

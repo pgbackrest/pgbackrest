@@ -10,9 +10,7 @@ run 001 - rmt 0, cmp 0, arc_async 0
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = false
- DEBUG:     File->pathCreate(): bIgnoreExists = <false>, strMode = <0750>, strPath = [undef], strPathType = backup:archive
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -36,8 +34,7 @@ run 001 - rmt 0, cmp 0, arc_async 0
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
@@ -55,8 +52,7 @@ run 001 - rmt 0, cmp 0, arc_async 0
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
@@ -100,8 +96,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -129,8 +124,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -156,8 +150,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -181,8 +174,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -210,8 +202,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -237,8 +228,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strWalSegment = 000000010000000100000002, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -262,8 +252,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strWalSegment = 000000010000000100000003, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -287,8 +276,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000004, strWalSegment = 000000010000000100000004, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -312,8 +300,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -337,8 +324,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
@@ -356,8 +342,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
@@ -375,8 +360,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -404,8 +388,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -431,8 +414,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -456,8 +438,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -485,8 +466,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -512,8 +492,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006, strWalSegment = 000000010000000100000006, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -537,8 +516,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000007, strWalSegment = 000000010000000100000007, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -562,8 +540,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000008, strWalSegment = 000000010000000100000008, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -587,8 +564,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -612,8 +588,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
@@ -631,8 +606,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
@@ -650,8 +624,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -679,8 +652,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -706,8 +678,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -731,8 +702,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -760,8 +730,7 @@ start db (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -782,7 +751,7 @@ start db (local)
 -----------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [db]

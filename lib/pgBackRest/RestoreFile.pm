@@ -65,19 +65,21 @@ sub restoreFile
             {name => 'strCurrentUser', trace => true},
             {name => 'strCurrentGroup', trace => true},
             {name => 'oFile', trace => true},
-            {name => 'lSizeTotal', trace => true},
-            {name => 'lSizeCurrent', trace => true}
+            {name => 'lSizeTotal', default => 0, trace => true},
+            {name => 'lSizeCurrent', required => false, trace => true}
         );
 
-    # Generate destination file name
-    my $strDestinationFile = $oFile->pathGet(PATH_DB_ABSOLUTE, "$$oFileHash{destination_path}/$$oFileHash{file}");
+    # Add the size of the current file to keep track of percent complete
+    if ($lSizeTotal > 0)
+    {
+        $lSizeCurrent += $$oFileHash{size};
+    }
 
     # Copy flag and log message
     my $bCopy = true;
     my $strLog;
-    $lSizeCurrent += $$oFileHash{size};
 
-    if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
+    if ($oFile->exists(PATH_DB_ABSOLUTE, $$oFileHash{db_file}))
     {
         # Perform delta if requested
         if ($bDelta)
@@ -85,7 +87,7 @@ sub restoreFile
             # If force then use size/timestamp delta
             if ($bForce)
             {
-                my $oStat = lstat($strDestinationFile);
+                my $oStat = lstat($$oFileHash{db_file});
 
                 # Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
                 if (defined($oStat) && $oStat->size == $$oFileHash{size} &&
@@ -97,7 +99,7 @@ sub restoreFile
             }
             else
             {
-                my ($strChecksum, $lSize) = $oFile->hashSize(PATH_DB_ABSOLUTE, $strDestinationFile);
+                my ($strChecksum, $lSize) = $oFile->hashSize(PATH_DB_ABSOLUTE, $$oFileHash{db_file});
 
                 if ($lSize == $$oFileHash{size} && ($lSize == 0 || $strChecksum eq $$oFileHash{checksum}))
                 {
@@ -105,8 +107,8 @@ sub restoreFile
 
                     # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
                     # presents a pristine version of the database after restore.
-                    utime($$oFileHash{modification_time}, $$oFileHash{modification_time}, $strDestinationFile)
-                        or confess &log(ERROR, "unable to set time for ${strDestinationFile}");
+                    utime($$oFileHash{modification_time}, $$oFileHash{modification_time}, $$oFileHash{db_file})
+                        or confess &log(ERROR, "unable to set time for $$oFileHash{db_file}");
 
                     $bCopy = false;
                 }
@@ -119,9 +121,9 @@ sub restoreFile
     {
         my ($bCopyResult, $strCopyChecksum, $lCopySize) =
             $oFile->copy(PATH_BACKUP_CLUSTER, (defined($$oFileHash{reference}) ? $$oFileHash{reference} : $strBackupPath) .
-                         "/$$oFileHash{source_path}/$$oFileHash{file}" .
+                         "/$$oFileHash{repo_file}" .
                          ($bSourceCompression ? '.' . $oFile->{strCompressExtension} : ''),
-                         PATH_DB_ABSOLUTE, $strDestinationFile,
+                         PATH_DB_ABSOLUTE, $$oFileHash{db_file},
                          $bSourceCompression,   # Source is compressed based on backup settings
                          undef, undef,
                          $$oFileHash{modification_time},
@@ -132,15 +134,17 @@ sub restoreFile
 
         if ($lCopySize != 0 && $strCopyChecksum ne $$oFileHash{checksum})
         {
-            confess &log(ERROR, "error restoring ${strDestinationFile}: actual checksum ${strCopyChecksum} " .
+            confess &log(ERROR, "error restoring $$oFileHash{db_file}: actual checksum ${strCopyChecksum} " .
                                 "does not match expected checksum $$oFileHash{checksum}", ERROR_CHECKSUM);
         }
     }
 
-    &log(INFO, "restore file ${strDestinationFile}" . (defined($strLog) ? " - ${strLog}" : '') .
-               ' (' . fileSizeFormat($$oFileHash{size}) .
-               ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-               ($$oFileHash{size} != 0 ? " checksum $$oFileHash{checksum}" : ''));
+    # Log the restore
+    &log($bCopy ? INFO : DETAIL,
+         "restore file $$oFileHash{db_file}" . (defined($strLog) ? " - ${strLog}" : '') .
+         ' (' . fileSizeFormat($$oFileHash{size}) .
+         ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
+         ($$oFileHash{size} != 0 ? " checksum $$oFileHash{checksum}" : ''));
 
     # Return from function and log return values if any
     return logDebugReturn

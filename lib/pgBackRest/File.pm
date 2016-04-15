@@ -528,7 +528,7 @@ sub linkCreate
         # ??? This should only happen when the link create errors
         if ($bPathCreate && $self->pathTypeGet($strDestinationPathType) eq PATH_BACKUP)
         {
-            filePathCreate(dirname($strDestination), undef, true, true);
+            filePathCreate(dirname($strDestination));
         }
 
         unless (-e $strSource)
@@ -708,7 +708,8 @@ sub pathCreate
         $strPathType,
         $strPath,
         $strMode,
-        $bIgnoreExists
+        $bIgnoreExists,
+        $bCreateParents
     ) =
         logDebugParam
         (
@@ -716,7 +717,8 @@ sub pathCreate
             {name => 'strPathType'},
             {name => 'strPath', required => false},
             {name => 'strMode', default => '0750'},
-            {name => 'bIgnoreExists', default => false}
+            {name => 'bIgnoreExists', default => false},
+            {name => 'bCreateParents', default => false}
         );
 
     # Set operation variables
@@ -739,7 +741,7 @@ sub pathCreate
     }
     else
     {
-        filePathCreate($strPathOp, $strMode, $bIgnoreExists, true, true);
+        filePathCreate($strPathOp, $strMode, $bIgnoreExists, $bCreateParents);
     }
 
     # Return from function and log return values if any

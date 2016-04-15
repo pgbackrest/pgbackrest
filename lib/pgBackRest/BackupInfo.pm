@@ -14,11 +14,13 @@ use File::Basename qw(dirname basename);
 use File::stat;
 
 use lib dirname($0);
+use pgBackRest::BackupCommon;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -30,6 +32,7 @@ use constant OP_INFO_BACKUP_ADD                                     => OP_BACKUP
 use constant OP_INFO_BACKUP_CHECK                                   => OP_BACKUP_INFO . "->check";
 use constant OP_INFO_BACKUP_CURRENT                                 => OP_BACKUP_INFO . "->current";
 use constant OP_INFO_BACKUP_DELETE                                  => OP_BACKUP_INFO . "->delete";
+use constant OP_INFO_BACKUP_LAST                                    => OP_BACKUP_INFO . "->last";
 use constant OP_INFO_BACKUP_LIST                                    => OP_BACKUP_INFO . "->list";
 use constant OP_INFO_BACKUP_NEW                                     => OP_BACKUP_INFO . "->new";
 
@@ -46,8 +49,6 @@ use constant INFO_BACKUP_SECTION_BACKUP                             => MANIFEST_
     push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP);
 use constant INFO_BACKUP_SECTION_BACKUP_CURRENT                     => INFO_BACKUP_SECTION_BACKUP . ':current';
     push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP_CURRENT);
-use constant INFO_BACKUP_SECTION_BACKUP_HISTORY                     => INFO_BACKUP_SECTION_BACKUP . ':history';
-    push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP_HISTORY);
 use constant INFO_BACKUP_SECTION_DB                                 => 'db';
     push @EXPORT, qw(INFO_BACKUP_SECTION_DB);
 use constant INFO_BACKUP_SECTION_DB_HISTORY                         => INFO_BACKUP_SECTION_DB . ':history';
@@ -62,13 +63,13 @@ use constant INFO_BACKUP_KEY_ARCHIVE_START                          => MANIFEST_
 use constant INFO_BACKUP_KEY_ARCHIVE_STOP                           => MANIFEST_KEY_ARCHIVE_STOP;
     push @EXPORT, qw(INFO_BACKUP_KEY_ARCHIVE_STOP);
 use constant INFO_BACKUP_KEY_BACKUP_REPO_SIZE                       => 'backup-info-repo-size';
-    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE);
+     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE);
 use constant INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA                 => 'backup-info-repo-size-delta';
-    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA);
+     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA);
 use constant INFO_BACKUP_KEY_BACKUP_SIZE                            => 'backup-info-size';
-    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE);
+     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE);
 use constant INFO_BACKUP_KEY_BACKUP_SIZE_DELTA                      => 'backup-info-size-delta';
-    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE_DELTA);
+     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE_DELTA);
 use constant INFO_BACKUP_KEY_CATALOG                                => MANIFEST_KEY_CATALOG;
     push @EXPORT, qw(INFO_BACKUP_KEY_CATALOG);
 use constant INFO_BACKUP_KEY_CONTROL                                => MANIFEST_KEY_CONTROL;
@@ -83,7 +84,7 @@ use constant INFO_BACKUP_KEY_FORMAT                                 => INI_KEY_F
     push @EXPORT, qw(INFO_BACKUP_KEY_FORMAT);
 use constant INFO_BACKUP_KEY_HARDLINK                               => MANIFEST_KEY_HARDLINK;
     push @EXPORT, qw(INFO_BACKUP_KEY_HARDLINK);
-use constant INFO_BACKUP_KEY_HISTORY_ID                             => 'db-id';
+use constant INFO_BACKUP_KEY_HISTORY_ID                             => MANIFEST_KEY_DB_ID;
     push @EXPORT, qw(INFO_BACKUP_KEY_HISTORY_ID);
 use constant INFO_BACKUP_KEY_LABEL                                  => MANIFEST_KEY_LABEL;
     push @EXPORT, qw(INFO_BACKUP_KEY_LABEL);
@@ -115,17 +116,19 @@ sub new
     my
     (
         $strOperation,
-        $strBackupClusterPath                       # Backup cluster path
+        $strBackupClusterPath,
+        $bValidate
     ) =
         logDebugParam
         (
             OP_INFO_BACKUP_NEW, \@_,
-            {name => 'strBackupClusterPath'}
+            {name => 'strBackupClusterPath'},
+            {name => 'bValidate', default => true}
         );
 
     # Build the backup info path/file name
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
-    my $bExists = -e $strBackupInfoFile ? true : false;
+    my $bExists = fileExists($strBackupInfoFile);
 
     # Init object and store variables
     my $self = $class->SUPER::new($strBackupInfoFile, $bExists);
@@ -134,7 +137,10 @@ sub new
     $self->{strBackupClusterPath} = $strBackupClusterPath;
 
     # Validate the backup info
-    $self->validate();
+    if ($bValidate)
+    {
+        $self->validate();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -147,7 +153,7 @@ sub new
 ####################################################################################################################################
 # validate
 #
-# Compare the backup info against the actual backups on disk.
+# Compare the backup info against the actual backups in the repository.
 ####################################################################################################################################
 sub validate
 {
@@ -163,15 +169,43 @@ sub validate
             OP_INFO_BACKUP_NEW
         );
 
-    # Remove backups that no longer exist on disk
+    # Check for backups that are not in FILE_BACKUP_INFO
+    my $strPattern = backupRegExpGet(true, true, true);
+
+    foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
+    {
+        my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
+
+        # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
+        # can't be moved.  This would also be true for the first move attempty in Backup->process();
+
+        if (!$self->current($strBackup) && fileExists($strManifestFile))
+        {
+            &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
+            my $oManifest = pgBackRest::Manifest->new($strManifestFile);
+            $self->add($oManifest);
+        }
+    }
+
+    # Remove backups from FILE_BACKUP_INFO that are not longer in the repository
     foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
     {
-        if (!-e "$self->{strBackupClusterPath}/${strBackup}")
+        my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
+        my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
+
+        if (!fileExists($strBackupPath))
         {
-            &log(WARN, "backup ${strBackup} is missing from the repository - removed from " . FILE_BACKUP_INFO);
+            &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
+            $self->delete($strBackup);
+        }
+        elsif (!fileExists($strManifestFile))
+        {
+            &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
             $self->delete($strBackup);
         }
     }
+
+    # ??? Add a section to remove backups that are missing references (unless they are hardlinked?)
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -180,7 +214,7 @@ sub validate
 ####################################################################################################################################
 # check
 #
-# Check db info and make it is compatible.
+# Check db info and make sure it matches what is already in the repository.
 ####################################################################################################################################
 sub check
 {
@@ -204,22 +238,23 @@ sub check
             {name => 'ullDbSysId', trace => true}
         );
 
+    # Initialize history id
+    my $iDbHistoryId = 1;
+
     if (!$self->test(INFO_BACKUP_SECTION_DB))
     {
-        my $iHistoryId = 1;
-
         # Fill db section
         $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion);
         $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion);
         $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId);
         $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iHistoryId);
+        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId);
 
         # Fill db history
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
-        $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
+        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
+        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
+        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
+        $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
     }
     else
     {
@@ -241,10 +276,16 @@ sub check
                                 $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG) .
                                 "\nHINT: this may be a symptom of database or repository corruption!", ERROR_BACKUP_MISMATCH);
         }
+
+        $iDbHistoryId = $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID);
     }
 
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
 }
 
 ####################################################################################################################################
@@ -260,18 +301,25 @@ sub add
     my
     (
         $strOperation,
-        $oFile,
         $oBackupManifest
     ) =
         logDebugParam
         (
             OP_INFO_BACKUP_ADD, \@_,
-            {name => 'oFile', trace => true},
             {name => 'oBackupManifest', trace => true}
         );
 
-    # !!! How best to log these follow-on cases?
+    # Get the backup label
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
+
+    # If the db section has not been created then create it
+    if (!$self->test(INFO_BACKUP_SECTION_DB))
+    {
+        $self->check($oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION),
+                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
+                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG),
+                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID));
+    }
 
     # Calculate backup sizes and references
     my $lBackupSize = 0;
@@ -280,61 +328,29 @@ sub add
     my $lBackupRepoSizeDelta = 0;
     my $oReferenceHash = undef;
 
-    my $bCompress = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
-
-    foreach my $strPathKey ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    foreach my $strFileKey ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
-        my $strFileSection = "${strPathKey}:" . MANIFEST_FILE;
-        my $strPath = $strPathKey;
-        $strPath =~ s/\:/\//g;
+        my $lFileSize =
+            $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_SIZE);
+        my $lRepoSize =
+            $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false, $lFileSize);
+        my $strFileReference =
+            $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE, false);
 
-        if ($oBackupManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK) &&
-            $oBackupManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
+        # Temporary until compressed size is back in
+        $lBackupSize += $lFileSize;
+        $lBackupRepoSize += $lRepoSize;
+
+        if (defined($strFileReference))
         {
-            $strPath .= '/' . $oBackupManifest->tablespacePathGet();
+            $$oReferenceHash{$strFileReference} = true;
         }
-
-        foreach my $strFileKey ($oBackupManifest->keys($strFileSection))
+        else
         {
-            my $lFileSize = $oBackupManifest->get($strFileSection, $strFileKey, MANIFEST_SUBKEY_SIZE);
-            my $strFileReference = $oBackupManifest->get($strFileSection, $strFileKey, MANIFEST_SUBKEY_REFERENCE, false);
-
-            my $strFile = $oFile->pathGet(PATH_BACKUP_CLUSTER,
-                                           (defined($strFileReference) ? "${strFileReference}" : $strBackupLabel) .
-                                           "/${strPath}/${strFileKey}" .
-                                           ($bCompress ? '.' . $oFile->{strCompressExtension} : ''));
-
-            my $oStat = lstat($strFile);
-
-            # Check for errors in stat
-            defined($oStat)
-                or confess &log(ERROR, "unable to lstat ${strFile}");
-
-            $lBackupSize += $lFileSize;
-            $lBackupRepoSize += $oStat->size;
-
-            if (defined($strFileReference))
-            {
-                $$oReferenceHash{$strFileReference} = true;
-            }
-            else
-            {
-                $lBackupSizeDelta += $lFileSize;
-                $lBackupRepoSizeDelta += $oStat->size;
-            }
+            $lBackupSizeDelta += $lFileSize;
+            $lBackupRepoSizeDelta += $lRepoSize;
         }
     }
-
-    # Add the manifest.backup size
-    my $strManifestFile = $oFile->pathGet(PATH_BACKUP_CLUSTER, "/${strBackupLabel}/" . FILE_MANIFEST);
-    my $oStat = lstat($strManifestFile);
-
-    # Check for errors in stat
-    defined($oStat)
-        or confess &log(ERROR, "unable to lstat ${strManifestFile}");
-
-    $lBackupRepoSize += $oStat->size;
-    $lBackupRepoSizeDelta += $oStat->size;
 
     # Set backup size info
     $self->numericSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_BACKUP_SIZE, $lBackupSize);
@@ -343,7 +359,6 @@ sub add
     $self->numericSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA,
         $lBackupRepoSizeDelta);
 
-    # Store information about the backup into the backup section
     $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_ARCHIVE_CHECK,
         $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK));
     $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_ARCHIVE_COPY,
@@ -380,10 +395,6 @@ sub add
         $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_REFERENCE,
                    \@stryReference);
     }
-
-    # Copy backup info to the history
-    $self->set(INFO_BACKUP_SECTION_BACKUP_HISTORY, $strBackupLabel, undef,
-        $self->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel));
 
     $self->save();
 
@@ -467,6 +478,39 @@ sub list
     (
         $strOperation,
         {name => 'stryBackup', value => \@stryBackup}
+    );
+}
+
+
+####################################################################################################################################
+# last
+#
+# Find the last backup depending on the type.
+####################################################################################################################################
+sub last
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType
+    ) =
+        logDebugParam
+        (
+            OP_INFO_BACKUP_LAST, \@_,
+            {name => 'strType'}
+        );
+
+    my $strFilter = backupRegExpGet(true, $strType ne BACKUP_TYPE_FULL, $strType eq BACKUP_TYPE_INCR);
+    my $strBackup = ($self->list($strFilter, 'reverse'))[0];
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBackup', value => $strBackup}
     );
 }
 

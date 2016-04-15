@@ -108,8 +108,8 @@ use constant ERROR_ARCHIVE_COMMAND_INVALID                          => ERROR_MIN
     push @EXPORT, qw(ERROR_ARCHIVE_COMMAND_INVALID);
 use constant ERROR_LINK_EXPECTED                                    => ERROR_MINIMUM + 44;
     push @EXPORT, qw(ERROR_LINK_EXPECTED);
-use constant ERROR_ABSOLUTE_LINK_EXPECTED                           => ERROR_MINIMUM + 45;
-    push @EXPORT, qw(ERROR_ABSOLUTE_LINK_EXPECTED);
+use constant ERROR_LINK_DESTINATION                                 => ERROR_MINIMUM + 45;
+    push @EXPORT, qw(ERROR_LINK_DESTINATION);
 use constant ERROR_TABLESPACE_IN_PGDATA                             => ERROR_MINIMUM + 46;
     push @EXPORT, qw(ERROR_TABLESPACE_IN_PGDATA);
 use constant ERROR_HOST_INVALID                                     => ERROR_MINIMUM + 47;
@@ -118,6 +118,14 @@ use constant ERROR_PATH_MISSING                                     => ERROR_MIN
     push @EXPORT, qw(ERROR_PATH_MISSING);
 use constant ERROR_FILE_MOVE                                        => ERROR_MINIMUM + 49;
     push @EXPORT, qw(ERROR_FILE_MOVE);
+use constant ERROR_BACKUP_SET_INVALID                               => ERROR_MINIMUM + 50;
+    push @EXPORT, qw(ERROR_BACKUP_SET_INVALID);
+use constant ERROR_TABLESPACE_MAP                                   => ERROR_MINIMUM + 51;
+    push @EXPORT, qw(ERROR_TABLESPACE_MAP);
+use constant ERROR_PATH_TYPE                                        => ERROR_MINIMUM + 52;
+    push @EXPORT, qw(ERROR_PATH_TYPE);
+use constant ERROR_LINK_MAP                                         => ERROR_MINIMUM + 53;
+    push @EXPORT, qw(ERROR_LINK_MAP);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

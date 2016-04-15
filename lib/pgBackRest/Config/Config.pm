@@ -317,10 +317,14 @@ use constant OPTION_RETENTION_FULL                                  => 'retentio
 
 # RESTORE Section
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_TABLESPACE                                      => 'tablespace';
-    push @EXPORT, qw(OPTION_TABLESPACE);
-use constant OPTION_RESTORE_TABLESPACE_MAP                          => 'tablespace-map';
-    push @EXPORT, qw(OPTION_RESTORE_TABLESPACE_MAP);
+use constant OPTION_LINK_ALL                                        => 'link-all';
+    push @EXPORT, qw(OPTION_LINK_ALL);
+use constant OPTION_LINK_MAP                                        => 'link-map';
+    push @EXPORT, qw(OPTION_LINK_MAP);
+use constant OPTION_TABLESPACE_MAP_ALL                              => 'tablespace-map-all';
+    push @EXPORT, qw(OPTION_TABLESPACE_MAP_ALL);
+use constant OPTION_TABLESPACE_MAP                                  => 'tablespace-map';
+    push @EXPORT, qw(OPTION_TABLESPACE_MAP);
 use constant OPTION_RESTORE_RECOVERY_OPTION                         => 'recovery-option';
     push @EXPORT, qw(OPTION_RESTORE_RECOVERY_OPTION);
 
@@ -457,12 +461,7 @@ use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
 use constant OPTION_DEFAULT_BACKUP_USER                             => 'backrest';
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_USER);
 
-# RESTORE SECTION
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_RESTORE_TABLESPACE                      => true;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TABLESPACE);
-
-# START/STOP SECTION
+# START/STOP Section
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_DEFAULT_STOP_FORCE                              => false;
     push @EXPORT, qw(OPTION_DEFAULT_STOP_FORCE);
@@ -475,6 +474,11 @@ use constant OPTION_DEFAULT_RETENTION_MIN                           => 1;
     push @EXPORT, qw(OPTION_DEFAULT_RETENTION_MIN);
 use constant OPTION_DEFAULT_RETENTION_MAX                           => 999999999;
     push @EXPORT, qw(OPTION_DEFAULT_RETENTION_MAX);
+
+# RESTORE Section
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_LINK_ALL                                => false;
+    push @EXPORT, qw(OPTION_DEFAULT_LINK_ALL);
 
 # STANZA Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1092,10 +1096,10 @@ my %oOptionRule =
             lc(ERROR)  => true,
             lc(WARN)   => true,
             lc(INFO)   => true,
+            lc(DETAIL) => true,
             lc(DEBUG)  => true,
             lc(TRACE)  => true
-        }
-        ,
+        },
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
@@ -1121,6 +1125,7 @@ my %oOptionRule =
             lc(WARN)   => true,
             lc(INFO)   => true,
             lc(DEBUG)  => true,
+            lc(DETAIL) => true,
             lc(TRACE)  => true
         },
         &OPTION_RULE_COMMAND =>
@@ -1352,25 +1357,47 @@ my %oOptionRule =
 
     # RESTORE Section
     #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_TABLESPACE =>
+    &OPTION_LINK_ALL =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TABLESPACE,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LINK_ALL,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_RESTORE => true
         }
     },
 
-    &OPTION_RESTORE_TABLESPACE_MAP =>
+    &OPTION_LINK_MAP =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_RESTORE => 1
+            &CMD_RESTORE => true
+        },
+    },
+
+    &OPTION_TABLESPACE_MAP_ALL =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_RESTORE => true
+        }
+    },
+
+    &OPTION_TABLESPACE_MAP =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_RESTORE => true
         },
     },
 
@@ -1381,7 +1408,7 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_RESTORE => 1
+            &CMD_RESTORE => true
         },
         &OPTION_RULE_DEPEND =>
         {

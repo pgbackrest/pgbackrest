@@ -35,14 +35,16 @@ sub backupRegExpGet
         $strOperation,
         $bFull,
         $bDifferential,
-        $bIncremental
+        $bIncremental,
+        $bAnchor
     ) =
         logDebugParam
         (
             OP_BACKUP_COMMON_REG_EXP_GET, \@_,
             {name => 'bFull', default => false},
             {name => 'bDifferential', default => false},
-            {name => 'bIncremental', default => false}
+            {name => 'bIncremental', default => false},
+            {name => 'bAnchor', default => true}
         );
 
     if (!$bFull && !$bDifferential && !$bIncremental)
@@ -51,7 +53,7 @@ sub backupRegExpGet
     }
 
     my $strDateTimeRegExp = "[0-9]{8}\\-[0-9]{6}";
-    my $strRegExp = '^';
+    my $strRegExp = $bAnchor ? '^' : '';
 
     if ($bFull || $bDifferential || $bIncremental)
     {
@@ -90,7 +92,7 @@ sub backupRegExpGet
         }
     }
 
-    $strRegExp .= "\$";
+    $strRegExp .= $bAnchor ? "\$" : '';
 
     # Return from function and log return values if any
     return logDebugReturn

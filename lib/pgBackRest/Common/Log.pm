@@ -34,6 +34,8 @@ use constant TRACE                                                  => 'TRACE';
     push @EXPORT, qw(TRACE);
 use constant DEBUG                                                  => 'DEBUG';
     push @EXPORT, qw(DEBUG);
+use constant DETAIL                                                 => 'DETAIL';
+    push @EXPORT, qw(DETAIL);
 use constant INFO                                                   => 'INFO';
     push @EXPORT, qw(INFO);
 use constant WARN                                                   => 'WARN';
@@ -52,8 +54,9 @@ use constant OFF                                                    => 'OFF';
 ####################################################################################################################################
 my %oLogLevelRank;
 
-$oLogLevelRank{TRACE}{rank} = 7;
-$oLogLevelRank{DEBUG}{rank} = 6;
+$oLogLevelRank{TRACE}{rank} = 8;
+$oLogLevelRank{DEBUG}{rank} = 7;
+$oLogLevelRank{DETAIL}{rank} = 6;
 $oLogLevelRank{INFO}{rank} = 5;
 $oLogLevelRank{WARN}{rank} = 4;
 $oLogLevelRank{ERROR}{rank} = 3;

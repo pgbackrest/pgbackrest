@@ -582,6 +582,69 @@ sub fileStringWrite
 push @EXPORT, qw(fileStringWrite);
 
 ####################################################################################################################################
+# pathAbsolute
+#
+# Generate an absolute path from an absolute base path and a relative path.
+####################################################################################################################################
+sub pathAbsolute
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strBasePath,
+        $strPath
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::pathAbsolute', \@_,
+            {name => 'strBasePath', trace => true},
+            {name => 'strPath', trace => true}
+        );
+
+    # Working variables
+    my $strAbsolutePath;
+
+    # If the path is already absolute
+    if (index($strPath, '/') == 0)
+    {
+        $strAbsolutePath = $strPath;
+    }
+    # Else make it absolute using the base path
+    else
+    {
+        # Make sure the absolute path is really absolute
+        if (index($strBasePath, '/') != 0 || index($strBasePath, '/..') != -1)
+        {
+            confess &log(ERROR, "${strBasePath} is not an absolute path", ERROR_PATH_TYPE);
+        }
+
+        while (index($strPath, '../') == 0)
+        {
+            $strBasePath = dirname($strBasePath);
+            $strPath = substr($strPath, 3);
+        }
+
+        $strAbsolutePath = "${strBasePath}/${strPath}";
+    }
+
+    # Make sure the result is really an absolute path
+    if (index($strAbsolutePath, '/') != 0 || index($strAbsolutePath, '/..') != -1)
+    {
+        confess &log(ERROR, "result ${strAbsolutePath} was not an absolute path", ERROR_PATH_TYPE);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strAbsolutePath', value => $strAbsolutePath, trace => true}
+    );
+}
+
+push @EXPORT, qw(pathAbsolute);
+
+####################################################################################################################################
 # filePathCreate
 #
 # Create a path.

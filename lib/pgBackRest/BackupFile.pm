@@ -18,6 +18,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -38,8 +39,8 @@ sub backupFile
     (
         $strOperation,
         $oFile,                                     # File object
-        $strSourceFile,                             # Source file to backup
-        $strDestinationFile,                        # Destination backup file
+        $strDbFile,                                 # Database file to backup
+        $strRepoFile,                               # Location in the repository to copy to
         $bDestinationCompress,                      # Compress destination file
         $strChecksum,                               # File checksum to be checked
         $lModificationTime,                         # File modification time
@@ -51,8 +52,8 @@ sub backupFile
         (
             OP_BACKUP_FILE_BACKUP_FILE, \@_,
             {name => 'oFile', trace => true},
-            {name => 'strSourceFile', trace => true},
-            {name => 'strDestinationFile', trace => true},
+            {name => 'strDbFile', trace => true},
+            {name => 'strRepoFile', trace => true},
             {name => 'bDestinationCompress', trace => true},
             {name => 'strChecksum', required => false, trace => true},
             {name => 'lModificationTime', trace => true},
@@ -64,6 +65,7 @@ sub backupFile
     my $bCopyResult = true;                         # Copy result
     my $strCopyChecksum;                            # Copy checksum
     my $lCopySize;                                  # Copy Size
+    my $lRepoSize;                                  # Repo size
 
     # Add the size of the current file to keep track of percent complete
     $lSizeCurrent += $lSizeFile;
@@ -71,17 +73,19 @@ sub backupFile
     # If checksum is defined then the file already exists but needs to be checked
     my $bCopy = true;
 
+    # Add compression suffix if needed
+    my $strFileOp = $strRepoFile . ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : '');
+
     if (defined($strChecksum))
     {
         ($strCopyChecksum, $lCopySize) =
-            $oFile->hashSize(PATH_BACKUP_TMP, $strDestinationFile .
-                             ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : ''), $bDestinationCompress);
+            $oFile->hashSize(PATH_BACKUP_TMP, $strFileOp, $bDestinationCompress);
 
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
         if ($bCopy)
         {
-            &log(WARN, "resumed backup file ${strDestinationFile} should have checksum ${strChecksum} but " .
+            &log(WARN, "resumed backup file ${strRepoFile} should have checksum ${strChecksum} but " .
                        "actually has checksum ${strCopyChecksum}.  The file will be recopied and backup will " .
                        "continue but this may be an issue unless the backup temp path is known to be corrupted.");
         }
@@ -91,9 +95,8 @@ sub backupFile
     {
         # Copy the file from the database to the backup (will return false if the source file is missing)
         ($bCopyResult, $strCopyChecksum, $lCopySize) =
-            $oFile->copy(PATH_DB_ABSOLUTE, $strSourceFile,
-                         PATH_BACKUP_TMP, $strDestinationFile .
-                             ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : ''),
+            $oFile->copy(PATH_DB_ABSOLUTE, $strDbFile,
+                         PATH_BACKUP_TMP, $strFileOp,
                          false,                   # Source is not compressed since it is the db directory
                          $bDestinationCompress,   # Destination should be compressed based on backup settings
                          true,                    # Ignore missing files
@@ -101,20 +104,28 @@ sub backupFile
                          undef,                   # Do not set original mode
                          true);                   # Create the destination directory if it does not exist
 
+        # If source file is missing then assume the database removed it (else corruption and nothing we can do!)
         if (!$bCopyResult)
         {
-            # If file is missing assume the database removed it (else corruption and nothing we can do!)
-            &log(INFO, "skip file removed by database: " . $strSourceFile);
+            &log(DETAIL, "skip file removed by database: " . $strDbFile);
         }
+    }
+
+    # If file was copied or checksum'd then get size in repo.  This has to be checked after the file is at rest because filesystem
+    # compression may affect the actual repo size and this cannot be calculated in stream.
+    if ($bCopyResult)
+    {
+        $lRepoSize = (fileStat($oFile->pathGet(PATH_BACKUP_TMP, $strFileOp)))->size;
     }
 
     # Ouput log
     if ($bCopyResult)
     {
-        &log(INFO, (defined($strChecksum) && !$bCopy ? 'checksum resumed file' : 'backup file') .
-                   " $strSourceFile (" . fileSizeFormat($lCopySize) .
-                   ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-                   ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
+        &log($bCopy ? INFO : DETAIL,
+             (defined($strChecksum) && !$bCopy ? 'checksum resumed file' : 'backup file') .
+             " ${strDbFile} (" . fileSizeFormat($lCopySize) .
+             ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
+             ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
     }
 
     # Return from function and log return values if any
@@ -124,6 +135,7 @@ sub backupFile
         {name => 'bCopyResult', value => $bCopyResult, trace => true},
         {name => 'lSizeCurrent', value => $lSizeCurrent, trace => true},
         {name => 'lCopySize', value => $lCopySize, trace => true},
+        {name => 'lRepoSize', value => $lRepoSize, trace => true},
         {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true}
     );
 }
@@ -140,10 +152,10 @@ sub backupManifestUpdate
     (
         $strOperation,
         $oManifest,
-        $strSection,
         $strFile,
         $bCopied,
         $lSize,
+        $lRepoSize,
         $strChecksum,
         $lManifestSaveSize,
         $lManifestSaveCurrent
@@ -152,10 +164,10 @@ sub backupManifestUpdate
         (
             OP_BACKUP_FILE_BACKUP_MANIFEST_UPDATE, \@_,
             {name => 'oManifest', trace => true},
-            {name => 'strSection', trace => true},
             {name => 'strFile', trace => true},
             {name => 'bCopied', trace => true},
             {name => 'lSize', required => false, trace => true},
+            {name => 'lRepoSize', required => false, trace => true},
             {name => 'strChecksum', required => false, trace => true},
             {name => 'lManifestSaveSize', required => false, trace => true},
             {name => 'lManifestSaveCurrent', required => false, trace => true}
@@ -164,11 +176,16 @@ sub backupManifestUpdate
     # If copy was successful store the checksum and size
     if ($bCopied)
     {
-        $oManifest->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $lSize + 0);
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE, $lSize);
+
+        if ($lRepoSize != $lSize)
+        {
+            $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
+        }
 
         if ($lSize > 0)
         {
-            $oManifest->set($strSection, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+            $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
         }
 
         # Determine whether to save the manifest
@@ -193,7 +210,7 @@ sub backupManifestUpdate
     # Else the file was removed during backup so remove from manifest
     else
     {
-        $oManifest->remove($strSection, $strFile);
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strFile);
     }
 
     # Return from function and log return values if any

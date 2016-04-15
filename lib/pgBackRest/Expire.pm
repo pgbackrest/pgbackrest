@@ -120,7 +120,7 @@ sub logExpire
     {
         if (defined($self->{strArchiveExpireStart}))
         {
-            &log(INFO, 'remove archive: start = ' . substr($self->{strArchiveExpireStart}, 0, 24) .
+            &log(DETAIL, 'remove archive: start = ' . substr($self->{strArchiveExpireStart}, 0, 24) .
                        ', stop = ' . substr($self->{strArchiveExpireStop}, 0, 24));
         }
 
@@ -180,6 +180,7 @@ sub process
 
                 foreach my $strPath ($oBackupInfo->list('^' . $stryPath[$iFullIdx] . '.*'))
                 {
+                    $oFile->remove(PATH_BACKUP_CLUSTER, "${strPath}/" . FILE_MANIFEST);
                     $oBackupInfo->delete($strPath);
 
                     if ($strPath ne $stryPath[$iFullIdx])
@@ -219,6 +220,7 @@ sub process
                     # Remove all differential and incremental backups before the oldest valid differential
                     if ($strPath lt $stryPath[$iDiffIdx + 1])
                     {
+                        $oFile->remove(PATH_BACKUP_CLUSTER, "/${strPath}" . FILE_MANIFEST);
                         $oBackupInfo->delete($strPath);
 
                         if ($strPath ne $stryPath[$iDiffIdx])
@@ -341,7 +343,7 @@ sub process
                                 $strArchiveExpireMax = $$oArchiveRange{start};
                             }
 
-                            &log(INFO, "archive retention on backup ${strBackup}, start = $$oArchiveRange{start}" .
+                            &log(DETAIL, "archive retention on backup ${strBackup}, start = $$oArchiveRange{start}" .
                                  (defined($$oArchiveRange{stop}) ? ", stop = $$oArchiveRange{stop}" : ''));
 
                             push(@oyArchiveRange, $oArchiveRange);
@@ -421,7 +423,7 @@ sub process
                     # Log if no archive was expired
                     if ($self->{iArchiveExpireTotal} == 0)
                     {
-                        &log(INFO, 'no archive to remove');
+                        &log(DETAIL, 'no archive to remove');
                     }
                 }
             }

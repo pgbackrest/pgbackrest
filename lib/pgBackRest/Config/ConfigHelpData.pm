@@ -291,6 +291,32 @@ my $oConfigHelpData =
                     "hard-linked can affect all the backups in the set."
         },
 
+        # LINK-ALL Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'link-all' =>
+        {
+            section => 'restore',
+            summary =>
+                "Restore all symlinks.",
+            description =>
+                "By default symlinked directories and files are restored as normal directories and files in \$PGDATA. This is " .
+                    "because it may not be safe to restore symlinks to their original destinations on a system other than where " .
+                    "the original backup was performed. This option restores all the symlinks just as they were on the original " .
+                    "system where the backup was performed."
+        },
+
+        # LINK-MAP Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'link-map' =>
+        {
+            section => 'restore',
+            summary =>
+                "Modify the destination of a symlink.",
+            description =>
+                "Allows the destination file or path of a symlink to be changed on restore. This is useful for restoring to " .
+                    "systems that have a different storage layout than the original system where the backup was generated."
+        },
+
         # LOCK-PATH Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'lock-path' =>
@@ -317,7 +343,8 @@ my $oConfigHelpData =
                 "* error - Log only errors\n" .
                 "* warn - Log warnings and errors\n" .
                 "* info - Log info, warnings, and errors\n" .
-                "* debug - Log debug, info, warnings, and errors\n" .
+                "* detail - Log detail, info, warnings, and errors\n" .
+                "* debug - Log debug, detail, info, warnings, and errors\n" .
                 "* trace - Log trace (very verbose debugging), debug, info, warnings, and errors"
         },
 
@@ -335,7 +362,8 @@ my $oConfigHelpData =
                 "* error - Log only errors\n" .
                 "* warn - Log warnings and errors\n" .
                 "* info - Log info, warnings, and errors\n" .
-                "* debug - Log debug, info, warnings, and errors\n" .
+                "* detail - Log detail, info, warnings, and errors\n" .
+                "* debug - Log debug, detail, info, warnings, and errors\n" .
                 "* trace - Log trace (very verbose debugging), debug, info, warnings, and errors"
         },
 
@@ -544,27 +572,13 @@ my $oConfigHelpData =
                     "because they do not call pg_start_backup() so are not exclusive."
         },
 
-        # TABLESPACE Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'tablespace' =>
-        {
-            section => 'restore',
-            summary =>
-                "Restore tablespaces into original or remapped paths.",
-            description =>
-                "Defines whether tablespaces will be be restored into their original (or remapped) paths or stored directly " .
-                    "under the pg_tblspc path. Disabling this setting produces compact restores that are convenient for " .
-                    "development, staging, etc. Currently these restores cannot be backed up as pgBackRest expects only links " .
-                    "in the pg_tblspc path. If no tablespaces are present this this setting has no effect."
-        },
-
         # TABLESPACE-MAP Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'tablespace-map' =>
         {
             section => 'restore',
             summary =>
-                "Modify a tablespace path.",
+                "Restore a tablespace into the specified directory.",
             description =>
                 "Moves a tablespace to a new location during the restore. This is useful when tablespace locations are not the " .
                     "same on a replica, or an upgraded system has different mount points.\n" .
@@ -573,6 +587,22 @@ my $oConfigHelpData =
                     "with impunity. However, moving a tablespace to the data_directory is not recommended and may cause " .
                     "problems. For more information on moving tablespaces " .
                     "http://www.databasesoup.com/2013/11/moving-tablespaces.html is a good resource."
+        },
+
+        # TABLESPACE-MAP-ALL Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'tablespace-map-all' =>
+        {
+            section => 'restore',
+            summary =>
+                "Restore all tablespaces into the specified directory.",
+            description =>
+                "By default tablespaces are restored into their original locations and while this behavior can be modified by " .
+                    "with the tablespace-map open it is sometime preferable to remap all tablespaces to a new directory all at " .
+                    "once. This is particularly useful for development or staging systems that may not have the same storage " .
+                    "layout as the original system where the backup was generated.\n" .
+                "\n" .
+                "The path specified will be the parent path used to create all the tablespaces in the backup."
         },
 
         # THREAD-MAX Option Help
@@ -902,6 +932,9 @@ my $oConfigHelpData =
                             "combination with --delta a timestamp/size delta will be performed instead of using checksums."
                 },
 
+                'link-all' => 'section',
+                'link-map' => 'section',
+
                 # LOCK Option Help
                 #-------------------------------------------------------------------------------------------------------------------
                 'lock' =>
@@ -934,8 +967,8 @@ my $oConfigHelpData =
                 },
 
                 'stanza' => 'default',
-                'tablespace' => 'section',
                 'tablespace-map' => 'section',
+                'tablespace-map-all' => 'section',
 
                 # TARGET Option Help
                 #-------------------------------------------------------------------------------------------------------------------

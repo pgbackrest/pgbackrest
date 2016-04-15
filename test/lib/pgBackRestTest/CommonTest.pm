@@ -611,17 +611,17 @@ sub BackRestTestCommon_ConfigRemap
     }
 
     # Rewrite recovery section
-    delete($oConfig{"${strStanza}:restore"}{&OPTION_RESTORE_TABLESPACE_MAP});
+    delete($oConfig{"${strStanza}:restore"}{&OPTION_TABLESPACE_MAP});
     my @stryTablespaceMap;
 
     foreach my $strRemap (sort(keys(%$oRemapHashRef)))
     {
         my $strRemapPath = ${$oRemapHashRef}{$strRemap};
 
-        if ($strRemap eq 'base')
+        if ($strRemap eq MANIFEST_TARGET_PGDATA)
         {
             $oConfig{$strStanza}{'db-path'} = $strRemapPath;
-            ${$oManifestRef}{'backup:path'}{base}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
+            ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
             if ($bRemote)
             {
@@ -630,16 +630,17 @@ sub BackRestTestCommon_ConfigRemap
         }
         else
         {
-            push (@stryTablespaceMap, "${strRemap}=${strRemapPath}");
+            my $strTablespaceOid = (split('\/', $strRemap))[1];
+            push (@stryTablespaceMap, "${strTablespaceOid}=${strRemapPath}");
 
-            ${$oManifestRef}{'backup:path'}{"tablespace/${strRemap}"}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
-            ${$oManifestRef}{'base:link'}{"pg_tblspc/${strRemap}"}{destination} = $strRemapPath;
+            ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strRemap}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
+            ${$oManifestRef}{&MANIFEST_SECTION_TARGET_LINK}{MANIFEST_TARGET_PGDATA . "/${strRemap}"}{destination} = $strRemapPath;
         }
     }
 
     if (@stryTablespaceMap)
     {
-        $oConfig{"${strStanza}:restore"}{&OPTION_RESTORE_TABLESPACE_MAP} = \@stryTablespaceMap;
+        $oConfig{"${strStanza}:restore"}{&OPTION_TABLESPACE_MAP} = \@stryTablespaceMap;
     }
 
     # Resave the config file

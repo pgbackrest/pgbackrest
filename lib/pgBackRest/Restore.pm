@@ -10,15 +10,18 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
 use lib dirname($0);
+use pgBackRest::BackupInfo;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
 
@@ -35,15 +38,6 @@ use constant OP_RESTORE_MANIFEST_OWNERSHIP_CHECK                    => OP_RESTOR
 use constant OP_RESTORE_NEW                                         => OP_RESTORE . '->new';
 use constant OP_RESTORE_PROCESS                                     => OP_RESTORE . '->process';
 use constant OP_RESTORE_RECOVERY                                    => OP_RESTORE . '->recovery';
-
-####################################################################################################################################
-# File constants
-####################################################################################################################################
-# Conf file with settings for recovery after restore
-use constant FILE_RECOVERY_CONF                                     => 'recovery.conf';
-
-# Tablespace map introduced in 9.5
-use constant FILE_TABLESPACE_MAP                                    => 'tablespace_map';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -125,7 +119,7 @@ sub manifestOwnershipCheck
         logDebugParam
         (
             OP_RESTORE_MANIFEST_OWNERSHIP_CHECK, \@_,
-            {name => 'oManifest', trace => true}
+            {name => 'oManifest'}
         );
 
     # Create hashes to track valid/invalid users/groups
@@ -135,64 +129,55 @@ sub manifestOwnershipCheck
     my $strDefaultUser = getpwuid($<);
     my $strDefaultGroup = getgrgid($();
 
-    my %oFileTypeHash = (&MANIFEST_PATH => true, &MANIFEST_LINK => true, &MANIFEST_FILE => true);
+    my %oFileTypeHash = (&MANIFEST_SECTION_TARGET_PATH => true, &MANIFEST_SECTION_TARGET_LINK => true,
+                         &MANIFEST_SECTION_TARGET_FILE => true);
     my %oOwnerTypeHash = (&MANIFEST_SUBKEY_USER => $strDefaultUser, &MANIFEST_SUBKEY_GROUP => $strDefaultGroup);
 
     # Loop through owner types (user, group)
     foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
     {
-        # Loop through all backup paths (base and tablespaces)
-        foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+        # Loop through types (path, link, file)
+        foreach my $strSection (sort (keys %oFileTypeHash))
         {
-            # Loop through types (path, link, file)
-            foreach my $strFileType (sort (keys %oFileTypeHash))
+            foreach my $strName ($oManifest->keys($strSection))
             {
-                my $strSection = "${strPathKey}:${strFileType}";
+                my $strOwner = $oManifest->get($strSection, $strName, $strOwnerType);
 
-                # Get users and groups for paths
-                if ($oManifest->test($strSection))
+                # If root then test to see if the user/group is valid
+                if ($< == 0)
                 {
-                    foreach my $strName ($oManifest->keys($strSection))
+                    # If the owner has not been tested yet then test it
+                    if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
                     {
-                        my $strOwner = $oManifest->get($strSection, $strName, $strOwnerType);
+                        my $strOwnerId;
 
-                        # If root then test to see if the user/group is valid
-                        if ($< == 0)
+                        if ($strOwnerType eq 'user')
                         {
-                            # If the owner has not been tested yet then test it
-                            if (!defined($oOwnerHash{$strOwnerType}{$strOwner}))
-                            {
-                                my $strOwnerId;
-
-                                if ($strOwnerType eq 'user')
-                                {
-                                    $strOwnerId = getpwnam($strOwner);
-                                }
-                                else
-                                {
-                                    $strOwnerId = getgrnam($strOwner);
-                                }
-
-                                $oOwnerHash{$strOwnerType}{$strOwner} = defined($strOwnerId) ? true : false;
-                            }
-
-                            if (!$oOwnerHash{$strOwnerType}{$strOwner})
-                            {
-                                $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
-                            }
+                            $strOwnerId = getpwnam($strOwner);
                         }
-                        # Else set user/group to current user/group
                         else
                         {
-                            if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
-                            {
-                                $oOwnerHash{$strOwnerType}{$strOwner} = false;
-                                $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
-                            }
+                            $strOwnerId = getgrnam($strOwner);
                         }
-                   }
+
+                        $oOwnerHash{$strOwnerType}{$strOwner} = defined($strOwnerId) ? true : false;
+                    }
+
+                    if (!$oOwnerHash{$strOwnerType}{$strOwner})
+                    {
+                        $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
+                    }
                 }
-            }
+                # Else set user/group to current user/group
+                else
+                {
+                    if ($strOwner ne $oOwnerTypeHash{$strOwnerType})
+                    {
+                        $oOwnerHash{$strOwnerType}{$strOwner} = false;
+                        $oManifest->set($strSection, $strName, $strOwnerType, $oOwnerTypeHash{$strOwnerType});
+                    }
+                }
+           }
         }
 
         # Output warning for any invalid owners
@@ -202,8 +187,8 @@ sub manifestOwnershipCheck
             {
                 if (!$oOwnerHash{$strOwnerType}{$strOwner})
                 {
-                    &log(WARN, "${strOwnerType} ${strOwner} " . ($< == 0 ? "does not exist" : "cannot be set") .
-                               ", changed to $oOwnerTypeHash{$strOwnerType}");
+                    &log(WARN, "${strOwnerType} ${strOwner} in manifest " . ($< == 0 ? 'does not exist locally ' : '') .
+                               "cannot be used for restore, changed to $oOwnerTypeHash{$strOwnerType}");
                 }
             }
         }
@@ -232,15 +217,12 @@ sub manifestLoad
     }
 
     # Copy the backup manifest to the db cluster path
-    $self->{oFile}->copy(PATH_BACKUP_CLUSTER, $self->{strBackupSet} . '/' . FILE_MANIFEST,
+    $self->{oFile}->copy(PATH_BACKUP_CLUSTER, "$self->{strBackupSet}/" . FILE_MANIFEST,
                          PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
     # Load the manifest into a hash
     my $oManifest = new pgBackRest::Manifest($self->{oFile}->pathGet(PATH_DB_ABSOLUTE,
                                                                    $self->{strDbClusterPath} . '/' . FILE_MANIFEST));
-
-    # Log the backup set to restore
-    &log(INFO, "restore backup set " . $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
 
     # If backup is latest then set it equal to backup label, else verify that requested backup and label match
     my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
@@ -255,67 +237,192 @@ sub manifestLoad
                              ' - this indicates some sort of corruption (at the very least paths have been renamed)');
     }
 
-    if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH))
+    if ($self->{strDbClusterPath} ne $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH))
     {
-        &log(INFO, 'remap base path to ' . $self->{strDbClusterPath});
-        $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
+        &log(INFO, 'remap $PGDATA directory to ' . $self->{strDbClusterPath});
+
+        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbClusterPath});
     }
 
-    # If no tablespaces are requested
-    if (!optionGet(OPTION_TABLESPACE))
+    # Remap tablespaces when requested
+    my $oTablespaceRemap;
+
+    if (optionTest(OPTION_TABLESPACE_MAP))
     {
-        foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+        my $oTablespaceRemapRequest = optionGet(OPTION_TABLESPACE_MAP);
+
+        for my $strKey (sort(keys(%{$oTablespaceRemapRequest})))
         {
-            if ($oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+            my $bFound = false;
+
+            for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
             {
-                my $strTablespaceKey =
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
-                my $strTablespaceLink = "pg_tblspc/${strTablespaceKey}";
-                my $strTablespacePath =
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
-                    "/${strTablespaceLink}";
+                if ($oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_ID, $strKey) ||
+                    $oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_NAME, $strKey))
+                {
+                    if (defined(${$oTablespaceRemap}{$strTarget}))
+                    {
+                        confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oTablespaceRemap}{$strTarget}",
+                                     ERROR_TABLESPACE_MAP);
+                    }
 
-                $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH, $strTablespacePath);
+                    ${$oTablespaceRemap}{$strTarget} = ${$oTablespaceRemapRequest}{$strKey};
+                    $bFound = true;
+                }
+            }
 
-                $oManifest->remove('base:link', $strTablespaceLink);
-                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_GROUP,
-                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_GROUP));
-                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_USER,
-                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_USER));
-                $oManifest->set('base:path', $strTablespaceLink, MANIFEST_SUBKEY_MODE,
-                    $oManifest->get('base:path', '.', MANIFEST_SUBKEY_MODE));
-
-                &log(INFO, "remap tablespace ${strTablespaceKey} to ${strTablespacePath}");
+            # Error if the tablespace was not found to be remapped
+            if (!$bFound)
+            {
+                confess &log(ERROR, "cannot remap invalid tablespace ${strKey} to ${$oTablespaceRemapRequest}{$strKey}",
+                             ERROR_TABLESPACE_MAP);
             }
         }
     }
-    # If tablespaces have been remapped, update the manifest
-    elsif (optionTest(OPTION_RESTORE_TABLESPACE_MAP))
+
+    # Remap all tablespaces (except ones that were done individually above)
+    if (optionTest(OPTION_TABLESPACE_MAP_ALL))
     {
-        my $oRemapRef = optionGet(OPTION_RESTORE_TABLESPACE_MAP);
-
-        foreach my $strTablespaceKey (sort(keys(%$oRemapRef)))
+        for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
         {
-            my $strRemapPath = $$oRemapRef{$strTablespaceKey};
-            my $strPathKey = "tablespace/${strTablespaceKey}";
-
-            # Make sure that the tablespace exists in the manifest
-            if (!$oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+            if ($oManifest->isTargetTablespace($strTarget))
             {
-                confess &log(ERROR, "cannot remap invalid tablespace ${strTablespaceKey} to ${strRemapPath}");
+                if (!defined(${$oTablespaceRemap}{$strTarget}))
+                {
+                    ${$oTablespaceRemap}{$strTarget} = optionGet(OPTION_TABLESPACE_MAP_ALL) . '/' .
+                        $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_NAME);
+                }
             }
+        }
+    }
+
+    # Alter manifest for remapped tablespaces
+    if (defined($oTablespaceRemap))
+    {
+        foreach my $strTarget (sort(keys(%{$oTablespaceRemap})))
+        {
+            my $strRemapPath = ${$oTablespaceRemap}{$strTarget};
 
             # Remap the tablespace in the manifest
-            &log(INFO, "remap tablespace ${strTablespaceKey} to ${strRemapPath}");
+            &log(INFO, "remap tablespace ${strTarget} directory to ${strRemapPath}");
 
-            my $strTablespaceLink = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
-
-            $oManifest->set(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH, $strRemapPath);
-            $oManifest->set('base:link', "pg_tblspc/${strTablespaceLink}", MANIFEST_SUBKEY_DESTINATION, $strRemapPath);
+            $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strRemapPath);
+            $oManifest->set(MANIFEST_SECTION_TARGET_LINK, MANIFEST_TARGET_PGDATA . "/${strTarget}", MANIFEST_SUBKEY_DESTINATION,
+                            $strRemapPath);
         }
     }
 
     $self->manifestOwnershipCheck($oManifest);
+
+    # Remap links when requested
+    my $oLinkRemap;
+
+    if (optionTest(OPTION_LINK_MAP))
+    {
+        my $oLinkRemapRequest = optionGet(OPTION_LINK_MAP);
+
+        for my $strKey (sort(keys(%{$oLinkRemapRequest})))
+        {
+            my $strTarget = MANIFEST_TARGET_PGDATA . "/${strKey}";
+
+            # Only remap if a valid target link but not a tablespace
+            if ($oManifest->isTargetValid($strTarget, false) &&
+                $oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget))
+            {
+                if (defined(${$oTablespaceRemap}{$strTarget}))
+                {
+                    confess &log(ERROR, "tablespace ${strKey} has already been remapped to ${$oLinkRemap}{$strTarget}",
+                                 ERROR_LINK_MAP);
+                }
+
+                ${$oLinkRemap}{$strTarget} = ${$oLinkRemapRequest}{$strKey};
+
+                &log(INFO, "remap link ${strTarget} destination to ${$oLinkRemap}{$strTarget}");
+            }
+            # Else error
+            else
+            {
+                confess &log(ERROR, "cannot remap invalid link ${strKey} to ${$oLinkRemapRequest}{$strKey}",
+                             ERROR_LINK_MAP);
+            }
+        }
+    }
+
+    # Remap all links (except ones that were done individually above)
+    if (optionGet(OPTION_LINK_ALL))
+    {
+        for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+        {
+            # If target is a link but not a tablespace and has not already been remapped when remap it
+            if ($oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget) &&
+                !defined(${$oLinkRemap}{$strTarget}))
+            {
+                    ${$oLinkRemap}{$strTarget} =
+                        $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH);
+
+                    if ($oManifest->isTargetFile($strTarget))
+                    {
+                        ${$oLinkRemap}{$strTarget} .= '/' .
+                            $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE);
+                    }
+            }
+        }
+    }
+
+    # Alter manifest for remapped links
+    for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+    {
+        if ($oManifest->isTargetLink($strTarget) && !$oManifest->isTargetTablespace($strTarget))
+        {
+            # If the link will be remapped
+            if (defined(${$oLinkRemap}{$strTarget}))
+            {
+                my $strTargetPath = ${$oLinkRemap}{$strTarget};
+
+                # If this link is to a file then the specified path must be split into file and path parts
+                if ($oManifest->isTargetFile($strTarget))
+                {
+                    $strTargetPath = dirname($strTargetPath);
+
+                    # Error when the path is not deep enough to be valid
+                    if (!defined($strTargetPath))
+                    {
+                        confess &log(ERROR, "${$oLinkRemap}{$strTarget} is not long enough to be target for ${strTarget}");
+                    }
+
+                    # Set the file part
+                    $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE,
+                                    substr(${$oLinkRemap}{$strTarget}, length($strTargetPath) + 1));
+                }
+
+                # Set the target path
+                $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strTargetPath);
+
+                # Since this will be a link remove the associated path (??? perhaps this should be in build like it is for ts?)
+                $oManifest->remove(MANIFEST_SECTION_TARGET_PATH, $strTarget);
+            }
+            # Else the link will be restored directly into $PGDATA instead
+            else
+            {
+                if ($oManifest->test(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE))
+                {
+                    &log(WARN, 'file link ' . $oManifest->dbPathGet(undef, $strTarget) .
+                               ' will be restored as a file at the same location');
+                }
+                else
+                {
+                    &log(WARN, 'contents of directory link ' . $oManifest->dbPathGet(undef, $strTarget) .
+                               ' will be restored in a directory at the same location');
+                }
+
+                $oManifest->remove(MANIFEST_SECTION_BACKUP_TARGET, $strTarget);
+                $oManifest->remove(MANIFEST_SECTION_TARGET_LINK, $strTarget);
+            }
+        }
+    }
+
+    # Make sure links are still valid after remapping
+    $oManifest->linkCheck();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -345,131 +452,259 @@ sub clean
         logDebugParam
         (
             OP_RESTORE_CLEAN, \@_,
-            {name => 'oManifest', trace => true}
+            {name => 'oManifest'}
         );
 
     # Track if files/links/paths where removed
-    my %oRemoveHash = (&MANIFEST_FILE => 0, &MANIFEST_PATH => 0, &MANIFEST_LINK => 0);
+    my %oRemoveHash =
+    (
+        &MANIFEST_SECTION_TARGET_FILE => 0,
+        &MANIFEST_SECTION_TARGET_PATH => 0,
+        &MANIFEST_SECTION_TARGET_LINK => 0
+    );
 
-    # Check each restore directory in the manifest and make sure that it exists and is empty.
-    # The --force option can be used to override the empty requirement.
-    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    # Check that all targets exist and are empty (unless --force or --delta specified)
+    my %oTargetFound;
+    my $bDelta = optionGet(OPTION_FORCE) || optionGet(OPTION_DELTA);
+
+    for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
     {
-        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
-        my $bTablespace = $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK);
+        ${$self->{oTargetPath}}{$strTarget} = $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH);
+        $oTargetFound{$strTarget} = false;
 
-        # Update path if this is a tablespace
-        if ($bTablespace && $oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0)
+        my $strCheckPath = ${$self->{oTargetPath}}{$strTarget};
+
+        if ($oManifest->isTargetLink($strTarget) && index($strCheckPath, '/') != 0)
         {
-            $strPath .= '/' . $oManifest->tablespacePathGet();
+            my $strBasePath = $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
+            my $strTargetPath = dirname($oManifest->dbPathGet(undef, $strTarget));
+
+            if ($strTargetPath ne '.')
+            {
+                $strBasePath .= "/${strTargetPath}";
+            }
+
+            ${$self->{oTargetPath}}{$strTarget} = pathAbsolute($strBasePath, $strCheckPath);
+
+            $strCheckPath = ${$self->{oTargetPath}}{$strTarget};
+
+            if ($oManifest->isTargetTablespace($strTarget))
+            {
+                $strCheckPath = dirname(${$self->{oTargetPath}}{$strTarget});
+            }
         }
 
-        &log(INFO, "check/clean db path ${strPath}");
+        &log(DETAIL, "check ${strCheckPath} exists");
 
-        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strPath))
+        # Check if the path exists
+        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strCheckPath))
         {
-            next;
+            confess &log(ERROR, "cannot restore to missing path ${strCheckPath}", ERROR_PATH_MISSING);
         }
 
-        # Load path manifest so it can be compared to deleted files/paths/links that are not in the backup
-        my %oPathManifest;
-        $self->{oFile}->manifest(PATH_DB_ABSOLUTE, $strPath, \%oPathManifest);
-
-        foreach my $strName (sort {$b cmp $a} (keys(%{$oPathManifest{name}})))
+        # Check if the file exists
+        if ($oManifest->isTargetFile($strTarget))
         {
-            # Skip the root path
-            if ($strName eq '.' || (!$bTablespace && $strName eq FILE_MANIFEST))
+            # Construct the file to check
+            my $strCheckFile = "${strCheckPath}/" .
+                               $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE);
+
+            # Check if the file exists
+            if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $strCheckFile))
+            {
+                # If the file exists and this is not a delta then error
+                if (!$bDelta)
+                {
+                    confess &log(ERROR, "cannot restore file '${strCheckFile}' that already exists - " .
+                                        'try using --delta if this is what you intended', ERROR_RESTORE_PATH_NOT_EMPTY);
+                }
+
+                # Mark that a file was found
+                $oTargetFound{$strTarget} = true;
+            }
+        }
+        # Check the directory for files
+        else
+        {
+            # If this is a tablespace search for the special directory that Postgres puts in every tablespace directory
+            if ($oManifest->isTargetTablespace($strTarget))
+            {
+                # Construct the special tablespace path
+                ${$self->{oTargetPath}}{$strTarget} = "${$self->{oTargetPath}}{$strTarget}/" . $oManifest->tablespacePathGet();
+
+                # If this path does not exist then skip the rest of the checking - the path will be created later
+                if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget}))
+                {
+                    next;
+                }
+            }
+
+            # Build a manifest of the path to check for existing files
+            my %oTargetManifest;
+            $self->{oFile}->manifest(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget}, \%oTargetManifest);
+
+            for my $strName (keys(%{$oTargetManifest{name}}))
+            {
+                # Skip the root path and backup.manifest in the base path
+                if ($strName eq '.' ||
+                    (($strName eq FILE_MANIFEST || $strName eq DB_FILE_RECOVERY_CONF) && $strTarget eq MANIFEST_TARGET_PGDATA))
+                {
+                    next;
+                }
+
+                # The presense of any other file will cause an error (unless --force or --delta specified)
+                if (!$bDelta)
+                {
+                    confess &log(ERROR, "cannot restore to path '${$self->{oTargetPath}}{$strTarget}' that contains files - " .
+                                        'try using --delta if this is what you intended', ERROR_RESTORE_PATH_NOT_EMPTY);
+                }
+
+                # Mark that some files were found
+                $oTargetFound{$strTarget} = true;
+            }
+        }
+    }
+
+    # Clean up each target starting from the most nested
+    my %oFileChecked;
+
+    for my $strTarget (sort {$b cmp $a} ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET)))
+    {
+        if ($oTargetFound{$strTarget})
+        {
+            &log(INFO, "remove invalid files/paths/links from ${$self->{oTargetPath}}{$strTarget}");
+
+            # OK for the special tablespace path to not exist yet - it will be created later
+            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget}) &&
+                $oManifest->isTargetTablespace($strTarget))
             {
                 next;
             }
 
-            # If force was not specified then error if any file is found
-            if (!optionGet(OPTION_FORCE) && !optionGet(OPTION_DELTA))
+            # Load path manifest so it can be compared to deleted files/paths/links that are not in the backup
+            my %oTargetManifest;
+            $self->{oFile}->manifest(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget}, \%oTargetManifest);
+
+            # If the target is a file it doesn't matter whether it already exists or not.
+            if ($oManifest->isTargetFile($strTarget))
             {
-                confess &log(ERROR, "cannot restore to path '${strPath}' that contains files - " .
-                                    'try using --delta if this is what you intended', ERROR_RESTORE_PATH_NOT_EMPTY);
+                next;
             }
 
-            my $strFile = "${strPath}/${strName}";
-
-            # Determine the file/path/link type
-            my $strType = MANIFEST_FILE;
-
-            if ($oPathManifest{name}{$strName}{type} eq 'd')
+            foreach my $strName (sort {$b cmp $a} (keys(%{$oTargetManifest{name}})))
             {
-                $strType = MANIFEST_PATH;
-            }
-            elsif ($oPathManifest{name}{$strName}{type} eq 'l')
-            {
-                $strType = MANIFEST_LINK;
-            }
-
-            # Build the section name
-            my $strSection = "${strPathKey}:${strType}";
-
-            # Check to see if the file/path/link exists in the manifest
-            if ($oManifest->test($strSection, $strName))
-            {
-                my $strUser = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER);
-                my $strGroup = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP);
-
-                # If ownership does not match, fix it
-                if ($strUser ne $oPathManifest{name}{$strName}{user} ||
-                    $strGroup ne $oPathManifest{name}{$strName}{group})
+                # Skip the root path
+                if ($strName eq '.' || ($strName eq FILE_MANIFEST && $strTarget eq MANIFEST_TARGET_PGDATA))
                 {
-                    &log(INFO, "set ownership ${strUser}:${strGroup} on ${strFile}");
-
-                    $self->{oFile}->owner(PATH_DB_ABSOLUTE, $strFile, $strUser, $strGroup);
+                    next;
                 }
 
-                # If a link does not have the same destination, then delete it (it will be recreated later)
-                if ($strType eq MANIFEST_LINK)
-                {
-                    if ($strType eq MANIFEST_LINK && $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION) ne
-                        $oPathManifest{name}{$strName}{link_destination})
-                    {
-                        &log(INFO, "remove link ${strFile} - destination changed");
+                my $strOsFile = "${$self->{oTargetPath}}{$strTarget}/${strName}";
+                my $strManifestFile = $oManifest->repoPathGet($strTarget, $strName);
 
-                        unlink($strFile)
-                            or confess &log(ERROR, "unable to remove link ${strFile}");
+                # Determine the file/path/link type
+                my $strSection = MANIFEST_SECTION_TARGET_FILE;
+
+                if ($oTargetManifest{name}{$strName}{type} eq 'd')
+                {
+                    $strSection = MANIFEST_SECTION_TARGET_PATH;
+                }
+                elsif ($oTargetManifest{name}{$strName}{type} eq 'l')
+                {
+                    $strSection = MANIFEST_SECTION_TARGET_LINK;
+                }
+
+                # Check to see if the file/path/link exists in the manifest
+                if ($oManifest->test($strSection, $strManifestFile) &&
+                    !defined($oFileChecked{$strSection}{$strManifestFile}))
+                {
+                    my $strUser = $oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_USER);
+                    my $strGroup = $oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_GROUP);
+
+                    # If ownership does not match, fix it
+                    if ($strUser ne $oTargetManifest{name}{$strName}{user} ||
+                        $strGroup ne $oTargetManifest{name}{$strName}{group})
+                    {
+                        &log(DETAIL, "set ownership ${strUser}:${strGroup} on ${strOsFile}");
+
+                        $self->{oFile}->owner(PATH_DB_ABSOLUTE, $strOsFile, $strUser, $strGroup);
+                    }
+
+                    # If a link does not have the same destination, then delete it (it will be recreated later)
+                    if ($strSection eq MANIFEST_SECTION_TARGET_LINK)
+                    {
+                        if ($oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_DESTINATION) ne
+                            $oTargetManifest{name}{$strName}{link_destination})
+                        {
+                            &log(DETAIL, "remove link ${strOsFile} - destination changed");
+                            fileRemove($strOsFile);
+                        }
+                    }
+                    # Else if file/path mode does not match, fix it
+                    else
+                    {
+                        my $strMode = $oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_MODE);
+
+                        if ($strMode ne $oTargetManifest{name}{$strName}{mode})
+                        {
+                            &log(DETAIL, "set mode ${strMode} on ${strOsFile}");
+
+                            chmod(oct($strMode), $strOsFile)
+                                or confess 'unable to set mode ${strMode} on ${strOsFile}';
+                        }
                     }
                 }
-                # Else if file/path mode does not match, fix it
+                # If it does not then remove it
                 else
                 {
-                    my $strMode = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE);
-
-                    if ($strType ne MANIFEST_LINK && $strMode ne $oPathManifest{name}{$strName}{mode})
+                    # If a path then remove it, all the files should have already been deleted since we are going in reverse order
+                    if ($strSection eq MANIFEST_SECTION_TARGET_PATH)
                     {
-                        &log(INFO, "set mode ${strMode} on ${strFile}");
+                        &log(DETAIL, "remove path ${strOsFile}");
+                        rmdir($strOsFile) or confess &log(ERROR, "unable to delete path ${strOsFile}, is it empty?");
 
-                        chmod(oct($strMode), $strFile)
-                            or confess 'unable to set mode ${strMode} on ${strFile}';
+                        $oRemoveHash{$strSection} += 1;
+                    }
+                    # Else delete a file/link
+                    else
+                    {
+                        my $strType = (split('\:', $strSection))[1];
+
+                        # Delete only if this is not the recovery.conf file.  This is in case the user wants the recovery.conf file
+                        # preserved.  It will be written/deleted/preserved as needed in recovery().
+                        if ($oManifest->dbPathGet(undef, $strManifestFile) eq DB_FILE_RECOVERY_CONF)
+                        {
+                            &log(DETAIL, "preserve ${strType} ${strOsFile}");
+                        }
+                        else
+                        {
+                            &log(DETAIL, "remove ${strType} ${strOsFile}");
+                            fileRemove($strOsFile);
+
+                            $oRemoveHash{$strSection} += 1;
+                        }
                     }
                 }
             }
-            # If it does not then remove it
-            else
+        }
+
+        # Mark all files, paths, and links in this target as having been checked.  This prevents them from being eligible for
+        # cleaning again in a higher level of the hierarchy.
+        foreach my $strSection (sort (keys %oRemoveHash))
+        {
+            for my $strManifestFile ($oManifest->keys($strSection))
             {
-                # If a path then remove it, all the files should have already been deleted since we are going in reverse order
-                if ($strType eq MANIFEST_PATH)
+                # If a link exactly matches the target then it should be checked at a higher level of the hierarchy.  Otherwise
+                # determine if the file/path/link should be marked as checked.
+                if ($strSection ne MANIFEST_SECTION_TARGET_LINK || $strManifestFile ne $strTarget)
                 {
-                    &log(INFO, "remove path ${strFile}");
-                    rmdir($strFile) or confess &log(ERROR, "unable to delete path ${strFile}, is it empty?");
-                }
-                # Else delete a file/link
-                else
-                {
-                    # Delete only if this is not the recovery.conf file.  This is in case the user wants the recovery.conf file
-                    # preserved.  It will be written/deleted/preserved as needed in recovery().
-                    if (!($strName eq FILE_RECOVERY_CONF && $strType eq MANIFEST_FILE))
+                    # If the file/path/link parent path matches the target then it should be marked as checked.
+                    if (index($strManifestFile, "${strTarget}/") == 0)
                     {
-                        &log(INFO, "remove file/link ${strFile}");
-                        unlink($strFile) or confess &log(ERROR, "unable to delete file/link ${strFile}");
+                        # Mark the file/path/link as checked
+                        $oFileChecked{$strSection}{$strManifestFile} = true;
                     }
                 }
-
-                $oRemoveHash{$strType} += 1;
             }
         }
     }
@@ -481,7 +716,8 @@ sub clean
     {
         if ($oRemoveHash{$strFileType} > 0)
         {
-            push(@stryMessage, "$oRemoveHash{$strFileType} ${strFileType}" . ($oRemoveHash{$strFileType} > 1 ? 's' : ''));
+            push(@stryMessage, "$oRemoveHash{$strFileType} " . (split('\:', $strFileType))[1] .
+                 ($oRemoveHash{$strFileType} > 1 ? 's' : ''));
         }
     }
 
@@ -497,7 +733,7 @@ sub clean
 ####################################################################################################################################
 # build
 #
-# Creates missing paths and links and corrects ownership/mode on existing paths and links.
+# Creates missing paths and links and sets ownership/mode.
 ####################################################################################################################################
 sub build
 {
@@ -513,77 +749,114 @@ sub build
         logDebugParam
         (
             OP_RESTORE_BUILD, \@_,
-            {name => 'oManifest', trace => true}
+            {name => 'oManifest'}
         );
 
-    # Build paths/links in each restore path
-    foreach my $strSectionPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    # Create target paths (except for MANIFEST_TARGET_PGDATA because that must already exist)
+    foreach my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
     {
-        my $strSection = "${strSectionPathKey}:path";
-        my $strSectionPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_PATH);
-
-        # Update path if this is a tablespace
-        if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
-            $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strSectionPathKey, MANIFEST_SUBKEY_LINK))
+        if ($strTarget ne MANIFEST_TARGET_PGDATA)
         {
-            $strSectionPath .= '/' . $oManifest->tablespacePathGet();
+            my $strPath = ${$self->{oTargetPath}}{$strTarget};
 
-            # Create the tablespace if it doesn't exist
-            if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strSectionPath))
+            if ($oManifest->isTargetTablespace($strTarget))
             {
-                $self->{oFile}->pathCreate(PATH_DB_ABSOLUTE, $strSectionPath,
-                                           $oManifest->get($strSection, '.', MANIFEST_SUBKEY_MODE));
+                $strPath = dirname($strPath);
             }
-        }
-
-        # Create all paths in the manifest that do not already exist
-        foreach my $strName ($oManifest->keys($strSection))
-        {
-            # Skip the root path
-            if ($strName eq '.')
-            {
-                next;
-            }
-
-            # Create the Path
-            my $strPath = "${strSectionPath}/${strName}";
 
             if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strPath))
             {
                 $self->{oFile}->pathCreate(PATH_DB_ABSOLUTE, $strPath,
-                                            $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE));
-            }
-        }
+                    $oManifest->get(MANIFEST_SECTION_TARGET_PATH, $strTarget, MANIFEST_SUBKEY_MODE));
 
-        # Create all links in the manifest that do not already exist
-        $strSection = "${strSectionPathKey}:link";
+                # Set ownership (??? this could be done better inside the file functions)
+                my $strUser = $oManifest->get(MANIFEST_SECTION_TARGET_PATH, $strTarget, MANIFEST_SUBKEY_USER);
+                my $strGroup = $oManifest->get(MANIFEST_SECTION_TARGET_PATH, $strTarget, MANIFEST_SUBKEY_GROUP);
 
-        if ($oManifest->test($strSection))
-        {
-            foreach my $strName ($oManifest->keys($strSection))
-            {
-                my $strLink = "${strSectionPath}/${strName}";
-
-                if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strLink))
+                if ($strUser ne getpwuid($<) || $strGroup ne getgrgid($())
                 {
-                    $self->{oFile}->linkCreate(PATH_DB_ABSOLUTE,
-                                                $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION),
-                                                PATH_DB_ABSOLUTE, $strLink);
+                    $self->{oFile}->owner(PATH_DB_ABSOLUTE, $strPath, $strUser, $strGroup);
                 }
             }
         }
+
+        $oManifest->remove(MANIFEST_SECTION_TARGET_PATH, $strTarget);
     }
 
-    # Make sure that all paths required for the restore now exist
-    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    # Create paths and links by level.  It's done this way so that all paths and links can be created within the hierarchy of
+    # $PGDATA without having to worry about where linked files and directories are pointed at.
+    my $iLevel = 1;
+    my $iFound;
+
+    do
     {
-        my $strPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
+        $iFound = 0;
 
-        if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE,  $strPath))
+        &log(DEBUG, "build level ${iLevel} paths/links");
+
+        # Iterate path/link sections
+        foreach my $strSection (&MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
         {
-            confess &log(ERROR, "required db path '${strPath}' does not exist");
+            # Iterate paths/links in the section
+            foreach my $strName ($oManifest->keys($strSection))
+            {
+                # Skip the root path since this must already exist
+                if ($strName eq '.')
+                {
+                    next;
+                }
+
+                # Determine the level by splitting the path
+                my @stryName = split('\/', $oManifest->dbPathGet(undef, $strName));
+
+                # Only create the path/link of at the current level
+                if (@stryName == $iLevel)
+                {
+                    my $strDbPath = $oManifest->dbPathGet($self->{strDbClusterPath}, $strName);
+
+                    # If the path/link does not already exist then create it.  The clean() method should have determined if the
+                    # permissions, destinations, etc. are correct
+                    if (!$self->{oFile}->exists(PATH_DB_ABSOLUTE, $strDbPath))
+                    {
+                        # Create a path
+                        if ($strSection eq &MANIFEST_SECTION_TARGET_PATH)
+                        {
+                            $self->{oFile}->pathCreate(PATH_DB_ABSOLUTE, $strDbPath,
+                                $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_MODE));
+                        }
+                        # Else create a link
+                        else
+                        {
+                            # Retrieve the link destination
+                            my $strDestination = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_DESTINATION);
+
+                            # In order to create relative links they must be converted to absolute links and then made relative
+                            # again by linkCreate().  It's possible to modify linkCreate() to accept relative paths but that could
+                            # have an impact elsewhere and doesn't seem worth it.
+                            $self->{oFile}->linkCreate(PATH_DB_ABSOLUTE, pathAbsolute(dirname($strDbPath), $strDestination),
+                                                       PATH_DB_ABSOLUTE, $strDbPath, undef, (index($strDestination, '/') != 0));
+                        }
+
+                        # Set ownership (??? this could be done better inside the file functions)
+                        my $strUser = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_USER);
+                        my $strGroup = $oManifest->get($strSection, $strName, MANIFEST_SUBKEY_GROUP);
+
+                        if ($strUser ne getpwuid($<) || $strGroup ne getgrgid($())
+                        {
+                            $self->{oFile}->owner(PATH_DB_ABSOLUTE, $strDbPath, $strUser, $strGroup);
+                        }
+                    }
+
+                    # Indicate that at least one path/link was found at this level
+                    $iFound++;
+                }
+            }
         }
+
+        # Move to the next path/link level
+        $iLevel++;
     }
+    while ($iFound > 0);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -603,7 +876,7 @@ sub recovery
     my ($strOperation) = logDebugParam (OP_RESTORE_RECOVERY);
 
     # Create recovery.conf path/file
-    my $strRecoveryConf = $self->{strDbClusterPath} . '/' . FILE_RECOVERY_CONF;
+    my $strRecoveryConf = $self->{strDbClusterPath} . '/' . DB_FILE_RECOVERY_CONF;
 
     # See if recovery.conf already exists
     my $bRecoveryConfExists = $self->{oFile}->exists(PATH_DB_ABSOLUTE, $strRecoveryConf);
@@ -733,6 +1006,11 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam (OP_RESTORE_PROCESS);
 
+    if (!fileExists($self->{strDbClusterPath}))
+    {
+        confess &log(ERROR, "\$PGDATA directory $self->{strDbClusterPath} does not exist");
+    }
+
     # Make sure that Postgres is not running
     if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
     {
@@ -753,14 +1031,44 @@ sub process
         optionSet(OPTION_FORCE, false);
     }
 
+    # Copy backup info, load it, then delete
+    $self->{oFile}->copy(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO,
+                         PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
+
+    my $oBackupInfo = new pgBackRest::BackupInfo($self->{strDbClusterPath}, false);
+
+    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO, undef, false);
+
+    # If set to restore is latest then get the actual set
+    if ($self->{strBackupSet} eq OPTION_DEFAULT_RESTORE_SET)
+    {
+        $self->{strBackupSet} = $oBackupInfo->last(BACKUP_TYPE_INCR);
+
+        if (!defined($self->{strBackupSet}))
+        {
+            confess &log(ERROR, "no backup sets to restore", ERROR_BACKUP_SET_INVALID);
+        }
+    }
+    # Otherwise check to make sure specified set is valid
+    else
+    {
+        if (!$oBackupInfo->current($self->{strBackupSet}))
+        {
+            confess &log(ERROR, "backup set $self->{strBackupSet} is not valid", ERROR_BACKUP_SET_INVALID);
+        }
+    }
+
+    # Log the backup set to restore
+    &log(INFO, "restore backup set " . $self->{strBackupSet});
+
     # Make sure the backup path is valid and load the manifest
     my $oManifest = $self->manifestLoad();
 
     # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database
     # from being started by PostgreSQL.
-    $self->{oFile}->remove(PATH_DB_ABSOLUTE,
-                           $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, MANIFEST_KEY_BASE, MANIFEST_SUBKEY_PATH) .
-                           '/' . FILE_PG_CONTROL);
+    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $oManifest->dbPathGet(
+                           $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH),
+                           MANIFEST_FILE_PGCONTROL));
 
     # Clean the restore paths
     $self->clean($oManifest);
@@ -779,76 +1087,67 @@ sub process
     my $lSizeTotal = 0;
     my $lSizeCurrent = 0;
 
-    foreach my $strPathKey ($oManifest->keys(MANIFEST_SECTION_BACKUP_PATH))
+    foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
-        my $strSection = "${strPathKey}:file";
-        my $strSourcePath = $strPathKey;
-        my $strDestinationPath = $oManifest->get(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_PATH);
-
-        # Update path if this is a tablespace
-        if ($oManifest->numericGet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.0 &&
-            $oManifest->test(MANIFEST_SECTION_BACKUP_PATH, $strPathKey, MANIFEST_SUBKEY_LINK))
+        # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in DB_PATH_PGTBLSPC.
+        # The tablespace links have already been created by Restore::build().
+        if ($strFile eq MANIFEST_FILE_TABLESPACEMAP &&
+            $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
         {
-            $strSourcePath .= '/' . $oManifest->tablespacePathGet();
-            $strDestinationPath .= '/' . $oManifest->tablespacePathGet();
+            next;
         }
 
-        if ($oManifest->test($strSection))
+        my $lSize = $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE);
+
+        # By default put everything into a single queue
+        my $strQueueKey = MANIFEST_TARGET_PGDATA;
+
+        # If multiple threads and the file belongs in a tablespace then put in a tablespace-specific queue
+        if (optionGet(OPTION_THREAD_MAX) > 1 && index($strFile, DB_PATH_PGTBLSPC . '/') == 0)
         {
-            foreach my $strFile ($oManifest->keys($strSection))
-            {
-                # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in the pg_tblspc directory.
-                # The tablespace links have already been created by Restore::build().
-                if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_TABLESPACE_MAP &&
-                    $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
-                {
-                    next;
-                }
+            $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strFile))[1];
+        }
 
-                my $lSize = $oManifest->numericGet($strSection, $strFile, MANIFEST_SUBKEY_SIZE);
-                $lSizeTotal += $lSize;
+        # Preface the file key with the size. This allows for sorting the files to restore by size.
+        my $strFileKey;
 
-                # Preface the file key with the size. This allows for sorting the files to restore by size.
-                my $strFileKey;
+        # Skip this for global/pg_control since it will be copied as the last step and needs to named in a way that it
+        # can be found for the copy.
+        if ($strFile eq MANIFEST_FILE_PGCONTROL)
+        {
+            $strFileKey = $strFile;
+            $oRestoreHash{$strQueueKey}{$strFileKey}{skip} = true;
+        }
+        # Else continue normally
+        else
+        {
+            $strFileKey = sprintf("%016d-${strFile}", $lSize);
+            $oRestoreHash{$strQueueKey}{$strFileKey}{skip} = false;
 
-                # Skip this for global/pg_control since it will be copied as the last step and needs to named in a way that it
-                # can be found for the copy.
-                if ($strPathKey eq MANIFEST_KEY_BASE && $strFile eq FILE_PG_CONTROL)
-                {
-                    $strFileKey = $strFile;
-                    $oRestoreHash{$strPathKey}{$strFileKey}{skip} = true;
-                }
-                # Else continue normally
-                else
-                {
-                    $strFileKey = sprintf("%016d-${strFile}", $lSize);
-                    $oRestoreHash{$strPathKey}{$strFileKey}{skip} = false;
-                }
+            $lSizeTotal += $lSize;
+        }
 
-                # Get restore information
-                $oRestoreHash{$strPathKey}{$strFileKey}{file} = $strFile;
-                $oRestoreHash{$strPathKey}{$strFileKey}{size} = $lSize;
-                $oRestoreHash{$strPathKey}{$strFileKey}{source_path} = $strSourcePath;
-                $oRestoreHash{$strPathKey}{$strFileKey}{destination_path} = $strDestinationPath;
-                $oRestoreHash{$strPathKey}{$strFileKey}{reference} =
-                    $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
-                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
-                $oRestoreHash{$strPathKey}{$strFileKey}{modification_time} =
-                    $oManifest->numericGet($strSection, $strFile, MANIFEST_SUBKEY_TIMESTAMP);
-                $oRestoreHash{$strPathKey}{$strFileKey}{mode} =
-                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_MODE);
-                $oRestoreHash{$strPathKey}{$strFileKey}{user} =
-                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_USER);
-                $oRestoreHash{$strPathKey}{$strFileKey}{group} =
-                    $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_GROUP);
+        # Get restore information
+        $oRestoreHash{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
+        $oRestoreHash{$strQueueKey}{$strFileKey}{db_file} =  $oManifest->dbPathGet($self->{strDbClusterPath}, $strFile);
+        $oRestoreHash{$strQueueKey}{$strFileKey}{size} = $lSize;
+        $oRestoreHash{$strQueueKey}{$strFileKey}{reference} =
+            $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
+        $oRestoreHash{$strQueueKey}{$strFileKey}{modification_time} =
+            $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP);
+        $oRestoreHash{$strQueueKey}{$strFileKey}{mode} =
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_MODE);
+        $oRestoreHash{$strQueueKey}{$strFileKey}{user} =
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_USER);
+        $oRestoreHash{$strQueueKey}{$strFileKey}{group} =
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_GROUP);
 
-                # Checksum is only stored if size > 0
-                if ($lSize > 0)
-                {
-                    $oRestoreHash{$strPathKey}{$strFileKey}{checksum} =
-                        $oManifest->get($strSection, $strFile, MANIFEST_SUBKEY_CHECKSUM);
-                }
-            }
+        # Checksum is only stored if size > 0
+        if ($lSize > 0)
+        {
+            $oRestoreHash{$strQueueKey}{$strFileKey}{checksum} =
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM);
         }
     }
 
@@ -859,7 +1158,6 @@ sub process
         require pgBackRest::Protocol::ThreadGroup;
         pgBackRest::Protocol::ThreadGroup->import();
 
-
         logDebugMisc
         (
             $strOperation, 'restore with threads',
@@ -869,16 +1167,16 @@ sub process
         # Initialize the thread queues
         my @oyRestoreQueue;
 
-        foreach my $strPathKey (sort (keys %oRestoreHash))
+        foreach my $strQueueKey (sort (keys %oRestoreHash))
         {
             push(@oyRestoreQueue, Thread::Queue->new());
 
-            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strQueueKey}})))
             {
                 # Skip files marked to be copied later
-                next if ($oRestoreHash{$strPathKey}{$strFileKey}{skip});
+                next if ($oRestoreHash{$strQueueKey}{$strFileKey}{skip});
 
-                $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strPathKey}{$strFileKey});
+                $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strQueueKey}{$strFileKey});
             }
         }
 
@@ -913,14 +1211,14 @@ sub process
         logDebugMisc($strOperation, 'restore in main process');
 
         # Restore file in main process
-        foreach my $strPathKey (sort (keys %oRestoreHash))
+        foreach my $strQueueKey (sort (keys %oRestoreHash))
         {
-            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strPathKey}})))
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strQueueKey}})))
             {
                 # Skip files marked to be copied later
-                next if ($oRestoreHash{$strPathKey}{$strFileKey}{skip});
+                next if ($oRestoreHash{$strQueueKey}{$strFileKey}{skip});
 
-                $lSizeCurrent = restoreFile($oRestoreHash{$strPathKey}{$strFileKey}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
+                $lSizeCurrent = restoreFile($oRestoreHash{$strQueueKey}{$strFileKey}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
                                             optionGet(OPTION_FORCE), $self->{strBackupSet}, $bSourceCompression, $strCurrentUser,
                                             $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
             }
@@ -931,11 +1229,12 @@ sub process
     $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 
     # Copy pg_control last
-    &log(INFO, 'restore ' . FILE_PG_CONTROL . ' (copied last to ensure aborted restores cannot be started)');
+    &log(INFO, 'restore ' . $oManifest->dbPathGet(undef, MANIFEST_FILE_PGCONTROL) .
+         ' (copied last to ensure aborted restores cannot be started)');
 
-    restoreFile($oRestoreHash{&MANIFEST_KEY_BASE}{&FILE_PG_CONTROL}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
+    restoreFile($oRestoreHash{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
                 optionGet(OPTION_FORCE), $self->{strBackupSet}, $bSourceCompression, $strCurrentUser, $strCurrentGroup,
-                $self->{oFile}, $lSizeTotal, $lSizeCurrent);
+                $self->{oFile});
 
     # Finally remove the manifest to indicate the restore is complete
     $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST, undef, false);

@@ -99,8 +99,8 @@ sub threadGroupThread
         my $iQueueStartIdx = int((@{$$oCommand{param}{queue}} / $$oCommand{thread_total}) * $iThreadIdx);
         my $iQueueIdx = $iQueueStartIdx;
 
-        # Keep track of progress
-        my $lSizeCurrent = 0;   # Running total of bytes copied
+        # Keep track of progress (ignored for threaded backup and restore)
+        my $lSizeCurrent = 0;
 
         # Loop through all the queues (exit when the original queue is reached)
         do
@@ -113,7 +113,7 @@ sub threadGroupThread
                 {
                     restoreFile($oMessage, $$oCommand{param}{copy_time_begin}, $$oCommand{param}{delta}, $$oCommand{param}{force},
                                 $$oCommand{param}{backup_path}, $$oCommand{param}{source_compression},
-                                $$oCommand{param}{current_user}, $$oCommand{param}{current_group}, $oFile, 0, 0);
+                                $$oCommand{param}{current_user}, $$oCommand{param}{current_group}, $oFile);
                 }
                 elsif ($$oCommand{function} eq 'backup')
                 {
@@ -121,14 +121,12 @@ sub threadGroupThread
                     my $oResult = {};
 
                     # Backup the file
-                    ($$oResult{copied}, $lSizeCurrent, $$oResult{size}, $$oResult{checksum}) =
-                        backupFile($oFile, $$oMessage{db_file}, $$oMessage{backup_file}, $$oCommand{param}{compress},
-                                   $$oMessage{checksum}, $$oMessage{modification_time},
-                                   $$oMessage{size}, 0, 0);
+                    ($$oResult{copied}, $lSizeCurrent, $$oResult{size}, $$oResult{repo_size}, $$oResult{checksum}) =
+                        backupFile($oFile, $$oMessage{db_file}, $$oMessage{repo_file}, $$oCommand{param}{compress},
+                                   $$oMessage{checksum}, $$oMessage{modification_time}, $$oMessage{size});
 
                     # Send a message to update the manifest
-                    $$oResult{file_section} = $$oMessage{file_section};
-                    $$oResult{file} = $$oMessage{file};
+                    $$oResult{repo_file} = $$oMessage{repo_file};
 
                     $$oCommand{param}{result_queue}->enqueue($oResult);
                 }

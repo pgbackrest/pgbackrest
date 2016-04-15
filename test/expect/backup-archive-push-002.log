@@ -12,7 +12,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -21,8 +21,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -35,7 +34,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -57,7 +56,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -66,8 +65,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
@@ -87,7 +85,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -96,8 +94,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
@@ -126,7 +123,7 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -165,7 +162,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -174,8 +171,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -192,7 +188,7 @@ start (local)
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -214,7 +210,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -223,8 +219,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -252,7 +247,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -261,8 +256,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -275,7 +269,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -297,7 +291,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -306,8 +300,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -324,7 +317,7 @@ start (local)
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -346,7 +339,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -355,8 +348,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-4518a0fdf41d796760b384a358270d4682589820
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000001.partial-4518a0fdf41d796760b384a358270d4682589820, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -384,7 +376,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -393,8 +385,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000002, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -407,7 +398,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -429,7 +420,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -438,8 +429,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000003, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -452,7 +442,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -474,7 +464,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -483,8 +473,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000004, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -497,7 +486,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -519,7 +508,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -528,8 +517,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -542,7 +530,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -564,7 +552,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -573,8 +561,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
@@ -594,7 +581,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -603,8 +590,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
@@ -624,7 +610,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -633,8 +619,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -651,7 +636,7 @@ start (local)
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -673,7 +658,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -682,8 +667,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -711,7 +695,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -720,8 +704,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -734,7 +717,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -756,7 +739,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -765,8 +748,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -783,7 +765,7 @@ start (local)
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -805,7 +787,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -814,8 +796,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-4518a0fdf41d796760b384a358270d4682589820
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000005.partial-4518a0fdf41d796760b384a358270d4682589820, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -843,7 +824,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -852,8 +833,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000006, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -866,7 +846,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -888,7 +868,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -897,8 +877,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000007, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -911,7 +890,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -933,7 +912,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -942,8 +921,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000008, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -956,7 +934,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -978,7 +956,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -987,8 +965,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -1001,7 +978,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1023,7 +1000,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1032,8 +1009,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
@@ -1053,7 +1029,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1062,8 +1038,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
@@ -1083,7 +1058,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1092,8 +1067,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -1110,7 +1084,7 @@ start (local)
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1132,7 +1106,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1141,8 +1115,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -1170,7 +1143,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1179,8 +1152,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -1193,7 +1165,7 @@ start (local)
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1215,7 +1187,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1224,8 +1196,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -1242,7 +1213,7 @@ start (local)
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = 1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1264,7 +1235,7 @@ start (local)
  DEBUG:     Archive->pushProcess: start async archive-push
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/lock/db-archive.stop
+ DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/backrest/archive/db/out, strStopFile = [TEST_PATH]/backrest/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/archive/db/out, strPathType = db:absolute
@@ -1273,8 +1244,7 @@ start (local)
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-4518a0fdf41d796760b384a358270d4682589820
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/backrest/archive/db/out/000000010000000100000009.partial-4518a0fdf41d796760b384a358270d4682589820, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- DEBUG:     File->exists(): strPath = [undef], strPathType = backup:archive
- DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
@@ -1295,7 +1265,7 @@ start (local)
 -----------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
-backrest-format=4
+backrest-format=5
 backrest-version="[VERSION-1]"
 
 [db]
