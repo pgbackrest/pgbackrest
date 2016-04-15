@@ -6,7 +6,7 @@
     </intro>
 
     <changelog>
-         <changelog-release date="XXXX-XX-XX" version="0.95dev" title="UNDER DEVELOPMENT">
+         <changelog-release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
              <release-feature-bullet-list>
                 <release-feature>
                     <text><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time.  See the notes below for more detailed information on what has changed.</text>

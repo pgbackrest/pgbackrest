@@ -1,7 +1,7 @@
 # pgBackRest<br/>Change Log
 
-## v0.95dev: UNDER DEVELOPMENT
-__No Release Date Set__
+## v1.00: New Repository Format and Configuration Scheme, Link Support
+__Released April 14, 2016__
 
 * **IMPORTANT NOTE**: This flag day release breaks compatibility with older versions of pgBackRest. The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed. You must create a new repository to hold backups for this version of pgBackRest and keep your older repository for a time in case you need to do a restore. Restores from the prior repository will require the prior version of pgBackRest but because of name changes it is possible to have `1.00` and a prior version of pgBackRest installed at the same time. See the notes below for more detailed information on what has changed.
 
