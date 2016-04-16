@@ -3,10 +3,11 @@
 <doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
     <variable-list>
         <!-- Variables used by the rest of the script -->
-        <variable key="github-url-base">https://github.com/pgmasters/backrest</variable>
+        <variable key="github-url-base">https://github.com/pgbackrest/pgbackrest</variable>
         <variable key="github-url-master">{[github-url-base]}/blob/master</variable>
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
         <variable key="github-url-change-log">{[github-url-master]}/CHANGELOG.md</variable>
+        <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
         <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
 
         <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
@@ -77,7 +78,7 @@
 
         <link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>.  <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in so cross-compatibility with the community version of <backrest/> is always strictly maintained.
 
-        Please visit <link url="{[crunchy-url-cbm]}">Crunchy Backup Manager</link> for more information.</p>
+        Please visit <link url="{[crunchy-url-base]}">Crunchy Data</link> for more information.</p>
     </section>
 
     <section id="recognition">

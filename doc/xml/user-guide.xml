@@ -175,7 +175,7 @@
 
             <execute user="{[host-user]}" skip="y">
                 <exe-cmd>wget -q -O -
-                    https://github.com/pgmasters/pgbackrest/archive/release/{[version]}.tar.gz |
+                    {[github-url-release]}/{[version]}.tar.gz |
                     tar zx -C ~</exe-cmd>
             </execute>
         </execute-list>
