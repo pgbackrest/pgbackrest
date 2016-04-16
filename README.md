@@ -52,7 +52,7 @@ The manifest contains checksums for every file in the backup so during a restore
 
 Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.
 
-The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical and returns an error otherwise. Asynchronous archiving allows the compression and transfer to be offloaded to another process which maintains a continuous connection to the remote server, improving throughput significantly.
+The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised. Asynchronous archiving allows the compression and transfer to be offloaded to another process which maintains a continuous connection to the remote server, improving throughput significantly.
 
 The push and get commands both ensure that the database and repository match by comparing PostgreSQL versions and system identifiers. This dramatically reduces the possibility of misconfiguring the WAL archive location.
 
