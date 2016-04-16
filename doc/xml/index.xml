@@ -26,6 +26,12 @@
 
         <p><backrest/> aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.</p>
 
+        <p>Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</p>
+    </section>
+
+    <section id="features">
+        <title>Features</title>
+
         <section id="multi-threaded">
             <title>Multithreaded Backup &amp; Restore</title>
 
@@ -51,7 +57,7 @@
         </section>
 
         <section id="postgres-compatibility">
-            <title>Compatible with <postgres/> >= 8.3</title>
+            <title>Compatibility with <postgres/> >= 8.3</title>
 
             <p>Blah, blah, blah</p>
         </section>
@@ -66,8 +72,7 @@
             <li>Tablespace support</li>
             <li>Restore delta option</li>
             <li>Restore using timestamp/size or checksum</li>
-            <li>Support for <postgres/> >= 8.3</li></ul>
-            Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</p> -->
+            <li>Support for <postgres/> >= 8.3</li></ul> -->
     </section>
 
     <section id="getting-started">
