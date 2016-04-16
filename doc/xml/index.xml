@@ -24,26 +24,50 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p><backrest/> aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.
+        <p><backrest/> aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.</p>
 
-        Primary <backrest/> features:
-        <ul>
-            <li>Local or remote backup</li>
-            <li>Multi-threaded backup/restore for performance</li>
-            <li>Checksums</li>
+        <section id="multi-threaded">
+            <title>Multithreaded Backup &amp; Restore</title>
+
+            <p>Blah, blah, blah</p>
+        </section>
+
+        <section id="local-or-remote">
+            <title>Local or Remote Operation</title>
+
+            <p>Blah, blah, blah</p>
+        </section>
+
+        <section id="stream-compression-checksums">
+            <title>Streaming Compression &amp; Checksums</title>
+
+            <p>Blah, blah, blah</p>
+        </section>
+
+        <section id="tablespace-link-support">
+            <title>Tablespace &amp; Link Support</title>
+
+            <p>Blah, blah, blah</p>
+        </section>
+
+        <section id="postgres-compatibility">
+            <title>Compatible with <postgres/> >= 8.3</title>
+
+            <p>Blah, blah, blah</p>
+        </section>
+
+        <!-- </li>
             <li>Safe backups (checks that logs required for consistency are present before backup completes)</li>
             <li>Full, differential, and incremental backups</li>
             <li>Backup rotation (and minimum retention rules with optional separate retention for archive)</li>
-            <li>In-stream compression/decompression</li>
             <li>Archiving and retrieval of logs for replicas/restores built in</li>
             <li>Async archiving for very busy systems (including space limits)</li>
             <li>Backup directories are consistent <postgres/> clusters (when hardlinks are on and compression is off)</li>
             <li>Tablespace support</li>
             <li>Restore delta option</li>
             <li>Restore using timestamp/size or checksum</li>
-            <li>Restore remapping base/tablespaces</li>
             <li>Support for <postgres/> >= 8.3</li></ul>
-            Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</p>
+            Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</p> -->
     </section>
 
     <section id="getting-started">

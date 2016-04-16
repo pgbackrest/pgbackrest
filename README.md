@@ -4,25 +4,25 @@
 
 pgBackRest aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.
 
-Primary pgBackRest features:
+### Multithreaded Backup & Restore
 
-- Local or remote backup
-- Multi-threaded backup/restore for performance
-- Checksums
-- Safe backups (checks that logs required for consistency are present before backup completes)
-- Full, differential, and incremental backups
-- Backup rotation (and minimum retention rules with optional separate retention for archive)
-- In-stream compression/decompression
-- Archiving and retrieval of logs for replicas/restores built in
-- Async archiving for very busy systems (including space limits)
-- Backup directories are consistent PostgreSQL clusters (when hardlinks are on and compression is off)
-- Tablespace support
-- Restore delta option
-- Restore using timestamp/size or checksum
-- Restore remapping base/tablespaces
-- Support for PostgreSQL >= 8.3
+Blah, blah, blah
 
-Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup issues. The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
+### Local or Remote Operation
+
+Blah, blah, blah
+
+### Streaming Compression & Checksums
+
+Blah, blah, blah
+
+### Tablespace & Link Support
+
+Blah, blah, blah
+
+### Compatible with PostgreSQL >= 8.3
+
+Blah, blah, blah
 
 ## Getting Started
 
