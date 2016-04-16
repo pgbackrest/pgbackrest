@@ -4,31 +4,35 @@
 
 pgBackRest aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.
 
-Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup issues. The custom remote protocol limits the types of connections that are required to perform a backup which increases security.
+Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup issues. The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.
 
 ## Features
 
 ### Multithreaded Backup & Restore
 
-Blah, blah, blah
+Compression is usually the bottleneck during backup operations but even with now ubiquitous multi-core servers most database backup solutions are still single-threaded. pgBackRest solves the compression bottleneck with multithreading.
+
+Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link. More cores and a larger pipe lead to even higher throughput.
 
 ### Local or Remote Operation
 
-Blah, blah, blah
+A custom protocol allows pgBackRest to backup, restore, and archive locally or remotely via SSH with minimal configuration. An interface to query PostgreSQL is also provided via the protocol layer so remote access to PostgreSQL is never required, which enhances security.
 
 ### Full, Incremental, & Differential Backups
 
-Blah, blah, blah
+Full, differential, and incremental backups are supported. pgBackRest is not susceptible to time resolution issues like rsync so differential and incremental backups are completely safe.
 
 ### Backup Rotation & Archive Expiration
 
-Expiration policies maintain a set of backups that cover
+Retention polices can be set for full and differential backups to create coverage for any timeframe. WAL archive can be maintained for all backups or only for more recent backups. In the latter case the WAL required to make older backups consistent will still be maintained in the archive.
 
 ### Backup Integrity
 
 Checksums are calculated for every file in the backup and rechecked during a restore. After a backup finishes copying files it waits until every WAL segment required to make the backup consistent reaches the repository.
 
-Backups in the repository are stored as in the same format as a standard PostgreSQL cluster. If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a PostgreSQL cluster directly on the snapshot. This can be a boon for very large databases that are time-consuming to restore in the traditional way.
+Backups in the repository are stored as in the same format as a standard PostgreSQL cluster (including tablespaces). If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a PostgreSQL cluster directly on the snapshot. This is advantageous for terabyte-scale databases that are time consuming to restore in the traditional way.
+
+All operations utilize file and directory level fsyncs to ensure durability.
 
 ### Backup Resume
 
@@ -42,19 +46,25 @@ If the repository is on a backup server then compression is performed on the dat
 
 ### Delta Restore
 
-Blah, blah, blah
+The manifest contains checksums for every file in the backup so during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are removed then checksums are taken for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Since this process is multithreaded is can lead to dramatic reductions in restore times.
 
 ### Advanced Archiving
 
-Get, push, async
+Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.
+
+The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical and returns an error otherwise. Asynchronous archiving allows the compression and transfer to be offloaded to another process which maintains a continuous connection to the remote server, improving throughput significantly.
+
+The push and get commands both ensure that the database and repository match by comparing PostgreSQL versions and system identifiers. This dramatically reduces the possibility of misconfiguring the WAL archive location.
 
 ### Tablespace & Link Support
 
-Blah, blah, blah
+Tablespaces are fully supported and on restore tablespaces can be remapped to any location. It's also possible to remap all tablespaces to one location with a single command which is useful for development restores.
+
+File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
 ### Compatibility with PostgreSQL >= 8.3
 
-Blah, blah, blah
+Older versions of PostgreSQL are regularly employed in the enterprise so pgBackRest includes support for versions down to 8.3.
 
 ## Getting Started
 

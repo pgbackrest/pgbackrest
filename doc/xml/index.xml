@@ -26,7 +26,7 @@
 
         <p><backrest/> aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.</p>
 
-        <p>Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol limits the types of connections that are required to perform a backup which increases security.</p>
+        <p>Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup issues.  The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.</p>
     </section>
 
     <section id="features">
@@ -35,25 +35,27 @@
         <section id="multi-threaded">
             <title>Multithreaded Backup &amp; Restore</title>
 
-            <p>Blah, blah, blah</p>
+            <p>Compression is usually the bottleneck during backup operations but even with now ubiquitous multi-core servers most database backup solutions are still single-threaded.  <backrest/> solves the compression bottleneck with multithreading.</p>
+
+            <p>Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link.  More cores and a larger pipe lead to even higher throughput.</p>
         </section>
 
         <section id="local-or-remote">
             <title>Local or Remote Operation</title>
 
-            <p>Blah, blah, blah</p>
+            <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via SSH with minimal configuration.  An interface to query <postgres/> is also provided via the protocol layer so remote access to <postgres/> is never required, which enhances security.</p>
         </section>
 
         <section id="backup-types">
             <title>Full, Incremental, &amp; Differential Backups</title>
 
-            <p>Blah, blah, blah</p>
+            <p>Full, differential, and incremental backups are supported.  <backrest/> is not susceptible to time resolution issues like rsync so differential and incremental backups are completely safe.</p>
         </section>
 
         <section id="backup-rotation">
             <title>Backup Rotation &amp; Archive Expiration</title>
 
-            <p>Expiration policies maintain a set of backups that cover </p>
+            <p>Retention polices can be set for full and differential backups to create coverage for any timeframe.  WAL archive can be maintained for all backups or only for more recent backups.  In the latter case the WAL required to make older backups consistent will still be maintained in the archive.</p>
         </section>
 
         <section id="backup-intregrity">
@@ -61,7 +63,9 @@
 
             <p>Checksums are calculated for every file in the backup and rechecked during a restore.  After a backup finishes copying files it waits until every WAL segment required to make the backup consistent reaches the repository.</p>
 
-            <p>Backups in the repository are stored as in the same format as a standard <postgres/> cluster.  If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a <postgres/> cluster directly on the snapshot.  This can be a boon for very large databases that are time-consuming to restore in the traditional way.</p>
+            <p>Backups in the repository are stored as in the same format as a standard <postgres/> cluster (including tablespaces).  If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a <postgres/> cluster directly on the snapshot.  This is advantageous for terabyte-scale databases that are time consuming to restore in the traditional way.</p>
+
+            <p>All operations utilize file and directory level fsyncs to ensure durability.</p>
         </section>
 
         <section id="backup-resume">
@@ -81,25 +85,31 @@
         <section id="delta-restore">
             <title>Delta Restore</title>
 
-            <p>Blah, blah, blah</p>
+            <p>The manifest contains checksums for every file in the backup so during a restore it is possible to use these checksums to speed processing enormously.  On a delta restore any files not present in the backup are removed then checksums are taken for the remaining files.  Files that match the backup are left in place and the rest of the files are restored as usual.  Since this process is multithreaded is can lead to dramatic reductions in restore times.</p>
         </section>
 
         <section id="advanced-archiving">
             <title>Advanced Archiving</title>
 
-            <p>Get, push, async</p>
+            <p>Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.</p>
+
+            <p>The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical and returns an error otherwise.  Asynchronous archiving allows the compression and transfer to be offloaded to another process which maintains a continuous connection to the remote server, improving throughput significantly.</p>
+
+            <p>The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers.  This dramatically reduces the possibility of misconfiguring the WAL archive location.</p>
         </section>
 
         <section id="tablespace-link-support">
             <title>Tablespace &amp; Link Support</title>
 
-            <p>Blah, blah, blah</p>
+            <p>Tablespaces are fully supported and on restore tablespaces can be remapped to any location.  It's also possible to remap all tablespaces to one location with a single command which is useful for development restores.</p>
+
+            <p>File and directory links are supported for any file or directory in the <postgres/> cluster.  When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.</p>
         </section>
 
         <section id="postgres-compatibility">
             <title>Compatibility with <postgres/> >= 8.3</title>
 
-            <p>Blah, blah, blah</p>
+            <p>Older versions of <postgres/> are regularly employed in the enterprise so <backrest/> includes support for versions down to 8.3.</p>
         </section>
     </section>
 
