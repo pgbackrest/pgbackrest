@@ -44,10 +44,50 @@
             <p>Blah, blah, blah</p>
         </section>
 
+        <section id="backup-types">
+            <title>Full, Incremental, &amp; Differential Backups</title>
+
+            <p>Blah, blah, blah</p>
+        </section>
+
+        <section id="backup-rotation">
+            <title>Backup Rotation &amp; Archive Expiration</title>
+
+            <p>Expiration policies maintain a set of backups that cover </p>
+        </section>
+
+        <section id="backup-intregrity">
+            <title>Backup Integrity</title>
+
+            <p>Checksums are calculated for every file in the backup and rechecked during a restore.  After a backup finishes copying files it waits until every WAL segment required to make the backup consistent reaches the repository.</p>
+
+            <p>Backups in the repository are stored as in the same format as a standard <postgres/> cluster.  If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a <postgres/> cluster directly on the snapshot.  This can be a boon for very large databases that are time-consuming to restore in the traditional way.</p>
+        </section>
+
+        <section id="backup-resume">
+            <title>Backup Resume</title>
+
+            <p>An aborted backup can be resumed from the point where it was stopped.  Files that were already copied are compared with the checksums in the manifest to ensure integrity.  Since this operation can take place entirely on the backup server it reduces load on the database server and in the end saves time since checksum calculation is faster than compressing and retransmitting data.</p>
+        </section>
+
         <section id="stream-compression-checksums">
             <title>Streaming Compression &amp; Checksums</title>
 
+            <p>Compression and checksum calculations are performed in stream while files are being copied to the repository, whether the repository is located locally or remotely.</p>
+
+            <p>If the repository is on a backup server then compression is performed on the database server and files are transmitted compressed and simply stored on the backup server.  When compression is disabled a lower level of compression is utilized to make efficient use of available bandwidth while keeping CPU cost to a minimum.</p>
+        </section>
+
+        <section id="delta-restore">
+            <title>Delta Restore</title>
+
             <p>Blah, blah, blah</p>
+        </section>
+
+        <section id="advanced-archiving">
+            <title>Advanced Archiving</title>
+
+            <p>Get, push, async</p>
         </section>
 
         <section id="tablespace-link-support">
@@ -61,18 +101,6 @@
 
             <p>Blah, blah, blah</p>
         </section>
-
-        <!-- </li>
-            <li>Safe backups (checks that logs required for consistency are present before backup completes)</li>
-            <li>Full, differential, and incremental backups</li>
-            <li>Backup rotation (and minimum retention rules with optional separate retention for archive)</li>
-            <li>Archiving and retrieval of logs for replicas/restores built in</li>
-            <li>Async archiving for very busy systems (including space limits)</li>
-            <li>Backup directories are consistent <postgres/> clusters (when hardlinks are on and compression is off)</li>
-            <li>Tablespace support</li>
-            <li>Restore delta option</li>
-            <li>Restore using timestamp/size or checksum</li>
-            <li>Support for <postgres/> >= 8.3</li></ul> -->
     </section>
 
     <section id="getting-started">
@@ -85,8 +113,8 @@
           <li><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating rich <backrest/> configurations.</li></ul></p>
     </section>
 
-    <section id="contributing">
-        <title>Contributing</title>
+    <section id="contributions">
+        <title>Contributions</title>
 
         <p>Contributions to <backrest/> are always welcome!
 

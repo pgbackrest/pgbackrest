@@ -16,9 +16,37 @@ Blah, blah, blah
 
 Blah, blah, blah
 
-### Streaming Compression & Checksums
+### Full, Incremental, & Differential Backups
 
 Blah, blah, blah
+
+### Backup Rotation & Archive Expiration
+
+Expiration policies maintain a set of backups that cover
+
+### Backup Integrity
+
+Checksums are calculated for every file in the backup and rechecked during a restore. After a backup finishes copying files it waits until every WAL segment required to make the backup consistent reaches the repository.
+
+Backups in the repository are stored as in the same format as a standard PostgreSQL cluster. If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a PostgreSQL cluster directly on the snapshot. This can be a boon for very large databases that are time-consuming to restore in the traditional way.
+
+### Backup Resume
+
+An aborted backup can be resumed from the point where it was stopped. Files that were already copied are compared with the checksums in the manifest to ensure integrity. Since this operation can take place entirely on the backup server it reduces load on the database server and in the end saves time since checksum calculation is faster than compressing and retransmitting data.
+
+### Streaming Compression & Checksums
+
+Compression and checksum calculations are performed in stream while files are being copied to the repository, whether the repository is located locally or remotely.
+
+If the repository is on a backup server then compression is performed on the database server and files are transmitted compressed and simply stored on the backup server. When compression is disabled a lower level of compression is utilized to make efficient use of available bandwidth while keeping CPU cost to a minimum.
+
+### Delta Restore
+
+Blah, blah, blah
+
+### Advanced Archiving
+
+Get, push, async
 
 ### Tablespace & Link Support
 
@@ -36,7 +64,7 @@ pgBackRest strives to be easy to configure and operate:
 - [Command reference](http://www.pgbackrest.org/command.html) for command-line operations.
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating rich pgBackRest configurations.
 
-## Contributing
+## Contributions
 
 Contributions to pgBackRest are always welcome!
 
