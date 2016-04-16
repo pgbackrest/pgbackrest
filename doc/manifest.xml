@@ -45,6 +45,7 @@
         </render>
 
         <render type="markdown">
+            <render-source key="index" file="../../../README.md"/>
             <render-source key="test" file="../../../test/README.md"/>
         </render>
     </render-list>

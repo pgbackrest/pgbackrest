@@ -1,4 +1,4 @@
-# pgBackRest - Regression, Unit, & Integration Testing
+# pgBackRest <br/> Regression, Unit, & Integration Testing
 
 ## Introduction
 

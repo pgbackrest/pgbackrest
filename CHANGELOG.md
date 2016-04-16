@@ -1,4 +1,4 @@
-# pgBackRest<br/>Change Log
+# pgBackRest <br/> Change Log
 
 ## v1.00: New Repository Format and Configuration Scheme, Link Support
 __Released April 14, 2016__

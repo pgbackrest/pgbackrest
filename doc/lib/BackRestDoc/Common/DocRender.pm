@@ -39,7 +39,7 @@ my $oRenderTag =
         'b' => ['**', '**'],
         'i' => ['_', '_'],
         # 'bi' => ['_**', '**_'],
-        'ul' => ["\n", "\n"],
+        'ul' => ["\n", ""],
         'ol' => ["\n", "\n"],
         'li' => ['- ', "\n"],
         'id' => ['`', '`'],
@@ -475,7 +475,7 @@ sub process
                 $strBuffer .= 'v' . $oDoc->paramGet('version') . ': ';
             }
 
-            $strBuffer .= ($iDepth == 1 ? "{[project]}<br/>" : '') . $strTitle;
+            $strBuffer .= ($iDepth == 1 ? "{[project]} <br/> " : '') . $strTitle;
 
             if (defined($oDoc->paramGet('date', false)))
             {

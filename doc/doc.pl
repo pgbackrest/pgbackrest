@@ -197,13 +197,6 @@ for my $strOutput (@stryOutput)
 
     &log(INFO, "render ${strOutput} output");
 
-    if ($strOutput eq 'markdown' && $oManifest->isBackRest())
-    {
-        # Generate the markdown
-        docProcess("${strBasePath}/xml/index.xml", "${strBasePath}/../README.md", $oManifest);
-        docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oManifest);
-    }
-
     if ($strOutput eq 'markdown')
     {
         my $oMarkdown =
@@ -216,6 +209,12 @@ for my $strOutput (@stryOutput)
             );
 
         $oMarkdown->process();
+
+        # Generate the change log using the old markdown code.
+        if ($oManifest->isBackRest())
+        {
+            docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oManifest);
+        }
     }
     elsif ($strOutput eq 'help' && $oManifest->isBackRest())
     {

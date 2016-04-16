@@ -89,7 +89,7 @@ sub process
 
     if (defined($oPage->paramGet('subtitle', false)))
     {
-        $strMarkdown .= ' - ' . $oPage->paramGet('subtitle');
+        $strMarkdown .= ' <br/> ' . $oPage->paramGet('subtitle') . '';
     }
 
     # my $oHtmlBuilder = new BackRestDoc::Html::DocHtmlBuilder("{[project]} - Reliable PostgreSQL Backup",
@@ -155,7 +155,7 @@ sub process
     # Render sections
     foreach my $oSection ($oPage->nodeList('section'))
     {
-        $strMarkdown .= "\n\n" . $self->sectionProcess($oSection, 1);
+        $strMarkdown = trim($strMarkdown) . "\n\n" . $self->sectionProcess($oSection, 1);
     }
 
     $strMarkdown .= "\n";
@@ -345,7 +345,7 @@ sub sectionProcess
         # Add a subsection
         elsif ($oChild->nameGet() eq 'section')
         {
-            $strMarkdown .= "\n\n" . $self->sectionProcess($oChild, $iDepth + 1);
+            $strMarkdown = trim($strMarkdown) . "\n\n" . $self->sectionProcess($oChild, $iDepth + 1);
         }
         # Check if the child can be processed by a parent
         else

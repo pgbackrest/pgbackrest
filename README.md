@@ -1,4 +1,4 @@
-# pgBackRest<br/>Reliable PostgreSQL Backup & Restore
+# pgBackRest <br/> Reliable PostgreSQL Backup & Restore
 
 ## Introduction
 
