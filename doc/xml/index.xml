@@ -3,7 +3,8 @@
 <doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
     <variable-list>
         <!-- Variables used by the rest of the script -->
-        <variable key="github-url-base">https://github.com/pgbackrest/pgbackrest</variable>
+        <variable key="github-url-root">https://github.com</variable>
+        <variable key="github-url-base">{[github-url-root]}/pgbackrest/pgbackrest</variable>
         <variable key="github-url-master">{[github-url-base]}/blob/master</variable>
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
         <variable key="github-url-change-log">{[github-url-master]}/CHANGELOG.md</variable>
@@ -14,6 +15,7 @@
         <variable key="backrest-page-user-guide">user-guide.html</variable>
         <variable key="backrest-page-configuration">configuration.html</variable>
         <variable key="backrest-page-command">command.html</variable>
+        <variable key="backrest-page-feature-backlog">backlog.html</variable>
 
         <variable key="crunchy-url-base">http://www.crunchydata.com</variable>
         <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
@@ -128,7 +130,7 @@
 
         <p>Contributions to <backrest/> are always welcome!
 
-        Code fixes or new features can be submitted via pull requests.  Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>.
+        Code fixes or new features can be submitted via pull requests.  Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>.  You may want to check the <link page="{[backrest-page-feature-backlog]}">Feature Backlog</link> to see if your suggestion has already been submitted.
 
         Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
 

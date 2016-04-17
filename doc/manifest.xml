@@ -29,6 +29,7 @@
         <source key="index"/>
         <source key="user-guide"/>
         <source key="reference" type="custom"/>
+        <source key="backlog"/>
         <source key="test"/>
     </source-list>
 
@@ -38,6 +39,7 @@
             <render-source key="user-guide" menu="User Guide"/>
             <render-source key="configuration" source="reference" menu="Configuration"/>
             <render-source key="command" source="reference" menu="Commands"/>
+            <render-source key="backlog" source="backlog" menu="Backlog"/>
         </render>
 
         <render type="pdf" file="{[pdf-file]}">

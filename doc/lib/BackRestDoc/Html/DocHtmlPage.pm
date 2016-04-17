@@ -120,7 +120,8 @@ sub process
                 addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => '{[project-url-root]}'});
     }
 
-    foreach my $strRenderOutKey ($self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
+    # ??? The sort order here is hokey and only works for backrest - will need to be changed
+    foreach my $strRenderOutKey (sort {$b cmp $a} $self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
     {
         if ($strRenderOutKey ne $self->{strRenderOutKey} && $strRenderOutKey ne 'index')
         {

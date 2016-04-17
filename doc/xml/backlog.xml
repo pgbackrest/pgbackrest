@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc subtitle="Feature Backlog">
+
+    <section id="introduction">
+        <title>Introduction</title>
+
+        <p>Github has a good facility for reporting issues but it doesn't work as well for feature requests, some of which might take time to implement or never get implemented at all.  The result is a long list of issues which makes the <backrest/> project look as if it does not handle problems in a timely fashion, when in fact the vast majority of the issues are not bugs.  </p>
+
+        <p>Feature requests submitted on Github will be moved here unless they can be satisfied immediately and the feature issue will be closed, but a link will be preserved so comments can be added.  This is not ideal but seems like the best compromise at this time.</p>
+
+        <p>Bug reports will stay open on Github until they are addressed and will not appear on this page.</p>
+    </section>
+
+    <section id="features">
+        <title>Features</title>
+
+        <section id="more-text-info">
+            <title>More information using --output=text for info command</title>
+
+            <p><link url="{[github-url-issues]}/139">Github Issue</link></p>
+
+            <p>The text (default) info output should include everything (or nearly everything) that is in the JSON output nicely formatted for human consumption.</p>
+        </section>
+
+        <section id="delete-backup-label">
+            <title>Delete backup_label as soon as possible</title>
+
+            <p><link url="{[github-url-issues]}/182">Github Issue</link></p>
+
+            <p>If <postgres/> crashes during a backup it may not be able to recover if the backup label is present. Copy and delete right after start_backup(). Stop backup will want to delete it so it might be necessary to copy it back or at least touch a file that <postgres/> can delete. Check after the backup is complete to make sure it's really gone.</p>
+        </section>
+
+        <section id="wal-archive-working">
+            <title>Ability to test that WAL archiving is working</title>
+
+            <p><link url="{[github-url-issues]}/149">Github Issue</link></p>
+
+            <p>Add a new command, archive-test, that will execute pg_switch_xlog and check that the xlog makes it to the archive.</p>
+        </section>
+
+        <section id="processes-vs-threads">
+            <title>Abandon threads and go to processes</title>
+
+            <p><link url="{[github-url-issues]}/48">Github Issue</link></p>
+
+            <p>Even with the thread refactor they are not reliable on all platforms.  Processes would be more compatible across platforms and basic testing has shown there are no significant performance tradeoffs.</p>
+        </section>
+
+        <section id="time-based-retention">
+            <title>Time-based retention</title>
+
+            <p><link url="{[github-url-issues]}/54">Github Issue</link></p>
+
+            <p>Create a setting that allows a time period to be set for retention. Right now only a certain number of backups can be set. If <setting>retention-full=2</setting> and two backups are done back to back, then the time period of protection will be very short.</p>
+
+            <p>The new option retention-period will be expressed in hours, days, weeks, months, years and will work with current retention like this: The time period will be honored but middle backups will be pruned to match retention-full. For example, if <setting>retention-period=2</setting> weeks <setting>full-rentention=2</setting> and a third full backup was taken, the first one would be pruned if it were older than two weeks, else the middle one will be pruned. This gives two weeks of backup coverage but keeps the number of backups down.</p>
+
+            <p>As part of this feature, WAL should be expired as part of retention-period if nothing else is set. This will support installations that are using backrest only for archiving.</p>
+        </section>
+
+        <section id="processes-vs-threads">
+            <title>Only use fully-qualified paths remotely when used locally</title>
+
+            <p><link url="{[github-url-issues]}/151">Github Issue</link></p>
+
+            <p>If <backrest/> is run without being fully-qualified locally it should also be done when running remotely. They might be in different paths but still on the search path. The remote-cmd option can still be used to set it explicitly.</p>
+        </section>
+
+        <section id="link-only-option">
+            <title>Implement --link-only option</title>
+
+            <p>This option would allow the user to restore the link but none of the data at the destination.  This would be useful for linked configuration files which are good to backup but not appropriate to restore in every situation, e.g. a standby that has its own custom config.  Another example would be a link to the log directory from within $PGDATA.</p>
+        </section>
+
+        <section id="stanza-add-update-remove">
+            <title>Stanza add/update/remove</title>
+
+            <p><link url="{[github-url-issues]}/105">Github Issue</link></p>
+
+            <p>Formalize this process and allow upgrades to new database versions.<ul>
+            <li>Make sure that restore and expiration still work - perhaps new unit tests.</li>
+            <li>Add db-id param to restore and archive-get to specify a database.</li></ul></p>
+
+            <p>This should also make it easy to throw a <quote>stanza does not exist</quote> error.</p>
+        </section>
+
+        <section id="info-running-state">
+            <title>Add running state to info</title>
+
+            <p><link url="{[github-url-issues]}/104">Github Issue</link></p>
+
+            <p>Add running (true/false) to info based on the lock file.</p>
+        </section>
+
+        <section id="improve-restore-permissions">
+            <title>Improve restore permissions</title>
+
+            <p><link url="{[github-url-issues]}/63">Github Issue</link></p>
+
+            <p>Two improvements:<ul>
+            <li>Make sure recovery.conf has same ownership/mode as base path</li>
+            <li>Make sure base path has original ownership/permissions.</li></ul></p>
+        </section>
+
+        <section id="pull-remote-options">
+            <title>Pull options from remote when required</title>
+
+            <p><link url="{[github-url-issues]}/164">Github Issue</link></p>
+
+            <p>Certain parameters like db-path and repo-path must be configured on both sides when the backup server is remote. It would be better if these parameters were pulled from the remote side so they aren't repeated.</p>
+        </section>
+
+        <section id="config-validate">
+            <title>Config file validation</title>
+
+            <p><link url="{[github-url-issues]}/134">Github Issue</link></p>
+
+            <p>It's possible to have bogus settings in the configuration file since it is only checked for certain values.<ul>
+            <li>Detect options that are placed in the wrong sections.</li>
+            <li>Detect options that do not exist.</li></ul></p>
+        </section>
+
+        <section id="repo-owner-option">
+            <title>Add repo-owner option</title>
+
+            <p>Suggested by <link url="{[github-url-root]}/terrorobe">Michael Renner</link>
+            <link url="{[github-url-issues]}/73">Github Issue</link></p>
+
+            <p>Allow (or perhaps require) a <setting>repo-owner</setting> to allow <backrest/> to check permissions on the repository.</p>
+        </section>
+
+        <section id="time-pitr-auto-select">
+            <title>Automatically pick a backup for time PITR</title>
+
+            <p><link url="{[github-url-issues]}/81">Github Issue</link></p>
+
+            <p>If time PITR is being done it should be possible to automatically pick the best backup to use.</p>
+        </section>
+
+        <section id="pgreceivexlog-archiving">
+            <title>Async archiving with pg_receivexlog</title>
+
+            <p><link url="{[github-url-issues]}/124">Github Issue</link></p>
+
+            <p>Make async archiving work when pg_receivexlog is writing directly to the out spool directory on the backup server. Setting this up with a replication slot will make it more reliable.</p>
+
+            <p>BackRest will not directly call pg_receivexlog but it can work in concert for more reliable logging.</p>
+        </section>
+
+        <section id="two-archivers-same-repo">
+            <title>Support two archivers on same repository</title>
+
+            <p><link url="{[github-url-issues]}/125">Github Issue</link></p>
+
+            <p>The <setting>archive_mode=always</setting> setting in 9.5 allows both the master and the standby to log to the same archive for redundancy.  Currently <backrest/> will error if this mode is set because it is not supported.</p>
+        </section>
+
+        <section id="archive-get-async">
+            <title>Async archive-get with prefetch</title>
+
+            <p><link url="{[github-url-issues]}/16">Github Issue</link></p>
+
+            <p>Getting one archive file at a time can be tedious if the cluster is very far behind. An async get with some sort of prefetch would speed the process a lot.</p>
+
+            <p>Should be able to specify how may archive logs to prefetch.</p>
+        </section>
+
+        <section id="multi-process-archive-push-get">
+            <title>Multi-processing for archive-get and archive-push</title>
+
+            <p><link url="{[github-url-issues]}/17">Github Issue</link></p>
+
+            <p>Multi-processing would improved performance for these operations, especially archive-push.  However, even very large systems have been working well with asynchronous archiving so this is not a big priority.</p>
+        </section>
+
+        <section id="checksum-delta-option">
+            <title>Add checksum-delta option</title>
+
+            <p><link url="{[github-url-issues]}/28">Github Issue</link></p>
+
+            <p>Checksums are calculated during the backup process, but the delta is still done during diff/incr backups. Add a new option checksum_delta (default n) that does the delta using checksums. Of course, if the timestamp or size has changed the checksum does not need to be calculated.</p>
+        </section>
+
+        <section id="interactive-log-level">
+            <title>Set --log-level-console=info for interactive sessions</title>
+
+            <p>Suggested by <link url="{[github-url-root]}/terrorobe">Michael Renner</link>
+            <link url="{[github-url-issues]}/72">Github Issue</link></p>
+
+            <p>This would prevent surprises for new users who expect to see more output and think the process has locked up if it is not logging.</p>
+        </section>
+
+        <section id="archive-hole-hard-error">
+            <title>Return hard error for holes in the the archive log</title>
+
+            <p><link url="{[github-url-issues]}/27">Github Issue</link></p>
+
+            <p>If an archive log is missing in the middle of an archive stream <backrest/> will return a soft error (1), even though there is probably no chance of that archive log showing up.</p>
+
+            <p>If an archive log is missing then check to see if the next one is present - if so return a hard error.  This is tricky because there is a question of how long to wait. With parallel async push it's very possible that the WALs could arrive out of order.</p>
+
+            <p>Here's a possible solution: <backrest/> on the database server knows the oldest WAL segment that is currently on the db server and not pushed. If this is reported to the backup server, then it can determine if a hole in the archive stream may be filled, or if it is a permanent condition.</p>
+        </section>
+
+        <section id="async-archive-sleep">
+            <title>Add configurable sleep to archiver process to reduce ssh connections</title>
+
+            <p><link url="{[github-url-issues]}/18">Github Issue</link></p>
+
+            <p>The async archiver exits as soon as there are no files left to transfer. A configurable sleep would be good because it would reduce the number of SSH connections made to the remote.</p>
+        </section>
+
+        <section id="preserve-wal-timestamps">
+            <title>Preserve WAL timestamps</title>
+
+            <p><link url="{[github-url-issues]}/55">Github Issue</link></p>
+
+            <p>Preserve exact WAL timestamps to make measurement of WAL rates more accurate in monitoring. Timestamp should be taken from the file before copying so delay in archiving can also be measured.</p>
+        </section>
+
+        <section id="pin-backup">
+            <title>Pin/lock a backup</title>
+
+            <p><link url="{[github-url-issues]}/100">Github Issue</link></p>
+
+            <p>Allow user to indicate that a backup is locked and should be preserved until unlocked. This could be handy for the last backup of a previous PG version or just to save data that is known to be important for any reason.</p>
+        </section>
+
+        <section id="archive-info-stanza">
+            <title>Write stanza name into archive.info and check it</title>
+
+            <p><link url="{[github-url-issues]}/59">Github Issue</link></p>
+
+            <p>This would allow <backrest/> to detect when paths inside the repo have been renamed.</p>
+        </section>
+
+        <section id="backrest-include-config">
+            <title>Allow pgbackrest.d directory to hold config snippets</title>
+
+            <p>Suggested by <link url="{[github-url-root]}/terrorobe">Michael Renner</link>
+            <link url="{[github-url-issues]}/75">Github Issue</link></p>
+
+            <p>This would allow easier configuration for CM software.</p>
+        </section>
+
+        <section id="throttling">
+            <title>Throttling</title>
+
+            <p><link url="{[github-url-issues]}/46">Github Issue</link></p>
+
+            <p>Add a throttling feature to limit the amount of disk i/o and or network bandwidth being used by the backup.</p>
+
+            <p>Make this a per thread limitation to start. That simplifies the problem quite a bit and most users who are throttling will probably be single threaded.</p>
+        </section>
+
+        <section id="hook-scripts">
+            <title>Hook scripts</title>
+
+            <p><link url="{[github-url-issues]}/49">Github Issue</link></p>
+
+            <p>Allow user-defined hook scripts to be run before and after backups.</p>
+        </section>
+
+        <section id="check-wal-early">
+            <title>Notify user earlier during backup if WAL is not being archived</title>
+
+            <p><link url="{[github-url-issues]}/152">Github Issue</link></p>
+
+            <p>It is possible to notify users earlier if archiving is not working during a backup. Check in the main backup loop to see if archiving is proceeding - if not then fail after a configurable amount of time.</p>
+        </section>
+
+        <section id="remote-sudo-user">
+            <title>Allow sudo user to be specified when calling remote via ssh</title>
+
+            <p><link url="{[github-url-issues]}/175">Github Issue</link></p>
+
+            <p>Add new options db-sudo-user and backup-sudo-user to allow the backrest command to be run through sudo for security. This is especially important on the db side.</p>
+        </section>
+
+        <section id="db-user-different">
+            <title>Allow db user to be different than OS user for backup</title>
+
+            <p><link url="{[github-url-issues]}/171">Github Issue</link></p>
+
+            <p>Although the file system backup needs to run as <postgres/>, it can be advantageous to have the start/stop backup run as a less privileged database user with the REPLICATION role. This will need to be tested to see if it works.</p>
+
+            <p>Ideally the file system backup could be run as a user in the <postgres/> group rather than <postgres/> itself but <postgres/> does not grant group permissions so sadly it is not possible to backup as a user other than the database owner at the file-system level.  This limitation will need to be addressed in core <postgres/>.</p>
+        </section>
+
+        <section id="relative-path-options">
+            <title>Allow path options to be relative</title>
+
+            <p><link url="{[github-url-issues]}/140">Github Issue</link></p>
+
+            <p>There are some use cases where would be valuable to use relative paths. However to avoid confusion it might be best to implement it like so:
+            <ul>
+                <li>relative paths would need to being with ./</li>
+                <li>--config would always be allowed to be relative</li>
+                <li>In the config file a new option 'relative-path' would enable relative paths for all other path options.</li></ul>This would avoid strange effects for users who do not need this feature.</p>
+        </section>
+
+        <section id="verify-pg-checksums">
+            <title>Verify <postgres/> data file checksums during backup</title>
+
+            <p><link url="{[github-url-issues]}/101">Github Issue</link></p>
+
+            <p><postgres/> >= 9.3 has the option to enable checksums on data files. <backrest/> should be able to test these checksums and report if it finds any issues. This could also be a stand-alone function.</p>
+
+            <p>For extra credit, test the checksums in WAL.</p>
+        </section>
+
+        <section id="database-logging">
+            <title>Database logging</title>
+
+            <p><link url="{[github-url-issues]}/116">Github Issue</link></p>
+
+            <p>Add the ability to log into a database - especially a centralized database. Include all backup metadata plus the logs.</p>
+
+            <p>This would make for easy querying and monitoring.</p>
+        </section>
+
+        <section id="encryption">
+            <title>Encryption</title>
+
+            <p><link url="{[github-url-issues]}/66">Github Issue</link></p>
+
+            <p>Backup encryption is a good thing ans might be required before users would be comfortable pushing to services such as S3.</p>
+        </section>
+
+        <section id="alternative-storage">
+            <title>Alternative storage methods (S3)</title>
+
+            <p><link url="{[github-url-issues]}/67">Github Issue</link></p>
+
+            <p>Consider alternative storage methods like S3. Ideally there would be an option to store a certain number of backups (at least the last one) locally for fast restores, while using S3 for long-term storage.</p>
+        </section>
+    </section>
+
+    <section id="optimization-refactor">
+        <title>Optimization &amp; Refactoring</title>
+
+        <section id="perl-critic-stern">
+            <title>Get Perl Critic to pass on stern</title>
+
+            <p><link url="{[github-url-issues]}/174">Github Issue</link></p>
+
+            <p>This may require some exceptions in the code, but they should be done on a case by case basis rather than excluding the entire policy.</p>
+        </section>
+
+        <section id="process-id-in-protocol">
+            <title>Pass process id to remote in protocol layer instead of on command line</title>
+
+            <p><link url="{[github-url-issues]}/176">Github Issue</link></p>
+
+            <p>This makes the remote command line static so it works better in secured environments that use ForceCommand or sudo (or both).</p>
+        </section>
+
+        <section id="verify-command-line-in-protocol">
+            <title>Verify command line passed to the remote</title>
+
+            <p><link url="{[github-url-issues]}/177">Github Issue</link></p>
+
+            <p>Some ssh options like ForceCommand can modify the command line passed to the remote. Also pass the command line in the protocol layer to ensure no destructive changes were made.</p>
+        </section>
+
+        <section id="diff-incr-checksum">
+            <title>Don't keep incr/diff files when the checksum matches</title>
+
+            <p><link url="{[github-url-issues]}/99">Github Issue</link></p>
+
+            <p>If a file is recopied in incr/diff because of timestamp changes, there may still be cases where the file was actually not modified. Since we are doing checksums anyway, it's possible to check it against the previous file and create a reference when the checksums match.</p>
+        </section>
+
+        <section id="move-file-object-create">
+            <title>Move File object creation to Config.pm</title>
+
+            <p><link url="{[github-url-issues]}/146">Github Issue</link></p>
+
+            <p>File objects are created in a bunch of places but it's all basically the same code. Move this to a common function that looks like protocolGet().</p>
+        </section>
+    </section>
+
+    <section id="testing">
+        <title>Testing</title>
+
+        <section id="test-recovery">
+            <title>Test to ensure recovery=none with backup_label replay before last checkpoint</title>
+
+            <p><link url="{[github-url-issues]}/168">Github Issue</link></p>
+
+            <p>This is to make sure those types of restores are consistent.</p>
+        </section>
+
+        <section id="test-lock">
+            <title>Locking tests</title>
+
+            <p><link url="{[github-url-issues]}/126">Github Issue</link></p>
+
+            <p>Low-level regression tests to be sure locking works as expected locally and remotely.  This should include tests on NFS since this is a popular scenario.</p>
+        </section>
+
+        <section id="test-debug-lines">
+            <title>Separate debug params onto separate lines</title>
+
+            <p><link url="{[github-url-issues]}/145">Github Issue</link></p>
+
+            <p>Low-level regression tests to be sure locking works as expected locally and remotely.  This should include tests on NFS since this is a popular scenario.</p>
+        </section>
+
+        <section id="test-points-different-times">
+            <title>Allow test points to have different times</title>
+
+            <p><link url="{[github-url-issues]}/160">Github Issue</link></p>
+
+            <p>Currently is is possible to have multiple test points but they must all have the same delay time. Make it so each test point can have its own delay.</p>
+
+            <p>A perfect test case would be adding keep alive testing to restore. The RESTORE_START test should have delay 1 while the KEEP_ALIVE test should have delay 0.</p>
+        </section>
+    </section>
+
+    <section id="documentation">
+        <title>Documentation</title>
+
+        <section id="doc-option-allowed-range">
+            <title>Automatically write option allowed range into docs</title>
+
+            <p><link url="{[github-url-issues]}/52">Github Issue</link></p>
+
+            <p>The debug params all end up on a single line so if one value changes it's tough to tell which one changed. Separate them out onto separate lines to aid debugging (even though this will add a lot of lines to the file.)</p>
+        </section>
+
+        <section id="doc-sudo-force-command">
+            <title>Document ForceCommand &amp; sudo method for security</title>
+
+            <p><link url="{[github-url-issues]}/178">Github Issue</link></p>
+
+            <p>Backrest can be secured by using the backrest use on the database server and configuring sudo and ssh.</p>
+
+            <code-block title="sudo">bf_backrest ALL = (postgres) NOPASSWD:/srv/pgbackrest/backrest-release-0.90/bin/pg_backrest
+            </code-block>
+
+            <code-block title="ssh authorized keys">no-agent-forwarding,no-X11-forwarding,no-port-forwarding,command="sudo -u postgres /srv/pgbackrest/backrest-release-0.90/bin/pg_backrest ${SSH_ORIGINAL_COMMAND#* }" ssh-rsa
+            </code-block>
+
+            <p>This method should be included in the documentation.</p>
+        </section>
+
+        <section id="doc-backrest-comparison">
+            <title>Comparison of <backrest/> to other backup methods</title>
+
+            <p>Suggested by <link url="{[github-url-root]}/terrorobe">Michael Renner</link>
+            <link url="{[github-url-issues]}/69">Github Issue</link></p>
+
+            <p>Discuss how <backrest/> is different from other <postgres/> backup solutions using this <link url="https://consul.io/intro/vs/zookeeper.html">consul comparison</link> as a model.</p>
+        </section>
+    </section>
+</doc>
