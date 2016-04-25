@@ -222,13 +222,13 @@
     <section id="quickstart" depend="installation">
         <title>Quick Start</title>
 
-        <p>The Quick Start section will cover basic configuration of <backrest/> and <postgres/> and introduce the <cmd>backup</cmd>, <cmd>restore</cmd>, and <cmd>info</cmd> commands.</p>
+        <p>The Quick Start section will cover basic configuration of <backrest/> and <postgres/> and introduce the <cmd>backup</cmd>, <cmd>restore</cmd>, and <cmd>info</cmd> commands. For more details on PostgreSQL, see <link url=''>Server Setup and Operation</link>.</p>
 
         <!-- SECTION => QUICKSTART - SETUP DEMO CLUSTER -->
         <section id="setup-demo-cluster">
             <title>Setup Demo Cluster</title>
 
-            <p>Creating the demo cluster is optional but commands in the user guide may not work in other environments without significant modification.  The cluster won't be started immediately because there is still some configuration to do.</p>
+            <p>Creating the demo cluster is optional but is strongly recommended, especially for new users, since all example commands in the user guide reference the demo cluster. The cluster is quick to set up and remove and provides an isolated area for learning. The examples assume no other clusters are set up on the system (i.e. pg_lsclusters returns nothing). The cluster will not be started until a later section because there is still some configuration to do.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create the demo cluster</title>
@@ -241,6 +241,7 @@
             <p>By default <postgres/> will only accept local connections.  The examples in this guide will require connections from other servers so <pg-option>listen_addresses</pg-option> is configured to listen on all interfaces.  This may not be appropriate for secure installations.</p>
 
             <postgres-config host="{[host-db-master]}" file="{[postgres-config-demo]}">
+
                 <title>Set <pg-option>listen_addresses</pg-option></title>
 
                 <postgres-config-option key="listen_addresses">'*'</postgres-config-option>
@@ -269,11 +270,13 @@
 
             <option-description key="stanza"/>
 
-            <p>Demo describes the purpose of this cluster accurately so that will also make a good stanza name.</p>
+            <p>The name 'Demo' describes the purpose of this cluster accurately so that will also make a good stanza name.</p>
 
             <p><backrest/> needs to know where the base data directory for the <postgres/> cluster is located.  The path can be requested from <postgres/> directly but in a recovery scenario the <postgres/> process will not be available.  During backups the value supplied to <backrest/> will be compared against the path that <postgres/> is running on and they must be equal or the backup will return an error.  Make sure that <br-option>db-path</br-option> is exactly equal to <pg-option>data_directory</pg-option> in <file>postgresql.conf</file>.</p>
 
             <p>By default Ubuntu stores clusters in <path>/var/lib/postgresql/[version]/[cluster]</path> so it is easy to determine the correct path for the data directory.</p>
+
+            <p>When creating the <file>{[backrest-config-demo]}</file> file, the default postgres user must have read access.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the <postgres/> cluster data directory</title>
@@ -328,7 +331,7 @@
         <section id="configure-archiving" depend="create-repository">
             <title>Configure Archiving</title>
 
-            <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.</p>
+            <p>Backing up a <postgres/> cluster requires WAL archiving to be enabled. A valid backup will always include <i>at least</i> one WAL segment even if no explicit writes were made to the database before or between backups, therefore archiving must be turned on.</p>
 
             <postgres-config host="{[host-db-master]}" file="{[postgres-config-demo]}">
                 <title>Configure archive settings</title>
@@ -523,7 +526,7 @@
                 </execute>
             </execute-list>
 
-            <p>By setting <br-setting>start-fast</br-setting> on the command-line or in <file>{[backrest-config-demo]}</file> an immediate checkpoint is requested and the backup will start more quickly. This is convenient for testing and for ad-hoc backups.  For instance, if a backup is being taken at the beginning of a release window it makes no sense to wait for a checkpoint.  Since regularly scheduled backups generally only happen once per day it is unlikely that enabling the <br-option>start-fast</br-option> in <file>{[backrest-config-demo]}</file> will negatively affect performance, however for high-volume transactional systems you may want to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line instead.</p>
+            <p>By passing <br-setting>{[dash]}-start-fast</br-setting> on the command-line or setting <br-setting>{[dash]}-start-fast=y</br-setting> in <file>{[backrest-config-demo]}</file> an immediate checkpoint is requested and the backup will start more quickly. This is convenient for testing and for ad-hoc backups.  For instance, if a backup is being taken at the beginning of a release window it makes no sense to wait for a checkpoint.  Since regularly scheduled backups generally only happen once per day it is unlikely that enabling the <br-option>start-fast</br-option> in <file>{[backrest-config-demo]}</file> will negatively affect performance, however for high-volume transactional systems you may want to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line instead. As with all binary commands, override the file setting by passing <br-setting>{[dash]}-no-start-fast</br-setting> on the command line.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Enable the <br-option>start-fast</br-option> option</title>
@@ -548,7 +551,7 @@
 
             <p>Sometimes <backrest/> will exit unexpectedly and the backup in progress on the <postgres/> cluster will not be properly stopped.  <backrest/> exits as quickly as possible when an error occurs so that the cause can be reported accurately and is not masked by another problem that might happen during a more extensive cleanup.</p>
 
-            <p>Here an error in intentionally caused by removing repository permissions.</p>
+            <p>Here an error is intentionally caused by removing repository permissions.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
@@ -1082,7 +1085,7 @@
                 </execute>
             </execute-list>
 
-            <p>A new backup must be performed to due to the timeline switch.</p>
+            <p>A new backup must be performed due to the timeline switch.</p>
 
             <execute-list host="{[host-backup]}">
                 <title>Backup the {[postgres-cluster-demo]} cluster</title>
@@ -1387,7 +1390,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connection as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>db-master</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
+            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>db-master</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create <file>pg_hba.conf</file> entry for replication user</title>
