@@ -317,6 +317,8 @@ use constant OPTION_RETENTION_FULL                                  => 'retentio
 
 # RESTORE Section
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DB_INCLUDE                                      => 'db-include';
+    push @EXPORT, qw(OPTION_DB_INCLUDE);
 use constant OPTION_LINK_ALL                                        => 'link-all';
     push @EXPORT, qw(OPTION_LINK_ALL);
 use constant OPTION_LINK_MAP                                        => 'link-map';
@@ -1357,6 +1359,17 @@ my %oOptionRule =
 
     # RESTORE Section
     #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_DB_INCLUDE =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_RESTORE => true
+        },
+    },
+
     &OPTION_LINK_ALL =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
