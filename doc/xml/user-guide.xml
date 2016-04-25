@@ -548,7 +548,7 @@
 
             <p>Sometimes <backrest/> will exit unexpectedly and the backup in progress on the <postgres/> cluster will not be properly stopped.  <backrest/> exits as quickly as possible when an error occurs so that the cause can be reported accurately and is not masked by another problem that might happen during a more extensive cleanup.</p>
 
-            <p>Here an error in intentionally caused by removing repository permissions.</p>
+            <p>Here an error is intentionally caused by removing repository permissions.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
@@ -1082,7 +1082,7 @@
                 </execute>
             </execute-list>
 
-            <p>A new backup must be performed to due to the timeline switch.</p>
+            <p>A new backup must be performed due to the timeline switch.</p>
 
             <execute-list host="{[host-backup]}">
                 <title>Backup the {[postgres-cluster-demo]} cluster</title>
@@ -1387,7 +1387,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connection as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>db-master</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
+            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>db-master</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create <file>pg_hba.conf</file> entry for replication user</title>
