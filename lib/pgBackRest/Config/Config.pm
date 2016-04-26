@@ -143,6 +143,8 @@ use constant OPTION_RULE_DEPEND_LIST                                => 'depend-l
     push @EXPORT, qw(OPTION_RULE_DEPEND_LIST);
 use constant OPTION_RULE_DEPEND_VALUE                               => 'depend-value';
     push @EXPORT, qw(OPTION_RULE_DEPEND_VALUE);
+use constant OPTION_RULE_HASH_VALUE                                 => 'hash-value';
+    push @EXPORT, qw(OPTION_RULE_HASH_VALUE);
 use constant OPTION_RULE_HINT                                       => 'hint';
     push @EXPORT, qw(OPTION_RULE_HINT);
 use constant OPTION_RULE_NEGATE                                     => 'negate';
@@ -1363,6 +1365,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
+        &OPTION_RULE_HASH_VALUE => false,
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
         {
@@ -1978,25 +1981,41 @@ sub optionValid
                 {
                     foreach my $strItem (@{$strValue})
                     {
-                        # Check for = and make sure there is a least one character on each side
-                        my $iEqualPos = index($strItem, '=');
+                        my $strKey;
+                        my $strValue;
 
-                        if ($iEqualPos < 1 || length($strItem) <= $iEqualPos + 1)
+                        # If the keys are expected to have values
+                        if (!defined($oOptionRule{$strOption}{&OPTION_RULE_HASH_VALUE}) ||
+                            $oOptionRule{$strOption}{&OPTION_RULE_HASH_VALUE})
                         {
-                            confess &log(ERROR, "'${strItem}' not valid key/value for '${strOption}' option",
-                                                ERROR_OPTION_INVALID_PAIR);
+                            # Check for = and make sure there is a least one character on each side
+                            my $iEqualPos = index($strItem, '=');
+
+                            if ($iEqualPos < 1 || length($strItem) <= $iEqualPos + 1)
+                            {
+                                confess &log(ERROR, "'${strItem}' not valid key/value for '${strOption}' option",
+                                                    ERROR_OPTION_INVALID_PAIR);
+                            }
+
+                            $strKey = substr($strItem, 0, $iEqualPos);
+                            $strValue = substr($strItem, $iEqualPos + 1);
+                        }
+                        # Else no values are expected so set value to true
+                        else
+                        {
+                            $strKey = $strItem;
+                            $strValue = true;
                         }
 
                         # Check that the key has not already been set
-                        my $strKey = substr($strItem, 0, $iEqualPos);
-
                         if (defined($oOption{$strOption}{$strKey}{value}))
                         {
                             confess &log(ERROR, "'${$strItem}' already defined for '${strOption}' option",
                                                 ERROR_OPTION_DUPLICATE_KEY);
                         }
 
-                        $oOption{$strOption}{value}{$strKey} = substr($strItem, $iEqualPos + 1);
+                        # Set key/value
+                        $oOption{$strOption}{value}{$strKey} = $strValue;
                     }
                 }
                 else
