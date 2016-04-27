@@ -895,9 +895,15 @@ sub BackRestTestBackup_Test
 
             # Create base path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt', 'BASE',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', '33000',
+                                                  '7f4c74dc10f61eef43e6ae642606627df1999b34', $lTime);
 
             # Create global path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
@@ -1125,11 +1131,11 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PathRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
 
             # Remove a file
-            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt');
+            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
-                                       'add and delete files', undef, ' --link-all');
+                                       'add and delete files', undef, ' --link-all --db-include=1');
 
             # Additional restore tests that don't need to be performed for every permutation
             if ($bNeutralTest && !$bRemote)
@@ -1138,14 +1144,14 @@ sub BackRestTestBackup_Test
                 BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                            undef, undef, undef, undef, undef, undef,
                                            'restore all links by mapping', undef, '--log-level-console=detail' .
-                                           '  --link-map=pg_stat=../pg_stat' .
+                                           ' --link-map=pg_stat=../pg_stat' .
                                            ' --link-map=postgresql.conf=../pg_config/postgresql.conf');
 
                 # Error when links overlap
                 BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                            undef, undef, undef, undef, undef, undef,
                                            'restore all links by mapping', ERROR_LINK_DESTINATION, '--log-level-console=warn' .
-                                           '  --link-map=pg_stat=../pg_stat' .
+                                           ' --link-map=pg_stat=../pg_stat' .
                                            ' --link-map=postgresql.conf=../pg_stat/postgresql.conf');
 
                 # Error when links still exist on non-delta restore
@@ -1436,7 +1442,7 @@ sub BackRestTestBackup_Test
                 executeTest('rm ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/backup.info", {bRemote => $bRemote});
             }
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt', 'BASEUPDT',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT',
                                                   '9a53d532e27785e681766c98516a5e93f096a501', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'update files',
@@ -1462,7 +1468,7 @@ sub BackRestTestBackup_Test
                                            {strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
                                             strOptionalParam => '--log-level-console=detail'});
 
-            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt');
+            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
             $strBackup = BackRestTestBackup_BackupEnd(\%oManifest);
 
@@ -1475,7 +1481,7 @@ sub BackRestTestBackup_Test
 
             $strType = 'diff';
 
-            BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt');
+            BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2b.txt', true);
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2c.txt', 'TBLSPC2C',
@@ -1497,7 +1503,7 @@ sub BackRestTestBackup_Test
             $strType = 'full';
             BackRestTestBackup_ManifestReference(\%oManifest);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt', 'BASEUPDT2',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT2',
                                                   '7579ada0808d7f98087a0a586d0df9de009cdc33', $lTime);
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'update file',
