@@ -1685,6 +1685,12 @@ sub BackRestTestBackup_Test
             my $strNameMessage = 'name';
             my $strTimelineMessage = 'timeline3';
 
+            # Create two new databases
+            BackRestTestBackup_PgExecuteNoTrans("create database test1");
+            my $strDbTest1Id = BackRestTestBackup_PgSelectOne("select oid from pg_database where datname = 'test1'");
+            BackRestTestBackup_PgExecuteNoTrans("create database test2");
+            my $strDbTest2Id = BackRestTestBackup_PgSelectOne("select oid from pg_database where datname = 'test2'");
+
             # Test invalid archive command
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
@@ -1878,7 +1884,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $strTargetAction, $strTargetTimeline,
-                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus, ' --db-include=' . $strDbTest2Id);
 
             BackRestTestBackup_ClusterStart();
             BackRestTestBackup_PgSelectOneTest('select message from test', $strNameMessage);
