@@ -1082,6 +1082,19 @@ sub process
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
 
+    # Build an expression to match files that should be zero'd for filtered restores
+    my $strDbFilter;
+
+    if (optionTest(OPTION_DB_INCLUDE))
+    {
+        my $oDbFilterRequest = optionGet(OPTION_DB_INCLUDE);
+
+        for my $strKey (sort(keys(%{$oDbFilterRequest})))
+        {
+            $strDbFilter = '^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strKey . '\/.*';
+        }
+    }
+
     # Create hash containing files to restore
     my %oRestoreHash;
     my $lSizeTotal = 0;
@@ -1125,6 +1138,12 @@ sub process
             $oRestoreHash{$strQueueKey}{$strFileKey}{skip} = false;
 
             $lSizeTotal += $lSize;
+        }
+
+        # Zero files that should be filtered
+        if (defined($strDbFilter) && $strFile =~ $strDbFilter)
+        {
+            $oRestoreHash{$strQueueKey}{$strFileKey}{zero} = true;
         }
 
         # Get restore information

@@ -1133,9 +1133,19 @@ sub BackRestTestBackup_Test
             # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                'a10909c2cdcaf5adb7e6b092a4faba558b62bd96';
+
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
-                                       'add and delete files', undef, ' --link-all --db-include=1');
+                                       'add and delete files', undef, ' --link-all --db-include=32768');
+
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                '7f4c74dc10f61eef43e6ae642606627df1999b34';
+
+            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
+                                       undef, undef, undef, undef, undef, undef,
+                                       'add and delete files', undef, ' --link-all');
 
             # Additional restore tests that don't need to be performed for every permutation
             if ($bNeutralTest && !$bRemote)

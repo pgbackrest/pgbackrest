@@ -352,6 +352,52 @@ sub fileMove
 push @EXPORT, qw(fileMove);
 
 ####################################################################################################################################
+# fileOpen
+#
+# Open a file.
+####################################################################################################################################
+sub fileOpen
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFile,
+        $lFlags
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileOpen', \@_,
+            {name => 'strFile', trace => true},
+            {name => 'lFlags', trace => true}
+        );
+
+    my $hFile;
+
+    if (!sysopen($hFile, $strFile, $lFlags))
+    {
+        my $strError = $!;
+
+        # If file exists then throw the error
+        if (fileExists($strFile))
+        {
+            confess &log(ERROR, "unable to open ${strFile}" . (defined($strError) ? ": $strError" : ''), ERROR_FILE_OPEN);
+        }
+
+        confess &log(ERROR, "${strFile} does not exist", ERROR_FILE_MISSING);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hFile', value => $hFile, trace => true}
+    );
+}
+
+push @EXPORT, qw(fileOpen);
+
+####################################################################################################################################
 # filePathSync
 #
 # Sync a directory.
@@ -379,10 +425,7 @@ sub filePathSync
         or confess &log(ERROR, "unable to sync ${strPath}", ERROR_PATH_SYNC);
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 push @EXPORT, qw(filePathSync);
