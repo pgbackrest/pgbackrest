@@ -1416,6 +1416,13 @@ sub BackRestTestBackup_BackupCompare
 
             foreach my $strFile (keys(%{${$oExpectedManifestRef}{$strSection}}))
             {
+                if (!defined(${$oExpectedManifestRef}{$strSection}{$strFile}{$strSubKey}) &&
+                    defined(${$oExpectedManifestRef}{"${strSection}:default"}{$strSubKey}))
+                {
+                    ${$oExpectedManifestRef}{$strSection}{$strFile}{$strSubKey} =
+                        ${$oExpectedManifestRef}{"${strSection}:default"}{$strSubKey};
+                }
+
                 my $strValue = ${$oExpectedManifestRef}{$strSection}{$strFile}{$strSubKey};
 
                 if (defined($strValue))
