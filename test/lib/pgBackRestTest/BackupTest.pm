@@ -899,11 +899,15 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/PG_VERSION', '9.3',
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', '33000',
                                                   '7f4c74dc10f61eef43e6ae642606627df1999b34', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/PG_VERSION', '9.3',
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             # Create global path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
@@ -1133,15 +1137,6 @@ sub BackRestTestBackup_Test
             # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
-
-            BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
-                                       undef, undef, undef, undef, undef, undef,
-                                       'add and delete files', undef, ' --link-all --db-include=32768');
-
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
-                '7f4c74dc10f61eef43e6ae642606627df1999b34';
-
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
                                        'add and delete files', undef, ' --link-all');
@@ -1312,8 +1307,9 @@ sub BackRestTestBackup_Test
 
             # Add tablespace 1
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 1);
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', 'tablespace1.txt', 'TBLSPC1',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
                                                   'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
                                                   'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
@@ -1337,8 +1333,9 @@ sub BackRestTestBackup_Test
 
             # Add tablespace 2
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 2);
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2.txt', 'TBLSPC2',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
                                                   'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
 
 
@@ -1557,6 +1554,12 @@ sub BackRestTestBackup_Test
                                        $bForce, undef, undef, undef, undef, undef, undef, 'no tablespace remap', undef,
                                        "--tablespace-map-all=../../tablespace --log-level-console=detail", false);
 
+            # Selective Restore
+            #-----------------------------------------------------------------------------------------------------------------------
+            # delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
+            # $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+            #     '7f4c74dc10f61eef43e6ae642606627df1999b34';
+
             # Backup Info (with an empty stanza)
             #-----------------------------------------------------------------------------------------------------------------------
             executeTest('mkdir ' . BackRestTestCommon_RepoPathGet . '/backup/db_empty',
@@ -1568,7 +1571,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Info('bogus', INFO_OUTPUT_JSON, false);
 
             # Dump out history path at the end to verify all history files are being recorded.  This test is only performed locally
-            # because for some reason sort order is different when this command is executed via ssh (even though the content if the
+            # because for some reason sort order is different when this command is executed via ssh (even though the content of the
             # directory is identical).
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bNeutralTest && !$bRemote)

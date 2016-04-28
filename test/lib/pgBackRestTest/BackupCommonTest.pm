@@ -493,13 +493,23 @@ push @EXPORT, qw(BackRestTestBackup_PathCreate);
 sub BackRestTestBackup_PathCreate
 {
     my $oManifestRef = shift;
-    my $strPath = shift;
+    my $strTarget = shift;
     my $strSubPath = shift;
     my $strMode = shift;
 
     # Create final file location
-    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strPath}{&MANIFEST_SUBKEY_PATH} .
-                       (defined($strSubPath) ? "/${strSubPath}" : '');
+    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_PATH};
+
+    # Get tablespace path if this is a tablespace
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0 &&
+        index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
+    {
+        my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
+
+        $strFinalPath .= '/PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
+    }
+
+    $strFinalPath .= (defined($strSubPath) ? "/${strSubPath}" : '');
 
     # Create the path
     if (!(-e $strFinalPath))
