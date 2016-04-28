@@ -1821,6 +1821,10 @@ sub BackRestTestBackup_RestoreCompare
                 $oActualManifest->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
                                       $oFile->hash(PATH_DB_ABSOLUTE, $oActualManifest->dbPathGet($strSectionPath, $strName)));
             }
+            else
+            {
+                $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM);
+            }
         }
     }
 

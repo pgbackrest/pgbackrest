@@ -1530,6 +1530,24 @@ sub BackRestTestBackup_Test
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'add file',
                                                             {strOptionalParam => '--log-level-console=detail'});
 
+            # Selective Restore
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = true;
+
+            executeTest('rm -rf ' . BackRestTestCommon_DbCommonPathGet() . "/*");
+
+            delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'});
+
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'selective restore', undef,
+                                       "--log-level-console=detail --db-include=32768");
+
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                '7f4c74dc10f61eef43e6ae642606627df1999b34';
+
             # Compact Restore
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
@@ -1540,7 +1558,6 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_PathCreate($strDbPath);
 
             $oRemapHash{&MANIFEST_TARGET_PGDATA} = $strDbPath;
-            delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'});
             delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
@@ -1553,12 +1570,6 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, undef, $bDelta,
                                        $bForce, undef, undef, undef, undef, undef, undef, 'no tablespace remap', undef,
                                        "--tablespace-map-all=../../tablespace --log-level-console=detail", false);
-
-            # Selective Restore
-            #-----------------------------------------------------------------------------------------------------------------------
-            # delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
-            # $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
-            #     '7f4c74dc10f61eef43e6ae642606627df1999b34';
 
             # Backup Info (with an empty stanza)
             #-----------------------------------------------------------------------------------------------------------------------
