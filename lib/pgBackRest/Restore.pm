@@ -1141,7 +1141,7 @@ sub process
         }
 
         # Zero files that should be filtered
-        if (defined($strDbFilter) && $strFile =~ $strDbFilter)
+        if (defined($strDbFilter) && $strFile =~ $strDbFilter && $strFile !~ /PG\_VERSION$/)
         {
             $oRestoreHash{$strQueueKey}{$strFileKey}{zero} = true;
         }

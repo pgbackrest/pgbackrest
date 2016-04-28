@@ -1804,8 +1804,13 @@ sub BackRestTestBackup_RestoreCompare
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
-            $oActualManifest->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
-                                  $oFile->hash(PATH_DB_ABSOLUTE, $oActualManifest->dbPathGet($strSectionPath, $strName)));
+            my $oStat = fileStat($oActualManifest->dbPathGet($strSectionPath, $strName));
+
+            if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
+            {
+                $oActualManifest->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
+                                      $oFile->hash(PATH_DB_ABSOLUTE, $oActualManifest->dbPathGet($strSectionPath, $strName)));
+            }
         }
     }
 

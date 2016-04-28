@@ -1133,8 +1133,7 @@ sub BackRestTestBackup_Test
             # Remove a file
             BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
-                'a10909c2cdcaf5adb7e6b092a4faba558b62bd96';
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
@@ -1888,6 +1887,9 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ClusterStart();
             BackRestTestBackup_PgSelectOneTest('select message from test', $strNameMessage);
+
+            # Now it should be OK to drop database test2
+            BackRestTestBackup_PgExecuteNoTrans("drop database test2");
 
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
