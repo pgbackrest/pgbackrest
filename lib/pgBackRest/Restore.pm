@@ -11,7 +11,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Cwd qw(abs_path);
-use File::Basename qw(dirname);
+use File::Basename qw(basename dirname);
 use File::stat qw(lstat);
 
 use lib dirname($0);
@@ -1087,12 +1087,60 @@ sub process
 
     if (optionTest(OPTION_DB_INCLUDE))
     {
-        my $oDbFilterRequest = optionGet(OPTION_DB_INCLUDE);
+        # Build a list of all databases
+        my %oDbList;
 
-        for my $strKey (sort(keys(%{$oDbFilterRequest})))
+        foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
         {
-            $strDbFilter = '^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strKey . '\/.*';
+            if ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/base\/[0-9]+\/PG\_VERSION'))
+            {
+                my $strDb = basename(dirname($strFile));
+
+                $oDbList{$strDb} = true;
+            }
         }
+
+        # If no databases where found then this backup does not contain a valid cluster
+        if (keys(%oDbList) == 0)
+        {
+            &log(ASSERT, 'no databases for include/exclude -- does not look like a valid cluster');
+        }
+
+        # Log databases found
+        &log(DETAIL, 'databases for include/exclude (' . join(', ', sort(keys(%oDbList))) . ')');
+
+        # Remove included databases from the list
+        my $oDbInclude = optionGet(OPTION_DB_INCLUDE);
+
+        for my $strDbKey (sort(keys(%{$oDbInclude})))
+        {
+            # To be included the db must exist
+            if (!defined($oDbList{$strDbKey}))
+            {
+                confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_PATH_MISSING);
+            }
+
+            delete($oDbList{$strDbKey});
+        }
+
+        # Construct regexp
+        for my $strDbKey (sort(keys(%oDbList)))
+        {
+            $strDbFilter .= (defined($strDbFilter) ? '|' : '') .
+                '(^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strDbKey . '\/)';
+
+            for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+            {
+                # If target is a link but not a tablespace and has not already been remapped when remap it
+                if ($oManifest->isTargetLink($strTarget) && $oManifest->isTargetTablespace($strTarget))
+                {
+                    $strDbFilter .=
+                        '|(^' . $strTarget . '\/' . $oManifest->tablespacePathGet() . '\/' . $strDbKey . '\/)';
+                }
+            }
+        }
+
+        &log(DETAIL, "database filter: $strDbFilter");
     }
 
     # Create hash containing files to restore
