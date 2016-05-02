@@ -45,12 +45,12 @@ full backup
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_stat
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_stat
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/pg_stat, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_config/postgresql.conf
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_config/postgresql.conf
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/pg_config/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/backrest/temp/db.tmp
@@ -334,12 +334,12 @@ full backup (resume)
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_stat
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_stat
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/pg_stat, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_config/postgresql.conf
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db/common, strPath = ../pg_config/postgresql.conf
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/pg_config/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
   WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
@@ -840,11 +840,11 @@ incr backup (add tablespace 1)
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common/pg_tblspc, strPathType = db:absolute
  DEBUG:     Manifest->build: found tablespace 1
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db/common/pg_tblspc, strPath = [TEST_PATH]/db/tablespace/ts1
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db/common/pg_tblspc, strPath = [TEST_PATH]/db/tablespace/ts1
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/backrest/temp/db.tmp
@@ -1087,14 +1087,14 @@ incr backup (resume and add tablespace 2)
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common/pg_tblspc, strPathType = db:absolute
  DEBUG:     Manifest->build: found tablespace 1
  DEBUG:     Manifest->build: found tablespace 2
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db/common/pg_tblspc, strPath = [TEST_PATH]/db/tablespace/ts1
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db/common/pg_tblspc, strPath = [TEST_PATH]/db/tablespace/ts1
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/tablespace/ts1, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db/common/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db/tablespace/ts2
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db/common/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db/tablespace/ts2
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/tablespace/ts2, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
   WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
@@ -1760,7 +1760,7 @@ incr backup (add files and remove tablespace 2)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --hardlink --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
   INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
-  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
   INFO: backup file [TEST_PATH]/db/common-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
   INFO: incr backup size = 13B
   INFO: new backup label = [BACKUP-INCR-3]
@@ -1859,7 +1859,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2017,7 +2017,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","reference":"[BACKUP-INCR-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","reference":"[BACKUP-INCR-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2079,7 +2079,7 @@ diff backup (updates since last full)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --hardlink --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 28%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/tablespace2b.txt (8B, 48%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 48%) checksum e324463005236d83e6e54795dbddd20a74533bf3
   INFO: backup file [TEST_PATH]/db/common-2/base/16384/17000 (8B, 69%) checksum 9a53d532e27785e681766c98516a5e93f096a501
   INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 87%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
   INFO: backup file [TEST_PATH]/db/common-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
@@ -2180,7 +2180,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2339,7 +2339,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2403,7 +2403,7 @@ diff backup (remove files during backup)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --hardlink --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 35%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/tablespace2c.txt (12B, 61%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 61%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
   INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 83%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 DETAIL: skip file removed by database: [TEST_PATH]/db/common-2/base/base2.txt
   INFO: diff backup size = 31B
@@ -2501,7 +2501,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2565,7 +2565,7 @@ full backup (update file)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --hardlink --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
   INFO: backup file [TEST_PATH]/db/common-2/postgresql.conf (21B, 26%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/tablespace2c.txt (12B, 41%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 41%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
   INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 55%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
   INFO: backup file [TEST_PATH]/db/common-2/base/16384/17000 (9B, 67%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
   INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 75%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
@@ -2670,7 +2670,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2839,7 +2839,7 @@ pg_data/global/pg_control={"checksum":"56fe5780b8dca9705e0c22032a83828860a21235"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_tblspc/2/[TS_PATH-1]/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
@@ -2900,6 +2900,39 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
+restore delta, remap (selective restore)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=16384=1 --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+  INFO: restore backup set [BACKUP-DIFF-5]
+  INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db/tablespace/ts2-2
+DETAIL: check [TEST_PATH]/db/common-2 exists
+DETAIL: check [TEST_PATH]/db/tablespace/ts2-2 exists
+  INFO: remove invalid files/paths/links from [TEST_PATH]/db/tablespace/ts2-2/[TS_PATH-1]
+  INFO: remove invalid files/paths/links from [TEST_PATH]/db/common-2
+DETAIL: preserve file [TEST_PATH]/db/common-2/recovery.conf
+DETAIL: databases for include/exclude (16384, 32768)
+DETAIL: database filter: (^pg_data\/base\/32768\/)|(^pg_tblspc/2\/[TS_PATH-1]\/32768\/)
+DETAIL: restore file [TEST_PATH]/db/common-2/postgresql.conf - exists and matches backup (21B, 23%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 37%)
+DETAIL: restore file [TEST_PATH]/db/common-2/badchecksum.txt - exists and matches backup (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+DETAIL: restore file [TEST_PATH]/db/common-2/base/base2.txt - exists and matches backup (9B, 60%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/17000 - exists and matches backup (9B, 70%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 78%)
+DETAIL: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat - exists and matches backup (5B, 84%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 89%)
+DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION - exists and matches backup (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION - exists and matches backup (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/PG_VERSION - exists and matches backup (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
+  INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
+  INFO: restore file [TEST_PATH]/db/common-2/global/pg_control (8KB) checksum 56fe5780b8dca9705e0c22032a83828860a21235
+  INFO: restore stop
+
++ supplemental file: [TEST_PATH]/db/common-2/recovery.conf
+----------------------------------------------------------
+restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
+
 restore, remap, expect exit 148 (no tablespace remap - error when tablespace dir does not exist)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2922,7 +2955,7 @@ restore (no tablespace remap)
 DETAIL: check [TEST_PATH]/db/common-2/base exists
 DETAIL: check [TEST_PATH]/db/common-2/tablespace exists
   INFO: restore file [TEST_PATH]/db/common-2/base/postgresql.conf (21B, 23%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: restore file [TEST_PATH]/db/common-2/base/pg_tblspc/2/[TS_PATH-1]/tablespace2c.txt (12B, 37%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: restore file [TEST_PATH]/db/common-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 37%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
   INFO: restore file [TEST_PATH]/db/common-2/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
   INFO: restore file [TEST_PATH]/db/common-2/base/base/base2.txt (9B, 60%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
   INFO: restore file [TEST_PATH]/db/common-2/base/base/16384/17000 (9B, 70%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
