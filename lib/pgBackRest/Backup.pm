@@ -640,6 +640,7 @@ sub process
     # Start backup (unless --no-online is set)
     my $strArchiveStart;
     my $oTablespaceMap;
+	my $oDatabaseMap;
 
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
@@ -673,13 +674,16 @@ sub process
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");
 
-        # Build the backup manifest
+        # Get tablespace map
         $oTablespaceMap = $self->{oDb}->tablespaceMapGet();
+
+        # Get database map
+        $oDatabaseMap = $self->{oDb}->databaseMapGet();
     }
 
     # Buid the manifest
     $oBackupManifest->build($self->{oFile}, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
-                            $oTablespaceMap);
+                            $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # Check if an aborted backup exists for this stanza

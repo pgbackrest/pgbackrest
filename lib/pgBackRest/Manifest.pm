@@ -68,6 +68,8 @@ use constant MANIFEST_SECTION_BACKUP_OPTION                         => 'backup:o
     push @EXPORT, qw(MANIFEST_SECTION_BACKUP_OPTION);
 use constant MANIFEST_SECTION_BACKUP_TARGET                         => 'backup:target';
     push @EXPORT, qw(MANIFEST_SECTION_BACKUP_TARGET);
+use constant MANIFEST_SECTION_DB                             		=> 'db';
+    push @EXPORT, qw(MANIFEST_SECTION_DB);
 use constant MANIFEST_SECTION_TARGET_PATH                           => 'target:path';
     push @EXPORT, qw(MANIFEST_SECTION_TARGET_PATH);
 use constant MANIFEST_SECTION_TARGET_FILE                           => 'target:file';
@@ -114,6 +116,8 @@ use constant MANIFEST_KEY_CATALOG                                   => 'db-catal
     push @EXPORT, qw(MANIFEST_KEY_CATALOG);
 use constant MANIFEST_KEY_CONTROL                                   => 'db-control-version';
     push @EXPORT, qw(MANIFEST_KEY_CONTROL);
+use constant MANIFEST_KEY_DB_LAST_SYSTEM_ID                         => 'db-last-system-id';
+    push @EXPORT, qw(MANIFEST_KEY_DB_LAST_SYSTEM_ID);
 use constant MANIFEST_KEY_DB_VERSION                                => 'db-version';
     push @EXPORT, qw(MANIFEST_KEY_DB_VERSION);
 
@@ -455,6 +459,7 @@ sub build
         $oLastManifest,
         $bOnline,
         $oTablespaceMapRef,
+        $oDatabaseMapRef,
         $strLevel,
         $bTablespace,
         $strParentPath,
@@ -468,6 +473,7 @@ sub build
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
             {name => 'oTablespaceMapRef', required => false},
+            {name => 'oDatabaseMapRef', required => false},
             {name => 'strLevel', required => false},
             {name => 'bTablespace', required => false},
             {name => 'strParentPath', required => false},
@@ -664,7 +670,7 @@ sub build
 
             $strPath = dirname("${strPath}/${strName}");
 
-            $self->build($oFile, $strLinkDestination, undef, $bOnline, $oTablespaceMapRef,
+            $self->build($oFile, $strLinkDestination, undef, $bOnline, $oTablespaceMapRef, $oDatabaseMapRef,
                          $strFile, $bTablespace, $strPath, $strFilter, $strLinkDestination);
         }
     }
@@ -688,6 +694,15 @@ sub build
         {
             $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef,
                        $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL));
+        }
+
+        # Store database map information when provided during an online backup.
+        foreach my $strDbName (sort(keys(%{${$oDatabaseMapRef}{name}})))
+        {
+            $self->numericSet(MANIFEST_SECTION_DB, $strDbName, MANIFEST_KEY_DB_ID,
+                              ${$oDatabaseMapRef}{'name'}{$strDbName}{&MANIFEST_KEY_DB_ID});
+            $self->numericSet(MANIFEST_SECTION_DB, $strDbName, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
+                              ${$oDatabaseMapRef}{'name'}{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
         }
 
         # Loop though all files

@@ -1094,9 +1094,9 @@ sub process
         {
             if ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/base\/[0-9]+\/PG\_VERSION'))
             {
-                my $strDb = basename(dirname($strFile));
+                my $lDbId = basename(dirname($strFile));
 
-                $oDbList{$strDb} = true;
+                $oDbList{$lDbId} = true;
             }
         }
 
@@ -1126,16 +1126,19 @@ sub process
         # Construct regexp
         for my $strDbKey (sort(keys(%oDbList)))
         {
-            $strDbFilter .= (defined($strDbFilter) ? '|' : '') .
-                '(^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strDbKey . '\/)';
-
-            for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+            # Only user created databases can be zeroed
+            if ($strDbKey >= 16384)
             {
-                # If target is a link but not a tablespace and has not already been remapped when remap it
-                if ($oManifest->isTargetLink($strTarget) && $oManifest->isTargetTablespace($strTarget))
+                $strDbFilter .= (defined($strDbFilter) ? '|' : '') .
+                    '(^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strDbKey . '\/)';
+
+                for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
                 {
-                    $strDbFilter .=
-                        '|(^' . $strTarget . '\/' . $oManifest->tablespacePathGet() . '\/' . $strDbKey . '\/)';
+                    if ($oManifest->isTargetTablespace($strTarget))
+                    {
+                        $strDbFilter .=
+                            '|(^' . $strTarget . '\/' . $oManifest->tablespacePathGet() . '\/' . $strDbKey . '\/)';
+                    }
                 }
             }
         }

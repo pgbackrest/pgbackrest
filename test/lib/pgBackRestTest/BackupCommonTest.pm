@@ -1824,6 +1824,7 @@ sub BackRestTestBackup_RestoreCompare
             else
             {
                 $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM);
+                delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM});
             }
         }
     }
@@ -1880,6 +1881,9 @@ sub BackRestTestBackup_RestoreCompare
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_ARCHIVE_STOP});
     }
+
+    # Delete the list of DBs
+    delete($$oExpectedManifestRef{&MANIFEST_SECTION_DB});
 
     iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
     iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);
