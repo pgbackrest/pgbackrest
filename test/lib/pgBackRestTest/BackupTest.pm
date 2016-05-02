@@ -1906,7 +1906,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $strTargetAction, $strTargetTimeline,
-                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus, ' --db-include=' . $strDbTest2Id);
+                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus, ' --db-include=test1');
 
             BackRestTestBackup_ClusterStart();
             BackRestTestBackup_PgSelectOneTest('select message from test', $strNameMessage);

@@ -1117,7 +1117,14 @@ sub process
             # To be included the db must exist
             if (!defined($oDbList{$strDbKey}))
             {
-                confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_PATH_MISSING);
+                my $lDbId = $oManifest->get(MANIFEST_SECTION_DB, $strDbKey, MANIFEST_KEY_DB_ID, false);
+
+                if (!defined($oDbList{$lDbId}))
+                {
+                    confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_PATH_MISSING);
+                }
+
+                $strDbKey = $lDbId;
             }
 
             delete($oDbList{$strDbKey});
