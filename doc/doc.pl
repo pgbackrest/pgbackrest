@@ -48,8 +48,17 @@ doc.pl - Generate pgBackRest documentation
 doc.pl [options]
 
  General Options:
-   --help           display usage and exit
-
+   --help           Display usage and exit
+   --version        Display pgBackRest version
+   --quiet          Sets log level to ERROR
+   --log-level      Log level for execution (e.g. ERROR, WARN, INFO, DEBUG)
+   --no-exe         Should commands be executed when building help? (for testing only)
+   --use-cache      Use cached data to generate the docs (for testing textual changes only)
+   --var            Override variables defined in the XML
+   --doc-path       Document path to render (manifest.xml should be located here)
+   --out            Output types (html, pdf, markdown)
+   --keyword        Keyword used to filter output
+   --require        Require only certain sections of the document (to speed testing)
 =cut
 
 ####################################################################################################################################
@@ -60,19 +69,19 @@ use constant OP_MAIN                                                => 'Main';
 use constant OP_MAIN_DOC_PROCESS                                    => OP_MAIN . '::docProcess';
 
 ####################################################################################################################################
-# Load command line parameters and config
+# Load command line parameters and config (see usage above for details)
 ####################################################################################################################################
-my $bHelp = false;                                  # Display usage
-my $bVersion = false;                               # Display version
-my $bQuiet = false;                                 # Sets log level to ERROR
-my $strLogLevel = 'info';                           # Log level for tests
-my $bNoExe = false;                                 # Should commands be executed when buildng help? (for testing only)
-my $bUseCache = false;                              # Use cached data to generate the docs (for testing code changes only)
-my $oVariableOverride = {};                         # Override variables
-my $strDocPath;                                     # Document path to render
-my @stryOutput;                                     # Output types
-my @stryKeyword;                                    # Keyword used to filter output
-my @stryRequire;                                    # Required sections of the document (to speed testing)
+my $bHelp = false;
+my $bVersion = false;
+my $bQuiet = false;
+my $strLogLevel = 'info';
+my $bNoExe = false;
+my $bUseCache = false;
+my $oVariableOverride = {};
+my $strDocPath;
+my @stryOutput;
+my @stryKeyword;
+my @stryRequire;
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
