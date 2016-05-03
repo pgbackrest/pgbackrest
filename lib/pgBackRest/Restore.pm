@@ -1119,22 +1119,29 @@ sub process
             {
                 my $lDbId = $oManifest->get(MANIFEST_SECTION_DB, $strDbKey, MANIFEST_KEY_DB_ID, false);
 
-                if (!defined($oDbList{$lDbId}))
+                if (!defined($lDbId) || !defined($oDbList{$lDbId}))
                 {
-                    confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_PATH_MISSING);
+                    confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_DB_MISSING);
                 }
 
                 $strDbKey = $lDbId;
             }
 
+            # Error if the db is a system db
+            if ($strDbKey < DB_USER_OBJECT_MINIMUM_ID)
+            {
+                confess &log(ERROR, "system databases (template0, postgres, etc.) are included by default", ERROR_DB_INVALID);
+            }
+
+            # Otherwise remove from list of DBs to zero
             delete($oDbList{$strDbKey});
         }
 
-        # Construct regexp
+        # Construct regexp for identify files that should be zeroed
         for my $strDbKey (sort(keys(%oDbList)))
         {
             # Only user created databases can be zeroed
-            if ($strDbKey >= 16384)
+            if ($strDbKey >= DB_USER_OBJECT_MINIMUM_ID)
             {
                 $strDbFilter .= (defined($strDbFilter) ? '|' : '') .
                     '(^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strDbKey . '\/)';

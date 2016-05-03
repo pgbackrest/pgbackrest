@@ -49,6 +49,7 @@ full backup
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -66,6 +67,7 @@ full backup
  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], strDbPath = [TEST_PATH]/db/common, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
@@ -73,29 +75,35 @@ full backup
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/postgresql.conf.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/postgresql.conf, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db/common/postgresql.conf (21B, 47%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: backup file [TEST_PATH]/db/common/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 21, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/pg_stat/global.stat.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/pg_stat/global.stat, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db/common/pg_stat/global.stat (5B, 59%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+  INFO: backup file [TEST_PATH]/db/common/pg_stat/global.stat (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/32768/33000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/base/32768/33000, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db/common/base/32768/33000 (5B, 70%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+  INFO: backup file [TEST_PATH]/db/common/base/32768/33000 (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/16384/17000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/base/16384/17000, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db/common/base/16384/17000 (4B, 79%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: backup file [TEST_PATH]/db/common/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/1/12000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/base/1/12000, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db/common/base/1/12000 (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/32768/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/base/32768/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db/common/base/32768/PG_VERSION (3B, 86%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: backup file [TEST_PATH]/db/common/base/32768/PG_VERSION (3B, 82%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/16384/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/base/16384/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db/common/base/16384/PG_VERSION (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: backup file [TEST_PATH]/db/common/base/16384/PG_VERSION (3B, 88%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/1/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/base/1/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db/common/base/1/PG_VERSION (3B, 94%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db/common/PG_VERSION (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/global/pg_control.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db/common/global/pg_control (8KB) checksum 56fe5780b8dca9705e0c22032a83828860a21235
- DEBUG:     Backup->processManifest=>: lSizeTotal = 8236
+ DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
   INFO: full backup size = 8KB
   INFO: new backup label = [BACKUP-FULL-1]
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
@@ -182,6 +190,8 @@ pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"
 
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -206,6 +216,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -325,6 +336,7 @@ full backup (resume)
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -343,6 +355,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/base, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
+ DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/1, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/16384, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/32768, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/global, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
@@ -355,6 +368,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], strDbPath = [TEST_PATH]/db/common, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
@@ -363,28 +377,34 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/postgresql.conf.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 21, strHash = 6721d92c9fcdf4248acff1f9a1377127d9064807
-DETAIL: checksum resumed file [TEST_PATH]/db/common/postgresql.conf (21B, 47%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+DETAIL: checksum resumed file [TEST_PATH]/db/common/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/pg_stat/global.stat.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 5, strHash = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: checksum resumed file [TEST_PATH]/db/common/pg_stat/global.stat (5B, 59%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: checksum resumed file [TEST_PATH]/db/common/pg_stat/global.stat (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/32768/33000.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 5, strHash = 7f4c74dc10f61eef43e6ae642606627df1999b34
-DETAIL: checksum resumed file [TEST_PATH]/db/common/base/32768/33000 (5B, 70%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: checksum resumed file [TEST_PATH]/db/common/base/32768/33000 (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/16384/17000.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 4, strHash = a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: checksum resumed file [TEST_PATH]/db/common/base/16384/17000 (4B, 79%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: checksum resumed file [TEST_PATH]/db/common/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/1/12000.gz, strHashType = <sha1>, strPathType = backup:tmp
+ DEBUG:     File->hashSize=>: iSize = 4, strHash = a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: checksum resumed file [TEST_PATH]/db/common/base/1/12000 (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/32768/PG_VERSION.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: checksum resumed file [TEST_PATH]/db/common/base/32768/PG_VERSION (3B, 86%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: checksum resumed file [TEST_PATH]/db/common/base/32768/PG_VERSION (3B, 82%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/16384/PG_VERSION.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: checksum resumed file [TEST_PATH]/db/common/base/16384/PG_VERSION (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: checksum resumed file [TEST_PATH]/db/common/base/16384/PG_VERSION (3B, 88%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/1/PG_VERSION.gz, strHashType = <sha1>, strPathType = backup:tmp
+ DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: checksum resumed file [TEST_PATH]/db/common/base/1/PG_VERSION (3B, 94%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db/common/PG_VERSION (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/global/pg_control.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 8192, strHash = 56fe5780b8dca9705e0c22032a83828860a21235
 DETAIL: checksum resumed file [TEST_PATH]/db/common/global/pg_control (8KB) checksum 56fe5780b8dca9705e0c22032a83828860a21235
- DEBUG:     Backup->processManifest=>: lSizeTotal = 8236
+ DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
   INFO: full backup size = 8KB
   INFO: new backup label = [BACKUP-FULL-2]
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
@@ -471,6 +491,8 @@ pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"
 
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -495,6 +517,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -558,6 +581,7 @@ DETAIL: check [TEST_PATH]/db/common exists
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -589,6 +613,7 @@ DETAIL: check [TEST_PATH]/db/pg_config exists
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -620,6 +645,8 @@ DETAIL: set mode 0700 on [TEST_PATH]/db/common/base
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     build level 2 paths/links
+ DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/1, strPathType = db:absolute
+ DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/16384, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/32768, strPathType = db:absolute
@@ -630,32 +657,42 @@ DETAIL: set mode 0700 on [TEST_PATH]/db/common/base
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/postgresql.conf, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 21, strHash = 6721d92c9fcdf4248acff1f9a1377127d9064807
-DETAIL: restore file [TEST_PATH]/db/common/postgresql.conf - exists and matches backup (21B, 47%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+DETAIL: restore file [TEST_PATH]/db/common/postgresql.conf - exists and matches backup (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/pg_stat/global.stat, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/pg_stat/global.stat, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 5, strHash = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: restore file [TEST_PATH]/db/common/pg_stat/global.stat - exists and matches backup (5B, 59%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: restore file [TEST_PATH]/db/common/pg_stat/global.stat - exists and matches backup (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/32768/33000, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/base/32768/33000, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 5, strHash = 7f4c74dc10f61eef43e6ae642606627df1999b34
-DETAIL: restore file [TEST_PATH]/db/common/base/32768/33000 - exists and matches backup (5B, 70%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: restore file [TEST_PATH]/db/common/base/32768/33000 - exists and matches backup (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/16384/17000, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = [TEST_PATH]/db/common/base/16384/17000, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000.gz, strSourcePathType = backup:cluster, strUser = [USER-1]
  DEBUG:     File->owner(): strFile = [TEST_PATH]/db/common/base/16384/17000.backrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
-  INFO: restore file [TEST_PATH]/db/common/base/16384/17000 (4B, 79%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: restore file [TEST_PATH]/db/common/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/1/12000, strPathType = db:absolute
+ DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/base/1/12000, strHashType = <sha1>, strPathType = db:absolute
+ DEBUG:     File->hashSize=>: iSize = 4, strHash = a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common/base/1/12000 - exists and matches backup (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/32768/PG_VERSION, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/base/32768/PG_VERSION, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: restore file [TEST_PATH]/db/common/base/32768/PG_VERSION - exists and matches backup (3B, 86%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common/base/32768/PG_VERSION - exists and matches backup (3B, 82%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/16384/PG_VERSION, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/base/16384/PG_VERSION, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: restore file [TEST_PATH]/db/common/base/16384/PG_VERSION - exists and matches backup (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common/base/16384/PG_VERSION - exists and matches backup (3B, 88%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+ DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/base/1/PG_VERSION, strPathType = db:absolute
+ DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/base/1/PG_VERSION, strHashType = <sha1>, strPathType = db:absolute
+ DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common/base/1/PG_VERSION - exists and matches backup (3B, 94%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/PG_VERSION, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db/common/PG_VERSION, strHashType = <sha1>, strPathType = db:absolute
@@ -707,12 +744,14 @@ DETAIL: preserve file [TEST_PATH]/db/common/recovery.conf
 DETAIL: remove link [TEST_PATH]/db/common/postgresql.conf
 DETAIL: remove link [TEST_PATH]/db/common/pg_stat
   INFO: cleanup removed 2 links
-  INFO: restore file [TEST_PATH]/db/common/postgresql.conf (21B, 47%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: restore file [TEST_PATH]/db/common/pg_stat/global.stat (5B, 59%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: restore file [TEST_PATH]/db/common/base/32768/33000 - exists and matches size 5 and modification time [MODIFICATION-TIME-2] (5B, 70%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-DETAIL: restore file [TEST_PATH]/db/common/base/16384/17000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 79%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: restore file [TEST_PATH]/db/common/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 86%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: restore file [TEST_PATH]/db/common/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: restore file [TEST_PATH]/db/common/pg_stat/global.stat (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: restore file [TEST_PATH]/db/common/base/32768/33000 - exists and matches size 5 and modification time [MODIFICATION-TIME-2] (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: restore file [TEST_PATH]/db/common/base/16384/17000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common/base/1/12000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 82%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 88%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common/base/1/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 94%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: restore file [TEST_PATH]/db/common/PG_VERSION (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: wrote [TEST_PATH]/db/common/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -817,6 +856,7 @@ incr backup (add tablespace 1)
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -834,6 +874,7 @@ incr backup (add tablespace 1)
  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], strDbPath = [TEST_PATH]/db/common, strType = incr
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
@@ -846,6 +887,10 @@ incr backup (add tablespace 1)
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
  DEBUG:     Backup->processManifest: hardlink pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/PG_VERSION, strSourcePathType = backup:cluster
+ DEBUG:     Backup->processManifest: hardlink pg_data/base/1/12000 to [BACKUP-FULL-2]
+ DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/12000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/12000, strSourcePathType = backup:cluster
+ DEBUG:     Backup->processManifest: hardlink pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+ DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/PG_VERSION, strSourcePathType = backup:cluster
  DEBUG:     Backup->processManifest: hardlink pg_data/base/16384/17000 to [BACKUP-FULL-2]
  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/16384/17000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster
  DEBUG:     Backup->processManifest: hardlink pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
@@ -956,6 +1001,8 @@ pg_tblspc/1={"path":"[TEST_PATH]/db/tablespace/ts1","tablespace-id":"1","tablesp
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -980,6 +1027,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -1054,6 +1102,7 @@ incr backup (resume and add tablespace 2)
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+ DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -1077,6 +1126,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/base, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
+ DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/1, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/16384, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/32768, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/global, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
@@ -1087,7 +1137,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/backrest/temp/db.tmp, strPathType = backup:tmp
- DEBUG:     Backup->fileNotInManifest=>: stryFile = (pg_data/PG_VERSION.gz, pg_data/base/16384/17000.gz, pg_data/base/16384/PG_VERSION.gz, pg_data/base/32768/33000.gz, pg_data/base/32768/PG_VERSION.gz, pg_data/global/pg_control.gz, pg_data/pg_stat/global.stat.gz, pg_data/postgresql.conf.gz)
+ DEBUG:     Backup->fileNotInManifest=>: stryFile = (pg_data/PG_VERSION.gz, pg_data/base/1/12000.gz, pg_data/base/1/PG_VERSION.gz, pg_data/base/16384/17000.gz, pg_data/base/16384/PG_VERSION.gz, pg_data/base/32768/33000.gz, pg_data/base/32768/PG_VERSION.gz, pg_data/global/pg_control.gz, pg_data/pg_stat/global.stat.gz, pg_data/postgresql.conf.gz)
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/postgresql.conf.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/pg_stat/global.stat.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/global/pg_control.gz
@@ -1095,10 +1145,13 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/base/32768/33000.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/base/16384/PG_VERSION.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/base/16384/17000.gz
+ DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/base/1/PG_VERSION.gz
+ DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/base/1/12000.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backrest/temp/db.tmp/pg_data/PG_VERSION.gz
  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], strDbPath = [TEST_PATH]/db/common, strType = incr
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
+ DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
@@ -1114,6 +1167,10 @@ DETAIL: clean backup temp path: [TEST_PATH]/backrest/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:tmp
  DEBUG:     Backup->processManifest: hardlink pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/PG_VERSION, strSourcePathType = backup:cluster
+ DEBUG:     Backup->processManifest: hardlink pg_data/base/1/12000 to [BACKUP-FULL-2]
+ DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/12000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/12000, strSourcePathType = backup:cluster
+ DEBUG:     Backup->processManifest: hardlink pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
+ DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/PG_VERSION, strSourcePathType = backup:cluster
  DEBUG:     Backup->processManifest: hardlink pg_data/base/16384/17000 to [BACKUP-FULL-2]
  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/16384/17000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster
  DEBUG:     Backup->processManifest: hardlink pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
@@ -1231,6 +1288,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2","tablespace-id":"2","tablesp
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1257,6 +1316,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -1371,6 +1431,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2","tablespace-id":"2","tablesp
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1397,6 +1459,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -1511,6 +1574,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2","tablespace-id":"2","tablesp
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1537,6 +1602,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -1613,15 +1679,17 @@ restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
 DETAIL: check [TEST_PATH]/db/common-2 exists
 DETAIL: check [TEST_PATH]/db/tablespace/ts1-2 exists
 DETAIL: check [TEST_PATH]/db/tablespace/ts2-2 exists
-  INFO: restore file [TEST_PATH]/db/common-2/postgresql.conf (21B, 30%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: restore file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 46%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: restore file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 56%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: restore file [TEST_PATH]/db/common-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 66%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
-  INFO: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat (5B, 73%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-  INFO: restore file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 81%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-  INFO: restore file [TEST_PATH]/db/common-2/base/16384/17000 (4B, 86%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-  INFO: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION (3B, 91%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
-  INFO: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION (3B, 95%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common-2/postgresql.conf (21B, 27%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: restore file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 42%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+  INFO: restore file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 51%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: restore file [TEST_PATH]/db/common-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 60%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat (5B, 67%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+  INFO: restore file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 73%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+  INFO: restore file [TEST_PATH]/db/common-2/base/16384/17000 (4B, 78%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: restore file [TEST_PATH]/db/common-2/base/1/12000 (4B, 84%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION (3B, 88%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION (3B, 92%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common-2/base/1/PG_VERSION (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: restore file [TEST_PATH]/db/common-2/PG_VERSION (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -1647,15 +1715,17 @@ DETAIL: check [TEST_PATH]/db/tablespace/ts2-2 exists
   INFO: remove invalid files/paths/links from [TEST_PATH]/db/tablespace/ts1-2/[TS_PATH-1]
   INFO: remove invalid files/paths/links from [TEST_PATH]/db/common-2
 DETAIL: preserve file [TEST_PATH]/db/common-2/recovery.conf
-DETAIL: restore file [TEST_PATH]/db/common-2/postgresql.conf - exists and matches backup (21B, 30%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-DETAIL: restore file [TEST_PATH]/db/common-2/badchecksum.txt - exists and matches backup (11B, 46%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-DETAIL: restore file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 56%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-DETAIL: restore file [TEST_PATH]/db/common-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 66%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
-DETAIL: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat - exists and matches backup (5B, 73%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/33000 - exists and matches backup (5B, 81%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/17000 - exists and matches backup (4B, 86%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION - exists and matches backup (3B, 91%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION - exists and matches backup (3B, 95%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/postgresql.conf - exists and matches backup (21B, 27%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+DETAIL: restore file [TEST_PATH]/db/common-2/badchecksum.txt - exists and matches backup (11B, 42%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+DETAIL: restore file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 51%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+DETAIL: restore file [TEST_PATH]/db/common-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 60%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+DETAIL: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat - exists and matches backup (5B, 67%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/33000 - exists and matches backup (5B, 73%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/17000 - exists and matches backup (4B, 78%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common-2/base/1/12000 - exists and matches backup (4B, 84%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION - exists and matches backup (3B, 88%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION - exists and matches backup (3B, 92%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/1/PG_VERSION - exists and matches backup (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
 DETAIL: restore file [TEST_PATH]/db/common-2/PG_VERSION - exists and matches backup (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -1740,6 +1810,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1766,6 +1838,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -1877,6 +1950,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1903,6 +1978,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -2019,6 +2095,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2045,6 +2123,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -2157,6 +2236,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2183,6 +2264,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -2300,6 +2382,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2324,6 +2408,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -2370,15 +2455,17 @@ full backup (update file)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common-2 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --hardlink --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
-  INFO: backup file [TEST_PATH]/db/common-2/postgresql.conf (21B, 26%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 41%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 55%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db/common-2/base/16384/17000 (9B, 67%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 75%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: backup file [TEST_PATH]/db/common-2/pg_stat/global.stat (5B, 82%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-  INFO: backup file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 88%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-  INFO: backup file [TEST_PATH]/db/common-2/base/32768/PG_VERSION (3B, 92%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
-  INFO: backup file [TEST_PATH]/db/common-2/base/16384/PG_VERSION (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: backup file [TEST_PATH]/db/common-2/postgresql.conf (21B, 24%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 38%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: backup file [TEST_PATH]/db/common-2/badchecksum.txt (11B, 51%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+  INFO: backup file [TEST_PATH]/db/common-2/base/16384/17000 (9B, 61%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+  INFO: backup file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 69%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db/common-2/pg_stat/global.stat (5B, 75%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+  INFO: backup file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 81%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+  INFO: backup file [TEST_PATH]/db/common-2/base/1/12000 (4B, 86%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: backup file [TEST_PATH]/db/common-2/base/32768/PG_VERSION (3B, 89%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: backup file [TEST_PATH]/db/common-2/base/16384/PG_VERSION (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: backup file [TEST_PATH]/db/common-2/base/1/PG_VERSION (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: backup file [TEST_PATH]/db/common-2/PG_VERSION (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: backup file [TEST_PATH]/db/common-2/global/pg_control (8KB) checksum 56fe5780b8dca9705e0c22032a83828860a21235
   INFO: full backup size = 8KB
@@ -2447,6 +2534,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2472,6 +2561,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -2601,6 +2691,8 @@ pg_tblspc/2={"path":"[TEST_PATH]/db/tablespace/ts2-2","tablespace-id":"2","table
 [target:file]
 pg_data/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"e1f7a3a299f62225cba076fc6d3d6e677f303482","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2627,6 +2719,7 @@ user="vagrant"
 [target:path]
 pg_data={}
 pg_data/base={}
+pg_data/base/1={}
 pg_data/base/16384={}
 pg_data/base/32768={}
 pg_data/global={}
@@ -2664,7 +2757,7 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
-restore delta, remap (selective restore)
+restore delta, remap (selective restore 16384)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: restore start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=16384=1 --delta --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
@@ -2675,18 +2768,20 @@ DETAIL: check [TEST_PATH]/db/tablespace/ts2-2 exists
   INFO: remove invalid files/paths/links from [TEST_PATH]/db/tablespace/ts2-2/[TS_PATH-1]
   INFO: remove invalid files/paths/links from [TEST_PATH]/db/common-2
 DETAIL: preserve file [TEST_PATH]/db/common-2/recovery.conf
-DETAIL: databases for include/exclude (16384, 32768)
+DETAIL: databases for include/exclude (1, 16384, 32768)
 DETAIL: database filter: (^pg_data\/base\/32768\/)|(^pg_tblspc/2\/[TS_PATH-1]\/32768\/)
-DETAIL: restore file [TEST_PATH]/db/common-2/postgresql.conf - exists and matches backup (21B, 23%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-DETAIL: restore zeroed file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 37%)
-DETAIL: restore file [TEST_PATH]/db/common-2/badchecksum.txt - exists and matches backup (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-DETAIL: restore file [TEST_PATH]/db/common-2/base/base2.txt - exists and matches backup (9B, 60%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/17000 - exists and matches backup (9B, 70%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-DETAIL: restore zeroed file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 78%)
-DETAIL: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat - exists and matches backup (5B, 84%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: restore zeroed file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 89%)
-DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION - exists and matches backup (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
-DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION - exists and matches backup (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/postgresql.conf - exists and matches backup (21B, 22%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 34%)
+DETAIL: restore file [TEST_PATH]/db/common-2/badchecksum.txt - exists and matches backup (11B, 46%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+DETAIL: restore file [TEST_PATH]/db/common-2/base/base2.txt - exists and matches backup (9B, 55%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/17000 - exists and matches backup (9B, 65%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%)
+DETAIL: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat - exists and matches backup (5B, 77%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 83%)
+DETAIL: restore file [TEST_PATH]/db/common-2/base/1/12000 - exists and matches backup (4B, 87%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION - exists and matches backup (3B, 90%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION - exists and matches backup (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/1/PG_VERSION - exists and matches backup (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
 DETAIL: restore file [TEST_PATH]/db/common-2/PG_VERSION - exists and matches backup (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -2696,6 +2791,51 @@ DETAIL: restore file [TEST_PATH]/db/common-2/PG_VERSION - exists and matches bac
 + supplemental file: [TEST_PATH]/db/common-2/recovery.conf
 ----------------------------------------------------------
 restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
+
+restore delta, remap (selective restore 32768)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=detail --db-include=32768  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: restore start: --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=32768=1 --delta --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+  INFO: restore backup set [BACKUP-DIFF-5]
+  INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db/tablespace/ts2-2
+DETAIL: check [TEST_PATH]/db/common-2 exists
+DETAIL: check [TEST_PATH]/db/tablespace/ts2-2 exists
+  INFO: remove invalid files/paths/links from [TEST_PATH]/db/tablespace/ts2-2/[TS_PATH-1]
+  INFO: remove invalid files/paths/links from [TEST_PATH]/db/common-2
+DETAIL: preserve file [TEST_PATH]/db/common-2/recovery.conf
+DETAIL: databases for include/exclude (1, 16384, 32768)
+DETAIL: database filter: (^pg_data\/base\/16384\/)|(^pg_tblspc/2\/[TS_PATH-1]\/16384\/)
+DETAIL: restore file [TEST_PATH]/db/common-2/postgresql.conf - exists and matches backup (21B, 22%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: restore file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 34%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+DETAIL: restore file [TEST_PATH]/db/common-2/badchecksum.txt - exists and matches backup (11B, 46%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+DETAIL: restore file [TEST_PATH]/db/common-2/base/base2.txt - exists and matches backup (9B, 55%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+DETAIL: restore zeroed file [TEST_PATH]/db/common-2/base/16384/17000 (9B, 65%)
+  INFO: restore file [TEST_PATH]/db/common-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+DETAIL: restore file [TEST_PATH]/db/common-2/pg_stat/global.stat - exists and matches backup (5B, 77%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+  INFO: restore file [TEST_PATH]/db/common-2/base/32768/33000 (5B, 83%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: restore file [TEST_PATH]/db/common-2/base/1/12000 - exists and matches backup (4B, 87%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db/common-2/base/32768/PG_VERSION - exists and matches backup (3B, 90%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/16384/PG_VERSION - exists and matches backup (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/base/1/PG_VERSION - exists and matches backup (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+DETAIL: restore file [TEST_PATH]/db/common-2/PG_VERSION - exists and matches backup (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: wrote [TEST_PATH]/db/common-2/recovery.conf
+  INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
+  INFO: restore file [TEST_PATH]/db/common-2/global/pg_control (8KB) checksum 56fe5780b8dca9705e0c22032a83828860a21235
+  INFO: restore stop
+
++ supplemental file: [TEST_PATH]/db/common-2/recovery.conf
+----------------------------------------------------------
+restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
+
+restore delta, remap, expect exit 155 (error on invalid id)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=warn --db-include=7777  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ ERROR: [155]: database to include '7777' does not exist
+
+restore delta, remap, expect exit 156 (error on system id)
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=warn --db-include=1  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+ ERROR: [156]: system databases (template0, postgres, etc.) are included by default
 
 restore, remap, expect exit 148 (no tablespace remap - error when tablespace dir does not exist)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
@@ -2718,16 +2858,18 @@ restore (no tablespace remap)
   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
 DETAIL: check [TEST_PATH]/db/common-2/base exists
 DETAIL: check [TEST_PATH]/db/common-2/tablespace exists
-  INFO: restore file [TEST_PATH]/db/common-2/base/postgresql.conf (21B, 23%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: restore file [TEST_PATH]/db/common-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 37%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: restore file [TEST_PATH]/db/common-2/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: restore file [TEST_PATH]/db/common-2/base/base/base2.txt (9B, 60%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-  INFO: restore file [TEST_PATH]/db/common-2/base/base/16384/17000 (9B, 70%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-  INFO: restore file [TEST_PATH]/db/common-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 78%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: restore file [TEST_PATH]/db/common-2/base/pg_stat/global.stat (5B, 84%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-  INFO: restore file [TEST_PATH]/db/common-2/base/base/32768/33000 (5B, 89%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-  INFO: restore file [TEST_PATH]/db/common-2/base/base/32768/PG_VERSION (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
-  INFO: restore file [TEST_PATH]/db/common-2/base/base/16384/PG_VERSION (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common-2/base/postgresql.conf (21B, 22%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: restore file [TEST_PATH]/db/common-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 34%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: restore file [TEST_PATH]/db/common-2/base/badchecksum.txt (11B, 46%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/base2.txt (9B, 55%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/16384/17000 (9B, 65%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+  INFO: restore file [TEST_PATH]/db/common-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: restore file [TEST_PATH]/db/common-2/base/pg_stat/global.stat (5B, 77%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/32768/33000 (5B, 83%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/1/12000 (4B, 87%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/32768/PG_VERSION (3B, 90%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/16384/PG_VERSION (3B, 93%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
+  INFO: restore file [TEST_PATH]/db/common-2/base/base/1/PG_VERSION (3B, 96%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: restore file [TEST_PATH]/db/common-2/base/PG_VERSION (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
   INFO: wrote [TEST_PATH]/db/common-2/base/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)

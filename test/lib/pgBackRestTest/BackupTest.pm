@@ -895,6 +895,13 @@ sub BackRestTestBackup_Test
 
             # Create base path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1');
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', 'BASE',
+                                                  'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/PG_VERSION', '9.3',
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
@@ -1537,7 +1544,7 @@ sub BackRestTestBackup_Test
             # Remove mapping for tablespace 1
             delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'});
 
-            # Remove checksum to match zeroed file
+            # Remove checksum to match zeroed files
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2.txt'}
                              {&MANIFEST_SUBKEY_CHECKSUM});
@@ -1546,16 +1553,37 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
                                        $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                                       'selective restore', undef,
+                                       'selective restore 16384', undef,
                                        "--log-level-console=detail --db-include=16384");
 
-            # Restore checksum value for next test
+            # Restore checksum values for next test
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
                 '7f4c74dc10f61eef43e6ae642606627df1999b34';
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2.txt'}
                       {&MANIFEST_SUBKEY_CHECKSUM} = 'dc7f76e43c46101b47acc55ae4d593a9e6983578';
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2c.txt'}
                       {&MANIFEST_SUBKEY_CHECKSUM} = 'dfcb8679956b734706cf87259d50c88f83e80e66';
+
+            # Remove chacksum to match zeroed file
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'selective restore 32768', undef,
+                                       "--log-level-console=detail --db-include=32768");
+
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                '7579ada0808d7f98087a0a586d0df9de009cdc33';
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'error on invalid id', ERROR_DB_MISSING,
+                                       "--log-level-console=warn --db-include=7777");
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'error on system id', ERROR_DB_INVALID,
+                                       "--log-level-console=warn --db-include=1");
 
             # Compact Restore
             #-----------------------------------------------------------------------------------------------------------------------
