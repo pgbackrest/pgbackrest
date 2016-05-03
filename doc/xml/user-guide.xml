@@ -84,7 +84,9 @@
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once you have <backrest/> up and running then skipping around is possible but it is recommended to follow the user guide in order the first time through.</p>
 
-        <p>Although the examples are targeted at Ubuntu and <postgres/> 9.4 they will also work fine on Debian and it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version but note that only 64-bit distributions are currently supported due to 64-bit operations in the Perl code.  The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.  Configuring archiving is different on <postgres/> versions &amp;lt;= 8.4 and configuration information can be found in the <postgres/> documentation.</p>
+        <p>Although the examples are targeted at Ubuntu and <postgres/> 9.4 they will also work fine on Debian and it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version but note that only 64-bit distributions are currently supported due to 64-bit operations in the Perl code.  The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.
+
+        Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/9.4/static/index.html'>Manual</link>.</p>
 
         <p>A somewhat novel approach is taken to documentation in this user guide.  Each command is run on a virtual machine when the documentation is built from the XML source.  This means you can have a high confidence that the commands work correctly in the order presented.  Output is captured and displayed below the command when appropriate.  If the output is not included it is because it was deemed not relevant or was considered a distraction from the narrative.</p>
 
@@ -125,7 +127,6 @@
 
             <p>WAL is conceptually infinite but in practice is broken up into individual 16MB files called segments.  WAL segments follow the naming convention <id>0000000100000A1E000000FE</id> where the first 8 hexadecimal digits represent the timeline and the next 16 digits are the logical sequence number (LSN).</p>
 
-            <p>A valid backup will always include <i>at least</i> one WAL segment even if explicit writes were not made to the database between backups.</p>
         </section>
     </section>
 
@@ -228,7 +229,7 @@
         <section id="setup-demo-cluster">
             <title>Setup Demo Cluster</title>
 
-            <p>Creating the demo cluster is optional but commands in the user guide may not work in other environments without significant modification.  The cluster won't be started immediately because there is still some configuration to do.</p>
+            <p>Creating the demo cluster is optional but is strongly recommended, especially for new users, since the example commands in the user guide reference the demo cluster; the examples assume the demo cluster is running on the default port (i.e. 5432). The cluster will not be started until a later section because there is still some configuration to do.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create the demo cluster</title>
@@ -269,11 +270,13 @@
 
             <option-description key="stanza"/>
 
-            <p>Demo describes the purpose of this cluster accurately so that will also make a good stanza name.</p>
+            <p>The name 'demo' describes the purpose of this cluster accurately so that will also make a good stanza name.</p>
 
             <p><backrest/> needs to know where the base data directory for the <postgres/> cluster is located.  The path can be requested from <postgres/> directly but in a recovery scenario the <postgres/> process will not be available.  During backups the value supplied to <backrest/> will be compared against the path that <postgres/> is running on and they must be equal or the backup will return an error.  Make sure that <br-option>db-path</br-option> is exactly equal to <pg-option>data_directory</pg-option> in <file>postgresql.conf</file>.</p>
 
             <p>By default Ubuntu stores clusters in <path>/var/lib/postgresql/[version]/[cluster]</path> so it is easy to determine the correct path for the data directory.</p>
+
+            <p>When creating the <file>{[backrest-config-demo]}</file> file, the database owner (usually <id>postgres</id>) must be granted read privileges.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the <postgres/> cluster data directory</title>
@@ -328,7 +331,7 @@
         <section id="configure-archiving" depend="create-repository">
             <title>Configure Archiving</title>
 
-            <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.</p>
+            <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.  Note that <i>at least</i> one WAL segment will be created during the backup process even if no explicit writes are made to the cluster.</p>
 
             <postgres-config host="{[host-db-master]}" file="{[postgres-config-demo]}">
                 <title>Configure archive settings</title>
@@ -523,7 +526,7 @@
                 </execute>
             </execute-list>
 
-            <p>By setting <br-setting>start-fast</br-setting> on the command-line or in <file>{[backrest-config-demo]}</file> an immediate checkpoint is requested and the backup will start more quickly. This is convenient for testing and for ad-hoc backups.  For instance, if a backup is being taken at the beginning of a release window it makes no sense to wait for a checkpoint.  Since regularly scheduled backups generally only happen once per day it is unlikely that enabling the <br-option>start-fast</br-option> in <file>{[backrest-config-demo]}</file> will negatively affect performance, however for high-volume transactional systems you may want to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line instead.</p>
+            <p>When <br-setting>{[dash]}-start-fast</br-setting> is passed on the command-line or  <br-setting>start-fast=y</br-setting> is set in <file>{[backrest-config-demo]}</file> an immediate checkpoint is requested and the backup will start more quickly. This is convenient for testing and for ad-hoc backups.  For instance, if a backup is being taken at the beginning of a release window it makes no sense to wait for a checkpoint.  Since regularly scheduled backups generally only happen once per day it is unlikely that enabling the <br-option>start-fast</br-option> in <file>{[backrest-config-demo]}</file> will negatively affect performance, however for high-volume transactional systems you may want to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line instead. Alternately, it is possible to override the setting in the configuration file by passing <br-setting>{[dash]}-no-start-fast</br-setting> on the command-line.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Enable the <br-option>start-fast</br-option> option</title>
