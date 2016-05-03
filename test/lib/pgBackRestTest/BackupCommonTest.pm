@@ -102,9 +102,11 @@ push @EXPORT, qw(BackRestTestBackup_PgExecuteNoTrans);
 sub BackRestTestBackup_PgExecuteNoTrans
 {
     my $strSql = shift;
+    my $strDatabase = shift;
 
     # Connect to the db with autocommit on so we can runs statements that can't run in transaction blocks
-    my $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+    my $hDb = DBI->connect('dbi:Pg:dbname=' . (defined($strDatabase) ? $strDatabase : 'postgres') .
+                           ';port=' . BackRestTestCommon_DbPortGet .
                            ';host=' . BackRestTestCommon_DbPathGet(),
                            BackRestTestCommon_UserGet(),
                            undef,

@@ -1859,6 +1859,13 @@ sub BackRestTestBackup_Test
 
             &log(INFO, "        name target is ${strNameTarget}");
 
+            # Create a table and data in database test2
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_PgExecuteNoTrans('create table test (id int);' .
+                                                'insert into test values (1);',
+                                                'test2');
+            BackRestTestBackup_PgSwitchXlog();
+
             # Restore (type = default)
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
