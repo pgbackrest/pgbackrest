@@ -68,7 +68,7 @@ use constant MANIFEST_SECTION_BACKUP_OPTION                         => 'backup:o
     push @EXPORT, qw(MANIFEST_SECTION_BACKUP_OPTION);
 use constant MANIFEST_SECTION_BACKUP_TARGET                         => 'backup:target';
     push @EXPORT, qw(MANIFEST_SECTION_BACKUP_TARGET);
-use constant MANIFEST_SECTION_DB                             		=> 'db';
+use constant MANIFEST_SECTION_DB                                    => 'db';
     push @EXPORT, qw(MANIFEST_SECTION_DB);
 use constant MANIFEST_SECTION_TARGET_PATH                           => 'target:path';
     push @EXPORT, qw(MANIFEST_SECTION_TARGET_PATH);
