@@ -904,7 +904,7 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, $lTimestampStop + 0);
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
-    # Save the backup manifest final time
+    # Final save of the backup manifest
     $oBackupManifest->save();
 
     &log(INFO, "new backup label = ${strBackupLabel}");
@@ -918,7 +918,7 @@ sub process
     logDebugMisc($strOperation, "move ${strBackupTmpPath} to " . $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strBackupLabel));
     $self->{oFile}->move(PATH_BACKUP_TMP, undef, PATH_BACKUP_CLUSTER, $strBackupLabel);
 
-    # Move historical and current manifests
+    # Copy manifest to history
     $self->{oFile}->move(PATH_BACKUP_CLUSTER, "${strBackupLabel}/" . FILE_MANIFEST . '.gz',
                          PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4) .
                          "/${strBackupLabel}.manifest.gz", true);
