@@ -925,7 +925,7 @@
             </execute>
         </execute-list>
 
-         <p>The start / stop timestamp shows that the differential backup is the one containing the data. The deltas indicate the sizes of the changes since the last referenced backup. The database and repository sizes will be different if the repository is compressed.</p>
+         <p>The start / stop timestamp is the period of time which the backup covers. The 'backup size' is the uncompressed size of the data backed up since the last referenced backup whereas the 'repository backup size' is the compressed size if compression is used.</p>
 
         <execute-list host="{[host-db-master]}">
             <title>Stop <postgres/>, restore from the previous backup, and start <postgres/></title>
