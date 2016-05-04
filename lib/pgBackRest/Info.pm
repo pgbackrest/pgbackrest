@@ -136,23 +136,39 @@ sub process
         {
             $strOutput = defined($strOutput) ? $strOutput .= "\n" : '';
 
-            $strOutput .= 'stanza ' . $$oStanzaInfo{&INFO_STANZA_NAME} . "\n";
+            $strOutput .= ' stanza: ' . $$oStanzaInfo{&INFO_STANZA_NAME} . "\n";
             $strOutput .= '    status: ' . ($$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
                           INFO_STANZA_STATUS_ERROR . ' (' . $$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') . "\n";
 
-            if (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} > 0)
+            # print out the information for each backup of the stanza, from oldest to newest
+            foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
             {
-                my $oOldestBackup = $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}[0];
+                $strOutput .= "\n    ". $$oBackupInfo{&INFO_KEY_TYPE} .' backup: '. $$oBackupInfo{&INFO_KEY_LABEL};
+                $strOutput .= "\n        start / stop timestamp: " .
+                                        timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
+                                        ' / ' .
+                                        timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP});
+                $strOutput .= "\n        database size: " .
+                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
+                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '').
+                                        ($$oBackupInfo{&INFO_KEY_TYPE} ne BACKUP_TYPE_FULL ?
+                                        (', delta: ' .
+                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
+                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '')) : '');
+                $strOutput .= "\n        repository size: " .
+                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
+                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '').
+                                        ($$oBackupInfo{&INFO_KEY_TYPE} ne BACKUP_TYPE_FULL ?
+                                        (', delta: ' .
+                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) ?
+                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) : '')) : '');
 
-                $strOutput .= '    oldest backup label: ' . $$oOldestBackup{&INFO_KEY_LABEL} . "\n";
-                $strOutput .= '    oldest backup timestamp: ' .
-                              timestampFormat(undef, $$oOldestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
-
-                my $oLatestBackup = $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}[@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} - 1];
-
-                $strOutput .= '    latest backup label: ' . $$oLatestBackup{&INFO_KEY_LABEL} . "\n";
-                $strOutput .= '    latest backup timestamp: ' .
-                              timestampFormat(undef, $$oLatestBackup{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) . "\n";
+                # list the backup reference chain, if any, for this back up
+                if (defined($$oBackupInfo{&INFO_KEY_REFERENCE}))
+                {
+                    $strOutput .= "\n        backup reference list: " . (join(', ' ,@{$$oBackupInfo{&INFO_KEY_REFERENCE}}));
+                }
+                $strOutput .= "\n";
             }
         }
 
@@ -371,13 +387,17 @@ sub backupList
             {
                 &INFO_SECTION_REPO =>
                 {
+                    # Size of the backup in the repository, taking compression into account
                     &INFO_KEY_SIZE =>
                         $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_BACKUP_REPO_SIZE),
+                    # Size of this backup only (does not include referenced backups like repo->size)
                     &INFO_KEY_DELTA =>
                         $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA),
                 },
+                # Original database size
                 &INFO_KEY_SIZE =>
                     $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_BACKUP_SIZE),
+                # Amount of database backed up (will be equal for full backups)
                 &INFO_KEY_DELTA =>
                     $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_BACKUP_SIZE_DELTA),
             },

@@ -416,13 +416,13 @@
 
                 <execute filter="n" output="y">
                     <exe-cmd>{[project-exe]} info</exe-cmd>
-                    <exe-highlight>(oldest|latest) backup label</exe-highlight>
+                    <exe-highlight>(full|incr|diff) backup</exe-highlight>
                 </execute>
             </execute-list>
 
-            <p>The oldest and newest backups are shown in the info output.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
+            <p>The backups are displayed oldest to newest.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
-            <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section.</p>
+            <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section. More information about the <cmd>info</cmd> command can be found in the <link section="/pitr">Point-in-Time Recovery</link> section.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM RESTORE -->
@@ -915,6 +915,17 @@
         </execute-list>
 
         <p>Using an earlier backup will allow <postgres/> to play forward to the correct time again.  The default behavior for restore is to use the most recent backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Get info for the {[postgres-cluster-demo]} cluster</title>
+
+            <execute filter="n" output="y">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>diff backup</exe-highlight>
+            </execute>
+        </execute-list>
+
+         <p>The start / stop timestamp shows that the differential backup is the one containing the data. The deltas indicate the sizes of the changes since the last referenced backup. The database and repository sizes will be different if the repository is compressed.</p>
 
         <execute-list host="{[host-db-master]}">
             <title>Stop <postgres/>, restore from the previous backup, and start <postgres/></title>
