@@ -745,9 +745,9 @@
         <section id="option-db-include">
             <title>Restore Selected Databases</title>
 
-            <p>There may be cases where it is desirable to selectively restore only specified databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
+            <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
 
-            <p>To demonstrate this feature two databases will be created: test1 and test2.  A new backup is created so <backrest/> is aware of the new databases.</p>
+            <p>To demonstrate this feature two databases are be created: test1 and test2.  A new backup is run so <backrest/> is aware of the new databases.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create two test databases and perform a backup</title>
@@ -789,7 +789,7 @@
                 </execute>
             </execute-list>
 
-            <p>One of the main reasons to use selective restore is to save space.  The size of the test1 database is shown here so it can be compared with the disk utilization during a selective restore.</p>
+            <p>One of the main reasons to use selective restore is to save space.  The size of the test1 database is shown here so it can be compared with the disk utilization after a selective restore.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Show space used by test1 database</title>
@@ -836,7 +836,7 @@
                 </execute>
             </execute-list>
 
-            <p>The test1 database, despite successful recovery, is not accessible.  This is because the entire database was restored as sparse, zeroed files.  <postgres/> can successfully apply WAL on the zeroed files but the database as a whole will not be valid because key files contain no data.  This is purposeful to prevent the database from be accidentally used when it might contain partial data that was applied during WAL replay.</p>
+            <p>The test1 database, despite successful recovery, is not accessible.  This is because the entire database was restored as sparse, zeroed files.  <postgres/> can successfully apply WAL on the zeroed files but the database as a whole will not be valid because key files contain no data.  This is purposeful to prevent the database from being accidentally used when it might contain partial data that was applied during WAL replay.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Attempting to connect to the test1 database will produce an error</title>
@@ -849,9 +849,9 @@
                 </execute>
             </execute-list>
 
-            <p>Since the test1 database is restored with sparse, zeroed files it will only require as much space as the amount of WAL that is written during recovery.  While the amount of WAL generated during a backup and applied during recovery can be significant it will generally be a small fraction of the total database size, especially for large data warehouses where this feature is likely to be the most useful.</p>
+            <p>Since the test1 database is restored with sparse, zeroed files it will only require as much space as the amount of WAL that is written during recovery.  While the amount of WAL generated during a backup and applied during recovery can be significant it will generally be a small fraction of the total database size, especially for large databases where this feature is most likely to be useful.</p>
 
-            <p>It is clear that the test1 database used far less disk space during the selective restore than it would have if the entire database had been restored.</p>
+            <p>It is clear that the test1 database uses far less disk space during the selective restore than it would have if the entire database had been restored.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Show space used by test1 database after recovery</title>
@@ -863,7 +863,7 @@
                 </execute>
             </execute-list>
 
-            <p>At this point the only action that can be taken is to drop the invalid test1 database. <backrest/> does not automatically drop the database since this cannot be done until recovery is complete and the cluster is accessible.</p>
+            <p>At this point the only action that can be taken on the invalid test1 database is <id>drop database</id>. <backrest/> does not automatically drop the database since this cannot be done until recovery is complete and the cluster is accessible.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Drop the test1 database</title>
