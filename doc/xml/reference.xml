@@ -338,11 +338,11 @@
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>
 
-                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be remove with the <id>drop database</id> command.
+                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command.
 
                         Note that built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.
 
-                        The <br-setting>{[dash]}-db-include</br-setting> option can be password multiple times to specify more than one database to include.</text>
+                        The <br-setting>{[dash]}-db-include</br-setting> option can be passed multiple times to specify more than one database to include.</text>
 
                         <example>db_main</example>
                     </config-key>
