@@ -6,6 +6,12 @@
     </intro>
 
     <changelog>
+         <changelog-release date="XXXX-XX-XX" version="1.01dev" title="UNDER DEVELOPMENT">
+             <release-feature-bullet-list>
+                <release-feature><text></text></release-feature>
+             </release-feature-bullet-list>
+         </changelog-release>
+
          <changelog-release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
              <release-feature-bullet-list>
                 <release-feature>
