@@ -1137,7 +1137,7 @@ sub process
             delete($oDbList{$strDbKey});
         }
 
-        # Construct regexp for identify files that should be zeroed
+        # Construct regexp to identify files that should be zeroed
         for my $strDbKey (sort(keys(%oDbList)))
         {
             # Only user created databases can be zeroed
