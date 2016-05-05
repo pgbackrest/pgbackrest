@@ -747,7 +747,7 @@
 
             <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
 
-            <p>To demonstrate this feature two databases are be created: test1 and test2.  A new backup is run so <backrest/> is aware of the new databases.</p>
+            <p>To demonstrate this feature two databases are created: test1 and test2.  A fresh backup is run so <backrest/> is aware of the new databases.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create two test databases and perform a backup</title>
@@ -882,7 +882,7 @@
 
                 <execute output="y" filter="n">
                     <exe-cmd>
-                        psql -c "select oid, datname from pg_database;"
+                        psql -c "select oid, datname from pg_database order by oid;"
                     </exe-cmd>
                     <exe-highlight>test2</exe-highlight>
                 </execute>
