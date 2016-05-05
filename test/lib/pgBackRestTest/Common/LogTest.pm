@@ -320,7 +320,9 @@ sub regExpReplace
 }
 
 ####################################################################################################################################
-# regExpReplaceAll - replaces dynamic test output so that the expected test output can be verified against actual test output
+# regExpReplaceAll
+#
+# Replaces dynamic test output so that the expected test output can be verified against actual test output.
 ####################################################################################################################################
 sub regExpReplaceAll
 {

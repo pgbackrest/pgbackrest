@@ -224,7 +224,7 @@ db-version="9.3"
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: stop start: --config=[TEST_PATH]/db/pgbackrest.conf --force --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest
   INFO: sent term signal to process [PROCESS-ID]
-        
+
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: stop stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -2442,7 +2442,7 @@ db-version="9.3"
 info db
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=db info
 ------------------------------------------------------------------------------------------------------------------------------------
- stanza: db
+stanza: db
     status: ok
 
     full backup: [BACKUP-FULL-2]
@@ -2945,7 +2945,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-
 info
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn info
 ------------------------------------------------------------------------------------------------------------------------------------
- stanza: db
+stanza: db
     status: ok
 
     full backup: [BACKUP-FULL-3]
@@ -2959,7 +2959,7 @@ info
         repository size: 8KB, repository backup size: 9B
         backup reference list: [BACKUP-FULL-3]
 
- stanza: db_empty
+stanza: db_empty
     status: error (no valid backups)
 
 info
@@ -3056,7 +3056,7 @@ info
 info bogus
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
- stanza: bogus
+stanza: bogus
     status: error (missing stanza path)
 
 info bogus

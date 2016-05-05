@@ -134,37 +134,46 @@ sub process
 
         foreach my $oStanzaInfo (@{$oyStanzaList})
         {
-            $strOutput .= ' stanza: ' . $$oStanzaInfo{&INFO_STANZA_NAME} . "\n";
-            $strOutput .= '    status: ' . ($$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
-                          INFO_STANZA_STATUS_ERROR . ' (' . $$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') . "\n\n";
+            # Add an LF between stanzas
+            $strOutput .= defined($strOutput) ? "\n" : '';
 
-            # print out the information for each backup of the stanza, from oldest to newest
+            # Output stanza name and status
+            $strOutput .=
+                'stanza: ' . $$oStanzaInfo{&INFO_STANZA_NAME} . "\n" .
+                '    status: ' . ($$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
+                INFO_STANZA_STATUS_ERROR . ' (' . $$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') . "\n";
+
+            # Output information for each stanza backup, from oldest to newest
             foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
             {
-                $strOutput .= '    '.$$oBackupInfo{&INFO_KEY_TYPE} .' backup: '. $$oBackupInfo{&INFO_KEY_LABEL} . "\n";
-                $strOutput .= '        start / stop timestamp: ' .
-                                        timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
-                                        ' / ' .
-                                        timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP}) . "\n";
-                $strOutput .= '        database size: ' .
-                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
-                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '') .
-                                        (', backup size: ' .
-                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
-                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '')) . "\n";
-                $strOutput .= '        repository size: ' .
-                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
-                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '').
-                                        (', repository backup size: ' .
-                                        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) ?
-                                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) : '')) . "\n";
+                $strOutput .=
+                    "\n".
+                    '    ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
 
-                # list the backup reference chain, if any, for this back up
+                    '        start / stop timestamp: ' .
+                    timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
+                    ' / ' .
+                    timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP}) . "\n" .
+
+                    '        database size: ' .
+                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
+                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '') .
+                    ', backup size: ' .
+                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
+                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '') . "\n" .
+
+                    '        repository size: ' .
+                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
+                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '') .
+                    ', repository backup size: ' .
+                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) ?
+                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) : '') . "\n";
+
+                # List the backup reference chain, if any, for this backup
                 if (defined($$oBackupInfo{&INFO_KEY_REFERENCE}))
                 {
                     $strOutput .= '        backup reference list: ' . (join(', ' ,@{$$oBackupInfo{&INFO_KEY_REFERENCE}})) . "\n";
                 }
-                $strOutput .= "\n";
             }
         }
 
