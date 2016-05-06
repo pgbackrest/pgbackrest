@@ -15,6 +15,7 @@ use File::Basename qw(dirname);
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
 
@@ -275,7 +276,7 @@ sub lockStop
             }
 
             # The file is locked so that means there is a running process - read the process id and send it a term signal
-            my $iProcessId = readline($hLockHandle);
+            my $iProcessId = trim(readline($hLockHandle));
 
             # If the process id is defined then this is a valid lock file
             if (defined($iProcessId))

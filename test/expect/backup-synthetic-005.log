@@ -285,7 +285,6 @@ full backup (protocol timeout)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: stop start: --config=[TEST_PATH]/db/pgbackrest.conf --force --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest
   INFO: sent term signal to process [PROCESS-ID]
-        
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: stop stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -425,7 +424,6 @@ start (local)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: stop start: --config=[TEST_PATH]/backrest/pgbackrest.conf --force --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest
   INFO: sent term signal to process [PROCESS-ID]
-        
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: stop stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
