@@ -219,67 +219,6 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
-info db
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=db info
-------------------------------------------------------------------------------------------------------------------------------------
-stanza db
-    status: ok
-    oldest backup label: [BACKUP-FULL-1]
-    oldest backup timestamp: [TIMESTAMP-STR]
-    latest backup label: [BACKUP-FULL-1]
-    latest backup timestamp: [TIMESTAMP-STR]
-
-info db
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=db info --output=json
-------------------------------------------------------------------------------------------------------------------------------------
-[
-    {
-        "backup" : [
-            {
-                "archive" : {
-                    "start" : null,
-                    "stop" : null
-                },
-                "backrest" : {
-                    "format" : 5,
-                    "version" : "[VERSION-1]"
-                },
-                "database" : {
-                    "id" : 1
-                },
-                "info" : {
-                    "delta" : [DELTA],
-                    "repository" : {
-                        "delta" : [DELTA],
-                        "size" : [SIZE]
-                    },
-                    "size" : [SIZE]
-                },
-                "label" : "[BACKUP-FULL-1]",
-                "prior" : null,
-                "reference" : null,
-                "timestamp" : {
-                    "start" : [TIMESTAMP],
-                    "stop" : [TIMESTAMP]
-                },
-                "type" : "full"
-            }
-        ],
-        "db" : [
-            {
-                "id" : "1",
-                "system-id" : 6156904820763115222,
-                "version" : "9.3"
-            }
-        ],
-        "name" : "db",
-        "status" : {
-            "code" : 0,
-            "message" : "ok"
-        }
-    }
-]
-
 full backup (resume)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --no-online --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2294,6 +2233,328 @@ db-version="9.3"
 [db:history]
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
+info db
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=db info
+------------------------------------------------------------------------------------------------------------------------------------
+ stanza: db
+    status: ok
+
+    full backup: [BACKUP-FULL-2]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 8KB
+        repository size: 277B, repository backup size: 277B
+
+    diff backup: [BACKUP-DIFF-2]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 25B
+        repository size: 362B, repository backup size: 85B
+        backup reference list: [BACKUP-FULL-2]
+
+    incr backup: [BACKUP-INCR-3]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 13B
+        repository size: 388B, repository backup size: 53B
+        backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2]
+
+    incr backup: [BACKUP-INCR-4]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 8B
+        repository size: 392B, repository backup size: 28B
+        backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3]
+
+    diff backup: [BACKUP-DIFF-3]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 39B
+        repository size: 392B, repository backup size: 139B
+        backup reference list: [BACKUP-FULL-2]
+
+    incr backup: [BACKUP-INCR-5]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 0B
+        repository size: 392B, repository backup size: 0B
+        backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-3]
+
+    diff backup: [BACKUP-DIFF-4]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 30B
+        repository size: 343B, repository backup size: 90B
+        backup reference list: [BACKUP-FULL-2]
+
+    full backup: [BACKUP-FULL-3]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 8KB
+        repository size: 372B, repository backup size: 372B
+
+info db
+> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=db info --output=json
+------------------------------------------------------------------------------------------------------------------------------------
+[
+    {
+        "backup" : [
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-FULL-2]",
+                "prior" : null,
+                "reference" : null,
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "full"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-DIFF-2]",
+                "prior" : "[BACKUP-FULL-2]",
+                "reference" : [
+                    "[BACKUP-FULL-2]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "diff"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-INCR-3]",
+                "prior" : "[BACKUP-DIFF-2]",
+                "reference" : [
+                    "[BACKUP-FULL-2]",
+                    "[BACKUP-DIFF-2]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "incr"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-INCR-4]",
+                "prior" : "[BACKUP-INCR-3]",
+                "reference" : [
+                    "[BACKUP-FULL-2]",
+                    "[BACKUP-DIFF-2]",
+                    "[BACKUP-INCR-3]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "incr"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-DIFF-3]",
+                "prior" : "[BACKUP-FULL-2]",
+                "reference" : [
+                    "[BACKUP-FULL-2]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "diff"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-INCR-5]",
+                "prior" : "[BACKUP-DIFF-3]",
+                "reference" : [
+                    "[BACKUP-FULL-2]",
+                    "[BACKUP-DIFF-3]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "incr"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-DIFF-4]",
+                "prior" : "[BACKUP-FULL-2]",
+                "reference" : [
+                    "[BACKUP-FULL-2]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "diff"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-FULL-3]",
+                "prior" : null,
+                "reference" : null,
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "full"
+            }
+        ],
+        "db" : [
+            {
+                "id" : "1",
+                "system-id" : 6156904820763115222,
+                "version" : "9.3"
+            }
+        ],
+        "name" : "db",
+        "status" : {
+            "code" : 0,
+            "message" : "ok"
+        }
+    }
+]
+
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --stanza=db expire --log-level-console=detail --retention-full=1
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: expire start: --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --retention-full=1 --stanza=db
@@ -2477,14 +2738,21 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-
 info
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn info
 ------------------------------------------------------------------------------------------------------------------------------------
-stanza db
+ stanza: db
     status: ok
-    oldest backup label: [BACKUP-FULL-3]
-    oldest backup timestamp: [TIMESTAMP-STR]
-    latest backup label: [BACKUP-DIFF-5]
-    latest backup timestamp: [TIMESTAMP-STR]
 
-stanza db_empty
+    full backup: [BACKUP-FULL-3]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 8KB
+        repository size: 372B, repository backup size: 372B
+
+    diff backup: [BACKUP-DIFF-5]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 9B
+        repository size: 401B, repository backup size: 29B
+        backup reference list: [BACKUP-FULL-3]
+
+ stanza: db_empty
     status: error (no valid backups)
 
 info
@@ -2581,7 +2849,7 @@ info
 info bogus
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=bogus info
 ------------------------------------------------------------------------------------------------------------------------------------
-stanza bogus
+ stanza: bogus
     status: error (missing stanza path)
 
 info bogus
