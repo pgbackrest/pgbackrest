@@ -1890,7 +1890,9 @@ sub BackRestTestBackup_Test
             # Create a table and data in database test2
             #-----------------------------------------------------------------------------------------------------------------------
             BackRestTestBackup_PgExecuteNoTrans('create table test (id int);' .
-                                                'insert into test values (1);',
+                                                'insert into test values (1);' .
+                                                'create table test_ts1 (id int) tablespace ts1;' .
+                                                'insert into test_ts1 values (2);',
                                                 'test2');
             BackRestTestBackup_PgSwitchXlog();
 
@@ -1949,6 +1951,20 @@ sub BackRestTestBackup_Test
             # Now it should be OK to drop database test2
             BackRestTestBackup_PgExecuteNoTrans("drop database test2");
 
+            # The test table lives in ts1 so it needs to be moved or dropped
+            if (BackRestTestCommon_DbVersion() >= 9.0)
+            {
+                BackRestTestBackup_PgExecute('alter table test set tablespace pg_default');
+            }
+            # Drop for older versions
+            else
+            {
+                BackRestTestBackup_PgExecute('drop table test');
+            }
+
+            # And drop the tablespace
+            BackRestTestBackup_PgExecuteNoTrans("drop tablespace ts1");
+
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
             if (BackRestTestCommon_DbVersion() >= 9.4)
@@ -1995,7 +2011,6 @@ sub BackRestTestBackup_Test
 
             executeTest('rm -rf ' . BackRestTestCommon_DbCommonPathGet() . "/*");
             executeTest('rm -rf ' . BackRestTestCommon_DbPathGet() . "/pg_xlog/*");
-            executeTest('rm -rf ' . BackRestTestCommon_DbTablespacePathGet(1));
 
             BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $strTargetAction, $strTargetTimeline,
