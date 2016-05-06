@@ -321,6 +321,8 @@ sub regExpReplace
 
 ####################################################################################################################################
 # regExpReplaceAll
+#
+# Replaces dynamic test output so that the expected test output can be verified against actual test output.
 ####################################################################################################################################
 sub regExpReplaceAll
 {
@@ -375,8 +377,8 @@ sub regExpReplaceAll
         "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = $self->regExpReplace($strLine, 'DELTA',
         "delta\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-STR', "est backup timestamp: $strTimestampRegExp",
-                                                "${strTimestampRegExp}\$", false);
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-STR', " timestamp: $strTimestampRegExp / $strTimestampRegExp",
+                                                "${strTimestampRegExp} / ${strTimestampRegExp}\$", false);
     $strLine = $self->regExpReplace($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
 
     $strLine = $self->regExpReplace($strLine, 'REMOTE-PROCESS-TERMINATED-MESSAGE',

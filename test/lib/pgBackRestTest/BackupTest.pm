@@ -1079,11 +1079,6 @@ sub BackRestTestBackup_Test
             # Cleanup any garbage left in the temp backup path
             executeTest('rm -rf ' . BackRestTestCommon_RepoPathGet() . "/temp/${strStanza}.tmp", {bRemote => $bRemote});
 
-            # Backup Info
-            #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_Info($strStanza, undef, false);
-            BackRestTestBackup_Info($strStanza, INFO_OUTPUT_JSON, false);
-
             # Resume Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'full';
@@ -1521,6 +1516,11 @@ sub BackRestTestBackup_Test
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'update file',
                                                                 {strOptionalParam => '--log-level-console=detail'});
+
+            # Backup Info
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_Info($strStanza, undef, false);
+            BackRestTestBackup_Info($strStanza, INFO_OUTPUT_JSON, false);
 
             # Call expire
             #-----------------------------------------------------------------------------------------------------------------------
