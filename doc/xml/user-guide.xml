@@ -409,6 +409,13 @@
 
             <p>This time there was no warning because a full backup already existed.  While incremental backups can be based on a full <i>or</i> differential backup, differential backups must be based on a full backup.  A full backup can be performed by running the <cmd>backup</cmd> command with <br-setting>{[dash]}-type=full</br-setting>.</p>
 
+            <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section.</p>
+        </section>
+
+        <!-- SECTION => QUICKSTART - BACKUP INFO -->
+        <section id="backup-info" depend="perform-backup">
+            <title>Backup Information</title>
+
             <p>Use the <cmd>info</cmd> command to get information about backups.</p>
 
             <execute-list host="{[host-db-master]}">
@@ -416,13 +423,17 @@
 
                 <execute filter="n" output="y">
                     <exe-cmd>{[project-exe]} info</exe-cmd>
-                    <exe-highlight>(oldest|latest) backup label</exe-highlight>
+                    <exe-highlight>(full|incr|diff) backup</exe-highlight>
                 </execute>
             </execute-list>
 
-            <p>The oldest and newest backups are shown in the info output.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
+            <p>The backups are displayed oldest to newest.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
-            <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section.</p>
+            <p>The '<id>start / stop timestamp</id>' defines the time period when the backup ran.  The '<id>stop timestamp</id>' can be used to determine the backup to use when performing Point-In-Time Recovery.  More information about Point-In-Time Recovery can be found in the <link section="/pitr">Point-In-Time Recovery</link> section.</p>
+
+            <p>The '<id>database size</id>' is the full uncompressed size of the database while '<id>backup size</id>' is the amount of data actually backed up (these will be the same for full backups).  The '<id>repository size</id>' includes all the files from this backup and any referenced backups that are required to restore the database while '<id>repository backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.</p>
+
+            <p>The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM RESTORE -->
@@ -743,7 +754,7 @@
     </section>
 
     <!-- SECTION => PITR -->
-    <section id="pitr">
+    <section id="pitr" depend="quickstart/perform-backup">
         <title>Point-in-Time Recovery</title>
 
         <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> performed default recovery, which is to play all the way to the end of the WAL stream.  In the case of a hardware failure this is usually the best choice but for data corruption scenarios (whether machine or human in origin) Point-in-Time Recovery (PITR) is often more appropriate.</p>
@@ -914,10 +925,21 @@
             </execute>
         </execute-list>
 
-        <p>Using an earlier backup will allow <postgres/> to play forward to the correct time again.  The default behavior for restore is to use the most recent backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
+        <p>Using an earlier backup will allow <postgres/> to play forward to the correct time.  The <cmd>info</cmd> command can be used to find the next to last backup.</p>
 
         <execute-list host="{[host-db-master]}">
-            <title>Stop <postgres/>, restore from the previous backup, and start <postgres/></title>
+            <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
+
+            <execute filter="n" output="y">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>{[backup-last]}</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>The default behavior for restore is to use the last backup but an earlier backup can be specified with the <br-option>{[dash]}-set</br-option> option.</p>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Stop <postgres/>, restore from the selected backup, and start <postgres/></title>
 
             <execute user="root">
                 <exe-cmd>{[db-cluster-stop]}</exe-cmd>

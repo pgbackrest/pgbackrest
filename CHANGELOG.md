@@ -3,7 +3,7 @@
 ## v1.01dev: UNDER DEVELOPMENT
 __No Release Date Set__
 
-* 
+* Enhanced text output of `info` command to include timestamps, sizes, and the reference list for all backups. _Contributed by Cynthia Shang_.
 
 ## v1.00: New Repository Format and Configuration Scheme, Link Support
 __Released April 14, 2016__
