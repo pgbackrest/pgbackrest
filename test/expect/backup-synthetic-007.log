@@ -2685,48 +2685,48 @@ stanza: db
     full backup: [BACKUP-FULL-2]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 8KB
-        repository size: 277B, repository backup size: 277B
+        repository size: 395B, repository backup size: 395B
 
     diff backup: [BACKUP-DIFF-2]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 25B
-        repository size: 362B, repository backup size: 85B
+        repository size: 480B, repository backup size: 85B
         backup reference list: [BACKUP-FULL-2]
 
     incr backup: [BACKUP-INCR-3]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 13B
-        repository size: 388B, repository backup size: 53B
+        repository size: 506B, repository backup size: 53B
         backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2]
 
     incr backup: [BACKUP-INCR-4]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 8B
-        repository size: 392B, repository backup size: 28B
+        repository size: 510B, repository backup size: 28B
         backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3]
 
     diff backup: [BACKUP-DIFF-3]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 39B
-        repository size: 392B, repository backup size: 139B
+        repository size: 510B, repository backup size: 139B
         backup reference list: [BACKUP-FULL-2]
 
     incr backup: [BACKUP-INCR-5]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 0B
-        repository size: 392B, repository backup size: 0B
+        repository size: 510B, repository backup size: 0B
         backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-3]
 
     diff backup: [BACKUP-DIFF-4]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 30B
-        repository size: 343B, repository backup size: 90B
+        repository size: 461B, repository backup size: 90B
         backup reference list: [BACKUP-FULL-2]
 
     full backup: [BACKUP-FULL-3]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 8KB
-        repository size: 372B, repository backup size: 372B
+        repository size: 490B, repository backup size: 490B
 
 info db
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=warn --stanza=db info --output=json
@@ -3302,53 +3302,53 @@ stanza: db
     full backup: [BACKUP-FULL-2]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 8KB
-        repository size: 277B, repository backup size: 277B
+        repository size: 395B, repository backup size: 395B
 
     diff backup: [BACKUP-DIFF-2]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 25B
-        repository size: 362B, repository backup size: 85B
+        repository size: 480B, repository backup size: 85B
         backup reference list: [BACKUP-FULL-2]
 
     incr backup: [BACKUP-INCR-3]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 13B
-        repository size: 388B, repository backup size: 53B
+        repository size: 506B, repository backup size: 53B
         backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2]
 
     incr backup: [BACKUP-INCR-4]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 8B
-        repository size: 392B, repository backup size: 28B
+        repository size: 510B, repository backup size: 28B
         backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3]
 
     diff backup: [BACKUP-DIFF-3]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 39B
-        repository size: 392B, repository backup size: 139B
+        repository size: 510B, repository backup size: 139B
         backup reference list: [BACKUP-FULL-2]
 
     incr backup: [BACKUP-INCR-5]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 0B
-        repository size: 392B, repository backup size: 0B
+        repository size: 510B, repository backup size: 0B
         backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-3]
 
     diff backup: [BACKUP-DIFF-4]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 30B
-        repository size: 343B, repository backup size: 90B
+        repository size: 461B, repository backup size: 90B
         backup reference list: [BACKUP-FULL-2]
 
     full backup: [BACKUP-FULL-3]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 8KB
-        repository size: 372B, repository backup size: 372B
+        repository size: 490B, repository backup size: 490B
 
     diff backup: [BACKUP-DIFF-5]
         start / stop timestamp: [TIMESTAMP-STR]
         database size: 8KB, backup size: 9B
-        repository size: 401B, repository backup size: 29B
+        repository size: 519B, repository backup size: 29B
         backup reference list: [BACKUP-FULL-3]
 
 stanza: db_empty

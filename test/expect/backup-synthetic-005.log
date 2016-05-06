@@ -305,10 +305,10 @@ full backup (protocol timeout)
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/postgresql.conf, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db/common/postgresql.conf, strSourcePathType = db:absolute, strUser = [undef]
- DEBUG:     Exit::exitSafe(): iExitCode = -1, strSignal = [undef]
-  INFO: backup stop
  ERROR: [141]: remote process terminated: ERROR [141]: unable to read line after 1 seconds
-  WARN: unable to shutdown protocol (141): remote process terminated: ERROR [141]: unable to read line after 1 seconds
+ DEBUG:     Exit::exitSafe(): iExitCode = 141, strSignal = [undef]
+  INFO: backup stop
+ DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --force stop
 ------------------------------------------------------------------------------------------------------------------------------------
