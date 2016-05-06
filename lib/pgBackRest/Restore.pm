@@ -1103,7 +1103,7 @@ sub process
         # If no databases where found then this backup does not contain a valid cluster
         if (keys(%oDbList) == 0)
         {
-            &log(ASSERT, 'no databases for include/exclude -- does not look like a valid cluster');
+            confess &log(ASSERT, 'no databases for include/exclude -- does not look like a valid cluster');
         }
 
         # Log databases found

@@ -104,7 +104,7 @@ sub BackRestTestBackup_PgExecuteNoTrans
     my $strSql = shift;
     my $strDatabase = shift;
 
-    # Connect to the db with autocommit on so we can runs statements that can't run in transaction blocks
+    # Connect to the db with autocommit on so we can run statements that can't run in transaction blocks
     my $hDb = DBI->connect('dbi:Pg:dbname=' . (defined($strDatabase) ? $strDatabase : 'postgres') .
                            ';port=' . BackRestTestCommon_DbPortGet .
                            ';host=' . BackRestTestCommon_DbPathGet(),

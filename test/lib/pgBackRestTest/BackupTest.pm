@@ -1737,9 +1737,7 @@ sub BackRestTestBackup_Test
 
             # Create two new databases
             BackRestTestBackup_PgExecuteNoTrans("create database test1");
-            my $strDbTest1Id = BackRestTestBackup_PgSelectOne("select oid from pg_database where datname = 'test1'");
             BackRestTestBackup_PgExecuteNoTrans("create database test2");
-            my $strDbTest2Id = BackRestTestBackup_PgSelectOne("select oid from pg_database where datname = 'test2'");
 
             # Test invalid archive command
             #-----------------------------------------------------------------------------------------------------------------------
