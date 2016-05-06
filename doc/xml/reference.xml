@@ -342,7 +342,7 @@
 
                         Note that built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.
 
-                        The <br-setting>{[dash]}-db-include</br-setting> option can be passed multiple times to specify more than one database to include.</text>
+                        The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.</text>
 
                         <example>db_main</example>
                     </config-key>
