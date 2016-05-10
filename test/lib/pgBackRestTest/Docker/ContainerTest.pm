@@ -19,6 +19,7 @@ use Scalar::Util qw(blessed);
 
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -120,7 +121,7 @@ sub containerWrite
     my $bForce = shift;
 
     # Write the image
-    fileStringWrite("${strTempPath}/${strImageName}", "$strImage\n", false);
+    fileStringWrite("${strTempPath}/${strImageName}", trim($strImage) . "\n", false);
     executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
                 " -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
                 {bSuppressStdErr => true});
@@ -500,7 +501,7 @@ sub containerBuild
 
             # Install Perl packages
             $strImage .=
-                "\n\n" . perlInstall($strOS) . "\n";
+                "\n\n" . perlInstall($strOS);
 
             # Make PostgreSQL home group readable
             $strImage .=

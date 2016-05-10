@@ -47,14 +47,11 @@ sub BackRestTestFile_Setup
         system("ssh ${strUserBackRest}\@${strHost} 'rm -rf ${strTestPath}/private'");
     }
 
-    # Remove the test directory
-    system("rm -rf ${strTestPath}") == 0 or die 'unable to drop test path';
+    # Remove contents of the test directory
+    system("rm -rf ${strTestPath}/*") == 0 or die 'unable to drop test path';
 
     if (!defined($bDropOnly) || !$bDropOnly)
     {
-        # Create the test directory
-        mkdir($strTestPath, oct('0770')) or confess 'Unable to create test directory';
-
         # Create the backrest private directory
         if (defined($bPrivate) && $bPrivate)
         {
@@ -102,8 +99,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    mkdir($strTestPath, oct('0770')) or confess 'Unable to create test directory';
-    mkdir($strTestPath . '/backrest', oct('0770')) or confess 'Unable to create test directory';
+    mkdir($strTestPath . '/backrest', oct('0770')) or confess 'Unable to create backrest directory';
 
     my $oRemote = new pgBackRest::Protocol::RemoteMaster
     (

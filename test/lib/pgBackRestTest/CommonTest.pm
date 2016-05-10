@@ -143,8 +143,8 @@ sub BackRestTestCommon_Drop
     # Remove the backrest private directory
     BackRestTestCommon_DropRepo();
 
-    # Remove the test directory
-    BackRestTestCommon_PathRemove(BackRestTestCommon_TestPathGet());
+    # Remove contents of the test directory
+    executeTest('rm -rf ' . BackRestTestCommon_TestPathGet() . '/*');
 }
 
 ####################################################################################################################################
@@ -152,8 +152,8 @@ sub BackRestTestCommon_Drop
 ####################################################################################################################################
 sub BackRestTestCommon_Create
 {
-    # Create the test directory
-    BackRestTestCommon_PathCreate(BackRestTestCommon_TestPathGet(), '0770');
+    # Test directory is now created in parent VM so nothing to do here.  Leaving as a place holder for a while in case any other
+    # test init needs to be done when refactoring.
 }
 
 ####################################################################################################################################

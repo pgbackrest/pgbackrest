@@ -27,6 +27,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Db;
+use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use lib dirname($0) . '/lib';
@@ -188,6 +189,12 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
 if (defined($iThreadMax) && ($iThreadMax < 1 || $iThreadMax > 32))
 {
     confess 'thread-max must be between 1 and 32';
+}
+
+# Set test path if not expicitly set
+if (!defined($strTestPath))
+{
+    $strTestPath = cwd() . '/test';
 }
 
 ####################################################################################################################################
@@ -485,6 +492,9 @@ eval
                 push(@{$oyProcess}, undef);
                 executeTest("docker rm -f test-${iProcessIdx}", {bSuppressError => true});
             }
+
+            executeTest("sudo rm -rf ${strTestPath}/*");
+            filePathCreate($strTestPath);
         }
 
         if ($bDryRun)
@@ -539,7 +549,11 @@ eval
 
                             if (!$bNoCleanup)
                             {
-                                executeTest("docker rm -f test-${iProcessIdx}");
+                                my $strImage = 'test-' . $iProcessIdx;
+                                my $strHostTestPath = "${strTestPath}/${strImage}";
+
+                                executeTest("docker rm -f ${strImage}");
+                                executeTest("sudo rm -rf ${strHostTestPath}");
                             }
 
                             $$oyProcess[$iProcessIdx] = undef;
@@ -579,12 +593,22 @@ eval
                     &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DEBUG, "${strTest}" .
                          ($bVmOut || $bShowOutputAsync ? "\n" : ''));
 
+                    my $strVmTestPath = "/home/vagrant/test/${strImage}";
+                    my $strHostTestPath = "${strTestPath}/${strImage}";
+
+                    # Don't create the container if this is a dry run unless output from the VM is required.  Ouput can be requested
+                    # to get more information about the specific tests that will be run.
                     if (!$bDryRun || $bVmOut)
                     {
+                        # Create host test directory
+                        filePathCreate($strHostTestPath, '0770');
+
                         executeTest("docker run -itd -h $$oTest{os}-test --name=${strImage}" .
+                                    " -v ${strHostTestPath}:${strVmTestPath}" .
                                     " -v /backrest:/backrest backrest/$$oTest{os}-test-${strDbVersion}");
                     }
 
+                    # Build up command line for the individual test
                     $strCommandLine =~ s/\-\-os\=\S*//g;
                     $strCommandLine =~ s/\-\-test-path\=\S*//g;
                     $strCommandLine =~ s/\-\-module\=\S*//g;
@@ -592,19 +616,25 @@ eval
                     $strCommandLine =~ s/\-\-run\=\S*//g;
                     $strCommandLine =~ s/\-\-db\-version\=\S*//g;
 
-                    my $strCommand = "docker exec -i -u vagrant ${strImage} $0 ${strCommandLine} --test-path=/home/vagrant/test" .
-                                     " --vm=none --module=$$oTest{module} --test=$$oTest{test}" .
-                                     (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
-                                     (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
-                                     (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
-                                     ($bDryRun ? " --dry-run" : '') .
-                                     " --no-cleanup --vm-out";
+                    my $strCommand =
+                        "docker exec -i -u vagrant ${strImage} $0 ${strCommandLine} --test-path=${strVmTestPath}" .
+                        " --vm=none --module=$$oTest{module} --test=$$oTest{test}" .
+                        (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
+                        (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
+                        (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
+                        ($bDryRun ? " --dry-run" : '') .
+                        " --no-cleanup --vm-out";
 
                     &log(DEBUG, $strCommand);
 
                     if (!$bDryRun || $bVmOut)
                     {
                         my $fTestStartTime = gettimeofday();
+
+                        # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
+                        # Docker and the host VM.
+                        executeTest("docker exec ${strImage} chown vagrant:postgres -R ${strVmTestPath}");
+
                         my $oExec = new pgBackRestTest::Common::ExecuteTest(
                             $strCommand,
                             {bSuppressError => true, bShowOutputAsync => $bShowOutputAsync});
