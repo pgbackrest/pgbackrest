@@ -5,6 +5,8 @@ __No Release Date Set__
 
 * Enhanced text output of `info` command to include timestamps, sizes, and the reference list for all backups. _Contributed by Cynthia Shang_.
 
+* Allow selective restore of databases from a cluster backup. This feature can result in major space and time savings when only specific databases are restored but has some minor caveats. See the User Guide for more information.
+
 ## v1.00: New Repository Format and Configuration Scheme, Link Support
 __Released April 14, 2016__
 

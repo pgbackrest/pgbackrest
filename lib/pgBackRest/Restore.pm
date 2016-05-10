@@ -1087,7 +1087,8 @@ sub process
 
     if (optionTest(OPTION_DB_INCLUDE))
     {
-        # Build a list of all databases
+        # Build a list of all databases from the manifest since the db name/id mappings will not be available for an offline
+        # restore.
         my %oDbList;
 
         foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
@@ -1114,9 +1115,10 @@ sub process
 
         for my $strDbKey (sort(keys(%{$oDbInclude})))
         {
-            # To be included the db must exist
+            # To be included the db must exist - first treat the key as an id and check for a match
             if (!defined($oDbList{$strDbKey}))
             {
+                # If the key does not match as an id then check for a name mapping
                 my $lDbId = $oManifest->get(MANIFEST_SECTION_DB, $strDbKey, MANIFEST_KEY_DB_ID, false);
 
                 if (!defined($lDbId) || !defined($oDbList{$lDbId}))
@@ -1124,10 +1126,11 @@ sub process
                     confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_DB_MISSING);
                 }
 
+                # Set the key to the id if the name mapping was successful
                 $strDbKey = $lDbId;
             }
 
-            # Error if the db is a system db
+            # Error if the db is a built-in db
             if ($strDbKey < DB_USER_OBJECT_MINIMUM_ID)
             {
                 confess &log(ERROR, "system databases (template0, postgres, etc.) are included by default", ERROR_DB_INVALID);
@@ -1140,12 +1143,14 @@ sub process
         # Construct regexp to identify files that should be zeroed
         for my $strDbKey (sort(keys(%oDbList)))
         {
-            # Only user created databases can be zeroed
+            # Only user created databases can be zeroed, never built-in databases
             if ($strDbKey >= DB_USER_OBJECT_MINIMUM_ID)
             {
+                # Filter files in base directory
                 $strDbFilter .= (defined($strDbFilter) ? '|' : '') .
                     '(^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strDbKey . '\/)';
 
+                # Filter files in tablespace directories
                 for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
                 {
                     if ($oManifest->isTargetTablespace($strTarget))
@@ -1157,6 +1162,7 @@ sub process
             }
         }
 
+        # Output the generated filter for debugging
         &log(DETAIL, "database filter: $strDbFilter");
     }
 
