@@ -222,7 +222,7 @@ sub logWrite
 
         if (!-e $strTestLogPath)
         {
-            mkdir($strTestLogPath) or
+            mkdir($strTestLogPath, 0750) or
                 confess "unable to create expect log path ${strTestLogPath}";
         }
 
