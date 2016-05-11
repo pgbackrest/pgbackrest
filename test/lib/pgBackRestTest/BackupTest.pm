@@ -895,9 +895,26 @@ sub BackRestTestBackup_Test
 
             # Create base path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt', 'BASE',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/PG_VERSION', '9.3',
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
+                                                  'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/PG_VERSION', '9.3',
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
+
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', '33000',
+                                                  '7f4c74dc10f61eef43e6ae642606627df1999b34', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/PG_VERSION', '9.3',
+                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             # Create global path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
@@ -1120,7 +1137,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PathRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
 
             # Remove a file
-            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt');
+            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
@@ -1133,14 +1150,14 @@ sub BackRestTestBackup_Test
                 BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                            undef, undef, undef, undef, undef, undef,
                                            'restore all links by mapping', undef, '--log-level-console=detail' .
-                                           '  --link-map=pg_stat=../pg_stat' .
+                                           ' --link-map=pg_stat=../pg_stat' .
                                            ' --link-map=postgresql.conf=../pg_config/postgresql.conf');
 
                 # Error when links overlap
                 BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                            undef, undef, undef, undef, undef, undef,
                                            'restore all links by mapping', ERROR_LINK_DESTINATION, '--log-level-console=warn' .
-                                           '  --link-map=pg_stat=../pg_stat' .
+                                           ' --link-map=pg_stat=../pg_stat' .
                                            ' --link-map=postgresql.conf=../pg_stat/postgresql.conf');
 
                 # Error when links still exist on non-delta restore
@@ -1292,8 +1309,9 @@ sub BackRestTestBackup_Test
 
             # Add tablespace 1
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 1);
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', 'tablespace1.txt', 'TBLSPC1',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
                                                   'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
                                                   'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
@@ -1317,8 +1335,9 @@ sub BackRestTestBackup_Test
 
             # Add tablespace 2
             BackRestTestBackup_ManifestTablespaceCreate(\%oManifest, 2);
+            BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2.txt', 'TBLSPC2',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
                                                   'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
 
 
@@ -1410,8 +1429,8 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestTablespaceDrop(\%oManifest, 1, 2);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2b.txt', 'TBLSPC2B',
-                                                  'e324463005236d83e6e54795dbddd20a74533bf3', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt',
+                                                  'TBLSPC2B', 'e324463005236d83e6e54795dbddd20a74533bf3', $lTime);
 
             # Munge the version to make sure it gets corrected on the next run
             BackRestTestBackup_ManifestMunge($oFile, $bRemote, $strBackup, INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
@@ -1431,7 +1450,7 @@ sub BackRestTestBackup_Test
                 executeTest('rm ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/backup.info", {bRemote => $bRemote});
             }
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt', 'BASEUPDT',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT',
                                                   '9a53d532e27785e681766c98516a5e93f096a501', $lTime);
 
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'update files',
@@ -1457,7 +1476,7 @@ sub BackRestTestBackup_Test
                                            {strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
                                             strOptionalParam => '--log-level-console=detail'});
 
-            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt');
+            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
             $strBackup = BackRestTestBackup_BackupEnd(\%oManifest);
 
@@ -1470,18 +1489,18 @@ sub BackRestTestBackup_Test
 
             $strType = 'diff';
 
-            BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt');
+            BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
-            BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2b.txt', true);
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2c.txt', 'TBLSPC2C',
+            BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPC2C',
                                                   'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime);
 
             BackRestTestBackup_BackupBegin($strType, $strStanza, 'remove files during backup',
                                            {strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
                                             strOptionalParam => '--log-level-console=detail'});
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', 'tablespace2c.txt', 'TBLSPCBIGGER',
-                                                  'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt',
+                                                  'TBLSPCBIGGER', 'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime);
 
             BackRestTestBackup_ManifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
 
@@ -1492,7 +1511,7 @@ sub BackRestTestBackup_Test
             $strType = 'full';
             BackRestTestBackup_ManifestReference(\%oManifest);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base1.txt', 'BASEUPDT2',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT2',
                                                   '7579ada0808d7f98087a0a586d0df9de009cdc33', $lTime);
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'update file',
@@ -1518,6 +1537,54 @@ sub BackRestTestBackup_Test
             $strBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'add file',
                                                             {strOptionalParam => '--log-level-console=detail'});
 
+            # Selective Restore
+            #-----------------------------------------------------------------------------------------------------------------------
+            $bDelta = true;
+
+            # Remove mapping for tablespace 1
+            delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'});
+
+            # Remove checksum to match zeroed files
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2.txt'}
+                             {&MANIFEST_SUBKEY_CHECKSUM});
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2c.txt'}
+                             {&MANIFEST_SUBKEY_CHECKSUM});
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'selective restore 16384', undef,
+                                       "--log-level-console=detail --db-include=16384");
+
+            # Restore checksum values for next test
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                '7f4c74dc10f61eef43e6ae642606627df1999b34';
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2.txt'}
+                      {&MANIFEST_SUBKEY_CHECKSUM} = 'dc7f76e43c46101b47acc55ae4d593a9e6983578';
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2c.txt'}
+                      {&MANIFEST_SUBKEY_CHECKSUM} = 'dfcb8679956b734706cf87259d50c88f83e80e66';
+
+            # Remove chacksum to match zeroed file
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'selective restore 32768', undef,
+                                       "--log-level-console=detail --db-include=32768");
+
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                '7579ada0808d7f98087a0a586d0df9de009cdc33';
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'error on invalid id', ERROR_DB_MISSING,
+                                       "--log-level-console=warn --db-include=7777");
+
+            BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
+                                       $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                                       'error on system id', ERROR_DB_INVALID,
+                                       "--log-level-console=warn --db-include=1");
+
             # Compact Restore
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
@@ -1528,7 +1595,6 @@ sub BackRestTestBackup_Test
             BackRestTestCommon_PathCreate($strDbPath);
 
             $oRemapHash{&MANIFEST_TARGET_PGDATA} = $strDbPath;
-            delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'});
             delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, \%oManifest, \%oRemapHash,
@@ -1553,7 +1619,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_Info('bogus', INFO_OUTPUT_JSON, false);
 
             # Dump out history path at the end to verify all history files are being recorded.  This test is only performed locally
-            # because for some reason sort order is different when this command is executed via ssh (even though the content if the
+            # because for some reason sort order is different when this command is executed via ssh (even though the content of the
             # directory is identical).
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bNeutralTest && !$bRemote)
@@ -1668,6 +1734,10 @@ sub BackRestTestBackup_Test
             my $strXidMessage = 'xid';
             my $strNameMessage = 'name';
             my $strTimelineMessage = 'timeline3';
+
+            # Create two new databases
+            BackRestTestBackup_PgExecuteNoTrans("create database test1");
+            BackRestTestBackup_PgExecuteNoTrans("create database test2");
 
             # Test invalid archive command
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1815,6 +1885,15 @@ sub BackRestTestBackup_Test
 
             &log(INFO, "        name target is ${strNameTarget}");
 
+            # Create a table and data in database test2
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_PgExecuteNoTrans('create table test (id int);' .
+                                                'insert into test values (1);' .
+                                                'create table test_ts1 (id int) tablespace ts1;' .
+                                                'insert into test_ts1 values (2);',
+                                                'test2');
+            BackRestTestBackup_PgSwitchXlog();
+
             # Restore (type = default)
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = false;
@@ -1862,10 +1941,27 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Restore($oFile, OPTION_DEFAULT_RESTORE_SET, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $strTargetAction, $strTargetTimeline,
-                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                                       $oRecoveryHashRef, $strComment, $iExpectedExitStatus, ' --db-include=test1');
 
             BackRestTestBackup_ClusterStart();
             BackRestTestBackup_PgSelectOneTest('select message from test', $strNameMessage);
+
+            # Now it should be OK to drop database test2
+            BackRestTestBackup_PgExecuteNoTrans("drop database test2");
+
+            # The test table lives in ts1 so it needs to be moved or dropped
+            if (BackRestTestCommon_DbVersion() >= 9.0)
+            {
+                BackRestTestBackup_PgExecute('alter table test set tablespace pg_default');
+            }
+            # Drop for older versions
+            else
+            {
+                BackRestTestBackup_PgExecute('drop table test');
+            }
+
+            # And drop the tablespace
+            BackRestTestBackup_PgExecuteNoTrans("drop tablespace ts1");
 
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1913,7 +2009,6 @@ sub BackRestTestBackup_Test
 
             executeTest('rm -rf ' . BackRestTestCommon_DbCommonPathGet() . "/*");
             executeTest('rm -rf ' . BackRestTestCommon_DbPathGet() . "/pg_xlog/*");
-            executeTest('rm -rf ' . BackRestTestCommon_DbTablespacePathGet(1));
 
             BackRestTestBackup_Restore($oFile, $strIncrBackup, $strStanza, $bRemote, undef, undef, $bDelta, $bForce,
                                        $strType, $strTarget, $bTargetExclusive, $strTargetAction, $strTargetTimeline,

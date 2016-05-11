@@ -126,6 +126,12 @@ use constant ERROR_PATH_TYPE                                        => ERROR_MIN
     push @EXPORT, qw(ERROR_PATH_TYPE);
 use constant ERROR_LINK_MAP                                         => ERROR_MINIMUM + 53;
     push @EXPORT, qw(ERROR_LINK_MAP);
+use constant ERROR_FILE_CLOSE                                       => ERROR_MINIMUM + 54;
+    push @EXPORT, qw(ERROR_FILE_CLOSE);
+use constant ERROR_DB_MISSING                                       => ERROR_MINIMUM + 55;
+    push @EXPORT, qw(ERROR_DB_MISSING);
+use constant ERROR_DB_INVALID                                       => ERROR_MINIMUM + 56;
+    push @EXPORT, qw(ERROR_DB_INVALID);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);
