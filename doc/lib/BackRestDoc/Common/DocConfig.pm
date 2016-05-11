@@ -519,6 +519,9 @@ sub helpConfigDocGet
     my $oDoc = new BackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $oConfigDoc->paramGet('title'));
 
+    # set the description for use as a meta tag
+    $oDoc->fieldSet('description', $oConfigDoc->fieldGet('description'));
+
     # Output the introduction
     my $oIntroSectionDoc = $oDoc->nodeAdd('section', undef, {id => 'introduction'});
     $oIntroSectionDoc->nodeAdd('title')->textSet('Introduction');
@@ -568,6 +571,9 @@ sub helpCommandDocGet
 
     my $oDoc = new BackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $oOperationDoc->paramGet('title'));
+
+    # set the description for use as a meta tag
+    $oDoc->fieldSet('description', $oOperationDoc->fieldGet('description'));
 
     # Output the introduction
     my $oIntroSectionDoc = $oDoc->nodeAdd('section', undef, {id => 'introduction'});

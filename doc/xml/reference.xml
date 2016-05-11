@@ -3,6 +3,8 @@
 <doc title="User Guide">
     <!-- CONFIG -->
     <config title="Configuration Reference">
+        <description>{[project]} can be configured using command-line parameters and/or a configuration file. This list details available configuration options for easily managing {[postgres]} backups and restores.</description>
+
         <text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest.conf</file>.</text>
 
         <config-section-list title="Settings">
@@ -490,6 +492,8 @@
 
     <!-- COMMAND -->
     <operation title="Command Reference">
+        <description>{[project]} Command Reference details all commands and applicable options for getting the most out of the fastest, most reliable {[postgres]} backup and restore solution.</description>
+
         <text>Commands are used to execute the various <backrest/> functions.  Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands.  This includes all the options that may also configured in <file>pgbackrest.conf</file>.</text>
 
         <operation-general title="General Options">
