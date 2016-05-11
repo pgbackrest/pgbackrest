@@ -61,7 +61,7 @@ test.pl [options]
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --infinite           repeat selected tests forever
-   --db-version         version of postgres to test (or all)
+   --db-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --no-lint            Disable static source code analysis
 
@@ -103,7 +103,7 @@ my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
 my $bInfinite = false;
-my $strDbVersion = 'all';
+my $strDbVersion = 'minimal';
 my $bLogForce = false;
 my $strVm = 'all';
 my $bVmBuild = false;
@@ -410,18 +410,28 @@ eval
                             my $iDbVersionMin = -1;
                             my $iDbVersionMax = -1;
 
+                            # By default test every db version that is supported for each OS
+                            my $strDbVersionKey = 'db';
+
+                            # Run a reduced set of tests where each PG version is only tested on a single OS
+                            if ($strDbVersion eq 'minimal')
+                            {
+                                $strDbVersionKey = 'db_minimal';
+                            }
+
                             if (defined($$oTest{db}) && $$oTest{db})
                             {
                                 $iDbVersionMin = 0;
-                                $iDbVersionMax = @{$$oyVm{$strTestOS}{db}} - 1;
+                                $iDbVersionMax = @{$$oyVm{$strTestOS}{$strDbVersionKey}} - 1;
                             }
 
                             my $bFirstDbVersion = true;
 
                             for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
                             {
-                                if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' ||
-                                    ($strDbVersion ne 'all' && $strDbVersion eq ${$$oyVm{$strTestOS}{db}}[$iDbVersionIdx]))
+                                if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' || $strDbVersion eq 'minimal' ||
+                                    ($strDbVersion ne 'all' &&
+                                        $strDbVersion eq ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx]))
                                 {
                                     my $iTestRunMin = defined($iModuleTestRun) ?
                                                           $iModuleTestRun : (defined($$oTest{total}) ? 1 : -1);
@@ -452,7 +462,8 @@ eval
                                                 test => $$oTest{name},
                                                 run => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
                                                 thread => $iThreadTestMax,
-                                                db => $iDbVersionIdx == -1 ? undef : ${$$oyVm{$strTestOS}{db}}[$iDbVersionIdx]
+                                                db => $iDbVersionIdx == -1 ? undef :
+                                                    ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx]
                                             };
 
                                             push(@{$oyTestRun}, $oTestRun);
@@ -692,7 +703,7 @@ eval
         {
             for (my $iVersionIdx = @stryVersionSupport - 1; $iVersionIdx >= 0; $iVersionIdx--)
             {
-                if ($strDbVersion eq 'all' || $strDbVersion eq 'max' && @stryTestVersion == 0 ||
+                if ($strDbVersion eq 'all' || $strDbVersion eq 'minimal' || $strDbVersion eq 'max' && @stryTestVersion == 0 ||
                     $strDbVersion eq $stryVersionSupport[$iVersionIdx])
                 {
                     my $strVersionPath = $strSearchPath;
