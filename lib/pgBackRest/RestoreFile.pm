@@ -12,6 +12,7 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use Fcntl qw(O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
@@ -21,6 +22,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -77,9 +79,40 @@ sub restoreFile
 
     # Copy flag and log message
     my $bCopy = true;
+    my $bZero = false;
     my $strLog;
 
-    if ($oFile->exists(PATH_DB_ABSOLUTE, $$oFileHash{db_file}))
+    if (defined($$oFileHash{zero}) && $$oFileHash{zero})
+    {
+        $bCopy = false;
+        $bZero = true;
+
+        # Open the file truncating to zero bytes in case it already exists
+        my $hFile = fileOpen($$oFileHash{db_file}, O_WRONLY | O_CREAT | O_TRUNC);
+
+        # Now truncate to the original size.  This will create a sparse file which is very efficient for this use case.
+        truncate($hFile, $$oFileHash{size});
+
+        # Sync the file
+        $hFile->sync()
+            or confess &log(ERROR, "unable to sync $$oFileHash{db_file}", ERROR_FILE_SYNC);
+
+        # Close the file
+        close($hFile)
+            or confess &log(ERROR, "unable to close $$oFileHash{db_file}", ERROR_FILE_CLOSE);
+
+        # Fix the timestamp - not really needed in this case but good for testing
+        utime($$oFileHash{modification_time}, $$oFileHash{modification_time}, $$oFileHash{db_file})
+            or confess &log(ERROR, "unable to set time for $$oFileHash{db_file}");
+
+        # Set file mode
+        chmod(oct($$oFileHash{mode}), $$oFileHash{db_file})
+            or confess &log(ERROR, "unable to set mode for $$oFileHash{db_file}");
+
+        # Set file ownership
+        $oFile->owner(PATH_DB_ABSOLUTE, $$oFileHash{db_file}, $$oFileHash{user}, $$oFileHash{group});
+    }
+    elsif ($oFile->exists(PATH_DB_ABSOLUTE, $$oFileHash{db_file}))
     {
         # Perform delta if requested
         if ($bDelta)
@@ -141,10 +174,11 @@ sub restoreFile
 
     # Log the restore
     &log($bCopy ? INFO : DETAIL,
-         "restore file $$oFileHash{db_file}" . (defined($strLog) ? " - ${strLog}" : '') .
+         'restore' . ($bZero ? ' zeroed' : '') .
+         " file $$oFileHash{db_file}" . (defined($strLog) ? " - ${strLog}" : '') .
          ' (' . fileSizeFormat($$oFileHash{size}) .
          ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-         ($$oFileHash{size} != 0 ? " checksum $$oFileHash{checksum}" : ''));
+         ($$oFileHash{size} != 0 && !$bZero ? " checksum $$oFileHash{checksum}" : ''));
 
     # Return from function and log return values if any
     return logDebugReturn

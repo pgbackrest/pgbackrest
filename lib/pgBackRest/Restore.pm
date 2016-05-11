@@ -11,7 +11,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Cwd qw(abs_path);
-use File::Basename qw(dirname);
+use File::Basename qw(basename dirname);
 use File::stat qw(lstat);
 
 use lib dirname($0);
@@ -1082,6 +1082,89 @@ sub process
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
 
+    # Build an expression to match files that should be zeroed for filtered restores
+    my $strDbFilter;
+
+    if (optionTest(OPTION_DB_INCLUDE))
+    {
+        # Build a list of databases from the manifest since the db name/id mappings will not be available for an offline restore.
+        my %oDbList;
+
+        foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+        {
+            if ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/base\/[0-9]+\/PG\_VERSION'))
+            {
+                my $lDbId = basename(dirname($strFile));
+
+                $oDbList{$lDbId} = true;
+            }
+        }
+
+        # If no databases where found then this backup does not contain a valid cluster
+        if (keys(%oDbList) == 0)
+        {
+            confess &log(ASSERT, 'no databases for include/exclude -- does not look like a valid cluster');
+        }
+
+        # Log databases found
+        &log(DETAIL, 'databases for include/exclude (' . join(', ', sort(keys(%oDbList))) . ')');
+
+        # Remove included databases from the list
+        my $oDbInclude = optionGet(OPTION_DB_INCLUDE);
+
+        for my $strDbKey (sort(keys(%{$oDbInclude})))
+        {
+            # To be included the db must exist - first treat the key as an id and check for a match
+            if (!defined($oDbList{$strDbKey}))
+            {
+                # If the key does not match as an id then check for a name mapping
+                my $lDbId = $oManifest->get(MANIFEST_SECTION_DB, $strDbKey, MANIFEST_KEY_DB_ID, false);
+
+                if (!defined($lDbId) || !defined($oDbList{$lDbId}))
+                {
+                    confess &log(ERROR, "database to include '${strDbKey}' does not exist", ERROR_DB_MISSING);
+                }
+
+                # Set the key to the id if the name mapping was successful
+                $strDbKey = $lDbId;
+            }
+
+            # Error if the db is a built-in db
+            if ($strDbKey < DB_USER_OBJECT_MINIMUM_ID)
+            {
+                confess &log(ERROR, "system databases (template0, postgres, etc.) are included by default", ERROR_DB_INVALID);
+            }
+
+            # Otherwise remove from list of DBs to zero
+            delete($oDbList{$strDbKey});
+        }
+
+        # Construct regexp to identify files that should be zeroed
+        for my $strDbKey (sort(keys(%oDbList)))
+        {
+            # Only user created databases can be zeroed, never built-in databases
+            if ($strDbKey >= DB_USER_OBJECT_MINIMUM_ID)
+            {
+                # Filter files in base directory
+                $strDbFilter .= (defined($strDbFilter) ? '|' : '') .
+                    '(^' . MANIFEST_TARGET_PGDATA . '\/base\/' . $strDbKey . '\/)';
+
+                # Filter files in tablespace directories
+                for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+                {
+                    if ($oManifest->isTargetTablespace($strTarget))
+                    {
+                        $strDbFilter .=
+                            '|(^' . $strTarget . '\/' . $oManifest->tablespacePathGet() . '\/' . $strDbKey . '\/)';
+                    }
+                }
+            }
+        }
+
+        # Output the generated filter for debugging
+        &log(DETAIL, "database filter: $strDbFilter");
+    }
+
     # Create hash containing files to restore
     my %oRestoreHash;
     my $lSizeTotal = 0;
@@ -1125,6 +1208,12 @@ sub process
             $oRestoreHash{$strQueueKey}{$strFileKey}{skip} = false;
 
             $lSizeTotal += $lSize;
+        }
+
+        # Zero files that should be filtered
+        if (defined($strDbFilter) && $strFile =~ $strDbFilter && $strFile !~ /\/PG\_VERSION$/)
+        {
+            $oRestoreHash{$strQueueKey}{$strFileKey}{zero} = true;
         }
 
         # Get restore information

@@ -102,9 +102,11 @@ push @EXPORT, qw(BackRestTestBackup_PgExecuteNoTrans);
 sub BackRestTestBackup_PgExecuteNoTrans
 {
     my $strSql = shift;
+    my $strDatabase = shift;
 
-    # Connect to the db with autocommit on so we can runs statements that can't run in transaction blocks
-    my $hDb = DBI->connect('dbi:Pg:dbname=postgres;port=' . BackRestTestCommon_DbPortGet .
+    # Connect to the db with autocommit on so we can run statements that can't run in transaction blocks
+    my $hDb = DBI->connect('dbi:Pg:dbname=' . (defined($strDatabase) ? $strDatabase : 'postgres') .
+                           ';port=' . BackRestTestCommon_DbPortGet .
                            ';host=' . BackRestTestCommon_DbPathGet(),
                            BackRestTestCommon_UserGet(),
                            undef,
@@ -493,13 +495,23 @@ push @EXPORT, qw(BackRestTestBackup_PathCreate);
 sub BackRestTestBackup_PathCreate
 {
     my $oManifestRef = shift;
-    my $strPath = shift;
+    my $strTarget = shift;
     my $strSubPath = shift;
     my $strMode = shift;
 
     # Create final file location
-    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strPath}{&MANIFEST_SUBKEY_PATH} .
-                       (defined($strSubPath) ? "/${strSubPath}" : '');
+    my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_PATH};
+
+    # Get tablespace path if this is a tablespace
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0 &&
+        index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
+    {
+        my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
+
+        $strFinalPath .= '/PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
+    }
+
+    $strFinalPath .= (defined($strSubPath) ? "/${strSubPath}" : '');
 
     # Create the path
     if (!(-e $strFinalPath))
@@ -1416,6 +1428,13 @@ sub BackRestTestBackup_BackupCompare
 
             foreach my $strFile (keys(%{${$oExpectedManifestRef}{$strSection}}))
             {
+                if (!defined(${$oExpectedManifestRef}{$strSection}{$strFile}{$strSubKey}) &&
+                    defined(${$oExpectedManifestRef}{"${strSection}:default"}{$strSubKey}))
+                {
+                    ${$oExpectedManifestRef}{$strSection}{$strFile}{$strSubKey} =
+                        ${$oExpectedManifestRef}{"${strSection}:default"}{$strSubKey};
+                }
+
                 my $strValue = ${$oExpectedManifestRef}{$strSection}{$strFile}{$strSubKey};
 
                 if (defined($strValue))
@@ -1797,8 +1816,18 @@ sub BackRestTestBackup_RestoreCompare
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
-            $oActualManifest->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
-                                  $oFile->hash(PATH_DB_ABSOLUTE, $oActualManifest->dbPathGet($strSectionPath, $strName)));
+            my $oStat = fileStat($oActualManifest->dbPathGet($strSectionPath, $strName));
+
+            if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
+            {
+                $oActualManifest->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
+                                      $oFile->hash(PATH_DB_ABSOLUTE, $oActualManifest->dbPathGet($strSectionPath, $strName)));
+            }
+            else
+            {
+                $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM);
+                delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM});
+            }
         }
     }
 
@@ -1854,6 +1883,9 @@ sub BackRestTestBackup_RestoreCompare
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_ARCHIVE_STOP});
     }
+
+    # Delete the list of DBs
+    delete($$oExpectedManifestRef{&MANIFEST_SECTION_DB});
 
     iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
     iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);

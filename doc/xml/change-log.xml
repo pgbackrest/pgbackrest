@@ -8,7 +8,12 @@
     <changelog>
          <changelog-release date="XXXX-XX-XX" version="1.01dev" title="UNDER DEVELOPMENT">
              <release-feature-bullet-list>
-                <release-feature><text>Enhanced text output of <cmd>info</cmd> command to include timestamps, sizes, and the reference list for all backups. <i>Contributed by Cynthia Shang</i>.</text></release-feature>
+                <release-feature>
+                    <text>Enhanced text output of <cmd>info</cmd> command to include timestamps, sizes, and the reference list for all backups. <i>Contributed by Cynthia Shang</i>.</text>
+                </release-feature>
+                <release-feature>
+                    <text>Allow selective restore of databases from a cluster backup.  This feature can result in major space and time savings when only specific databases are restored.  Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.</text>
+                </release-feature>
              </release-feature-bullet-list>
          </changelog-release>
 

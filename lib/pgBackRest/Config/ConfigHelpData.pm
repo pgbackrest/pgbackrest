@@ -210,6 +210,24 @@ my $oConfigHelpData =
                 "Used for backups where the database cluster host is different from the backup host."
         },
 
+        # DB-INCLUDE Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'db-include' =>
+        {
+            section => 'restore',
+            summary =>
+                "Restore only specified databases.",
+            description =>
+                "This feature allows only selected databases to be restored. Databases not specifically included will be " .
+                    "restored as sparse, zeroed files to save space but still allow PostgreSQL to perform recovery. After " .
+                    "recovery the databases that were not included will not be accessible but can be removed with the drop " .
+                    "database command.\n" .
+                "\n" .
+                "Note that built-in databases (template0, template1, and postgres) are always restored.\n" .
+                "\n" .
+                "The --db-include option can be passed multiple times to specify more than one database to include."
+        },
+
         # DB-PATH Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'db-path' =>
@@ -908,6 +926,7 @@ my $oConfigHelpData =
                 'compress-level-network' => 'section',
                 'config' => 'default',
                 'config-remote' => 'section',
+                'db-include' => 'section',
                 'db-timeout' => 'section',
 
                 # DELTA Option Help

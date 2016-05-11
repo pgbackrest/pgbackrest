@@ -516,7 +516,7 @@
     </section>
 
     <!-- SECTION => BACKUP -->
-    <section id="backup" depend="/quick-start/configure-archiving">
+    <section id="backup" depend="/quickstart/configure-archiving">
         <title>Backup</title>
 
         <p>The Backup section introduces additional <cmd>backup</cmd> command features.</p>
@@ -621,7 +621,7 @@
     </section>
 
     <!-- SECTION => RETENTION -->
-    <section id="retention" depend="quick-start/perform-backup">
+    <section id="retention" depend="quickstart/perform-backup">
         <title>Retention</title>
 
         <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
@@ -714,7 +714,7 @@
     </section>
 
     <!-- SECTION => RESTORE -->
-    <section id="restore" depend="quick-start/perform-backup">
+    <section id="restore" depend="quickstart/perform-backup">
         <title>Restore</title>
 
         <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
@@ -751,6 +751,154 @@
                 </execute>
             </execute-list>
         </section>
+
+        <!-- SECTION => RESTORE - DELTA -->
+        <section id="option-db-include">
+            <title>Restore Selected Databases</title>
+
+            <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
+
+            <p>To demonstrate this feature two databases are created: test1 and test2.  A fresh backup is run so <backrest/> is aware of the new databases.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Create two test databases and perform a backup</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "create database test1;"
+                    </exe-cmd>
+                </execute>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "create database test2;"
+                    </exe-cmd>
+                </execute>
+
+                <execute>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=incr backup</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Each test database will be seeded with tables and data to demonstrate that recovery works with selective restore.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Create a test table in each database</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "create table test1_table (id int);
+                                 insert into test1_table (id) values (1);" test1
+                    </exe-cmd>
+                </execute>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "create table test2_table (id int);
+                                 insert into test2_table (id) values (2);" test2
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>One of the main reasons to use selective restore is to save space.  The size of the test1 database is shown here so it can be compared with the disk utilization after a selective restore.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Show space used by test1 database</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        du -sh {[db-path]}/base/16384
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Restore from last backup including only the test2 database</title>
+
+                <execute user="root">
+                    <exe-cmd>{[db-cluster-stop]}</exe-cmd>
+                </execute>
+
+                <execute>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
+                        {[dash]}-db-include=test2 restore</exe-cmd>
+                </execute>
+
+                <execute user="root">
+                    <exe-cmd>{[db-cluster-start]}</exe-cmd>
+                </execute>
+
+                <execute show="n">
+                    <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Once recovery is complete the test2 database will contain all previously created tables and data.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Demonstrate that the test2 database was recovered</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "select * from test2_table;" test2
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>The test1 database, despite successful recovery, is not accessible.  This is because the entire database was restored as sparse, zeroed files.  <postgres/> can successfully apply WAL on the zeroed files but the database as a whole will not be valid because key files contain no data.  This is purposeful to prevent the database from being accidentally used when it might contain partial data that was applied during WAL replay.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Attempting to connect to the test1 database will produce an error</title>
+
+                <execute output="y" filter="n" err-expect="2">
+                    <exe-cmd>
+                        psql -c "select * from test1_table;" test1
+                    </exe-cmd>
+                    <exe-highlight>relation mapping file.*contains invalid data</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>Since the test1 database is restored with sparse, zeroed files it will only require as much space as the amount of WAL that is written during recovery.  While the amount of WAL generated during a backup and applied during recovery can be significant it will generally be a small fraction of the total database size, especially for large databases where this feature is most likely to be useful.</p>
+
+            <p>It is clear that the test1 database uses far less disk space during the selective restore than it would have if the entire database had been restored.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Show space used by test1 database after recovery</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        du -sh {[db-path]}/base/16384
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>At this point the only action that can be taken on the invalid test1 database is <id>drop database</id>. <backrest/> does not automatically drop the database since this cannot be done until recovery is complete and the cluster is accessible.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Drop the test1 database</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "drop database test1;"
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Now that the invalid test1 database has been dropped only the test2 and built-in databases remain.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>List remaining databases</title>
+
+                <execute output="y" filter="n">
+                    <exe-cmd>
+                        psql -c "select oid, datname from pg_database order by oid;"
+                    </exe-cmd>
+                    <exe-highlight>test2</exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
     </section>
 
     <!-- SECTION => PITR -->
@@ -774,7 +922,7 @@
                              create table important_table (message text);
                              insert into important_table values ('{[test-table-data]}');
                              commit;
-                             select * from important_table";
+                             select * from important_table;"
                 </exe-cmd>
                 <exe-highlight>{[test-table-data]}</exe-highlight>
             </execute>

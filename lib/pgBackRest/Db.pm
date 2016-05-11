@@ -21,6 +21,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -364,6 +365,29 @@ sub tablespaceMapGet
     (
         $strOperation,
         {name => 'oTablespaceMapRef', value => $oTablespaceMapRef}
+    );
+}
+
+####################################################################################################################################
+# databaseMapGet
+#
+# Get the mapping between oid and database name.
+####################################################################################################################################
+sub databaseMapGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->databaseMapGet');
+
+    dataHashBuild(my $oDatabaseMapRef = {}, "name\t" . MANIFEST_KEY_DB_ID . "\t" . MANIFEST_KEY_DB_LAST_SYSTEM_ID  . "\n" .
+                  $self->executeSql('select datname, oid, datlastsysoid from pg_database'), "\t");
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oDatabaseMapRef', value => $oDatabaseMapRef}
     );
 }
 

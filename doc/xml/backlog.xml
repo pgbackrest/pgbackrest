@@ -430,6 +430,12 @@
             <p>The debug params all end up on a single line so if one value changes it's tough to tell which one changed. Separate them out onto separate lines to aid debugging (even though this will add a lot of lines to the file.)</p>
         </section>
 
+        <section id="doc-option-multiple">
+            <title>Automatically document options that can be passed multiple times</title>
+
+            <p>Some options can be passed multiple times on the command line (or the config file) and this should be written into the reference guide automatically rather than being manually written per option.</p>
+        </section>
+
         <section id="doc-sudo-force-command">
             <title>Document ForceCommand &amp; sudo method for security</title>
 
