@@ -18,6 +18,7 @@ use pgBackRest::BackupInfo;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::Manifest;
 
@@ -316,7 +317,7 @@ sub archiveCreate
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
     my $iArchiveIdx = 0;
-    my $bSkipFF = $$oStanza{strDbVersion} <= 9.2;
+    my $bSkipFF = $$oStanza{strDbVersion} <= PG_VERSION_92;
 
     my $strArchive = defined($$oStanza{strArchiveLast}) ? $self->archiveNext($$oStanza{strArchiveLast}, $bSkipFF) :
                                                           '000000010000000000000000';

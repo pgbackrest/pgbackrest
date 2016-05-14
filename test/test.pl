@@ -598,7 +598,7 @@ eval
                                           (defined($$oTest{db}) ? ", db=$$oTest{db}" : '');
 
                     my $strImage = 'test-' . $iProcessIdx;
-                    my $strDbVersion = (defined($$oTest{db}) ? $$oTest{db} : '9.4');
+                    my $strDbVersion = (defined($$oTest{db}) ? $$oTest{db} : PG_VERSION_94);
                     $strDbVersion =~ s/\.//;
 
                     &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DEBUG, "${strTest}" .

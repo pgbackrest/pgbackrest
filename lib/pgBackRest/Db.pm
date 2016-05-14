@@ -44,19 +44,56 @@ use constant OP_DB_VERSION_GET                                      => OP_DB . "
 use constant OP_DB_VERSION_SUPPORT                                  => OP_DB . "->versionSupport";
 
 ####################################################################################################################################
-# Postgres filename constants
-####################################################################################################################################
-use constant FILE_POSTMASTER_PID                                    => 'postmaster.pid';
-    push @EXPORT, qw(FILE_POSTMASTER_PID);
-
-use constant FILE_PG_VERSION                                        => 'PG_VERSION';
-    push @EXPORT, qw(FILE_PG_VERSION);
-
-####################################################################################################################################
 # Backup advisory lock
 ####################################################################################################################################
 use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078987004321';
     push @EXPORT, qw(DB_BACKUP_ADVISORY_LOCK);
+
+####################################################################################################################################
+# PostgreSQL version numbers
+####################################################################################################################################
+use constant PG_VERSION_83                                          => '8.3';
+    push @EXPORT, qw(PG_VERSION_83);
+use constant PG_VERSION_84                                          => '8.4';
+    push @EXPORT, qw(PG_VERSION_84);
+use constant PG_VERSION_90                                          => '9.0';
+    push @EXPORT, qw(PG_VERSION_90);
+use constant PG_VERSION_91                                          => '9.1';
+    push @EXPORT, qw(PG_VERSION_91);
+use constant PG_VERSION_92                                          => '9.2';
+    push @EXPORT, qw(PG_VERSION_92);
+use constant PG_VERSION_93                                          => '9.3';
+    push @EXPORT, qw(PG_VERSION_93);
+use constant PG_VERSION_94                                          => '9.4';
+    push @EXPORT, qw(PG_VERSION_94);
+use constant PG_VERSION_95                                          => '9.5';
+    push @EXPORT, qw(PG_VERSION_95);
+
+####################################################################################################################################
+# Map the control and catalog versions to PostgreSQL version.
+#
+# The control version can be found in src/include/catalog/pg_control.h and may not change with every version of PostgreSQL but is
+# still checked to detect custom builds which change the structure.  The catalog version can be found in
+# src/include/catalog/catversion.h and should change with every release.
+####################################################################################################################################
+my $oPgControlVersionHash =
+{
+    # iControlVersion => {iCatalogVersion => strDbVersion}
+    833 => {200711281 => PG_VERSION_83},
+    843 => {200904091 => PG_VERSION_84},
+    903 =>
+    {
+        201008051 => PG_VERSION_90,
+        201105231 => PG_VERSION_91,
+    },
+    922 => {201204301 => PG_VERSION_92},
+    937 => {201306121 => PG_VERSION_93},
+    942 =>
+    {
+        201409291 => PG_VERSION_94,
+        201510051 => PG_VERSION_95,
+    },
+};
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -133,7 +170,8 @@ sub versionSupport
             OP_DB_VERSION_SUPPORT
         );
 
-    my @strySupportVersion = ('8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5');
+    my @strySupportVersion = (PG_VERSION_83, PG_VERSION_84, PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93,
+                              PG_VERSION_94, PG_VERSION_95);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -428,140 +466,92 @@ sub info
             {name => 'strDbPath'}
         );
 
-    # Return data from the cache if it exists
-    if (defined($self->{info}{$strDbPath}))
+    # Get info if it is not cached
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if (!defined($self->{info}{$strDbPath}))
     {
-        return $self->{info}{$strDbPath}{fDbVersion},
-               $self->{info}{$strDbPath}{iControlVersion},
-               $self->{info}{$strDbPath}{iCatalogVersion},
-               $self->{info}{$strDbPath}{ullDbSysId};
-    }
-
-    # Database info
-    my $iCatalogVersion;
-    my $iControlVersion;
-    my $ullDbSysId;
-    my $fDbVersion;
-
-    if ($oFile->isRemote(PATH_DB_ABSOLUTE))
-    {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{'db-path'} = ${strDbPath};
-
-        # Output remote trace info
-        &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
-
-        # Execute the command
-        my $strResult = $oFile->{oProtocol}->cmdExecute(OP_DB_INFO, \%oParamHash, true);
-
-        # Split the result into return values
-        my @stryToken = split(/\t/, $strResult);
-
-        $fDbVersion = $stryToken[0];
-        $iControlVersion = $stryToken[1];
-        $iCatalogVersion = $stryToken[2];
-        $ullDbSysId = $stryToken[3];
-    }
-    else
-    {
-        # Open the control file
-        my $strControlFile = "${strDbPath}/global/pg_control";
-        my $hFile;
-        my $tBlock;
-
-        sysopen($hFile, $strControlFile, O_RDONLY)
-            or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
-
-        # Read system identifier
-        sysread($hFile, $tBlock, 8) == 8
-            or confess &log(ERROR, "unable to read database system identifier");
-
-        $ullDbSysId = unpack('Q', $tBlock);
-
-        # Read control version
-        sysread($hFile, $tBlock, 4) == 4
-            or confess &log(ERROR, "unable to read control version");
-
-        $iControlVersion = unpack('L', $tBlock);
-
-        # Read catalog version
-        sysread($hFile, $tBlock, 4) == 4
-            or confess &log(ERROR, "unable to read catalog version");
-
-        $iCatalogVersion = unpack('L', $tBlock);
-
-        # Close the control file
-        close($hFile);
-
-        # Make sure the control version is supported
-        if ($iControlVersion == 942 && $iCatalogVersion == 201510051)
+        # Get info from remote
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($oFile->isRemote(PATH_DB_ABSOLUTE))
         {
-            $fDbVersion = '9.5';
+            # Build param hash
+            my %oParamHash;
+
+            $oParamHash{'db-path'} = ${strDbPath};
+
+            # Output remote trace info
+            &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
+
+            # Execute the command
+            my $strResult = $oFile->{oProtocol}->cmdExecute(OP_DB_INFO, \%oParamHash, true);
+
+            # Split the result into return values
+            my @stryToken = split(/\t/, $strResult);
+
+            # Cache info so it does not need to read again for the same database
+            $self->{info}{$strDbPath}{strDbVersion} = $stryToken[0];
+            $self->{info}{$strDbPath}{iControlVersion} = $stryToken[1];
+            $self->{info}{$strDbPath}{iCatalogVersion} = $stryToken[2];
+            $self->{info}{$strDbPath}{ullDbSysId} = $stryToken[3];
         }
-        elsif ($iControlVersion == 942 && $iCatalogVersion == 201409291)
-        {
-            $fDbVersion = '9.4';
-        }
-        elsif ($iControlVersion == 937 && $iCatalogVersion == 201306121)
-        {
-            $fDbVersion = '9.3';
-        }
-        elsif ($iControlVersion == 922 && $iCatalogVersion == 201204301)
-        {
-            $fDbVersion = '9.2';
-        }
-        elsif ($iControlVersion == 903 && $iCatalogVersion == 201105231)
-        {
-            $fDbVersion = '9.1';
-        }
-        elsif ($iControlVersion == 903 && $iCatalogVersion == 201008051)
-        {
-            $fDbVersion = '9.0';
-        }
-        elsif ($iControlVersion == 843 && $iCatalogVersion == 200904091)
-        {
-            $fDbVersion = '8.4';
-        }
-        elsif ($iControlVersion == 833 && $iCatalogVersion == 200711281)
-        {
-            $fDbVersion = '8.3';
-        }
-        elsif ($iControlVersion == 822 && $iCatalogVersion == 200611241)
-        {
-            $fDbVersion = '8.2';
-        }
-        elsif ($iControlVersion == 812 && $iCatalogVersion == 200510211)
-        {
-            $fDbVersion = '8.1';
-        }
-        elsif ($iControlVersion == 74 && $iCatalogVersion == 200411041)
-        {
-            $fDbVersion = '8.0';
-        }
+        # Get info locally
+        #---------------------------------------------------------------------------------------------------------------------------
         else
         {
-            confess &log(ERROR, "unexpected control version = ${iControlVersion} and catalog version = ${iCatalogVersion}" .
-                                ' (unsupported PostgreSQL version?)',
-                         ERROR_VERSION_NOT_SUPPORTED);
+            # Open the control file and read system id and versions
+            #-----------------------------------------------------------------------------------------------------------------------
+            my $strControlFile = "${strDbPath}/" . DB_FILE_PGCONTROL;
+            my $hFile;
+            my $tBlock;
+
+            sysopen($hFile, $strControlFile, O_RDONLY)
+                or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+            # Read system identifier
+            sysread($hFile, $tBlock, 8) == 8
+                or confess &log(ERROR, "unable to read database system identifier");
+
+            $self->{info}{$strDbPath}{ullDbSysId} = unpack('Q', $tBlock);
+
+            # Read control version
+            sysread($hFile, $tBlock, 4) == 4
+                or confess &log(ERROR, "unable to read control version");
+
+            $self->{info}{$strDbPath}{iControlVersion} = unpack('L', $tBlock);
+
+            # Read catalog version
+            sysread($hFile, $tBlock, 4) == 4
+                or confess &log(ERROR, "unable to read catalog version");
+
+            $self->{info}{$strDbPath}{iCatalogVersion} = unpack('L', $tBlock);
+
+            # Close the control file
+            close($hFile);
+
+            # Get PostgreSQL version
+            $self->{info}{$strDbPath}{strDbVersion} =
+                $$oPgControlVersionHash{$self->{info}{$strDbPath}{iControlVersion}}{$self->{info}{$strDbPath}{iCatalogVersion}};
+
+            if (!defined($self->{info}{$strDbPath}{strDbVersion}))
+            {
+                confess &log(
+                    ERROR,
+                    'unexpected control version = ' . $self->{info}{$strDbPath}{iControlVersion} .
+                    ' and catalog version = ' . $self->{info}{$strDbPath}{iCatalogVersion} . "\n" .
+                    'HINT: Is this version of PostgreSQL supported?',
+                    ERROR_VERSION_NOT_SUPPORTED);
+            }
         }
     }
-
-    # Store data in the cache
-    $self->{info}{$strDbPath}{fDbVersion} = $fDbVersion;
-    $self->{info}{$strDbPath}{iControlVersion} = $iControlVersion;
-    $self->{info}{$strDbPath}{iCatalogVersion} = $iCatalogVersion;
-    $self->{info}{$strDbPath}{ullDbSysId} = $ullDbSysId;
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'fDbVersion', value => $fDbVersion},
-        {name => 'iControlVersion', value => $iControlVersion},
-        {name => 'iCatalogVersion', value => $iCatalogVersion},
-        {name => 'ullDbSysId', value => $ullDbSysId}
+        {name => 'strDbVersion', value => $self->{info}{$strDbPath}{strDbVersion}},
+        {name => 'iControlVersion', value => $self->{info}{$strDbPath}{iControlVersion}},
+        {name => 'iCatalogVersion', value => $self->{info}{$strDbPath}{iCatalogVersion}},
+        {name => 'ullDbSysId', value => $self->{info}{$strDbPath}{ullDbSysId}}
     );
 }
 
@@ -583,28 +573,28 @@ sub versionGet
         );
 
     # Get data from the cache if possible
-    if (defined($self->{fDbVersion}) && defined($self->{strDbPath}))
+    if (defined($self->{strDbVersion}) && defined($self->{strDbPath}))
     {
-        return $self->{fDbVersion}, $self->{strDbPath};
+        return $self->{strDbVersion}, $self->{strDbPath};
     }
 
     # Get version and db-path from
-    ($self->{fDbVersion}, $self->{strDbPath}) =
+    ($self->{strDbVersion}, $self->{strDbPath}) =
         $self->executeSqlRow("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1], setting" .
                              " from pg_settings where name = 'data_directory'");
 
     my @stryVersionSupport = versionSupport();
 
-    if ($self->{fDbVersion} < $stryVersionSupport[0])
+    if ($self->{strDbVersion} < $stryVersionSupport[0])
     {
-        confess &log(ERROR, 'unsupported Postgres version' . $self->{fDbVersion}, ERROR_VERSION_NOT_SUPPORTED);
+        confess &log(ERROR, 'unsupported Postgres version' . $self->{strDbVersion}, ERROR_VERSION_NOT_SUPPORTED);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'fDbVersion', value => $self->{fDbVersion}},
+        {name => 'strDbVersion', value => $self->{strDbVersion}},
         {name => 'strDbPath', value => $self->{strDbPath}}
     );
 }
@@ -635,30 +625,29 @@ sub backupStart
         );
 
     # Get the version from the control file
-    my ($fDbVersion) = $self->info($oFile, $strDbPath);
+    my ($strDbVersion) = $self->info($oFile, $strDbPath);
 
     # Get version and db path from the database
     my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();
 
     # Error if the version from the control file and the configured db-path do not match the values obtained from the database
-    if (!($fDbVersion == $fCompareDbVersion && $strDbPath eq $strCompareDbPath))
+    if (!($strDbVersion == $fCompareDbVersion && $strDbPath eq $strCompareDbPath))
     {
-        confess &log(ERROR, "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
-                            " version '${fDbVersion}' and db-path '${strDbPath}' read from '${strDbPath}/global/pg_control'\n" .
-                            "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
+        confess &log(ERROR,
+            "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
+            " version '${strDbVersion}' and db-path '${strDbPath}' read from '${strDbPath}/" . DB_FILE_PGCONTROL . "'\n" .
+            "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
     }
 
     # Only allow start-fast option for version >= 8.4
-    if ($self->{fDbVersion} < 8.4 && $bStartFast)
+    if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
     {
-        &log(WARN, OPTION_START_FAST . ' option is only available in PostgreSQL >= 8.4');
+        &log(WARN, OPTION_START_FAST . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
         $bStartFast = false;
     }
 
     # Error if archive_mode = always (support has not been added yet)
-    my $strArchiveMode = trim($self->executeSql('show archive_mode'));
-
-    if ($strArchiveMode eq 'always')
+    if ($self->executeSql('show archive_mode') eq 'always')
     {
         confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
     }
@@ -683,13 +672,13 @@ sub backupStart
     if (optionGet(OPTION_STOP_AUTO))
     {
         # Running backups can only be detected in PostgreSQL >= 9.3
-        if ($self->{fDbVersion} >= 9.3)
+        if ($self->{strDbVersion} >= PG_VERSION_93)
         {
             # If a backup is currently in progress emit a warning and then stop it
             if ($self->executeSqlOne('select pg_is_in_backup()'))
             {
-                &log(WARN, 'the cluster is already in backup mode but no backup process is running. pg_stop_backup() will be called' .
-                           ' so a new backup can be started.');
+                &log(WARN, 'the cluster is already in backup mode but no backup process is running.' .
+                           ' pg_stop_backup() will be called so a new backup can be started.');
                 $self->backupStop();
             }
         }
@@ -697,7 +686,7 @@ sub backupStart
         # generated later on.
         else
         {
-            &log(WARN, OPTION_STOP_AUTO . 'option is only available in PostgreSQL >= 9.3');
+            &log(WARN, OPTION_STOP_AUTO . 'option is only available in PostgreSQL >= ' . PG_VERSION_93);
         }
     }
 

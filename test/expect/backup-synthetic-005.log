@@ -41,7 +41,7 @@ full backup
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
@@ -280,7 +280,7 @@ full backup (protocol timeout)
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
@@ -336,7 +336,7 @@ full backup (abort backup - local)
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
@@ -478,7 +478,7 @@ full backup (abort backup - remote)
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
@@ -539,9 +539,9 @@ start (remote)
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
 full backup (resume)
-> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
+> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --force --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
+  INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --force --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
@@ -556,10 +556,11 @@ full backup (resume)
   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
  DEBUG:     BackupInfo->delete(): strBackupLabel = [BACKUP-FULL-1]
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
- DEBUG:     File->exists=>: bExists = false
+ DEBUG:     File->exists=>: bExists = true
+  WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db/common
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db/common, strPathType = db:absolute
@@ -869,11 +870,14 @@ DETAIL: check [TEST_PATH]/db/pg_config exists
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db/common, strPathType = db:absolute
+DETAIL: remove file [TEST_PATH]/db/common/recovery.done
+DETAIL: preserve file [TEST_PATH]/db/common/recovery.conf
 DETAIL: remove link [TEST_PATH]/db/common/pg_stat - destination changed
 DETAIL: remove file [TEST_PATH]/db/common/deleteme/deleteme.txt
 DETAIL: remove path [TEST_PATH]/db/common/deleteme
 DETAIL: set mode 0700 on [TEST_PATH]/db/common/base
-  INFO: cleanup removed 1 file, 1 path
+DETAIL: remove file [TEST_PATH]/db/common/backup_label.old
+  INFO: cleanup removed 3 files, 1 path
  DEBUG:     Restore->build(): oManifest = [object]
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/pg_stat, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
@@ -949,7 +953,9 @@ DETAIL: restore file [TEST_PATH]/db/common/base/1/PG_VERSION - exists and matche
  DEBUG:     File->hashSize=>: iSize = 3, strHash = e1f7a3a299f62225cba076fc6d3d6e677f303482
 DETAIL: restore file [TEST_PATH]/db/common/PG_VERSION - exists and matches backup (3B, 100%) checksum e1f7a3a299f62225cba076fc6d3d6e677f303482
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/recovery.conf, strPathType = db:absolute
- DEBUG:     File->exists=>: bExists = false
+ DEBUG:     File->exists=>: bExists = true
+ DEBUG:     File->remove(): bIgnoreMissing = <true>, bTemp = [undef], strPath = [TEST_PATH]/db/common/recovery.conf, strPathType = db:absolute
+ DEBUG:     File->remove=>: bRemoved = true
   INFO: wrote [TEST_PATH]/db/common/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/global/pg_control, strPathType = db:absolute
@@ -1097,7 +1103,7 @@ incr backup (add tablespace 1)
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
@@ -1330,7 +1336,7 @@ incr backup (resume and add tablespace 2)
  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db/common
- DEBUG:     Db->info=>: fDbVersion = 9.3, iCatalogVersion = 201306121, iControlVersion = 937, ullDbSysId = 6156904820763115222
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false

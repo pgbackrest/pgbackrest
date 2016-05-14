@@ -27,6 +27,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
@@ -311,11 +312,11 @@ sub BackRestTestBackup_ClusterStart
 
     # Start the cluster
     my $strCommand = BackRestTestCommon_PgSqlBinPathGet() . "/pg_ctl start -o \"-c port=${iPort}" .
-                     (BackRestTestCommon_DbVersion() < 9.5 ? ' -c checkpoint_segments=1' : '');
+                     (BackRestTestCommon_DbVersion() < PG_VERSION_95 ? ' -c checkpoint_segments=1' : '');
 
-    if (BackRestTestCommon_DbVersion() >= '8.3')
+    if (BackRestTestCommon_DbVersion() >= PG_VERSION_83)
     {
-        if (BackRestTestCommon_DbVersion() >= '9.5' && $bArchiveAlways)
+        if (BackRestTestCommon_DbVersion() >= PG_VERSION_95 && $bArchiveAlways)
         {
             $strCommand .= " -c archive_mode=always";
         }
@@ -334,7 +335,7 @@ sub BackRestTestBackup_ClusterStart
         $strCommand .= " -c archive_command=true";
     }
 
-    if (BackRestTestCommon_DbVersion() >= '9.0')
+    if (BackRestTestCommon_DbVersion() >= PG_VERSION_90)
     {
         $strCommand .= " -c wal_level=hot_standby";
 
@@ -345,7 +346,7 @@ sub BackRestTestBackup_ClusterStart
     }
 
     $strCommand .= " -c log_error_verbosity=verbose" .
-                   " -c unix_socket_director" . (BackRestTestCommon_DbVersion() < '9.3' ? "y='" : "ies='") .
+                   " -c unix_socket_director" . (BackRestTestCommon_DbVersion() < PG_VERSION_93 ? "y='" : "ies='") .
                    BackRestTestCommon_DbPathGet() . "'\" " .
                    "-D ${strPath} -l ${strPath}/postgresql.log -s";
 
@@ -395,7 +396,7 @@ sub BackRestTestBackup_ClusterCreate
 
     # Don't link pg_xlog for versions < 9.2 because some recovery scenarios won't work.
     executeTest(BackRestTestCommon_PgSqlBinPathGet() .
-                 '/initdb' . (BackRestTestCommon_DbVersion() >= 9.2 ? ' --xlogdir=${strXlogPath}' : '') .
+                 '/initdb' . (BackRestTestCommon_DbVersion() >= PG_VERSION_92 ? ' --xlogdir=${strXlogPath}' : '') .
                  " --pgdata=${strPath} --auth=trust");
 
     BackRestTestBackup_ClusterStart($strPath, $iPort, undef, $bArchive);
@@ -503,7 +504,7 @@ sub BackRestTestBackup_PathCreate
     my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_PATH};
 
     # Get tablespace path if this is a tablespace
-    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0 &&
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90 &&
         index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
@@ -630,7 +631,7 @@ sub BackRestTestBackup_ManifestTablespaceCreate
     my $strTablespacePath = $strLinkPath;
     my $strPathTarget = $strTarget;
 
-    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0)
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
         my $strTablespaceId = 'PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
@@ -740,7 +741,7 @@ sub BackRestTestBackup_FileCreate
     # Get tablespace path if this is a tablespace
     my $strPgPath;
 
-    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0 &&
+    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90 &&
         index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
@@ -781,7 +782,7 @@ sub BackRestTestBackup_ManifestKeyGet
 
     # If target is a tablespace and pg version >= 9.0
     if (defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID}) &&
-        $$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0)
+        $$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
 
@@ -809,7 +810,7 @@ sub BackRestTestBackup_DbPathGet
 
     # If target is a tablespace and pg version >= 9.0
     if (defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID}) &&
-        $$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.0)
+        $$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
 
@@ -1746,7 +1747,7 @@ sub BackRestTestBackup_RestoreCompare
     if (!$bSynthetic)
     {
         # Tablespace_map file is not restored in versions >= 9.5 because it interferes with internal remapping features.
-        if (${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= 9.5)
+        if (${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_95)
         {
             delete(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/tablespace_map'});
         }

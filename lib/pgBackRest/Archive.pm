@@ -20,6 +20,7 @@ use pgBackRest::ArchiveInfo;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 
@@ -42,6 +43,27 @@ use constant OP_ARCHIVE_RANGE                                       => OP_ARCHIV
 use constant OP_ARCHIVE_WAL_FILE_NAME                               => OP_ARCHIVE . '->walFileName';
 use constant OP_ARCHIVE_WAL_INFO                                    => OP_ARCHIVE . '->walInfo';
 use constant OP_ARCHIVE_XFER                                        => OP_ARCHIVE . '->xfer';
+
+####################################################################################################################################
+# PostgreSQL WAL magic
+####################################################################################################################################
+my $oWalMagicHash =
+{
+    hex('0xD062') => PG_VERSION_83,
+    hex('0xD063') => PG_VERSION_84,
+    hex('0xD064') => PG_VERSION_90,
+    hex('0xD066') => PG_VERSION_91,
+    hex('0xD071') => PG_VERSION_92,
+    hex('0xD075') => PG_VERSION_93,
+    hex('0xD07E') => PG_VERSION_94,
+    hex('0xD087') => PG_VERSION_95,
+};
+
+####################################################################################################################################
+# PostgreSQL WAL system id offset
+####################################################################################################################################
+use constant PG_WAL_SYSTEM_ID_OFFSET_GTE_93                         => 20;
+use constant PG_WAL_SYSTEM_ID_OFFSET_LT_93                          => 12;
 
 ####################################################################################################################################
 # constructor
@@ -244,7 +266,8 @@ sub walInfo
             {name => 'strWalFile'}
         );
 
-    # Open the WAL segment
+    # Open the WAL segment and read magic number
+    #-------------------------------------------------------------------------------------------------------------------------------
     my $hFile;
     my $tBlock;
 
@@ -257,67 +280,27 @@ sub walInfo
 
     my $iMagic = unpack('S', $tBlock);
 
-    # Make sure the WAL magic is supported
-    my $strDbVersion;
-    my $iSysIdOffset;
+    # Map the WAL magic number to the version of PostgreSQL.
+    #
+    # The magic number can be found in src/include/access/xlog_internal.h The offset can be determined by counting bytes in the
+    # XLogPageHeaderData struct, though this value rarely changes.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $strDbVersion = $$oWalMagicHash{$iMagic};
 
-    if ($iMagic == hex('0xD087'))
+    if (!defined($strDbVersion))
     {
-        $strDbVersion = '9.5';
-        $iSysIdOffset = 20;
-    }
-    elsif ($iMagic == hex('0xD07E'))
-    {
-        $strDbVersion = '9.4';
-        $iSysIdOffset = 20;
-    }
-    elsif ($iMagic == hex('0xD075'))
-    {
-        $strDbVersion = '9.3';
-        $iSysIdOffset = 20;
-    }
-    elsif ($iMagic == hex('0xD071'))
-    {
-        $strDbVersion = '9.2';
-        $iSysIdOffset = 12;
-    }
-    elsif ($iMagic == hex('0xD066'))
-    {
-        $strDbVersion = '9.1';
-        $iSysIdOffset = 12;
-    }
-    elsif ($iMagic == hex('0xD064'))
-    {
-        $strDbVersion = '9.0';
-        $iSysIdOffset = 12;
-    }
-    elsif ($iMagic == hex('0xD063'))
-    {
-        $strDbVersion = '8.4';
-        $iSysIdOffset = 12;
-    }
-    elsif ($iMagic == hex('0xD062'))
-    {
-        $strDbVersion = '8.3';
-        $iSysIdOffset = 12;
-    }
-    # elsif ($iMagic == hex('0xD05E'))
-    # {
-    #     $strDbVersion = '8.2';
-    #     $iSysIdOffset = 12;
-    # }
-    # elsif ($iMagic == hex('0xD05D'))
-    # {
-    #     $strDbVersion = '8.1';
-    #     $iSysIdOffset = 12;
-    # }
-    else
-    {
-        confess &log(ERROR, "unexpected xlog magic 0x" . sprintf("%X", $iMagic) . ' (unsupported PostgreSQL version?)',
+        confess &log(ERROR, "unexpected WAL magic 0x" . sprintf("%X", $iMagic) . "\n" .
+                     'HINT: Is this version of PostgreSQL supported?',
                      ERROR_VERSION_NOT_SUPPORTED);
     }
 
-    # Read flags
+    # Map the WAL PostgreSQL version to the system identifier offset.  The offset can be determined by counting bytes in the
+    # XLogPageHeaderData struct, though this value rarely changes.
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
+
+    # Check flags to be sure the long header is present (this is an extra check to be sure the system id exists)
+    #-------------------------------------------------------------------------------------------------------------------------------
     sysread($hFile, $tBlock, 2) == 2
         or confess &log(ERROR, "unable to read xlog info");
 
@@ -327,7 +310,8 @@ sub walInfo
     $iFlag & 2
         or confess &log(ERROR, "expected long header in flags " . sprintf("%x", $iFlag));
 
-    # Get the database system id
+    # Get the system id
+    #-------------------------------------------------------------------------------------------------------------------------------
     sysseek($hFile, $iSysIdOffset, SEEK_CUR)
         or confess &log(ERROR, "unable to read padding");
 

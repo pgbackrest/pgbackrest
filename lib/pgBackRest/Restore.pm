@@ -547,7 +547,7 @@ sub clean
             {
                 # Skip the root path and backup.manifest in the base path
                 if ($strName eq '.' ||
-                    (($strName eq FILE_MANIFEST || $strName eq DB_FILE_RECOVERY_CONF) && $strTarget eq MANIFEST_TARGET_PGDATA))
+                    (($strName eq FILE_MANIFEST || $strName eq DB_FILE_RECOVERYCONF) && $strTarget eq MANIFEST_TARGET_PGDATA))
                 {
                     next;
                 }
@@ -672,7 +672,7 @@ sub clean
 
                         # Delete only if this is not the recovery.conf file.  This is in case the user wants the recovery.conf file
                         # preserved.  It will be written/deleted/preserved as needed in recovery().
-                        if ($oManifest->dbPathGet(undef, $strManifestFile) eq DB_FILE_RECOVERY_CONF)
+                        if ($oManifest->dbPathGet(undef, $strManifestFile) eq DB_FILE_RECOVERYCONF)
                         {
                             &log(DETAIL, "preserve ${strType} ${strOsFile}");
                         }
@@ -869,14 +869,14 @@ sub build
 ####################################################################################################################################
 sub recovery
 {
-    my $self = shift;       # Class hash
-    my $fDbVersion = shift; # Version to restore
+    my $self = shift;           # Class hash
+    my $strDbVersion = shift;   # Version to restore
 
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam (OP_RESTORE_RECOVERY);
 
     # Create recovery.conf path/file
-    my $strRecoveryConf = $self->{strDbClusterPath} . '/' . DB_FILE_RECOVERY_CONF;
+    my $strRecoveryConf = $self->{strDbClusterPath} . '/' . DB_FILE_RECOVERYCONF;
 
     # See if recovery.conf already exists
     my $bRecoveryConfExists = $self->{oFile}->exists(PATH_DB_ABSOLUTE, $strRecoveryConf);
@@ -953,17 +953,17 @@ sub recovery
 
                 if ($strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION)
                 {
-                    if ($fDbVersion >= 9.5)
+                    if ($strDbVersion >= PG_VERSION_95)
                     {
                         $strRecovery .= "recovery_target_action = '${strTargetAction}'\n";
                     }
-                    elsif  ($fDbVersion >= 9.1)
+                    elsif  ($strDbVersion >= PG_VERSION_91)
                     {
                         $strRecovery .= "pause_at_recovery_target = 'false'\n";
                     }
                     else
                     {
-                        confess &log(ERROR, OPTION_TARGET_ACTION .  ' option is only available in PostgreSQL >= 9.1')
+                        confess &log(ERROR, OPTION_TARGET_ACTION .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
                     }
                 }
             }
@@ -1012,17 +1012,17 @@ sub process
     }
 
     # Make sure that Postgres is not running
-    if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
+    if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_POSTMASTERPID))
     {
         confess &log(ERROR, 'unable to restore while Postgres is running', ERROR_POSTMASTER_RUNNING);
     }
 
     # If the restore will be destructive attempt to verify that $PGDATA is valid
     if ((optionGet(OPTION_DELTA) || optionGet(OPTION_FORCE)) &&
-        !($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_PG_VERSION) ||
+        !($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_PGVERSION) ||
           $self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST)))
     {
-        &log(WARN, '--delta or --force specified but unable to find \'' . FILE_PG_VERSION . '\' or \'' . FILE_MANIFEST .
+        &log(WARN, '--delta or --force specified but unable to find \'' . DB_FILE_PGVERSION . '\' or \'' . FILE_MANIFEST .
                    '\' in \'' . $self->{strDbClusterPath} . '\' to confirm that this is a valid $PGDATA directory.' .
                    '  --delta and --force have been disabled and if any files exist in the destination directories the restore' .
                    ' will be aborted.');
@@ -1175,7 +1175,7 @@ sub process
         # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in DB_PATH_PGTBLSPC.
         # The tablespace links have already been created by Restore::build().
         if ($strFile eq MANIFEST_FILE_TABLESPACEMAP &&
-            $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= 9.5)
+            $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= PG_VERSION_95)
         {
             next;
         }

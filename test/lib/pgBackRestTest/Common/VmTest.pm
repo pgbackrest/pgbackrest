@@ -10,6 +10,11 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use File::Basename qw(dirname);
+
+use lib dirname($0) . '/../lib';
+use pgBackRest::Db;
+
 use Exporter qw(import);
     our @EXPORT = qw();
 
@@ -30,30 +35,81 @@ my $oyVm =
     # CentOS 6
     &OS_CO6 =>
     {
-        db => ['9.0', '9.1', '9.2', '9.3', '9.4', '9.5'],
-        db_minimal => ['9.0', '9.1']
+        db =>
+        [
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+
+        db_minimal =>
+        [
+            PG_VERSION_90,
+            PG_VERSION_91,
+        ],
     },
 
     # CentOS 7
     &OS_CO7 =>
     {
-        db => ['9.3', '9.4', '9.5'],
-        db_minimal => ['9.3', '9.5']
+        db =>
+        [
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+
+        db_minimal =>
+        [
+            PG_VERSION_93,
+            PG_VERSION_95,
+        ],
     },
 
     # Ubuntu 12.04
     &OS_U12 =>
     {
-        db => ['8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5'],
-        db_minimal => ['8.3', '8.4']
+        db =>
+        [
+            PG_VERSION_83,
+            PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+
+        db_minimal =>
+        [
+            PG_VERSION_83,
+            PG_VERSION_84,
+        ],
     },
 
     # Ubuntu 14.04
     &OS_U14 =>
     {
-        db => ['9.0', '9.1', '9.2', '9.3', '9.4', '9.5'],
-        db_minimal => ['9.2', '9.4']
-    }
+        db =>
+        [
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+        ],
+
+        db_minimal =>
+        [
+            PG_VERSION_92,
+            PG_VERSION_94,
+        ],
+    },
 };
 
 ####################################################################################################################################

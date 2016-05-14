@@ -380,7 +380,7 @@ sub processManifest
     # pg_control should always be in the backup (unless this is an offline backup)
     if (!defined($oFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL}) && optionGet(OPTION_ONLINE))
     {
-        confess &log(ERROR, "global/pg_control must be present in all online backups\n" .
+        confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
                      'HINT: Is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
     }
 
@@ -626,13 +626,13 @@ sub process
                               !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
     # Database info
-    my ($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
         $self->{oDb}->info($self->{oFile}, optionGet(OPTION_DB_PATH));
 
-    my $iDbHistoryId = $oBackupInfo->check($fDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+    my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $fDbVersion);
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
@@ -645,17 +645,17 @@ sub process
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
     {
-        if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, optionGet(OPTION_DB_PATH) . '/' . FILE_POSTMASTER_PID))
+        if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, optionGet(OPTION_DB_PATH) . '/' . DB_FILE_POSTMASTERPID))
         {
             if (optionGet(OPTION_FORCE))
             {
-                &log(WARN, '--no-online passed and ' . FILE_POSTMASTER_PID . ' exists but --force was passed so backup will ' .
+                &log(WARN, '--no-online passed and ' . DB_FILE_POSTMASTERPID . ' exists but --force was passed so backup will ' .
                            'continue though it looks like the postmaster is running and the backup will probably not be ' .
                            'consistent');
             }
             else
             {
-                confess &log(ERROR, '--no-online passed but ' . FILE_POSTMASTER_PID . ' exists - looks like the postmaster is ' .
+                confess &log(ERROR, '--no-online passed but ' . DB_FILE_POSTMASTERPID . ' exists - looks like the postmaster is ' .
                             'running. Shutdown the postmaster and try again, or use --force.', ERROR_POSTMASTER_RUNNING);
             }
         }
@@ -663,11 +663,9 @@ sub process
     # Else start the backup normally
     else
     {
-        my $strTimestampDbStart;
-
         # Start the backup
-        ($strArchiveStart, $strTimestampDbStart) =
-            $self->{oDb}->backupStart($self->{oFile}, optionGet(OPTION_DB_PATH), BACKREST_NAME . ' Backup Started at ' .
+        ($strArchiveStart) =
+            $self->{oDb}->backupStart($self->{oFile}, optionGet(OPTION_DB_PATH), BACKREST_NAME . ' backup started at ' .
                                       timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
@@ -693,7 +691,7 @@ sub process
         my $strReason = "resume is disabled";
         my $oAbortedManifest;
 
-        # Attempt to read the manifest file in the aborted backup to seeif it can be used.  If any error at all occurs then the
+        # Attempt to read the manifest file in the aborted backup to see if it can be used.  If any error at all occurs then the
         # backup will be considered unusable and a resume will not be attempted.
         if (optionGet(OPTION_RESUME))
         {
@@ -810,8 +808,7 @@ sub process
 
     if (optionGet(OPTION_ONLINE))
     {
-        my $strTimestampDbStop;
-        ($strArchiveStop, $strTimestampDbStop) = $self->{oDb}->backupStop();
+        ($strArchiveStop) = $self->{oDb}->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
 
@@ -833,7 +830,7 @@ sub process
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new pgBackRest::Archive();
         my $strArchiveId = $oArchive->getCheck($self->{oFile});
-        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $fDbVersion < 9.3);
+        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $strDbVersion < PG_VERSION_93);
 
         foreach my $strArchive (@stryArchive)
         {

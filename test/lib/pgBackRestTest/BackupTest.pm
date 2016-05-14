@@ -74,7 +74,7 @@ sub archiveCheck
     my $bCompress = shift;
 
     # Build the archive name to check for at the destination
-    my $strArchiveCheck = "9.3-1/${strArchiveFile}-${strArchiveChecksum}";
+    my $strArchiveCheck = PG_VERSION_93 . "-1/${strArchiveFile}-${strArchiveChecksum}";
 
     if ($bCompress)
     {
@@ -290,8 +290,8 @@ sub BackRestTestBackup_Test
                             &log(INFO, '        test archive when tmp file exists');
 
                             ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo);
-                            executeTest('touch ' . BackRestTestCommon_RepoPathGet() . "/archive/${strStanza}/9.3-1/" .
-                                        substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.tmp",
+                            executeTest('touch ' . BackRestTestCommon_RepoPathGet() . "/archive/${strStanza}/" . PG_VERSION_93 .
+                                        '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.tmp",
                                         {bRemote => $bRemote});
                         }
 
@@ -521,7 +521,7 @@ sub BackRestTestBackup_Test
                 # Fix the database version
                 if ($iError == 0)
                 {
-                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '9.3';
+                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = PG_VERSION_93;
                     BackRestTestCommon_iniSave($strInfoFile, \%oInfo, $bRemote, true);
                 }
 
@@ -629,7 +629,7 @@ sub BackRestTestBackup_Test
 
                 executeTest('mkdir -p -m 770 ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE),
                             {bRemote => $bRemote});
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check('9.3', 1234567890123456789);
+                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 1234567890123456789);
 
                 if (defined($oLogTest))
                 {
@@ -668,7 +668,7 @@ sub BackRestTestBackup_Test
                         }
 
                         $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile,         # Source file
-                                     PATH_BACKUP_ARCHIVE, "9.3-1/${strSourceFile}", # Destination file
+                                     PATH_BACKUP_ARCHIVE, PG_VERSION_93 . "-1/${strSourceFile}", # Destination file
                                      false,                                         # Source is not compressed
                                      $bCompress,                                    # Destination compress based on test
                                      undef, undef, undef,                           # Unused params
@@ -764,7 +764,7 @@ sub BackRestTestBackup_Test
             # Create the test object
             my $oExpireTest = new pgBackRestTest::ExpireCommonTest($oFile, $oLogTest);
 
-            $oExpireTest->stanzaCreate($strStanza, '9.2');
+            $oExpireTest->stanzaCreate($strStanza, PG_VERSION_92);
             use constant SECONDS_PER_DAY => 86400;
             my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
 
@@ -867,7 +867,7 @@ sub BackRestTestBackup_Test
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201306121;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 937;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6156904820763115222;
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = '9.3';
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_93;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
             # Create the test directory
@@ -890,7 +890,7 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_Init($bRemote, $oFile, true, $oLogTest, $iThreadMax);
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'PG_VERSION', '9.3',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_93,
                                                   'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             # Create base path
@@ -899,33 +899,34 @@ sub BackRestTestBackup_Test
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/PG_VERSION', '9.3',
-                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
+                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/PG_VERSION', '9.3',
-                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
+                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
             BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', '33000',
                                                   '7f4c74dc10f61eef43e6ae642606627df1999b34', $lTime);
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/PG_VERSION', '9.3',
-                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/' . DB_FILE_PGVERSION,
+                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
 
             # Create global path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
-            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global/pg_control', '[replaceme]',
+            BackRestTestBackup_ManifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
                                                   '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
             executeTest('cp ' . BackRestTestCommon_DataPathGet() . '/pg_control ' .
-                        BackRestTestCommon_DbCommonPathGet() . '/global/pg_control');
-            utime($lTime - 100, $lTime - 100, BackRestTestCommon_DbCommonPathGet() . '/global/pg_control')
+                        BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_PGCONTROL);
+            utime($lTime - 100, $lTime - 100, BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/global/pg_control'}{&MANIFEST_SUBKEY_SIZE} = 8192;
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
+                      {&MANIFEST_SUBKEY_SIZE} = 8192;
 
             # Create tablespace path
             BackRestTestBackup_ManifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGTBLSPC);
@@ -1083,6 +1084,12 @@ sub BackRestTestBackup_Test
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'full';
 
+            # These files should never be backed up (this requires the next backup to do --force)
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_POSTMASTERPID, 'JUNK');
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_BACKUPLABELOLD, 'JUNK');
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_RECOVERYCONF, 'JUNK');
+            BackRestTestCommon_FileCreate(BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_RECOVERYDONE, 'JUNK');
+
             # Create files in root tblspc paths that should not be copied or deleted.
             # This will be checked later after a --force restore.
             my $strDoNotDeleteFile = BackRestTestCommon_DbTablespacePathGet(1, 2) . '/donotdelete.txt';
@@ -1098,7 +1105,7 @@ sub BackRestTestBackup_Test
                                         $strTmpPath, $bRemote);
 
             my $oMungeManifest = BackRestTestCommon_manifestLoad("$strTmpPath/backup.manifest", $bRemote);
-            $oMungeManifest->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/PG_VERSION', 'checksum');
+            $oMungeManifest->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGVERSION, 'checksum');
             BackRestTestCommon_manifestSave("$strTmpPath/backup.manifest", $oMungeManifest, $bRemote);
 
             # Create a temp file in backup temp root to be sure it's deleted correctly
@@ -1106,7 +1113,11 @@ sub BackRestTestBackup_Test
                         {bRemote => $bRemote});
 
             $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, \%oManifest, 'resume',
-                                                                {strTest => TEST_BACKUP_RESUME});
+                                                                {strTest => TEST_BACKUP_RESUME,
+                                                                 strOptionalParam => '--force'});
+
+            # Remove postmaster.pid so restore will succeed (the rest will be cleaned up)
+            BackRestTestCommon_FileRemove(BackRestTestCommon_DbCommonPathGet() . '/' . DB_FILE_POSTMASTERPID);
 
             # Misconfigure repo-path and check errors
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1192,12 +1203,13 @@ sub BackRestTestBackup_Test
             $bForce = true;
 
             # Remove PG_VERSION
-            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'PG_VERSION');
+            BackRestTestBackup_FileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION);
 
             # Attempt the restore
             BackRestTestBackup_Restore($oFile, $strFullBackup, $strStanza, $bRemote, \%oManifest, undef, $bDelta, $bForce,
                                        undef, undef, undef, undef, undef, undef,
-                                       'fail on missing PG_VERSION', ERROR_RESTORE_PATH_NOT_EMPTY, '--log-level-console=detail');
+                                       'fail on missing ' . DB_FILE_PGVERSION, ERROR_RESTORE_PATH_NOT_EMPTY,
+                                       '--log-level-console=detail');
 
             # Write a backup.manifest file to make $PGDATA valid
             BackRestTestCommon_FileCreate(BackRestTestCommon_DbCommonPathGet() . '/backup.manifest', 'BOGUS');
@@ -1812,7 +1824,7 @@ sub BackRestTestBackup_Test
 
             # Incr backup - fail on archive_mode=always when version >= 9.5
             #-----------------------------------------------------------------------------------------------------------------------
-            if (BackRestTestCommon_DbVersion() >= 9.5)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_95)
             {
                 $strType = BACKUP_TYPE_INCR;
 
@@ -1843,7 +1855,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgSwitchXlog();
 
             # Start a backup so the next backup has to restart it
-            if (BackRestTestCommon_DbVersion() >= 9.3)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_93)
             {
                 BackRestTestBackup_PgSelectOne("select pg_start_backup('test backup that will be cancelled', true)");
             }
@@ -1878,7 +1890,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgExecute("update test set message = '$strNameMessage'", false, true);
             BackRestTestBackup_PgSwitchXlog();
 
-            if (BackRestTestCommon_DbVersion() >= 9.1)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_91)
             {
                 BackRestTestBackup_PgExecute("select pg_create_restore_point('${strNameTarget}')", false, false);
             }
@@ -1950,7 +1962,7 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgExecuteNoTrans("drop database test2");
 
             # The test table lives in ts1 so it needs to be moved or dropped
-            if (BackRestTestCommon_DbVersion() >= 9.0)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_90)
             {
                 BackRestTestBackup_PgExecute('alter table test set tablespace pg_default');
             }
@@ -1965,7 +1977,7 @@ sub BackRestTestBackup_Test
 
             # Restore (restore type = immediate, inclusive)
             #-----------------------------------------------------------------------------------------------------------------------
-            if (BackRestTestCommon_DbVersion() >= 9.4)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_94)
             {
                 $bDelta = false;
                 $bForce = true;
@@ -1997,7 +2009,7 @@ sub BackRestTestBackup_Test
             $strType = RECOVERY_TYPE_XID;
             $strTarget = $strXidTarget;
             $bTargetExclusive = undef;
-            $strTargetAction = BackRestTestCommon_DbVersion() >= 9.1 ? 'promote' : undef;
+            $strTargetAction = BackRestTestCommon_DbVersion() >= PG_VERSION_91 ? 'promote' : undef;
             $strTargetTimeline = undef;
             $oRecoveryHashRef = undef;
             $strComment = undef;
@@ -2109,7 +2121,7 @@ sub BackRestTestBackup_Test
 
             # Restore (restore type = name)
             #-----------------------------------------------------------------------------------------------------------------------
-            if (BackRestTestCommon_DbVersion() >= 9.1)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_91)
             {
                 $bDelta = true;
                 $bForce = true;
@@ -2136,7 +2148,7 @@ sub BackRestTestBackup_Test
 
             # Restore (restore type = default, timeline = 3)
             #-----------------------------------------------------------------------------------------------------------------------
-            if (BackRestTestCommon_DbVersion() >= 8.4)
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_84)
             {
                 $bDelta = true;
                 $bForce = false;
@@ -2145,7 +2157,7 @@ sub BackRestTestBackup_Test
                 $bTargetExclusive = undef;
                 $strTargetAction = undef;
                 $strTargetTimeline = 4;
-                $oRecoveryHashRef = BackRestTestCommon_DbVersion() >= 9.0 ? {'standby-mode' => 'on'} : undef;
+                $oRecoveryHashRef = BackRestTestCommon_DbVersion() >= PG_VERSION_90 ? {'standby-mode' => 'on'} : undef;
                 $strComment = undef;
                 $iExpectedExitStatus = undef;
 

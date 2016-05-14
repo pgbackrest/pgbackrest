@@ -156,18 +156,36 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 # Database locations for important files/paths
 ####################################################################################################################################
-use constant DB_FILE_RECOVERY_CONF                                  => 'recovery.conf';
-    push @EXPORT, qw(DB_FILE_RECOVERY_CONF);
+use constant DB_PATH_GLOBAL                                         => 'global';
+    push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
+####################################################################################################################################
+use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
+    push @EXPORT, qw(DB_FILE_POSTMASTERPID);
+
+use constant DB_FILE_BACKUPLABEL                                    => 'backup_label';
+    push @EXPORT, qw(DB_FILE_BACKUPLABEL);
+use constant DB_FILE_BACKUPLABELOLD                                 => DB_FILE_BACKUPLABEL . '.old';
+    push @EXPORT, qw(DB_FILE_BACKUPLABELOLD);
+use constant DB_FILE_PGCONTROL                                      => DB_PATH_GLOBAL . '/pg_control';
+    push @EXPORT, qw(DB_FILE_PGCONTROL);
+use constant DB_FILE_PGVERSION                                      => 'PG_VERSION';
+    push @EXPORT, qw(DB_FILE_PGVERSION);
+use constant DB_FILE_RECOVERYCONF                                   => 'recovery.conf';
+    push @EXPORT, qw(DB_FILE_RECOVERYCONF);
+use constant DB_FILE_RECOVERYDONE                                   => 'recovery.done';
+    push @EXPORT, qw(DB_FILE_RECOVERYDONE);
+use constant DB_FILE_TABLESPACEMAP                                  => 'tablespace_map';
+    push @EXPORT, qw(DB_FILE_TABLESPACEMAP);
 
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
-use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/tablespace_map';
-    push @EXPORT, qw(MANIFEST_FILE_TABLESPACEMAP);
-use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_TARGET_PGDATA . '/global/pg_control';
+use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL;
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
+use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_TABLESPACEMAP;
+    push @EXPORT, qw(MANIFEST_FILE_TABLESPACEMAP);
 
 ####################################################################################################################################
 # Minimum ID for a user object in postgres
@@ -586,10 +604,10 @@ sub build
         # Skip certain files during backup
         if ($strLevel eq MANIFEST_TARGET_PGDATA &&
             (($strName =~ /^pg\_xlog\/.*/ && $bOnline) ||           # pg_xlog/ - this will be reconstructed
-             $strName =~ /^postmaster\.pid$/ ||                     # postmaster.pid - to avoid confusing postgres when restoring
-             $strName =~ /^backup\_label\.old$/ ||                  # backup_label.old - old backup labels are not useful
-             $strName =~ /^recovery\.done$/ ||                      # recovery.done - doesn't make sense to backup this file
-             $strName =~ /^recovery\.conf$/))                       # recovery.conf - doesn't make sense to backup this file
+             $strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
+             $strName eq DB_FILE_POSTMASTERPID ||                   # postmaster.pid - to avoid confusing postgres after restore
+             $strName eq DB_FILE_RECOVERYCONF ||                    # recovery.conf - doesn't make sense to backup this file
+             $strName eq DB_FILE_RECOVERYDONE))                     # recovery.done - doesn't make sense to backup this file
         {
             next;
         }
@@ -778,7 +796,6 @@ sub build
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }
-
 
 ####################################################################################################################################
 # linkCheck
