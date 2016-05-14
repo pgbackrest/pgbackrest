@@ -862,16 +862,8 @@ sub process
                                         "file does not match actual checksum of '${strCopyChecksum}'", ERROR_CHECKSUM);
                 }
 
-                # Set manifest values
-                $oBackupManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFileLog, MANIFEST_SUBKEY_USER,
-                                      $oBackupManifest->get(MANIFEST_SECTION_TARGET_PATH, $strPathLog, MANIFEST_SUBKEY_USER));
-                $oBackupManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFileLog, MANIFEST_SUBKEY_GROUP,
-                                      $oBackupManifest->get(MANIFEST_SECTION_TARGET_PATH, $strPathLog, MANIFEST_SUBKEY_GROUP));
-                $oBackupManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFileLog, MANIFEST_SUBKEY_MODE, '0700');
-                $oBackupManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFileLog, MANIFEST_SUBKEY_TIMESTAMP, $lModificationTime);
-                $oBackupManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFileLog, MANIFEST_SUBKEY_SIZE, $lCopySize);
-                $oBackupManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFileLog, MANIFEST_SUBKEY_CHECKSUM, $strCopyChecksum);
-                $oBackupManifest->buildDefault();
+                # Add file to manifest
+                $oBackupManifest->fileAdd($strFileLog, $lModificationTime, $lCopySize, $strCopyChecksum);
             }
         }
     }

@@ -839,6 +839,46 @@ sub linkCheck
 }
 
 ####################################################################################################################################
+# fileAdd
+#
+# Add files to the manifest that were generated after the initial manifest build, e.g. backup_label, tablespace_map, and copied WAL
+# files.  Since the files were not in the original cluster the user, group, and mode must be defaulted.
+####################################################################################################################################
+sub fileAdd
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strManifestFile,
+        $lModificationTime,
+        $lSize,
+        $strChecksum
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->fileAdd', \@_,
+            {name => 'strManifestFile'},
+            {name => 'lModificationTime'},
+            {name => 'lSize'},
+            {name => 'lChecksum'}
+        );
+
+    # Set manifest values
+    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_USER,
+               $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER));
+    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_GROUP,
+               $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP));
+    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_MODE, '0600');
+    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_TIMESTAMP, $lModificationTime);
+    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_SIZE, $lSize);
+    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+    $self->buildDefault();
+}
+
+####################################################################################################################################
 # buildDefault
 #
 # Builds the default section.
