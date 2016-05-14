@@ -245,20 +245,36 @@ sub executeSql
                 }
 
                 # Get rows and return them
-                my @stryArray;
+                my @stryRow;
 
                 do
                 {
-                    @stryArray = $hStatement->fetchrow_array;
+                    # Get next row
+                    @stryRow = $hStatement->fetchrow_array;
 
-                    if (!@stryArray && $hStatement->err)
+                    # If the row has data then add it to the result
+                    if (@stryRow)
+                    {
+                        # Add an LF after the first row
+                        $strResult .= (defined($strResult) ? "\n" : '');
+
+                        # Add row to result
+                        for (my $iColumnIdx = 0; $iColumnIdx < @stryRow; $iColumnIdx++)
+                        {
+                            # Add tab between columns
+                            $strResult .= $iColumnIdx == 0 ? '' : "\t";
+
+                            # Add column data
+                            $strResult .= defined($stryRow[$iColumnIdx]) ? $stryRow[$iColumnIdx] : '';
+                        }
+                    }
+                    # Else check for error
+                    elsif ($hStatement->err)
                     {
                         confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
                     }
-
-                    $strResult = (defined($strResult) ? "${strResult}\n" : '') . join("\t", @stryArray);
                 }
-                while (@stryArray);
+                while (@stryRow);
 
                 $bTimeout = false;
             }
@@ -301,7 +317,7 @@ sub executeSqlRow
         );
 
     # Return from function and log return values if any
-    my @stryResult = split("\t", trim($self->executeSql($strSql)));
+    my @stryResult = split("\t", $self->executeSql($strSql));
 
     # Return from function and log return values if any
     return logDebugReturn
