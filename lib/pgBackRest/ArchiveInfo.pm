@@ -79,8 +79,8 @@ sub new
     if (!$bExists && $bRequired)
     {
         confess &log(ERROR, ARCHIVE_INFO_FILE . " does not exist but is required to get WAL segments\n" .
-                     "HINT: Is archive_command configured in postgresql.conf?\n" .
-                     "HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving" .
+                     "HINT: is archive_command configured in postgresql.conf?\n" .
+                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving" .
                      " scheme.", ERROR_FILE_MISSING);
     }
 

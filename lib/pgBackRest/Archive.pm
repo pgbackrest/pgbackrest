@@ -290,7 +290,7 @@ sub walInfo
     if (!defined($strDbVersion))
     {
         confess &log(ERROR, "unexpected WAL magic 0x" . sprintf("%X", $iMagic) . "\n" .
-                     'HINT: Is this version of PostgreSQL supported?',
+                     'HINT: is this version of PostgreSQL supported?',
                      ERROR_VERSION_NOT_SUPPORTED);
     }
 

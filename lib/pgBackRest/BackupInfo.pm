@@ -263,8 +263,8 @@ sub check
         {
             confess &log(ERROR, "database version = ${strDbVersion}, system-id ${ullDbSysId} does not match backup version = " .
                                 $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION) . ", system-id = " .
-                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID) .
-                                "\nHINT: are you backing up to the correct stanza?", ERROR_BACKUP_MISMATCH);
+                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID) . "\n" .
+                                "HINT: is this the correct stanza?", ERROR_BACKUP_MISMATCH);
         }
 
         if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion) ||
@@ -273,8 +273,8 @@ sub check
             confess &log(ERROR, "database control-version = ${iControlVersion}, catalog-version ${iCatalogVersion}" .
                                 " does not match backup control-version = " .
                                 $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL) . ", catalog-version = " .
-                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG) .
-                                "\nHINT: this may be a symptom of database or repository corruption!", ERROR_BACKUP_MISMATCH);
+                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG) . "\n" .
+                                "HINT: this may be a symptom of database or repository corruption!", ERROR_BACKUP_MISMATCH);
         }
 
         $iDbHistoryId = $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID);

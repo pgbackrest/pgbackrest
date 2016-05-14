@@ -381,7 +381,7 @@ sub processManifest
     if (!defined($oFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL}) && optionGet(OPTION_ONLINE))
     {
         confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
-                     'HINT: Is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
+                     'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
     }
 
     # If there are no files to backup then we'll exit with a warning unless in test mode.  The other way this could happen is if

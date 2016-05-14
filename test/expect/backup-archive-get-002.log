@@ -9,8 +9,8 @@ run 002 - rmt 0, cmp 0, exists 1
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
  ERROR: [130]: archive.info does not exist but is required to get WAL segments
-               HINT: Is archive_command configured in postgresql.conf?
-               HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+               HINT: is archive_command configured in postgresql.conf?
+               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
  DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false

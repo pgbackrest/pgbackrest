@@ -1456,7 +1456,7 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_HINT => "Does this stanza exist?",
+        &OPTION_RULE_HINT => "does this stanza exist?",
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET =>

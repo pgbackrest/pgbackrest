@@ -10,8 +10,8 @@ run 008 - rmt 1, cmp 1, exists 1
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  ERROR: [130]: archive.info does not exist but is required to get WAL segments
-               HINT: Is archive_command configured in postgresql.conf?
-               HINT: Use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+               HINT: is archive_command configured in postgresql.conf?
+               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
  DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false

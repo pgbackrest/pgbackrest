@@ -544,7 +544,7 @@ sub BackRestTestConfig_Test
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
 
-            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_REQUIRED, OPTION_DB_PATH, 'Does this stanza exist?');
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_REQUIRED, OPTION_DB_PATH, 'does this stanza exist?');
         }
     }
 

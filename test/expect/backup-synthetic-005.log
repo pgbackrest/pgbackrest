@@ -1024,7 +1024,7 @@ incr backup (invalid database version)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not match backup version = 8.0, system-id = 6156904820763115222
-               HINT: are you backing up to the correct stanza?
+               HINT: is this the correct stanza?
   INFO: backup stop
 
 incr backup (invalid system id)
@@ -1033,7 +1033,7 @@ incr backup (invalid system id)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [126]: database version = 9.3, system-id 6156904820763115222 does not match backup version = 9.3, system-id = 6999999999999999999
-               HINT: are you backing up to the correct stanza?
+               HINT: is this the correct stanza?
   INFO: backup stop
 
 incr backup (invalid control version)

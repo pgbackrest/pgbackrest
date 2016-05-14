@@ -538,7 +538,7 @@ sub info
                     ERROR,
                     'unexpected control version = ' . $self->{info}{$strDbPath}{iControlVersion} .
                     ' and catalog version = ' . $self->{info}{$strDbPath}{iCatalogVersion} . "\n" .
-                    'HINT: Is this version of PostgreSQL supported?',
+                    'HINT: is this version of PostgreSQL supported?',
                     ERROR_VERSION_NOT_SUPPORTED);
             }
         }
