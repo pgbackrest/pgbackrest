@@ -243,6 +243,8 @@ for my $strOutput (@stryOutput)
                 "${strBasePath}/xml",
                 "${strOutputPath}/html",
                 "${strBasePath}/resource/html/default.css",
+                "${strBasePath}/resource/html/" . $oManifest->variableGet('project-favicon'),
+                "${strBasePath}/resource/" . $oManifest->variableGet('project-logo'),
                 !$bNoExe
             );
 

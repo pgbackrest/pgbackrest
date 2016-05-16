@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc subtitle="Feature Backlog">
+    <description>Feature requests for {[project]} submitted on Github will be moved to this Backlog page (unless they can be satisfied immediately) and the feature issue will be closed, but a link will be preserved so comments can be added.</description>
 
     <section id="introduction">
         <title>Introduction</title>
 
         <p>Github has a good facility for reporting issues but it doesn't work as well for feature requests, some of which might take time to implement or never get implemented at all.  The result is a long list of issues which makes the <backrest/> project look as if it does not handle problems in a timely fashion, when in fact the vast majority of the issues are not bugs.  </p>
 
-        <p>Feature requests submitted on Github will be moved here unless they can be satisfied immediately and the feature issue will be closed, but a link will be preserved so comments can be added.  This is not ideal but seems like the best compromise at this time.</p>
+        <p>Feature requests submitted on Github will be moved here (unless they can be satisfied immediately) and the feature issue will be closed, but a link will be preserved so comments can be added.  This is not ideal but seems like the best compromise at this time.</p>
 
         <p>Bug reports will stay open on Github until they are addressed and will not appear on this page.</p>
     </section>

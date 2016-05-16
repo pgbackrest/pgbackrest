@@ -45,6 +45,8 @@ sub new
         my $strOperation,
         $self->{strName},
         $self->{strTitle},
+        $self->{strFavicon},
+        $self->{strDescription},
         $self->{bPretty}
     ) =
         logDebugParam
@@ -52,6 +54,8 @@ sub new
             OP_DOC_HTML_BUILDER_NEW, \@_,
             {name => 'strName'},
             {name => 'strTitle'},
+            {name => 'strFavicon', required => false},
+            {name => 'strDescription', required => false},
             {name => 'bPretty', default => false}
         );
 
@@ -199,7 +203,21 @@ sub htmlGet
             $self->indent(1) . "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></meta>" . $self->lf() .
             $self->indent(1) . "<meta name=\"og:site_name\" content=\"$self->{strName}\"></meta>" . $self->lf() .
             $self->indent(1) . "<meta name=\"og:title\" content=\"$self->{strTitle}\"></meta>" . $self->lf() .
-            $self->indent(1) . "<meta name=\"og:image\" content=\"favicon.png\"></meta>" . $self->lf() .
+            $self->indent(1) . "<meta name=\"og:type\" content=\"article\"></meta>" . $self->lf();
+
+            if (defined($self->{strFavicon}))
+            {
+                $strHtml .=
+                    $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/png\"></link>" . $self->lf() .
+                    $self->indent(1) . "<meta name=\"og:image\" content=\"$self->{strFavicon}\"></meta>" . $self->lf();
+            }
+            if (defined($self->{strDescription}))
+            {
+                $strHtml .=
+                    $self->indent(1) . "<meta name=\"description\" content=\"$self->{strDescription}\"></meta>" . $self->lf() .
+                    $self->indent(1) . "<meta name=\"og:description\" content=\"$self->{strDescription}\"></meta>" . $self->lf();
+            }
+
         $self->indent(0) . "</head>" . $self->lf();
 
     $strHtml .= $self->htmlRender($self->bodyGet(), 0);
