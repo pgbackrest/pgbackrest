@@ -14,6 +14,9 @@
                 <release-feature>
                     <text>Allow selective restore of databases from a cluster backup.  This feature can result in major space and time savings when only specific databases are restored.  Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.</text>
                 </release-feature>
+                <release-feature>
+                    <text>Experimental support for non-exclusive backups in <postgres/> 9.6 beta1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</text>
+                </release-feature>
              </release-feature-bullet-list>
          </changelog-release>
 

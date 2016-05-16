@@ -7,6 +7,8 @@ __No Release Date Set__
 
 * Allow selective restore of databases from a cluster backup. This feature can result in major space and time savings when only specific databases are restored. Unrestored databases will not be accessible but must be manually dropped before they will be removed from the shared catalogue.
 
+* Experimental support for non-exclusive backups in PostgreSQL 9.6 beta1. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but pgBackRest will be updated with each release to keep pace.
+
 ## v1.00: New Repository Format and Configuration Scheme, Link Support
 __Released April 14, 2016__
 

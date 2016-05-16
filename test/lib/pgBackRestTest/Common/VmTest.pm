@@ -43,6 +43,7 @@ my $oyVm =
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
         ],
 
         db_minimal =>
@@ -60,12 +61,14 @@ my $oyVm =
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
         ],
 
         db_minimal =>
         [
             PG_VERSION_93,
             PG_VERSION_95,
+            PG_VERSION_96,
         ],
     },
 
@@ -82,6 +85,7 @@ my $oyVm =
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
         ],
 
         db_minimal =>
@@ -102,6 +106,7 @@ my $oyVm =
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
+            PG_VERSION_96,
         ],
 
         db_minimal =>

@@ -68,6 +68,8 @@ use constant PG_VERSION_94                                          => '9.4';
     push @EXPORT, qw(PG_VERSION_94);
 use constant PG_VERSION_95                                          => '9.5';
     push @EXPORT, qw(PG_VERSION_95);
+use constant PG_VERSION_96                                          => '9.6';
+    push @EXPORT, qw(PG_VERSION_96);
 
 ####################################################################################################################################
 # Map the control and catalog versions to PostgreSQL version.
@@ -92,6 +94,7 @@ my $oPgControlVersionHash =
     {
         201409291 => PG_VERSION_94,
         201510051 => PG_VERSION_95,
+        201605051 => PG_VERSION_96,
     },
 };
 
@@ -171,7 +174,7 @@ sub versionSupport
         );
 
     my @strySupportVersion = (PG_VERSION_83, PG_VERSION_84, PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93,
-                              PG_VERSION_94, PG_VERSION_95);
+                              PG_VERSION_94, PG_VERSION_95, PG_VERSION_96);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -668,8 +671,9 @@ sub backupStart
                             'HINT: is another backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
     }
 
-    # If stop-auto is enabled check for a running backup
-    if (optionGet(OPTION_STOP_AUTO))
+    # If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
+    # run in non-exclusive mode.
+    if (optionGet(OPTION_STOP_AUTO) && $self->{strDbVersion} < PG_VERSION_96)
     {
         # Running backups can only be detected in PostgreSQL >= 9.3
         if ($self->{strDbVersion} >= PG_VERSION_93)
@@ -691,13 +695,16 @@ sub backupStart
     }
 
     # Start the backup
-    &log(INFO, "execute pg_start_backup() with label \"${strLabel}\": backup begins after " .
+    &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
+               "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
     my ($strTimestampDbStart, $strArchiveStart) =
         $self->executeSqlRow("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), " .
-                             "pg_xlogfile_name(xlog) from pg_start_backup('${strLabel}'" .
-                             ($bStartFast ? ', true' : '') . ') as xlog');
+                             "pg_xlogfile_name(lsn) from pg_start_backup('${strLabel}'" .
+                             ($bStartFast ? ', true' : '') .
+                             ($self->{strDbVersion} >= PG_VERSION_96 ? (!$bStartFast ? ', false' : '') . ', false' : '') .
+                             ') as lsn');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -726,18 +733,30 @@ sub backupStop
         );
 
     # Stop the backup
-    &log(INFO, 'execute pg_stop_backup() and wait for all WAL segments to archive');
+    &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
+               'exclusive pg_stop_backup() and wait for all WAL segments to archive');
 
-    my ($strTimestampDbStop, $strArchiveStop) =
-        $self->executeSqlRow("select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ')," .
-                             " pg_xlogfile_name(xlog) from pg_stop_backup() as xlog");
+    my ($strTimestampDbStop, $strArchiveStop, $strLabel, $strTablespaceMap) =
+        $self->executeSqlRow(
+            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), " .
+            ($self->{strDbVersion} >= PG_VERSION_96 ? 'labelfile, spcmapfile' : "null as labelfile, null as spcmapfile") .
+            ' from pg_stop_backup(' .
+            ($self->{strDbVersion} >= PG_VERSION_96 ? 'false)' : ') as lsn'));
+
+    # Build a hash of the files that need to be written to the backup
+    my $oFileHash =
+    {
+        &MANIFEST_FILE_BACKUPLABEL => $strLabel,
+        &MANIFEST_FILE_TABLESPACEMAP => $strTablespaceMap
+    };
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'strArchiveStop', value => $strArchiveStop},
-        {name => 'strTimestampDbStop', value => $strTimestampDbStop}
+        {name => 'strTimestampDbStop', value => $strTimestampDbStop},
+        {name => 'oFileHash', value => $oFileHash}
     );
 }
 

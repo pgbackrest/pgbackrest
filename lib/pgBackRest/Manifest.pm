@@ -182,6 +182,8 @@ use constant DB_FILE_TABLESPACEMAP                                  => 'tablespa
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
+use constant MANIFEST_FILE_BACKUPLABEL                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_BACKUPLABEL;
+    push @EXPORT, qw(MANIFEST_FILE_BACKUPLABEL);
 use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL;
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
 use constant MANIFEST_FILE_TABLESPACEMAP                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_TABLESPACEMAP;

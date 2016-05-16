@@ -1854,8 +1854,9 @@ sub BackRestTestBackup_Test
             BackRestTestBackup_PgExecute("update test set message = '$strDefaultMessage'", false);
             BackRestTestBackup_PgSwitchXlog();
 
-            # Start a backup so the next backup has to restart it
-            if (BackRestTestCommon_DbVersion() >= PG_VERSION_93)
+            # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
+            # are run in non-exlusive mode.
+            if (BackRestTestCommon_DbVersion() >= PG_VERSION_93 && BackRestTestCommon_DbVersion() < PG_VERSION_96)
             {
                 BackRestTestBackup_PgSelectOne("select pg_start_backup('test backup that will be cancelled', true)");
             }

@@ -808,11 +808,40 @@ sub process
 
     if (optionGet(OPTION_ONLINE))
     {
-        ($strArchiveStop) = $self->{oDb}->backupStop();
+        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $self->{oDb}->backupStop();
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
 
         &log(INFO, 'archive stop: ' . $strArchiveStop);
+
+        # Write out files returned from stop backup
+        foreach my $strFile (sort(keys(%{$oFileHash})))
+        {
+            # Only save the file if it has content
+            if (defined($$oFileHash{$strFile}))
+            {
+                my $strFileName = $self->{oFile}->pathGet(PATH_BACKUP_TMP, $strFile);
+
+                # Write content out to a file
+                fileStringWrite($strFileName, $$oFileHash{$strFile});
+
+                # Compress if required
+                if ($bCompress)
+                {
+                    $self->{oFile}->compress(PATH_BACKUP_ABSOLUTE, $strFileName);
+                    $strFileName .= '.' . $self->{oFile}->{strCompressExtension};
+                }
+
+                # Add file to manifest
+                $oBackupManifest->fileAdd(
+                    $strFile,
+                    (fileStat($strFileName))->mtime,
+                    length($$oFileHash{$strFile}),
+                    $self->{oFile}->hash(PATH_BACKUP_ABSOLUTE, $strFileName, $bCompress));
+
+                &log(DETAIL, "wrote '${strFile}' file returned from pg_stop_backup()");
+            }
+        }
     }
 
     # If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
