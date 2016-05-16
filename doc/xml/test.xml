@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc subtitle="Regression, Unit, &amp; Integration Testing" toc="y">
+    <description>{[project]} testing configuration requirements, setup, and options.</description>
 
     <section id="introduction">
         <title>Introduction</title>

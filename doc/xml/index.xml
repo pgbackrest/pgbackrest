@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
+    <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and multi-threading.</description>
+
     <variable-list>
         <!-- Variables used by the rest of the script -->
         <variable key="github-url-root">https://github.com</variable>
@@ -157,5 +159,7 @@
         <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.
 
         <link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
+
+        <p><link url="https://thenounproject.com/search/?q=lounge+chair&amp;i=129971">Armchair</link> graphic by <link url="https://thenounproject.com/sandorsz">Sandor Szabo</link>.</p>
     </section>
 </doc>

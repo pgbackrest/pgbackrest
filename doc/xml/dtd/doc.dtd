@@ -1,11 +1,13 @@
-<!ELEMENT doc ((intro, changelog)|(config, operation)|(variable-list?, cleanup?, section+))>
+<!ELEMENT doc ((intro, changelog)|(config, operation)|(description, variable-list?, cleanup?, section+))>
     <!ATTLIST doc title CDATA "">
     <!ATTLIST doc subtitle CDATA "">
     <!ATTLIST doc toc CDATA "y">
 
+<!ELEMENT description (#PCDATA)>
+
 <!ELEMENT intro (text)>
 
-<!ELEMENT operation (text?, operation-general, command-list)>
+<!ELEMENT operation (description, text?, operation-general, command-list)>
     <!ATTLIST operation title CDATA #REQUIRED>
 
 <!ELEMENT operation-general (option-list)>
@@ -30,7 +32,7 @@
     <!ATTLIST option id CDATA #REQUIRED>
     <!ATTLIST option name CDATA #REQUIRED>
 
-<!ELEMENT config (text, config-section-list)>
+<!ELEMENT config (description, text, config-section-list)>
     <!ATTLIST config title CDATA #REQUIRED>
 
 <!ELEMENT config-example (text)>

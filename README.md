@@ -101,3 +101,5 @@ Please visit [Crunchy Data](http://www.crunchydata.com) for more information.
 Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of pgBackRest.
 
 [Crunchy Data](http://www.crunchydata.com) has contributed significant time and resources to pgBackRest and continues to actively support development. [Resonate](http://www.resonate.com) also contributed to the development of pgBackRest and allowed early (but well tested) versions to be installed as their primary PostgreSQL backup solution.
+
+[Armchair](https://thenounproject.com/search/?q=lounge+chair&i=129971) graphic by [Sandor Szabo](https://thenounproject.com/sandorsz).

@@ -243,6 +243,10 @@ for my $strOutput (@stryOutput)
                 "${strBasePath}/xml",
                 "${strOutputPath}/html",
                 "${strBasePath}/resource/html/default.css",
+                defined($oManifest->variableGet('project-favicon')) ?
+                    "${strBasePath}/resource/html/" . $oManifest->variableGet('project-favicon') : undef,
+                defined($oManifest->variableGet('project-logo')) ?
+                    "${strBasePath}/resource/" . $oManifest->variableGet('project-logo') : undef,
                 !$bNoExe
             );
 

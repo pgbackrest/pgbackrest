@@ -56,6 +56,8 @@ sub new
         $self->{strXmlPath},
         $self->{strHtmlPath},
         $self->{strCssFile},
+        $self->{strFaviconFile},
+        $self->{strProjectLogoFile},
         $self->{bExe}
     ) =
         logDebugParam
@@ -65,6 +67,8 @@ sub new
             {name => 'strXmlPath'},
             {name => 'strHtmlPath'},
             {name => 'strCssFile'},
+            {name => 'strFaviconFile', required => false},
+            {name => 'strProjectLogoFile', required => false},
             {name => 'bExe'}
         );
 
@@ -104,6 +108,22 @@ sub process
     my $strCssFileDestination = "$self->{strHtmlPath}/default.css";
     copy($self->{strCssFile}, $strCssFileDestination)
         or confess &log(ERROR, "unable to copy $self->{strCssFile} to ${strCssFileDestination}");
+
+    # Copy the favicon file
+    if (defined($self->{strFaviconFile}))
+    {
+        my $strFaviconFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-favicon');
+        copy($self->{strFaviconFile}, $strFaviconFileDestination)
+            or confess &log(ERROR, "unable to copy $self->{strFaviconFile} to ${strFaviconFileDestination}");
+    }
+
+    # Copy the project logo file
+    if (defined($self->{strProjectLogoFile}))
+    {
+        my $strProjectLogoFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-logo');
+        copy($self->{strProjectLogoFile}, $strProjectLogoFileDestination)
+            or confess &log(ERROR, "unable to copy $self->{strProjectLogoFile} to ${strProjectLogoFileDestination}");
+    }
 
     foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
     {

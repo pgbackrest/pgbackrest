@@ -9,6 +9,8 @@
         <variable key="project-url-root">/</variable>
         <variable key="postgres">PostgreSQL</variable>
         <variable key="dash">-</variable>
+        <variable key="project-logo">logo.png</variable>
+        <variable key="project-favicon">favicon.png</variable>
 
         <!-- Logo locations -->
         <variable key="logo">/backrest/doc/output/latex/logo</variable>
@@ -18,6 +20,7 @@
         use POSIX qw(strftime); 'Copyright &amp;copy; 2015' . '-' . strftime('%Y', localtime) .
         ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
         strftime('%B ', localtime) . trim(strftime('%e,', localtime)) . strftime(' %Y.', localtime)</variable>
+        <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
         <!-- PDF variables  -->
         <variable key="pdf-title">{[project]} User Guide</variable>
@@ -39,7 +42,7 @@
             <render-source key="user-guide" menu="User Guide"/>
             <render-source key="configuration" source="reference" menu="Configuration"/>
             <render-source key="command" source="reference" menu="Commands"/>
-            <render-source key="backlog" source="backlog" menu="Backlog"/>
+            <render-source key="backlog" menu="Backlog"/>
         </render>
 
         <render type="pdf" file="{[pdf-file]}">

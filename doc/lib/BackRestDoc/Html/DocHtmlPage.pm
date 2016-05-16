@@ -90,12 +90,24 @@ sub process
                    (defined($oPage->paramGet('title', false)) ? ' ' . $oPage->paramGet('title') : '');
     my $strSubTitle = $oPage->paramGet('subtitle', false);
 
-    my $oHtmlBuilder = new BackRestDoc::Html::DocHtmlBuilder("{[project]} - Reliable PostgreSQL Backup",
-                                                             $strTitle . (defined($strSubTitle) ? " - ${strSubTitle}" : ''),
-                                                             $self->{bPretty});
+    my $oHtmlBuilder = new BackRestDoc::Html::DocHtmlBuilder(
+        "{[project]} - Reliable PostgreSQL Backup & Restore",
+         $strTitle . (defined($strSubTitle) ? " - ${strSubTitle}" : ''),
+         $self->{oManifest}->variableGet('project-favicon'),
+         $self->{oManifest}->variableGet('project-logo'),
+         trim($self->{oDoc}->fieldGet('description')),
+         $self->{bPretty});
 
     # Generate header
     my $oPageHeader = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-header');
+
+    # add the logo to the header
+    if (defined($self->{oManifest}->variableGet('html-logo')))
+    {
+        $oPageHeader->
+            addNew(HTML_DIV, 'page-header-logo',
+                   {strContent =>"{[html-logo]}"});
+    }
 
     $oPageHeader->
         addNew(HTML_DIV, 'page-header-title',
