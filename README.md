@@ -6,7 +6,7 @@ pgBackRest aims to be a simple, reliable backup and restore system that can seam
 
 Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges. The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.
 
-pgBackRest [v1.00](https://github.com/pgbackrest/pgbackrest/releases/tag/release/1.00) is the current stable release.
+pgBackRest [v1.01](https://github.com/pgbackrest/pgbackrest/releases/tag/release/1.01) is the current stable release.
 
 ## Features
 

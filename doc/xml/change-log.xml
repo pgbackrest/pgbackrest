@@ -6,7 +6,7 @@
     </intro>
 
     <changelog>
-         <changelog-release date="XXXX-XX-XX" version="1.01dev" title="UNDER DEVELOPMENT">
+         <changelog-release date="2016-05-17" version="1.01" title="Enhanced Info, Selective Restore, and 9.6 Support">
              <release-feature-bullet-list>
                 <release-feature>
                     <text>Enhanced text output of <cmd>info</cmd> command to include timestamps, sizes, and the reference list for all backups. <i>Contributed by Cynthia Shang</i>.</text>

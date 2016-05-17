@@ -1,7 +1,7 @@
 # pgBackRest <br/> Change Log
 
-## v1.01dev: UNDER DEVELOPMENT
-__No Release Date Set__
+## v1.01: Enhanced Info, Selective Restore, and 9.6 Support
+__Released May 17, 2016__
 
 * Enhanced text output of `info` command to include timestamps, sizes, and the reference list for all backups. _Contributed by Cynthia Shang_.
 

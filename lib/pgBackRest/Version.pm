@@ -26,7 +26,7 @@ use constant BACKREST_EXE                                           => lc(BACKRE
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
 our # 'our' keyword is on a separate line to make the ExtUtils::MakeMaker parser happy.
-$VERSION = '1.01dev';
+$VERSION = '1.01';
 
 push @EXPORT, qw($VERSION);
 
