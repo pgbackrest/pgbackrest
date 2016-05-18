@@ -638,7 +638,7 @@ sub paramGet
     {
         if ($bRequired)
         {
-            confess "${strType} '${strName}' in required in node '$self->{strName}'";
+            confess "${strType} '${strName}' is required in node '$self->{strName}'";
         }
 
         $strValue = $strDefault;
