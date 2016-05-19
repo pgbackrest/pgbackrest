@@ -94,11 +94,13 @@ sub new
     {
         my $oSourceHash = {};
         my $strKey = $oSource->paramGet('key');
+        my $strSourceType = $oSource->paramGet('type', false);
 
         logDebugMisc
         (
             $strOperation, 'load source',
-            {name => 'strKey', value => $strKey}
+            {name => 'strKey', value => $strKey},
+            {name => 'strSourceType', value => $strSourceType}
         );
 
         $$oSourceHash{doc} = new BackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
@@ -107,6 +109,7 @@ sub new
         $self->variableListParse($$oSourceHash{doc}->nodeGet('variable-list', false), $oVariableOverride);
 
         ${$self->{oManifest}}{source}{$strKey} = $oSourceHash;
+        ${$self->{oManifest}}{source}{$strKey}{strSourceType} = $strSourceType;
     }
 
     # Iterate the renderers
