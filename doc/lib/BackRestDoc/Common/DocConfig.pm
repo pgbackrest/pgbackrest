@@ -84,7 +84,7 @@ sub process
     my $oDoc = $self->{oDoc};
     my $oConfigHash = {};
 
-    foreach my $strCommand (sort(keys(commandHashGet())))
+    foreach my $strCommand (sort(keys(%{commandHashGet()})))
     {
         if ($strCommand eq CMD_REMOTE)
         {
@@ -103,7 +103,7 @@ sub process
     # Iterate through all options
     my $oOptionRule = optionRuleGet();
 
-    foreach my $strOption (sort(keys($oOptionRule)))
+    foreach my $strOption (sort(keys(%{$oOptionRule})))
     {
         if ($strOption =~ /^test/ || $strOption eq 'no-fork')
         {
@@ -111,8 +111,8 @@ sub process
         }
 
         # Iterate through all commands
-        my @stryCommandList = sort(keys(defined($$oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ?
-                              $$oOptionRule{$strOption}{&OPTION_RULE_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}));
+        my @stryCommandList = sort(keys(%{defined($$oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ?
+                              $$oOptionRule{$strOption}{&OPTION_RULE_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
 
         foreach my $strCommand (@stryCommandList)
         {
@@ -257,7 +257,7 @@ sub helpDataWrite
     my $oConfigHash = $self->{oConfigHash};
     my $strOptionData;
 
-    foreach my $strOption (sort(keys($$oConfigHash{&CONFIG_HELP_OPTION})))
+    foreach my $strOption (sort(keys(%{$$oConfigHash{&CONFIG_HELP_OPTION}})))
     {
         my $oOptionHash = $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption};
 
@@ -284,7 +284,7 @@ sub helpDataWrite
     # Iterate commands
     my $strCommandData;
 
-    foreach my $strCommand (sort(keys($$oConfigHash{&CONFIG_HELP_COMMAND})))
+    foreach my $strCommand (sort(keys(%{$$oConfigHash{&CONFIG_HELP_COMMAND}})))
     {
         my $oCommandHash = $$oConfigHash{&CONFIG_HELP_COMMAND}{$strCommand};
 
@@ -315,7 +315,7 @@ sub helpDataWrite
                 '            ' . CONFIG_HELP_OPTION . " =>\n" .
                 "            {\n";
 
-            foreach my $strOption (sort(keys($$oCommandHash{&CONFIG_HELP_OPTION})))
+            foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
                 my $oOptionHash = $$oCommandHash{&CONFIG_HELP_OPTION}{$strOption};
 
@@ -506,7 +506,7 @@ sub helpConfigDocGet
     my $oConfigDoc = $self->{oDoc}->nodeGet('config');
     my $oSectionHash = {};
 
-    foreach my $strOption (sort(keys($$oConfigHash{&CONFIG_HELP_OPTION})))
+    foreach my $strOption (sort(keys(%{$$oConfigHash{&CONFIG_HELP_OPTION}})))
     {
         my $oOption = $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption};
 
@@ -527,7 +527,7 @@ sub helpConfigDocGet
     $oIntroSectionDoc->nodeAdd('title')->textSet('Introduction');
     $oIntroSectionDoc->textSet($oConfigDoc->textGet());
 
-    foreach my $strSection (sort(keys($oSectionHash)))
+    foreach my $strSection (sort(keys(%{$oSectionHash})))
     {
         my $oSectionElement = $oDoc->nodeAdd('section', undef, {id => "section-${strSection}"});
 
@@ -538,7 +538,7 @@ sub helpConfigDocGet
                 {name => 'text',
                  children=> [$oSectionDoc->paramGet('name') . ' Options (', {name => 'id', value => $strSection}, ')']});
 
-        foreach my $strOption (sort(keys($$oSectionHash{$strSection})))
+        foreach my $strOption (sort(keys(%{$$oSectionHash{$strSection}})))
         {
             $self->helpOptionGet(undef, $strOption, $oSectionElement, $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption});
         }
@@ -580,7 +580,7 @@ sub helpCommandDocGet
     $oIntroSectionDoc->nodeAdd('title')->textSet('Introduction');
     $oIntroSectionDoc->textSet($oOperationDoc->textGet());
 
-    foreach my $strCommand (sort(keys($$oConfigHash{&CONFIG_HELP_COMMAND})))
+    foreach my $strCommand (sort(keys(%{$$oConfigHash{&CONFIG_HELP_COMMAND}})))
     {
         my $oCommandHash = $$oConfigHash{&CONFIG_HELP_COMMAND}{$strCommand};
         my $oSectionElement = $oDoc->nodeAdd('section', undef, {id => "command-${strCommand}"});
