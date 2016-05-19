@@ -444,7 +444,7 @@ sub renderList
 
     if (defined(${$self->{oManifest}}{render}))
     {
-        @stryRender = sort(keys(${$self->{oManifest}}{render}));
+        @stryRender = sort(keys(%{${$self->{oManifest}}{render}}));
     }
 
     # Return from function and log return values if any
@@ -512,7 +512,7 @@ sub renderOutList
 
     if (defined(${$self->{oManifest}}{render}{$strType}))
     {
-        @stryRenderOut = sort(keys(${$self->{oManifest}}{render}{$strType}{out}));
+        @stryRenderOut = sort(keys(%{${$self->{oManifest}}{render}{$strType}{out}}));
     }
 
     # Return from function and log return values if any

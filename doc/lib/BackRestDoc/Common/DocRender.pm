@@ -348,7 +348,7 @@ sub required
     if (!defined($bDepend) || $bDepend)
     {
         # Match section and all child sections
-        foreach my $strChildPath (sort(keys($self->{oSection})))
+        foreach my $strChildPath (sort(keys(%{$self->{oSection}})))
         {
             if ($strChildPath =~ /^$strPath$/ || $strChildPath =~ /^$strPath\/.*$/)
             {

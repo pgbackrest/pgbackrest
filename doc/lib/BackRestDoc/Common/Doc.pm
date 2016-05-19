@@ -86,7 +86,8 @@ sub new
 
             eval
             {
-                local $XML::Checker::FAIL = sub
+                local $XML::Checker::FAIL;
+                $XML::Checker::FAIL = sub
                 {
                     my $iCode = shift;
 
@@ -154,7 +155,7 @@ sub parse
     # Store the node name
     $oOut{name} = $strName;
 
-    if (keys($$oyNode[$iIndex]))
+    if (keys(%{$$oyNode[$iIndex]}))
     {
         $oOut{param} = $$oyNode[$iIndex];
     }
@@ -184,7 +185,7 @@ sub parse
                         $oOut{children} = [];
                     }
 
-                    push($oOut{children}, $strBuffer);
+                    push(@{$oOut{children}}, $strBuffer);
                 }
                 # Don't allow strings mixed with children
                 elsif (length(trim($strBuffer)) > 0)
@@ -217,7 +218,7 @@ sub parse
                 $oOut{children} = [];
             }
 
-            push($oOut{children}, $self->parse($$oyNode[$iIndex++], $$oyNode[$iIndex++]));
+            push(@{$oOut{children}}, $self->parse($$oyNode[$iIndex++], $$oyNode[$iIndex++]));
         }
     }
 
@@ -257,7 +258,7 @@ sub build
     # Get all params
     if (defined($$oDoc{param}))
     {
-        for my $strParam (keys $$oDoc{param})
+        for my $strParam (keys %{$$oDoc{param}})
         {
             $$oOut{param}{$strParam} = $$oDoc{param}{$strParam};
         }
@@ -289,7 +290,7 @@ sub build
             }
             else
             {
-                push($$oOut{children}, $self->build($oSub));
+                push(@{$$oOut{children}}, $self->build($oSub));
             }
         }
     }

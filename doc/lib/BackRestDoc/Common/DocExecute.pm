@@ -355,7 +355,7 @@ sub backrestConfig
                 {
                     delete(${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey});
 
-                    if (keys(${$self->{config}}{$strHostName}{$strFile}{$strSection}) == 0)
+                    if (keys(%{${$self->{config}}{$strHostName}{$strFile}{$strSection}}) == 0)
                     {
                         delete(${$self->{config}}{$strHostName}{$strFile}{$strSection});
                     }
@@ -617,7 +617,7 @@ sub sectionChildProcess
             $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'", undef, 'root');
 
             # Add all other host IPs to this host
-            foreach my $strOtherHostName (sort(keys($self->{host})))
+            foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
             {
                 if ($strOtherHostName ne $strName)
                 {
@@ -628,7 +628,7 @@ sub sectionChildProcess
             }
 
             # Add this host IP to all other hosts
-            foreach my $strOtherHostName (sort(keys($self->{host})))
+            foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
             {
                 if ($strOtherHostName ne $strName)
                 {
