@@ -86,8 +86,7 @@ sub new
 
             eval
             {
-                local $XML::Checker::FAIL;
-                $XML::Checker::FAIL = sub
+                local $XML::Checker::FAIL = sub
                 {
                     my $iCode = shift;
 
