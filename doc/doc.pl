@@ -66,8 +66,6 @@ doc.pl [options]
 ####################################################################################################################################
 use constant OP_MAIN                                                => 'Main';
 
-use constant OP_MAIN_DOC_PROCESS                                    => OP_MAIN . '::docProcess';
-
 ####################################################################################################################################
 # Load command line parameters and config (see usage above for details)
 ####################################################################################################################################
@@ -140,32 +138,6 @@ if (!defined($strDocPath))
 
 my $strOutputPath = "${strDocPath}/output";
 
-sub docProcess
-{
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strXmlIn,
-        $strMdOut,
-        $oManifest
-    ) =
-        logDebugParam
-        (
-            OP_MAIN_DOC_PROCESS, \@_,
-            {name => 'strXmlIn'},
-            {name => 'strMdOut'},
-            {name => 'oHtmlSite'}
-        );
-
-    # Build the document from xml
-    my $oDoc = new BackRestDoc::Common::Doc($strXmlIn);
-
-    # Write markdown
-    my $oRender = new BackRestDoc::Common::DocRender('markdown', $oManifest);
-    $oRender->save($strMdOut, $oManifest->variableReplace($oRender->process($oDoc)));
-}
-
 # Create the out path if it does not exist
 if (!-e $strOutputPath)
 {
@@ -218,12 +190,6 @@ for my $strOutput (@stryOutput)
             );
 
         $oMarkdown->process();
-
-        # Generate the change log using the old markdown code.
-        if ($oManifest->isBackRest())
-        {
-            docProcess("${strBasePath}/xml/change-log.xml", "${strBasePath}/../CHANGELOG.md", $oManifest);
-        }
     }
     elsif ($strOutput eq 'help' && $oManifest->isBackRest())
     {

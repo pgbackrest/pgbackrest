@@ -226,7 +226,7 @@ Section
 /*.section-body*/
 
 /*******************************************************************************
-Config, Execute, and Code Block Elements
+Config, Execute, Code Block, Release Elements
 *******************************************************************************/
 .section-body-text
 {
@@ -331,6 +331,20 @@ pre
 .config-body-output
 {
     padding-left: 1.75em;
+}
+
+.release-title
+{
+    font-weight: bold;
+    font-size: 14pt;
+    color: #396a93;
+}
+
+.release-date
+{
+    font-style: italic;
+    margin-top: 0px;
+    color: #396a93;
 }
 
 /*.code-block*/

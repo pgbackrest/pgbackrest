@@ -184,10 +184,11 @@ sub new
         my $strSourceType = ${$self->{oManifest}->sourceGet('reference')}{strSourceType};
         if (defined($strSourceType) && $strSourceType eq 'custom')
         {
-            # Get the reference if this is the backrest project
+            # Get the reference and change-log if this is the backrest project
             if ($self->{oManifest}->isBackRest())
             {
                 $self->{oReference} = new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+                $self->{oChangeLog} = new BackRestDoc::Common::DocChangeLog(${$self->{oManifest}->sourceGet('change-log')}{doc}, $self);
             }
         }
 
@@ -205,6 +206,12 @@ sub new
             {
                 confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
             }
+        }
+        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'change-log')
+        {
+            #confess Dumper($self->{oChangeLog});
+            $self->{oDoc} = $self->{oChangeLog}->docGet();
+           # confess Dumper($self->{oDoc});
         }
         else
         {
@@ -417,6 +424,7 @@ sub isRequired
 #
 # Render the document
 ####################################################################################################################################
+#CSHANG: Remove this - was only for change-log
 sub process
 {
     my $self = shift;
