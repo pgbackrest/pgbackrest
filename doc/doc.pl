@@ -17,7 +17,6 @@ use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
 use Storable;
-use XML::Checker::Parser;
 
 use lib dirname($0) . '/lib';
 use BackRestDoc::Common::Doc;

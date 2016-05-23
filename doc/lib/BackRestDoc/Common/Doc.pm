@@ -12,6 +12,8 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 
+use XML::Checker::Parser;
+
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -72,15 +74,7 @@ sub new
         else
         {
             my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-
-            if (-e dirname($0) . '/dtd')
-            {
-                $oParser->set_sgml_search_path(dirname($0) . '/dtd')
-            }
-            else
-            {
-                $oParser->set_sgml_search_path(dirname($0) . '/xml/dtd');
-            }
+            $oParser->set_sgml_search_path(dirname($self->{strFileName}) . '/dtd', dirname($self->{strFileName}) . '/xml/dtd');
 
             my $oTree;
 

@@ -30,6 +30,9 @@ use pgBackRest::Db;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
+use lib dirname($0) . '/../doc/lib';
+use BackRestDoc::Common::Doc;
+
 use lib dirname($0) . '/lib';
 use pgBackRestTest::BackupTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -207,30 +210,19 @@ if ($bVmBuild)
 }
 
 ####################################################################################################################################
-# Make sure version number matches in the change log.
+# Make sure version number matches the latest release
 ####################################################################################################################################
-my $hReadMe;
-my $strLine;
-my $bMatch = false;
-my $strChangeLogFile = abs_path(dirname($0) . '/../CHANGELOG.md');
+my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/change-log.xml';
+my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
 
-if (!open($hReadMe, '<', $strChangeLogFile))
+foreach my $oRelease ($oReleaseDoc->nodeGet('changelog')->nodeList('changelog-release'))
 {
-    confess "unable to open ${strChangeLogFile}";
-}
-
-while ($strLine = readline($hReadMe))
-{
-    if ($strLine =~ /^\#\# v/)
+    if ($oRelease->paramGet('version') ne BACKREST_VERSION)
     {
-        $bMatch = substr($strLine, 4, length(BACKREST_VERSION)) eq BACKREST_VERSION;
-        last;
+        confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
     }
-}
 
-if (!$bMatch)
-{
-    confess 'unable to find version ' . BACKREST_VERSION . " as last revision in ${strChangeLogFile}";
+    last;
 }
 
 eval
