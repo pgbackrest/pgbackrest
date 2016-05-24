@@ -377,12 +377,11 @@ eval
 
         # Determine which tests to run
         my $iTestsToRun = 0;
-
         my $stryTestOS = [];
 
         if ($strVm eq 'all')
         {
-            $stryTestOS = ['co6', 'u12', 'co7', 'u14'];
+            $stryTestOS = [VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12];
         }
         else
         {

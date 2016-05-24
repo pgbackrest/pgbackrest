@@ -59,11 +59,13 @@ sub userCreate
     my $iId = shift;
     my $strGroup = shift;
 
-    if ($strOS eq OS_CO6 || $strOS eq OS_CO7)
+    my $oVm = vmGet();
+
+    if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
         return "RUN adduser -g${strGroup} -u${iId} -n ${strName}";
     }
-    elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         return "RUN adduser --uid=${iId} --ingroup=${strGroup} --disabled-password --gecos \"\" ${strName}";
     }
@@ -176,23 +178,28 @@ sub perlInstall
     my $strImage =
         "# Install Perl packages\n";
 
-    if ($strOS eq OS_CO6)
+    if ($strOS eq VM_CO6)
     {
-        $strImage .=
+        return $strImage .
             "RUN yum -y install perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg";
     }
-    elsif ($strOS eq OS_CO7)
+    elsif ($strOS eq VM_CO7)
     {
-        $strImage .=
+        return $strImage .
             "RUN yum -y install perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg";
     }
-    elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+    elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
     {
-        $strImage .=
+        return $strImage .
             "RUN apt-get -y install libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl";
     }
+    elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
+    {
+        return $strImage .
+            "RUN apt-get -y install libdbd-pg-perl libdbi-perl";
+    }
 
-    return $strImage;
+    confess &log(ERROR, "unable to install perl for os '${strOS}'");
 }
 
 ####################################################################################################################################
@@ -221,19 +228,19 @@ sub containerBuild
     {
         &log(INFO, "Building SSH keys...");
 
-        executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 768 -N ''", {bSuppressStdErr => true});
+        executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 1024 -N ''", {bSuppressStdErr => true});
     }
 
-    my $oyVm = vmGet();
+    my $oVm = vmGet();
 
-    foreach my $strOS (sort(keys(%$oyVm)))
+    foreach my $strOS (sort(keys(%$oVm)))
     {
         if ($strVm ne 'all' && $strVm ne $strOS)
         {
             next;
         }
 
-        my $oOS = $$oyVm{$strOS};
+        my $oOS = $$oVm{$strOS};
         my $strImage;
         my $strImageName;
 
@@ -242,33 +249,16 @@ sub containerBuild
         $strImageName = "${strOS}-base";
         &log(INFO, "Building ${strImageName} image...");
 
-        $strImage = "# Base Container\nFROM ";
-
-        if ($strOS eq OS_CO6)
-        {
-            $strImage .= 'centos:6';
-        }
-        elsif ($strOS eq OS_CO7)
-        {
-            $strImage .= 'centos:7';
-        }
-        elsif ($strOS eq OS_U12)
-        {
-            $strImage .= 'ubuntu:12.04';
-        }
-        elsif ($strOS eq OS_U14)
-        {
-            $strImage .= 'ubuntu:14.04';
-        }
+        $strImage = "# Base Container\nFROM " . $$oVm{$strOS}{&VM_IMAGE};
 
         # Install SSH
         $strImage .= "\n\n# Install SSH\n";
 
-        if ($strOS eq OS_CO6 || $strOS eq OS_CO7)
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
             $strImage .= "RUN yum -y install openssh-server openssh-clients\n";
         }
-        elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strImage .=
                 "RUN apt-get update\n" .
@@ -277,7 +267,7 @@ sub containerBuild
 
         $strImage .=
             "RUN rm -f /etc/ssh/ssh_host_rsa_key*\n" .
-            "RUN ssh-keygen -t rsa -b 768 -f /etc/ssh/ssh_host_rsa_key";
+            "RUN ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
 
         # Create PostgreSQL Group
         $strImage .= "\n\n" . postgresGroupCreate($strOS);
@@ -285,7 +275,7 @@ sub containerBuild
         # Add PostgreSQL packages
         $strImage .= "\n\n# Add PostgreSQL packages\n";
 
-        if ($strOS eq OS_CO6)
+        if ($strOS eq VM_CO6)
         {
             $strImage .=
                 "RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm\n" .
@@ -296,7 +286,7 @@ sub containerBuild
                 "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-2.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-1.noarch.rpm";
         }
-        elsif ($strOS eq OS_CO7)
+        elsif ($strOS eq VM_CO7)
         {
             $strImage .=
                 "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-1.noarch.rpm\n" .
@@ -304,18 +294,17 @@ sub containerBuild
                 "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-1.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-1.noarch.rpm";
         }
-        elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-            if ($strOS eq OS_U12)
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 $strImage .=
-                    "RUN apt-get install -y sudo\n";
+                    "RUN apt-get install -y sudo wget\n";
             }
 
             $strImage .=
                 "RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    ($strOS eq OS_U12 ? 'precise' : 'trusty') .
-                    "-pgdg main 9.6' >> /etc/apt/sources.list.d/pgdg.list\n" .
+                $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main 9.6' >> /etc/apt/sources.list.d/pgdg.list\n" .
                 "RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -\n" .
                 "RUN apt-get update";
         }
@@ -325,14 +314,14 @@ sub containerBuild
             "\n\n# Create test group\n" .
             groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . "\n";
 
-        if ($strOS eq OS_CO6 || $strOS eq OS_CO7)
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
             $strImage .=
                 "RUN yum -y install sudo\n" .
                 "RUN echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . "\n" .
                 "RUN sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
         }
-        elsif ($strOS eq OS_U12 || $strOS eq OS_U14)
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strImage .=
                 "RUN sed -i 's/^\\\%admin.*\$/\\\%" . TEST_GROUP . " ALL\\=\\(ALL\\) NOPASSWD\\: ALL/' /etc/sudoers";
@@ -344,7 +333,7 @@ sub containerBuild
             userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
 
         # Suppress dpkg interactive output
-        if ($strOS eq OS_U12 || $strOS eq OS_U14)
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strImage .=
                 "\n\n# Suppress dpkg interactive output\n" .
@@ -355,14 +344,14 @@ sub containerBuild
         $strImage .=
             "\n\n# Start SSH when container starts\n";
 
-        # This is required in newer versions of u12 containers - seems like a bug in the caontainer
-        if ($strOS eq OS_U12)
+        # This is required in newer versions of u12 containers - seems like a bug in the container
+        if ($strOS eq VM_U12)
         {
             $strImage .=
                 "RUN mkdir /var/run/sshd\n";
         }
 
-        if ($strOS eq OS_U14)
+        if ($strOS eq VM_U14 || $strOS eq VM_D8 || $strOS eq VM_U16)
         {
             $strImage .=
                 "ENTRYPOINT service ssh restart && bash";
@@ -399,18 +388,13 @@ sub containerBuild
             $strImage .=
                 "\n\n# Install PostgreSQL";
 
-            if ($strOS eq OS_U12 || $strOS eq OS_U14)
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 $strImage .=
                     "\nRUN apt-get install -y postgresql-${strDbVersion}" .
                     "\nRUN pg_dropcluster --stop ${strDbVersion} main";
             }
-            elsif ($strOS eq OS_CO6)
-            {
-                $strImage .=
-                    "\nRUN yum -y install postgresql${strDbVersionNoDot}-server";
-            }
-            elsif ($strOS eq OS_CO7)
+            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
                 $strImage .=
                     "\nRUN yum -y install postgresql${strDbVersionNoDot}-server";
