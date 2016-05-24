@@ -30,9 +30,6 @@ use pgBackRest::Db;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
-use lib dirname($0) . '/../doc/lib';
-use BackRestDoc::Common::Doc;
-
 use lib dirname($0) . '/lib';
 use pgBackRestTest::BackupTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -209,22 +206,6 @@ if ($bVmBuild)
     exit 0;
 }
 
-####################################################################################################################################
-# Make sure version number matches the latest release
-####################################################################################################################################
-my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/change-log.xml';
-my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
-
-foreach my $oRelease ($oReleaseDoc->nodeGet('changelog')->nodeList('changelog-release'))
-{
-    if ($oRelease->paramGet('version') ne BACKREST_VERSION)
-    {
-        confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
-    }
-
-    last;
-}
-
 eval
 {
     ################################################################################################################################
@@ -338,6 +319,25 @@ eval
     ################################################################################################################################
     if ($strVm ne 'none')
     {
+        # Load the doc module dynamically since it is not supported on all systems
+        use lib dirname($0) . '/../doc/lib';
+        require BackRestDoc::Common::Doc;
+        BackRestDoc::Common::Doc->import();
+
+        # Make sure version number matches the latest release
+        my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/change-log.xml';
+        my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
+
+        foreach my $oRelease ($oReleaseDoc->nodeGet('changelog')->nodeList('changelog-release'))
+        {
+            if ($oRelease->paramGet('version') ne BACKREST_VERSION)
+            {
+                confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
+            }
+
+            last;
+        }
+
         if (!$bDryRun)
         {
             # Run Perl critic
