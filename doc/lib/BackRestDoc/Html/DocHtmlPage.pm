@@ -404,6 +404,18 @@ sub sectionProcess
             $oSectionBodyElement->add($oChildSectionElement);
             $oSectionTocElement->add($oChildSectionTocElement);
         }
+        elsif ($oChild->nameGet() eq 'release-title')
+        {
+            $oSectionBodyElement->
+                addNew(HTML_DIV, 'release-title',
+                       {strContent => $self->processText($oChild->textGet())});
+        }
+        elsif ($oChild->nameGet() eq 'release-date')
+        {
+            $oSectionBodyElement->
+                addNew(HTML_DIV, 'release-date',
+                       {strContent => $self->processText($oChild->textGet())});
+        }
         # Check if the child can be processed by a parent
         else
         {

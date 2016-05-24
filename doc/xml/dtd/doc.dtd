@@ -1,4 +1,4 @@
-<!ELEMENT doc ((intro, changelog)|(config, operation)|(description, variable-list?, cleanup?, section+))>
+<!ELEMENT doc ((description, intro, changelog)|(config, operation)|(description, variable-list?, cleanup?, section+))>
     <!ATTLIST doc title CDATA "">
     <!ATTLIST doc subtitle CDATA "">
     <!ATTLIST doc toc CDATA "y">
@@ -110,7 +110,7 @@
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section keyword CDATA "">
     <!ATTLIST section depend CDATA "">
-<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
                  pg-option|pg-setting|link|user)*>
 
 <!ELEMENT default (#PCDATA)>
@@ -150,29 +150,29 @@
 
 <!ELEMENT table-header (table-column+)>
     <!ATTLIST table-header width CDATA "">
-<!ELEMENT table-column (#PCDATA|quote|b|i|id|code|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+<!ELEMENT table-column (#PCDATA|quote|b|i|id|code|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                         br-setting|pg-option|pg-setting|link|user)*>
     <!ATTLIST table-column align CDATA "">
     <!ATTLIST table-column fill CDATA "">
 
 <!ELEMENT table-data (table-row+)>
 <!ELEMENT table-row (table-cell+)>
-<!ELEMENT table-cell (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+<!ELEMENT table-cell (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                       br-setting|pg-option|pg-setting|link|user)*>
 
 <!-- Formatted elements -->
-<!ELEMENT summary (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+<!ELEMENT summary (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                    br-setting|pg-option|pg-setting|link|user)*>
-<!ELEMENT p (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|br-setting|
+<!ELEMENT p (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
              pg-option|pg-setting|link|user)*>
     <!ATTLIST p keyword CDATA "">
-<!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+<!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                 br-setting|pg-option|pg-setting|link|user)*>
 <!ELEMENT i (#PCDATA)>
 <!ELEMENT b (#PCDATA)>
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
-<!ELEMENT li (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|param|setting|exe|backrest|postgres|br-option|
+<!ELEMENT li (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
               br-setting|pg-option|pg-setting|link|user)*>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
@@ -185,7 +185,6 @@
 <!ELEMENT cmd (#PCDATA)>
 <!ELEMENT user (#PCDATA)>
 <!ELEMENT quote (#PCDATA)>
-<!ELEMENT param (#PCDATA)>
 <!ELEMENT setting (#PCDATA)>
 <!ELEMENT br-option (#PCDATA)>
 <!ELEMENT br-setting (#PCDATA)>

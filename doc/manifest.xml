@@ -34,6 +34,7 @@
         <source key="reference" type="custom"/>
         <source key="backlog"/>
         <source key="test"/>
+        <source key="change-log" type="custom"/>
     </source-list>
 
     <render-list>
@@ -43,6 +44,7 @@
             <render-source key="configuration" source="reference" menu="Configuration"/>
             <render-source key="command" source="reference" menu="Commands"/>
             <render-source key="backlog" menu="Backlog"/>
+            <render-source key="change-log" menu="Change Log"/>
         </render>
 
         <render type="pdf" file="{[pdf-file]}">

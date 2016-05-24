@@ -25,6 +25,7 @@ use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
 
 use BackRestDoc::Common::DocConfig;
+use BackRestDoc::Common::DocChangeLog;
 use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Html::DocHtmlPage;
 

@@ -98,6 +98,7 @@ sub process
 
         $$oCommand{&CONFIG_HELP_SUMMARY} = $oCommandDoc->nodeGet('summary')->textGet();
         $$oCommand{&CONFIG_HELP_DESCRIPTION} = $oCommandDoc->textGet();
+
     }
 
     # Iterate through all options
@@ -542,6 +543,7 @@ sub helpConfigDocGet
         {
             $self->helpOptionGet(undef, $strOption, $oSectionElement, $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption});
         }
+#CSHANG        use Data::Dumper; confess Dumper($oSectionElement);
     }
 
     # Return from function and log return values if any
@@ -694,7 +696,7 @@ sub helpOptionGet
 
     # Create the option section
     my $oOptionElement = $oParentElement->nodeAdd('section', undef, {id => "option-${strOption}"});
-
+#CSHANG            use Data::Dumper; confess Dumper($$oOptionHash{&CONFIG_HELP_DESCRIPTION});
     # Set the option section title
     $oOptionElement->
         nodeAdd('title')->textSet(
