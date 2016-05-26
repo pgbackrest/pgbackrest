@@ -29,14 +29,6 @@ use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Latex::DocLatexSection;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_LATEX                                           => 'DocLatex';
-
-use constant OP_DOC_LATEX_NEW                                       => OP_DOC_LATEX . '->new';
-use constant OP_DOC_LATEX_PROCESS                                   => OP_DOC_LATEX . '->process';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -60,7 +52,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_LATEX_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strXmlPath'},
             {name => 'strLatexPath'},
@@ -98,7 +90,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_LATEX_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_PDF);
 

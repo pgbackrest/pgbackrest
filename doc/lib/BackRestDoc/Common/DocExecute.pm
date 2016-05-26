@@ -27,17 +27,6 @@ use pgBackRestTest::Common::HostTest;
 use BackRestDoc::Common::DocManifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_EXECUTE                                         => 'DocExecute';
-
-use constant OP_DOC_EXECUTE_BACKREST_CONFIG                         => OP_DOC_EXECUTE . '->backrestConfig';
-use constant OP_DOC_EXECUTE_EXECUTE                                 => OP_DOC_EXECUTE . '->execute';
-use constant OP_DOC_EXECUTE_NEW                                     => OP_DOC_EXECUTE . '->new';
-use constant OP_DOC_EXECUTE_POSTGRES_CONFIG                         => OP_DOC_EXECUTE . '->postresConfig';
-use constant OP_DOC_EXECUTE_SECTION_CHILD_PROCESS                   => OP_DOC_EXECUTE . '->sectionChildProcess';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -55,7 +44,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_EXECUTE_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
             {name => 'oManifest'},
             {name => 'strRenderOutKey'},
@@ -94,7 +83,7 @@ sub execute
     ) =
         logDebugParam
         (
-            OP_DOC_EXECUTE_EXECUTE, \@_,
+            __PACKAGE__ . '->execute', \@_,
             {name => 'oSection'},
             {name => 'strHostName'},
             {name => 'oCommand'},
@@ -301,7 +290,7 @@ sub backrestConfig
     ) =
         logDebugParam
         (
-            OP_DOC_EXECUTE_BACKREST_CONFIG, \@_,
+            __PACKAGE__ . '->backrestConfig', \@_,
             {name => 'oSection'},
             {name => 'oConfig'},
             {name => 'iDepth'}
@@ -449,7 +438,7 @@ sub postgresConfig
     ) =
         logDebugParam
         (
-            OP_DOC_EXECUTE_POSTGRES_CONFIG, \@_,
+            __PACKAGE__ . '->postgresConfig', \@_,
             {name => 'oSection'},
             {name => 'oConfig'},
             {name => 'iDepth'}
@@ -579,7 +568,7 @@ sub sectionChildProcess
     ) =
         logDebugParam
         (
-            OP_DOC_EXECUTE_SECTION_CHILD_PROCESS, \@_,
+            __PACKAGE__ . '->sectionChildProcess', \@_,
             {name => 'oSection'},
             {name => 'oChild'},
             {name => 'iDepth'}

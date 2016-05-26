@@ -20,25 +20,6 @@ use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC                                                 => 'Doc';
-
-use constant OP_DOC_BUILD                                           => OP_DOC . '->build';
-use constant OP_DOC_NAME_GET                                        => OP_DOC . '->nameGet';
-use constant OP_DOC_NEW                                             => OP_DOC . '->new';
-use constant OP_DOC_NODE_BLESS                                      => OP_DOC . '->nodeBless';
-use constant OP_DOC_NODE_GET                                        => OP_DOC . '->nodeGet';
-use constant OP_DOC_NODE_LIST                                       => OP_DOC . '->nodeList';
-use constant OP_DOC_NODE_REMOVE                                     => OP_DOC . '->nodeRemove';
-use constant OP_DOC_PARAM_GET                                       => OP_DOC . '->paramGet';
-use constant OP_DOC_PARAM_SET                                       => OP_DOC . '->paramSet';
-use constant OP_DOC_PARAM_TEST                                      => OP_DOC . '->paramSet';
-use constant OP_DOC_PARSE                                           => OP_DOC . '->parse';
-use constant OP_DOC_VALUE_GET                                       => OP_DOC . '->valueGet';
-use constant OP_DOC_VALUE_SET                                       => OP_DOC . '->valueSet';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -59,7 +40,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strFileName', required => false},
             {name => 'bCached', default => false}
         );
@@ -135,7 +116,7 @@ sub parse
     ) =
         logDebugParam
         (
-            OP_DOC_PARSE, \@_,
+            __PACKAGE__ . '->parse', \@_,
             {name => 'strName', trace => true},
             {name => 'oyNode', trace => true}
         );
@@ -240,7 +221,7 @@ sub build
     ) =
         logDebugParam
         (
-            OP_DOC_BUILD, \@_,
+            __PACKAGE__ . '->build', \@_,
             {name => 'oDoc', trace => true}
         );
 
@@ -315,7 +296,7 @@ sub nodeGetById
     ) =
         logDebugParam
         (
-            OP_DOC_NODE_GET, \@_,
+            __PACKAGE__ . 'nodeGetById', \@_,
             {name => 'strName', trace => true},
             {name => 'strId', required => false, trace => true},
             {name => 'bRequired', default => true, trace => true}
@@ -415,7 +396,7 @@ sub nodeBless
     ) =
         logDebugParam
         (
-            OP_DOC_NODE_BLESS, \@_,
+            __PACKAGE__ . '->nodeBless', \@_,
             {name => 'oNode', required => false, trace => true}
         );
 
@@ -457,7 +438,7 @@ sub nodeList
     ) =
         logDebugParam
         (
-            OP_DOC_NODE_LIST, \@_,
+            __PACKAGE__ . '->nodeList', \@_,
             {name => 'strName', required => false, trace => true},
             {name => 'bRequired', default => true, trace => true},
         );
@@ -513,7 +494,7 @@ sub nodeRemove
     ) =
         logDebugParam
         (
-            OP_DOC_NODE_REMOVE, \@_,
+            __PACKAGE__ . '->nodeRemove', \@_,
             {name => 'oChildRemove', required => false, trace => true}
         );
 
@@ -553,7 +534,7 @@ sub nameGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_NAME_GET);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->nameGet');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -571,7 +552,7 @@ sub valueGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_VALUE_GET);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->valueGet');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -590,7 +571,7 @@ sub valueSet
     my $strValue = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_VALUE_SET);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->valueSet');
 
     # Set the value
     ${$self->{oDoc}}{value} = $strValue;
@@ -619,7 +600,7 @@ sub paramGet
     ) =
         logDebugParam
         (
-            OP_DOC_PARAM_GET, \@_,
+            __PACKAGE__ . '->paramGet', \@_,
             {name => 'strName', trace => true},
             {name => 'bRequired', default => true, trace => true},
             {name => 'strDefault', required => false, trace => true},
@@ -665,7 +646,7 @@ sub paramTest
     ) =
         logDebugParam
         (
-            OP_DOC_PARAM_TEST, \@_,
+            __PACKAGE__ . '->paramTest', \@_,
             {name => 'strName', trace => true},
             {name => 'strExpectedValue', required => false, trace => true},
             {name => 'strType', default => 'param', trace => true}
@@ -710,7 +691,7 @@ sub paramSet
     ) =
         logDebugParam
         (
-            OP_DOC_PARAM_SET, \@_,
+            __PACKAGE__ . '->paramSet', \@_,
             {name => 'strName', trace => true},
             {name => 'strValue', required => false, trace => true},
             {name => 'strType', default => 'param', trace => true}

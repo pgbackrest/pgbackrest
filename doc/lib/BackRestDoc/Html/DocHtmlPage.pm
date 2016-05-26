@@ -25,17 +25,6 @@ use BackRestDoc::Html::DocHtmlBuilder;
 use BackRestDoc::Html::DocHtmlElement;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_HTML_PAGE                                       => 'DocHtmlPage';
-
-use constant OP_DOC_HTML_PAGE_BACKREST_CONFIG_PROCESS               => OP_DOC_HTML_PAGE . '->backrestConfigProcess';
-use constant OP_DOC_HTML_PAGE_NEW                                   => OP_DOC_HTML_PAGE . '->new';
-use constant OP_DOC_HTML_PAGE_POSTGRES_CONFIG_PROCESS               => OP_DOC_HTML_PAGE . '->postgresConfigProcess';
-use constant OP_DOC_HTML_PAGE_PROCESS                               => OP_DOC_HTML_PAGE . '->process';
-use constant OP_DOC_HTML_PAGE_SECTION_PROCESS                       => OP_DOC_HTML_PAGE . '->sectionProcess';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -52,7 +41,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_PAGE_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strRenderOutKey'},
             {name => 'bExe'}
@@ -80,7 +69,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_HTML_PAGE_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     # Working variables
     my $oPage = $self->{oDoc};
@@ -206,7 +195,7 @@ sub sectionProcess
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_PAGE_SECTION_PROCESS, \@_,
+            __PACKAGE__ . '->sectionProcess', \@_,
             {name => 'oSection'},
             {name => 'strAnchor', required => false},
             {name => 'iDepth'}
@@ -437,7 +426,7 @@ sub backrestConfigProcess
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_PAGE_BACKREST_CONFIG_PROCESS, \@_,
+            __PACKAGE__ . '->backrestConfigProcess', \@_,
             {name => 'oSection'},
             {name => 'oConfig'},
             {name => 'iDepth'}
@@ -495,7 +484,7 @@ sub postgresConfigProcess
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_PAGE_POSTGRES_CONFIG_PROCESS, \@_,
+            __PACKAGE__ . '->postgresConfigProcess', \@_,
             {name => 'oSection'},
             {name => 'oConfig'},
             {name => 'iDepth'}

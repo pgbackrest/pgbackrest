@@ -25,16 +25,6 @@ use pgBackRest::FileCommon;
 use BackRestDoc::Common::DocManifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_LATEX_SECTION                                   => 'DocLatexSection';
-
-use constant OP_DOC_LATEX_SECTION_CONFIG_PROCESS                    => OP_DOC_LATEX_SECTION . '->configProcess';
-use constant OP_DOC_LATEX_SECTION_NEW                               => OP_DOC_LATEX_SECTION . '->new';
-use constant OP_DOC_LATEX_SECTION_PROCESS                           => OP_DOC_LATEX_SECTION . '->process';
-use constant OP_DOC_LATEX_SECTION_SECTION_PROCESS                   => OP_DOC_LATEX_SECTION . '->sectionProcess';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -51,7 +41,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_LATEX_SECTION_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strRenderOutKey'},
             {name => 'bExe'}
@@ -79,7 +69,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_LATEX_SECTION_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     # Working variables
     my $oPage = $self->{oDoc};
@@ -121,7 +111,7 @@ sub sectionProcess
     ) =
         logDebugParam
         (
-            OP_DOC_LATEX_SECTION_SECTION_PROCESS, \@_,
+            __PACKAGE__ . '->sectionRender', \@_,
             {name => 'oSection'},
             {name => 'strSection', required => false},
             {name => 'iDepth'}
@@ -369,7 +359,7 @@ sub configProcess
     ) =
         logDebugParam
         (
-            OP_DOC_LATEX_SECTION_CONFIG_PROCESS, \@_,
+            __PACKAGE__ . '->configProcess', \@_,
             {name => 'oSection'},
             {name => 'oConfig'},
             {name => 'iDepth'}

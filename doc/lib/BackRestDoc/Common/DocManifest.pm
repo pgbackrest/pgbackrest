@@ -19,19 +19,6 @@ use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_MANIFEST                                        => 'DocManifest';
-
-use constant OP_DOC_MANIFEST_NEW                                    => OP_DOC_MANIFEST . '->new';
-use constant OP_DOC_MANIFEST_RENDER_GET                             => OP_DOC_MANIFEST . '->renderGet';
-use constant OP_DOC_MANIFEST_RENDER_LIST                            => OP_DOC_MANIFEST . '->renderList';
-use constant OP_DOC_MANIFEST_RENDER_OUT_GET                         => OP_DOC_MANIFEST . '->renderOutGet';
-use constant OP_DOC_MANIFEST_RENDER_OUT_LIST                        => OP_DOC_MANIFEST . '->renderOutList';
-use constant OP_DOC_MANIFEST_SOURCE_GET                             => OP_DOC_MANIFEST . '->sourceGet';
-use constant OP_DOC_MANIFEST_VARIABLE_LIST_PARSE                    => OP_DOC_MANIFEST . '->variableListParse';
-
-####################################################################################################################################
 # File constants
 ####################################################################################################################################
 use constant FILE_MANIFEST                                          => 'manifest.xml';
@@ -71,7 +58,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_MANIFEST_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'stryKeyword'},
             {name => 'stryRequire'},
             {name => 'oVariableOverride', required => false},
@@ -263,7 +250,7 @@ sub variableListParse
     ) =
         logDebugParam
         (
-            OP_DOC_MANIFEST_VARIABLE_LIST_PARSE, \@_,
+            __PACKAGE__ . '->variableListParse', \@_,
             {name => '$oVariableList', required => false},
             {name => '$oVariableOverride', required => false}
         );
@@ -415,7 +402,7 @@ sub sourceGet
     ) =
         logDebugParam
         (
-            OP_DOC_MANIFEST_SOURCE_GET, \@_,
+            __PACKAGE__ . '->sourceGet', \@_,
             {name => 'strSource', trace => true}
         );
 
@@ -440,7 +427,7 @@ sub renderList
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_DOC_MANIFEST_RENDER_LIST);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->renderList');
 
     # Check that the render output exists
     my @stryRender;
@@ -473,7 +460,7 @@ sub renderGet
     ) =
         logDebugParam
         (
-            OP_DOC_MANIFEST_RENDER_GET, \@_,
+            __PACKAGE__ . '->renderGet', \@_,
             {name => 'strType', trace => true}
         );
 
@@ -506,7 +493,7 @@ sub renderOutList
     ) =
         logDebugParam
         (
-            OP_DOC_MANIFEST_RENDER_OUT_LIST, \@_,
+            __PACKAGE__ . '->renderOutList', \@_,
             {name => 'strType'}
         );
 
@@ -542,7 +529,7 @@ sub renderOutGet
     ) =
         logDebugParam
         (
-            OP_DOC_MANIFEST_RENDER_OUT_GET, \@_,
+            __PACKAGE__ . '->renderOutGet', \@_,
             {name => 'strType', trace => true},
             {name => 'strKey', trace => true}
         );

@@ -29,14 +29,6 @@ use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Html::DocHtmlPage;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_HTML_SITE                                       => 'DocHtmlSite';
-
-use constant OP_DOC_HTML_SITE_NEW                                   => OP_DOC_HTML_SITE . '->new';
-use constant OP_DOC_HTML_SITE_PROCESS                               => OP_DOC_HTML_SITE . '->process';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -62,7 +54,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_SITE_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strXmlPath'},
             {name => 'strHtmlPath'},
@@ -102,7 +94,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_HTML_SITE_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     # Copy the css file
     my $strCssFileDestination = "$self->{strHtmlPath}/default.css";

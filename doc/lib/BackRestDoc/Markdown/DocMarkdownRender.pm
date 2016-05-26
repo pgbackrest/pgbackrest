@@ -23,17 +23,6 @@ use pgBackRest::Config::ConfigHelp;
 use BackRestDoc::Common::DocManifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_MARKDOWN_RENDER                                 => 'DocMarkdownRender';
-
-use constant OP_DOC_MARKDOWN_RENDER_BACKREST_CONFIG_PROCESS         => OP_DOC_MARKDOWN_RENDER . '->backrestConfigProcess';
-use constant OP_DOC_MARKDOWN_RENDER_NEW                             => OP_DOC_MARKDOWN_RENDER . '->new';
-use constant OP_DOC_MARKDOWN_RENDER_POSTGRES_CONFIG_PROCESS         => OP_DOC_MARKDOWN_RENDER . '->postgresConfigProcess';
-use constant OP_DOC_MARKDOWN_RENDER_PROCESS                         => OP_DOC_MARKDOWN_RENDER . '->process';
-use constant OP_DOC_MARKDOWN_RENDER_SECTION_PROCESS                 => OP_DOC_MARKDOWN_RENDER . '->sectionProcess';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -50,7 +39,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_MARKDOWN_RENDER_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strRenderOutKey'},
             {name => 'bExe'}
@@ -78,7 +67,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_MARKDOWN_RENDER_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     # Working variables
     my $oPage = $self->{oDoc};
@@ -184,7 +173,7 @@ sub sectionProcess
     ) =
         logDebugParam
         (
-            OP_DOC_MARKDOWN_RENDER_SECTION_PROCESS, \@_,
+            __PACKAGE__ . '->sectionProcess', \@_,
             {name => 'oSection'},
             {name => 'iDepth'}
         );
@@ -381,7 +370,7 @@ sub backrestConfigProcess
     ) =
         logDebugParam
         (
-            OP_DOC_MARKDOWN_RENDER_BACKREST_CONFIG_PROCESS, \@_,
+            __PACKAGE__ . '->backrestConfigProcess', \@_,
             {name => 'oSection'},
             {name => 'oConfig'},
             {name => 'iDepth'}
@@ -439,7 +428,7 @@ sub postgresConfigProcess
     # ) =
     #     logDebugParam
     #     (
-    #         OP_DOC_MARKDOWN_RENDER_POSTGRES_CONFIG_PROCESS, \@_,
+    #         __PACKAGE__ . '->postgresConfigProcess', \@_,
     #         {name => 'oSection'},
     #         {name => 'oConfig'},
     #         {name => 'iDepth'}

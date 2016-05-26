@@ -17,15 +17,6 @@ use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_HTML_ELEMENT                                    => 'DocHtmlElement';
-
-use constant OP_DOC_HTML_ELEMENT_ADD                                => OP_DOC_HTML_ELEMENT . '->add';
-use constant OP_DOC_HTML_ELEMENT_ADD_NEW                            => OP_DOC_HTML_ELEMENT . '->addNew';
-use constant OP_DOC_HTML_ELEMENT_NEW                                => OP_DOC_HTML_ELEMENT . '->new';
-
-####################################################################################################################################
 # Html Element Types
 ####################################################################################################################################
 use constant HTML_A                                                 => 'a';
@@ -61,7 +52,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_ELEMENT_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strType', trace => true},
             {name => 'strClass', required => false, trace => true},
             {name => 'oParam', required => false, trace => true}
@@ -99,7 +90,7 @@ sub addNew
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_ELEMENT_ADD_NEW, \@_,
+            __PACKAGE__ . '->addNew', \@_,
             {name => 'strType', trace => true},
             {name => 'strClass', required => false, trace => true},
             {name => 'oParam', required => false, trace => true}
@@ -133,7 +124,7 @@ sub add
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_ELEMENT_ADD, \@_,
+            __PACKAGE__ . '->add', \@_,
             {name => 'oElement', trace => true}
         );
 

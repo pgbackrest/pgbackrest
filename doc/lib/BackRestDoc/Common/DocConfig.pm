@@ -19,16 +19,6 @@ use pgBackRest::Config::ConfigHelp;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_CONFIG                                          => 'DocConfig';
-
-use constant OP_DOC_CONFIG_NEW                                      => OP_DOC_CONFIG . '->new';
-use constant OP_DOC_CONFIG_PROCESS                                  => OP_DOC_CONFIG . '->process';
-use constant OP_DOC_CONFIG_HELP_DATA_WRITE                          => OP_DOC_CONFIG . '->helpDataWrite';
-use constant OP_DOC_CONFIG_HELP_CONFIG_DOC_GET                      => OP_DOC_CONFIG . '->helpConfigDocGet';
-
-####################################################################################################################################
 # Help types
 ####################################################################################################################################
 use constant CONFIG_HELP_NAME                                       => 'name';
@@ -53,7 +43,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_CONFIG_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oDoc'},
             {name => 'oDocRender'}
         );
@@ -78,7 +68,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_CONFIG_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     # Iterate through all commands
     my $oDoc = $self->{oDoc};
@@ -249,7 +239,7 @@ sub helpDataWrite
     ) =
         logDebugParam
         (
-            OP_DOC_CONFIG_HELP_DATA_WRITE, \@_,
+            __PACKAGE__ . '->helpDataWrite', \@_,
             {name => 'oManifest'}
         );
 
@@ -499,7 +489,7 @@ sub helpConfigDocGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_CONFIG_HELP_CONFIG_DOC_GET);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->helpConfigDocGet');
 
     # Build a hash of the sections
     my $oConfigHash = $self->{oConfigHash};
@@ -562,7 +552,7 @@ sub helpCommandDocGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_CONFIG_HELP_CONFIG_DOC_GET);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->helpCommandDocGet');
 
     # Working variables
     my $oConfigHash = $self->{oConfigHash};

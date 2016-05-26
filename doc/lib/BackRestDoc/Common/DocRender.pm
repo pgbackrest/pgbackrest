@@ -18,17 +18,6 @@ use pgBackRest::Common::String;
 use BackRestDoc::Common::DocManifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_RENDER                                          => 'DocRender';
-
-use constant OP_DOC_RENDER_PROCESS                                  => OP_DOC_RENDER . '->process';
-use constant OP_DOC_RENDER_PROCESS_TAG                              => OP_DOC_RENDER . '->processTag';
-use constant OP_DOC_RENDER_PROCESS_TEXT                             => OP_DOC_RENDER . '->processText';
-use constant OP_DOC_RENDER_NEW                                      => OP_DOC_RENDER . '->new';
-use constant OP_DOC_RENDER_SAVE                                     => OP_DOC_RENDER . '->save';
-
-####################################################################################################################################
 # Render tags for various output types
 ####################################################################################################################################
 my $oRenderTag =
@@ -156,7 +145,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_RENDER_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
             {name => 'oManifest'},
             {name => 'strRenderOutKey', required => false}
@@ -431,7 +420,7 @@ sub process
     ) =
         logDebugParam
         (
-            OP_DOC_RENDER_PROCESS, \@_,
+            __PACKAGE__ . '->process', \@_,
             {name => 'oDoc', trace => true},
             {name => 'iDepth', default => 1, trace => true},
             {name => 'bChildList', default => true, trace => true}
@@ -601,7 +590,7 @@ sub processTag
     ) =
         logDebugParam
         (
-            OP_DOC_RENDER_PROCESS_TAG, \@_,
+            __PACKAGE__ . '->processTag', \@_,
             {name => 'oTag', trace => true}
         );
 
@@ -720,7 +709,7 @@ sub processText
     ) =
         logDebugParam
         (
-            OP_DOC_RENDER_PROCESS_TEXT, \@_,
+            __PACKAGE__ . '->processText', \@_,
             {name => 'oText', trace => true}
         );
 
@@ -794,7 +783,7 @@ sub save
     ) =
         logDebugParam
         (
-            OP_DOC_RENDER_SAVE, \@_,
+            __PACKAGE__ . '->save', \@_,
             {name => 'strFileName', trace => true},
             {name => 'strBuffer', trace => true}
         );

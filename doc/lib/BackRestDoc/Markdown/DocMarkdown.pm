@@ -29,14 +29,6 @@ use BackRestDoc::Common::DocManifest;
 use BackRestDoc::Markdown::DocMarkdownRender;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_MARKDOWN                                        => 'DocMarkdown';
-
-use constant OP_DOC_MARKDOWN_NEW                                    => OP_DOC_MARKDOWN . '->new';
-use constant OP_DOC_MARKDOWN_PROCESS                                => OP_DOC_MARKDOWN . '->process';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -59,7 +51,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_MARKDOWN_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strXmlPath'},
             {name => 'strMarkdownPath'},
@@ -96,7 +88,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(OP_DOC_MARKDOWN_PROCESS);
+    my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
     foreach my $strRenderOutId ($self->{oManifest}->renderOutList(RENDER_TYPE_MARKDOWN))
     {

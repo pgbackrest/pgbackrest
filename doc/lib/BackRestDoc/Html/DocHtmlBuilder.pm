@@ -19,15 +19,6 @@ use pgBackRest::Common::String;
 use BackRestDoc::Html::DocHtmlElement;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_DOC_HTML_BUILDER                                    => 'DocHtmlBuilder';
-
-use constant OP_DOC_HTML_BUILDER_NEW                                => OP_DOC_HTML_BUILDER . '->new';
-use constant OP_DOC_HTML_BUILDER_HTML_GET                           => OP_DOC_HTML_BUILDER . '->htmlGet';
-use constant OP_DOC_HTML_BUILDER_HTML_RENDER                        => OP_DOC_HTML_BUILDER . '->htmlRender';
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -52,7 +43,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_BUILDER_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strName'},
             {name => 'strTitle'},
             {name => 'strFavicon', required => false},
@@ -125,7 +116,7 @@ sub htmlRender
     ) =
         logDebugParam
         (
-            OP_DOC_HTML_BUILDER_HTML_RENDER, \@_,
+            __PACKAGE__ . '->htmlRender', \@_,
             {name => 'oElement', trace => true},
             {name => 'iDepth', trace => true}
         );
@@ -191,7 +182,7 @@ sub htmlGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_DOC_HTML_BUILDER_HTML_GET);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->htmlGet');
 
     # Build the header
     my $strHtml =
