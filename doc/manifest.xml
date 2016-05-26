@@ -13,7 +13,7 @@
         <variable key="project-favicon">favicon.png</variable>
 
         <!-- Logo locations -->
-        <variable key="logo">/backrest/doc/output/latex/logo</variable>
+        <variable key="logo">doc/output/latex/logo</variable>
 
         <!-- HTML variables  -->
         <variable key="html-footer" eval='y'>
