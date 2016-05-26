@@ -153,6 +153,12 @@
              </release-doc-list>
 
              <release-test-list>
+                 <release-bug-list>
+                    <release-item>
+                        <p>Replaced overzealous <code>perl -cW</code> check which failed on Perl 5.22 with <code>perl -cw</code>.</p>
+                    </release-item>
+                </release-bug-list>
+
                  <release-feature-list>
                     <release-item>
                         <p>Added Ubuntu 16.04 (Xenial) and Debian 8 (Jessie) to the regression suite.</p>
@@ -161,7 +167,6 @@
                     <release-item>
                         <p>Upgraded doc/test VM to Ubuntu 16.04.  This will help catch Perl errors in the doc code since it is not run across multiple distributions like the core and test code. It is also to be hoped that a newer kernel will make Docker more stable.</p>
                     </release-item>
-
                  </release-feature-list>
 
                  <release-refactor-list>

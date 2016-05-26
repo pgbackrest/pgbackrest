@@ -357,10 +357,10 @@ eval
             {
                 my $strBasePath = dirname(dirname(abs_path($0)));
 
-                &log(INFO, "Performing static code analysis using perl -cW");
+                &log(INFO, "Performing static code analysis using perl -cw");
 
                 # Check the exe for warnings
-                my $strWarning = trim(executeTest("perl -cW ${strBasePath}/bin/pgbackrest 2>&1"));
+                my $strWarning = trim(executeTest("perl -cw ${strBasePath}/bin/pgbackrest 2>&1"));
 
                 if ($strWarning ne "${strBasePath}/bin/pgbackrest syntax OK")
                 {
