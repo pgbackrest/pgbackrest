@@ -95,7 +95,7 @@ sub process
     my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_PDF);
 
     # Copy the logo
-    copy('/backrest/doc/resource/latex/cds-logo.eps', "$self->{strLatexPath}/logo.eps")
+    copy("$self->{oManifest}{strDocPath}/resource/latex/cds-logo.eps", "$self->{strLatexPath}/logo.eps")
         or confess &log(ERROR, "unable to copy logo");
 
     my $strLatex = $self->{oManifest}->variableReplace(fileStringRead($self->{strPreambleFile}), 'latex') . "\n";

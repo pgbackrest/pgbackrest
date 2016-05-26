@@ -109,6 +109,14 @@
 
                         <p>Fixed syntax that was not compatible with Perl 5.2X.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed absolute paths that were used for the PDF logo.</p>
+                    </release-item>
                 </release-bug-list>
 
                  <release-feature-list>

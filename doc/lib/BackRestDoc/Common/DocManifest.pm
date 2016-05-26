@@ -181,10 +181,11 @@ sub new
         ${$self->{oManifest}}{render}{$strType} = $oRenderHash;
     }
 
+    # Set the doc path variable
+    $self->variableSet('doc-path', $self->{strDocPath});
+
     # Read variables from manifest
     $self->variableListParse($self->{oManifestXml}->nodeGet('variable-list', false), $oVariableOverride);
-
-    # use Data::Dumper; confess Dumper($self->{oVariable});
 
     # Return from function and log return values if any
     return logDebugReturn
