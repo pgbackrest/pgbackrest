@@ -172,7 +172,11 @@ sub timestampFormat
 
     my ($iSecond, $iMinute, $iHour, $iMonthDay, $iMonth, $iYear, $iWeekDay, $iYearDay, $bIsDst) = localtime($lTime);
 
-    return sprintf($strFormat, $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
+    if ($strFormat eq "%4d") {
+        return sprintf($strFormat, $iYear + 1900)
+    } else {
+        return sprintf($strFormat, $iYear + 1900, $iMonth + 1, $iMonthDay, $iHour, $iMinute, $iSecond);
+    }
 }
 
 push @EXPORT, qw(timestampFormat);
