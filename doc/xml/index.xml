@@ -9,7 +9,6 @@
         <variable key="github-url-base">{[github-url-root]}/pgbackrest/pgbackrest</variable>
         <variable key="github-url-master">{[github-url-base]}/blob/master</variable>
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
-        <variable key="github-url-change-log">{[github-url-master]}/CHANGELOG.md</variable>
         <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
         <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
 
@@ -18,6 +17,7 @@
         <variable key="backrest-page-configuration">configuration.html</variable>
         <variable key="backrest-page-command">command.html</variable>
         <variable key="backrest-page-feature-backlog">backlog.html</variable>
+        <variable key="backrest-page-release">release.html</variable>
 
         <variable key="crunchy-url-base">http://www.crunchydata.com</variable>
         <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
@@ -138,7 +138,7 @@
 
         Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
 
-        You will always receive credit in the <link url="{[github-url-change-log]}">change log</link> for your contributions.</p>
+        You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.</p>
     </section>
 
     <section id="support">

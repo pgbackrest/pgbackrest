@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="Change Log">
+<doc title="Releases">
+    <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
     <intro>
-        <text></text>
+        <text>Listing of changes with contributor credits for each release of <backrest/>.</text>
     </intro>
 
     <changelog>
@@ -47,10 +48,10 @@
                     <text>Executable filename changed from <file>pg_backrest</file> to <file>pgbackrest</file>.</text>
                 </release-feature>
                 <release-feature>
-                    <text>All files and directories linked from PGDATA are now included in the backup.  By default links will be restored directly into PGDATA as files or directories.  The <setting>--link-all</setting> option can be used to restore all links to their original locations.  The <setting>--link-map</setting> option can be used to remap a link to a new location.</text>
+                    <text>All files and directories linked from PGDATA are now included in the backup.  By default links will be restored directly into PGDATA as files or directories.  The <setting>{[dash]}-link-all</setting> option can be used to restore all links to their original locations.  The <setting>{[dash]}-link-map</setting> option can be used to remap a link to a new location.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Removed <setting>--tablespace</setting> option and replaced with <setting>--tablespace-map-all</setting> option which should more clearly indicate its function.</text>
+                    <text>Removed <setting>{[dash]}-tablespace</setting> option and replaced with <setting>{[dash]}-tablespace-map-all</setting> option which should more clearly indicate its function.</text>
                 </release-feature>
                 <release-feature>
                     <text>Added <id>detail</id> log level which will output more information than <id>info</id> without being as verbose as <id>debug</id>.</text>
@@ -60,7 +61,7 @@
 
         <changelog-release date="2016-04-06" version="0.92" title="Command-line Repository Path Fix">
             <release-feature-bullet-list>
-                <release-feature><text>Fixed an issue where the master process was passing <setting>--repo-remote-path</setting> instead of <setting>--repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure.  This was only an issue when <setting>--repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.  <i>Reported by Jan Wieck</i>.</text></release-feature>
+                <release-feature><text>Fixed an issue where the master process was passing <setting>{[dash]}-repo-remote-path</setting> instead of <setting>{[dash]}-repo-path</setting> to the remote and causing the lock files to be created in the default repository directory (<path>/var/lib/backup</path>), generally ending in failure.  This was only an issue when <setting>{[dash]}-repo-remote-path</setting> was defined on the command line rather than in <file>pg_backrest.conf</file>.  <i>Reported by Jan Wieck</i>.</text></release-feature>
             </release-feature-bullet-list>
         </changelog-release>
 
@@ -76,7 +77,7 @@
                     <text>Write <id>.info</id> and <id>.manifest</id> files to temp before moving them to their final locations and fsync'ing.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Rename <setting>--no-start-stop</setting> option to <setting>--no-online</setting>.</text>
+                    <text>Rename <setting>{[dash]}-no-start-stop</setting> option to <setting>{[dash]}-no-online</setting>.</text>
                 </release-feature>
                 <release-feature>
                     <text>Static source analysis using Perl-Critic, currently passes on gentle.</text>
@@ -87,7 +88,7 @@
         <changelog-release date="2016-02-07" version="0.90" title="9.5 Support, Various Enhancements, and Minor Bug Fixes">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text>Fixed an issue where specifying <setting>--no-archive-check</setting> would throw a configuration error.  <i>Reported by Jason O'Donnell</i>.</text>
+                    <text>Fixed an issue where specifying <setting>{[dash]}-no-archive-check</setting> would throw a configuration error.  <i>Reported by Jason O'Donnell</i>.</text>
                 </release-feature>
                 <release-feature>
                     <text>Fixed an issue where a temp WAL file left over after a well-timed system crash could cause the next <cmd>archive-push</cmd> to fail.</text>
@@ -99,7 +100,7 @@
                     <text>The <setting>retention-archive</setting> option can now be be safely set to less than backup retention (<setting>retention-full</setting> or <setting>retention-diff</setting>) without also specifying <setting>archive-copy=n</setting>.  The WAL required to make the backups that fall outside of archive retention consistent will be preserved in the archive.  However, in this case PITR will not be possible for the backups that fall outside of archive retention.</text>
                 </release-feature>
                 <release-feature>
-                    <text>When backing up and restoring tablespaces <backrest/> only operates on the subdirectory created for the version of <postgres/> being run against.  Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a restore.  This only applies to <postgres/> >= 9.0 -- prior versions of <postgres/> could not share a tablespace directory.</text>
+                    <text>When backing up and restoring tablespaces <backrest/> only operates on the subdirectory created for the version of <postgres/> being run against.  Since multiple versions can live in a tablespace (especially during a binary upgrade) this prevents too many files from being copied during a backup and other versions possibly being wiped out during a restore.  This only applies to <postgres/> >= 9.0 {[dash]}- prior versions of <postgres/> could not share a tablespace directory.</text>
                 </release-feature>
                 <release-feature>
                     <text>Generate an error when <setting>archive-check=y</setting> but <setting>archive_command</setting> does not execute <file>pg_backrest</file>. <i>Contributed by Jason O'Donnell</i>.</text>
@@ -108,10 +109,10 @@
                     <text>Improved error message when <setting>repo-path</setting> or <setting>repo-remote-path</setting> does not exist.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Added checks for <setting>--delta</setting> and <setting>--force</setting> restore options to ensure that the destination is a valid $PGDATA directory.  <backrest/> will check for the presence of <file>PG_VERSION</file> or <file>backup.manifest</file> (left over from an aborted restore).  If neither file is found then <setting>--delta</setting> and <setting>--force</setting> will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.</text>
+                    <text>Added checks for <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> restore options to ensure that the destination is a valid $PGDATA directory.  <backrest/> will check for the presence of <file>PG_VERSION</file> or <file>backup.manifest</file> (left over from an aborted restore).  If neither file is found then <setting>{[dash]}-delta</setting> and <setting>{[dash]}-force</setting> will be disabled but the restore will proceed unless there are files in the $PGDATA directory (or any tablespace directories) in which case the operation will be aborted.</text>
                 </release-feature>
                 <release-feature>
-                    <text>When restore <setting>--set=latest</setting> (the default) the actual backup restored will be output to the log.</text>
+                    <text>When restore <setting>{[dash]}-set=latest</setting> (the default) the actual backup restored will be output to the log.</text>
                 </release-feature>
                 <release-feature>
                     <text>Support for <postgres/> 9.5 partial WAL segments and <setting>recovery_target_action</setting> setting. The <setting>archive_mode = 'always'</setting> setting is not yet supported.</text>
@@ -131,13 +132,13 @@
                     <text>Fixed an issue where longer-running backups/restores would timeout when remote and threaded.  Keepalives are now used to make sure the remote for the main process does not timeout while the thread remotes do all the work.  The error message for timeouts was also improved to make debugging easier.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Allow restores to be performed on a read-only repository by using <setting>--no-lock</setting> and <setting>--log-level-file=off</setting>.  The <setting>--no-lock</setting> option can only be used with restores.</text>
+                    <text>Allow restores to be performed on a read-only repository by using <setting>{[dash]}-no-lock</setting> and <setting>{[dash]}-log-level-file=off</setting>.  The <setting>{[dash]}-no-lock</setting> option can only be used with restores.</text>
                 </release-feature>
                 <release-feature>
                     <text>Minor styling changes, clarifications and rewording in the user guide.</text>
                 </release-feature>
                 <release-feature>
-                    <text>The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point -- thus ends the gitflow experiment for <backrest/>.  It is recommended that any forks get re-forked and clones get re-cloned.</text>
+                    <text>The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point {[dash]}- thus ends the gitflow experiment for <backrest/>.  It is recommended that any forks get re-forked and clones get re-cloned.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
@@ -148,7 +149,7 @@
                     <text>Added documentation in the user guide for delta restores, expiration, dedicated backup hosts, starting and stopping <backrest/>, and replication.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>--config</setting> option.</text>
+                    <text>Fixed an issue where the <cmd>start</cmd>/<cmd>stop</cmd> commands required the <setting>{[dash]}-config</setting> option.</text>
                 </release-feature>
                 <release-feature>
                     <text>Fixed an issue where log files were being overwritten instead of appended.</text>
@@ -197,7 +198,7 @@
                     <text>Fixed an issue where a resume would fail if temp files were left in the root backup directory when the backup failed.  This scenario was likely if the backup process got terminated during the copy phase.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Experimental support for <postgres/> 9.5 beta1.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>--target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</text>
+                    <text>Experimental support for <postgres/> 9.5 beta1.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
@@ -211,7 +212,7 @@
                     <text>Fixed an issue where resume and incr/diff would not ensure that the prior backup had the same compression and hardlink settings.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Fixed an issue where a cold backup using <setting>--no-start-stop</setting> could be started on a running <postgres/> cluster without <setting>--force</setting> specified.</text>
+                    <text>Fixed an issue where a cold backup using <setting>{[dash]}-no-start-stop</setting> could be started on a running <postgres/> cluster without <setting>{[dash]}-force</setting> specified.</text>
                 </release-feature>
                 <release-feature>
                     <text>Fixed an issue where a thread could be started even when none were requested.</text>
@@ -241,7 +242,7 @@
                     <text>Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Experimental support for <postgres/> 9.5 alpha2.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>--target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</text>
+                    <text>Experimental support for <postgres/> 9.5 alpha2.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</text>
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
@@ -249,7 +250,7 @@
         <changelog-release date="2015-08-09" version="0.80" title="DBI Support, Stability, and Convenience Features">
             <release-feature-bullet-list>
                 <release-feature>
-                    <text>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command.  Only <id>text</id> output was affected -- <id>json</id> output reported the correct epoch values.  <i>Reported by Michael Renner</i>.</text>
+                    <text>Fixed an issue that caused the formatted timestamp for both the oldest and newest backups to be reported as the current time by the <cmd>info</cmd> command.  Only <id>text</id> output was affected {[dash]}- <id>json</id> output reported the correct epoch values.  <i>Reported by Michael Renner</i>.</text>
                 </release-feature>
                 <release-feature>
                     <text>Fixed protocol issue that was preventing ssh errors (especially on connection) from being logged.</text>
@@ -273,7 +274,7 @@
                     <text>Added checks to be sure the <setting>db-path</setting> setting is consistent with <setting>db-port</setting> by comparing the <setting>data_directory</setting> as reported by the cluster against the <setting>db-path</setting> setting and the version as reported by the cluster against the value read from <file>pg_control</file>.  The <setting>db-socket-path</setting> setting is checked to be sure it is an absolute path.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Experimental support for <postgres/> 9.5 alpha1.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>--target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</text>
+                    <text>Experimental support for <postgres/> 9.5 alpha1.  This may break when the control version or WAL magic changes in future versions but will be updated in each <backrest/> release to keep pace.  All regression tests pass except for <setting>{[dash]}-target-resume</setting> tests (this functionality has changed in 9.5) and there is no testing yet for <file>.partial</file> WAL segments.</text>
                 </release-feature>
                 <release-feature>
                     <text>Major refactoring of the protocol layer to support future development.</text>
@@ -316,7 +317,7 @@
                     <text>Support for Perl 5.10.1 and OpenSSH 5.3 which are default for CentOS/RHEL 6.  <i>Reported by Eric Radman.</i></text>
                 </release-feature>
                 <release-feature>
-                    <text>Improved error message when backup is run without <setting>archive_command</setting> set and without <setting>--no-archive-check</setting> specified.  <i>Reported by Eric Radman</i>.</text>
+                    <text>Improved error message when backup is run without <setting>archive_command</setting> set and without <setting>{[dash]}-no-archive-check</setting> specified.  <i>Reported by Eric Radman</i>.</text>
                 </release-feature>
                 <release-feature>
                     <text>Moved version number out of the <file>VERSION</file> file to <file>Version.pm</file> to better support packaging.  <i>Suggested by Michael Renner</i>.</text>
@@ -382,7 +383,7 @@
                     <text>Better resume support.  Resumed files are checked to be sure they have not been modified and the manifest is saved more often to preserve checksums as the backup progresses.  More unit tests to verify each resume case.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Resume is now optional.  Use the <setting>resume</setting> setting or <param>--no-resume</param> from the command line to disable.</text>
+                    <text>Resume is now optional.  Use the <setting>resume</setting> setting or <setting>{[dash]}-no-resume</setting> from the command line to disable.</text>
                 </release-feature>
                 <release-feature>
                     <text>More info messages during restore.  Previously, most of the restore messages were debug level so not a lot was output in the log.</text>
@@ -433,7 +434,7 @@
                     <text>De/compression is now performed without threads and checksum/size is calculated in stream.  That means file checksums are no longer optional.</text>
                 </release-feature>
                 <release-feature>
-                    <text>Added option <param>--no-start-stop</param> to allow backups when Postgres is shut down.  If <file>postmaster.pid</file> is present then <param>--force</param> is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.</text>
+                    <text>Added option <setting>{[dash]}-no-start-stop</setting> to allow backups when Postgres is shut down.  If <file>postmaster.pid</file> is present then <setting>{[dash]}-force</setting> is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created).  This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.</text>
                 </release-feature>
                 <release-feature>
                     <text>Fixed broken checksums and now they work with normal and resumed backups.  Finally realized that checksums and checksum deltas should be functionally separated and this simplified a number of things.  Issue #28 has been created for checksum deltas.</text>
@@ -555,5 +556,6 @@
                 </release-feature>
             </release-feature-bullet-list>
         </changelog-release>
+
     </changelog>
 </doc>

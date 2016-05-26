@@ -631,7 +631,7 @@ sub sectionChildProcess
         }
     }
     # Skip children that have already been processed and error on others
-    elsif ($oChild->nameGet() ne 'title')
+    elsif ($oChild->nameGet() ne 'title' && $oChild->nameGet() ne 'subtitle' && $oChild->nameGet() ne 'subsubtitle')
     {
         confess &log(ASSERT, 'unable to process child type ' . $oChild->nameGet());
     }

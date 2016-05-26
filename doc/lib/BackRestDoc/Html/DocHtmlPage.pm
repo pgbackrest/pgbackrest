@@ -234,6 +234,21 @@ sub sectionProcess
         addNew(HTML_A, undef,
                {strContent => $strSectionTitle, strRef => "#${strAnchor}"});
 
+    # Add subtitle and subsubtitle if they exist
+    if ($oSection->nodeTest('subtitle'))
+    {
+        $oSectionElement->
+            addNew(HTML_DIV, "section${iDepth}-subtitle",
+                   {strContent => $self->processText($oSection->nodeGet('subtitle')->textGet())});
+    }
+
+    if ($oSection->nodeTest('subsubtitle'))
+    {
+        $oSectionElement->
+            addNew(HTML_DIV, "section${iDepth}-subsubtitle",
+                   {strContent => $self->processText($oSection->nodeGet('subsubtitle')->textGet())});
+    }
+
     # Add the section intro if it exists
     if (defined($oSection->textGet(false)))
     {

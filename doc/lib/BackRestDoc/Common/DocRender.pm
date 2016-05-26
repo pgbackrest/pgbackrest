@@ -16,6 +16,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 
 use BackRestDoc::Common::DocManifest;
+use BackRestDoc::Custom::DocCustomRelease;
 
 ####################################################################################################################################
 # Render tags for various output types
@@ -171,12 +172,16 @@ sub new
 
         # Determine if this is a custom source which signals special handling for different projects.
         my $strSourceType = ${$self->{oManifest}->sourceGet('reference')}{strSourceType};
+
         if (defined($strSourceType) && $strSourceType eq 'custom')
         {
-            # Get the reference if this is the backrest project
+            # Get the reference and release xml if this is the backrest project
             if ($self->{oManifest}->isBackRest())
             {
-                $self->{oReference} = new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+                $self->{oReference} =
+                    new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+                $self->{oRelease} =
+                    new BackRestDoc::Custom::DocCustomRelease(${$self->{oManifest}->sourceGet('release')}{doc}, $self);
             }
         }
 
@@ -194,6 +199,10 @@ sub new
             {
                 confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
             }
+        }
+        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release')
+        {
+            $self->{oDoc} = $self->{oRelease}->docGet();
         }
         else
         {
@@ -402,180 +411,6 @@ sub isRequired
 }
 
 ####################################################################################################################################
-# process
-#
-# Render the document
-####################################################################################################################################
-sub process
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oDoc,
-        $iDepth,
-        $bChildList,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->process', \@_,
-            {name => 'oDoc', trace => true},
-            {name => 'iDepth', default => 1, trace => true},
-            {name => 'bChildList', default => true, trace => true}
-        );
-
-    my $strType = $self->{strType};
-
-    my $strBuffer = "";
-    my $bList = $oDoc->nameGet() =~ /.*-bullet-list$/;
-    $bChildList = defined($bChildList) ? $bChildList : false;
-    my $iChildDepth = $iDepth;
-
-    my @stryMonth = ('January', 'February', 'March', 'April', 'May', 'June',
-                     'July', 'August', 'September', 'October', 'November', 'December');
-
-    if ($strType eq 'markdown' || $strType eq 'text')
-    {
-        if (defined($oDoc->paramGet('id', false)))
-        {
-            my @stryToken = split('-', $oDoc->nameGet());
-            my $strTitle = @stryToken == 0 ? '[unknown]' : $stryToken[@stryToken - 1];
-
-            $strBuffer = ('#' x $iDepth) . ' `' . $oDoc->paramGet('id') . '` ' . $strTitle;
-        }
-
-        # Try to get the title param from the element (??? this is the old style and should be removed)
-        my $strTitle = $oDoc->paramGet('title', false);
-
-        if (!defined($strTitle))
-        {
-            $strTitle = $oDoc->paramGet('subtitle', false);
-        }
-
-        # If not found then get the title element
-        if (!defined($strTitle) && defined($oDoc->nodeGet('title', false)))
-        {
-            $strTitle = $self->processText($oDoc->nodeGet('title')->textGet());
-        }
-
-        if (defined($strTitle))
-        {
-            $strBuffer = ('#' x $iDepth) . ' ';
-
-            if (defined($oDoc->paramGet('version', false)))
-            {
-                $strBuffer .= 'v' . $oDoc->paramGet('version') . ': ';
-            }
-
-            $strBuffer .= ($iDepth == 1 ? "{[project]} <br/> " : '') . $strTitle;
-
-            if (defined($oDoc->paramGet('date', false)))
-            {
-                my $strDate = $oDoc->paramGet('date');
-
-                if ($strDate !~ /^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$/)
-                {
-                    confess "invalid date ${strDate}";
-                }
-
-                if ($strDate =~ /^X/)
-                {
-                    $strBuffer .= "\n__No Release Date Set__";
-                }
-                else
-                {
-                    $strBuffer .= "\n__Released " . $stryMonth[(substr($strDate, 5, 2) - 1)] . ' ' .
-                                  (substr($strDate, 8, 2) + 0) . ', ' . substr($strDate, 0, 4) . '__';
-                }
-            }
-        }
-
-        if ($strBuffer ne "")
-        {
-            $iChildDepth++;
-        }
-
-        if (defined($oDoc->nodeGet('summary', false)))
-        {
-            if ($strBuffer ne "")
-            {
-                $strBuffer .= "\n\n";
-            }
-
-            if ($bChildList)
-            {
-                $strBuffer .= '* ';
-            }
-
-            $strBuffer .= $self->processText($oDoc->nodeGet('summary')->textGet());
-        }
-
-        if (defined($oDoc->textGet(false)))
-        {
-            if ($strBuffer ne "")
-            {
-                $strBuffer .= "\n\n";
-            }
-
-            if ($bChildList)
-            {
-                $strBuffer .= '* ';
-            }
-
-            $strBuffer .= $self->processText($oDoc->textGet());
-        }
-
-        if ($strBuffer ne "" && $iDepth != 1 && !$bList)
-        {
-            $strBuffer = "\n\n" . $strBuffer;
-        }
-    }
-    else
-    {
-        confess "unknown type ${strType}";
-    }
-
-    my $bFirst = true;
-
-    foreach my $oChild ($oDoc->nodeList(undef, false))
-    {
-        if ($oChild->nameGet() ne 'summary' && $oChild->nameGet() ne 'title')
-        {
-            if ($strType eq 'markdown' || $strType eq 'text')
-            {
-            }
-            else
-            {
-                confess "unknown type ${strType}";
-            }
-
-             $strBuffer .= $self->process($oChild, $iChildDepth, $bList);
-        }
-    }
-
-    if ($iDepth == 1)
-    {
-        if ($strType eq 'markdown' || $strType eq 'text')
-        {
-            $strBuffer .= "\n";
-        }
-        else
-        {
-            confess "unknown type ${strType}";
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strBuffer', value => $strBuffer, trace => true}
-    );
-}
-
-####################################################################################################################################
 # processTag
 ####################################################################################################################################
 sub processTag
@@ -765,48 +600,6 @@ sub processText
         $strOperation,
         {name => 'strBuffer', value => $strBuffer, trace => true}
     );
-}
-
-####################################################################################################################################
-# save
-####################################################################################################################################
-sub save
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileName,
-        $strBuffer
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->save', \@_,
-            {name => 'strFileName', trace => true},
-            {name => 'strBuffer', trace => true}
-        );
-
-    # Open the file
-    my $hFile;
-    open($hFile, '>', $strFileName)
-        or confess &log(ERROR, "unable to open ${strFileName}");
-
-    # Write the buffer
-    my $iBufferOut = syswrite($hFile, $strBuffer);
-
-    # Report any errors
-    if (!defined($iBufferOut) || $iBufferOut != length($strBuffer))
-    {
-        confess "unable to write '${strBuffer}'" . (defined($!) ? ': ' . $! : '');
-    }
-
-    # Close the file
-    close($hFile);
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 1;

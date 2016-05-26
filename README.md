@@ -84,7 +84,7 @@ Code fixes or new features can be submitted via pull requests. Ideas for new fea
 
 Bug reports should be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). Please provide as much information as possible to aid in determining the cause of the problem.
 
-You will always receive credit in the [change log](https://github.com/pgbackrest/pgbackrest/blob/master/CHANGELOG.md) for your contributions.
+You will always receive credit in the [release notes](http://www.pgbackrest.org/release.html) for your contributions.
 
 ## Support
 

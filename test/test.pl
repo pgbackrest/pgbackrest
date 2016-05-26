@@ -325,7 +325,7 @@ eval
         BackRestDoc::Common::Doc->import();
 
         # Make sure version number matches the latest release
-        my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/change-log.xml';
+        my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/release.xml';
         my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
 
         foreach my $oRelease ($oReleaseDoc->nodeGet('changelog')->nodeList('changelog-release'))

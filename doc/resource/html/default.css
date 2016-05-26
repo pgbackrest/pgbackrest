@@ -187,6 +187,19 @@ Section
     margin-bottom: .5em;
 }
 
+.section1-subtitle, .section2-subtitle, .section3-subtitle
+{
+    font-weight: bold;
+    font-size: 16pt;
+}
+
+.section1-subsubtitle, .section2-subsubtitle, .section3-subsubtitle
+{
+    font-style: italic;
+    font-size: 14pt;
+    margin-top: 0px;
+}
+
 .section2
 {
     margin-top: 1em;
@@ -226,7 +239,7 @@ Section
 /*.section-body*/
 
 /*******************************************************************************
-Config, Execute, and Code Block Elements
+Config, Execute, Code Block, Release Elements
 *******************************************************************************/
 .section-body-text
 {
