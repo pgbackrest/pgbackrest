@@ -331,6 +331,16 @@ sub sectionProcess
             #     $oSectionBodyElement->add($oConfigElement);
             # }
         }
+        # Add a list
+        elsif ($oChild->nameGet() eq 'list')
+        {
+            $strMarkdown .= "\n";
+
+            foreach my $oListItem ($oChild->nodeList())
+            {
+                $strMarkdown .= "\n- " . $self->processText($oListItem->textGet());
+            }
+        }
         # Add a subsection
         elsif ($oChild->nameGet() eq 'section')
         {

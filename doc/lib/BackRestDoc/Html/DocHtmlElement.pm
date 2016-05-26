@@ -29,6 +29,10 @@ use constant HTML_DIV                                               => 'div';
     push @EXPORT, qw(HTML_DIV);
 use constant HTML_SPAN                                              => 'span';
     push @EXPORT, qw(HTML_SPAN);
+use constant HTML_UL                                                => 'ul';
+    push @EXPORT, qw(HTML_UL);
+use constant HTML_LI                                                => 'li';
+    push @EXPORT, qw(HTML_LI);
 
 ####################################################################################################################################
 # CONSTRUCTOR

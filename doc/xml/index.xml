@@ -122,11 +122,13 @@
     <section id="getting-started">
         <title>Getting Started</title>
 
-        <p><backrest/> strives to be easy to configure and operate:
-        <ul>
-          <li><link page="{[backrest-page-user-guide]}">User guide</link> for Ubuntu 12.04 &amp; 14.04 / <postgres/> 9.4.</li>
-          <li><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</li>
-          <li><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</li></ul></p>
+        <p><backrest/> strives to be easy to configure and operate:</p>
+
+        <list>
+          <list-item><link page="{[backrest-page-user-guide]}">User guide</link> for Ubuntu 12.04 &amp; 14.04 / <postgres/> 9.4.</list-item>
+          <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
+          <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
+      </list>
     </section>
 
     <section id="contributions">

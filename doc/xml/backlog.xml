@@ -79,9 +79,12 @@
 
             <p><link url="{[github-url-issues]}/105">Github Issue</link></p>
 
-            <p>Formalize this process and allow upgrades to new database versions.<ul>
-            <li>Make sure that restore and expiration still work - perhaps new unit tests.</li>
-            <li>Add db-id param to restore and archive-get to specify a database.</li></ul></p>
+            <p>Formalize this process and allow upgrades to new database versions:</p>
+
+            <list>
+                <list-item>Make sure that restore and expiration still work - perhaps new unit tests.</list-item>
+                <list-item>Add db-id param to restore and archive-get to specify a database.</list-item>
+            </list>
 
             <p>This should also make it easy to throw a <quote>stanza does not exist</quote> error.</p>
         </section>
@@ -99,9 +102,12 @@
 
             <p><link url="{[github-url-issues]}/63">Github Issue</link></p>
 
-            <p>Two improvements:<ul>
-            <li>Make sure recovery.conf has same ownership/mode as base path</li>
-            <li>Make sure base path has original ownership/permissions.</li></ul></p>
+            <p>Two improvements:</p>
+
+            <list>
+                <list-item>Make sure recovery.conf has same ownership/mode as base path</list-item>
+                <list-item>Make sure base path has original ownership/permissions.</list-item>
+            </list>
         </section>
 
         <section id="pull-remote-options">
@@ -117,9 +123,12 @@
 
             <p><link url="{[github-url-issues]}/134">Github Issue</link></p>
 
-            <p>It's possible to have bogus settings in the configuration file since it is only checked for certain values.<ul>
-            <li>Detect options that are placed in the wrong sections.</li>
-            <li>Detect options that do not exist.</li></ul></p>
+            <p>It's possible to have bogus settings in the configuration file since it is only checked for certain values:</p>
+
+            <list>
+                <list-item>Detect options that are placed in the wrong sections.</list-item>
+                <list-item>Detect options that do not exist.</list-item>
+            </list>
         </section>
 
         <section id="repo-owner-option">
@@ -294,11 +303,15 @@
 
             <p><link url="{[github-url-issues]}/140">Github Issue</link></p>
 
-            <p>There are some use cases where would be valuable to use relative paths. However to avoid confusion it might be best to implement it like so:
-            <ul>
-                <li>relative paths would need to being with ./</li>
-                <li>--config would always be allowed to be relative</li>
-                <li>In the config file a new option 'relative-path' would enable relative paths for all other path options.</li></ul>This would avoid strange effects for users who do not need this feature.</p>
+            <p>There are some use cases where would be valuable to use relative paths. However to avoid confusion it might be best to implement it like so:</p>
+
+            <list>
+                <list-item>relative paths would need to being with ./</list-item>
+                <list-item>--config would always be allowed to be relative</list-item>
+                <list-item>In the config file a new option 'relative-path' would enable relative paths for all other path options.</list-item>
+            </list>
+
+            <p>This would avoid strange effects for users who do not need this feature.</p>
         </section>
 
         <section id="verify-pg-checksums">

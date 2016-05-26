@@ -105,8 +105,8 @@
     <!ATTLIST option-description key CDATA #REQUIRED>
 
 <!ELEMENT section (title,
-                   ((p|table|host-add|execute-list|backrest-config|postgres-config|option-description|code-block)+|
-                   (p*, section+)|p*))>
+                   ((p|list|table|host-add|execute-list|backrest-config|postgres-config|option-description|code-block)+|
+                   ((p|list)*, section+)|(p|list)*))>
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section keyword CDATA "">
     <!ATTLIST section depend CDATA "">
@@ -163,7 +163,7 @@
 <!-- Formatted elements -->
 <!ELEMENT summary (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
                    br-setting|pg-option|pg-setting|link|user)*>
-<!ELEMENT p (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
+<!ELEMENT p (#PCDATA|quote|b|i|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
              pg-option|pg-setting|link|user)*>
     <!ATTLIST p keyword CDATA "">
 <!ELEMENT text (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
@@ -173,6 +173,9 @@
 <!ELEMENT ul (li+)>
 <!ELEMENT ol (li+)>
 <!ELEMENT li (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
+              br-setting|pg-option|pg-setting|link|user)*>
+<!ELEMENT list (list-item+)>
+<!ELEMENT list-item (#PCDATA|quote|b|i|ul|ol|id|code|code-block|host|file|path|cmd|setting|exe|backrest|postgres|br-option|
               br-setting|pg-option|pg-setting|link|user)*>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>

@@ -584,7 +584,7 @@ sub helpCommandDocGet
 
         $oSectionElement->textSet($$oCommandHash{&CONFIG_HELP_DESCRIPTION});
 
-        # use Data::Dumper;
+        # use Data::doc;
         # confess Dumper($oDoc->{oDoc});
 
         if (defined($$oCommandHash{&CONFIG_HELP_OPTION}))

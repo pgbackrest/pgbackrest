@@ -399,6 +399,16 @@ sub sectionProcess
                 $oSectionBodyElement->add($oConfigElement);
             }
         }
+        # Add a list
+        elsif ($oChild->nameGet() eq 'list')
+        {
+            my $oList = $oSectionBodyElement->addNew(HTML_UL, 'list-unordered');
+
+            foreach my $oListItem ($oChild->nodeList())
+            {
+                $oList->addNew(HTML_LI, 'list-unordered', {strContent => $self->processText($oListItem->textGet())});
+            }
+        }
         # Add a subsection
         elsif ($oChild->nameGet() eq 'section')
         {
