@@ -103,6 +103,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="berg.christoph"/>
+                            <release-item-contributor id="vondendriesch.adrian"/>
                             <release-item-reviewer id="steele.david"/>
                         </release-item-contributor-list>
 
