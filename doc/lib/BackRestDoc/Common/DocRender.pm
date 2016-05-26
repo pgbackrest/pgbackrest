@@ -16,7 +16,14 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 
 use BackRestDoc::Common::DocManifest;
-use BackRestDoc::Custom::DocCustomRelease;
+
+####################################################################################################################################
+# XML tag/param constants
+####################################################################################################################################
+use constant XML_SECTION_PARAM_ANCHOR                               => 'anchor';
+    push @EXPORT, qw(XML_SECTION_PARAM_ANCHOR);
+use constant XML_SECTION_PARAM_ANCHOR_VALUE_NOINHERIT               => 'no-inherit';
+    push @EXPORT, qw(XML_SECTION_PARAM_ANCHOR_VALUE_NOINHERIT);
 
 ####################################################################################################################################
 # Render tags for various output types
@@ -180,6 +187,10 @@ sub new
             {
                 $self->{oReference} =
                     new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+
+                require BackRestDoc::Custom::DocCustomRelease;
+                BackRestDoc::Custom::DocCustomRelease->import();
+
                 $self->{oRelease} =
                     new BackRestDoc::Custom::DocCustomRelease(${$self->{oManifest}->sourceGet('release')}{doc}, $self);
             }

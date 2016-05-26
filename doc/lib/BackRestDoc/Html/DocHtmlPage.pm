@@ -21,6 +21,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::ConfigHelp;
 
 use BackRestDoc::Common::DocManifest;
+use BackRestDoc::Common::DocRender;
 use BackRestDoc::Html::DocHtmlBuilder;
 use BackRestDoc::Html::DocHtmlElement;
 
@@ -209,7 +210,10 @@ sub sectionProcess
     }
 
     # Working variables
-    $strAnchor = (defined($strAnchor) ? "${strAnchor}/" : '') . $oSection->paramGet('id');
+    $strAnchor =
+        ($oSection->paramTest(XML_SECTION_PARAM_ANCHOR, XML_SECTION_PARAM_ANCHOR_VALUE_NOINHERIT) ? '' :
+            (defined($strAnchor) ? "${strAnchor}/" : '')) .
+        $oSection->paramGet('id');
 
     # Create the section toc element
     my $oSectionTocElement = new BackRestDoc::Html::DocHtmlElement(HTML_DIV, "section${iDepth}-toc");
@@ -233,21 +237,6 @@ sub sectionProcess
     $oTocSectionTitleElement->
         addNew(HTML_A, undef,
                {strContent => $strSectionTitle, strRef => "#${strAnchor}"});
-
-    # Add subtitle and subsubtitle if they exist
-    if ($oSection->nodeTest('subtitle'))
-    {
-        $oSectionElement->
-            addNew(HTML_DIV, "section${iDepth}-subtitle",
-                   {strContent => $self->processText($oSection->nodeGet('subtitle')->textGet())});
-    }
-
-    if ($oSection->nodeTest('subsubtitle'))
-    {
-        $oSectionElement->
-            addNew(HTML_DIV, "section${iDepth}-subsubtitle",
-                   {strContent => $self->processText($oSection->nodeGet('subsubtitle')->textGet())});
-    }
 
     # Add the section intro if it exists
     if (defined($oSection->textGet(false)))
@@ -408,6 +397,20 @@ sub sectionProcess
             {
                 $oList->addNew(HTML_LI, 'list-unordered', {strContent => $self->processText($oListItem->textGet())});
             }
+        }
+        # Add a subtitle
+        elsif ($oChild->nameGet() eq 'subtitle')
+        {
+            $oSectionBodyElement->
+                addNew(HTML_DIV, "section${iDepth}-subtitle",
+                       {strContent => $self->processText($oChild->textGet())});
+        }
+        # Add a subsubtitle
+        elsif ($oChild->nameGet() eq 'subsubtitle')
+        {
+            $oSectionBodyElement->
+                addNew(HTML_DIV, "section${iDepth}-subsubtitle",
+                       {strContent => $self->processText($oChild->textGet())});
         }
         # Add a subsection
         elsif ($oChild->nameGet() eq 'section')

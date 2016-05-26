@@ -191,6 +191,7 @@ Section
 {
     font-weight: bold;
     font-size: 16pt;
+    margin-top: .5em;
 }
 
 .section1-subsubtitle, .section2-subsubtitle, .section3-subsubtitle
@@ -198,6 +199,16 @@ Section
     font-style: italic;
     font-size: 14pt;
     margin-top: 0px;
+}
+
+.section1-subtitle
+{
+    font-size: 16pt;
+}
+
+.section1-subsubtitle
+{
+    font-size: 14pt;
 }
 
 .section2
@@ -210,6 +221,16 @@ Section
     border-bottom: 2px #396a93 solid;
     color: #396a93;
     font-size: 16pt;
+}
+
+.section2-subtitle, .section2-subtitle
+{
+    font-size: 14pt;
+}
+
+.section2-subsubtitle, .section3-subsubtitle
+{
+    font-size: 12pt;
 }
 
 .section3

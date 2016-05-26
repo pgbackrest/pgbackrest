@@ -328,9 +328,21 @@ eval
         my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/release.xml';
         my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
 
-        foreach my $oRelease ($oReleaseDoc->nodeGet('changelog')->nodeList('changelog-release'))
+        foreach my $oRelease ($oReleaseDoc->nodeGet('release-list')->nodeList('release'))
         {
-            if ($oRelease->paramGet('version') ne BACKREST_VERSION)
+            my $strVersion = $oRelease->paramGet('version');
+
+            if ($strVersion =~ /dev$/)
+            {
+                if ($oRelease->nodeTest('release-core-list'))
+                {
+                    confess "dev release ${strVersion} must match the program version when core changes have been made";
+                }
+
+                next;
+            }
+
+            if ($strVersion ne BACKREST_VERSION)
             {
                 confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
             }

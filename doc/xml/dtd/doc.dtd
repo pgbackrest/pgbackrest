@@ -1,4 +1,5 @@
-<!ELEMENT doc ((description, intro, changelog)|(config, operation)|(description, variable-list?, cleanup?, section+))>
+<!ELEMENT doc ((description, intro, contributor-list, release-list)|(config, operation)|
+               (description, variable-list?, cleanup?, section+))>
     <!ATTLIST doc title CDATA "">
     <!ATTLIST doc subtitle CDATA "">
     <!ATTLIST doc toc CDATA "y">
@@ -117,16 +118,40 @@
 <!ELEMENT allow (#PCDATA)>
 <!ELEMENT example (#PCDATA)>
 
-<!ELEMENT changelog (text?, changelog-release+)>
+<!ELEMENT contributor-list (contributor+)>
 
-<!ELEMENT changelog-release (text?, release-feature-bullet-list)>
-    <!ATTLIST changelog-release date CDATA #REQUIRED>
-    <!ATTLIST changelog-release version CDATA #REQUIRED>
-    <!ATTLIST changelog-release title CDATA #REQUIRED>
+<!ELEMENT contributor (contributor-name-display, contributor-id*)>
+    <!ATTLIST contributor id CDATA #REQUIRED>
 
-<!ELEMENT release-feature-bullet-list (release-feature+)>
+<!ELEMENT contributor-name-display (#PCDATA)>
+<!ELEMENT contributor-id (#PCDATA)>
+    <!ATTLIST contributor-id type CDATA #REQUIRED>
 
-<!ELEMENT release-feature (text)>
+<!ELEMENT release-list (release+)>
+
+<!ELEMENT release (release-core-list?, release-doc-list?, release-test-list?)>
+    <!ATTLIST release date CDATA #REQUIRED>
+    <!ATTLIST release version CDATA #REQUIRED>
+    <!ATTLIST release title CDATA #REQUIRED>
+
+<!ELEMENT release-core-list (p?, release-bug-list?, release-feature-list?, release-refactor-list?)>
+<!ELEMENT release-test-list (p?, release-bug-list?, release-feature-list?, release-refactor-list?)>
+<!ELEMENT release-doc-list (p?, release-bug-list?, release-feature-list?, release-refactor-list?)>
+
+<!ELEMENT release-bug-list (release-item+)>
+<!ELEMENT release-feature-list (release-item+)>
+<!ELEMENT release-refactor-list (release-item+)>
+
+<!ELEMENT release-item (release-item-contributor-list?, p)*>
+
+<!ELEMENT release-item-contributor-list (release-item-ideator*, release-item-contributor*, release-item-reviewer*)>
+
+<!ELEMENT release-item-ideator (#PCDATA)>
+    <!ATTLIST release-item-ideator id CDATA #REQUIRED>
+<!ELEMENT release-item-contributor (#PCDATA)>
+    <!ATTLIST release-item-contributor id CDATA #REQUIRED>
+<!ELEMENT release-item-reviewer (#PCDATA)>
+    <!ATTLIST release-item-reviewer id CDATA #REQUIRED>
 
 <!ELEMENT contribute (text)>
     <!ATTLIST contribute title CDATA #REQUIRED>
