@@ -332,7 +332,7 @@ eval
         {
             my $strVersion = $oRelease->paramGet('version');
 
-            if ($strVersion =~ /dev$/)
+            if ($strVersion =~ /dev$/ && BACKREST_VERSION !~ /dev$/)
             {
                 if ($oRelease->nodeTest('release-core-list'))
                 {
