@@ -3,6 +3,7 @@
 *.swp
 test/test
 test/.vagrant
+test/package
 test/nytprof.out
 test/nytprof/*
 doc/output/*
