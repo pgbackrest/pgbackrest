@@ -120,13 +120,13 @@ sub contributorTextGet
             foreach my $oContributor ($oReleaseItem->nodeGet(XML_RELEASE_ITEM_CONTRIBUTOR_LIST)->
                                       nodeList($strContributorType, false))
             {
-                push $stryItemContributor, $oContributor->paramGet(XML_PARAM_ID);
+                push @{$stryItemContributor}, $oContributor->paramGet(XML_PARAM_ID);
             }
         }
 
         if (@$stryItemContributor == 0 && $strContributorType eq XML_RELEASE_ITEM_CONTRIBUTOR)
         {
-            push $stryItemContributor, $self->{strContributorDefault}
+            push @{$stryItemContributor}, $self->{strContributorDefault}
         }
 
         $$hItemContributorType{$strContributorType} = $stryItemContributor;
@@ -372,10 +372,10 @@ sub docGet
 
                             if (defined($strContributorText))
                             {
-                                push($oReleaseItemText->{oDoc}{children}, ' (');
-                                push($oReleaseItemText->{oDoc}{children},
+                                push(@{$oReleaseItemText->{oDoc}{children}}, ' (');
+                                push(@{$oReleaseItemText->{oDoc}{children}},
                                      {name => 'i', value => $strContributorText});
-                                push($oReleaseItemText->{oDoc}{children}, ')');
+                                push(@{$oReleaseItemText->{oDoc}{children}}, ')');
                             }
 
                             $oList->nodeAdd('list-item')->textSet($oReleaseItemText);
