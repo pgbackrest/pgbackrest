@@ -72,6 +72,11 @@
             <contributor-id type="github">gregscds</contributor-id>
         </contributor>
 
+        <contributor id="vondendriesch.adrian">
+            <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
+            <contributor-id type="github">disco-stu</contributor-id>
+        </contributor>
+
         <contributor id="wieck.jan">
             <contributor-name-display>Jan Wieck</contributor-name-display>
             <contributor-id type="github">wieck</contributor-id>
@@ -80,6 +85,19 @@
 
     <release-list>
          <release date="XXXX-XX-XX" version="1.02dev" title="UNDER DEVELOPMENT">
+             <release-core-list>
+                 <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                            <release-item-reviewer id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix usage of sprintf() due to new constraints in Perl 5.22. Parameters not referenced in the format string are no longer allowed.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
              <release-doc-list>
                  <release-bug-list>
                     <release-item>
