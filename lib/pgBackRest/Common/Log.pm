@@ -107,11 +107,7 @@ sub logFileSet
     # Only open the log file if file logging is enabled
     if ($strLogLevelFile ne OFF)
     {
-        unless (-e dirname($strFile))
-        {
-            mkdir(dirname($strFile), oct('0770'))
-                or die "unable to create directory " . dirname($strFile) . " for log file ${strFile}";
-        }
+        filePathCreate(dirname($strFile), '0770', true, true);
 
         $strFile .= '.log';
         my $bExists = false;
@@ -121,8 +117,7 @@ sub logFileSet
             $bExists = true;
         }
 
-        sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, 0660)
-            or confess &log(ERROR, "unable to open log file ${strFile}", ERROR_FILE_OPEN);
+        $hLogFile = fileOpen($strFile, O_WRONLY | O_CREAT | O_APPEND, '0660');
 
         if ($bExists)
         {
@@ -142,6 +137,10 @@ sub logLevelSet
 {
     my $strLevelFileParam = shift;
     my $strLevelConsoleParam = shift;
+
+    # Load FileCommon module
+    require pgBackRest::FileCommon;
+    pgBackRest::FileCommon->import();
 
     if (defined($strLevelFileParam))
     {

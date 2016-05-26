@@ -88,7 +88,7 @@ sub restoreFile
         $bZero = true;
 
         # Open the file truncating to zero bytes in case it already exists
-        my $hFile = fileOpen($$oFileHash{db_file}, O_WRONLY | O_CREAT | O_TRUNC);
+        my $hFile = fileOpen($$oFileHash{db_file}, O_WRONLY | O_CREAT | O_TRUNC, $$oFileHash{mode});
 
         # Now truncate to the original size.  This will create a sparse file which is very efficient for this use case.
         truncate($hFile, $$oFileHash{size});

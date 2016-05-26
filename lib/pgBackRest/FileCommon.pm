@@ -363,18 +363,20 @@ sub fileOpen
     (
         $strOperation,
         $strFile,
-        $lFlags
+        $lFlags,
+        $strMode,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileOpen', \@_,
             {name => 'strFile', trace => true},
-            {name => 'lFlags', trace => true}
+            {name => 'lFlags', trace => true},
+            {name => 'strMode', default => '0640', trace => true},
         );
 
     my $hFile;
 
-    if (!sysopen($hFile, $strFile, $lFlags))
+    if (!sysopen($hFile, $strFile, $lFlags, oct($strMode)))
     {
         my $strError = $!;
 

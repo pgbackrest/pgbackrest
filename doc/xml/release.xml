@@ -96,6 +96,12 @@
                         <p>Fix usage of sprintf() due to new constraints in Perl 5.22. Parameters not referenced in the format string are no longer allowed.</p>
                     </release-item>
                 </release-bug-list>
+
+                 <release-refactor-list>
+                    <release-item>
+                        <p>Log directory create and file open now using FileCommon functions which produce more detailed error messages on failure.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
              <release-doc-list>
