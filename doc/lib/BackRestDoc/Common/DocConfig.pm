@@ -509,7 +509,7 @@ sub manGet
         "NAME\n" .
         '  ' . BACKREST_NAME . ' - ' . $oManifest->variableReplace($oIndexDoc->paramGet('subtitle')) . "\n\n" .
         "SYNOPSIS\n" .
-        '  ' . lc(BACKREST_NAME) . " [options] [command]";
+        '  ' . BACKREST_EXE . ' [options] [command]';
 
     # Output the description (first two paragraphs of index.xml introduction)
     my $iParaTotal = 0;
@@ -589,34 +589,34 @@ sub manGet
     $strManPage .= "\n\n" .
         "FILES\n" .
         "\n" .
-        "  /etc/" . lc(BACKREST_NAME) . ".conf\n" .
-        "  /var/lib/" . lc(BACKREST_NAME) . "\n" .
-        "  /var/log/" . lc(BACKREST_NAME) . "\n" .
-        "  /var/spool/" . lc(BACKREST_NAME) . "\n" .
+        '  ' . OPTION_DEFAULT_CONFIG . ".conf\n" .
+        '  /var/lib/' . BACKREST_EXE . "\n" .
+        '  /var/log/' . BACKREST_EXE . "\n" .
+        '  /var/spool/' . BACKREST_EXE . "\n" .
         "\n" .
         "EXAMPLES\n" .
         "\n" .
         "  * Create a backup of the PostgreSQL `main` cluster:\n" .
         "\n" .
-        "    \$ " . lc(BACKREST_NAME) . " --stanza=main backup\n" .
+        '    $ ' . BACKREST_EXE . ' --' . OPTION_STANZA . "=main backup\n" .
         "\n" .
-        "    The `main` cluster should be configured in `/etc/" . lc(BACKREST_NAME) . ".conf`\n" .
+        '    The `main` cluster should be configured in `' . OPTION_DEFAULT_CONFIG . "`\n" .
         "\n" .
         "  * Show all available backups:\n" .
         "\n" .
-        "    \$ " . lc(BACKREST_NAME) . " info\n" .
+        '    $ ' . BACKREST_EXE . ' ' . CMD_INFO . "\n" .
         "\n" .
         "  * Show all available backups for a specific cluster:\n" .
         "\n" .
-        "    \$ " . lc(BACKREST_NAME) . " --stanza=main info\n" .
+        '    $ ' . BACKREST_EXE . ' --' . OPTION_STANZA . '=main ' . CMD_INFO . "\n" .
         "\n" .
         "  * Show backup specific options:\n" .
         "\n" .
-        "    \$ " . lc(BACKREST_NAME) . " help backup\n" .
+        '    $ ' . BACKREST_EXE . ' ' . CMD_HELP . ' ' . CMD_BACKUP . "\n" .
         "\n" .
         "SEE ALSO\n" .
         "\n" .
-	    "  /usr/share/doc/" . lc(BACKREST_NAME) . "/html/index.html";
+	    '  /usr/share/doc/' . BACKREST_EXE . "/html/index.html";
 
     return $strManPage;
 }
