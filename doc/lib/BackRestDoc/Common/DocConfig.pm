@@ -589,7 +589,7 @@ sub manGet
     $strManPage .= "\n\n" .
         "FILES\n" .
         "\n" .
-        '  ' . OPTION_DEFAULT_CONFIG . ".conf\n" .
+        '  ' . OPTION_DEFAULT_CONFIG . "\n" .
         '  /var/lib/' . BACKREST_EXE . "\n" .
         '  /var/log/' . BACKREST_EXE . "\n" .
         '  /var/spool/' . BACKREST_EXE . "\n" .
