@@ -28,6 +28,7 @@
     <section id="introduction">
         <title>Introduction</title>
 
+        <!-- These first two paragraphs are pulled in other parts of the documentation as a concise introduction and summary of features. -->
         <p><backrest/> aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads.</p>
 
         <p>Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges.  The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.</p>

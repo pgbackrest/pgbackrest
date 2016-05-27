@@ -17,6 +17,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Config::ConfigHelp;
 use pgBackRest::FileCommon;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # Help types
@@ -477,6 +478,84 @@ sub helpDataWriteFormatText
     }
 
     return $strText;
+}
+
+####################################################################################################################################
+# manGet
+#
+# Generate the man page.
+####################################################################################################################################
+sub manGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oManifest
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->manGet', \@_,
+            {name => 'oManifest'}
+        );
+
+    # Get index.xml to pull various text from
+    my $oIndexDoc = ${$oManifest->sourceGet('index')}{doc};
+
+    # Write the header
+    my $strManPage =
+        "NAME\n" .
+        '  ' . BACKREST_NAME . ' - ' . $oManifest->variableReplace($oIndexDoc->paramGet('subtitle')) . "\n\n" .
+        "SYNOPSIS\n" .
+        '  ' . lc(BACKREST_NAME) . " [options] [command]\n\n" .
+        "DESCRIPTION";
+
+    # Output the description (first two paragraphs of index.xml introduction)
+    my $iParaTotal = 0;
+
+    foreach my $oPara ($oIndexDoc->nodeGetById('section', 'introduction')->nodeList('p'))
+    {
+        if ($iParaTotal >= 2)
+        {
+            last;
+        }
+
+        $strManPage .= "\n" .
+            manGetFormatText($oManifest->variableReplace($self->{oDocRender}->processText($oPara->textGet())), 80, 2);
+
+        $iParaTotal++;
+    }
+
+
+    return $strManPage;
+}
+
+# Helper function for manGet() used to format text by indenting and splitting
+sub manGetFormatText
+{
+    my $strLine = shift;
+    my $iLength = shift;
+    my $iIndentFirst = shift;
+    my $iIndentRest = shift;
+
+    my $strPart;
+    my $strResult;
+    # my $bFirst = true;
+
+    $iIndentRest = defined($iIndentRest) ? $iIndentRest : $iIndentFirst;
+
+    # Split the line for output if it's too long
+    do
+    {
+        ($strPart, $strLine) = stringSplit($strLine, ' ', $iLength - $iIndentFirst);
+
+        $strResult .= "\n" . (' ' x $iIndentFirst) . trim($strPart);
+    }
+    while (defined($strLine));
+
+    return $strResult;
 }
 
 ####################################################################################################################################
