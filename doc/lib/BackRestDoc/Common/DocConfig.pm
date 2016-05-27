@@ -509,11 +509,13 @@ sub manGet
         "NAME\n" .
         '  ' . BACKREST_NAME . ' - ' . $oManifest->variableReplace($oIndexDoc->paramGet('subtitle')) . "\n\n" .
         "SYNOPSIS\n" .
-        '  ' . lc(BACKREST_NAME) . " [options] [command]\n\n" .
-        "DESCRIPTION";
+        '  ' . lc(BACKREST_NAME) . " [options] [command]";
 
     # Output the description (first two paragraphs of index.xml introduction)
     my $iParaTotal = 0;
+
+    $strManPage .= "\n\n" .
+        "DESCRIPTION";
 
     foreach my $oPara ($oIndexDoc->nodeGetById('section', 'introduction')->nodeList('p'))
     {
@@ -522,12 +524,99 @@ sub manGet
             last;
         }
 
-        $strManPage .= "\n" .
+        $strManPage .= ($iParaTotal == 0 ? "\n" : "\n\n") . '  ' .
             manGetFormatText($oManifest->variableReplace($self->{oDocRender}->processText($oPara->textGet())), 80, 2);
 
         $iParaTotal++;
     }
 
+    # Build command and config hashes
+    my $hConfig = $self->{oConfigHash};
+    my $hCommandList = {};
+    my $iCommandMaxLen = 0;
+    my $hOptionList = {};
+    my $iOptionMaxLen = 0;
+
+    foreach my $strCommand (sort(keys(%{$$hConfig{&CONFIG_HELP_COMMAND}})))
+    {
+        my $hCommand = $$hConfig{&CONFIG_HELP_COMMAND}{$strCommand};
+        $iCommandMaxLen = length($strCommand) > $iCommandMaxLen ? length($strCommand) : $iCommandMaxLen;
+
+        $$hCommandList{$strCommand}{summary} = $$hCommand{&CONFIG_HELP_SUMMARY};
+    }
+
+    foreach my $strOption (sort(keys(%{$$hConfig{&CONFIG_HELP_OPTION}})))
+    {
+        my $hOption = $$hConfig{&CONFIG_HELP_OPTION}{$strOption};
+        $iOptionMaxLen = length($strOption) > $iOptionMaxLen ? length($strOption) : $iOptionMaxLen;
+        my $strSection = defined($$hOption{&CONFIG_HELP_SECTION}) ? $$hOption{&CONFIG_HELP_SECTION} : CONFIG_SECTION_GENERAL;
+
+        $$hOptionList{$strSection}{$strOption}{summary} = $$hOption{&CONFIG_HELP_SUMMARY};
+    }
+
+    # Output Commands
+    $strManPage .= "\n\n" .
+        'COMMANDS';
+
+    foreach my $strCommand (sort(keys(%{$hCommandList})))
+    {
+        $strManPage .= "\n  " . "${strCommand}" . (' ' x ($iCommandMaxLen - length($strCommand))) . '  ' .
+            manGetFormatText($oManifest->variableReplace($self->{oDocRender}->processText($$hCommandList{$strCommand}{summary})),
+                80, $iCommandMaxLen + 4);
+    }
+
+    # Output options
+    my $bFirst = true;
+    $strManPage .= "\n\n" .
+        'OPTIONS';
+
+    foreach my $strSection (sort(keys(%{$hOptionList})))
+    {
+        $strManPage .= ($bFirst ?'' : "\n") . "\n  " . ucfirst($strSection) . ' Options:';
+
+        foreach my $strOption (sort(keys(%{$$hOptionList{$strSection}})))
+        {
+            $strManPage .= "\n    " . "--${strOption}" . (' ' x ($iOptionMaxLen - length($strOption))) . '  ' .
+                manGetFormatText(
+                    $oManifest->variableReplace($self->{oDocRender}->processText($$hOptionList{$strSection}{$strOption}{summary})),
+                        80, $iOptionMaxLen + 8);
+        }
+
+        $bFirst = false;
+    }
+
+    # Write files, examples, and references
+    $strManPage .= "\n\n" .
+        "FILES\n" .
+        "\n" .
+        "  /etc/" . lc(BACKREST_NAME) . ".conf\n" .
+        "  /var/lib/" . lc(BACKREST_NAME) . "\n" .
+        "  /var/log/" . lc(BACKREST_NAME) . "\n" .
+        "  /var/spool/" . lc(BACKREST_NAME) . "\n" .
+        "\n" .
+        "EXAMPLES\n" .
+        "\n" .
+        "  * Create a backup of the PostgreSQL `main` cluster:\n" .
+        "\n" .
+        "    \$ " . lc(BACKREST_NAME) . " --stanza=main backup\n" .
+        "\n" .
+        "    The `main` cluster should be configured in `/etc/" . lc(BACKREST_NAME) . ".conf`\n" .
+        "\n" .
+        "  * Show all available backups:\n" .
+        "\n" .
+        "    \$ " . lc(BACKREST_NAME) . " info\n" .
+        "\n" .
+        "  * Show all available backups for a specific cluster:\n" .
+        "\n" .
+        "    \$ " . lc(BACKREST_NAME) . " --stanza=main info\n" .
+        "\n" .
+        "  * Show backup specific options:\n" .
+        "\n" .
+        "    \$ " . lc(BACKREST_NAME) . " help backup\n" .
+        "\n" .
+        "SEE ALSO\n" .
+        "\n" .
+	    "  /usr/share/doc/" . lc(BACKREST_NAME) . "/html/index.html";
 
     return $strManPage;
 }
@@ -537,21 +626,21 @@ sub manGetFormatText
 {
     my $strLine = shift;
     my $iLength = shift;
-    my $iIndentFirst = shift;
     my $iIndentRest = shift;
 
     my $strPart;
     my $strResult;
-    # my $bFirst = true;
+    my $bFirst = true;
 
-    $iIndentRest = defined($iIndentRest) ? $iIndentRest : $iIndentFirst;
-
-    # Split the line for output if it's too long
     do
     {
-        ($strPart, $strLine) = stringSplit($strLine, ' ', $iLength - $iIndentFirst);
+        my $iIndent = $bFirst ? 0 : $iIndentRest;
 
-        $strResult .= "\n" . (' ' x $iIndentFirst) . trim($strPart);
+        ($strPart, $strLine) = stringSplit($strLine, ' ', $iLength - $iIndentRest);
+
+        $strResult .= ($bFirst ? '' : "\n") . (' ' x $iIndent) . trim($strPart);
+
+        $bFirst = false;
     }
     while (defined($strLine));
 
