@@ -590,9 +590,10 @@ sub manGet
         "FILES\n" .
         "\n" .
         '  ' . OPTION_DEFAULT_CONFIG . "\n" .
-        '  /var/lib/' . BACKREST_EXE . "\n" .
-        '  /var/log/' . BACKREST_EXE . "\n" .
-        '  /var/spool/' . BACKREST_EXE . "\n" .
+        '  ' . OPTION_DEFAULT_REPO_PATH . "\n" .
+        '  ' . OPTION_DEFAULT_LOG_PATH . "\n" .
+        '  ' . OPTION_DEFAULT_SPOOL_PATH . "\n" .
+        '  ' . OPTION_DEFAULT_LOCK_PATH . "\n" .
         "\n" .
         "EXAMPLES\n" .
         "\n" .
