@@ -1,0 +1,5067 @@
+{
+   "co6" : {
+      "all" : {
+         "user-guide" : [
+            {
+               "key" : {
+                  "image" : "backrest/co6-db-doc",
+                  "mount" : "/backrest:/backrest",
+                  "name" : "db-master",
+                  "os" : "co6",
+                  "user" : "vagrant"
+               },
+               "type" : "host",
+               "value" : {
+                  "ip" : "172.17.0.2"
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo yum -y install perl perl-Time-HiRes perl-parent perl-JSON \\",
+                     "    perl-Digest-SHA perl-DBD-Pg"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo cp -r ~/pgbackrest-release-1.02/lib/pgBackRest \\",
+                     "    /usr/share/perl5"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo find /usr/share/perl5/pgBackRest -type f -exec chmod 644 {} +"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo find /usr/share/perl5/pgBackRest -type d -exec chmod 755 {} +"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo cp ~/pgbackrest-release-1.02/bin/pgbackrest /usr/bin/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 755 /usr/bin/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo mkdir -m 770 /var/log/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chown postgres:postgres /var/log/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "pgBackRest 1.02 - General help",
+                     "",
+                     "Usage:",
+                     "    pgbackrest [options] [command]",
+                     "",
+                     "Commands:",
+                     "    archive-get   Get a WAL segment from the archive.",
+                     "    archive-push  Push a WAL segment to the archive.",
+                     "    backup        Backup a database cluster.",
+                     "    expire        Expire backups that exceed retention.",
+                     "    help          Get help.",
+                     "    info          Retrieve information about backups.",
+                     "    restore       Restore a database cluster.",
+                     "    start         Allow pgBackRest processes to run.",
+                     "    stop          Stop pgBackRest processes from running.",
+                     "    version       Get version.",
+                     "",
+                     "Use 'pgbackrest help [command]' for more information."
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 initdb"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "Initializing database: [  OK  ]\r"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/var/lib/pgsql/9.4/data/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "listen_addresses" : {
+                        "value" : "'*'"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "listen_addresses = '*'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/var/lib/pgsql/9.4/data/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "log_line_prefix" : {
+                        "value" : "''"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "listen_addresses = '*'",
+                     "log_line_prefix = ''"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/var/lib/pgsql/9.4/data/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "log_filename" : {
+                        "value" : "'postgresql.log'"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "listen_addresses = '*'",
+                     "log_filename = 'postgresql.log'",
+                     "log_line_prefix = ''"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "demo" : {
+                        "db-path" : {
+                           "value" : "/var/lib/pgsql/9.4/data"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo mkdir /var/lib/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 750 /var/lib/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chown postgres:postgres /var/lib/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/var/lib/pgsql/9.4/data/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "archive_command" : {
+                        "value" : "'pgbackrest --stanza=demo archive-push %p'"
+                     },
+                     "archive_mode" : {
+                        "value" : "on"
+                     },
+                     "max_wal_senders" : {
+                        "value" : "3"
+                     },
+                     "wal_level" : {
+                        "value" : "hot_standby"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "archive_command = 'pgbackrest --stanza=demo archive-push %p'",
+                     "archive_mode = on",
+                     "listen_addresses = '*'",
+                     "log_filename = 'postgresql.log'",
+                     "log_line_prefix = ''",
+                     "max_wal_senders = 3",
+                     "wal_level = hot_standby"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 restart"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "no prior backup exists|full backup size"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/pgsql/9.4/data --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo",
+                     "  WARN: no prior backup exists, incr backup has been changed to full",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:10:39\": backup begins after the next regular checkpoint completes",
+                     "  INFO: archive start: 000000010000000000000002",
+                     "       [filtered 764 lines of output]",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/base/1/11886 (0B, 100%)",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/global/pg_control (8KB) checksum 9754ddafb9d3d5d6997e2d2214dd88f45ed039d4",
+                     "  INFO: full backup size = 19.3MB",
+                     "  INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive",
+                     "  INFO: archive stop: 000000010000000000000002",
+                     "       [filtered 4 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-141047F"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "diff backup size"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 5 lines of output]",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/backup_label (236B, 100%) checksum 898b9c2a11d7c7651cebd805e6b55f795790f1ec",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/global/pg_control (8KB) checksum 1705df04953362f7c214cb1c10e7f14561850451",
+                     "  INFO: diff backup size = 8.7KB",
+                     "  INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive",
+                     "  INFO: archive stop: 000000010000000000000003",
+                     "       [filtered 4 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest info"
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "(full|incr|diff) backup"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "stanza: demo",
+                     "    status: ok",
+                     "",
+                     "    full backup: 20160602-141047F",
+                     "        start / stop timestamp: 2016-06-02 14:10:39 / 2016-06-02 14:10:47",
+                     "        database size: 19.3MB, backup size: 19.3MB",
+                     "        repository size: 2.2MB, repository backup size: 2.2MB",
+                     "",
+                     "    diff backup: 20160602-141047F_20160602-141051D",
+                     "        start / stop timestamp: 2016-06-02 14:10:48 / 2016-06-02 14:10:51",
+                     "        database size: 19.3MB, backup size: 8.7KB",
+                     "        repository size: 2.2MB, repository backup size: 581B",
+                     "        backup reference list: 20160602-141047F"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres rm /var/lib/pgsql/9.4/data/global/pg_control"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm -f /var/lib/pgsql/9.4/pgstartup.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "err-expect" : "1",
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo cat /var/lib/pgsql/9.4/pgstartup.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "could not find the database system"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "postmaster: could not find the database system",
+                     "Expected to find it in the directory \"/var/lib/pgsql/9.4/data\",",
+                     "but could not open file \"/var/lib/pgsql/9.4/data/global/pg_control\": No such file or directory"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres find /var/lib/pgsql/9.4/data -mindepth 1 -delete"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "backup begins after the next regular checkpoint completes"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/pgsql/9.4/data --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --type=incr",
+                     "  INFO: last backup label = 20160602-141047F_20160602-141051D, version = 1.02",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:11:06\": backup begins after the next regular checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000006",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/base/12140/pg_internal.init (115.2KB, 71%) checksum 9b0495b477dd242b9942f4a5b8c917e24d228ff5",
+                     "       [filtered 17 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "start-fast" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "start-fast=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "backup begins after the requested immediate checkpoint completes"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/pgsql/9.4/data --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --start-fast --type=incr",
+                     "  INFO: last backup label = 20160602-141047F_20160602-141109I, version = 1.02",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:11:10\": backup begins after the requested immediate checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000007",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/pg_log/postgresql.log (1.4KB, 85%) checksum 09c48a384d1139124c75e8909bc57f74b9c5558f",
+                     "       [filtered 9 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 550 /var/lib/pgbackrest/temp"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "err-expect" : "122",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "ERROR:"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 2 lines of output]",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:11:14\": backup begins after the requested immediate checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000008",
+                     " ERROR: [122]: unable to create /var/lib/pgbackrest/temp/demo.tmp: Permission denied",
+                     "  INFO: backup stop"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 750 /var/lib/pgbackrest/temp"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "err-expect" : "132",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "ERROR:"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/pgsql/9.4/data --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --start-fast --type=incr",
+                     "  INFO: last backup label = 20160602-141047F_20160602-141113I, version = 1.02",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:11:16\": backup begins after the requested immediate checkpoint completes",
+                     " ERROR: [132]: ERROR:  a backup is already in progress",
+                     "              HINT:  Run pg_stop_backup() and try again.:",
+                     "              select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn) from pg_start_backup('pgBackRest backup started at 2016-06-02 14:11:16', true) as lsn"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "stop-auto" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "start-fast=y",
+                     "stop-auto=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "cluster is already in backup mode|backup begins after the requested immediate checkpoint completes"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/pgsql/9.4/data --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --start-fast --stop-auto --type=incr",
+                     "  INFO: last backup label = 20160602-141047F_20160602-141113I, version = 1.02",
+                     "  WARN: the cluster is already in backup mode but no backup process is running. pg_stop_backup() will be called so a new backup can be started.",
+                     "  INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:11:18\": backup begins after the requested immediate checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000009",
+                     "  INFO: backup file /var/lib/pgsql/9.4/data/pg_log/postgresql.log (1.8KB, 88%) checksum c3c2f3d88e13dbf4063dad2b0b4f855df3c3d61a",
+                     "       [filtered 9 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "retention-full" : {
+                           "value" : "2"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "retention-full=2",
+                     "start-fast=y",
+                     "stop-auto=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=full \\",
+                     "    --log-level-console=detail backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "archive retention on backup 20160602-141047F|remove archive"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 773 lines of output]",
+                     "  INFO: backup stop",
+                     "  INFO: expire start: --log-level-console=detail --repo-path=/var/lib/pgbackrest --retention-full=2 --stanza=demo",
+                     "DETAIL: archive retention on backup 20160602-141047F, start = 000000010000000000000002",
+                     "DETAIL: remove archive: start = 000000010000000000000001, stop = 000000010000000000000001",
+                     "  INFO: expire stop"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-141132F"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=full \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "expire full backup set\\: 20160602-141047F|archive retention on backup 20160602-141132F|remove archive"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 773 lines of output]",
+                     "  INFO: backup stop",
+                     "  INFO: expire start: --log-level-console=info --repo-path=/var/lib/pgbackrest --retention-full=2 --stanza=demo",
+                     "  INFO: expire full backup set: 20160602-141047F, 20160602-141047F_20160602-141051D, 20160602-141047F_20160602-141109I, 20160602-141047F_20160602-141113I, 20160602-141047F_20160602-141123I",
+                     "  INFO: remove expired backup 20160602-141047F_20160602-141123I",
+                     "  INFO: remove expired backup 20160602-141047F_20160602-141113I",
+                     "       [filtered 3 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "retention-diff" : {
+                           "value" : "1"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "retention-diff=1",
+                     "retention-full=2",
+                     "start-fast=y",
+                     "stop-auto=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-141141F_20160602-141146D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "expire diff backup set: 20160602-141141F_20160602-141146D"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 11 lines of output]",
+                     "  INFO: backup stop",
+                     "  INFO: expire start: --log-level-console=info --repo-path=/var/lib/pgbackrest --retention-diff=1 --retention-full=2 --stanza=demo",
+                     "  INFO: expire diff backup set: 20160602-141141F_20160602-141146D, 20160602-141141F_20160602-141150I",
+                     "  INFO: remove expired backup 20160602-141141F_20160602-141150I",
+                     "  INFO: remove expired backup 20160602-141141F_20160602-141146D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --log-level-console=detail restore"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "demo\\/PG_VERSION - exists and matches backup|check\\/clean db path|restore global\\/pg_control"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 785 lines of output]",
+                     "DETAIL: restore file /var/lib/pgsql/9.4/data/base/1/11886 - exists and is zero size (0B, 100%)",
+                     "  INFO: wrote /var/lib/pgsql/9.4/data/recovery.conf",
+                     "  INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)",
+                     "  INFO: restore file /var/lib/pgsql/9.4/data/global/pg_control (8KB) checksum ffb22ce29e4be8c50b49c7a406295bc75522fc27",
+                     "  INFO: restore stop"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create database test1;\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "CREATE DATABASE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create database test2;\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "CREATE DATABASE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create table test1_table (id int); \\",
+                     "    insert into test1_table (id) values (1);\" test1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "INSERT 0 1"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create table test2_table (id int); \\",
+                     "    insert into test2_table (id) values (2);\" test2"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "INSERT 0 1"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres du -sh /var/lib/pgsql/9.4/data/base/16384"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "6.4M\t/var/lib/pgsql/9.4/data/base/16384"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --db-include=test2 restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from test2_table;\" test2"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " id ",
+                     "----",
+                     "  2",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from test1_table;\" test1"
+                  ],
+                  "err-expect" : "2",
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "relation mapping file.*contains invalid data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "psql: FATAL:  relation mapping file \"base/16384/pg_filenode.map\" contains invalid data"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres du -sh /var/lib/pgsql/9.4/data/base/16384"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "152K\t/var/lib/pgsql/9.4/data/base/16384"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"drop database test1;\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "DROP DATABASE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select oid, datname from pg_database order by oid;\""
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "test2"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  oid  |  datname  ",
+                     "-------+-----------",
+                     "     1 | template1",
+                     " 12135 | template0",
+                     " 12140 | postgres",
+                     " 16385 | test2",
+                     "(4 rows)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"begin; \\",
+                     "    create table important_table (message text); \\",
+                     "    insert into important_table values ('Important Data'); \\",
+                     "    commit; \\",
+                     "    select * from important_table;\""
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -Atc \"select current_timestamp\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "2016-06-02 14:12:26.707479+00"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"begin; \\",
+                     "    drop table important_table; \\",
+                     "    commit; \\",
+                     "    select * from important_table;\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"important_table\" does not exist",
+                     "LINE 1: ...le important_table;     commit;     select * from important_...",
+                     "                                                             ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --type=time \"--target=2016-06-02 14:12:26.707479+00\" restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/recovery.conf"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "recovery_target_time"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "restore_command = '/usr/bin/pgbackrest --stanza=demo archive-get %f \"%p\"'",
+                     "recovery_target_time = '2016-06-02 14:12:26.707479+00'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from important_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "recovery stopping before|last completed transaction|starting point-in-time recovery"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:12:21 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  starting point-in-time recovery to 2016-06-02 14:12:26.707479+00",
+                     "LOG:  restored log file \"00000004.history\" from archive",
+                     "LOG:  restored log file \"000000040000000000000013\" from archive",
+                     "       [filtered 2 lines of output]",
+                     "FATAL:  the database system is starting up",
+                     "LOG:  restored log file \"000000040000000000000014\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 689, time 2016-06-02 14:12:26.95253+00",
+                     "LOG:  redo done at 0/140157F0",
+                     "LOG:  last completed transaction was at log time 2016-06-02 14:12:26.44935+00",
+                     "LOG:  selected new timeline ID: 5",
+                     "LOG:  restored log file \"00000004.history\" from archive",
+                     "       [filtered 3 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"begin; \\",
+                     "    drop table important_table; \\",
+                     "    commit; \\",
+                     "    select * from important_table;\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"important_table\" does not exist",
+                     "LINE 1: ...le important_table;     commit;     select * from important_...",
+                     "                                                             ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-141141F_20160602-141226D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --type=time \"--target=2016-06-02 14:12:26.707479+00\" restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from important_table\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"important_table\" does not exist",
+                     "LINE 1: select * from important_table",
+                     "                      ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "starting point-in-time recovery"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:12:36 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "FATAL:  the database system is starting up",
+                     "LOG:  starting point-in-time recovery to 2016-06-02 14:12:26.707479+00",
+                     "LOG:  restored log file \"00000005.history\" from archive",
+                     "LOG:  restored log file \"000000050000000000000015\" from archive",
+                     "       [filtered 11 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest info"
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "20160602-141141F_20160602-141226D"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "stanza: demo",
+                     "    status: ok",
+                     "",
+                     "    full backup: 20160602-141132F",
+                     "        start / stop timestamp: 2016-06-02 14:11:24 / 2016-06-02 14:11:32",
+                     "        database size: 19.3MB, backup size: 19.3MB",
+                     "        repository size: 2.2MB, repository backup size: 2.2MB",
+                     "",
+                     "    full backup: 20160602-141141F",
+                     "        start / stop timestamp: 2016-06-02 14:11:33 / 2016-06-02 14:11:41",
+                     "        database size: 19.3MB, backup size: 19.3MB",
+                     "        repository size: 2.2MB, repository backup size: 2.2MB",
+                     "",
+                     "    diff backup: 20160602-141141F_20160602-141226D",
+                     "        start / stop timestamp: 2016-06-02 14:12:21 / 2016-06-02 14:12:26",
+                     "        database size: 25.7MB, backup size: 6.5MB",
+                     "        repository size: 3MB, repository backup size: 790.3KB",
+                     "        backup reference list: 20160602-141141F",
+                     "",
+                     "    incr backup: 20160602-141141F_20160602-141238I",
+                     "        start / stop timestamp: 2016-06-02 14:12:35 / 2016-06-02 14:12:38",
+                     "        database size: 25.6MB, backup size: 1.9MB",
+                     "        repository size: 3MB, repository backup size: 215KB",
+                     "        backup reference list: 20160602-141141F, 20160602-141141F_20160602-141226D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --type=time \"--target=2016-06-02 14:12:26.707479+00\" \\",
+                     "    --set=20160602-141141F_20160602-141226D restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from important_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "recovery stopping before|last completed transaction|starting point-in-time recovery"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:12:21 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  starting point-in-time recovery to 2016-06-02 14:12:26.707479+00",
+                     "FATAL:  the database system is starting up",
+                     "LOG:  restored log file \"00000004.history\" from archive",
+                     "       [filtered 2 lines of output]",
+                     "LOG:  consistent recovery state reached at 0/130000F0",
+                     "LOG:  restored log file \"000000040000000000000014\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 689, time 2016-06-02 14:12:26.95253+00",
+                     "LOG:  redo done at 0/140157F0",
+                     "LOG:  last completed transaction was at log time 2016-06-02 14:12:26.44935+00",
+                     "LOG:  restored log file \"00000005.history\" from archive",
+                     "LOG:  restored log file \"00000006.history\" from archive",
+                     "       [filtered 5 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "image" : "backrest/co6-backup-doc",
+                  "mount" : "/backrest:/backrest",
+                  "name" : "backup",
+                  "os" : "co6",
+                  "user" : "vagrant"
+               },
+               "type" : "host",
+               "value" : {
+                  "ip" : "172.17.0.3"
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "backup",
+                  "option" : {
+                     "global" : {
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "backup",
+                  "option" : {
+                     "demo" : {
+                        "db-host" : {
+                           "value" : "db-master"
+                        },
+                        "db-path" : {
+                           "value" : "/var/lib/pgsql/9.4/data"
+                        }
+                     },
+                     "global" : {
+                        "start-fast" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-host=db-master",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "start-fast=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "demo" : {
+                        "db-path" : {
+                           "value" : "/var/lib/pgsql/9.4/data"
+                        }
+                     },
+                     "global" : {
+                        "backup-host" : {
+                           "value" : "backup"
+                        },
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  },
+                  "reset" : true
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "",
+                     "[global]",
+                     "backup-host=backup",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo find /var/lib/pgbackrest -delete"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u backrest pgbackrest --stanza=demo backup"
+                  ],
+                  "host" : "backup",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  WARN: no prior backup exists, incr backup has been changed to full"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u backrest pgbackrest --stanza=demo backup"
+                  ],
+                  "host" : "backup",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo backup"
+                  ],
+                  "err-expect" : "137",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "stop file exists for all stanzas"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " ERROR: [137]: stop file exists for all stanzas"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  WARN: stop file already exists for all stanzas"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo backup"
+                  ],
+                  "err-expect" : "137",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "stop file exists for stanza demo"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " ERROR: [137]: stop file exists for stanza demo"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "image" : "backrest/co6-db-doc",
+                  "mount" : "/backrest:/backrest",
+                  "name" : "db-standby",
+                  "os" : "co6",
+                  "user" : "vagrant"
+               },
+               "type" : "host",
+               "value" : {
+                  "ip" : "172.17.0.4"
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "demo" : {
+                        "db-path" : {
+                           "value" : "/var/lib/pgsql/9.4/data"
+                        },
+                        "recovery-option" : {
+                           "value" : "standby_mode=on"
+                        }
+                     },
+                     "global" : {
+                        "backup-host" : {
+                           "value" : "backup"
+                        },
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "recovery-option=standby_mode=on",
+                     "",
+                     "[global]",
+                     "backup-host=backup",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta restore"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/recovery.conf"
+                  ],
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "standby_mode = 'on'",
+                     "restore_command = '/usr/bin/pgbackrest --stanza=demo archive-get %f \"%p\"'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/var/lib/pgsql/9.4/data/postgresql.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "hot_standby" : {
+                        "value" : "on"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "hot_standby = on"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "entering standby mode|database system is ready to accept read only connections"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:13:21 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  entering standby mode",
+                     "LOG:  restored log file \"00000008.history\" from archive",
+                     "LOG:  restored log file \"000000080000000000000017\" from archive",
+                     "LOG:  redo starts at 0/17000028",
+                     "LOG:  consistent recovery state reached at 0/170000F0",
+                     "LOG:  database system is ready to accept read only connections"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    begin; \\",
+                     "    create table replicated_table (message text); \\",
+                     "    insert into replicated_table values ('Important Data'); \\",
+                     "    commit; \\",
+                     "    select * from replicated_table\";"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from replicated_table;\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"replicated_table\" does not exist",
+                     "LINE 1: select * from replicated_table;",
+                     "                      ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select *, current_timestamp from pg_switch_xlog()\";"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " pg_switch_xlog |              now              ",
+                     "----------------+-------------------------------",
+                     " 0/18017950     | 2016-06-02 14:15:15.532767+00",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    select *, current_timestamp from replicated_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     |              now              ",
+                     "----------------+-------------------------------",
+                     " Important Data | 2016-06-02 14:15:18.440608+00",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    create user replicator password 'jw8s0F4' replication\";"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "CREATE ROLE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sh -c 'echo \\",
+                     "    \"host    replication     replicator      172.17.0.4/32           md5\" \\",
+                     "    >> /var/lib/pgsql/9.4/data/pg_hba.conf'"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 reload"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "demo" : {
+                        "recovery-option" : {
+                           "value" : "primary_conninfo=host=172.17.0.2 port=5432 user=replicator"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/pgsql/9.4/data",
+                     "recovery-option=standby_mode=on",
+                     "recovery-option=primary_conninfo=host=172.17.0.2 port=5432 user=replicator",
+                     "",
+                     "[global]",
+                     "backup-host=backup",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sh -c 'echo \\",
+                     "    \"172.17.0.2:*:replication:replicator:jw8s0F4\" \\",
+                     "    >> /home/postgres/.pgpass'"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres chmod 600 /home/postgres/.pgpass"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 stop"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta restore"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/recovery.conf"
+                  ],
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "primary_conninfo = 'host=172.17.0.2 port=5432 user=replicator'",
+                     "standby_mode = 'on'",
+                     "restore_command = '/usr/bin/pgbackrest --stanza=demo archive-get %f \"%p\"'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/var/lib/pgsql/9.4/data/postgresql.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "hot_standby" : {
+                        "value" : "on"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "hot_standby = on"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo service postgresql-9.4 start"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/pgsql/9.4/data/pg_log/postgresql.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "started streaming WAL from primary"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 7 lines of output]",
+                     "LOG:  database system is ready to accept read only connections",
+                     "LOG:  restored log file \"000000080000000000000018\" from archive",
+                     "LOG:  started streaming WAL from primary at 0/19000000 on timeline 8"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    begin; \\",
+                     "    create table stream_table (message text); \\",
+                     "    insert into stream_table values ('Important Data'); \\",
+                     "    commit; \\",
+                     "    select *, current_timestamp from stream_table\";"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     |              now              ",
+                     "----------------+-------------------------------",
+                     " Important Data | 2016-06-02 14:15:29.793384+00",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    select *, current_timestamp from stream_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     |              now              ",
+                     "----------------+-------------------------------",
+                     " Important Data | 2016-06-02 14:15:30.384055+00",
+                     "(1 row)"
+                  ]
+               }
+            }
+         ]
+      }
+   },
+   "default" : {
+      "all" : {
+         "user-guide" : [
+            {
+               "key" : {
+                  "image" : "backrest/u14-db-doc",
+                  "mount" : "/backrest:/backrest",
+                  "name" : "db-master",
+                  "os" : "u14",
+                  "user" : "vagrant"
+               },
+               "type" : "host",
+               "value" : {
+                  "ip" : "172.17.0.2"
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo apt-get install libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo cp -r ~/pgbackrest-release-1.02/lib/pgBackRest \\",
+                     "    /usr/lib/perl5"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo find /usr/lib/perl5/pgBackRest -type f -exec chmod 644 {} +"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo find /usr/lib/perl5/pgBackRest -type d -exec chmod 755 {} +"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo cp ~/pgbackrest-release-1.02/bin/pgbackrest /usr/bin/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 755 /usr/bin/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo mkdir -m 770 /var/log/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chown postgres:postgres /var/log/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "pgBackRest 1.02 - General help",
+                     "",
+                     "Usage:",
+                     "    pgbackrest [options] [command]",
+                     "",
+                     "Commands:",
+                     "    archive-get   Get a WAL segment from the archive.",
+                     "    archive-push  Push a WAL segment to the archive.",
+                     "    backup        Backup a database cluster.",
+                     "    expire        Expire backups that exceed retention.",
+                     "    help          Get help.",
+                     "    info          Retrieve information about backups.",
+                     "    restore       Restore a database cluster.",
+                     "    start         Allow pgBackRest processes to run.",
+                     "    stop          Stop pgBackRest processes from running.",
+                     "    version       Get version.",
+                     "",
+                     "Use 'pgbackrest help [command]' for more information."
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_createcluster 9.4 demo"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "Creating new cluster 9.4/demo ...",
+                     "  config /etc/postgresql/9.4/demo",
+                     "  data   /var/lib/postgresql/9.4/demo",
+                     "  locale C",
+                     "  socket /var/run/postgresql",
+                     "  port   5432"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/postgresql/9.4/demo/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "listen_addresses" : {
+                        "value" : "'*'"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "listen_addresses = '*'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/postgresql/9.4/demo/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "log_line_prefix" : {
+                        "value" : "''"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "listen_addresses = '*'",
+                     "log_line_prefix = ''"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "demo" : {
+                        "db-path" : {
+                           "value" : "/var/lib/postgresql/9.4/demo"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo mkdir /var/lib/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 750 /var/lib/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chown postgres:postgres /var/lib/pgbackrest"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/postgresql/9.4/demo/postgresql.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "archive_command" : {
+                        "value" : "'pgbackrest --stanza=demo archive-push %p'"
+                     },
+                     "archive_mode" : {
+                        "value" : "on"
+                     },
+                     "max_wal_senders" : {
+                        "value" : "3"
+                     },
+                     "wal_level" : {
+                        "value" : "hot_standby"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "archive_command = 'pgbackrest --stanza=demo archive-push %p'",
+                     "archive_mode = on",
+                     "listen_addresses = '*'",
+                     "log_line_prefix = ''",
+                     "max_wal_senders = 3",
+                     "wal_level = hot_standby"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo restart"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "no prior backup exists|full backup size"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/postgresql/9.4/demo --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo",
+                     "  WARN: no prior backup exists, incr backup has been changed to full",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:04:42\": backup begins after the next regular checkpoint completes",
+                     "  INFO: archive start: 000000010000000000000002",
+                     "       [filtered 759 lines of output]",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/base/1/11885 (0B, 100%)",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/global/pg_control (8KB) checksum 6403b44e2e80c48c9d373125b9d9492595e531c8",
+                     "  INFO: full backup size = 19.3MB",
+                     "  INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive",
+                     "  INFO: archive stop: 000000010000000000000002",
+                     "       [filtered 4 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-140450F"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "diff backup size"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 4 lines of output]",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/backup_label (236B, 100%) checksum 6accb18cd558ffab3f3f0788d9f106b1ed003678",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/global/pg_control (8KB) checksum b87573085244f25b2d65114aab93edcb04c0be12",
+                     "  INFO: diff backup size = 8.2KB",
+                     "  INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive",
+                     "  INFO: archive stop: 000000010000000000000003",
+                     "       [filtered 4 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest info"
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "(full|incr|diff) backup"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "stanza: demo",
+                     "    status: ok",
+                     "",
+                     "    full backup: 20160602-140450F",
+                     "        start / stop timestamp: 2016-06-02 14:04:42 / 2016-06-02 14:04:50",
+                     "        database size: 19.3MB, backup size: 19.3MB",
+                     "        repository size: 2.2MB, repository backup size: 2.2MB",
+                     "",
+                     "    diff backup: 20160602-140450F_20160602-140453D",
+                     "        start / stop timestamp: 2016-06-02 14:04:50 / 2016-06-02 14:04:53",
+                     "        database size: 19.3MB, backup size: 8.2KB",
+                     "        repository size: 2.2MB, repository backup size: 340B",
+                     "        backup reference list: 20160602-140450F"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres rm /var/lib/postgresql/9.4/demo/global/pg_control"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "could not find the database system"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "The PostgreSQL server failed to start. Please check the log output:",
+                     "postgres: could not find the database system",
+                     "Expected to find it in the directory \"/var/lib/postgresql/9.4/demo\",",
+                     "but could not open file \"/var/lib/postgresql/9.4/demo/global/pg_control\": No such file or directory"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres find /var/lib/postgresql/9.4/demo -mindepth 1 -delete"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "backup begins after the next regular checkpoint completes"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/postgresql/9.4/demo --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --type=incr",
+                     "  INFO: last backup label = 20160602-140450F_20160602-140453D, version = 1.02",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:05:10\": backup begins after the next regular checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000006",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/base/12139/pg_internal.init (115.2KB, 71%) checksum ba5bc24187d85b7a4e642ddf065ebcc837a23001",
+                     "       [filtered 15 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "start-fast" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "start-fast=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "backup begins after the requested immediate checkpoint completes"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/postgresql/9.4/demo --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --start-fast --type=incr",
+                     "  INFO: last backup label = 20160602-140450F_20160602-140513I, version = 1.02",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:05:15\": backup begins after the requested immediate checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000007",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/backup_label (236B, 100%) checksum 9fae3ba406a560ad70afcd770285db57d62054f1",
+                     "       [filtered 8 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 550 /var/lib/pgbackrest/temp"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "err-expect" : "122",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "ERROR:"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 2 lines of output]",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:05:19\": backup begins after the requested immediate checkpoint completes",
+                     "  INFO: archive start: 000000020000000000000009",
+                     " ERROR: [122]: unable to create /var/lib/pgbackrest/temp/demo.tmp: Permission denied",
+                     "  INFO: backup stop"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo chmod 750 /var/lib/pgbackrest/temp"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "err-expect" : "132",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "ERROR:"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/postgresql/9.4/demo --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --start-fast --type=incr",
+                     "  INFO: last backup label = 20160602-140450F_20160602-140518I, version = 1.02",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:05:21\": backup begins after the requested immediate checkpoint completes",
+                     " ERROR: [132]: ERROR:  a backup is already in progress",
+                     "              HINT:  Run pg_stop_backup() and try again.:",
+                     "              select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn) from pg_start_backup('pgBackRest backup started at 2016-06-02 14:05:21', true) as lsn"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "stop-auto" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "start-fast=y",
+                     "stop-auto=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "cluster is already in backup mode|backup begins after the requested immediate checkpoint completes"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  INFO: backup start: --db-path=/var/lib/postgresql/9.4/demo --log-level-console=info --repo-path=/var/lib/pgbackrest --stanza=demo --start-fast --stop-auto --type=incr",
+                     "  INFO: last backup label = 20160602-140450F_20160602-140518I, version = 1.02",
+                     "  WARN: the cluster is already in backup mode but no backup process is running. pg_stop_backup() will be called so a new backup can be started.",
+                     "  INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive",
+                     "  INFO: execute exclusive pg_start_backup() with label \"pgBackRest backup started at 2016-06-02 14:05:23\": backup begins after the requested immediate checkpoint completes",
+                     "  INFO: archive start: 00000002000000000000000A",
+                     "  INFO: backup file /var/lib/postgresql/9.4/demo/backup_label (236B, 100%) checksum 588b810519cbe32e70525d444919b469e488f256",
+                     "       [filtered 8 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "retention-full" : {
+                           "value" : "2"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "retention-full=2",
+                     "start-fast=y",
+                     "stop-auto=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=full \\",
+                     "    --log-level-console=detail backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "archive retention on backup 20160602-140450F|remove archive"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 768 lines of output]",
+                     "  INFO: backup stop",
+                     "  INFO: expire start: --log-level-console=detail --repo-path=/var/lib/pgbackrest --retention-full=2 --stanza=demo",
+                     "DETAIL: archive retention on backup 20160602-140450F, start = 000000010000000000000002",
+                     "DETAIL: remove archive: start = 000000010000000000000001, stop = 000000010000000000000001",
+                     "  INFO: expire stop"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-140537F"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=full \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "expire full backup set\\: 20160602-140450F|archive retention on backup 20160602-140537F|remove archive"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 768 lines of output]",
+                     "  INFO: backup stop",
+                     "  INFO: expire start: --log-level-console=info --repo-path=/var/lib/pgbackrest --retention-full=2 --stanza=demo",
+                     "  INFO: expire full backup set: 20160602-140450F, 20160602-140450F_20160602-140453D, 20160602-140450F_20160602-140513I, 20160602-140450F_20160602-140518I, 20160602-140450F_20160602-140527I",
+                     "  INFO: remove expired backup 20160602-140450F_20160602-140527I",
+                     "  INFO: remove expired backup 20160602-140450F_20160602-140518I",
+                     "       [filtered 3 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "global" : {
+                        "retention-diff" : {
+                           "value" : "1"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "retention-diff=1",
+                     "retention-full=2",
+                     "start-fast=y",
+                     "stop-auto=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-140546F_20160602-140551D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff \\",
+                     "    --log-level-console=info backup"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "expire diff backup set: 20160602-140546F_20160602-140551D"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 10 lines of output]",
+                     "  INFO: backup stop",
+                     "  INFO: expire start: --log-level-console=info --repo-path=/var/lib/pgbackrest --retention-diff=1 --retention-full=2 --stanza=demo",
+                     "  INFO: expire diff backup set: 20160602-140546F_20160602-140551D, 20160602-140546F_20160602-140556I",
+                     "  INFO: remove expired backup 20160602-140546F_20160602-140556I",
+                     "  INFO: remove expired backup 20160602-140546F_20160602-140551D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --log-level-console=detail restore"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "demo\\/PG_VERSION - exists and matches backup|check\\/clean db path|restore global\\/pg_control"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 692 lines of output]",
+                     "DETAIL: restore file /var/lib/postgresql/9.4/demo/base/12134/PG_VERSION - exists and matches backup (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1",
+                     "DETAIL: restore file /var/lib/postgresql/9.4/demo/base/1/PG_VERSION - exists and matches backup (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1",
+                     "DETAIL: restore file /var/lib/postgresql/9.4/demo/PG_VERSION - exists and matches backup (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1",
+                     "DETAIL: restore file /var/lib/postgresql/9.4/demo/global/12086 - exists and is zero size (0B, 100%)",
+                     "DETAIL: restore file /var/lib/postgresql/9.4/demo/global/12038 - exists and is zero size (0B, 100%)",
+                     "       [filtered 83 lines of output]",
+                     "DETAIL: restore file /var/lib/postgresql/9.4/demo/base/1/11885 - exists and is zero size (0B, 100%)",
+                     "  INFO: wrote /var/lib/postgresql/9.4/demo/recovery.conf",
+                     "  INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)",
+                     "  INFO: restore file /var/lib/postgresql/9.4/demo/global/pg_control (8KB) checksum 207621dd70537fe7e24909f89a1e3d17a20115d1",
+                     "  INFO: restore stop"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create database test1;\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "CREATE DATABASE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create database test2;\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "CREATE DATABASE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create table test1_table (id int); \\",
+                     "    insert into test1_table (id) values (1);\" test1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "INSERT 0 1"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"create table test2_table (id int); \\",
+                     "    insert into test2_table (id) values (2);\" test2"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "INSERT 0 1"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres du -sh /var/lib/postgresql/9.4/demo/base/16384"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "6.4M\t/var/lib/postgresql/9.4/demo/base/16384"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --db-include=test2 restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from test2_table;\" test2"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " id ",
+                     "----",
+                     "  2",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from test1_table;\" test1"
+                  ],
+                  "err-expect" : "2",
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "relation mapping file.*contains invalid data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "psql: FATAL:  relation mapping file \"base/16384/pg_filenode.map\" contains invalid data"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres du -sh /var/lib/postgresql/9.4/demo/base/16384"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "152K\t/var/lib/postgresql/9.4/demo/base/16384"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"drop database test1;\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "DROP DATABASE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select oid, datname from pg_database order by oid;\""
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "test2"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  oid  |  datname  ",
+                     "-------+-----------",
+                     "     1 | template1",
+                     " 12134 | template0",
+                     " 12139 | postgres",
+                     " 16385 | test2",
+                     "(4 rows)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=diff backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"begin; \\",
+                     "    create table important_table (message text); \\",
+                     "    insert into important_table values ('Important Data'); \\",
+                     "    commit; \\",
+                     "    select * from important_table;\""
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -Atc \"select current_timestamp\""
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "2016-06-02 14:06:36.720682+00"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"begin; \\",
+                     "    drop table important_table; \\",
+                     "    commit; \\",
+                     "    select * from important_table;\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"important_table\" does not exist",
+                     "LINE 1: ...le important_table;     commit;     select * from important_...",
+                     "                                                             ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --type=time \"--target=2016-06-02 14:06:36.720682+00\" restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/postgresql/9.4/demo/recovery.conf"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "recovery_target_time"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "restore_command = '/usr/bin/pgbackrest --stanza=demo archive-get %f \"%p\"'",
+                     "recovery_target_time = '2016-06-02 14:06:36.720682+00'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from important_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "recovery stopping before|last completed transaction|starting point-in-time recovery"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:06:32 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  starting point-in-time recovery to 2016-06-02 14:06:36.720682+00",
+                     "LOG:  incomplete startup packet",
+                     "LOG:  restored log file \"00000004.history\" from archive",
+                     "       [filtered 3 lines of output]",
+                     "FATAL:  the database system is starting up",
+                     "LOG:  restored log file \"000000040000000000000015\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 689, time 2016-06-02 14:06:36.951666+00",
+                     "LOG:  redo done at 0/150157F0",
+                     "LOG:  last completed transaction was at log time 2016-06-02 14:06:36.460109+00",
+                     "LOG:  selected new timeline ID: 5",
+                     "FATAL:  the database system is starting up",
+                     "       [filtered 4 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"begin; \\",
+                     "    drop table important_table; \\",
+                     "    commit; \\",
+                     "    select * from important_table;\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"important_table\" does not exist",
+                     "LINE 1: ...le important_table;     commit;     select * from important_...",
+                     "                                                             ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres ls -1 /var/lib/pgbackrest/backup/demo | tail -4 | head -1"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "20160602-140546F_20160602-140635D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --type=incr backup"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --type=time \"--target=2016-06-02 14:06:36.720682+00\" restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from important_table\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"important_table\" does not exist",
+                     "LINE 1: select * from important_table",
+                     "                      ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "starting point-in-time recovery"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:06:47 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  starting point-in-time recovery to 2016-06-02 14:06:36.720682+00",
+                     "LOG:  restored log file \"00000005.history\" from archive",
+                     "LOG:  incomplete startup packet",
+                     "       [filtered 14 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest info"
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "20160602-140546F_20160602-140635D"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "stanza: demo",
+                     "    status: ok",
+                     "",
+                     "    full backup: 20160602-140537F",
+                     "        start / stop timestamp: 2016-06-02 14:05:28 / 2016-06-02 14:05:37",
+                     "        database size: 19.3MB, backup size: 19.3MB",
+                     "        repository size: 2.2MB, repository backup size: 2.2MB",
+                     "",
+                     "    full backup: 20160602-140546F",
+                     "        start / stop timestamp: 2016-06-02 14:05:38 / 2016-06-02 14:05:46",
+                     "        database size: 19.3MB, backup size: 19.3MB",
+                     "        repository size: 2.2MB, repository backup size: 2.2MB",
+                     "",
+                     "    diff backup: 20160602-140546F_20160602-140635D",
+                     "        start / stop timestamp: 2016-06-02 14:06:31 / 2016-06-02 14:06:35",
+                     "        database size: 25.7MB, backup size: 6.5MB",
+                     "        repository size: 3MB, repository backup size: 788.8KB",
+                     "        backup reference list: 20160602-140546F",
+                     "",
+                     "    incr backup: 20160602-140546F_20160602-140649I",
+                     "        start / stop timestamp: 2016-06-02 14:06:46 / 2016-06-02 14:06:49",
+                     "        database size: 25.6MB, backup size: 1.9MB",
+                     "        repository size: 2.9MB, repository backup size: 214.4KB",
+                     "        backup reference list: 20160602-140546F, 20160602-140546F_20160602-140635D"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta \\",
+                     "    --type=time \"--target=2016-06-02 14:06:36.720682+00\" \\",
+                     "    --set=20160602-140546F_20160602-140635D restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from important_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "recovery stopping before|last completed transaction|starting point-in-time recovery"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:06:32 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  starting point-in-time recovery to 2016-06-02 14:06:36.720682+00",
+                     "LOG:  restored log file \"00000004.history\" from archive",
+                     "LOG:  incomplete startup packet",
+                     "       [filtered 3 lines of output]",
+                     "FATAL:  the database system is starting up",
+                     "LOG:  restored log file \"000000040000000000000015\" from archive",
+                     "LOG:  recovery stopping before commit of transaction 689, time 2016-06-02 14:06:36.951666+00",
+                     "LOG:  redo done at 0/150157F0",
+                     "LOG:  last completed transaction was at log time 2016-06-02 14:06:36.460109+00",
+                     "LOG:  restored log file \"00000005.history\" from archive",
+                     "FATAL:  the database system is starting up",
+                     "       [filtered 7 lines of output]"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "image" : "backrest/u14-backup-doc",
+                  "mount" : "/backrest:/backrest",
+                  "name" : "backup",
+                  "os" : "u14",
+                  "user" : "vagrant"
+               },
+               "type" : "host",
+               "value" : {
+                  "ip" : "172.17.0.3"
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "backup",
+                  "option" : {
+                     "global" : {
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "backup",
+                  "option" : {
+                     "demo" : {
+                        "db-host" : {
+                           "value" : "db-master"
+                        },
+                        "db-path" : {
+                           "value" : "/var/lib/postgresql/9.4/demo"
+                        }
+                     },
+                     "global" : {
+                        "start-fast" : {
+                           "value" : "y"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-host=db-master",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "repo-path=/var/lib/pgbackrest",
+                     "start-fast=y"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-master",
+                  "option" : {
+                     "demo" : {
+                        "db-path" : {
+                           "value" : "/var/lib/postgresql/9.4/demo"
+                        }
+                     },
+                     "global" : {
+                        "backup-host" : {
+                           "value" : "backup"
+                        },
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  },
+                  "reset" : true
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "",
+                     "[global]",
+                     "backup-host=backup",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo find /var/lib/pgbackrest -delete"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u backrest pgbackrest --stanza=demo backup"
+                  ],
+                  "host" : "backup",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  WARN: no prior backup exists, incr backup has been changed to full"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta restore"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u backrest pgbackrest --stanza=demo backup"
+                  ],
+                  "host" : "backup",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo backup"
+                  ],
+                  "err-expect" : "137",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "stop file exists for all stanzas"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " ERROR: [137]: stop file exists for all stanzas"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "  WARN: stop file already exists for all stanzas"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo stop"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo backup"
+                  ],
+                  "err-expect" : "137",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "stop file exists for stanza demo"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " ERROR: [137]: stop file exists for stanza demo"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo start"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "image" : "backrest/u14-db-doc",
+                  "mount" : "/backrest:/backrest",
+                  "name" : "db-standby",
+                  "os" : "u14",
+                  "user" : "vagrant"
+               },
+               "type" : "host",
+               "value" : {
+                  "ip" : "172.17.0.4"
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/postgresql/9.4/demo/postgresql.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "log_filename" : {
+                        "value" : "'postgresql.log'"
+                     },
+                     "log_line_prefix" : {
+                        "value" : "''"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "log_filename = 'postgresql.log'",
+                     "log_line_prefix = ''"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "demo" : {
+                        "db-path" : {
+                           "value" : "/var/lib/postgresql/9.4/demo"
+                        },
+                        "recovery-option" : {
+                           "value" : "standby_mode=on"
+                        }
+                     },
+                     "global" : {
+                        "backup-host" : {
+                           "value" : "backup"
+                        },
+                        "repo-path" : {
+                           "value" : "/var/lib/pgbackrest"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "recovery-option=standby_mode=on",
+                     "",
+                     "[global]",
+                     "backup-host=backup",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta restore"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/postgresql/9.4/demo/recovery.conf"
+                  ],
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "standby_mode = 'on'",
+                     "restore_command = '/usr/bin/pgbackrest --stanza=demo archive-get %f \"%p\"'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "file" : "/etc/postgresql/9.4/demo/postgresql.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "hot_standby" : {
+                        "value" : "on"
+                     }
+                  }
+               },
+               "type" : "cfg-postgresql",
+               "value" : {
+                  "config" : [
+                     "hot_standby = on",
+                     "log_filename = 'postgresql.log'",
+                     "log_line_prefix = ''"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "entering standby mode|database system is ready to accept read only connections"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "LOG:  database system was interrupted; last known up at 2016-06-02 14:07:37 UTC",
+                     "LOG:  creating missing WAL directory \"pg_xlog/archive_status\"",
+                     "LOG:  entering standby mode",
+                     "LOG:  incomplete startup packet",
+                     "LOG:  restored log file \"00000008.history\" from archive",
+                     "       [filtered 2 lines of output]",
+                     "LOG:  redo starts at 0/18000028",
+                     "LOG:  consistent recovery state reached at 0/180000F0",
+                     "LOG:  database system is ready to accept read only connections"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    begin; \\",
+                     "    create table replicated_table (message text); \\",
+                     "    insert into replicated_table values ('Important Data'); \\",
+                     "    commit; \\",
+                     "    select * from replicated_table\";"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     ",
+                     "----------------",
+                     " Important Data",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select * from replicated_table;\""
+                  ],
+                  "err-expect" : "1",
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "does not exist"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "ERROR:  relation \"replicated_table\" does not exist",
+                     "LINE 1: select * from replicated_table;",
+                     "                      ^"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \"select *, current_timestamp from pg_switch_xlog()\";"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     " pg_switch_xlog |              now              ",
+                     "----------------+-------------------------------",
+                     " 0/19017950     | 2016-06-02 14:08:10.917231+00",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    select *, current_timestamp from replicated_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     |             now              ",
+                     "----------------+------------------------------",
+                     " Important Data | 2016-06-02 14:08:12.82773+00",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    create user replicator password 'jw8s0F4' replication\";"
+                  ],
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "CREATE ROLE"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sh -c 'echo \\",
+                     "    \"host    replication     replicator      172.17.0.4/32           md5\" \\",
+                     "    >> /etc/postgresql/9.4/demo/pg_hba.conf'"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo reload"
+                  ],
+                  "host" : "db-master",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "file" : "/etc/pgbackrest.conf",
+                  "host" : "db-standby",
+                  "option" : {
+                     "demo" : {
+                        "recovery-option" : {
+                           "value" : "primary_conninfo=host=172.17.0.2 port=5432 user=replicator"
+                        }
+                     }
+                  }
+               },
+               "type" : "cfg-pgbackrest",
+               "value" : {
+                  "config" : [
+                     "[demo]",
+                     "db-path=/var/lib/postgresql/9.4/demo",
+                     "recovery-option=standby_mode=on",
+                     "recovery-option=primary_conninfo=host=172.17.0.2 port=5432 user=replicator",
+                     "",
+                     "[global]",
+                     "backup-host=backup",
+                     "repo-path=/var/lib/pgbackrest"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sh -c 'echo \\",
+                     "    \"172.17.0.2:*:replication:replicator:jw8s0F4\" \\",
+                     "    >> /home/postgres/.pgpass'"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres chmod 600 /home/postgres/.pgpass"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo stop"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres pgbackrest --stanza=demo --delta restore"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/lib/postgresql/9.4/demo/recovery.conf"
+                  ],
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "primary_conninfo = 'host=172.17.0.2 port=5432 user=replicator'",
+                     "standby_mode = 'on'",
+                     "restore_command = '/usr/bin/pgbackrest --stanza=demo archive-get %f \"%p\"'"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo rm /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo pg_ctlcluster 9.4 demo start"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres sleep 1"
+                  ],
+                  "host" : "db-standby",
+                  "output" : false
+               },
+               "type" : "exe"
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres cat /var/log/postgresql/postgresql-9.4-demo.log"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "started streaming WAL from primary"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "       [filtered 9 lines of output]",
+                     "LOG:  database system is ready to accept read only connections",
+                     "LOG:  restored log file \"000000080000000000000019\" from archive",
+                     "LOG:  started streaming WAL from primary at 0/1A000000 on timeline 8"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    begin; \\",
+                     "    create table stream_table (message text); \\",
+                     "    insert into stream_table values ('Important Data'); \\",
+                     "    commit; \\",
+                     "    select *, current_timestamp from stream_table\";"
+                  ],
+                  "highlight" : {
+                     "filter" : true,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-master",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     |              now              ",
+                     "----------------+-------------------------------",
+                     " Important Data | 2016-06-02 14:08:23.797431+00",
+                     "(1 row)"
+                  ]
+               }
+            },
+            {
+               "key" : {
+                  "cmd" : [
+                     "sudo -u postgres psql -c \" \\",
+                     "    select *, current_timestamp from stream_table\""
+                  ],
+                  "highlight" : {
+                     "filter" : false,
+                     "filter-context" : 2,
+                     "list" : [
+                        "Important Data"
+                     ]
+                  },
+                  "host" : "db-standby",
+                  "output" : true
+               },
+               "type" : "exe",
+               "value" : {
+                  "output" : [
+                     "    message     |              now              ",
+                     "----------------+-------------------------------",
+                     " Important Data | 2016-06-02 14:08:24.328548+00",
+                     "(1 row)"
+                  ]
+               }
+            }
+         ]
+      }
+   }
+}

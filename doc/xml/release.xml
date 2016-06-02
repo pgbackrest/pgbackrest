@@ -84,7 +84,7 @@
     </contributor-list>
 
     <release-list>
-         <release date="XXXX-XX-XX" version="1.02dev" title="UNDER DEVELOPMENT">
+         <release date="2016-06-02" version="1.02" title="Bug Fix for Perl 5.22">
              <release-core-list>
                  <release-bug-list>
                     <release-item>
