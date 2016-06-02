@@ -13,6 +13,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use File::Copy;
 use POSIX qw(strftime);
+use Scalar::Util qw(blessed);
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
@@ -121,11 +122,37 @@ sub process
     {
         &log(INFO, "    render out: ${strPageId}");
 
+        my $strHtml;
+
+        eval
+        {
+            $strHtml =
+                $self->{oManifest}->variableReplace(
+                    (new BackRestDoc::Html::DocHtmlPage($self->{oManifest}, $strPageId, $self->{bExe}))->process());
+        };
+
+        if ($@)
+        {
+            my $oMessage = $@;
+
+            # If a backrest exception then return the code - don't confess
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') && $oMessage->code() == -1)
+            {
+                my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
+                $self->{oManifest}->cacheReset($$oRenderOut{source});
+
+                $strHtml =
+                    $self->{oManifest}->variableReplace(
+                        (new BackRestDoc::Html::DocHtmlPage($self->{oManifest}, $strPageId, $self->{bExe}))->process());
+            }
+            else
+            {
+                confess $@;
+            }
+        }
+
         # Save the html page
-        fileStringWrite("$self->{strHtmlPath}/${strPageId}.html",
-                        $self->{oManifest}->variableReplace((new BackRestDoc::Html::DocHtmlPage($self->{oManifest},
-                            $strPageId, $self->{bExe}))->process()),
-                        false);
+        fileStringWrite("$self->{strHtmlPath}/${strPageId}.html", $strHtml, false);
     }
 
     # Return from function and log return values if any

@@ -197,6 +197,9 @@ if (!defined($strTestPath))
     $strTestPath = cwd() . '/test';
 }
 
+# Get the base backrest path
+my $strBackRestBase = dirname(dirname(abs_path($0)));
+
 ####################################################################################################################################
 # Build Docker containers
 ####################################################################################################################################
@@ -320,12 +323,12 @@ eval
     if ($strVm ne 'none')
     {
         # Load the doc module dynamically since it is not supported on all systems
-        use lib dirname($0) . '/../doc/lib';
+        use lib dirname(abs_path($0)) . '/../doc/lib';
         require BackRestDoc::Common::Doc;
         BackRestDoc::Common::Doc->import();
 
         # Make sure version number matches the latest release
-        my $strReleaseFile = dirname(dirname($0)) . '/doc/xml/release.xml';
+        my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
         my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
 
         foreach my $oRelease ($oReleaseDoc->nodeGet('release-list')->nodeList('release'))
@@ -619,24 +622,27 @@ eval
 
                         executeTest("docker run -itd -h $$oTest{os}-test --name=${strImage}" .
                                     " -v ${strHostTestPath}:${strVmTestPath}" .
-                                    " -v /backrest:/backrest backrest/$$oTest{os}-test-${strDbVersion}");
+                                    " -v ${strBackRestBase}:${strBackRestBase} backrest/$$oTest{os}-test-${strDbVersion}");
                     }
 
                     # Build up command line for the individual test
                     $strCommandLine =~ s/\-\-os\=\S*//g;
-                    $strCommandLine =~ s/\-\-test-path\=\S*//g;
+                    $strCommandLine =~ s/\-\-test\-path\=\S*//g;
                     $strCommandLine =~ s/\-\-module\=\S*//g;
                     $strCommandLine =~ s/\-\-test\=\S*//g;
                     $strCommandLine =~ s/\-\-run\=\S*//g;
                     $strCommandLine =~ s/\-\-db\-version\=\S*//g;
+                    $strCommandLine =~ s/\-\-no\-lint\S*//g;
+                    $strCommandLine =~ s/\-\-process\-max\=\S*//g;
 
                     my $strCommand =
-                        "docker exec -i -u vagrant ${strImage} $0 ${strCommandLine} --test-path=${strVmTestPath}" .
+                        "docker exec -i -u vagrant ${strImage} ${strBackRestBase}/test/test.pl ${strCommandLine}" .
                         " --vm=none --module=$$oTest{module} --test=$$oTest{test}" .
                         (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
                         (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
                         (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
                         ($bDryRun ? " --dry-run" : '') .
+                        " --test-path=${strVmTestPath}" .
                         " --no-cleanup --vm-out";
 
                     &log(DEBUG, $strCommand);

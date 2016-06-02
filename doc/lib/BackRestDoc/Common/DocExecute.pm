@@ -19,6 +19,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
+use pgBackRest::Version;
 
 use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
@@ -55,6 +56,16 @@ sub new
     my $self = $class->SUPER::new($strType, $oManifest, $strRenderOutKey);
     bless $self, $class;
 
+    if (defined($self->{oSource}{hyCache}))
+    {
+        $self->{bCache} = true;
+        $self->{iCacheIdx} = 0;
+    }
+    else
+    {
+        $self->{bCache} = false;
+    }
+
     $self->{bExe} = $bExe;
 
     # Return from function and log return values if any
@@ -62,6 +73,75 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
+    );
+}
+
+####################################################################################################################################
+# executeKey
+#
+# Get a unique key for the execution step to determine if the cache is valid.
+####################################################################################################################################
+sub executeKey
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strHostName,
+        $oCommand,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->executeKey', \@_,
+            {name => 'strHostName', trace => true},
+            {name => 'oCommand', trace => true},
+        );
+
+    # Add user to command
+    my $strCommand = $self->{oManifest}->variableReplace(trim($oCommand->fieldGet('exe-cmd')));
+    my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
+    $strCommand = ($strUser eq 'vagrant' ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
+
+    # Format and split command
+    $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
+    my @stryCommand = split("\n", $strCommand);
+
+    my $hCacheKey =
+    {
+        host => $strHostName,
+        cmd => \@stryCommand,
+        output => JSON::PP::false,
+    };
+
+    if (defined($oCommand->paramGet('err-expect', false)))
+    {
+        $$hCacheKey{'err-expect'} = $oCommand->paramGet('err-expect');
+    }
+
+    if ($oCommand->paramTest('output', 'y') || $oCommand->paramTest('show', 'y') || $oCommand->paramTest('variable-key'))
+    {
+        $$hCacheKey{'output'} = JSON::PP::true;
+    }
+
+    if (defined($oCommand->fieldGet('exe-highlight', false)))
+    {
+        $$hCacheKey{'output'} = JSON::PP::true;
+        $$hCacheKey{highlight}{'filter'} = $oCommand->paramTest('filter', 'n') ? JSON::PP::false : JSON::PP::true;
+        $$hCacheKey{highlight}{'filter-context'} = $oCommand->paramGet('filter-context', false, 2);
+
+        my @stryHighlight;
+        $stryHighlight[0] = $self->{oManifest}->variableReplace($oCommand->fieldGet('exe-highlight'));
+
+        $$hCacheKey{highlight}{list} = \@stryHighlight;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hExecuteKey', value => $hCacheKey, trace => true}
     );
 }
 
@@ -79,7 +159,8 @@ sub execute
         $oSection,
         $strHostName,
         $oCommand,
-        $iIndent
+        $iIndent,
+        $bCache,
     ) =
         logDebugParam
         (
@@ -87,51 +168,40 @@ sub execute
             {name => 'oSection'},
             {name => 'strHostName'},
             {name => 'oCommand'},
-            {name => 'iIndent', default => 1}
+            {name => 'iIndent', default => 1},
+            {name => 'bCache', default => true},
         );
 
     # Working variables
-    my $strCommand;
+    my $hCacheKey = $self->executeKey($strHostName, $oCommand);
+    my $strCommand = join("\n", @{$$hCacheKey{cmd}});
     my $strOutput;
 
-    if ($oCommand->fieldTest('actual-command'))
+    if (!$oCommand->paramTest('show', 'n') && $self->{bExe} && $self->isRequired($oSection))
     {
-        $strCommand = $oCommand->fieldGet('actual-command');
-        $strOutput = $oCommand->fieldGet('actual-output', false);
-    }
-    else
-    {
-        # Command variables
-        $strCommand = trim($oCommand->fieldGet('exe-cmd'));
-        my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
-        my $bExeOutput = $oCommand->paramTest('output', 'y');
-        my $strVariableKey = $oCommand->paramGet('variable-key', false);
-        my $iExeExpectedError = $oCommand->paramGet('err-expect', false);
-
-        $strCommand = $self->{oManifest}->variableReplace(
-            ($strUser eq 'vagrant' ? '' :
-                ('sudo ' . ($strUser eq 'root' ? '' : "-u ${strUser} "))) . $strCommand);
-
-        # Add continuation chars and proper spacing
-        $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
-
-        if (!$oCommand->paramTest('show', 'n') && $self->{bExe} && $self->isRequired($oSection))
+        # Make sure that no lines are greater than 80 chars
+        foreach my $strLine (split("\n", $strCommand))
         {
-            # Make sure that no lines are greater than 80 chars
-            foreach my $strLine (split("\n", $strCommand))
+            if (length(trim($strLine)) > 80)
             {
-                if (length(trim($strLine)) > 80)
-                {
-                    confess &log(ERROR, "command has a line > 80 characters:\n${strCommand}\noffending line: ${strLine}");
-                }
+                confess &log(ERROR, "command has a line > 80 characters:\n${strCommand}\noffending line: ${strLine}");
             }
         }
+    }
 
-        &log(DEBUG, ('    ' x $iIndent) . "execute: $strCommand");
+    &log(DEBUG, ('    ' x $iIndent) . "execute: $strCommand");
 
-        if (!$oCommand->paramTest('skip', 'y'))
+    if (!$oCommand->paramTest('skip', 'y'))
+    {
+        if ($self->{bExe} && $self->isRequired($oSection))
         {
-            if ($self->{bExe} && $self->isRequired($oSection))
+            my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('exe', $hCacheKey);
+
+            if ($bCacheHit)
+            {
+                $strOutput = defined($$hCacheValue{output}) ? join("\n", @{$$hCacheValue{output}}) : undef;
+            }
+            else
             {
                 # Check that the host is valid
                 my $oHost = $self->{host}{$strHostName};
@@ -142,13 +212,13 @@ sub execute
                 }
 
                 my $oExec = $oHost->execute($strCommand,
-                                            {iExpectedExitStatus => $iExeExpectedError,
+                                            {iExpectedExitStatus => $$hCacheKey{'err-expect'},
                                              bSuppressError => $oCommand->paramTest('err-suppress', 'y'),
                                              iRetrySeconds => $oCommand->paramGet('retry', false)});
                 $oExec->begin();
                 $oExec->end();
 
-                if ($bExeOutput && defined($oExec->{strOutLog}) && $oExec->{strOutLog} ne '')
+                if (defined($oExec->{strOutLog}) && $oExec->{strOutLog} ne '')
                 {
                     $strOutput = $oExec->{strOutLog};
 
@@ -160,28 +230,36 @@ sub execute
                         $strOutput =~ s/^                             //smg;
                         $strOutput =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //smg;
                     }
+
+                    # my @stryOutput = split("\n", $strOutput);
+                    # $$hCacheValue{stdout} = \@stryOutput;
                 }
 
-                if (defined($iExeExpectedError))
+                if (defined($$hCacheKey{'err-expect'}) && defined($oExec->{strErrorLog}) && $oExec->{strErrorLog} ne '')
                 {
-                    $strOutput .= trim($oExec->{strErrorLog});
+                    # my $strError = $oExec->{strErrorLog};
+                    # $strError =~ s/^\n+|\n$//g;
+                    # my @stryError = split("\n", $strError);
+                    # $$hCacheValue{stderr} = \@stryError;
+
+                    $strOutput .= $oExec->{strErrorLog};
                 }
 
-                # Output is assigned to a var
-                if (defined($strVariableKey))
+                # if (defined($$hCacheValue{stderr}))
+                # {
+                #     $strOutput .= join("\n", @{$$hCacheValue{stderr}});
+                # }
+
+                if ($$hCacheKey{output} && defined($$hCacheKey{highlight}) && $$hCacheKey{highlight}{filter} && defined($strOutput))
                 {
-                    $self->{oManifest}->variableSet($strVariableKey, trim($oExec->{strOutLog}));
-                }
-                elsif (!$oCommand->paramTest('filter', 'n') && $bExeOutput && defined($strOutput))
-                {
-                    my $strHighLight = $self->{oManifest}->variableReplace($oCommand->fieldGet('exe-highlight', false));
+                    my $strHighLight = @{$$hCacheKey{highlight}{list}}[0];
 
                     if (!defined($strHighLight))
                     {
                         confess &log(ERROR, 'filter requires highlight definition: ' . $strCommand);
                     }
 
-                    my $iFilterContext = $oCommand->paramGet('filter-context', false, 2);
+                    my $iFilterContext = $$hCacheKey{highlight}{'filter-context'};
 
                     my @stryOutput = split("\n", $strOutput);
                     undef($strOutput);
@@ -248,20 +326,40 @@ sub execute
                         }
                     }
                 }
+
+                if (!$$hCacheKey{output})
+                {
+                    $strOutput = undef;
+                }
+
+                if (defined($strOutput))
+                {
+                    my @stryOutput = split("\n", $strOutput);
+                    $$hCacheValue{output} = \@stryOutput;
+                }
+
+                if ($bCache)
+                {
+                    $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
+                }
             }
-            elsif ($bExeOutput)
+
+            # Output is assigned to a var
+            if ($oCommand->paramTest('variable-key'))
             {
-                $strOutput = 'Output suppressed for testing';
+                $self->{oManifest}->variableSet($oCommand->paramGet('variable-key'), trim($strOutput), true);
             }
         }
-
-        if (defined($strVariableKey) && !defined($self->{oManifest}->variableGet($strVariableKey)))
+        elsif ($$hCacheKey{output})
         {
-            $self->{oManifest}->variableSet($strVariableKey, '[Test Variable]');
+            $strOutput = 'Output suppressed for testing';
         }
+    }
 
-        $oCommand->fieldSet('actual-command', $strCommand);
-        $oCommand->fieldSet('actual-output', $strOutput);
+    # Default variable output when it was not set by execution
+    if ($oCommand->paramTest('variable-key') && !defined($self->{oManifest}->variableGet($oCommand->paramGet('variable-key'))))
+    {
+        $self->{oManifest}->variableSet($oCommand->paramGet('variable-key'), '[Test Variable]', true);
     }
 
     # Return from function and log return values if any
@@ -270,6 +368,76 @@ sub execute
         $strOperation,
         {name => 'strCommand', value => $strCommand, trace => true},
         {name => 'strOutput', value => $strOutput, trace => true}
+    );
+}
+
+
+####################################################################################################################################
+# configKey
+####################################################################################################################################
+sub configKey
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oConfig,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hostKey', \@_,
+            {name => 'oConfig', trace => true},
+        );
+
+    my $hCacheKey =
+    {
+        host => $self->{oManifest}->variableReplace($oConfig->paramGet('host')),
+        file => $self->{oManifest}->variableReplace($oConfig->paramGet('file')),
+    };
+
+    if ($oConfig->paramTest('reset', 'y'))
+    {
+        $$hCacheKey{reset} = JSON::PP::true;
+    }
+
+    # Add all options to the key
+    my $strOptionTag = $oConfig->nameGet() eq 'backrest-config' ? 'backrest-config-option' : 'postgres-config-option';
+
+    foreach my $oOption ($oConfig->nodeList($strOptionTag))
+    {
+        my $hOption = {};
+
+        if ($oOption->paramTest('remove', 'y'))
+        {
+            $$hOption{remove} = JSON::PP::true;
+        }
+
+        if (defined($oOption->valueGet(false)))
+        {
+            $$hOption{value} = $self->{oManifest}->variableReplace($oOption->valueGet());
+        }
+
+        my $strKey = $self->{oManifest}->variableReplace($oOption->paramGet('key'));
+
+        if ($oConfig->nameGet() eq 'backrest-config')
+        {
+            my $strSection = $self->{oManifest}->variableReplace($oOption->paramGet('section'));
+
+            $$hCacheKey{option}{$strSection}{$strKey} = $hOption;
+        }
+        else
+        {
+            $$hCacheKey{option}{$strKey} = $hOption;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hCacheKey', value => $hCacheKey, trace => true}
     );
 }
 
@@ -297,22 +465,21 @@ sub backrestConfig
         );
 
     # Working variables
-    my $strFile;
-    my $strConfig;
+    my $hCacheKey = $self->configKey($oConfig);
+    my $strFile = $$hCacheKey{file};
+    my $strConfig = undef;
 
-    if ($oConfig->fieldTest('actual-file'))
+    &log(DEBUG, ('    ' x $iDepth) . 'process backrest config: ' . $$hCacheKey{file});
+
+    if ($self->{bExe} && $self->isRequired($oSection))
     {
-        $strFile = $oConfig->fieldGet('actual-file');
-        $strConfig = $oConfig->fieldGet('actual-config');
-    }
-    else
-    {
-        # Get filename
-        $strFile = $self->{oManifest}->variableReplace($oConfig->paramGet('file'));
+        my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('cfg-' . BACKREST_EXE, $hCacheKey);
 
-        &log(DEBUG, ('    ' x $iDepth) . 'process backrest config: ' . $strFile);
-
-        if ($self->{bExe} && $self->isRequired($oSection))
+        if ($bCacheHit)
+        {
+            $strConfig = defined($$hCacheValue{config}) ? join("\n", @{$$hCacheValue{config}}) : undef;
+        }
+        else
         {
             # Check that the host is valid
             my $strHostName = $self->{oManifest}->variableReplace($oConfig->paramGet('host'));
@@ -326,7 +493,7 @@ sub backrestConfig
             # Reset all options
             if ($oConfig->paramTest('reset', 'y'))
             {
-                delete(${$self->{config}}{$strHostName}{$strFile})
+                delete(${$self->{config}}{$strHostName}{$$hCacheKey{file}})
             }
 
             foreach my $oOption ($oConfig->nodeList('backrest-config-option'))
@@ -342,11 +509,11 @@ sub backrestConfig
 
                 if (!defined($strValue))
                 {
-                    delete(${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey});
+                    delete(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey});
 
-                    if (keys(%{${$self->{config}}{$strHostName}{$strFile}{$strSection}}) == 0)
+                    if (keys(%{${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}}) == 0)
                     {
-                        delete(${$self->{config}}{$strHostName}{$strFile}{$strSection});
+                        delete(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection});
                     }
 
                     &log(DEBUG, ('    ' x ($iDepth + 1)) . "reset ${strSection}->${strKey}");
@@ -364,10 +531,10 @@ sub backrestConfig
 
                     # If this option is a hash and the value is already set then append to the array
                     if ($$oOption{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH &&
-                        defined(${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey}))
+                        defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();
-                        my $strHashValue = ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey};
+                        my $strHashValue = ${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey};
 
                         # If there is only one key/value
                         if (ref(\$strHashValue) eq 'SCALAR')
@@ -381,12 +548,12 @@ sub backrestConfig
                         }
 
                         push(@oValue, $strValue);
-                        ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey} = \@oValue;
+                        ${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey} = \@oValue;
                     }
                     # else just set the value
                     else
                     {
-                        ${$self->{config}}{$strHostName}{$strFile}{$strSection}{$strKey} = $strValue;
+                        ${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey} = $strValue;
                     }
 
                     &log(DEBUG, ('    ' x ($iDepth + 1)) . "set ${strSection}->${strKey} = ${strValue}");
@@ -396,19 +563,25 @@ sub backrestConfig
             my $strLocalFile = "/home/vagrant/data/db-master/etc/pgbackrest.conf";
 
             # Save the ini file
-            iniSave($strLocalFile, $self->{config}{$strHostName}{$strFile}, true);
+            iniSave($strLocalFile, $self->{config}{$strHostName}{$$hCacheKey{file}}, true);
 
-            $strConfig = fileStringRead($strLocalFile);
+            $oHost->copyTo($strLocalFile, $$hCacheKey{file}, $oConfig->paramGet('owner', false, 'postgres:postgres'), '640');
 
-            $oHost->copyTo($strLocalFile, $strFile, $oConfig->paramGet('owner', false, 'postgres:postgres'), '640');
+            my $strConfig = fileStringRead($strLocalFile);
+            my @stryConfig = undef;
+
+            if (trim($strConfig) ne '')
+            {
+                @stryConfig = split("\n", $strConfig);
+            }
+
+            $$hCacheValue{config} = \@stryConfig;
+            $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
         }
-        else
-        {
-            $strConfig = 'Config suppressed for testing';
-        }
-
-        $oConfig->fieldSet('actual-file', $strFile);
-        $oConfig->fieldSet('actual-config', $strConfig);
+    }
+    else
+    {
+        $strConfig = 'Config suppressed for testing';
     }
 
     # Return from function and log return values if any
@@ -445,20 +618,19 @@ sub postgresConfig
         );
 
     # Working variables
-    my $strFile;
+    my $hCacheKey = $self->configKey($oConfig);
+    my $strFile = $$hCacheKey{file};
     my $strConfig;
 
-    if ($oConfig->fieldTest('actual-file'))
+    if ($self->{bExe} && $self->isRequired($oSection))
     {
-        $strFile = $oConfig->fieldGet('actual-file');
-        $strConfig = $oConfig->fieldGet('actual-config');
-    }
-    else
-    {
-        # Get filename
-        $strFile = $self->{oManifest}->variableReplace($oConfig->paramGet('file'));
+        my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('cfg-postgresql', $hCacheKey);
 
-        if ($self->{bExe} && $self->isRequired($oSection))
+        if ($bCacheHit)
+        {
+            $strConfig = defined($$hCacheValue{config}) ? join("\n", @{$$hCacheValue{config}}) : undef;
+        }
+        else
         {
             # Check that the host is valid
             my $strHostName = $self->{oManifest}->variableReplace($oConfig->paramGet('host'));
@@ -470,14 +642,14 @@ sub postgresConfig
             }
 
             my $strLocalFile = '/home/vagrant/data/db-master/etc/postgresql.conf';
-            $oHost->copyFrom($strFile, $strLocalFile);
+            $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
-            if (!defined(${$self->{'pg-config'}}{$strHostName}{$strFile}{base}) && $self->{bExe})
+            if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
             {
-                ${$self->{'pg-config'}}{$strHostName}{$strFile}{base} = fileStringRead($strLocalFile);
+                ${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base} = fileStringRead($strLocalFile);
             }
 
-            my $oConfigHash = $self->{'pg-config'}{$strHostName}{$strFile};
+            my $oConfigHash = $self->{'pg-config'}{$strHostName}{$$hCacheKey{file}};
             my $oConfigHashNew;
 
             if (!defined($$oConfigHash{old}))
@@ -490,7 +662,7 @@ sub postgresConfig
                 $oConfigHashNew = dclone($$oConfigHash{old});
             }
 
-            &log(DEBUG, ('    ' x $iDepth) . 'process postgres config: ' . $strFile);
+            &log(DEBUG, ('    ' x $iDepth) . 'process postgres config: ' . $$hCacheKey{file});
 
             foreach my $oOption ($oConfig->nodeList('postgres-config-option'))
             {
@@ -527,18 +699,25 @@ sub postgresConfig
                 fileStringWrite($strLocalFile, $$oConfigHash{base} .
                                 (defined($strConfig) ? "\n# pgBackRest Configuration\n${strConfig}\n" : ''));
 
-                $oHost->copyTo($strLocalFile, $strFile, 'postgres:postgres', '640');
+                $oHost->copyTo($strLocalFile, $$hCacheKey{file}, 'postgres:postgres', '640');
             }
 
             $$oConfigHash{old} = $oConfigHashNew;
-        }
-        else
-        {
-            $strConfig = 'Config suppressed for testing';
-        }
 
-        $oConfig->fieldSet('actual-file', $strFile);
-        $oConfig->fieldSet('actual-config', $strConfig);
+            my @stryConfig = undef;
+
+            if (trim($strConfig) ne '')
+            {
+                @stryConfig = split("\n", $strConfig);
+            }
+
+            $$hCacheValue{config} = \@stryConfig;
+            $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
+        }
+    }
+    else
+    {
+        $strConfig = 'Config suppressed for testing';
     }
 
     # Return from function and log return values if any
@@ -549,6 +728,178 @@ sub postgresConfig
         {name => 'strConfig', value => $strConfig, trace => true},
         {name => 'bShow', value => $oConfig->paramTest('show', 'n') ? false : true, trace => true}
     );
+}
+
+####################################################################################################################################
+# hostKey
+####################################################################################################################################
+sub hostKey
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oHost,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hostKey', \@_,
+            {name => 'oHost', trace => true},
+        );
+
+    my $hCacheKey =
+    {
+        name => $self->{oManifest}->variableReplace($oHost->paramGet('name')),
+        user => $self->{oManifest}->variableReplace($oHost->paramGet('user')),
+        image => $self->{oManifest}->variableReplace($oHost->paramGet('image')),
+    };
+
+    if (defined($oHost->paramGet('os', false)))
+    {
+        $$hCacheKey{os} = $self->{oManifest}->variableReplace($oHost->paramGet('os'));
+    }
+
+    if (defined($oHost->paramGet('mount', false)))
+    {
+        $$hCacheKey{mount} = $self->{oManifest}->variableReplace($oHost->paramGet('mount'));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hCacheKey', value => $hCacheKey, trace => true}
+    );
+}
+
+####################################################################################################################################
+# cachePop
+####################################################################################################################################
+sub cachePop
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCacheType,
+        $hCacheKey,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hostKey', \@_,
+            {name => 'strCacheType', trace => true},
+            {name => 'hCacheKey', trace => true},
+        );
+
+    my $bCacheHit = false;
+    my $oCacheValue = undef;
+
+    if ($self->{bCache})
+    {
+        my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
+        # &log(WARN, "checking cache for\ncurrent key: " . $oJSON->encode($hCacheKey));
+
+        my $hCache = ${$self->{oSource}{hyCache}}[$self->{iCacheIdx}];
+
+        if (!defined($hCache))
+        {
+            confess &log(ERROR, 'unable to get index from cache', -1);
+        }
+
+        if (!defined($$hCache{key}))
+        {
+            confess &log(ERROR, 'unable to get key from cache', -1);
+        }
+
+        if (!defined($$hCache{type}))
+        {
+            confess &log(ERROR, 'unable to get type from cache', -1);
+        }
+
+        if ($$hCache{type} ne $strCacheType)
+        {
+            confess &log(ERROR, 'types do not match, cache is invalid', -1);
+        }
+
+        if ($oJSON->encode($$hCache{key}) ne $oJSON->encode($hCacheKey))
+        {
+            confess &log(ERROR,
+                "keys at index $self->{iCacheIdx} do not match, cache is invalid." .
+                "\ncache key: " . $oJSON->encode($$hCache{key}) .
+                "\ncurrent key: " . $oJSON->encode($hCacheKey), -1);
+        }
+
+        $bCacheHit = true;
+        $oCacheValue = $$hCache{value};
+        $self->{iCacheIdx}++;
+    }
+    else
+    {
+        if ($self->{oManifest}{bCacheOnly})
+        {
+            confess &log(ERROR, 'Cache only operation forced by --cache-only option');
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bCacheHit', value => $bCacheHit, trace => true},
+        {name => 'strCacheType', value => $strCacheType, trace => true},
+        {name => 'hCacheKey', value => $hCacheKey, trace => true},
+        {name => 'oCacheValue', value => $oCacheValue, trace => true},
+    );
+}
+
+####################################################################################################################################
+# cachePush
+####################################################################################################################################
+sub cachePush
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strType,
+        $hCacheKey,
+        $oCacheValue,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->hostKey', \@_,
+            {name => 'strType', trace => true},
+            {name => 'hCacheKey', trace => true},
+            {name => 'oCacheValue', required => false, trace => true},
+        );
+
+    if ($self->{bCache})
+    {
+        confess &log(ASSERT, "cachePush should not be called when cache is already present");
+    }
+
+    # Create the cache entry
+    my $hCache =
+    {
+        key => $hCacheKey,
+        type => $strType,
+    };
+
+    if (defined($oCacheValue))
+    {
+        $$hCache{value} = $oCacheValue;
+    }
+
+    push @{$self->{oSource}{hyCache}}, $hCache;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -579,55 +930,62 @@ sub sectionChildProcess
     # Execute a command
     if ($oChild->nameGet() eq 'host-add')
     {
-        if ($self->{bExe} && $self->isRequired($oSection) && !$oChild->paramTest('created', true))
+        if ($self->{bExe} && $self->isRequired($oSection))
         {
-            my $strName = $self->{oManifest}->variableReplace($oChild->paramGet('name'));
-            my $strUser = $self->{oManifest}->variableReplace($oChild->paramGet('user'));
-            my $strImage = $self->{oManifest}->variableReplace($oChild->paramGet('image'));
-            my $strOS = $self->{oManifest}->variableReplace($oChild->paramGet('os', false));
-            my $strMount = $self->{oManifest}->variableReplace($oChild->paramGet('mount', false));
+            my ($bCacheHit, $strCacheType, $hCacheKey, $hCacheValue) = $self->cachePop('host', $self->hostKey($oChild));
 
-            if (defined($self->{host}{$strName}))
+            if ($bCacheHit)
             {
-                confess &log(ERROR, 'cannot add host ${strName} because the host already exists');
+                $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $$hCacheValue{ip}, true);
             }
-
-            my $oHost = new pgBackRestTest::Common::HostTest($strName, $strImage, $strUser, $strOS, $strMount);
-            $self->{host}{$strName} = $oHost;
-            $self->{oManifest}->variableSet("host-${strName}-ip", $oHost->{strIP});
-
-            # Execute cleanup commands
-            foreach my $oExecute ($oChild->nodeList('execute'))
+            else
             {
-                $self->execute($oSection, $strName, $oExecute, $iDepth + 1);
-            }
-
-            $oHost->executeSimple("sh -c 'echo \"\" >> /etc/hosts\'", undef, 'root');
-            $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'", undef, 'root');
-
-            # Add all other host IPs to this host
-            foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
-            {
-                if ($strOtherHostName ne $strName)
+                if (defined($self->{host}{$$hCacheKey{name}}))
                 {
-                    my $oOtherHost = $self->{host}{$strOtherHostName};
-
-                    $oHost->executeSimple("sh -c 'echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts'", undef, 'root');
+                    confess &log(ERROR, 'cannot add host ${strName} because the host already exists');
                 }
-            }
 
-            # Add this host IP to all other hosts
-            foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
-            {
-                if ($strOtherHostName ne $strName)
+                my $oHost =
+                    new pgBackRestTest::Common::HostTest(
+                        $$hCacheKey{name}, $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os}, $$hCacheKey{mount});
+
+                $self->{host}{$$hCacheKey{name}} = $oHost;
+                $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);
+                $$hCacheValue{ip} = $oHost->{strIP};
+
+                # Execute cleanup commands
+                foreach my $oExecute ($oChild->nodeList('execute'))
                 {
-                    my $oOtherHost = $self->{host}{$strOtherHostName};
-
-                    $oOtherHost->executeSimple("sh -c 'echo \"$oHost->{strIP} ${strName}\" >> /etc/hosts'", undef, 'root');
+                    $self->execute($oSection, $$hCacheKey{name}, $oExecute, $iDepth + 1, false);
                 }
-            }
 
-            $oChild->paramSet('created', true);
+                $oHost->executeSimple("sh -c 'echo \"\" >> /etc/hosts\'", undef, 'root');
+                $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'", undef, 'root');
+
+                # Add all other host IPs to this host
+                foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
+                {
+                    if ($strOtherHostName ne $$hCacheKey{name})
+                    {
+                        my $oOtherHost = $self->{host}{$strOtherHostName};
+
+                        $oHost->executeSimple("sh -c 'echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts'", undef, 'root');
+                    }
+                }
+
+                # Add this host IP to all other hosts
+                foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
+                {
+                    if ($strOtherHostName ne $$hCacheKey{name})
+                    {
+                        my $oOtherHost = $self->{host}{$strOtherHostName};
+
+                        $oOtherHost->executeSimple("sh -c 'echo \"$oHost->{strIP} $$hCacheKey{name}\" >> /etc/hosts'", undef, 'root');
+                    }
+                }
+
+                $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
+            }
         }
     }
     # Skip children that have already been processed and error on others

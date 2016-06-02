@@ -212,12 +212,7 @@ sub containerBuild
 
     # Create temp path
     my $strTempPath = dirname(abs_path($0)) . '/.vagrant/docker';
-
-    if (!-e $strTempPath)
-    {
-        mkdir $strTempPath
-            or confess &log(ERROR, "unable to create ${strTempPath}");
-    }
+    filePathCreate($strTempPath, '0770', true, true);
 
     # Create SSH key (if it does not already exist)
     if (-e "${strTempPath}/id_rsa")

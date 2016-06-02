@@ -187,16 +187,10 @@ sub new
             {
                 $self->{oReference} =
                     new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
-
-                require BackRestDoc::Custom::DocCustomRelease;
-                BackRestDoc::Custom::DocCustomRelease->import();
-
-                $self->{oRelease} =
-                    new BackRestDoc::Custom::DocCustomRelease(${$self->{oManifest}->sourceGet('release')}{doc}, $self);
             }
         }
 
-        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference')
+        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference' && $self->{oManifest}->isBackRest())
         {
             if ($self->{strRenderOutKey} eq 'configuration')
             {
@@ -211,14 +205,20 @@ sub new
                 confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
             }
         }
-        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release')
+        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
-            $self->{oDoc} = $self->{oRelease}->docGet();
+            require BackRestDoc::Custom::DocCustomRelease;
+            BackRestDoc::Custom::DocCustomRelease->import();
+
+            $self->{oDoc} =
+                (new BackRestDoc::Custom::DocCustomRelease(${$self->{oManifest}->sourceGet('release')}{doc}, $self))->docGet();
         }
         else
         {
             $self->{oDoc} = ${$self->{oManifest}->sourceGet($self->{strRenderOutKey})}{doc};
         }
+
+        $self->{oSource} = $self->{oManifest}->sourceGet($$oRenderOut{source});
     }
 
     if (defined($self->{strRenderOutKey}))
@@ -459,7 +459,7 @@ sub processTag
         {
             if (!defined($strUrl))
             {
-                $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page');
+                $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html';
             }
 
             $strBuffer = '[' . $oTag->valueGet() . '](' . $strUrl . ')';
@@ -468,7 +468,22 @@ sub processTag
         {
             if (!defined($strUrl))
             {
-                $strUrl = $oTag->paramGet('page', false);
+                my $strPage = $self->variableReplace($oTag->paramGet('page', false));
+
+                # If this is a page URL
+                if (defined($strPage))
+                {
+                    # If the page wasn't rendered then point at the website
+                    if (!defined($self->{oManifest}->renderOutGet('html', $strPage, true)))
+                    {
+                        $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html';
+                    }
+                    # Else point locally
+                    else
+                    {
+                        $strUrl = $oTag->paramGet('page', false) . '.html';
+                    }
+                }
 
                 if (!defined($strUrl))
                 {

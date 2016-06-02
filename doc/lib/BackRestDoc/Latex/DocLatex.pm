@@ -13,6 +13,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use File::Copy;
 use POSIX qw(strftime);
+use Scalar::Util qw(blessed);
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
@@ -104,11 +105,32 @@ sub process
     {
         &log(INFO, "    render out: ${strPageId}");
 
-        my $oDocLatexSection =
-            new BackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
+        eval
+        {
+            my $oDocLatexSection =
+                new BackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
 
-        # Save the html page
-        $strLatex .= $oDocLatexSection->process();
+            # Save the html page
+            $strLatex .= $oDocLatexSection->process();
+        };
+
+        if ($@)
+        {
+            my $oMessage = $@;
+
+            # If a backrest exception then return the code - don't confess
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') && $oMessage->code() == -1)
+            {
+                my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
+                $self->{oManifest}->cacheReset($$oRenderOut{source});
+
+                my $oDocLatexSection =
+                    new BackRestDoc::Latex::DocLatexSection($self->{oManifest}, $strPageId, $self->{bExe});
+
+                # Save the html page
+                $strLatex .= $oDocLatexSection->process();
+            }
+        }
     }
 
     $strLatex .= "\n% " . ('-' x 130) . "\n% End document\n% " . ('-' x 130) . "\n\\end{document}\n";

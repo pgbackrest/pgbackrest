@@ -11,6 +11,7 @@ use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
+use JSON::PP;
 use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
@@ -53,16 +54,22 @@ sub new
         my $strOperation,
         $self->{stryKeyword},
         $self->{stryRequire},
+        $self->{stryExclude},
         my $oVariableOverride,
-        $self->{strDocPath}
+        $self->{strDocPath},
+        $self->{bDeploy},
+        $self->{bCacheOnly},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'stryKeyword'},
             {name => 'stryRequire'},
+            {name => 'stryExclude'},
             {name => 'oVariableOverride', required => false},
             {name => 'strDocPath', required => false},
+            {name => 'bDeploy', required => false},
+            {name => 'bCacheOnly', required => false},
         );
 
     # Set the base path if it was not passed in
@@ -70,6 +77,10 @@ sub new
     {
         $self->{strDocPath} = abs_path(dirname($0));
     }
+
+    # Set cache file names
+    $self->{strExeCacheLocal} = $self->{strDocPath} . "/output/exe.cache";
+    $self->{strExeCacheDeploy} = $self->{strDocPath} . "/resource/exe.cache";
 
     # Load the manifest
     $self->{oManifestXml} = new BackRestDoc::Common::Doc("$self->{strDocPath}/manifest.xml");
@@ -89,6 +100,12 @@ sub new
             {name => 'strKey', value => $strKey},
             {name => 'strSourceType', value => $strSourceType}
         );
+
+        # Skip sources in exclude list
+        if (grep(/^$strKey$/, @{$self->{stryExclude}}))
+        {
+            next;
+        }
 
         $$oSourceHash{doc} = new BackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
 
@@ -133,6 +150,12 @@ sub new
             my $oRenderOutHash = {};
             my $strKey = $oRenderOut->paramGet('key');
             my $strSource = $oRenderOut->paramGet('source', false, $strKey);
+
+            # Skip sources in exclude list
+            if (grep(/^$strSource$/, @{$self->{stryExclude}}))
+            {
+                next;
+            }
 
             $$oRenderOutHash{source} = $strSource;
 
@@ -263,7 +286,7 @@ sub variableListParse
             if ($self->keywordMatch($oVariable->paramGet('keyword', false)))
             {
                 my $strKey = $oVariable->paramGet('key');
-                my $strValue = $oVariable->valueGet();
+                my $strValue = $self->variableReplace($oVariable->valueGet());
 
                 if ($oVariable->paramTest('eval', 'y'))
                 {
@@ -526,18 +549,20 @@ sub renderOutGet
     (
         $strOperation,
         $strType,
-        $strKey
+        $strKey,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->renderOutGet', \@_,
             {name => 'strType', trace => true},
-            {name => 'strKey', trace => true}
+            {name => 'strKey', trace => true},
+            {name => 'bIgnoreMissing', default => false, trace => true},
         );
 
     # use Data::Dumper; print Dumper(${$self->{oManifest}}{render});
 
-    if (!defined(${$self->{oManifest}}{render}{$strType}{out}{$strKey}))
+    if (!defined(${$self->{oManifest}}{render}{$strType}{out}{$strKey}) && !$bIgnoreMissing)
     {
         confess &log(ERROR, "render out ${strKey} does not exist");
     }
@@ -548,6 +573,135 @@ sub renderOutGet
         $strOperation,
         {name => 'oRenderOut', value => ${$self->{oManifest}}{render}{$strType}{out}{$strKey}}
     );
+}
+
+####################################################################################################################################
+# cacheKey
+####################################################################################################################################
+sub cacheKey
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->cacheKey');
+
+    my $strKeyword = join("\n", @{$self->{stryKeyword}});
+    my $strRequire = defined($self->{stryRequire}) && @{$self->{stryRequire}} > 0 ?
+        join("\n", @{$self->{stryRequire}}) : 'all';
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strKeyword', value => $strKeyword},
+        {name => 'strRequire', value => $strRequire},
+    );
+}
+
+####################################################################################################################################
+# cacheRead
+####################################################################################################################################
+sub cacheRead
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->cacheRead');
+
+    $self->{hCache} = undef;
+
+    my $strCacheFile = $self->{bDeploy} ? $self->{strExeCacheDeploy} : $self->{strExeCacheLocal};
+
+    if (!fileExists($strCacheFile) && !$self->{bDeploy})
+    {
+        $strCacheFile = $self->{strExeCacheDeploy};
+    }
+
+    if (fileExists($strCacheFile))
+    {
+        my ($strKeyword, $strRequire) = $self->cacheKey();
+        my $oJSON = JSON::PP->new()->allow_nonref();
+        $self->{hCache} = $oJSON->decode(fileStringRead($strCacheFile));
+
+        foreach my $strSource (sort(keys(%{${$self->{oManifest}}{source}})))
+        {
+            my $hSource = ${$self->{oManifest}}{source}{$strSource};
+
+            if (defined(${$self->{hCache}}{$strKeyword}{$strRequire}{$strSource}))
+            {
+                $$hSource{hyCache} = ${$self->{hCache}}{$strKeyword}{$strRequire}{$strSource};
+                &log(DETAIL, "cache load $strSource (keyword = ${strKeyword}, require = ${strRequire})");
+            }
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# cacheWrite
+####################################################################################################################################
+sub cacheWrite
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->cacheWrite');
+
+    my $strCacheFile = $self->{bDeploy} ? $self->{strExeCacheDeploy} : $self->{strExeCacheLocal};
+    my ($strKeyword, $strRequire) = $self->cacheKey();
+
+    foreach my $strSource (sort(keys(%{${$self->{oManifest}}{source}})))
+    {
+        my $hSource = ${$self->{oManifest}}{source}{$strSource};
+
+        if (defined($$hSource{hyCache}))
+        {
+            ${$self->{hCache}}{$strKeyword}{$strRequire}{$strSource} = $$hSource{hyCache};
+            &log(DETAIL, "cache load $strSource (keyword = ${strKeyword}, require = ${strRequire})");
+        }
+    }
+
+    if (defined($self->{hCache}))
+    {
+        my $oJSON = JSON::PP->new()->canonical()->allow_nonref()->pretty();
+        fileStringWrite($strCacheFile, $oJSON->encode($self->{hCache}), false);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# cacheReset
+####################################################################################################################################
+sub cacheReset
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSource
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->cacheReset', \@_,
+            {name => 'strSource', trace => true}
+        );
+
+    if ($self->{bCacheOnly})
+    {
+        confess &log(ERROR, 'Cache reset disabled by --cache-only option');
+    }
+
+    &log(WARN, "Cache will be reset for source ${strSource} and rendering retried automatically");
+    delete(${$self->{oManifest}}{source}{$strSource}{hyCache});
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 1;

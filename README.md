@@ -72,7 +72,7 @@ pgBackRest includes support for versions down to 8.3, since older versions of Po
 
 pgBackRest strives to be easy to configure and operate:
 
-- [User guide](http://www.pgbackrest.org/user-guide.html) for Ubuntu 12.04 & 14.04 / PostgreSQL 9.4.
+- [User guide](http://www.pgbackrest.org/user-guide.html) for Debian & Ubuntu / PostgreSQL 9.4.
 - [Command reference](http://www.pgbackrest.org/command.html) for command-line operations.
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 

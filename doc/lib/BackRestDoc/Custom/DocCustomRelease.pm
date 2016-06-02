@@ -97,6 +97,30 @@ sub new
 }
 
 ####################################################################################################################################
+# currentStableVersion
+#
+# Return the current stable version.
+####################################################################################################################################
+sub currentStableVersion
+{
+    my $self = shift;
+
+    my $oDoc = $self->{oDoc};
+
+    foreach my $oRelease ($oDoc->nodeGet('release-list')->nodeList('release'))
+    {
+        my $strVersion = $oRelease->paramGet('version');
+
+        if ($strVersion !~ /dev$/)
+        {
+            return $strVersion;
+        }
+    }
+
+    confess &log(ERROR, "unable to find non-development version");
+}
+
+####################################################################################################################################
 # contributorTextGet
 #
 # Get a list of contributors for an item in text format.

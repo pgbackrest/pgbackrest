@@ -392,7 +392,7 @@ sub configProcess
         $strLatex =
             "\n\\begin\{lstlisting\}[title=\{\\textnormal{\\textbf\{${strHostName}}}:\\textnormal{\\texttt\{${strFile}}} --- " .
             $self->processText($oConfig->nodeGet('title')->textGet()) . "}]\n" .
-            ${strConfig} .
+            (defined($strConfig) ? $strConfig : '') .
             "\\end{lstlisting}\n";
     }
 

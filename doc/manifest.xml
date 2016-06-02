@@ -5,6 +5,12 @@
     <variable-list>
         <variable key="project">pgBackRest</variable>
         <variable key="version" eval="y">use pgBackRest::Version; $VERSION</variable>
+        <variable key="version-stable" eval="y">
+            use BackRestDoc::Custom::DocCustomRelease;
+
+            (new BackRestDoc::Custom::DocCustomRelease(
+                new BackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->currentStableVersion();
+        </variable>
         <variable key="project-exe">pgbackrest</variable>
         <variable key="project-url-root">/</variable>
         <variable key="postgres">PostgreSQL</variable>

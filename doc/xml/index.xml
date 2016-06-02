@@ -13,11 +13,11 @@
         <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
 
         <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
-        <variable key="backrest-page-user-guide">user-guide.html</variable>
-        <variable key="backrest-page-configuration">configuration.html</variable>
-        <variable key="backrest-page-command">command.html</variable>
-        <variable key="backrest-page-feature-backlog">backlog.html</variable>
-        <variable key="backrest-page-release">release.html</variable>
+        <variable key="backrest-page-user-guide">user-guide</variable>
+        <variable key="backrest-page-configuration">configuration</variable>
+        <variable key="backrest-page-command">command</variable>
+        <variable key="backrest-page-feature-backlog">backlog</variable>
+        <variable key="backrest-page-release">release</variable>
 
         <variable key="crunchy-url-base">http://www.crunchydata.com</variable>
         <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
@@ -33,7 +33,7 @@
 
         <p>Instead of relying on traditional backup tools like tar and rsync, <backrest/> implements all backup features internally and uses a custom protocol for communicating with remote systems.  Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges.  The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.</p>
 
-        <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version]}">v{[version]}</link> is the current stable release.  Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
+        <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release.  Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
     </section>
 
     <section id="features">
@@ -126,7 +126,7 @@
         <p><backrest/> strives to be easy to configure and operate:</p>
 
         <list>
-          <list-item><link page="{[backrest-page-user-guide]}">User guide</link> for Ubuntu 12.04 &amp; 14.04 / <postgres/> 9.4.</list-item>
+          <list-item><link page="{[backrest-page-user-guide]}">User guide</link> for {[user-guide-subtitle]} / <postgres/> 9.4.</list-item>
           <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
           <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
       </list>

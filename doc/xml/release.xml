@@ -138,6 +138,10 @@
 
                         <p>Added man page generation.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added an execution cache so that documentation can be generated without setting up the full container environment.  This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
+                    </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>
