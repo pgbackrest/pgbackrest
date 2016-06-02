@@ -474,9 +474,9 @@
                     <config-key id="db-path" name="Database Path">
                         <summary>Cluster data directory.</summary>
 
-                        <text>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>.  Even though this value can be read from <file>postgresql.conf</file> or the database cluster it is prudent to set it in case those resources are not available during a restore or cold backup scenario.
+                        <text>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>.  Even though this value can be read from <file>postgresql.conf</file> or the database cluster it is prudent to set it in case those resources are not available during a restore or offline backup scenario.
 
-                        The <setting>db-path</setting> option is tested against the value reported by <postgres/> on every hot backup so it should always be current.</text>
+                        The <setting>db-path</setting> option is tested against the value reported by <postgres/> on every online backup so it should always be current.</text>
 
                         <example>/data/db</example>
                     </config-key>
@@ -557,18 +557,18 @@
 
                     <!-- OPERATION - BACKUP COMMAND - ONLINE OPTION -->
                     <option id="online" name="Online">
-                        <summary>Perform hot backup.</summary>
+                        <summary>Perform an online backup.</summary>
 
                         <text>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
 
-                        The purpose of this option is to allow cold backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
+                        The purpose of this option is to allow offline backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
 
                         <example>n</example>
                     </option>
 
                     <!-- OPERATION - BACKUP COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
-                        <summary>Force a cold backup.</summary>
+                        <summary>Force an offline backup.</summary>
 
                         <text>When used with <br-option>--no-start-stop</br-option> a backup will be run even if <backrest/> thinks that <postgres/> is running.  <b>This option should be used with extreme care as it will likely result in a bad backup.</b>
 

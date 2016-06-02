@@ -129,6 +129,15 @@
                     <release-item>
                         <p>Release notes are now broken into sections so that bugs, features, and refactors are clearly delineated.  An <quote>Additional Notes</quote> section has been added for changes to documentation and the test suite that do not affect the core code.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Added man page generation.</p>
+                    </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>

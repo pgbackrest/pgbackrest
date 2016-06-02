@@ -160,12 +160,13 @@ if (@stryOutput == 0)
     if ($oManifest->isBackRest())
     {
         push(@stryOutput, 'help');
+        push(@stryOutput, 'man');
     }
 }
 
 for my $strOutput (@stryOutput)
 {
-    if (!(($strOutput eq 'help' || $strOutput eq 'markdown') && $oManifest->isBackRest()))
+    if (!(($strOutput eq 'help' || $strOutput eq 'man') && $oManifest->isBackRest()))
     {
         $oManifest->renderGet($strOutput);
     }
@@ -185,14 +186,23 @@ for my $strOutput (@stryOutput)
 
         $oMarkdown->process();
     }
-    elsif ($strOutput eq 'help' && $oManifest->isBackRest())
+    elsif (($strOutput eq 'help' || $strOutput eq 'man') && $oManifest->isBackRest())
     {
         # Generate the command-line help
         my $oRender = new BackRestDoc::Common::DocRender('text', $oManifest);
         my $oDocConfig =
             new BackRestDoc::Common::DocConfig(
                 new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
-        $oDocConfig->helpDataWrite($oManifest);
+
+        if ($strOutput eq 'help')
+        {
+            $oDocConfig->helpDataWrite($oManifest);
+        }
+        else
+        {
+            filePathCreate("${strBasePath}/output/man", '0770', true, true);
+            fileStringWrite("${strBasePath}/output/man/" . lc(BACKREST_NAME) . '.1.txt', $oDocConfig->manGet($oManifest), false);
+        }
     }
     elsif ($strOutput eq 'html')
     {

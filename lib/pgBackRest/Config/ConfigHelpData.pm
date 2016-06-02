@@ -238,10 +238,10 @@ my $oConfigHelpData =
             description =>
                 "This should be the same as the data_directory setting in postgresql.conf. Even though this value can be read " .
                     "from postgresql.conf or the database cluster it is prudent to set it in case those resources are not " .
-                    "available during a restore or cold backup scenario.\n" .
+                    "available during a restore or offline backup scenario.\n" .
                 "\n" .
-                "The db-path option is tested against the value reported by PostgreSQL on every hot backup so it should always " .
-                    "be current."
+                "The db-path option is tested against the value reported by PostgreSQL on every online backup so it should " .
+                    "always be current."
         },
 
         # DB-PORT Option Help
@@ -753,7 +753,7 @@ my $oConfigHelpData =
                 'force' =>
                 {
                     summary =>
-                        "Force a cold backup.",
+                        "Force an offline backup.",
                     description =>
                         "When used with --no-start-stop a backup will be run even if pgBackRest thinks that PostgreSQL is " .
                             "running. This option should be used with extreme care as it will likely result in a bad backup.\n" .
@@ -778,13 +778,13 @@ my $oConfigHelpData =
                 'online' =>
                 {
                     summary =>
-                        "Perform hot backup.",
+                        "Perform an online backup.",
                     description =>
                         "Specifying --no-online prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the " .
                             "database cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will " .
                             "generate an error if it is not.\n" .
                         "\n" .
-                        "The purpose of this option is to allow cold backups. The pg_xlog directory is copied as-is and " .
+                        "The purpose of this option is to allow offline backups. The pg_xlog directory is copied as-is and " .
                             "archive-check is automatically disabled for the backup."
                 },
 
