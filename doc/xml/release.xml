@@ -84,6 +84,20 @@
     </contributor-list>
 
     <release-list>
+         <release date="XXXX-XX-XX" version="1.03dev" title="UNDER DEVELOPMENT">
+             <release-doc-list>
+                 <release-refactor-list>
+                    <release-item>
+                        <p>Recommended install location for <backrest/> modules is now <path>/usr/share/perl5</path> since <path>/usr/lib/perl5</path> has been removed from the search path in newer versions of Perl.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added instructions for removing prior versions of <backrest/>.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+         </release>
+
          <release date="2016-06-02" version="1.02" title="Bug Fix for Perl 5.22">
              <release-core-list>
                  <release-bug-list>

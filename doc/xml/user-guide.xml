@@ -11,8 +11,7 @@
         <variable key="user-guide-os" keyword="default">Debian/Ubuntu</variable>
         <variable key="user-guide-os" keyword="co6">RHEL/CentOS 6</variable>
 
-        <variable key="perl-lib-path" keyword="default">/usr/lib/perl5</variable>
-        <variable key="perl-lib-path" keyword="co6">/usr/share/perl5</variable>
+        <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
 
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
@@ -191,6 +190,33 @@
                     tar zx -C ~</exe-cmd>
             </execute>
         </execute-list>
+
+        <p>If <backrest/> has been installed before it's best to be sure that no prior copies of it are still installed.  Depending on how old the version of pgBackRest is it may have been installed in a few different locations.  The following commands will remove all prior versions of pgBackRest.</p>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Remove prior <backrest/> installations</title>
+
+            <execute user="root">
+                <exe-cmd>rm -f /usr/bin/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>rm -f /usr/bin/pg_backrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>rm -rf /usr/lib/perl5/BackRest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>rm -rf {[perl-lib-path]}/BackRest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>rm -rf /usr/lib/perl5/pgBackRest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>rm -rf {[perl-lib-path]}/pgBackRest</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>The new version can now be installed.</p>
 
         <execute-list host="{[host-db-master]}">
             <title>Install <backrest/></title>
