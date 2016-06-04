@@ -175,20 +175,15 @@ sub new
     if (defined($self->{strRenderOutKey}))
     {
         # Copy page data to self
-        my $oRenderOut = $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
+        my $oRenderOut =
+            $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
 
-        # Determine if this is a custom source which signals special handling for different projects.
-        my $strSourceType = ${$self->{oManifest}->sourceGet('reference')}{strSourceType};
-
-        if (defined($strSourceType) && $strSourceType eq 'custom')
-        {
-            # Get the reference and release xml if this is the backrest project
+        # If these are the backrest docs then load the reference
             if ($self->{oManifest}->isBackRest())
             {
                 $self->{oReference} =
                     new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
             }
-        }
 
         if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference' && $self->{oManifest}->isBackRest())
         {

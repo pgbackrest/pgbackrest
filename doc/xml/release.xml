@@ -90,6 +90,10 @@
                     <release-item>
                         <p>Fixed DTD search path that did not work properly when <setting>--doc-path</setting> was used.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed <backrest/>-specific xml that was loaded for non-<backrest/> projects.</p>
+                    </release-item>
                 </release-bug-list>
 
                  <release-feature-list>
