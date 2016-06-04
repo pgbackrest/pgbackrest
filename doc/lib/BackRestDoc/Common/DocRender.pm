@@ -179,11 +179,11 @@ sub new
             $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
 
         # If these are the backrest docs then load the reference
-            if ($self->{oManifest}->isBackRest())
-            {
-                $self->{oReference} =
-                    new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
-            }
+        if ($self->{oManifest}->isBackRest())
+        {
+            $self->{oReference} =
+                new BackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('reference')}{doc}, $self);
+        }
 
         if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'reference' && $self->{oManifest}->isBackRest())
         {
@@ -450,65 +450,79 @@ sub processTag
     {
         my $strUrl = $oTag->paramGet('url', false);
 
-        if ($strType eq 'markdown')
+        if (!defined($strUrl))
         {
-            if (!defined($strUrl))
-            {
-                $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html';
-            }
+            my $strPage = $self->variableReplace($oTag->paramGet('page', false));
 
-            $strBuffer = '[' . $oTag->valueGet() . '](' . $strUrl . ')';
-        }
-        elsif ($strType eq 'html')
-        {
-            if (!defined($strUrl))
+            # If this is a page URL
+            if (defined($strPage))
             {
-                my $strPage = $self->variableReplace($oTag->paramGet('page', false));
-
-                # If this is a page URL
-                if (defined($strPage))
+                # If the page wasn't rendered then point at the website
+                if (!defined($self->{oManifest}->renderOutGet($strType, $strPage, true)))
                 {
-                    # If the page wasn't rendered then point at the website
-                    if (!defined($self->{oManifest}->renderOutGet('html', $strPage, true)))
+                    $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html';
+                }
+                # Else point locally
+                else
+                {
+                    if ($strType eq 'html' || $strType eq 'markdown')
                     {
-                        $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html';
+                        $strUrl =
+                            $oTag->paramGet('page', false) . '.' .
+                            ($strType eq 'html' ? $strType : '.md');
                     }
-                    # Else point locally
                     else
                     {
-                        $strUrl = $oTag->paramGet('page', false) . '.html';
+                        confess &log(ERROR, "page links not supported for type ${strType}, value '" . $oTag->valueGet() . "'");
                     }
                 }
-
-                if (!defined($strUrl))
-                {
-                    $strUrl = '#' . substr($oTag->paramGet('section'), 1);
-                }
-            }
-
-            $strBuffer = '<a href="' . $strUrl . '">' . $oTag->valueGet() . '</a>';
-        }
-        elsif ($strType eq 'latex')
-        {
-            if (!defined($strUrl))
-            {
-                $strUrl = $oTag->paramGet('page', false);
-
-                if (!defined($strUrl))
-                {
-                    $strUrl = $oTag->paramGet('section');
-                }
-
-                $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
             }
             else
             {
+                my $strSection = $oTag->paramGet('section');
+
+                if (!defined($strSection))
+                {
+                    confess &log(ERROR, "link with value '" . $oTag->valueGet() . "' must defined url, page, or section");
+                }
+
+                if ($strType eq 'html')
+                {
+                    $strUrl = '#' . substr($oTag->paramGet('section'), 1);
+                }
+                elsif ($strType eq 'latex')
+                {
+                    $strUrl = $strSection;
+                }
+                else
+                {
+                    confess &log(ERROR, "section links not supported for type ${strType}, value '" . $oTag->valueGet() . "'");
+                }
+            }
+        }
+
+        if ($strType eq 'html')
+        {
+            $strBuffer = '<a href="' . $strUrl . '">' . $oTag->valueGet() . '</a>';
+        }
+        elsif ($strType eq 'markdown')
+        {
+            $strBuffer = '[' . $oTag->valueGet() . '](' . $strUrl . ')';
+        }
+        elsif ($strType eq 'latex')
+        {
+            if ($oTag->paramTest('url'))
+            {
                 $strBuffer = "\\href{$strUrl}{" . $oTag->valueGet() . "}";
+            }
+            else
+            {
+                $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
             }
         }
         else
         {
-            confess "tag link not valid for type ${strType}";
+            confess "'link' tag not valid for type ${strType}";
         }
     }
     else
@@ -518,7 +532,7 @@ sub processTag
 
         if (!defined($strStart) || !defined($strStop))
         {
-            confess "invalid type ${strType} or tag ${strTag}";
+            confess &log(ERROR, "invalid type ${strType} or tag ${strTag}");
         }
 
         $strBuffer .= $strStart;

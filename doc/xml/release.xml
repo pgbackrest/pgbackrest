@@ -110,6 +110,10 @@
                     <release-item>
                         <p>Added instructions for removing prior versions of <backrest/>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>New, consolidated implementation for link rendering.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
          </release>
