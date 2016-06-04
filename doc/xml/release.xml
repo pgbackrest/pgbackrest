@@ -114,6 +114,10 @@
                     <release-item>
                         <p>New, consolidated implementation for link rendering.</p>
                     </release-item>
+
+                    <release-item>
+                        <p><postgres/> version is now a variable to allow multi-version documentation.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
          </release>

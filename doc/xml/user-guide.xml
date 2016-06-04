@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="User Guide" subtitle="{[user-guide-subtitle]} / {[postgres]} 9.4">
+<doc title="User Guide" subtitle="{[user-guide-subtitle]} / {[postgres]} {[pg-version]}">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
     <variable-list>
@@ -10,6 +10,8 @@
 
         <variable key="user-guide-os" keyword="default">Debian/Ubuntu</variable>
         <variable key="user-guide-os" keyword="co6">RHEL/CentOS 6</variable>
+
+        <variable key="pg-version" keyword="default">9.4</variable>
 
         <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
@@ -21,21 +23,21 @@
         <variable key="db-path-default" keyword="default">/var/lib/postgresql/[version]/[cluster]</variable>
         <variable key="db-path-default" keyword="co6">/var/lib/pgsql/[version]/data</variable>
 
-        <variable key="db-path" keyword="default">/var/lib/postgresql/9.4/{[postgres-cluster-demo]}</variable>
-        <variable key="db-path" keyword="co6">/var/lib/pgsql/9.4/data</variable>
+        <variable key="db-path" keyword="default">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
+        <variable key="db-path" keyword="co6">/var/lib/pgsql/{[pg-version]}/data</variable>
 
-        <variable key="postgres-config-demo" keyword="default">/etc/postgresql/9.4/{[postgres-cluster-demo]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[db-path]}/postgresql.conf</variable>
 
-        <variable key="postgres-hba-demo" keyword="default">/etc/postgresql/9.4/{[postgres-cluster-demo]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
         <variable key="postgres-hba-demo" keyword="co6">{[db-path]}/pg_hba.conf</variable>
 
         <variable key="postgres-pgpass">/home/postgres/.pgpass</variable>
 
-        <variable key="postgres-log-demo" keyword="default">/var/log/postgresql/postgresql-9.4-{[postgres-cluster-demo]}.log</variable>
+        <variable key="postgres-log-demo" keyword="default">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
         <variable key="postgres-log-demo" keyword="co6">{[db-path]}/pg_log/postgresql.log</variable>
 
-        <variable key="postgres-log-pgstartup-demo" keyword="co6">/var/lib/pgsql/9.4/pgstartup.log</variable>
+        <variable key="postgres-log-pgstartup-demo" keyword="co6">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
         <variable key="postgres-recovery-demo" keyword="default">{[db-path]}/recovery.conf</variable>
         <variable key="postgres-recovery-demo" keyword="co6">{[db-path]}/recovery.conf</variable>
@@ -72,20 +74,20 @@
         <!-- Database cluster commmands -->
         <variable key="db-cluster-wait">sleep 1</variable>
 
-        <variable key="db-cluster-create" keyword="default">pg_createcluster 9.4 {[postgres-cluster-demo]}</variable>
-        <variable key="db-cluster-create" keyword="co6">service postgresql-9.4 initdb</variable>
+        <variable key="db-cluster-create" keyword="default">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
+        <variable key="db-cluster-create" keyword="co6">service postgresql-{[pg-version]} initdb</variable>
 
-        <variable key="db-cluster-start" keyword="default">pg_ctlcluster 9.4 {[postgres-cluster-demo]} start</variable>
-        <variable key="db-cluster-start" keyword="co6">service postgresql-9.4 start</variable>
+        <variable key="db-cluster-start" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
+        <variable key="db-cluster-start" keyword="co6">service postgresql-{[pg-version]} start</variable>
 
-        <variable key="db-cluster-stop" keyword="default">pg_ctlcluster 9.4 {[postgres-cluster-demo]} stop</variable>
-        <variable key="db-cluster-stop" keyword="co6">service postgresql-9.4 stop</variable>
+        <variable key="db-cluster-stop" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
+        <variable key="db-cluster-stop" keyword="co6">service postgresql-{[pg-version]} stop</variable>
 
-        <variable key="db-cluster-restart" keyword="default">pg_ctlcluster 9.4 {[postgres-cluster-demo]} restart</variable>
-        <variable key="db-cluster-restart" keyword="co6">service postgresql-9.4 restart</variable>
+        <variable key="db-cluster-restart" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} restart</variable>
+        <variable key="db-cluster-restart" keyword="co6">service postgresql-{[pg-version]} restart</variable>
 
-        <variable key="db-cluster-reload" keyword="default">pg_ctlcluster 9.4 {[postgres-cluster-demo]} reload</variable>
-        <variable key="db-cluster-reload" keyword="co6">service postgresql-9.4 reload</variable>
+        <variable key="db-cluster-reload" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} reload</variable>
+        <variable key="db-cluster-reload" keyword="co6">service postgresql-{[pg-version]} reload</variable>
     </variable-list>
 
     <!-- SECTION => INTRODUCTION -->
@@ -94,9 +96,9 @@
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
-        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> 9.4, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. Note that only 64-bit distributions are currently supported due to 64-bit operations in the Perl code.  The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.
+        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. Note that only 64-bit distributions are currently supported due to 64-bit operations in the Perl code.  The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the locations to install Perl libraries and executables may vary.
 
-        Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/9.4/static/index.html'>Manual</link>.</p>
+        Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
 
         <p>A somewhat novel approach is taken to documentation in this user guide.  Each command is run on a virtual machine when the documentation is built from the XML source.  This means you can have a high confidence that the commands work correctly in the order presented.  Output is captured and displayed below the command when appropriate.  If the output is not included it is because it was deemed not relevant or was considered a distraction from the narrative.</p>
 
@@ -406,7 +408,7 @@
 
             <execute-list host="{[host-db-master]}">
                 <execute output="y">
-                    <exe-cmd>ls -lahR {[backrest-repo-path]}/archive/{[postgres-cluster-demo]}/9.4-1</exe-cmd>
+                    <exe-cmd>ls -lahR {[backrest-repo-path]}/archive/{[postgres-cluster-demo]}/{[pg-version]}-1</exe-cmd>
                     <exe-retry/>
                 </execute>
             </execute-list> -->
