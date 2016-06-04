@@ -156,24 +156,26 @@
             </execute>
         </host-add>
 
-        <p keyword="default"><backrest/> is written in Perl which is included with {[user-guide-os]} by default.  A few additional modules are required which are all available as packages.</p>
+        <p keyword="default"><backrest/> is written in Perl which is included with {[user-guide-os]} by default.  The <id>DBD::Pg</id> module must also be installed.</p>
 
         <execute-list host="{[host-db-master]}" keyword="default">
-            <title>Install required Perl packages</title>
+            <title>Install the <id>DBD::Pg</id> module</title>
 
             <execute user="root">
-                <exe-cmd>apt-get install libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl</exe-cmd>
+                <exe-cmd>apt-get install libdbd-pg-perl</exe-cmd>
+                <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
         </execute-list>
 
-        <p keyword="co6"><backrest/> is written in Perl which is not included with {[user-guide-os]} by default, however all required modules are all available as standard packages.</p>
+        <p keyword="co6"><backrest/> is written in Perl which is not included with {[user-guide-os]} by default, however all required modules are available as standard packages.</p>
 
         <execute-list host="{[host-db-master]}" keyword="co6">
             <title>Install required Perl packages</title>
 
             <execute user="root">
-                <exe-cmd>yum -y install perl perl-Time-HiRes perl-parent perl-JSON
+                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
                     perl-Digest-SHA perl-DBD-Pg</exe-cmd>
+                <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
         </execute-list>
 
@@ -1397,8 +1399,7 @@
             <host-add name="{[host-db-standby]}" user="{[host-db-standby-user]}" image="{[host-db-standby-image]}" os="{[host-os]}" mount="{[host-db-standby-mount]}">
                 <!-- Install packages -->
                 <execute user="root" keyword="default">
-                    <exe-cmd>apt-get -y install libdbd-pg-perl libdbi-perl
-                        libnet-daemon-perl libplrpc-perl</exe-cmd>
+                    <exe-cmd>apt-get -y install libdbd-pg-perl</exe-cmd>
                 </execute>
 
                 <execute user="root" keyword="co6">

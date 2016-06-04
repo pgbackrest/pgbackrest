@@ -86,6 +86,12 @@
     <release-list>
          <release date="XXXX-XX-XX" version="1.03dev" title="UNDER DEVELOPMENT">
              <release-doc-list>
+                 <release-feature-list>
+                    <release-item>
+                        <p>Allow hidden options to be added to a command.  This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
+                    </release-item>
+                </release-feature-list>
+
                  <release-refactor-list>
                     <release-item>
                         <p>Recommended install location for <backrest/> modules is now <path>/usr/share/perl5</path> since <path>/usr/lib/perl5</path> has been removed from the search path in newer versions of Perl.</p>

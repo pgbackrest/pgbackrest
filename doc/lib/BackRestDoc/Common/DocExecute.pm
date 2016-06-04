@@ -115,6 +115,11 @@ sub executeKey
         output => JSON::PP::false,
     };
 
+    if (defined($oCommand->fieldGet('exe-cmd-extra', false)))
+    {
+        $$hCacheKey{'cmd-extra'} = $oCommand->fieldGet('exe-cmd-extra');
+    }
+
     if (defined($oCommand->paramGet('err-expect', false)))
     {
         $$hCacheKey{'err-expect'} = $oCommand->paramGet('err-expect');
@@ -211,10 +216,11 @@ sub execute
                     confess &log(ERROR, "cannot execute on host ${strHostName} because the host does not exist");
                 }
 
-                my $oExec = $oHost->execute($strCommand,
-                                            {iExpectedExitStatus => $$hCacheKey{'err-expect'},
-                                             bSuppressError => $oCommand->paramTest('err-suppress', 'y'),
-                                             iRetrySeconds => $oCommand->paramGet('retry', false)});
+                my $oExec = $oHost->execute(
+                    $strCommand . (defined($$hCacheKey{'cmd-extra'}) ? ' ' . $$hCacheKey{'cmd-extra'} : ''),
+                    {iExpectedExitStatus => $$hCacheKey{'err-expect'},
+                     bSuppressError => $oCommand->paramTest('err-suppress', 'y'),
+                     iRetrySeconds => $oCommand->paramGet('retry', false)});
                 $oExec->begin();
                 $oExec->end();
 
