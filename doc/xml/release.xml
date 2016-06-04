@@ -86,6 +86,12 @@
     <release-list>
          <release date="XXXX-XX-XX" version="1.03dev" title="UNDER DEVELOPMENT">
              <release-doc-list>
+                 <release-bug-list>
+                    <release-item>
+                        <p>Fixed DTD search path that did not work properly when <setting>--doc-path</setting> was used.</p>
+                    </release-item>
+                </release-bug-list>
+
                  <release-feature-list>
                     <release-item>
                         <p>Allow hidden options to be added to a command.  This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>

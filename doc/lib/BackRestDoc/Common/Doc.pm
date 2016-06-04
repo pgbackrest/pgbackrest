@@ -53,7 +53,7 @@ sub new
         else
         {
             my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-            $oParser->set_sgml_search_path(dirname($self->{strFileName}) . '/dtd', dirname($self->{strFileName}) . '/xml/dtd');
+            $oParser->set_sgml_search_path(dirname($0) . '/xml/dtd');
 
             my $oTree;
 
