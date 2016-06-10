@@ -118,6 +118,10 @@
                     <release-item>
                         <p><postgres/> version is now a variable to allow multi-version documentation.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added <cmd>check</cmd> command to for the ability to test that WAL archiving is working and that the database is configured correctly for backups.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
          </release>

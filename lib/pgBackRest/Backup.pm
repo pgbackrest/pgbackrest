@@ -855,7 +855,7 @@ sub process
         # Create the modification time for the archive logs
         my $lModificationTime = time();
 
-        # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
+        # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new pgBackRest::Archive();
         my $strArchiveId = $oArchive->getCheck($self->{oFile});
@@ -863,7 +863,7 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, false, 600);
+            my $strArchiveFile = $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {

@@ -90,6 +90,17 @@ my $oConfigHelpData =
                     "\${stanza} is the backup stanza."
         },
 
+        # ARCHIVE-TIMEOUT Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'archive-timeout' =>
+        {
+            section => 'general',
+            summary =>
+                "Achiving timeout.",
+            description =>
+                "Set the timeout, in seconds, for waiting for archive logs. Default is 60 seconds."
+        },
+
         # BACKUP-HOST Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-host' =>
@@ -277,10 +288,10 @@ my $oConfigHelpData =
             summary =>
                 "Database query timeout.",
             description =>
-                "Sets the timeout for queries against the database. This includes the pg_start_backup() and pg_stop_backup() " .
-                    "functions which can each take a substantial amount of time. Because of this the timeout should be kept " .
-                    "high unless you know that these functions will return quickly (i.e. if you have set startfast=y and you " .
-                    "know that the database cluster will not generate many WAL segments during the backup)."
+                "Sets the timeout, in seconds, for queries against the database. This includes the pg_start_backup() and " .
+                    "pg_stop_backup() functions which can each take a substantial amount of time. Because of this the timeout " .
+                    "should be kept high unless you know that these functions will return quickly (i.e. if you have set " .
+                    "startfast=y and you know that the database cluster will not generate many WAL segments during the backup)."
         },
 
         # DB-USER Option Help
@@ -734,6 +745,7 @@ my $oConfigHelpData =
             {
                 'archive-check' => 'section',
                 'archive-copy' => 'section',
+                'archive-timeout' => 'section',
                 'buffer-size' => 'section',
                 'cmd-remote' => 'section',
                 'compress' => 'section',
@@ -814,6 +826,39 @@ my $oConfigHelpData =
                         "* incr - incremental from the last successful backup.\n" .
                         "* diff - like an incremental backup but always based on the last full backup."
                 }
+            }
+        },
+
+        # CHECK Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'check' =>
+        {
+            summary =>
+                "Test that WAL archiving is configured.",
+            description =>
+                "Execute pg_switch_xlog and check that the xlog makes it to the archive.",
+
+            option =>
+            {
+                'archive-timeout' => 'section',
+                'backup-host' => 'section',
+                'backup-user' => 'section',
+                'buffer-size' => 'section',
+                'cmd-remote' => 'section',
+                'compress-level' => 'section',
+                'compress-level-network' => 'section',
+                'config' => 'default',
+                'config-remote' => 'section',
+                'db-path' => 'section',
+                'db-port' => 'section',
+                'db-socket-path' => 'section',
+                'db-timeout' => 'section',
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
+                'log-path' => 'section',
+                'neutral-umask' => 'section',
+                'repo-path' => 'section',
+                'stanza' => 'default'
             }
         },
 

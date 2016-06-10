@@ -72,8 +72,16 @@
             <config-section id="general" name="General">
                 <text>The <setting>general</setting> section defines settings that are shared between multiple operations.</text>
 
-                <!-- CONFIG - GENERAL SECTION - BUFFER-SIZE KEY -->
+                <!-- CONFIG - GENERAL SECTION - ARCHIVE-TIMEOUT -->
                 <config-key-list>
+                    <config-key id="archive-timeout" name="Archive Timeout">
+                        <summary>Achiving timeout.</summary>
+
+                        <text>Set the timeout, in seconds, for waiting for archive logs. Default is 60 seconds.</text>
+
+                        <example>60</example>
+                    </config-key>
+
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for file operations.</summary>
 
@@ -125,7 +133,7 @@
                     <config-key id="db-timeout" name="Database Timeout">
                         <summary>Database query timeout.</summary>
 
-                        <text>Sets the timeout for queries against the database.  This includes the <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set <setting>startfast=y</setting> and you know that the database cluster will not generate many WAL segments during the backup).</text>
+                        <text>Sets the timeout, in seconds, for queries against the database.  This includes the <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> functions which can each take a substantial amount of time.  Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set <setting>startfast=y</setting> and you know that the database cluster will not generate many WAL segments during the backup).</text>
 
                         <example>600</example>
                     </config-key>
@@ -203,7 +211,6 @@
             <config-section id="backup" name="Backup">
                 <text>The <setting>backup</setting> section defines settings related to backup.</text>
 
-                <!-- CONFIG - BACKUP SECTION - BACKUP-HOST KEY -->
                 <config-key-list>
                     <!-- CONFIG - BACKUP SECTION - ARCHIVE-CHECK -->
                     <config-key id="archive-check" name="Check Archive">
@@ -225,6 +232,7 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- CONFIG - BACKUP SECTION - BACKUP-HOST KEY -->
                     <config-key id="backup-host" name="Backup Host">
                         <summary>Backup host when operating remotely via SSH.</summary>
 
@@ -616,6 +624,22 @@
                             {[backrest-exe]} --stanza=db archive-get %f %p
                         </code-block>
                         Retrieves a WAL segment from the repository.  This command is used in <file>recovery.conf</file> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
+
+            <!-- OPERATION - CHECK COMMAND -->
+            <command id="check" name="Check">
+                <summary>Check the configuration.</summary>
+
+                <text>Validates that the database is configured correctly for backups. This will alert the user to any misconfiguration, particularly of archiving, that would result in the inability of a backup to complete (e.g waiting at the end until it times out because it could not find the WAL file). This command can be run on the database server and backup host. To ensure archiving is configured properly, this command will rotate the xlog.</text>
+
+                <command-example-list>
+                    <command-example>
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db check
+                        </code-block>
+                        </text>
                     </command-example>
                 </command-example-list>
             </command>

@@ -32,14 +32,6 @@
             <p>If <postgres/> crashes during a backup it may not be able to recover if the backup label is present. Copy and delete right after start_backup(). Stop backup will want to delete it so it might be necessary to copy it back or at least touch a file that <postgres/> can delete. Check after the backup is complete to make sure it's really gone.</p>
         </section>
 
-        <section id="wal-archive-working">
-            <title>Ability to test that WAL archiving is working</title>
-
-            <p><link url="{[github-url-issues]}/149">Github Issue</link></p>
-
-            <p>Add a new command, archive-test, that will execute pg_switch_xlog and check that the xlog makes it to the archive.</p>
-        </section>
-
         <section id="processes-vs-threads">
             <title>Abandon threads and go to processes</title>
 
