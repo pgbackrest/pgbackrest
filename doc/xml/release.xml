@@ -100,6 +100,9 @@
                     <release-item>
                         <p>Allow hidden options to be added to a command.  This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
                     </release-item>
+                    <release-item>
+                        <p>Update TeX Live to 2016 version.</p>
+                    </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>
