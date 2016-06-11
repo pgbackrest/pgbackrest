@@ -1714,10 +1714,12 @@ sub BackRestTestBackup_Test
                                                 undef);                        # compress-async
             }
 
-            # Create the cluster
+            # Create the cluster.
             if ($bCreate)
             {
-                BackRestTestBackup_ClusterCreate();
+                # For the 'fail on missing archive.info file' test, the arhive.info file must not be found so set archive
+                # invalid.
+                BackRestTestBackup_ClusterCreate(undef, undef, undef, undef, true);
                 $bCreate = false;
             }
 
@@ -1754,16 +1756,62 @@ sub BackRestTestBackup_Test
             # Test invalid archive command
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
-            $strComment = 'fail on invalid archive_command';
+
+            # NOTE: This must run before the success test since that will create the archive.info file
+            $strComment = 'fail on missing archive.info file';
+            BackRestTestBackup_Check($strStanza, $bRemote, 0, $strComment, ERROR_FILE_MISSING);
+
+            # Clean up the archive_timeout error from the postgresql log by stopping the cluster and removing the log file
+            # before running the next test
+            BackRestTestBackup_ClusterStop(undef, undef, true);
+            BackRestTestCommon_FileRemove(BackRestTestCommon_DbCommonPathGet() . '/postgresql.log');
 
             # Check archive_command_not_set error
-            BackRestTestBackup_ClusterStop();
+            $strComment = 'fail on invalid archive_command';
             BackRestTestBackup_ClusterStart(undef, undef, undef, false);
 
             BackRestTestBackup_Backup($strType, $strStanza, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
-            # Reset the cluster to a normal state so the next test will work
+            BackRestTestBackup_Check($strStanza, $bRemote, 0.1, $strComment, ERROR_ARCHIVE_COMMAND_INVALID);
+            # If running the remote tests then also need to run check locally
+            if ($bRemote)
+            {
+                BackRestTestBackup_Check($strStanza, false, 0.1, $strComment, ERROR_ARCHIVE_COMMAND_INVALID);
+            }
+
+            # Clean up the archive_command error from the postgresql log by stopping the cluster and removing the log file
+            # before running the next test
+            BackRestTestBackup_ClusterStop(undef, undef, true);
+            BackRestTestCommon_FileRemove(BackRestTestCommon_DbCommonPathGet() . '/postgresql.log');
+
+            # Providing a sufficient archive-timeout, verify that the check command runs successfully.
+            $strComment = 'verify success';
+            BackRestTestBackup_ClusterStart();
+            BackRestTestBackup_Check($strStanza, $bRemote, 5, $strComment, 0);
+
+            # If running the remote tests then also need to run check locally
+            if ($bRemote)
+            {
+                BackRestTestBackup_Check($strStanza, false, 5, $strComment, 0);
+            }
+
+            # Check archive_timeout error
+            $strComment = 'fail on archive timeout';
             BackRestTestBackup_ClusterStop();
+            BackRestTestBackup_ClusterStart(undef, undef, undef, undef, undef, true);
+            BackRestTestBackup_Check($strStanza, $bRemote, 0.1, $strComment, ERROR_ARCHIVE_TIMEOUT);
+            # If running the remote tests then also need to run check locally
+            if ($bRemote)
+            {
+                BackRestTestBackup_Check($strStanza, false, 0.1, $strComment, ERROR_ARCHIVE_TIMEOUT);
+            }
+
+            # Clean up the archive_timeout error from the postgresql log by stopping the cluster and removing the log file
+            # before running the next test
+            BackRestTestBackup_ClusterStop(undef, undef, true);
+            BackRestTestCommon_FileRemove(BackRestTestCommon_DbCommonPathGet() . '/postgresql.log');
+
+            # Reset the cluster to a normal state so the next test will work
             BackRestTestBackup_ClusterStart();
 
             # Full backup

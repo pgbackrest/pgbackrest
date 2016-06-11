@@ -292,6 +292,7 @@ sub BackRestTestBackup_ClusterStart
     my $bHotStandby = shift;
     my $bArchive = shift;
     my $bArchiveAlways = shift;
+    my $bArchiveInvalid = shift;
 
     # Set default
     $iPort = defined($iPort) ? $iPort : BackRestTestCommon_DbPortGet();
@@ -307,7 +308,8 @@ sub BackRestTestBackup_ClusterStart
     }
 
     # Create the archive command
-    my $strArchive = BackRestTestCommon_CommandMainAbsGet() . ' --stanza=' . BackRestTestCommon_StanzaGet() .
+    my $strArchive = BackRestTestCommon_CommandMainAbsGet() . ' --stanza=' .
+                     (defined($bArchiveInvalid) ? 'bogus' : BackRestTestCommon_StanzaGet()) .
                      ' --config=' . BackRestTestCommon_DbPathGet() . '/pgbackrest.conf archive-push %p';
 
     # Start the cluster
@@ -389,6 +391,7 @@ sub BackRestTestBackup_ClusterCreate
     my $iPort = shift;
     my $bArchive = shift;
     my $strXlogPath = shift;
+    my $bArchiveInvalid = shift;
 
     # Defaults
     $strPath = defined($strPath) ? $strPath : BackRestTestCommon_DbCommonPathGet();
@@ -399,7 +402,7 @@ sub BackRestTestBackup_ClusterCreate
                  '/initdb' . (BackRestTestCommon_DbVersion() >= PG_VERSION_92 ? ' --xlogdir=${strXlogPath}' : '') .
                  " --pgdata=${strPath} --auth=trust");
 
-    BackRestTestBackup_ClusterStart($strPath, $iPort, undef, $bArchive);
+    BackRestTestBackup_ClusterStart($strPath, $iPort, undef, $bArchive, undef, $bArchiveInvalid);
 
     # Connect user session
     BackRestTestBackup_PgConnect();
@@ -1304,6 +1307,31 @@ sub BackRestTestBackup_Backup
 
     BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment, $oParam);
     return BackRestTestBackup_BackupEnd();
+}
+
+####################################################################################################################################
+# BackRestTestBackup_Check
+####################################################################################################################################
+push @EXPORT, qw(BackRestTestBackup_Check);
+
+sub BackRestTestBackup_Check
+{
+    my $strStanza = shift;
+    my $bRemote = shift;
+    my $iArchiveTimeout = shift;
+    my $strComment = shift;
+    my $iExpectedExitStatus = shift;
+
+    $strComment = "check" . (defined($strStanza) ? " ${strStanza}" : '') . " (" . $strComment . ")";
+    &log(INFO, "    $strComment");
+
+    my $strCommand = ($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                     ' --config=' . ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
+                     "/pgbackrest.conf --archive-timeout=${iArchiveTimeout} --stanza=${strStanza} check --log-level-console=detail";
+
+    executeTest($strCommand,
+                {bRemote => $bRemote, strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus,
+                 oLogTest => $oBackupLogTest});
 }
 
 ####################################################################################################################################

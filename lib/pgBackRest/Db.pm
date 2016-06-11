@@ -627,40 +627,14 @@ sub backupStart
             {name => 'bStartFast'}
         );
 
-    # Get the version from the control file
-    my ($strDbVersion) = $self->info($oFile, $strDbPath);
-
-    # Get version and db path from the database
-    my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();
-
-    # Error if the version from the control file and the configured db-path do not match the values obtained from the database
-    if (!($strDbVersion == $fCompareDbVersion && $strDbPath eq $strCompareDbPath))
-    {
-        confess &log(ERROR,
-            "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
-            " version '${strDbVersion}' and db-path '${strDbPath}' read from '${strDbPath}/" . DB_FILE_PGCONTROL . "'\n" .
-            "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
-    }
+    # Validate the database configuration
+    $self->configValidate($oFile, $strDbPath);
 
     # Only allow start-fast option for version >= 8.4
     if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
     {
         &log(WARN, OPTION_START_FAST . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
         $bStartFast = false;
-    }
-
-    # Error if archive_mode = always (support has not been added yet)
-    if ($self->executeSql('show archive_mode') eq 'always')
-    {
-        confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
-    }
-
-    # Check if archive_command is set
-    my $strArchiveCommand = $self->executeSql('show archive_command');
-
-    if (index($strArchiveCommand, BACKREST_EXE) == -1)
-    {
-        confess &log(ERROR, 'archive_command must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
     }
 
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
@@ -757,6 +731,91 @@ sub backupStop
         {name => 'strArchiveStop', value => $strArchiveStop},
         {name => 'strTimestampDbStop', value => $strTimestampDbStop},
         {name => 'oFileHash', value => $oFileHash}
+    );
+}
+
+####################################################################################################################################
+# configValidate
+#
+# Validate the database configuration and archiving
+####################################################################################################################################
+sub configValidate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strDbPath
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->configValidate', \@_,
+            {name => 'oFile'},
+            {name => 'strDbPath'}
+        );
+
+    # Get the version from the control file
+    my ($strDbVersion) = $self->info($oFile, $strDbPath);
+
+    # Get version and db path from the database
+    my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();
+
+    # Error if the version from the control file and the configured db-path do not match the values obtained from the database
+    if (!($strDbVersion == $fCompareDbVersion && $strDbPath eq $strCompareDbPath))
+    {
+        confess &log(ERROR,
+            "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
+            " version '${strDbVersion}' and db-path '${strDbPath}' read from '${strDbPath}/" . DB_FILE_PGCONTROL . "'\n" .
+            "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
+    }
+
+    # Error if archive_mode = always (support has not been added yet)
+    if ($self->executeSql('show archive_mode') eq 'always')
+    {
+        confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
+    }
+
+    # Check if archive_command is set
+    my $strArchiveCommand = $self->executeSql('show archive_command');
+
+    if (index($strArchiveCommand, BACKREST_EXE) == -1)
+    {
+        confess &log(ERROR, 'archive_command must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
+    }
+
+    return logDebugReturn
+    (
+        $strOperation
+    );
+}
+
+####################################################################################################################################
+# xlogSwitch
+#
+# Forces a switch to the next transaction log in order to archive the current log.
+####################################################################################################################################
+sub xlogSwitch
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my $strOperation = logDebugParam(__PACKAGE__ . '->xlogSwitch');
+
+    # Create a restore point to ensure current Xlog will be archived
+    $self->executeSql("select pg_create_restore_point('pgBackRest Archive Check');");
+
+    my $strWalFileName = $self->executeSqlRow('select pg_xlogfile_name from pg_xlogfile_name(pg_switch_xlog());');
+
+    &log(INFO, "switch Xlog ${strWalFileName}");
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strXlogFileName', value => $strWalFileName}
     );
 }
 
