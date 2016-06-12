@@ -66,7 +66,7 @@ sub new
             {name => 'strComment', trace => true},
             {name => 'strCommandMain', trace => true},
             {name => 'strCommandRemote', trace => true},
-            {name => 'strPgSqlBin', trace => true},
+            {name => 'strPgSqlBin', required => false, trace => true},
             {name => 'strTestPath', trace => true},
             {name => 'strRepoPath', trace => true}
         );
@@ -333,8 +333,12 @@ sub regExpReplaceAll
 
     $strLine =~ s/$self->{strCommandMain}/[BACKREST_BIN]/g;
     $strLine =~ s/$self->{strCommandRemote}/[BACKREST_BIN]/g;
-    $strLine =~ s/$self->{strPgSqlBin}/[PGSQL_BIN_PATH]/g;
     $strLine =~ s/$self->{strTestPath}/[TEST_PATH]/g;
+
+    if (defined($self->{strPgSqlBin}))
+    {
+        $strLine =~ s/$self->{strPgSqlBin}/[PGSQL_BIN_PATH]/g;
+    }
 
     $strLine = $self->regExpReplace($strLine, 'BACKREST_NAME_VERSION', '^' . BACKREST_NAME . ' ' . BACKREST_VERSION,
                                                 undef, false);

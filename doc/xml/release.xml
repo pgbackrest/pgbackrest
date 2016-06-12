@@ -123,6 +123,24 @@
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>
+
+             <release-test-list>
+                 <release-feature-list>
+                    <release-item>
+                        <p>Containers now use a squid proxy for apt/yum to speed builds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Obsolete containers are removed by the <br-option>--vm-force</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
+                 <release-refactor-list>
+                    <release-item>
+                        <p>Greatly reduced the quantity of Docker containers built by default.  Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
+                    </release-item>
+                 </release-refactor-list>
+             </release-test-list>
          </release>
 
          <release date="2016-06-02" version="1.02" title="Bug Fix for Perl 5.22">

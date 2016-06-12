@@ -428,7 +428,6 @@ sub BackRestTestCommon_Setup
     $strCommonCommandRemote = defined($strExe) ? $strExe : "${strCommonBasePath}/bin/pgbackrest";
     $strCommonCommandRemoteFull = "${strCommonCommandRemote} --stanza=${strCommonStanza}" .
                                   " --repo-path=${strCommonRepoPath} --no-config --command=test remote";
-    $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
 
     $iCommonDbPort = 6543;
     $iModuleTestRunOnly = $iModuleTestRunOnlyParam;
@@ -437,29 +436,34 @@ sub BackRestTestCommon_Setup
     $bLogForce = $bLogForceParam;
 
     # Get the Postgres version
-    my $strVersionRegExp = '(devel|((alpha|beta|rc)[0-9]+))$';
-    my $strOutLog = executeTest($strPgSqlBin . '/postgres --version');
-
-    my @stryVersionToken = split(/ /, $strOutLog);
-    @stryVersionToken = split(/\./, $stryVersionToken[2]);
-    $strCommonDbVersion = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
-
-    # Warn if this is a devel/alpha/beta version
-    if ($strCommonDbVersion =~ /$strVersionRegExp/)
+    if (defined($strPgSqlBinParam))
     {
-        my $strDevVersion = $strCommonDbVersion;
-        $strCommonDbVersion =~ s/$strVersionRegExp//;
-        $strDevVersion = substr($strDevVersion, length($strCommonDbVersion));
+        my $strVersionRegExp = '(devel|((alpha|beta|rc)[0-9]+))$';
+        my $strOutLog = executeTest($strPgSqlBin . '/postgres --version');
 
-        &log(WARN, "Testing against ${strCommonDbVersion} ${strDevVersion} version");
-    }
+        my @stryVersionToken = split(/ /, $strOutLog);
+        @stryVersionToken = split(/\./, $stryVersionToken[2]);
+        $strCommonDbVersion = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
 
-    # Don't run unit tests for unsupported versions
-    my @stryVersionSupport = versionSupport();
+        # Warn if this is a devel/alpha/beta version
+        if ($strCommonDbVersion =~ /$strVersionRegExp/)
+        {
+            my $strDevVersion = $strCommonDbVersion;
+            $strCommonDbVersion =~ s/$strVersionRegExp//;
+            $strDevVersion = substr($strDevVersion, length($strCommonDbVersion));
 
-    if ($strCommonDbVersion < $stryVersionSupport[0])
-    {
-        confess "currently only version $stryVersionSupport[0] and up are supported";
+            &log(WARN, "Testing against ${strCommonDbVersion} ${strDevVersion} version");
+        }
+
+        # Don't run unit tests for unsupported versions
+        my @stryVersionSupport = versionSupport();
+
+        if ($strCommonDbVersion < $stryVersionSupport[0])
+        {
+            confess "currently only version $stryVersionSupport[0] and up are supported";
+        }
+
+        $strCommonCommandPsql = "${strPgSqlBin}/psql -X %option% -h ${strCommonDbPath}";
     }
 
     return true;

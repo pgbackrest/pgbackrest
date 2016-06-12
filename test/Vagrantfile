@@ -24,7 +24,25 @@ Vagrant.configure(2) do |config|
         sudo usermod -aG docker vagrant
 
         # Install Perl modules
-        apt-get install -y libdbd-pg-perl libxml-checker-perl ghostscript libperl-critic-perl vim
+        apt-get install -y libdbd-pg-perl libxml-checker-perl libperl-critic-perl
+
+        # Install additional modules
+        apt-get install -y vim htop
+
+        # Install squid proxy (to speed container builds)
+        apt-get install -y squid3
+        mkdir -m 700 /var/lib/squid
+        chown proxy /var/lib/squid
+        cp /etc/squid/squid.conf /etc/squid/squid.conf.old
+        echo 'http_port 172.17.0.1:3128'                 > /etc/squid/squid.conf
+        echo 'maximum_object_size 100 MB'               >> /etc/squid/squid.conf
+        echo 'cache_replacement_policy heap LFUDA'      >> /etc/squid/squid.conf
+        echo 'refresh_pattern . 0 20% 4320'             >> /etc/squid/squid.conf
+        echo 'acl docker_network src 172.17.0.0/16'     >> /etc/squid/squid.conf
+        echo 'http_access allow docker_network'         >> /etc/squid/squid.conf
+        echo 'cache_dir ufs /var/lib/squid 4096 16 256' >> /etc/squid/squid.conf
+        echo 'cache_mem 16 MB'                          >> /etc/squid/squid.conf
+        service squid restart
 
         # Install Texlive
         mkdir /root/texlive
@@ -40,8 +58,18 @@ Vagrant.configure(2) do |config|
         /usr/local/texlive/2016/bin/x86_64-linux/tlmgr install caption xcolor listings parskip helvetic ltablex titlesec \
             epstopdf courier sectsty pgf ms
 
+        apt-get install -y ghostscript
+
+        # Create backrest user and postgres group
+        groupadd -g5000 postgres
+        adduser --uid=5001 --ingroup=postgres --disabled-password --gecos "" backrest
+
+        # Make postgres the primary group for vagrant user (and preserve vagrant group)
+        usermod -g postgres vagrant
+        usermod -a -G vagrant vagrant
+
         # Build VM images
-        sudo -u vagrant /backrest/test/test.pl --vm-build
+        sudo -u vagrant /backrest/test/test.pl --vm-build --vm-force
     SHELL
 
   # Don't share the default vagrant folder

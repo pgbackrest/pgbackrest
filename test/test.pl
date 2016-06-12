@@ -205,7 +205,7 @@ my $strBackRestBase = dirname(dirname(abs_path($0)));
 ####################################################################################################################################
 if ($bVmBuild)
 {
-    containerBuild($strVm, $bVmForce);
+    containerBuild($strVm, $bVmForce, $strDbVersion);
     exit 0;
 }
 
@@ -422,7 +422,8 @@ eval
                             # Run a reduced set of tests where each PG version is only tested on a single OS
                             if ($strDbVersion eq 'minimal')
                             {
-                                $strDbVersionKey = 'db_minimal';
+                                $strDbVersionKey = 'db-minimal';
+                                $strDbVersionKey = 'db-minimal';
                             }
 
                             if (defined($$oTest{db}) && $$oTest{db})
@@ -461,6 +462,17 @@ eval
 
                                         foreach my $iThreadTestMax (@{$iyThreadMax})
                                         {
+                                            my $strDbVersion =
+                                                $iDbVersionIdx == -1 ?
+                                                    undef : ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx];
+                                            my $strPgSqlBin;
+
+                                            if (defined($strDbVersion))
+                                            {
+                                                $strPgSqlBin = $$oyVm{$strTestOS}{&VMDEF_PGSQL_BIN};
+                                                $strPgSqlBin =~ s/\{\[version\]\}/$strDbVersion/g;
+                                            }
+
                                             my $oTestRun =
                                             {
                                                 os => $strTestOS,
@@ -468,8 +480,9 @@ eval
                                                 test => $$oTest{name},
                                                 run => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
                                                 thread => $iThreadTestMax,
-                                                db => $iDbVersionIdx == -1 ? undef :
-                                                    ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx]
+                                                pgsql_bin => $strPgSqlBin,
+                                                db => $strDbVersion,
+
                                             };
 
                                             push(@{$oyTestRun}, $oTestRun);
@@ -503,11 +516,11 @@ eval
 
         if (!$bDryRun || $bVmOut)
         {
+            containerRemove('test-[0-9]+');
+
             for (my $iProcessIdx = 0; $iProcessIdx < 8; $iProcessIdx++)
             {
-                # &log(INFO, "stop test-${iProcessIdx}");
                 push(@{$oyProcess}, undef);
-                executeTest("docker rm -f test-${iProcessIdx}", {bSuppressError => true});
             }
 
             executeTest("sudo rm -rf ${strTestPath}/*");
@@ -569,7 +582,7 @@ eval
                                 my $strImage = 'test-' . $iProcessIdx;
                                 my $strHostTestPath = "${strTestPath}/${strImage}";
 
-                                executeTest("docker rm -f ${strImage}");
+                                containerRemove("test-${iProcessIdx}");
                                 executeTest("sudo rm -rf ${strHostTestPath}");
                             }
 
@@ -620,9 +633,11 @@ eval
                         # Create host test directory
                         filePathCreate($strHostTestPath, '0770');
 
-                        executeTest("docker run -itd -h $$oTest{os}-test --name=${strImage}" .
-                                    " -v ${strHostTestPath}:${strVmTestPath}" .
-                                    " -v ${strBackRestBase}:${strBackRestBase} backrest/$$oTest{os}-test-${strDbVersion}");
+                        executeTest(
+                            "docker run -itd -h $$oTest{os}-test --name=${strImage}" .
+                            " -v ${strHostTestPath}:${strVmTestPath}" .
+                            " -v ${strBackRestBase}:${strBackRestBase}" .
+                            " backrest/$$oTest{os}-" . (defined($$oTest{db}) ? "db-$$oTest{db}" : 'loop' ) . '-test-pre');
                     }
 
                     # Build up command line for the individual test
@@ -641,6 +656,7 @@ eval
                         (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
                         (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
                         (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
+                        (defined($$oTest{pgsql_bin}) ? ' --pgsql-bin=' . $$oTest{pgsql_bin} : '') .
                         ($bDryRun ? " --dry-run" : '') .
                         " --test-path=${strVmTestPath}" .
                         " --no-cleanup --vm-out";
@@ -653,7 +669,7 @@ eval
 
                         # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
                         # Docker and the host VM.
-                        executeTest("docker exec ${strImage} chown vagrant:postgres -R ${strVmTestPath}");
+                            executeTest("docker exec ${strImage} chown vagrant:postgres -R ${strVmTestPath}");
 
                         my $oExec = new pgBackRestTest::Common::ExecuteTest(
                             $strCommand,
@@ -692,51 +708,6 @@ eval
     }
 
     ################################################################################################################################
-    # Search for psql
-    ################################################################################################################################
-    my @stryTestVersion;
-    my @stryVersionSupport = versionSupport();
-
-    if (!defined($strPgSqlBin))
-    {
-        # Distribution-specific paths where the PostgreSQL binaries may be located
-        my @strySearchPath =
-        (
-            '/usr/lib/postgresql/VERSION/bin',  # Debian/Ubuntu
-            '/usr/pgsql-VERSION/bin',           # CentOS/RHEL/Fedora
-            '/Library/PostgreSQL/VERSION/bin',  # OSX
-            '/usr/local/bin'                    # BSD
-        );
-
-        foreach my $strSearchPath (@strySearchPath)
-        {
-            for (my $iVersionIdx = @stryVersionSupport - 1; $iVersionIdx >= 0; $iVersionIdx--)
-            {
-                if ($strDbVersion eq 'all' || $strDbVersion eq 'minimal' || $strDbVersion eq 'max' && @stryTestVersion == 0 ||
-                    $strDbVersion eq $stryVersionSupport[$iVersionIdx])
-                {
-                    my $strVersionPath = $strSearchPath;
-                    $strVersionPath =~ s/VERSION/$stryVersionSupport[$iVersionIdx]/g;
-
-                    if (-e "${strVersionPath}/initdb")
-                    {
-                        &log(DEBUG, "FOUND pgsql-bin at ${strVersionPath}");
-                        push @stryTestVersion, $strVersionPath;
-                    }
-                }
-            }
-        }
-
-        # Make sure at least one version of postgres was found
-        @stryTestVersion > 0
-            or confess 'pgsql-bin was not defined and postgres could not be located automatically';
-    }
-    else
-    {
-        push @stryTestVersion, $strPgSqlBin;
-    }
-
-    ################################################################################################################################
     # Clean whitespace only if test.pl is being run from the test directory in the backrest repo
     ################################################################################################################################
     # if (-e './test.pl' && -e '../bin/pgbackrest)
@@ -758,27 +729,22 @@ eval
 
     do
     {
-        if (BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[0], $iModuleTestRun,
-                                     $bDryRun, $bNoCleanup, $bLogForce))
+        if (BackRestTestCommon_Setup($strExe, $strTestPath, $strPgSqlBin, $iModuleTestRun,
+                                 $bDryRun, $bNoCleanup, $bLogForce))
         {
             if (!$bVmOut &&
                 ($strModule eq 'all' ||
                  $strModule eq 'backup' && $strModuleTest eq 'all' ||
                  $strModule eq 'backup' && $strModuleTest eq 'full'))
             {
-                &log(INFO, "TESTING psql-bin = $stryTestVersion[0]\n");
+                &log(INFO, "TESTING psql-bin = $strPgSqlBin\n");
             }
 
             if ($bInfinite)
             {
-                $iRun++;
-                &log(INFO, "INFINITE - RUN ${iRun}\n");
+                    $iRun++;
+                    &log(INFO, "INFINITE - RUN ${iRun}\n");
             }
-
-            # if ($strModule eq 'all' || $strModule eq 'ini')
-            # {
-            #     BackRestTestIni_Test($strModuleTest);
-            # }
 
             if ($strModule eq 'all' || $strModule eq 'help')
             {
@@ -806,22 +772,6 @@ eval
                 {
                     BackRestTestBackup_Test($strModuleTest, defined($iThreadMax) ? $iThreadMax : 4, $bVmOut);
                 }
-
-                if (@stryTestVersion > 1 && ($strModuleTest eq 'all' || $strModuleTest eq 'full'))
-                {
-                    for (my $iVersionIdx = 1; $iVersionIdx < @stryTestVersion; $iVersionIdx++)
-                    {
-                        BackRestTestCommon_Setup($strExe, $strTestPath, $stryTestVersion[$iVersionIdx],
-                                                 $iModuleTestRun, $bDryRun, $bNoCleanup);
-                        &log(INFO, "TESTING psql-bin = $stryTestVersion[$iVersionIdx] for backup/full\n");
-                        BackRestTestBackup_Test('full', defined($iThreadMax) ? $iThreadMax : 4, $bVmOut);
-                    }
-                }
-            }
-
-            if ($strModule eq 'compare')
-            {
-                BackRestTestCompare_Test($strModuleTest);
             }
         }
     }

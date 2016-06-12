@@ -21,6 +21,12 @@ use Exporter qw(import);
 ####################################################################################################################################
 # VM hash keywords
 ####################################################################################################################################
+use constant VM_DB                                                  => 'db';
+    push @EXPORT, qw(VM_DB);
+use constant VM_DB_DOC                                              => 'db-doc';
+    push @EXPORT, qw(VM_DB_DOC);
+use constant VM_DB_MINIMAL                                          => 'db-minimal';
+    push @EXPORT, qw(VM_DB_MINIMAL);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
 use constant VM_OS                                                  => 'os';
@@ -29,6 +35,8 @@ use constant VM_OS_BASE                                             => 'os-base'
     push @EXPORT, qw(VM_OS_BASE);
 use constant VM_OS_REPO                                             => 'os-repo';
     push @EXPORT, qw(VM_OS_REPO);
+use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
+    push @EXPORT, qw(VMDEF_PGSQL_BIN);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -72,8 +80,9 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:6',
+        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
-        db =>
+        &VM_DB =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
@@ -84,10 +93,15 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        db_minimal =>
+        &VM_DB_MINIMAL =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
+        ],
+
+        &VM_DB_DOC =>
+        [
+            PG_VERSION_94,
         ],
     },
 
@@ -97,8 +111,9 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
+        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
-        db =>
+        &VM_DB =>
         [
             PG_VERSION_93,
             PG_VERSION_94,
@@ -106,7 +121,7 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        db_minimal =>
+        &VM_DB_MINIMAL =>
         [
             PG_VERSION_95,
             PG_VERSION_96,
@@ -120,8 +135,9 @@ my $oyVm =
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'jessie',
         &VM_IMAGE => 'debian:8',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        db =>
+        &VM_DB =>
         [
             PG_VERSION_84,
             PG_VERSION_90,
@@ -133,7 +149,7 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        db_minimal =>
+        &VM_DB_MINIMAL =>
         [
             PG_VERSION_84,
             PG_VERSION_93,
@@ -147,8 +163,9 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'precise',
         &VM_IMAGE => 'ubuntu:12.04',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        db =>
+        &VM_DB =>
         [
             PG_VERSION_83,
             PG_VERSION_84,
@@ -161,7 +178,7 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        db_minimal =>
+        &VM_DB_MINIMAL =>
         [
             PG_VERSION_83,
         ],
@@ -174,8 +191,9 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'trusty',
         &VM_IMAGE => 'ubuntu:14.04',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        db =>
+        &VM_DB =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
@@ -186,9 +204,14 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        db_minimal =>
+        &VM_DB_MINIMAL =>
         [
             PG_VERSION_92,
+        ],
+
+        &VM_DB_DOC =>
+        [
+            PG_VERSION_94,
         ],
     },
 
@@ -199,8 +222,9 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'xenial',
         &VM_IMAGE => 'ubuntu:16.04',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        db =>
+        &VM_DB =>
         [
             PG_VERSION_91,
             PG_VERSION_92,
@@ -210,7 +234,7 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        db_minimal =>
+        &VM_DB_MINIMAL =>
         [
             PG_VERSION_94,
         ],

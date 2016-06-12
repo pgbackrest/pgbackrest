@@ -25,15 +25,18 @@ use pgBackRest::FileCommon;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;
 
-use constant TEST_GROUP                                             => 'admin';
-use constant TEST_GROUP_ID                                          => 1000;
-use constant TEST_USER                                              => 'vagrant';
-use constant TEST_USER_ID                                           => TEST_GROUP_ID;
-
+####################################################################################################################################
+# User/group definitions
+####################################################################################################################################
 use constant POSTGRES_GROUP                                         => 'postgres';
 use constant POSTGRES_GROUP_ID                                      => 5000;
 use constant POSTGRES_USER                                          => POSTGRES_GROUP;
 use constant POSTGRES_USER_ID                                       => POSTGRES_GROUP_ID;
+
+use constant TEST_GROUP                                             => POSTGRES_GROUP;
+use constant TEST_GROUP_ID                                          => POSTGRES_GROUP_ID;
+use constant TEST_USER                                              => 'vagrant';
+use constant TEST_USER_ID                                           => 1000;
 
 use constant BACKREST_GROUP                                         => POSTGRES_GROUP;
 use constant BACKREST_GROUP_ID                                      => POSTGRES_GROUP_ID;
@@ -118,14 +121,42 @@ sub backrestConfigCreate
 sub containerWrite
 {
     my $strTempPath = shift;
-    my $strImageName = shift;
+    my $strOS = shift;
+    my $strTitle = shift;
+    my $strImageParent = shift;
     my $strImage = shift;
+    my $strScript = shift;
     my $bForce = shift;
+    my $bPre = shift;
+    my $bPreOnly = shift;
+
+    if (defined($bPre) && $bPre)
+    {
+        $strImage .= '-pre';
+        $strImageParent .= '-pre';
+        $strTitle .= ' (Pre-Installed)'
+    }
+    elsif (!defined($bPre))
+    {
+        containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bForce, true);
+
+        if (defined($bPreOnly) && $bPreOnly)
+        {
+            return;
+        }
+    }
+
+    &log(INFO, "Building ${strImage} image...");
+
+    $strScript =
+        "# ${strTitle} Container\n" .
+        "FROM ${strImageParent}\n\n" .
+        $strScript;
 
     # Write the image
-    fileStringWrite("${strTempPath}/${strImageName}", trim($strImage) . "\n", false);
+    fileStringWrite("${strTempPath}/${strImage}", trim($strScript) . "\n", false);
     executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
-                " -f ${strTempPath}/${strImageName} -t backrest/${strImageName} ${strTempPath}",
+                " -f ${strTempPath}/${strImage} -t backrest/${strImage} ${strTempPath}",
                 {bSuppressStdErr => true});
 }
 
@@ -143,18 +174,19 @@ sub sshSetup
         "RUN mkdir /home/${strUser}/.ssh\n" .
         "COPY id_rsa  /home/${strUser}/.ssh/id_rsa\n" .
         "COPY id_rsa.pub  /home/${strUser}/.ssh/authorized_keys\n" .
-        "RUN chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh\n" .
-        "RUN chmod 700 /home/${strUser}/.ssh\n" .
         "RUN echo 'Host *' > /home/${strUser}/.ssh/config\n" .
         "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n" .
         "RUN echo '    LogLevel quiet' >> /home/${strUser}/.ssh/config\n" .
         "RUN echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config\n" .
         "RUN echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config";
+        "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config\n" .
+        "RUN chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh\n" .
+        "RUN chmod 700 /home/${strUser}/.ssh\n" .
+        "RUN chmod 600 /home/${strUser}/.ssh/*";
 }
 
 ####################################################################################################################################
-# Repo Setup
+# Repo setup
 ####################################################################################################################################
 sub repoSetup
 {
@@ -166,6 +198,40 @@ sub repoSetup
            "RUN mkdir /var/lib/pgbackrest\n" .
            "RUN chown -R ${strUser}:${strGroup} /var/lib/pgbackrest\n" .
            "RUN chmod 750 /var/lib/pgbackrest";
+}
+
+
+####################################################################################################################################
+# Sudo setup
+####################################################################################################################################
+sub sudoSetup
+{
+    my $strOS = shift;
+    my $strGroup = shift;
+
+    my $strScript =
+        "# Setup sudo";
+
+    my $oVm = vmGet();
+
+    if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+    {
+        $strScript .=
+            "\nRUN yum -y install sudo\n" .
+            "\nRUN echo '%${strGroup}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/${strGroup}" .
+            "\nRUN sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
+    }
+    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    {
+        $strScript .=
+            "\nRUN sed -i 's/^\\\%admin.*\$/\\\%${strGroup} ALL\\=\\(ALL\\) NOPASSWD\\: ALL/' /etc/sudoers";
+    }
+    else
+    {
+        confess &log(ERROR, "unable to find base for ${strOS}");
+    }
+
+    return $strScript;
 }
 
 ####################################################################################################################################
@@ -181,22 +247,22 @@ sub perlInstall
     if ($strOS eq VM_CO6)
     {
         return $strImage .
-            "RUN yum -y install perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg";
+            "RUN yum install -y perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg";
     }
     elsif ($strOS eq VM_CO7)
     {
         return $strImage .
-            "RUN yum -y install perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg";
+            "RUN yum install -y perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg";
     }
     elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
     {
         return $strImage .
-            "RUN apt-get -y install libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl";
+            "RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl";
     }
     elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
     {
         return $strImage .
-            "RUN apt-get -y install libdbd-pg-perl libdbi-perl";
+            "RUN apt-get install -y libdbd-pg-perl libdbi-perl";
     }
 
     confess &log(ERROR, "unable to install perl for os '${strOS}'");
@@ -209,10 +275,25 @@ sub containerBuild
 {
     my $strVm = shift;
     my $bVmForce = shift;
+    my $strDbVersionBuild = shift;
 
     # Create temp path
     my $strTempPath = dirname(abs_path($0)) . '/.vagrant/docker';
     filePathCreate($strTempPath, '0770', true, true);
+
+    # Remove old images on force
+    if ($bVmForce)
+    {
+        my $strRegExp = '^backrest\/';
+
+        if ($strVm ne 'all')
+        {
+            $strRegExp .= "${strVm}-";
+        }
+
+        executeTest("rm -f ${strTempPath}/" . ($strVm eq 'all' ? '*' : "${strVm}-*"));
+        imageRemove("${strRegExp}.*");
+    }
 
     # Create SSH key (if it does not already exist)
     if (-e "${strTempPath}/id_rsa")
@@ -236,43 +317,48 @@ sub containerBuild
         }
 
         my $oOS = $$oVm{$strOS};
-        my $strImage;
-        my $strImageName;
+        my $bDocBuild = false;
 
         # Base image
         ###########################################################################################################################
-        $strImageName = "${strOS}-base";
-        &log(INFO, "Building ${strImageName} image...");
+        my $strImageParent = "$$oVm{$strOS}{&VM_IMAGE}";
+        my $strImage = "${strOS}-base";
 
-        $strImage = "# Base Container\nFROM " . $$oVm{$strOS}{&VM_IMAGE};
-
-        # Install SSH
-        $strImage .= "\n\n# Install SSH\n";
+        # Install package proxy
+        my $strScript =
+                "# Use squid proxy\n";
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            $strImage .= "RUN yum -y install openssh-server openssh-clients\n";
+            $strScript .=
+                "RUN echo 'proxy=http://172.17.0.1:3128' >> /etc/yum.conf";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-            $strImage .=
-                "RUN apt-get update\n" .
-                "RUN apt-get -y install openssh-server\n";
+            $strScript .=
+                "RUN echo 'Acquire {Retries \"0\"; HTTP {Proxy \"http://172.17.0.1:3128\";};};' > /etc/apt/apt.conf.d/vmproxy";
         }
 
-        $strImage .=
-            "RUN rm -f /etc/ssh/ssh_host_rsa_key*\n" .
-            "RUN ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
+        # Install base packages
+        $strScript .= "\n\n# Install base packages\n";
 
-        # Create PostgreSQL Group
-        $strImage .= "\n\n" . postgresGroupCreate($strOS);
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        {
+            $strScript .= "RUN yum -y install openssh-server openssh-clients\n";
+        }
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+        {
+            $strScript .=
+                "RUN apt-get update\n" .
+                "RUN apt-get -y install openssh-server wget\n";
+        }
 
         # Add PostgreSQL packages
-        $strImage .= "\n\n# Add PostgreSQL packages\n";
+        $strScript .= "\n# Add PostgreSQL packages\n";
 
         if ($strOS eq VM_CO6)
         {
-            $strImage .=
+            $strScript .=
                 "RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm\n" .
@@ -283,7 +369,7 @@ sub containerBuild
         }
         elsif ($strOS eq VM_CO7)
         {
-            $strImage .=
+            $strScript .=
                 "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-1.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm\n" .
                 "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-1.noarch.rpm\n" .
@@ -291,211 +377,300 @@ sub containerBuild
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-            {
-                $strImage .=
-                    "RUN apt-get install -y sudo wget\n";
-            }
-
-            $strImage .=
+            $strScript .=
                 "RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
                 $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main 9.6' >> /etc/apt/sources.list.d/pgdg.list\n" .
                 "RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -\n" .
                 "RUN apt-get update";
         }
 
-        # Create test group
-        $strImage .=
-            "\n\n# Create test group\n" .
-            groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . "\n";
+        $strScript .=
+            "\n\n# Regenerate SSH keys\n" .
+            "RUN rm -f /etc/ssh/ssh_host_rsa_key*\n" .
+            "RUN ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
 
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-        {
-            $strImage .=
-                "RUN yum -y install sudo\n" .
-                "RUN echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . "\n" .
-                "RUN sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
-        }
-        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-        {
-            $strImage .=
-                "RUN sed -i 's/^\\\%admin.*\$/\\\%" . TEST_GROUP . " ALL\\=\\(ALL\\) NOPASSWD\\: ALL/' /etc/sudoers";
-        }
+        # Create PostgreSQL Group
+        $strScript .= "\n\n" . postgresGroupCreate($strOS);
 
         # Create test user
-        $strImage .=
+        $strScript .=
             "\n\n# Create test user\n" .
             userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
 
         # Suppress dpkg interactive output
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-            $strImage .=
+            $strScript .=
                 "\n\n# Suppress dpkg interactive output\n" .
                 "RUN rm /etc/apt/apt.conf.d/70debconf";
         }
 
         # Start SSH when container starts
-        $strImage .=
+        $strScript .=
             "\n\n# Start SSH when container starts\n";
 
         # This is required in newer versions of u12 containers - seems like a bug in the container
         if ($strOS eq VM_U12)
         {
-            $strImage .=
+            $strScript .=
                 "RUN mkdir /var/run/sshd\n";
         }
 
         if ($strOS eq VM_U14 || $strOS eq VM_D8 || $strOS eq VM_U16)
         {
-            $strImage .=
+            $strScript .=
                 "ENTRYPOINT service ssh restart && bash";
         }
         else
         {
-            $strImage .=
+            $strScript .=
                 "ENTRYPOINT /usr/sbin/sshd -D";
         }
 
         # Write the image
-        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
+        containerWrite($strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strScript, $bVmForce, false);
+
+        # Base pre image
+        ###########################################################################################################################
+        $strImageParent = "backrest/${strOS}-base";
+        $strImage = "${strOS}-base-pre";
+
+        # Install Perl packages
+        $strScript =
+            perlInstall($strOS) . "\n";
+
+        # Write the image
+        containerWrite($strTempPath, $strOS, 'Base (Pre-Installed)', $strImageParent, $strImage, $strScript, $bVmForce, false);
 
         # Db image
         ###########################################################################################################################
-        foreach my $strDbVersion (@{$$oOS{db}})
+        my @stryDbBuild;
+
+        # Get the list of db versions required for testing
+        if ($strDbVersionBuild eq 'all')
+        {
+            push(@stryDbBuild, @{$$oOS{&VM_DB}});
+        }
+        elsif ($strDbVersionBuild eq 'minimal')
+        {
+            push(@stryDbBuild, @{$$oOS{&VM_DB_MINIMAL}});
+        }
+        else
+        {
+            push(@stryDbBuild, $strDbVersionBuild);
+        }
+
+        # Merge db versions required for docs
+        if (defined($$oOS{&VM_DB_DOC}))
+        {
+            @stryDbBuild = keys %{{map {($_ => 1)}                  ## no critic (BuiltinFunctions::ProhibitVoidMap)
+                (@stryDbBuild, @{$$oOS{&VM_DB_DOC}})}};
+            $bDocBuild = true;
+        }
+
+        foreach my $strDbVersion (@stryDbBuild)
         {
             my $strDbVersionNoDot = $strDbVersion;
             $strDbVersionNoDot =~ s/\.//;
+            my $strTitle = "Db ${strDbVersion}";
 
-            $strImageName = "${strOS}-db-${strDbVersionNoDot}";
-            &log(INFO, "Building ${strImageName} image...");
+            my $bDocBuildVersion = ($bDocBuild && grep(/^$strDbVersion$/, @{$$oOS{&VM_DB_DOC}}));
 
-            $strImage = "# Database Container\nFROM backrest/${strOS}-base";
+            $strImageParent = "backrest/${strOS}-base";
+            $strImage = "${strOS}-db-${strDbVersion}";
 
             # Create PostgreSQL User
-            $strImage .= "\n\n" . postgresUserCreate($strOS);
-
-            # Install SSH key
-            $strImage .=
-                "\n\n" . sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP);
+            $strScript = postgresUserCreate($strOS);
 
             # Install PostgreSQL
-            $strImage .=
+            $strScript .=
                 "\n\n# Install PostgreSQL";
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
-                $strImage .=
+                $strScript .=
                     "\nRUN apt-get install -y postgresql-${strDbVersion}" .
                     "\nRUN pg_dropcluster --stop ${strDbVersion} main";
             }
             elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
-                $strImage .=
+                $strScript .=
                     "\nRUN yum -y install postgresql${strDbVersionNoDot}-server";
             }
 
             # Write the image
-            containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
+            containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bVmForce,
+                           $bDocBuildVersion ? undef : true, $bDocBuildVersion ? undef : true);
+
+            # Db doc image
+            ########################################################################################################################
+            if ($bDocBuildVersion)
+            {
+                $strImageParent = "backrest/${strOS}-db-${strDbVersion}";
+                $strImage = "${strOS}-db-${strDbVersion}-doc";
+
+                # Install SSH key
+                $strScript = sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP);
+
+                # Setup sudo
+                $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
+
+                # Write the image
+                containerWrite($strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce);
+            }
+
+            # Db test image
+            ########################################################################################################################
+            $strImageParent = "backrest/${strOS}-db-${strDbVersion}";
+            $strImage = "${strOS}-db-${strDbVersion}-test";
+
+            # Create BackRest User
+            $strScript = backrestUserCreate($strOS);
+
+            # Install SSH key
+            $strScript .=
+                "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
+
+            # Install SSH key
+            $strScript .=
+                "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
+
+            # Make test user home readable
+            $strScript .=
+                "\n\n# Make " . TEST_USER . " home dir readable\n" .
+                'RUN chmod g+r,g+x /home/' . TEST_USER;
+
+            # Write the image
+            containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
         }
 
-        # Db Doc image
-        ###########################################################################################################################
-        $strImageName = "${strOS}-db-doc";
-        &log(INFO, "Building ${strImageName} image...");
+        # Db test image (for sythetic tests)
+        ########################################################################################################################
+        $strImageParent = "backrest/${strOS}-base";
+        $strImage = "${strOS}-db-test";
 
-        $strImage = "# Database Doc Container\nFROM backrest/${strOS}-db-94";
-
-        # Create configuration file
-        $strImage .=
-            "\n\n" . backrestConfigCreate($strOS, POSTGRES_USER, POSTGRES_GROUP);
+        # Install SSH key
+        $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP);
 
         # Write the image
-        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
+        containerWrite($strTempPath, $strOS, 'Db Synthetic Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
+
+        # Loop test image
+        ########################################################################################################################
+        $strImageParent = "backrest/${strOS}-base";
+        $strImage = "${strOS}-loop-test";
+
+        # Create BackRest User
+        $strScript = backrestUserCreate($strOS);
+
+        # Install SSH key
+        $strScript .=
+            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
+
+        # Install SSH key
+        $strScript .=
+            "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
+
+        # Make test user home readable
+        $strScript .=
+            "\n\n# Make " . TEST_USER . " home dir readable\n" .
+            'RUN chmod g+r,g+x /home/' . TEST_USER;
+
+        # Write the image
+        containerWrite($strTempPath, $strOS, 'Loop Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
 
         # Backup image
         ###########################################################################################################################
-        $strImageName = "${strOS}-backup";
-        &log(INFO, "Building ${strImageName} image...");
-
-        $strImage = "# Backup Container\nFROM backrest/${strOS}-base";
+        $strImageParent = "backrest/${strOS}-base";
+        $strImage = "${strOS}-backup";
+        my $strTitle = "Backup";
 
         # Create BackRest User
-        $strImage .= "\n\n" . backrestUserCreate($strOS);
+        $strScript = backrestUserCreate($strOS);
 
         # Install SSH key
-        $strImage .=
+        $strScript .=
             "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
 
         # Write the image
-        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
+        containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bVmForce,
+                       $bDocBuild ? undef : true, $bDocBuild ? undef : true);
 
         # Backup Doc image
         ###########################################################################################################################
-        $strImageName = "${strOS}-backup-doc";
-        &log(INFO, "Building ${strImageName} image...");
-
-        $strImage = "# Backup Doc Container\nFROM backrest/${strOS}-backup";
-
-        # Create configuration file
-        $strImage .=
-            "\n\n" . backrestConfigCreate($strOS, BACKREST_USER, BACKREST_GROUP);
-
-        # Setup repository
-        $strImage .=
-            "\n\n" . repoSetup($strOS, BACKREST_USER, BACKREST_GROUP);
-
-        # Install Perl packages
-        $strImage .=
-            "\n\n" . perlInstall($strOS) . "\n";
-
-        # Write the image
-        containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
-
-        # Test image
-        ###########################################################################################################################
-        foreach my $strDbVersion (@{$$oOS{db}})
+        if ($bDocBuild)
         {
-            my $strDbVersionNoDot = $strDbVersion;
-            $strDbVersionNoDot =~ s/\.//;
+            $strImageParent = "backrest/${strOS}-backup";
+            $strImage = "${strOS}-backup-doc";
 
-            $strImageName = "${strOS}-test-${strDbVersionNoDot}";
-            &log(INFO, "Building ${strImageName} image...");
+            # Create configuration file
+            $strScript = backrestConfigCreate($strOS, BACKREST_USER, BACKREST_GROUP);
 
-            $strImage = "# Test Container\nFROM backrest/${strOS}-db-${strDbVersionNoDot}";
+            # Setup repository
+            $strScript .=
+                "\n\n" . repoSetup($strOS, BACKREST_USER, BACKREST_GROUP);
 
-            # Create BackRest User
-            $strImage .= "\n\n" . backrestUserCreate($strOS);
-
-            # Install SSH key
-            $strImage .=
-                "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
-
-            # Install SSH key for vagrant user
-            $strImage .=
-                "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
-
-            # Put vagrant user in postgres group so tests work properly (this will be removed in the future)
-            $strImage .=
-                "\n\n# Add postgres group to vagrant user\n" .
-                "RUN usermod -g " . BACKREST_GROUP . " -G " . TEST_GROUP . " " . TEST_USER;
-
-            # Install Perl packages
-            $strImage .=
-                "\n\n" . perlInstall($strOS);
-
-            # Make PostgreSQL home group readable
-            $strImage .=
-                "\n\n# Make vagrant home dir readable\n" .
-                "RUN chown -R vagrant:postgres /home/vagrant\n" .
-                "RUN chmod g+r,g+x /home/vagrant";
+            # Setup sudo
+            $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
             # Write the image
-            containerWrite($strTempPath, $strImageName, $strImage, $bVmForce);
+            containerWrite($strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
         }
+
+        # Backup Test image
+        ###########################################################################################################################
+        $strImageParent = "backrest/${strOS}-backup";
+        $strImage = "${strOS}-backup-test";
+
+        # Make test user home readable
+        $strScript =
+            "# Make " . TEST_USER . " home dir readable\n" .
+            'RUN chmod g+r,g+x /home/' . TEST_USER;
+
+        # Write the image
+        containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
     }
 }
 
 push @EXPORT, qw(containerBuild);
+
+####################################################################################################################################
+# containerRemove
+#
+# Remove containers that match a regexp.
+####################################################################################################################################
+sub containerRemove
+{
+    my $strRegExp = shift;
+
+    foreach my $strContainer (sort(split("\n", trim(executeTest('docker ps -a --format "{{.Names}}"')))))
+    {
+        if ($strContainer =~ $strRegExp)
+        {
+            executeTest("docker rm -f ${strContainer}", {bSuppressError => true});
+        }
+    }
+}
+
+####################################################################################################################################
+# imageRemove
+#
+# Remove images that match a regexp.
+####################################################################################################################################
+sub imageRemove
+{
+    my $strRegExp = shift;
+
+    foreach my $strImage (sort(split("\n", trim(executeTest('docker images --format "{{.Repository}}"')))))
+    {
+        if ($strImage =~ $strRegExp)
+        {
+            &log(INFO, "Removing ${strImage} image...");
+            executeTest("docker rmi -f ${strImage}", {bSuppressError => true});
+        }
+    }
+}
+
+push @EXPORT, qw(containerRemove);
 
 1;
