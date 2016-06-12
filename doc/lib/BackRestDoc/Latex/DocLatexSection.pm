@@ -312,7 +312,20 @@ sub sectionProcess
 
             if (!defined($oDescription))
             {
-                confess &log(ERROR, "unable to find ${strOption} option in sections - try adding command?");
+                confess &log(ERROR, "unable to find ${strOption} option in sections - try adding option?");
+            }
+
+            $strLatex .= "\n" . $self->processText($oDescription) . "\n";
+        }
+        # Add cmd descriptive text
+        elsif ($oChild->nameGet() eq 'cmd-description')
+        {
+            my $strCommand = $oChild->paramGet("key");
+            my $oDescription = ${$self->{oReference}->{oConfigHash}}{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_DESCRIPTION};
+
+            if (!defined($oDescription))
+            {
+                confess &log(ERROR, "unable to find ${strCommand} command in sections - try adding command?");
             }
 
             $strLatex .= "\n" . $self->processText($oDescription) . "\n";

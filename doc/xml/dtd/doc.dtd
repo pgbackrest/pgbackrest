@@ -106,8 +106,12 @@
 <!ELEMENT option-description EMPTY>
     <!ATTLIST option-description key CDATA #REQUIRED>
 
+<!ELEMENT cmd-description EMPTY>
+    <!ATTLIST cmd-description key CDATA #REQUIRED>
+
 <!ELEMENT section (title,
-                   ((p|list|table|host-add|execute-list|backrest-config|postgres-config|option-description|code-block)+|
+                   ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
+                     option-description|code-block)+|
                    ((p|list)*, section+)|(p|list)*))>
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section keyword CDATA "">
