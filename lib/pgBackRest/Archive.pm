@@ -11,6 +11,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT);
 use File::Basename qw(dirname basename);
+use Scalar::Util qw(blessed);
 
 use lib dirname($0);
 use pgBackRest::Common::Exception;
@@ -235,7 +236,7 @@ sub walFileName
     # If waiting and no WAL segment was found then throw an error
     if (@stryWalFileName == 0 && defined($iWaitSeconds))
     {
-        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . waitInterval($oWait)  . ' second(s)');
+        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after ${iWaitSeconds} second(s)", ERROR_ARCHIVE_TIMEOUT);
     }
 
     # Return from function and log return values if any
@@ -511,7 +512,7 @@ sub pushProcess
 
         $self->push($ARGV[1], $bArchiveAsync);
 
-        # Fork is async archiving is enabled
+        # Fork if async archiving is enabled
         if ($bArchiveAsync)
         {
             # Fork and disable the async archive flag if this is the parent process
@@ -1033,6 +1034,136 @@ sub range
         $strOperation,
         {name => 'stryArchive', value => \@stryArchive}
     );
+}
+
+####################################################################################################################################
+# check
+#
+# Validates the database configuration and checks that the archive logs can be read by backup. This will alert the user to any
+# misconfiguration, particularly of archiving, that would result in the inability of a backup to complete (e.g waiting at the end
+# until it times out because it could not find the WAL file).
+####################################################################################################################################
+sub check
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my $strOperation = logDebugParam(__PACKAGE__ . '->check');
+
+    # Initialize default file object
+    $self->{oFile} = new pgBackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_PATH),
+        optionRemoteType(),
+        protocolGet()
+    );
+
+    # Initialize the database object
+    $self->{oDb} = new pgBackRest::Db();
+
+    # Validate the database configuration
+    $self->{oDb}->configValidate($self->{oFile}, optionGet(OPTION_DB_PATH));
+
+    # Force archiving
+    my $strWalSegment = $self->{oDb}->xlogSwitch();
+
+    # Get the timeout and error message to display - if it is 0 we are testing
+    my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
+
+    # Initialize the result variables
+    my $iResult = 0;
+    my $strResultMessage = undef;
+
+    # Record the start time to wait for the archive.info file to be written
+    my $oWait = waitInit($iArchiveTimeout);
+
+    my $strArchiveId = undef;
+    my $strArchiveFile = undef;
+
+    # Turn off console logging to control when to display the error
+    logLevelSet(undef, OFF);
+
+    # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
+    do
+    {
+        eval
+        {
+            $strArchiveId = $self->getCheck($self->{oFile});
+
+            # Clear any previous errors if we've found the archive.info
+            $iResult = 0;
+        };
+
+        if ($@)
+        {
+            my $oMessage = $@;
+
+            # If this is a backrest error then capture the last code and message else confess
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+            {
+                $iResult = $oMessage->code();
+                $strResultMessage = $oMessage->message();
+            }
+            else
+            {
+                confess $oMessage;
+            }
+        }
+    } while (!defined($strArchiveId) && waitMore($oWait));
+
+    # If able to get the archive id then check the archived WAL file with the time remaining
+    if ($iResult == 0)
+    {
+        eval
+        {
+            $strArchiveFile = $self->walFileName($self->{oFile}, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
+        };
+
+        # If this is a backrest error then capture the last code and message else confess
+        if ($@)
+        {
+            my $oMessage = $@;
+
+            # If a backrest exception then return the code else confess
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+            {
+                $iResult = $oMessage->code();
+                $strResultMessage = $oMessage->message();
+            }
+            else
+            {
+                confess $oMessage;
+            }
+        }
+    }
+
+    # Reset the console logging
+    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+
+    # Display results
+    if ($iResult == 0)
+    {
+        &log(INFO,
+            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
+            $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+    }
+    else
+    {
+        &log(ERROR, $strResultMessage, $iResult);
+        &log(WARN,
+            "WAL segment ${strWalSegment} did not reach the archive:\n" .
+            "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
+            "HINT: Check the PostreSQL server log for errors.");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $iResult, trace => true}
+    );
+
 }
 
 1;

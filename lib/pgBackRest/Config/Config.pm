@@ -17,6 +17,7 @@ use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::Wait;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::RemoteMaster;
 use pgBackRest::Version;
@@ -45,6 +46,9 @@ use constant CMD_ARCHIVE_PUSH                                       => 'archive-
 use constant CMD_BACKUP                                             => 'backup';
     push @EXPORT, qw(CMD_BACKUP);
     $oCommandHash{&CMD_BACKUP} = true;
+use constant CMD_CHECK                                              => 'check';
+    push @EXPORT, qw(CMD_CHECK);
+    $oCommandHash{&CMD_CHECK} = true;
 use constant CMD_EXPIRE                                             => 'expire';
     push @EXPORT, qw(CMD_EXPIRE);
     $oCommandHash{&CMD_EXPIRE} = true;
@@ -239,6 +243,8 @@ use constant OPTION_TEST_POINT                                      => 'test-poi
 
 # GENERAL Section
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_ARCHIVE_TIMEOUT                                 => 'archive-timeout';
+    push @EXPORT, qw(OPTION_ARCHIVE_TIMEOUT);
 use constant OPTION_BUFFER_SIZE                                     => 'buffer-size';
     push @EXPORT, qw(OPTION_BUFFER_SIZE);
 use constant OPTION_CONFIG_REMOTE                                   => 'config-remote';
@@ -380,6 +386,13 @@ use constant OPTION_DEFAULT_TEST_NO_FORK                            => false;
 
 # GENERAL Section
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT                         => 60;
+    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT);
+use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN                     => WAIT_TIME_MINIMUM;
+    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN);
+use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX                     => 86400;
+    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX);
+
 use constant OPTION_DEFAULT_BUFFER_SIZE                             => 4194304;
     push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE);
 use constant OPTION_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
@@ -406,6 +419,11 @@ use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX              => 9;
 
 use constant OPTION_DEFAULT_DB_TIMEOUT                              => 1800;
     push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT);
+use constant OPTION_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME_MINIMUM;
+    push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MIN);
+use constant OPTION_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
+    push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MAX);
+
 use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_EXE . '.conf';
     push @EXPORT, qw(OPTION_DEFAULT_CONFIG);
 use constant OPTION_DEFAULT_LOCK_PATH                               => '/tmp/' . BACKREST_EXE;
@@ -493,6 +511,12 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 
 ####################################################################################################################################
 # Option Rule Hash
+#
+# pgbackrest will throw an error if:
+#   1) an option is provided when executing the command that is not listed in the OPTION_RULE_COMMAND section of the Option Rule Hash
+#   2) or an option is not provided when executing the command and it is listed in the OPTION_RULE_COMMAND section as "true"
+# If an OPTION_RULE_COMMAND is set to "false" then pgbackrest will not throw an error if the option is missing and also will not throw an
+# error if it exists.
 ####################################################################################################################################
 my %oOptionRule =
 (
@@ -508,6 +532,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
@@ -606,6 +631,10 @@ my %oOptionRule =
                 &OPTION_RULE_REQUIRED => true
             },
             &CMD_BACKUP =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &CMD_CHECK =>
             {
                 &OPTION_RULE_REQUIRED => true
             },
@@ -852,6 +881,19 @@ my %oOptionRule =
 
     # GENERAL Section
     #-------------------------------------------------------------------------------------------------------------------------------
+    &OPTION_ARCHIVE_TIMEOUT =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_ARCHIVE_TIMEOUT,
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN, OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX],
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+        },
+    },
+
     &OPTION_BUFFER_SIZE =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -863,6 +905,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
@@ -873,13 +916,15 @@ my %oOptionRule =
     &OPTION_DB_TIMEOUT =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_TIMEOUT,
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_DB_TIMEOUT_MIN, OPTION_DEFAULT_DB_TIMEOUT_MAX],
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
@@ -913,6 +958,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
@@ -931,6 +977,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
@@ -948,6 +995,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_RESTORE => true
         },
@@ -963,6 +1011,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_INFO => false,
             &CMD_EXPIRE => false,
             &CMD_REMOTE => true,
@@ -1001,6 +1050,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
@@ -1020,6 +1070,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
@@ -1082,6 +1133,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_RESTORE => true
         }
@@ -1109,6 +1161,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_RESTORE => true,
@@ -1137,6 +1190,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_RESTORE => true,
@@ -1216,6 +1270,7 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
+            &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_RESTORE => true
         },
@@ -1230,6 +1285,7 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
+            &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_RESTORE => true
         },
@@ -1467,7 +1523,11 @@ my %oOptionRule =
             {
                 &OPTION_RULE_REQUIRED => false
             },
-            &CMD_BACKUP => true
+            &CMD_BACKUP => true,
+            &CMD_CHECK =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            }
         },
     },
 
@@ -1479,6 +1539,7 @@ my %oOptionRule =
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_REMOTE => true
         }
     },
@@ -1491,6 +1552,7 @@ my %oOptionRule =
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
+            &CMD_CHECK => true,
             &CMD_REMOTE => true
         }
     },
@@ -1502,7 +1564,8 @@ my %oOptionRule =
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP => true
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>

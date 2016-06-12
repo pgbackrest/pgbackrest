@@ -90,6 +90,19 @@ my $oConfigHelpData =
                     "\${stanza} is the backup stanza."
         },
 
+        # ARCHIVE-TIMEOUT Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'archive-timeout' =>
+        {
+            section => 'general',
+            summary =>
+                "Archive timeout.",
+            description =>
+                "Set maximum time, in seconds, to wait for WAL segments to reach the archive. The timeout applies to the check " .
+                    "command and to the backup command when waiting for WAL segments required to make the backup consistent to " .
+                    "be archived."
+        },
+
         # BACKUP-HOST Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-host' =>
@@ -277,10 +290,10 @@ my $oConfigHelpData =
             summary =>
                 "Database query timeout.",
             description =>
-                "Sets the timeout for queries against the database. This includes the pg_start_backup() and pg_stop_backup() " .
-                    "functions which can each take a substantial amount of time. Because of this the timeout should be kept " .
-                    "high unless you know that these functions will return quickly (i.e. if you have set startfast=y and you " .
-                    "know that the database cluster will not generate many WAL segments during the backup)."
+                "Sets the timeout, in seconds, for queries against the database. This includes the pg_start_backup() and " .
+                    "pg_stop_backup() functions which can each take a substantial amount of time. Because of this the timeout " .
+                    "should be kept high unless you know that these functions will return quickly (i.e. if you have set " .
+                    "startfast=y and you know that the database cluster will not generate many WAL segments during the backup)."
         },
 
         # DB-USER Option Help
@@ -734,6 +747,7 @@ my $oConfigHelpData =
             {
                 'archive-check' => 'section',
                 'archive-copy' => 'section',
+                'archive-timeout' => 'section',
                 'buffer-size' => 'section',
                 'cmd-remote' => 'section',
                 'compress' => 'section',
@@ -814,6 +828,47 @@ my $oConfigHelpData =
                         "* incr - incremental from the last successful backup.\n" .
                         "* diff - like an incremental backup but always based on the last full backup."
                 }
+            }
+        },
+
+        # CHECK Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'check' =>
+        {
+            summary =>
+                "Check the configuration.",
+            description =>
+                "The check command validates that pgBackRest and the archive_command setting are configured correctly for " .
+                    "archiving and backups. It detects misconfigurations, particularly in archiving, that result in incomplete " .
+                    "backups because required WAL segments did not reach the archive. The command can be run on the database or " .
+                    "the backup host.\n" .
+                "\n" .
+                "Note that pg_create_restore_point('pgBackRest Archive Check') and pg_switch_xlog() are called to force " .
+                    "PostgreSQL to archive a WAL segment. Restore points are only supported in PostgreSQL >= 9.1 so for older " .
+                    "versions the check command may fail if there has been no write activity since the last log rotation.",
+
+            option =>
+            {
+                'archive-timeout' => 'section',
+                'backup-host' => 'section',
+                'backup-user' => 'section',
+                'buffer-size' => 'section',
+                'cmd-remote' => 'section',
+                'compress-level' => 'section',
+                'compress-level-network' => 'section',
+                'config' => 'default',
+                'config-remote' => 'section',
+                'db-path' => 'section',
+                'db-port' => 'section',
+                'db-socket-path' => 'section',
+                'db-timeout' => 'section',
+                'db-user' => 'section',
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
+                'log-path' => 'section',
+                'neutral-umask' => 'section',
+                'repo-path' => 'section',
+                'stanza' => 'default'
             }
         },
 

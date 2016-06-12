@@ -66,6 +66,7 @@ my $oRenderTag =
         'path' => ['', ''],
         'cmd' => ['', ''],
         'br-option' => ['', ''],
+        'pg-setting' => ['', ''],
         'param' => ['', ''],
         'setting' => ['', ''],
         'code' => ['', ''],
