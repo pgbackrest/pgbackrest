@@ -324,23 +324,8 @@ sub containerBuild
         my $strImageParent = "$$oVm{$strOS}{&VM_IMAGE}";
         my $strImage = "${strOS}-base";
 
-        # Install package proxy
-        my $strScript =
-                "# Use squid proxy\n";
-
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-        {
-            $strScript .=
-                "RUN echo 'proxy=http://172.17.0.1:3128' >> /etc/yum.conf";
-        }
-        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-        {
-            $strScript .=
-                "RUN echo 'Acquire {Retries \"0\"; HTTP {Proxy \"http://172.17.0.1:3128\";};};' > /etc/apt/apt.conf.d/vmproxy";
-        }
-
         # Install base packages
-        $strScript .= "\n\n# Install base packages\n";
+        my $strScript = "# Install base packages\n";
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
