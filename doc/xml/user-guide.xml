@@ -26,6 +26,8 @@
         <variable key="db-path" keyword="default">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
         <variable key="db-path" keyword="co6">/var/lib/pgsql/{[pg-version]}/data</variable>
 
+        <variable key="spool-path">/var/spool/pgbackrest</variable>
+
         <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[db-path]}/postgresql.conf</variable>
 
@@ -1349,6 +1351,61 @@
 
                 <execute user="backrest">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <!-- SECTION => BACKUP HOST - ASYNCHRONOUS ARCHIVING -->
+        <section id="async-archiving" depend="install-config">
+            <title>Asynchronous Archiving</title>
+
+            <p>With <br-option>archive-async</br-option>, archiving can be offloaded to a separate process to improve throughput. WAL files are temporarily stored in a local diectory on the database server specified by <br-option>spool-path</br-option> before being transferred to the archive location on the backup server specified by <br-option>repo-path</br-option>.</p>
+
+            <p>Create the local spool directory to temporarily store WAL segments.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Create the spool directory, owned and accessible by the database owner.</title>
+
+                <execute user="root">
+                    <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>The spool path must be configured so <backrest/> knows where to find it and asynchronous archiving turned on.</p>
+
+            <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
+                <title>Configure the spool path and asyncronous archiving</title>
+
+                <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
+
+                <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+            </backrest-config>
+
+            <p>Test the configuration and confirm the output directory is created</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Test archiving and confirm the output location has been created.</title>
+
+                <execute>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>WAL segment</exe-highlight>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>ls -l {[spool-path]}/archive/{[postgres-cluster-demo]}</exe-cmd>
+                    <exe-highlight>out</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>Confirm the archiving reached the backup server.</p>
+
+            <execute-list host="{[host-backup]}">
+                <title>Examine the archive directory.</title>
+
+                <execute user="root" output="y">
+                    <exe-cmd>ls -lR {[backrest-repo-path]}/archive/{[postgres-cluster-demo]}/{[pg-version]}-1</exe-cmd>
                 </execute>
             </execute-list>
         </section>

@@ -600,7 +600,7 @@
             <command id="archive-push" name="Archive Push">
                 <summary>Push a WAL segment to the archive.</summary>
 
-                <text>The WAL segment may be pushed immediately to the archive or stored locally depending on the value of <setting>archive-async</setting></text>
+                <text>The WAL segment may be pushed immediately to the archive or stored locally depending on the value of <setting>archive-async</setting>. This command should not be invoked by a user as it is intended to be used internally; it is described here for completeness.</text>
 
                 <command-example-list>
                     <command-example>
@@ -616,7 +616,7 @@
             <command id="archive-get" name="Archive Get">
                 <summary>Get a WAL segment from the archive.</summary>
 
-                <text>WAL segments are required for restoring a <postgres/> cluster or maintaining a replica.</text>
+                <text>WAL segments are required for restoring a <postgres/> cluster or maintaining a replica. This command should not be invoked by a user as it is intended to be used internally; it is described here for completeness.</text>
 
                 <command-example-list>
                     <command-example>

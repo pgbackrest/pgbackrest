@@ -672,7 +672,8 @@ my $oConfigHelpData =
             summary =>
                 "Get a WAL segment from the archive.",
             description =>
-                "WAL segments are required for restoring a PostgreSQL cluster or maintaining a replica.",
+                "WAL segments are required for restoring a PostgreSQL cluster or maintaining a replica. This command should not " .
+                    "be invoked by a user as it is intended to be used internally; it is described here for completeness.",
 
             option =>
             {
@@ -705,7 +706,8 @@ my $oConfigHelpData =
                 "Push a WAL segment to the archive.",
             description =>
                 "The WAL segment may be pushed immediately to the archive or stored locally depending on the value of " .
-                    "archive-async",
+                    "archive-async. This command should not be invoked by a user as it is intended to be used internally; it is " .
+                    "described here for completeness.",
 
             option =>
             {

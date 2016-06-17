@@ -120,6 +120,9 @@
                     <release-item>
                         <p>Update TeX Live to 2016 version.</p>
                     </release-item>
+                    <release-item>
+                        <p>Added user guide documentation for Asyncronous Archiving.</p>
+                    </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>
