@@ -48,8 +48,10 @@ eval
     }
 
     # Set test options
-    !optionGet(OPTION_TEST, false) or
+    if (optionTest(OPTION_TEST) && optionGet(OPTION_TEST))
+    {
         testSet(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY), optionGet(OPTION_TEST_POINT, false));
+    }
 
     ################################################################################################################################
     # Process remote commands

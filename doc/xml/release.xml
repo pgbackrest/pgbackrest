@@ -17,6 +17,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="barber.chris">
+            <contributor-name-display>Chris Barber</contributor-name-display>
+            <contributor-id type="github">gamerscomplete</contributor-id>
+        </contributor>
+
         <contributor id="benoit.evan">
             <contributor-name-display>Evan Benoit</contributor-name-display>
             <contributor-id type="github">evanbenoit</contributor-id>
@@ -86,6 +91,16 @@
     <release-list>
          <release date="XXXX-XX-XX" version="1.03dev" title="UNDER DEVELOPMENT">
              <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="barber.chris"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set.  This was not an issue when <cmd>expire</cmd> was run after a <cmd>backup</cmd>, which is the usual case.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -97,6 +112,12 @@
                         <p>Added <cmd>check</cmd> command to validate that <backrest/> is configured correctly for archiving and backups.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Option handling is now far more strict.  Previously it was possible for a command to use an option that was not explicitly assigned to it.  This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
+                    </release-item>
+                </release-refactor-list>
              </release-core-list>
 
              <release-doc-list>

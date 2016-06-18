@@ -31,8 +31,8 @@ full backup
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --manifest-save-threshold=3 --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
@@ -105,7 +105,7 @@ full backup
  DEBUG:     File->remove=>: bRemoved = false
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -266,8 +266,8 @@ full backup (resume)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --force --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
@@ -357,7 +357,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db/common/global/pg_control (8KB) chec
  DEBUG:     File->remove=>: bRemoved = true
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2], strSourcePathType = backup:cluster
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -515,11 +515,11 @@ db-version="9.3"
 restore delta, backup '[BACKUP-FULL-2]' (add and delete files)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --delta --link-all --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --delta --link-all --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = restore
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=restore --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-2]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --command=restore --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=restore --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-2]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=restore --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db/common/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
@@ -689,7 +689,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --stan
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 115 (fail on missing PG_VERSION)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --delta --force --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --delta --force --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db/common' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
   INFO: restore backup set [BACKUP-FULL-2]
   WARN: contents of directory link pg_stat will be restored in a directory at the same location
@@ -701,7 +701,7 @@ DETAIL: check [TEST_PATH]/db/common exists
 restore delta, force, backup '[BACKUP-FULL-2]' (restore succeeds with backup.manifest file)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --delta --force --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --delta --force --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-FULL-2] --stanza=db
   INFO: restore backup set [BACKUP-FULL-2]
   WARN: group bogus in manifest cannot be used for restore, changed to postgres
   WARN: user bogus in manifest cannot be used for restore, changed to vagrant
@@ -797,8 +797,8 @@ incr backup (add tablespace 1)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
@@ -855,7 +855,7 @@ incr backup (add tablespace 1)
  DEBUG:     File->remove=>: bRemoved = true
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1], strSourcePathType = backup:cluster
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -1026,8 +1026,8 @@ incr backup (resume and add tablespace 2)
   INFO: backup start: --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
@@ -1103,7 +1103,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db/common/pg_tblspc/1/[TS_PATH-1]/1638
  DEBUG:     File->remove=>: bRemoved = true
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2], strSourcePathType = backup:cluster
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -1287,7 +1287,7 @@ diff backup (cannot resume - new diff)
   INFO: diff backup size = 25B
   INFO: new backup label = [BACKUP-DIFF-1]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -1450,7 +1450,7 @@ diff backup (cannot resume - disabled)
   INFO: diff backup size = 25B
   INFO: new backup label = [BACKUP-DIFF-2]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -1603,7 +1603,7 @@ db-version="9.3"
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 (fail on used path)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
   INFO: restore backup set [BACKUP-DIFF-2]
 DETAIL: check [TEST_PATH]/db/common exists
  ERROR: [115]: cannot restore to path '[TEST_PATH]/db/common' that contains files - try using --delta if this is what you intended
@@ -1612,7 +1612,7 @@ DETAIL: check [TEST_PATH]/db/common exists
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
   INFO: restore backup set [BACKUP-DIFF-2]
  ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 5 is required
   INFO: restore stop
@@ -1620,7 +1620,7 @@ restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on undef format)
 restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db
   INFO: restore backup set [BACKUP-DIFF-2]
  ERROR: [104]: format of [TEST_PATH]/db/common/backup.manifest is 0 but 5 is required
   INFO: restore stop
@@ -1628,7 +1628,7 @@ restore, backup '[BACKUP-DIFF-2]', expect exit 104 (fail on mismatch format)
 restore, backup '[BACKUP-DIFF-2]', remap (remap all paths)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common-2 --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
   INFO: restore backup set [BACKUP-DIFF-2]
   INFO: remap $PGDATA directory to [TEST_PATH]/db/common-2
   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db/tablespace/ts1-2
@@ -1660,7 +1660,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-
 restore delta, backup '[BACKUP-DIFF-2]', remap (ensure file in tblspc root remains after --delta)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common-2 --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
   INFO: restore backup set [BACKUP-DIFF-2]
   INFO: remap $PGDATA directory to [TEST_PATH]/db/common-2
   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db/tablespace/ts1-2
@@ -1703,7 +1703,7 @@ incr backup (add files and remove tablespace 2)
   INFO: incr backup size = 13B
   INFO: new backup label = [BACKUP-INCR-3]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -1863,7 +1863,7 @@ incr backup (update files)
   INFO: incr backup size = 8B
   INFO: new backup label = [BACKUP-INCR-4]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -2028,7 +2028,7 @@ diff backup (updates since last full)
   INFO: diff backup size = 39B
   INFO: new backup label = [BACKUP-DIFF-3]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -2189,7 +2189,7 @@ incr backup (remove files - but won't affect manifest)
   INFO: incr backup size = 0B
   INFO: new backup label = [BACKUP-INCR-5]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -2355,7 +2355,7 @@ DETAIL: skip file removed by database: [TEST_PATH]/db/common-2/base/base2.txt
   INFO: diff backup size = 31B
   INFO: new backup label = [BACKUP-DIFF-4]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -2528,7 +2528,7 @@ full backup (update file)
   INFO: full backup size = 8KB
   INFO: new backup label = [BACKUP-FULL-3]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -3004,9 +3004,9 @@ info db
     }
 ]
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --stanza=db expire --log-level-console=detail --retention-full=1
+> [BACKREST_BIN] --config=[TEST_PATH]/db --config=[TEST_PATH]/db/pgbackrest.conf --stanza=db expire --log-level-console=detail --retention-full=1
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --retention-full=1 --stanza=db
+  INFO: expire start: --backup-host=127.0.0.1 --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --retention-full=1 --stanza=db
  ERROR: [147]: backup and expire commands must run on the backup host
   INFO: expire stop
 
@@ -3019,7 +3019,7 @@ diff backup (add file)
   INFO: diff backup size = 9B
   INFO: new backup label = [BACKUP-DIFF-5]
   INFO: backup stop
-  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: archive retention type not set - archive logs will not be expired
   INFO: expire stop
 
@@ -3179,7 +3179,7 @@ db-version="9.3"
 restore delta, remap (selective restore 16384)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=16384=1 --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=16384=1 --db-path=[TEST_PATH]/db/common-2 --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
   INFO: restore backup set [BACKUP-DIFF-5]
   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db/tablespace/ts2-2
 DETAIL: check [TEST_PATH]/db/common-2 exists
@@ -3214,7 +3214,7 @@ restore_command = '[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-
 restore delta, remap (selective restore 32768)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --delta --log-level-console=detail --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=32768=1 --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-include=32768=1 --db-path=[TEST_PATH]/db/common-2 --delta --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map=2=[TEST_PATH]/db/tablespace/ts2-2
   INFO: restore backup set [BACKUP-DIFF-5]
   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db/tablespace/ts2-2
 DETAIL: check [TEST_PATH]/db/common-2 exists
@@ -3259,7 +3259,7 @@ restore delta, remap, expect exit 156 (error on system id)
 restore, remap, expect exit 148 (no tablespace remap - error when tablespace dir does not exist)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map-all=../../tablespace
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common-2/base --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map-all=../../tablespace
   INFO: restore backup set [BACKUP-DIFF-5]
   INFO: remap $PGDATA directory to [TEST_PATH]/db/common-2/base
   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
@@ -3271,7 +3271,7 @@ DETAIL: check [TEST_PATH]/db/common-2/tablespace exists
 restore (no tablespace remap)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --tablespace-map-all=../../tablespace --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map-all=../../tablespace
+  INFO: restore start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common-2/base --lock-path=[TEST_PATH]/local/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db --tablespace-map-all=../../tablespace
   INFO: restore backup set [BACKUP-DIFF-5]
   INFO: remap $PGDATA directory to [TEST_PATH]/db/common-2/base
   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2

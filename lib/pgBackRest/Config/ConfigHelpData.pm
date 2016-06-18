@@ -748,6 +748,7 @@ my $oConfigHelpData =
                 'archive-check' => 'section',
                 'archive-copy' => 'section',
                 'archive-timeout' => 'section',
+                'backup-host' => 'section',
                 'buffer-size' => 'section',
                 'cmd-remote' => 'section',
                 'compress' => 'section',
@@ -858,6 +859,7 @@ my $oConfigHelpData =
                 'compress-level-network' => 'section',
                 'config' => 'default',
                 'config-remote' => 'section',
+                'db-host' => 'section',
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
@@ -885,7 +887,9 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-host' => 'section',
                 'config' => 'default',
+                'db-host' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -982,6 +986,7 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'config-remote' => 'section',
                 'db-include' => 'section',
+                'db-path' => 'section',
                 'db-timeout' => 'section',
 
                 # DELTA Option Help
@@ -1132,7 +1137,9 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-host' => 'section',
                 'config' => 'default',
+                'db-host' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -1156,7 +1163,9 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-host' => 'section',
                 'config' => 'default',
+                'db-host' => 'section',
 
                 # FORCE Option Help
                 #-------------------------------------------------------------------------------------------------------------------

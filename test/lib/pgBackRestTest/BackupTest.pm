@@ -1536,7 +1536,8 @@ sub BackRestTestBackup_Test
 
             # Call expire
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_Expire($strStanza, undef, $oFile, 1);
+            BackRestTestBackup_Expire($bRemote && !$bCompress, $strStanza, undef, $oFile, 1, undef,
+                $bRemote && $bCompress ? ERROR_HOST_INVALID : undef);
 
             # Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------

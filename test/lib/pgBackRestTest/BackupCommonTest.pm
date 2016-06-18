@@ -1932,11 +1932,13 @@ push @EXPORT, qw(BackRestTestBackup_Expire);
 
 sub BackRestTestBackup_Expire
 {
+    my $bRemote = shift;
     my $strStanza = shift;
     my $strComment = shift;
     my $oFile = shift;
     my $iExpireFull = shift;
     my $iExpireDiff = shift;
+    my $iExpectedExitStatus = shift;
 
     $strComment = 'expire' .
                   (defined($iExpireFull) ? " full=$iExpireFull" : '') .
@@ -1946,7 +1948,8 @@ sub BackRestTestBackup_Expire
     &log(INFO, "        ${strComment}");
 
     my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
-                               "/pgbackrest.conf --stanza=${strStanza} expire --log-level-console=detail";
+        ' --config=' . ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) . '/pgbackrest.conf' .
+        " --stanza=${strStanza} expire --log-level-console=detail";
 
     if (defined($iExpireFull))
     {
@@ -1958,8 +1961,7 @@ sub BackRestTestBackup_Expire
         $strCommand .= ' --retention-diff=' . $iExpireDiff;
     }
 
-    executeTest($strCommand, {oLogTest => $oBackupLogTest,
-                iExpectedExitStatus => $bBackupRemote ? ERROR_HOST_INVALID : undef});
+    executeTest($strCommand, {bRemote => $bRemote, oLogTest => $oBackupLogTest, iExpectedExitStatus => $iExpectedExitStatus});
 }
 
 1;

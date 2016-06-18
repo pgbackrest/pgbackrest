@@ -366,6 +366,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, 'restore invalid ' . OPTION_TARGET))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_TYPE, RECOVERY_TYPE_DEFAULT);
             optionSetTest($oOption, OPTION_TARGET, BOGUS);
 
@@ -376,6 +377,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, 'restore ' . OPTION_TARGET))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_TYPE, RECOVERY_TYPE_NAME);
             optionSetTest($oOption, OPTION_TARGET, BOGUS);
 
@@ -435,6 +437,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, 'restore valid ' . OPTION_TARGET_TIMELINE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_TARGET_TIMELINE, 2);
 
             configLoadExpect($oOption, CMD_RESTORE);
@@ -482,6 +485,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, '=');
 
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=', OPTION_RESTORE_RECOVERY_OPTION);
@@ -490,6 +494,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, '=' . BOGUS);
 
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=' . BOGUS, OPTION_RESTORE_RECOVERY_OPTION);
@@ -498,6 +503,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, BOGUS . '=');
 
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, BOGUS . '=', OPTION_RESTORE_RECOVERY_OPTION);
@@ -506,6 +512,7 @@ sub BackRestTestConfig_Test
         if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' valid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, 'primary-conn-info=db.domain.net');
 
             configLoadExpect($oOption, CMD_RESTORE);
@@ -720,6 +727,7 @@ sub BackRestTestConfig_Test
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_RESTORE);
@@ -767,6 +775,7 @@ sub BackRestTestConfig_Test
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_VALUE, 'bogus=', OPTION_RESTORE_RECOVERY_OPTION);
@@ -779,6 +788,7 @@ sub BackRestTestConfig_Test
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_VALUE, '=bogus', OPTION_RESTORE_RECOVERY_OPTION);
@@ -792,6 +802,7 @@ sub BackRestTestConfig_Test
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_RESTORE);
@@ -805,6 +816,7 @@ sub BackRestTestConfig_Test
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_RESTORE);

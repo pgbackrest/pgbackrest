@@ -1270,9 +1270,14 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
             &CMD_INFO => true,
-            &CMD_RESTORE => true
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
         },
     },
 
@@ -1504,7 +1509,12 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP => true
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_REMOTE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
         }
     },
 
@@ -1527,7 +1537,8 @@ my %oOptionRule =
             &CMD_CHECK =>
             {
                 &OPTION_RULE_REQUIRED => false
-            }
+            },
+            &CMD_RESTORE => true,
         },
     },
 
@@ -1655,7 +1666,7 @@ sub configLoad
                 $ARGV[0] = $ARGV[1];
             }
 
-            optionValid(\%oOptionTest, $bHelp);
+            optionValidate(\%oOptionTest, $bHelp);
 
             if ($bHelp)
             {
@@ -1671,7 +1682,7 @@ sub configLoad
     }
 
     # Neutralize the umask to make the repository file/path modes more consistent
-    if (optionGet(OPTION_NEUTRAL_UMASK))
+    if (optionTest(OPTION_NEUTRAL_UMASK) && optionGet(OPTION_NEUTRAL_UMASK))
     {
         umask(0000);
     }
@@ -1685,7 +1696,7 @@ sub configLoad
     elsif (optionTest(OPTION_DB_HOST))
     {
         # Don't allow both sides to be remote
-        if (defined($strRemoteType))
+        if (optionTest(OPTION_BACKUP_HOST))
         {
             confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
         }
@@ -1703,11 +1714,11 @@ sub configLoad
 push @EXPORT, qw(configLoad);
 
 ####################################################################################################################################
-# optionValid
+# optionValidate
 #
 # Make sure the command-line options are valid based on the command.
 ####################################################################################################################################
-sub optionValid
+sub optionValidate
 {
     my $oOptionTest = shift;
     my $bHelp = shift;
@@ -1747,6 +1758,22 @@ sub optionValid
             {
                 next;
             }
+
+            # The command rules must be explicitly set
+            if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}))
+            {
+                confess &log(ASSERT, OPTION_RULE_COMMAND . " rules must be set for '${strOption}' option");
+            }
+
+            # Determine if an option is valid for a command
+            if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
+            {
+                $oOption{$strOption}{valid} = false;
+                $oOptionResolved{$strOption} = true;
+                next;
+            }
+
+            $oOption{$strOption}{valid} = true;
 
             # Store the option value since it is used a lot
             my $strValue = $$oOptionTest{$strOption};
@@ -2259,6 +2286,41 @@ sub optionSource
 push @EXPORT, qw(optionSource);
 
 ####################################################################################################################################
+# optionValid
+#
+# Is the option valid for the current command?
+####################################################################################################################################
+sub optionValid
+{
+    my $strOption = shift;
+    my $bError = shift;
+
+    if (defined($oOption{$strOption}) && defined($oOption{$strOption}{valid}) && $oOption{$strOption}{valid})
+    {
+        return true;
+    }
+
+    if (defined($bError) && $bError)
+    {
+        if (!defined($oOption{$strOption}))
+        {
+            confess &log(ASSERT, "option '${strOption}' does not exist");
+        }
+
+        if (!defined($oOption{$strOption}{valid}))
+        {
+            confess &log(ASSERT, "option '${strOption}' does not have 'valid' flag set");
+        }
+
+        confess &log(ASSERT, "option ${strOption} is not valid for command '" . commandGet() . "'");
+    }
+
+    return false;
+}
+
+push @EXPORT, qw(optionValid);
+
+####################################################################################################################################
 # optionGet
 #
 # Get option value.
@@ -2267,6 +2329,8 @@ sub optionGet
 {
     my $strOption = shift;
     my $bRequired = shift;
+
+    optionValid($strOption, true);
 
     if (!defined($oOption{$strOption}{value}) && (!defined($bRequired) || $bRequired))
     {
@@ -2288,6 +2352,8 @@ sub optionSet
     my $strOption = shift;
     my $oValue = shift;
 
+    optionValid($strOption, true);
+
     if (!defined($oOption{$strOption}{value}))
     {
         confess &log(ASSERT, "option ${strOption} is not defined");
@@ -2308,12 +2374,17 @@ sub optionTest
     my $strOption = shift;
     my $strValue = shift;
 
-    if (defined($strValue))
+    if (!optionValid($strOption))
     {
-        return optionGet($strOption) eq $strValue;
+        return false;
     }
 
-    return defined($oOption{$strOption}{value});
+    if (defined($strValue))
+    {
+        return optionGet($strOption) eq $strValue ? true : false;
+    }
+
+    return defined($oOption{$strOption}{value}) ? true : false;
 }
 
 push @EXPORT, qw(optionTest);

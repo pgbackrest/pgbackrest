@@ -6,8 +6,8 @@ run 007 - rmt 1, cmp 1, exists 0
   INFO: archive-get start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: get WAL segment 000000010000000100000001
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  ERROR: [130]: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
@@ -33,7 +33,7 @@ db-version="9.3"
 
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: stop start: --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest
+  INFO: stop start: --backup-host=127.0.0.1 --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: stop stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -51,7 +51,7 @@ db-version="9.3"
 start (local)
 > [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: start start: --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest
+  INFO: start start: --backup-host=127.0.0.1 --config=[TEST_PATH]/db/pgbackrest.conf --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: start stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
@@ -61,8 +61,8 @@ start (local)
   INFO: archive-get start: --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --repo-path=[TEST_PATH]/backrest --stanza=db
   INFO: get WAL segment 000000090000000900000009
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-get --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>

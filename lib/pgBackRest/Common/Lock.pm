@@ -164,7 +164,7 @@ sub lockRelease
         );
 
     # Release if locking is enabled
-    if (!optionTest(OPTION_LOCK) || optionGet(OPTION_LOCK))
+    if (optionValid(OPTION_LOCK))
     {
         # Fail if there is no lock
         if (!defined($strCurrentLockType))
