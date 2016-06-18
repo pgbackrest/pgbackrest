@@ -108,6 +108,10 @@
                     <release-item>
                         <p>Fixed <backrest/>-specific xml that was loaded for non-<backrest/> projects.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed section names being repeated in the info output when multiple <br-option>--require</br-option> options depended on the same sections.</p>
+                    </release-item>
                 </release-bug-list>
 
                  <release-feature-list>

@@ -362,9 +362,12 @@ sub required
         {
             if ($strChildPath =~ /^$strPath$/ || $strChildPath =~ /^$strPath\/.*$/)
             {
-                &log(INFO, "        require section: ${strChildPath}");
+                if (!defined(${$self->{oSectionRequired}}{$strChildPath}))
+                {
+                    &log(INFO, "        require section: ${strChildPath}");
 
-                ${$self->{oSectionRequired}}{$strChildPath} = true;
+                    ${$self->{oSectionRequired}}{$strChildPath} = true;
+                }
             }
         }
     }
