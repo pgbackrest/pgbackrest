@@ -573,7 +573,7 @@ sub backrestConfig
 
             $oHost->copyTo($strLocalFile, $$hCacheKey{file}, $oConfig->paramGet('owner', false, 'postgres:postgres'), '640');
 
-            my $strConfig = fileStringRead($strLocalFile);
+            $strConfig = fileStringRead($strLocalFile);
             my @stryConfig = undef;
 
             if (trim($strConfig) ne '')
