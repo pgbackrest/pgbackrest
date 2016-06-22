@@ -10,6 +10,7 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 use Time::HiRes qw(gettimeofday);
+use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
@@ -92,22 +93,48 @@ sub close
 {
     my $self = shift;
 
+    # Exit status defaults to success
+    my $iExitStatus = 0;
+
     # Only send the exit command if the process is running
     if (defined($self->{io}) && defined($self->{io}->pIdGet()))
     {
         &log(TRACE, "sending exit command to process");
 
-        $self->cmdWrite('exit');
+        eval
+        {
+            $self->cmdWrite('exit');
+        };
+
+        if ($@)
+        {
+            my $oMessage = $@;
+            my $strError = 'unable to shutdown protocol';
+            my $strHint = 'HINT: the process completed successfully but protocol-timeout may need to be increased.';
+
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+            {
+                $iExitStatus = $oMessage->code();
+            }
+            else
+            {
+                if (!defined($oMessage))
+                {
+                    $oMessage = 'unknown error';
+                }
+
+                $iExitStatus = ERROR_UNKNOWN;
+            }
+
+            &log(WARN,
+                $strError . ($iExitStatus == ERROR_UNKNOWN ? '' : ' [' . $oMessage->code() . ']') . ': ' .
+                ($iExitStatus == ERROR_UNKNOWN ? $oMessage : $oMessage->message()) . "\n${strHint}");
+        }
 
         undef($self->{io});
-
-        # &log(TRACE, "waiting for remote process");
-        # if (!$self->waitPid(5, false))
-        # {
-        #     &log(TRACE, "killed remote process");
-        #     kill('KILL', $self->{pId});
-        # }
     }
+
+    return $iExitStatus;
 }
 
 ####################################################################################################################################

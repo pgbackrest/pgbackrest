@@ -439,6 +439,19 @@ my $oConfigHelpData =
                     "the command line."
         },
 
+        # PROTOCOL-TIMEOUT Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'protocol-timeout' =>
+        {
+            section => 'general',
+            summary =>
+                "Protocol timeout.",
+            description =>
+                "Sets the timeout, in seconds, that the master or remote process will wait for a new message to be received on " .
+                    "the protocol layer. This prevents processes from waiting indefinitely for a message. The protocol-timeout " .
+                    "option must be greater than the db-timeout option."
+        },
+
         # RECOVERY-OPTION Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'recovery-option' =>
@@ -686,12 +699,12 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'config-remote' => 'section',
                 'db-path' => 'section',
-                'db-timeout' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }
@@ -721,12 +734,12 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'config-remote' => 'section',
                 'db-path' => 'section',
-                'db-timeout' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'spool-path' => 'section',
                 'stanza' => 'default'
@@ -803,6 +816,7 @@ my $oConfigHelpData =
                             "archive-check is automatically disabled for the backup."
                 },
 
+                'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'resume' => 'section',
                 'retention-archive' => 'section',
@@ -869,6 +883,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }
@@ -941,7 +956,6 @@ my $oConfigHelpData =
                 'compress-level-network' => 'section',
                 'config' => 'default',
                 'config-remote' => 'section',
-                'db-timeout' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -960,6 +974,7 @@ my $oConfigHelpData =
                         "* json - Exhaustive machine-readable backup information in JSON format."
                 },
 
+                'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }
@@ -987,7 +1002,6 @@ my $oConfigHelpData =
                 'config-remote' => 'section',
                 'db-include' => 'section',
                 'db-path' => 'section',
-                'db-timeout' => 'section',
 
                 # DELTA Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -1031,6 +1045,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'protocol-timeout' => 'section',
                 'recovery-option' => 'section',
                 'repo-path' => 'section',
 

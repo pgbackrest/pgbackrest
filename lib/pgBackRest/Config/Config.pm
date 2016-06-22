@@ -259,6 +259,8 @@ use constant OPTION_COMPRESS_LEVEL_NETWORK                          => 'compress
     push @EXPORT, qw(OPTION_COMPRESS_LEVEL_NETWORK);
 use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-umask';
     push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
+use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
+    push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
 use constant OPTION_THREAD_MAX                                      => 'thread-max';
     push @EXPORT, qw(OPTION_THREAD_MAX);
 use constant OPTION_THREAD_TIMEOUT                                  => 'thread-timeout';
@@ -423,6 +425,13 @@ use constant OPTION_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME
     push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MIN);
 use constant OPTION_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
     push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MAX);
+
+use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT                        => OPTION_DEFAULT_DB_TIMEOUT + 30;
+    push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT);
+use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN                    => OPTION_DEFAULT_DB_TIMEOUT_MIN;
+    push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN);
+use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX                    => OPTION_DEFAULT_DB_TIMEOUT_MAX;
+    push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX);
 
 use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_EXE . '.conf';
     push @EXPORT, qw(OPTION_DEFAULT_CONFIG);
@@ -921,14 +930,14 @@ my %oOptionRule =
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_DB_TIMEOUT_MIN, OPTION_DEFAULT_DB_TIMEOUT_MAX],
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
+            &CMD_ARCHIVE_GET => false,
+            &CMD_ARCHIVE_PUSH => false,
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => false,
-            &CMD_INFO => true,
+            &CMD_INFO => false,
             &CMD_REMOTE => true,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => false
         }
     },
 
@@ -1058,6 +1067,25 @@ my %oOptionRule =
             &CMD_STOP => true,
             &CMD_EXPIRE => true
         },
+    },
+
+    &OPTION_PROTOCOL_TIMEOUT =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_PROTOCOL_TIMEOUT,
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN, OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX],
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => false,
+            &CMD_INFO => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true
+        }
     },
 
     &OPTION_REPO_PATH =>
@@ -1685,6 +1713,16 @@ sub configLoad
     if (optionTest(OPTION_NEUTRAL_UMASK) && optionGet(OPTION_NEUTRAL_UMASK))
     {
         umask(0000);
+    }
+
+    # Protocol timeout should be greater than db timeout
+    if (optionTest(OPTION_DB_TIMEOUT) && optionTest(OPTION_PROTOCOL_TIMEOUT) &&
+        optionGet(OPTION_PROTOCOL_TIMEOUT) <= optionGet(OPTION_DB_TIMEOUT))
+    {
+        confess &log(ERROR,
+            "'" . optionGet(OPTION_PROTOCOL_TIMEOUT) . "' is not valid for '" . OPTION_PROTOCOL_TIMEOUT . "' option\n" .
+            "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
+            ERROR_OPTION_INVALID_VALUE);
     }
 
     # Check if the backup host is remote
@@ -2461,7 +2499,7 @@ sub protocolGet
             optionGet(OPTION_BUFFER_SIZE),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-            protocolTimeoutGet()
+            optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
     }
 
@@ -2483,7 +2521,7 @@ sub protocolGet
         commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_HOST) : optionGet(OPTION_BACKUP_HOST),
         optionRemoteTypeTest(DB) ? optionGet(OPTION_DB_USER) : optionGet(OPTION_BACKUP_USER),
-        protocolTimeoutGet()
+        optionGet(OPTION_PROTOCOL_TIMEOUT)
     );
 
     if (!defined($bStore) || $bStore)
@@ -2497,30 +2535,21 @@ sub protocolGet
 push @EXPORT, qw(protocolGet);
 
 ####################################################################################################################################
-# protocolTimeoutGet
-#
-# Get the protocol time - for the moment this is based on the db timeout + 30 seconds.
-####################################################################################################################################
-sub protocolTimeoutGet
-{
-    return optionGet(OPTION_DB_TIMEOUT) >= OPTION_DEFAULT_DB_TIMEOUT ?
-               optionGet(OPTION_DB_TIMEOUT) + 30 : optionGet(OPTION_DB_TIMEOUT);
-}
-
-push @EXPORT, qw(protocolTimeoutGet);
-
-####################################################################################################################################
 # protocolDestroy
 #
 # Undefine the protocol if it is stored locally.
 ####################################################################################################################################
 sub protocolDestroy
 {
+    my $iExitStatus = 0;
+
     if (defined($oProtocol))
     {
-        $oProtocol->close();
+        $iExitStatus = $oProtocol->close();
         undef($oProtocol);
     }
+
+    return $iExitStatus;
 }
 
 push @EXPORT, qw(protocolDestroy);

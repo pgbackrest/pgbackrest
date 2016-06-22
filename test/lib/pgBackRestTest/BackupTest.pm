@@ -963,7 +963,7 @@ sub BackRestTestBackup_Test
 
             if ($bNeutralTest && $bRemote)
             {
-                $strOptionalParam .= ' --db-timeout=2';
+                $strOptionalParam .= ' --protocol-timeout=2 --db-timeout=1';
 
                 if ($iThreadMax > 1)
                 {
@@ -1019,7 +1019,7 @@ sub BackRestTestBackup_Test
             {
                 BackRestTestBackup_BackupSynthetic(
                     $strType, $strStanza, \%oManifest, 'protocol timeout',
-                    {strOptionalParam => '--db-timeout=1',
+                    {strOptionalParam => '--protocol-timeout=1 --db-timeout=.1',
                      strTest => TEST_BACKUP_START,
                      fTestDelay => 1,
                      iExpectedExitStatus => ERROR_PROTOCOL_TIMEOUT});
@@ -1639,6 +1639,16 @@ sub BackRestTestBackup_Test
             {
                 executeTest('ls -1R ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza}/" . PATH_BACKUP_HISTORY,
                             {oLogTest => $oLogTest, bRemote => $bRemote});
+            }
+
+            # Test protocol shutdown timeout
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bNeutralTest && $bRemote)
+            {
+                BackRestTestBackup_BackupSynthetic(
+                    $strType, $strStanza, \%oManifest, 'protocol shutdown timeout',
+                    {strOptionalParam => '--protocol-timeout=1 --db-timeout=.5 --log-level-console=warn',
+                     strTest => TEST_PROCESS_EXIT, fTestDelay => 1, bSupplemental => false});
             }
         }
         }

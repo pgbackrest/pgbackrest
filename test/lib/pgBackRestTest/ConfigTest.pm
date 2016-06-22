@@ -153,7 +153,8 @@ sub configLoadExpect
             }
             elsif ($iExpectedError == ERROR_OPTION_INVALID_VALUE)
             {
-                $strError = "'${strErrorParam1}' is not valid for '${strErrorParam2}' option";
+                $strError = "'${strErrorParam1}' is not valid for '${strErrorParam2}' option" .
+                            (defined($strErrorParam3) ? "\nHINT: ${strErrorParam3}." : '');
             }
             elsif ($iExpectedError == ERROR_OPTION_INVALID_RANGE)
             {
@@ -468,6 +469,18 @@ sub BackRestTestConfig_Test
             optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BOGUS);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_RETENTION_ARCHIVE_TYPE);
+        }
+
+        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_PROTOCOL_TIMEOUT))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
+            optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 4);
+
+            configLoadExpect(
+                $oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, 4, OPTION_PROTOCOL_TIMEOUT,
+                "'protocol-timeout' option should be greater than 'db-timeout' option");
         }
 
         if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_RETENTION_ARCHIVE_TYPE))

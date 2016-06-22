@@ -114,25 +114,8 @@ sub exitSafe
         }
     }
 
-    # Don't fail if protocol cannot be destroyed
-    eval
-    {
-        protocolDestroy();
-    };
-
-    if ($@ && defined($iExitCode))
-    {
-        my $oMessage = $@;
-
-        if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
-        {
-            &log(WARN, 'unable to shutdown protocol (' . $oMessage->code() . '): ' . $oMessage->message());
-
-            exit $oMessage->code();
-        }
-
-        &log(WARN, "unable to shutdown protocol: $oMessage");
-    }
+    # Close the remote
+    protocolDestroy();
 
     # Don't fail if the lock can't be released
     eval

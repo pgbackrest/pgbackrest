@@ -178,6 +178,15 @@
                         <example>/backup/db/spool</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - PROTOCOL-TIMEOUT KEY -->
+                    <config-key id="protocol-timeout" name="Protocol Timeout">
+                        <summary>Protocol timeout.</summary>
+
+                        <text>Sets the timeout, in seconds, that the master or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message.  The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</text>
+
+                        <example>630</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Repository path where WAL segments and backups stored.</summary>

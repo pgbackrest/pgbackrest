@@ -94,6 +94,8 @@ use constant TEST_BACKUP_START                                      => 'BACKUP-S
     push @EXPORT, qw(TEST_BACKUP_START);
 use constant TEST_KEEP_ALIVE                                        => 'KEEP_ALIVE';
     push @EXPORT, qw(TEST_KEEP_ALIVE);
+use constant TEST_PROCESS_EXIT                                      => 'TEST_PROCESS_EXIT';
+    push @EXPORT, qw(TEST_PROCESS_EXIT);
 use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-PUSH-ASYNC-START';
     push @EXPORT, qw(TEST_ARCHIVE_PUSH_ASYNC_START);
 

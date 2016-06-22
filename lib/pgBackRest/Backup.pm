@@ -448,6 +448,10 @@ sub processManifest
                     $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oFileCopy{repo_file}, $bCopied, $lCopySize,
                                                                  $lRepoSize, $strCopyChecksum, $lManifestSaveSize,
                                                                  $lManifestSaveCurrent);
+
+                    # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
+                    # then the remote might timeout while waiting for a command.
+                    protocolGet()->keepAlive();
                 }
             }
         }
@@ -481,10 +485,12 @@ sub processManifest
 
             # Complete thread queues
             my $bDone = false;
+            my $bKeepAlive = false;
 
             do
             {
                 $bDone = threadGroupComplete();
+                $bKeepAlive = false;
 
                 # Read the messages that are passed back from the backup threads
                 while (my $oMessage = $oResultQueue->dequeue_nb())
@@ -494,10 +500,18 @@ sub processManifest
                     $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$oMessage{repo_file}, $$oMessage{copied},
                                                                  $$oMessage{size}, $$oMessage{repo_size}, $$oMessage{checksum},
                                                                  $lManifestSaveSize, $lManifestSaveCurrent);
+
+                    # A keep-alive is required inside the loop because a flood of thread messages could prevent the keep-alive
+                    # outside the loop from running in a timely fashion.
+                    protocolGet()->keepAlive();
+                    $bKeepAlive = true;
                 }
 
-                # Keep the protocol layer from timing out
-                protocolGet()->keepAlive();
+                # This keep-alive only runs if the keep-alive in the loop did not run
+                if (!$bKeepAlive)
+                {
+                    protocolGet()->keepAlive();
+                }
             }
             while (!$bDone);
         }
@@ -679,7 +693,7 @@ sub process
         $oDatabaseMap = $self->{oDb}->databaseMapGet();
     }
 
-    # Buid the manifest
+    # Build the manifest
     $oBackupManifest->build($self->{oFile}, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
                             $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);

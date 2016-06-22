@@ -1236,6 +1236,7 @@ push @EXPORT, qw(BackRestTestBackup_BackupEnd);
 sub BackRestTestBackup_BackupEnd
 {
     my $oExpectedManifestRef = shift;
+    my $bSupplemental = shift;
 
     my $iExitStatus = $oExecuteBackup->end();
 
@@ -1258,7 +1259,7 @@ sub BackRestTestBackup_BackupEnd
         BackRestTestBackup_BackupCompare($oBackupFile, $bBackupRemote, $strBackup, $oExpectedManifestRef);
     }
 
-    if (defined($oBackupLogTest))
+    if (defined($oBackupLogTest) && (!defined($bSupplemental) || $bSupplemental))
     {
         $oBackupLogTest->supplementalAdd(BackRestTestCommon_DbPathGet() . "/pgbackrest.conf", $bBackupRemote);
 
@@ -1290,7 +1291,7 @@ sub BackRestTestBackup_BackupSynthetic
     my $oParam = shift;
 
     BackRestTestBackup_BackupBegin($strType, $strStanza, $strComment, $oParam);
-    return BackRestTestBackup_BackupEnd($oExpectedManifestRef);
+    return BackRestTestBackup_BackupEnd($oExpectedManifestRef, $$oParam{bSupplemental});
 }
 
 ####################################################################################################################################

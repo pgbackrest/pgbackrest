@@ -78,7 +78,7 @@ eval
             optionGet(OPTION_BUFFER_SIZE),
             optionGet(OPTION_COMPRESS_LEVEL),
             optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-            protocolTimeoutGet()
+            optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
 
         # ??? Would like to remove this check and allow a test lock
@@ -225,6 +225,9 @@ eval
             new pgBackRest::Expire()->process();
         }
     }
+
+    # Process exit test point
+    &log(TEST, TEST_PROCESS_EXIT);
 
     lockRelease();
     exitSafe(0);

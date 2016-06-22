@@ -57,6 +57,11 @@
             <contributor-id type="github">Dwaligon</contributor-id>
         </contributor>
 
+        <contributor id="parkinson.janice">
+            <contributor-name-display>Janice Parkinson</contributor-name-display>
+            <contributor-id type="github">jpabt</contributor-id>
+        </contributor>
+
         <contributor id="renner.michael">
             <contributor-name-display>Michael Renner</contributor-name-display>
             <contributor-id type="github">terrorobe</contributor-id>
@@ -94,6 +99,14 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="parkinson.janice"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded operation and were completely absent during single-threaded operation when resuming from a previous incomplete backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="barber.chris"/>
                         </release-item-contributor-list>
 
@@ -110,6 +123,14 @@
                         </release-item-contributor-list>
 
                         <p>Added <cmd>check</cmd> command to validate that <backrest/> is configured correctly for archiving and backups.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added the <br-option>protocol-timeout</br-option> option.  Previously <br-option>protocol-timeout</br-option> was set as <br-option>db-timeout</br-option> + 30 seconds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Failure to shutdown remotes at the end of the backup no longer throws an exception.  A warning is still generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
                     </release-item>
                 </release-feature-list>
 

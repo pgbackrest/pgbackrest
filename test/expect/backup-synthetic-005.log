@@ -26,13 +26,13 @@ full backup (error on link to a link)
   INFO: backup stop
 
 full backup
-> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --manifest-save-threshold=3 --db-timeout=2 --type=full --stanza=db backup
+> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=2 --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --manifest-save-threshold=3 --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
+  INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=1 --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --manifest-save-threshold=3 --no-online --protocol-timeout=2 --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --type=full
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 2, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=2 --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 2, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=2 --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 2, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=1 --protocol-timeout=2 --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 2, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=1 --protocol-timeout=2 --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
@@ -105,7 +105,7 @@ full backup
  DEBUG:     File->remove=>: bRemoved = false
  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
   INFO: backup stop
-  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --db-timeout=2 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: expire start: --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --db-host=127.0.0.1 --db-timeout=1 --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --protocol-timeout=2 --repo-path=[TEST_PATH]/backrest --stanza=db
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -263,13 +263,13 @@ db-version="9.3"
 1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6156904820763115222,"db-version":"9.3"}
 
 full backup (protocol timeout)
-> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --db-timeout=1 --type=full --stanza=db backup --test --test-delay=1 --test-point=backup-start=y
+> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --protocol-timeout=1 --db-timeout=.1 --type=full --stanza=db backup --test --test-delay=1 --test-point=backup-start=y
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=1 --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=backup-start=y --type=full
+  INFO: backup start: --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/backrest/pgbackrest.conf --config-remote=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-path=[TEST_PATH]/db/common --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=.1 --db-user=vagrant --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --no-online --protocol-timeout=1 --repo-path=[TEST_PATH]/backrest --stanza=db --start-fast --test --test-delay=1 --test-point=backup-start=y --type=full
  DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common:::Lock::lockAquire=>: bResult = true
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=1 --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=1 --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1, strCommand = [BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=.1 --protocol-timeout=1 --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1, strCommand = ssh -o Compression=no -o PasswordAuthentication=no vagrant@127.0.0.1 '[BACKREST_BIN] --command=backup --config=[TEST_PATH]/db/pgbackrest.conf --db-host=127.0.0.1 --db-port=[PORT-1] --db-socket-path=[TEST_PATH]/db --db-timeout=.1 --protocol-timeout=1 --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = db, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backrest/backup/db
@@ -3742,3 +3742,10 @@ info bogus
         }
     }
 ]
+
+diff backup (protocol shutdown timeout)
+> [BACKREST_BIN] --config=[TEST_PATH]/backrest/pgbackrest.conf --no-online --protocol-timeout=1 --db-timeout=.5 --log-level-console=warn --type=diff --stanza=db backup --test --test-delay=1 --test-point=test_process_exit=y
+------------------------------------------------------------------------------------------------------------------------------------
+ ERROR: [141]: remote process terminated: ERROR [141]: unable to read line after 1 seconds
+  WARN: unable to shutdown protocol [141]: remote process terminated: ERROR [141]: unable to read line after 1 seconds
+        HINT: the process completed successfully but protocol-timeout may need to be increased.
