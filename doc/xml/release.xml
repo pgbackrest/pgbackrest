@@ -136,6 +136,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>The <code>pg_xlogfile_name()</code> function is no longer used to construct WAL filenames from LSNs. While this function is convenient it is not available on a standby.  Instead, the archive is searched for the LSN in order to find the timeline.  If due to some misadventure the LSN appears on multiple timelines then an error will be thrown, whereas before this condition would have passed unnoticed.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Option handling is now far more strict.  Previously it was possible for a command to use an option that was not explicitly assigned to it.  This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
                     </release-item>
                 </release-refactor-list>

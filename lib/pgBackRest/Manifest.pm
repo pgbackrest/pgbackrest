@@ -84,6 +84,10 @@ use constant MANIFEST_KEY_ARCHIVE_STOP                              => 'backup-a
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_STOP);
 use constant MANIFEST_KEY_LABEL                                     => 'backup-label';
     push @EXPORT, qw(MANIFEST_KEY_LABEL);
+use constant MANIFEST_KEY_LSN_START                                 => 'backup-lsn-start';
+    push @EXPORT, qw(MANIFEST_KEY_LSN_START);
+use constant MANIFEST_KEY_LSN_STOP                                  => 'backup-lsn-stop';
+    push @EXPORT, qw(MANIFEST_KEY_LSN_STOP);
 use constant MANIFEST_KEY_PRIOR                                     => 'backup-prior';
     push @EXPORT, qw(MANIFEST_KEY_PRIOR);
 use constant MANIFEST_KEY_TIMESTAMP_COPY_START                      => 'backup-timestamp-copy-start';

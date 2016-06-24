@@ -683,7 +683,7 @@ sub process
                                       timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strArchiveStart);
         &log(INFO, "archive start: ${strArchiveStart}");
 
         # Get tablespace map
@@ -824,8 +824,7 @@ sub process
     {
         ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $self->{oDb}->backupStop();
 
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
-
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strArchiveStop);
         &log(INFO, 'archive stop: ' . $strArchiveStop);
 
         # Write out files returned from stop backup
@@ -877,7 +876,19 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
+            my $strArchiveFile =
+                $oArchive->walFileName($self->{oFile}, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
+            $strArchive = substr($strArchiveFile, 0, 24);
+
+            if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
+            {
+                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchive);
+                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchive);
+            }
+            else
+            {
+                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchive);
+            }
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {

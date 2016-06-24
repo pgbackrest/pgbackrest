@@ -213,25 +213,43 @@ sub walFileName
 
     # Record the start time
     my $oWait = waitInit($iWaitSeconds);
-
-    # Determine the path where the requested WAL segment is located
-    my $strArchivePath = dirname($oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strWalSegment}"));
     my @stryWalFileName;
+    my $bNoTimeline = $strWalSegment =~ /^[0-F]{16}$/ ? true : false;
 
     do
     {
-        # Get the name of the requested WAL segment (may have hash info and compression extension)
-        @stryWalFileName = $oFile->list(PATH_BACKUP_ABSOLUTE, $strArchivePath,
-            "^${strWalSegment}" . ($bPartial ? '\\.partial' : '') .
-            "(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", undef, true);
+        # If the timeline is on the WAL segment then use it, otherwise contruct a regexp with the major WAL part to find paths
+        # where the wal could be found.
+        my @stryTimelineMajor = ('default');
 
-        # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
-        if (@stryWalFileName > 1)
+        if ($bNoTimeline)
         {
-            confess &log(ASSERT, @stryWalFileName . " duplicate files found for ${strWalSegment}", ERROR_ARCHIVE_DUPLICATE);
+            @stryTimelineMajor =
+                $oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, '[0-F]{8}' . substr($strWalSegment, 0, 8), undef, true);
+        }
+
+        foreach my $strTimelineMajor (@stryTimelineMajor)
+        {
+            my $strWalSegmentFind = $bNoTimeline ? $strTimelineMajor . substr($strWalSegment, 8, 8) : $strWalSegment;
+
+            # Determine the path where the requested WAL segment is located
+            my $strArchivePath = dirname($oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strWalSegmentFind}"));
+
+            # Get the name of the requested WAL segment (may have hash info and compression extension)
+            push(@stryWalFileName, $oFile->list(
+                PATH_BACKUP_ABSOLUTE, $strArchivePath,
+                "^${strWalSegmentFind}" . ($bPartial ? '\\.partial' : '') .
+                    "(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$",
+                undef, true));
         }
     }
     while (@stryWalFileName == 0 && waitMore($oWait));
+
+    # If there is more than one matching archive file then there is a serious issue - likely a bug in the archiver
+    if (@stryWalFileName > 1)
+    {
+        confess &log(ASSERT, @stryWalFileName . " duplicate files found for ${strWalSegment}", ERROR_ARCHIVE_DUPLICATE);
+    }
 
     # If waiting and no WAL segment was found then throw an error
     if (@stryWalFileName == 0 && defined($iWaitSeconds))
@@ -994,24 +1012,20 @@ sub range
             {name => 'bSkipFF', default => false}
         );
 
-    # Get the timelines and make sure they match
-    my $strTimeline = substr($strArchiveStart, 0, 8);
+    # Working variables
     my @stryArchive;
     my $iArchiveIdx = 0;
 
-    if ($strTimeline ne substr($strArchiveStop, 0, 8))
-    {
-        confess &log(ERROR, "timelines differ between ${strArchiveStart} and ${strArchiveStop}");
-    }
-
     # Iterate through all archive logs between start and stop
-    my $iStartMajor = hex substr($strArchiveStart, 8, 8);
-    my $iStartMinor = hex substr($strArchiveStart, 16, 8);
+    my @stryArchiveSplit = split('/', $strArchiveStart);
+    my $iStartMajor = hex($stryArchiveSplit[0]);
+    my $iStartMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
 
-    my $iStopMajor = hex substr($strArchiveStop, 8, 8);
-    my $iStopMinor = hex substr($strArchiveStop, 16, 8);
+    @stryArchiveSplit = split('/', $strArchiveStop);
+    my $iStopMajor = hex($stryArchiveSplit[0]);
+    my $iStopMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
 
-    $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+    $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
     $iArchiveIdx += 1;
 
     while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
@@ -1024,7 +1038,7 @@ sub range
             $iStartMinor = 0;
         }
 
-        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
+        $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
         $iArchiveIdx += 1;
     }
 

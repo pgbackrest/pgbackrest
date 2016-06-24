@@ -673,12 +673,11 @@ sub backupStart
                "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-    my ($strTimestampDbStart, $strArchiveStart) =
-        $self->executeSqlRow("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), " .
-                             "pg_xlogfile_name(lsn) from pg_start_backup('${strLabel}'" .
-                             ($bStartFast ? ', true' : '') .
-                             ($self->{strDbVersion} >= PG_VERSION_96 ? (!$bStartFast ? ', false' : '') . ', false' : '') .
-                             ') as lsn');
+    my ($strTimestampDbStart, $strArchiveStart) = $self->executeSqlRow(
+        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), lsn::text" .
+            " from pg_start_backup('${strLabel}'" .
+            ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
+            ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -712,7 +711,7 @@ sub backupStop
 
     my ($strTimestampDbStop, $strArchiveStop, $strLabel, $strTablespaceMap) =
         $self->executeSqlRow(
-            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), " .
+            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), lsn::text, " .
             ($self->{strDbVersion} >= PG_VERSION_96 ? 'labelfile, spcmapfile' : "null as labelfile, null as spcmapfile") .
             ' from pg_stop_backup(' .
             ($self->{strDbVersion} >= PG_VERSION_96 ? 'false)' : ') as lsn'));
