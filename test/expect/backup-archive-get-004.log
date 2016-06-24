@@ -1,13 +1,13 @@
 run 004 - rmt 0, cmp 1, exists 1
 ================================
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --config=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-get start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
   INFO: get WAL segment 000000010000000100000001
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
  ERROR: [130]: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
@@ -15,8 +15,8 @@ run 004 - rmt 0, cmp 1, exists 1
   INFO: archive-get stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-+ supplemental file: [TEST_PATH]/backrest/archive/db/archive.info
------------------------------------------------------------------
++ supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
+-----------------------------------------------------------------------
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
@@ -30,55 +30,55 @@ db-version="9.3"
 [db:history]
 1={"db-id":1234567890123456789,"db-version":"9.3"}
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --config=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-get start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
   INFO: get WAL segment 000000010000000100000001
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
- DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+ DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
  DEBUG:     File->list=>: stryFileList = (000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --config=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-get start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
   INFO: get WAL segment 000000010000000100000002
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strSourceArchive = 000000010000000100000002
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourceArchive = 000000010000000100000002
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
- DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+ DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
  DEBUG:     File->list=>: stryFileList = (000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --config=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/backrest/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backrest/log --repo-path=[TEST_PATH]/backrest --stanza=db
+  INFO: archive-get start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
   INFO: get WAL segment 000000010000000100000003
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strSourceArchive = 000000010000000100000003
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
- DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/backrest/archive/db
+ DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourceArchive = 000000010000000100000003
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000003
- DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backrest/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
+ DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
  DEBUG:     File->list=>: stryFileList = (000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz)
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop

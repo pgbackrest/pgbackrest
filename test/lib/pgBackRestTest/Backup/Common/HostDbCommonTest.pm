@@ -56,13 +56,11 @@ use constant HOST_PARAM_TABLESPACE_PATH                             => 'tablespa
 ####################################################################################################################################
 # Host paths
 ####################################################################################################################################
-# !!! This name should be changed to "spool" at the end of this branch
-use constant HOST_PATH_SPOOL                                        => 'local';
+use constant HOST_PATH_SPOOL                                        => 'spool';
     push @EXPORT, qw(HOST_PATH_SPOOL);
 use constant HOST_PATH_DB                                           => 'db';
     push @EXPORT, qw(HOST_PATH_DB);
-# !!! This name should be changed to "base" at the end of this branch
-use constant HOST_PATH_DB_BASE                                      => 'common';
+use constant HOST_PATH_DB_BASE                                      => 'base';
     push @EXPORT, qw(HOST_PATH_DB_BASE);
 
 ####################################################################################################################################

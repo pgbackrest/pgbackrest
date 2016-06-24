@@ -60,8 +60,7 @@ use constant HOST_PATH_LOCK                                         => 'lock';
     push @EXPORT, qw(HOST_PATH_LOCK);
 use constant HOST_PATH_LOG                                          => 'log';
     push @EXPORT, qw(HOST_PATH_LOG);
-# !!! This name should be changed to "repo" at the end of this branch
-use constant HOST_PATH_REPO                                         => 'backrest';
+use constant HOST_PATH_REPO                                         => 'repo';
     push @EXPORT, qw(HOST_PATH_REPO);
 
 ####################################################################################################################################

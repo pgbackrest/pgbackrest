@@ -206,7 +206,7 @@
 
                  <release-refactor-list>
                     <release-item>
-                        <p>Major refactor of the test code to make it more modular and object-oriented.  Multiple Docker containers can now be created for a single test to simulate more realistic environments.</p>
+                        <p>Major refactor of the test suite to make it more modular and object-oriented.  Multiple Docker containers can now be created for a single test to simulate more realistic environments.  Tests paths have been renamed for clarity.</p>
                     </release-item>
 
                     <release-item>

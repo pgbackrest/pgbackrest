@@ -317,12 +317,13 @@ sub regExpReplaceAll
 
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
+    # Replace the exe path/file
     $strLine =~ s/$self->{strCommandMain}/[BACKREST-BIN]/g;
 
-    # !!! Replace with a loop through all hosts
-    $strLine =~ s/$self->{strTestPath}\/db\-master/[TEST_PATH]/g;
-    $strLine =~ s/$self->{strTestPath}\/backup/[TEST_PATH]/g;
+    # Replace the test path
+    $strLine =~ s/$self->{strTestPath}/[TEST_PATH]/g;
 
+    # Replace the pgsql path (if exists)
     if (defined($self->{strPgSqlBin}))
     {
         $strLine =~ s/$self->{strPgSqlBin}/[PGSQL_BIN_PATH]/g;
