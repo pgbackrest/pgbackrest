@@ -4,7 +4,7 @@
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
-        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance that 1.XX line is not compatible with the 0.XX line.  Minor releases can include bug fixes and features but do not change the interface, naming, or the repository format.
+        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the interface, naming, or the repository format.
 
         The notes for a release may also contain <quote>Additional Notes</quote> but changes in the this section are only to documentation and the test suite and have no impact the on the <backrest/> codebase.</text>
     </intro>
@@ -168,9 +168,11 @@
                     <release-item>
                         <p>Allow hidden options to be added to a command.  This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
                     </release-item>
+
                     <release-item>
                         <p>Allow command summaries to be inserted anywhere in the documentation to avoid duplication.</p>
                     </release-item>
+
                     <release-item>
                         <p>Update TeX Live to 2016 version.</p>
                     </release-item>
@@ -198,15 +200,15 @@
              <release-test-list>
                  <release-feature-list>
                     <release-item>
-                        <p>Containers now use a squid proxy for apt/yum to speed builds.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Obsolete containers are removed by the <br-option>--vm-force</br-option> option.</p>
                     </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>
+                    <release-item>
+                        <p>Major refactor of the test code to make it more modular and object-oriented.  Multiple Docker containers can now be created for a single test to simulate more realistic environments.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Greatly reduced the quantity of Docker containers built by default.  Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
                     </release-item>

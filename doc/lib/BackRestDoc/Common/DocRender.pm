@@ -225,6 +225,11 @@ sub new
         # Get required sections
         foreach my $strPath (@{$self->{oManifest}->{stryRequire}})
         {
+            if (substr($strPath, 0, 1) ne '/')
+            {
+                confess &log(ERROR, "path ${strPath} must begin with a /");
+            }
+
             if (defined(${$self->{oSection}}{$strPath}))
             {
                 $self->required($strPath);

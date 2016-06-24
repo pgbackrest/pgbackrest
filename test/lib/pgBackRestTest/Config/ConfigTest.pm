@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ConfigTest.pm - Unit Tests for pgBackRest::Param and pgBackRest::Config::Config
 ####################################################################################################################################
-package pgBackRestTest::ConfigTest;
+package pgBackRestTest::Config::ConfigTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -12,15 +12,15 @@ use Carp qw(confess);
 
 use Cwd qw(abs_path);
 use Exporter qw(import);
-use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 
+use pgBackRestTest::Backup::Common::HostBaseTest;
+use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::CommonTest;
 
 sub optionSetTest
@@ -229,24 +229,25 @@ sub optionTestExpect
 }
 
 ####################################################################################################################################
-# BackRestTestConfig_Test
+# configTestRun
 ####################################################################################################################################
-our @EXPORT = qw(BackRestTestConfig_Test);
-
-sub BackRestTestConfig_Test
+sub configTestRun
 {
     my $strTest = shift;
     my $iThreadMax = shift;
     my $bVmOut = shift;
 
     # Setup test variables
+    my $oHostGroup = hostGroupGet();
+
     my $iRun;
     my $bCreate;
     my $strStanza = 'main';
     my $oOption = {};
     my $oConfig = {};
     my @oyArray;
-    my $strConfigFile = BackRestTestCommon_TestPathGet() . '/pgbackrest.conf';
+    my $strTestPath = $oHostGroup->paramGet(HOST_PARAM_TEST_PATH);
+    my $strConfigFile = "${strTestPath}/pgbackrest.conf";
 
     use constant BOGUS => 'bogus';
 
@@ -255,8 +256,6 @@ sub BackRestTestConfig_Test
     {
         &log(INFO, 'CONFIG MODULE ******************************************************************');
     }
-
-    BackRestTestCommon_Drop();
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test command-line options
@@ -272,21 +271,21 @@ sub BackRestTestConfig_Test
             &log(INFO, "Test ${strThisTest}\n");
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup with no stanza'))
+        if (testRun(++$iRun, 'backup with no stanza'))
         {
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_REQUIRED, OPTION_STANZA);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup with boolean stanza'))
+        if (testRun(++$iRun, 'backup with boolean stanza'))
         {
             optionBoolSetTest($oOption, OPTION_STANZA);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_COMMAND_REQUIRED);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup type defaults to ' . BACKUP_TYPE_INCR))
+        if (testRun(++$iRun, 'backup type defaults to ' . BACKUP_TYPE_INCR))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -295,7 +294,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_TYPE, BACKUP_TYPE_INCR);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup type set to ' . BACKUP_TYPE_FULL))
+        if (testRun(++$iRun, 'backup type set to ' . BACKUP_TYPE_FULL))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -305,7 +304,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_TYPE, BACKUP_TYPE_FULL);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup type invalid'))
+        if (testRun(++$iRun, 'backup type invalid'))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -314,7 +313,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_TYPE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup invalid force'))
+        if (testRun(++$iRun, 'backup invalid force'))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -323,7 +322,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_FORCE, 'no-' . OPTION_ONLINE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup valid force'))
+        if (testRun(++$iRun, 'backup valid force'))
         {
             # $oOption = {};
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
@@ -336,7 +335,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_FORCE, true);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup invalid value for ' . OPTION_TEST_DELAY))
+        if (testRun(++$iRun, 'backup invalid value for ' . OPTION_TEST_DELAY))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -346,7 +345,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_TEST_DELAY);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup invalid ' . OPTION_TEST_DELAY))
+        if (testRun(++$iRun, 'backup invalid ' . OPTION_TEST_DELAY))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -355,7 +354,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_TEST_DELAY, OPTION_TEST);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'backup check ' . OPTION_TEST_DELAY . ' undef'))
+        if (testRun(++$iRun, 'backup check ' . OPTION_TEST_DELAY . ' undef'))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -364,7 +363,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_TEST_DELAY);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'restore invalid ' . OPTION_TARGET))
+        if (testRun(++$iRun, 'restore invalid ' . OPTION_TARGET))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -375,7 +374,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID, OPTION_TARGET, OPTION_TYPE, \@oyArray);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'restore ' . OPTION_TARGET))
+        if (testRun(++$iRun, 'restore ' . OPTION_TARGET))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -388,7 +387,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_TARGET_TIMELINE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'invalid string ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'invalid string ' . OPTION_THREAD_MAX))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -397,7 +396,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_THREAD_MAX);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'invalid float ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'invalid float ' . OPTION_THREAD_MAX))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -406,7 +405,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, '0.0', OPTION_THREAD_MAX);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'valid ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'valid ' . OPTION_THREAD_MAX))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -415,7 +414,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'valid float ' . OPTION_TEST_DELAY))
+        if (testRun(++$iRun, 'valid float ' . OPTION_TEST_DELAY))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -425,7 +424,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'valid int ' . OPTION_TEST_DELAY))
+        if (testRun(++$iRun, 'valid int ' . OPTION_TEST_DELAY))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -435,7 +434,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'restore valid ' . OPTION_TARGET_TIMELINE))
+        if (testRun(++$iRun, 'restore valid ' . OPTION_TARGET_TIMELINE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -444,7 +443,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'invalid ' . OPTION_BUFFER_SIZE))
+        if (testRun(++$iRun, 'invalid ' . OPTION_BUFFER_SIZE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_BUFFER_SIZE, '512');
@@ -452,7 +451,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_RANGE, '512', OPTION_BUFFER_SIZE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' invalid option ' . OPTION_RETENTION_ARCHIVE_TYPE))
+        if (testRun(++$iRun, CMD_BACKUP . ' invalid option ' . OPTION_RETENTION_ARCHIVE_TYPE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -461,7 +460,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_RETENTION_ARCHIVE_TYPE, OPTION_RETENTION_ARCHIVE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
+        if (testRun(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -471,7 +470,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_RETENTION_ARCHIVE_TYPE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_PROTOCOL_TIMEOUT))
+        if (testRun(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_PROTOCOL_TIMEOUT))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -483,7 +482,7 @@ sub BackRestTestConfig_Test
                 "'protocol-timeout' option should be greater than 'db-timeout' option");
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
+        if (testRun(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -495,7 +494,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+        if (testRun(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -504,7 +503,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=', OPTION_RESTORE_RECOVERY_OPTION);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+        if (testRun(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -513,7 +512,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=' . BOGUS, OPTION_RESTORE_RECOVERY_OPTION);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+        if (testRun(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -522,7 +521,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, BOGUS . '=', OPTION_RESTORE_RECOVERY_OPTION);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' valid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+        if (testRun(++$iRun, CMD_RESTORE . ' valid value ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -532,7 +531,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RESTORE_RECOVERY_OPTION, 'db.domain.net', 'primary-conn-info');
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' values passed to ' . CMD_ARCHIVE_GET))
+        if (testRun(++$iRun, CMD_RESTORE . ' values passed to ' . CMD_ARCHIVE_GET))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db path/main');
@@ -551,7 +550,7 @@ sub BackRestTestConfig_Test
             }
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' default value ' . OPTION_COMMAND_REMOTE))
+        if (testRun(++$iRun, CMD_BACKUP . ' default value ' . OPTION_COMMAND_REMOTE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -560,7 +559,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_COMMAND_REMOTE, abs_path($0));
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' missing option ' . OPTION_DB_PATH))
+        if (testRun(++$iRun, CMD_BACKUP . ' missing option ' . OPTION_DB_PATH))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
 
@@ -582,9 +581,7 @@ sub BackRestTestConfig_Test
             &log(INFO, "Test ${strThisTest}\n");
         }
 
-        BackRestTestCommon_Create();
-
-        if (BackRestTestCommon_Run(++$iRun, 'set and negate option ' . OPTION_CONFIG))
+        if (testRun(++$iRun, 'set and negate option ' . OPTION_CONFIG))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -594,7 +591,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_NEGATE, OPTION_CONFIG);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'option ' . OPTION_CONFIG))
+        if (testRun(++$iRun, 'option ' . OPTION_CONFIG))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -604,7 +601,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_CONFIG);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'default option ' . OPTION_CONFIG))
+        if (testRun(++$iRun, 'default option ' . OPTION_CONFIG))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -613,16 +610,16 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_CONFIG, OPTION_DEFAULT_CONFIG);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'config file is a path'))
+        if (testRun(++$iRun, 'config file is a path'))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_CONFIG, BackRestTestCommon_TestPathGet());
+            optionSetTest($oOption, OPTION_CONFIG, $strTestPath);
 
-            configLoadExpect($oOption, CMD_BACKUP, ERROR_FILE_INVALID, BackRestTestCommon_TestPathGet());
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_FILE_INVALID, $strTestPath);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'load from config stanza command section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config stanza command section - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
             $$oConfig{"${strStanza}:" . &CMD_BACKUP}{&OPTION_THREAD_MAX} = 2;
@@ -636,7 +633,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_THREAD_MAX, 2);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'load from config stanza section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config stanza section - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_THREAD_MAX} = 3;
@@ -651,7 +648,7 @@ sub BackRestTestConfig_Test
         }
 
 
-        if (BackRestTestCommon_Run(++$iRun, 'load from config global command section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config global command section - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_THREAD_MAX} = 2;
@@ -665,7 +662,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_THREAD_MAX, 2);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'load from config global section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config global section - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = 5;
@@ -679,7 +676,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_THREAD_MAX, 5);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'default - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'default - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
             iniSave($strConfigFile, $oConfig, true);
@@ -692,7 +689,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_THREAD_MAX, 1);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'command-line override - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'command-line override - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = 9;
@@ -707,7 +704,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_THREAD_MAX, 7);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'invalid boolean - option ' . OPTION_HARDLINK))
+        if (testRun(++$iRun, 'invalid boolean - option ' . OPTION_HARDLINK))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'Y';
@@ -720,7 +717,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, 'Y', OPTION_HARDLINK);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'invalid value - option ' . OPTION_LOG_LEVEL_CONSOLE))
+        if (testRun(++$iRun, 'invalid value - option ' . OPTION_LOG_LEVEL_CONSOLE))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = BOGUS;
@@ -733,7 +730,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_LOG_LEVEL_CONSOLE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'valid value - option ' . OPTION_LOG_LEVEL_CONSOLE))
+        if (testRun(++$iRun, 'valid value - option ' . OPTION_LOG_LEVEL_CONSOLE))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(INFO);
@@ -746,7 +743,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, 'archive-push - option ' . OPTION_LOG_LEVEL_CONSOLE))
+        if (testRun(++$iRun, 'archive-push - option ' . OPTION_LOG_LEVEL_CONSOLE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -754,7 +751,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_ARCHIVE_PUSH);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_EXPIRE . ' ' . OPTION_RETENTION_FULL))
+        if (testRun(++$iRun, CMD_EXPIRE . ' ' . OPTION_RETENTION_FULL))
         {
             $oConfig = {};
             $$oConfig{"${strStanza}:" . &CMD_EXPIRE}{&OPTION_RETENTION_FULL} = 2;
@@ -767,7 +764,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RETENTION_FULL, 2);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' option ' . OPTION_COMPRESS))
+        if (testRun(++$iRun, CMD_BACKUP . ' option ' . OPTION_COMPRESS))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_COMPRESS} = 'n';
@@ -781,7 +778,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_COMPRESS, false);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' global option ' . OPTION_RESTORE_RECOVERY_OPTION . ' error'))
+        if (testRun(++$iRun, CMD_RESTORE . ' global option ' . OPTION_RESTORE_RECOVERY_OPTION . ' error'))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_RESTORE}{&OPTION_RESTORE_RECOVERY_OPTION} = 'bogus=';
@@ -794,7 +791,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_VALUE, 'bogus=', OPTION_RESTORE_RECOVERY_OPTION);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' global option ' . OPTION_RESTORE_RECOVERY_OPTION . ' error'))
+        if (testRun(++$iRun, CMD_RESTORE . ' global option ' . OPTION_RESTORE_RECOVERY_OPTION . ' error'))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_RESTORE}{&OPTION_RESTORE_RECOVERY_OPTION} = '=bogus';
@@ -807,7 +804,7 @@ sub BackRestTestConfig_Test
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_VALUE, '=bogus', OPTION_RESTORE_RECOVERY_OPTION);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' global option ' . OPTION_RESTORE_RECOVERY_OPTION))
+        if (testRun(++$iRun, CMD_RESTORE . ' global option ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_RESTORE}{&OPTION_RESTORE_RECOVERY_OPTION} =
@@ -822,7 +819,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RESTORE_RECOVERY_OPTION, '/path/to/pgbackrest', 'archive-command');
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_RESTORE . ' stanza option ' . OPTION_RESTORE_RECOVERY_OPTION))
+        if (testRun(++$iRun, CMD_RESTORE . ' stanza option ' . OPTION_RESTORE_RECOVERY_OPTION))
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_RESTORE_RECOVERY_OPTION} = ['standby-mode=on', 'a=b'];
@@ -837,7 +834,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_RESTORE_RECOVERY_OPTION, 'on', 'standby-mode');
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' option ' . OPTION_DB_PATH))
+        if (testRun(++$iRun, CMD_BACKUP . ' option ' . OPTION_DB_PATH))
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_DB_PATH} = '/path/to/db';
@@ -850,7 +847,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_DB_PATH, '/path/to/db');
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' option ' . OPTION_BACKUP_ARCHIVE_CHECK))
+        if (testRun(++$iRun, CMD_BACKUP . ' option ' . OPTION_BACKUP_ARCHIVE_CHECK))
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_DB_PATH} = '/path/to/db';
@@ -865,7 +862,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_BACKUP_ARCHIVE_CHECK, false);
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_ARCHIVE_PUSH . ' option ' . OPTION_DB_PATH))
+        if (testRun(++$iRun, CMD_ARCHIVE_PUSH . ' option ' . OPTION_DB_PATH))
         {
             $oConfig = {};
             $$oConfig{$strStanza}{&OPTION_DB_PATH} = '/path/to/db';
@@ -878,7 +875,7 @@ sub BackRestTestConfig_Test
             optionTestExpect(OPTION_DB_PATH, '/path/to/db');
         }
 
-        if (BackRestTestCommon_Run(++$iRun, CMD_BACKUP . ' option ' . OPTION_REPO_PATH))
+        if (testRun(++$iRun, CMD_BACKUP . ' option ' . OPTION_REPO_PATH))
         {
             $oConfig = {};
             $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = '/repo';
@@ -893,12 +890,10 @@ sub BackRestTestConfig_Test
         }
 
         # Cleanup
-        if (BackRestTestCommon_Cleanup())
-        {
-            &log(INFO, 'cleanup');
-            BackRestTestCommon_Drop(true);
-        }
+        testCleanup();
     }
 }
+
+our @EXPORT = qw(configTestRun);
 
 1;

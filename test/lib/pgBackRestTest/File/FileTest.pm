@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # FileTest.pm - Unit Tests for pgBackRest::File
 ####################################################################################################################################
-package pgBackRestTest::FileTest;
+package pgBackRestTest::File::FileTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -13,20 +13,21 @@ use Carp qw(confess);
 use Cwd qw(abs_path cwd);
 use Exporter qw(import);
 use Fcntl qw(:mode);
-use File::Basename;
 use File::stat;
 use POSIX qw(ceil);
 use Scalar::Util qw(blessed);
 use Time::HiRes qw(gettimeofday usleep);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::RemoteMaster;
 
+use pgBackRestTest::Backup::Common::HostBackupTest;
+use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::CommonTest;
 
 my $strTestPath;
@@ -34,9 +35,9 @@ my $strHost;
 my $strUserBackRest;
 
 ####################################################################################################################################
-# BackRestTestFile_Setup
+# fileTestSetup
 ####################################################################################################################################
-sub BackRestTestFile_Setup
+sub fileTestSetup
 {
     my $bPrivate = shift;
     my $bDropOnly = shift;
@@ -65,11 +66,9 @@ sub BackRestTestFile_Setup
 }
 
 ####################################################################################################################################
-# BackRestTestFile_Test
+# fileTestRun
 ####################################################################################################################################
-our @EXPORT = qw(BackRestTestFile_Test);
-
-sub BackRestTestFile_Test
+sub fileTestRun
 {
     my $strTest = shift;
     my $iThreadMax = shift;
@@ -82,13 +81,13 @@ sub BackRestTestFile_Test
     }
 
     # Setup test variables
-    my $iRun;
-    $strTestPath = BackRestTestCommon_TestPathGet();
-    my $strStanza = BackRestTestCommon_StanzaGet();
-    my $strUser = BackRestTestCommon_UserGet();
-    my $strGroup = BackRestTestCommon_GroupGet();
-    $strHost = BackRestTestCommon_HostGet();
-    $strUserBackRest = BackRestTestCommon_UserBackRestGet();
+    my $oHostGroup = hostGroupGet();
+    $strTestPath = $oHostGroup->paramGet(HOST_PARAM_TEST_PATH);
+    my $strStanza = 'db';
+    my $strUser = getpwuid($<);
+    my $strGroup = getgrgid($();
+    $strHost = '127.0.0.1';
+    $strUserBackRest = 'backrest';
 
     # Print test banner
     if (!$bVmOut)
@@ -99,33 +98,33 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     # Create remotes
     #-------------------------------------------------------------------------------------------------------------------------------
-    mkdir($strTestPath . '/backrest', oct('0770')) or confess 'Unable to create backrest directory';
+    my $strRepoPath =  "${strTestPath}/repo";
 
-    my $oRemote = new pgBackRest::Protocol::RemoteMaster
-    (
-        BackRestTestCommon_CommandRemoteFullGet(),  # Remote command
-        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
-        $strHost,                                   # Host
-        $strUserBackRest,                           # User
-        PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
-    );
+    mkdir($strRepoPath, oct('0770'))
+        or confess "Unable to create repo directory: ${strRepoPath}";
 
-    my $oLocal = new pgBackRest::Protocol::Common
-    (
-        OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
-        OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
-        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
-        PROTOCOL_TIMEOUT_TEST                       # Protocol timeout
-    );
+    my $oRemote = new pgBackRest::Protocol::RemoteMaster(
+        $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --stanza=' . HOST_STANZA .
+            " --repo-path=${strRepoPath} --no-config --command=test remote",
+        OPTION_DEFAULT_BUFFER_SIZE,
+        OPTION_DEFAULT_COMPRESS_LEVEL,
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,
+        $strHost,
+        $strUserBackRest,
+        HOST_PROTOCOL_TIMEOUT);
+
+    my $oLocal = new pgBackRest::Protocol::Common(
+        OPTION_DEFAULT_BUFFER_SIZE,
+        OPTION_DEFAULT_COMPRESS_LEVEL,
+        OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,
+        HOST_PROTOCOL_TIMEOUT);
 
     #-------------------------------------------------------------------------------------------------------------------------------
     # Test path_create()
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'path_create')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -153,11 +152,11 @@ sub BackRestTestFile_Test
                 my $strPathType = PATH_BACKUP_CLUSTER;
 
                 # Increment the run, log, and decide whether this unit test should be run
-                if (!BackRestTestCommon_Run(++$iRun,
+                if (!testRun(++$iRun,
                                             "rmt ${bRemote}, err ${bError}, mode ${bMode}")) {next}
 
                 # Setup test directory
-                BackRestTestFile_Setup($bError);
+                fileTestSetup($bError);
 
                 mkdir("${strTestPath}/backup") or confess 'Unable to create test/backup directory';
                 mkdir("${strTestPath}/backup/db") or confess 'Unable to create test/backup/db directory';
@@ -237,7 +236,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'move')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -271,13 +270,13 @@ sub BackRestTestFile_Test
             for (my $bCreate = 0; $bCreate <= $bDestinationExists; $bCreate++)
             {
                 # Increment the run, log, and decide whether this unit test should be run
-                if (!BackRestTestCommon_Run(++$iRun,
+                if (!testRun(++$iRun,
                                             "src_exists ${bSourceExists}, src_error ${bSourceError}, " .
                                             ", dst_exists ${bDestinationExists}, dst_error ${bDestinationError}, " .
                                             "dst_create ${bCreate}")) {next}
 
                 # Setup test directory
-                BackRestTestFile_Setup($bSourceError || $bDestinationError);
+                fileTestSetup($bSourceError || $bDestinationError);
 
                 my $strSourceFile = "${strTestPath}/test.txt";
                 my $strDestinationFile = "${strTestPath}/test-dest.txt";
@@ -338,7 +337,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'compress')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -361,11 +360,11 @@ sub BackRestTestFile_Test
             {
             for (my $bError = 0; $bError <= 1; $bError++)
             {
-                if (!BackRestTestCommon_Run(++$iRun,
+                if (!testRun(++$iRun,
                                             "rmt ${bRemote}, exists ${bExists}, err ${bError}")) {next}
 
                 # Setup test directory
-                BackRestTestFile_Setup($bError);
+                fileTestSetup($bError);
 
                 my $strFile = "${strTestPath}/test.txt";
                 my $strSourceHash;
@@ -432,7 +431,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'wait')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -452,7 +451,7 @@ sub BackRestTestFile_Test
 
             my $lTimeBegin = gettimeofday();
 
-            if (!BackRestTestCommon_Run(++$iRun,
+            if (!testRun(++$iRun,
                                         "rmt ${bRemote}, begin ${lTimeBegin}")) {next}
 
             # If there is not enough time to complete the test then sleep
@@ -491,7 +490,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'manifest')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -525,11 +524,11 @@ sub BackRestTestFile_Test
             {
             for (my $bExists = 0; $bExists <= 1; $bExists++)
             {
-                if (!BackRestTestCommon_Run(++$iRun,
+                if (!testRun(++$iRun,
                                             "rmt ${bRemote}, exists ${bExists}, err ${bError}")) {next}
 
                 # Setup test directory
-                BackRestTestFile_Setup($bError);
+                fileTestSetup($bError);
 
                 # Setup test data
                 system("mkdir -m 750 ${strTestPath}/sub1") == 0 or confess 'Unable to create test directory';
@@ -647,7 +646,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'list')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -694,13 +693,13 @@ sub BackRestTestFile_Test
                     # Loop through error
                     for (my $bError = false; $bError <= true; $bError++)
                     {
-                        if (!BackRestTestCommon_Run(++$iRun,
+                        if (!testRun(++$iRun,
                                                     "rmt ${bRemote}, err ${bError}, exists ${bExists}, ignmis ${bIgnoreMissing}, " .
                                                     'expression ' . (defined($strExpression) ? $strExpression : '[undef]') . ', ' .
                                                     'sort ' . (defined($strSort) ? $strSort : '[undef]'))) {next}
 
                         # Setup test directory
-                        BackRestTestFile_Setup($bError);
+                        fileTestSetup($bError);
 
                         my $strPath = $strTestPath;
 
@@ -776,7 +775,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'remove')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -805,12 +804,12 @@ sub BackRestTestFile_Test
                 # Loop through ignore missing
                 for (my $bIgnoreMissing = 0; $bIgnoreMissing <= 1; $bIgnoreMissing++)
                 {
-                    if (!BackRestTestCommon_Run(++$iRun,
+                    if (!testRun(++$iRun,
                                                 "rmt ${bRemote}, err = ${bError}, exists ${bExists}, tmp ${bTemp}, " .
                                                 "ignore missing ${bIgnoreMissing}")) {next}
 
                     # Setup test directory
-                    BackRestTestFile_Setup($bError);
+                    fileTestSetup($bError);
 
                     my $strFile = "${strTestPath}/test.txt";
 
@@ -881,7 +880,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'hash')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -907,11 +906,11 @@ sub BackRestTestFile_Test
             # Loop through exists
             for (my $bCompressed = false; $bCompressed <= true; $bCompressed++)
             {
-                if (!BackRestTestCommon_Run(++$iRun,
+                if (!testRun(++$iRun,
                                             "rmt ${bRemote}, err ${bError}, exists ${bExists}, cmp ${bCompressed}")) {next}
 
                 # Setup test directory
-                BackRestTestFile_Setup($bError);
+                fileTestSetup($bError);
 
                 my $strFile = "${strTestPath}/test.txt";
 
@@ -974,7 +973,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'exists')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         if (!$bVmOut)
         {
@@ -997,11 +996,11 @@ sub BackRestTestFile_Test
                 # Loop through exists
                 for (my $bError = 0; $bError <= $bExists; $bError++)
                 {
-                    if (!BackRestTestCommon_Run(++$iRun,
+                    if (!testRun(++$iRun,
                                                 "rmt ${bRemote}, err ${bError}, exists ${bExists}")) {next}
 
                     # Setup test directory
-                    BackRestTestFile_Setup($bError);
+                    fileTestSetup($bError);
 
                     my $strFile = "${strTestPath}/test.txt";
 
@@ -1063,7 +1062,7 @@ sub BackRestTestFile_Test
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strTest eq 'all' || $strTest eq 'copy')
     {
-        $iRun = 0;
+        my $iRun = 0;
 
         # Loop through small/large
         for (my $iLarge = 0; $iLarge <= 3; $iLarge++)
@@ -1119,7 +1118,7 @@ sub BackRestTestFile_Test
                 my $strDestinationPathType = $bDestinationPathType ? PATH_DB_ABSOLUTE : PATH_BACKUP_ABSOLUTE;
                 my $strDestinationPath = $bDestinationPathType ? 'db' : 'backup';
 
-                if (!BackRestTestCommon_Run(++$iRun,
+                if (!testRun(++$iRun,
                                             "lrg ${iLarge}, rmt " .
                                                 (defined($strRemote) && ($strRemote eq $strSourcePath ||
                                                  $strRemote eq $strDestinationPath) ? 1 : 0) .
@@ -1132,7 +1131,7 @@ sub BackRestTestFile_Test
                                                 "dstcmp $bDestinationCompress")) {next}
 
                 # Setup test directory
-                BackRestTestFile_Setup(false);
+                fileTestSetup(false);
                 system("mkdir ${strTestPath}/backup") == 0 or confess 'Unable to create test/backup directory';
                 system("mkdir ${strTestPath}/db") == 0 or confess 'Unable to create test/db directory';
 
@@ -1155,13 +1154,13 @@ sub BackRestTestFile_Test
 
                         if ($iLarge < 3)
                         {
-                            executeTest('cp ' . BackRestTestCommon_DataPathGet() . "/test.archive${iLarge}.bin ${strSourceFile}");
+                            executeTest('cp ' . testDataPath() . "/test.archive${iLarge}.bin ${strSourceFile}");
                         }
                         else
                         {
                             for (my $iTableSizeIdx = 0; $iTableSizeIdx < 100; $iTableSizeIdx++)
                             {
-                                executeTest('cat ' . BackRestTestCommon_DataPathGet() . "/test.table.bin >> ${strSourceFile}");
+                                executeTest('cat ' . testDataPath() . "/test.table.bin >> ${strSourceFile}");
                             }
                         }
                     }
@@ -1317,10 +1316,9 @@ sub BackRestTestFile_Test
         }
     }
 
-    if (BackRestTestCommon_Cleanup())
-    {
-        BackRestTestFile_Setup(undef, true);
-    }
+    testCleanup();
 }
+
+our @EXPORT = qw(fileTestRun);
 
 1;

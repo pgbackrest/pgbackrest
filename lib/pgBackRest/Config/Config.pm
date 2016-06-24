@@ -433,7 +433,7 @@ use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN                    => OPTION_DE
 use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX                    => OPTION_DEFAULT_DB_TIMEOUT_MAX;
     push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX);
 
-use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_EXE . '.conf';
+use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_CONF;
     push @EXPORT, qw(OPTION_DEFAULT_CONFIG);
 use constant OPTION_DEFAULT_LOCK_PATH                               => '/tmp/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_LOCK_PATH);

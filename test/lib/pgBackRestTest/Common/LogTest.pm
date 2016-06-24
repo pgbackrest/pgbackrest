@@ -15,7 +15,6 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Version;
@@ -51,7 +50,6 @@ sub new
         $self->{bForce},
         $self->{strComment},
         $self->{strCommandMain},
-        $self->{strCommandRemote},
         $self->{strPgSqlBin},
         $self->{strTestPath},
         $self->{strRepoPath}
@@ -65,7 +63,6 @@ sub new
             {name => 'bForce', trace => true},
             {name => 'strComment', trace => true},
             {name => 'strCommandMain', trace => true},
-            {name => 'strCommandRemote', trace => true},
             {name => 'strPgSqlBin', required => false, trace => true},
             {name => 'strTestPath', trace => true},
             {name => 'strRepoPath', trace => true}
@@ -149,14 +146,7 @@ sub supplementalAdd
 {
     my $self = shift;
     my $strFileName = shift;
-    my $bRemote = shift;
     my $strComment = shift;
-
-    if ($bRemote)
-    {
-        executeTest("chmod g+x " . $self->{strRepoPath},
-                    {bRemote => true});
-    }
 
     open(my $hFile, '<', $strFileName)
         or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
@@ -176,13 +166,6 @@ sub supplementalAdd
     }
 
     close($hFile);
-
-    if ($bRemote)
-    {
-        executeTest("chmod g-x " . $self->{strRepoPath},
-                    {bRemote => true});
-
-    }
 }
 
 ####################################################################################################################################
@@ -285,23 +268,26 @@ sub regExpReplace
                 $strReplacement = $strReplace;
             }
 
-            if (defined(${$self->{oReplaceHash}}{$strType}{$strReplacement}))
+            if (defined($strType))
             {
-                $iIndex = ${$self->{oReplaceHash}}{$strType}{$strReplacement}{index};
-            }
-            else
-            {
-                if (!defined(${$self->{oReplaceHash}}{$strType}{index}))
+                if (defined(${$self->{oReplaceHash}}{$strType}{$strReplacement}))
                 {
-                    ${$self->{oReplaceHash}}{$strType}{index} = 1;
+                    $iIndex = ${$self->{oReplaceHash}}{$strType}{$strReplacement}{index};
                 }
+                else
+                {
+                    if (!defined(${$self->{oReplaceHash}}{$strType}{index}))
+                    {
+                        ${$self->{oReplaceHash}}{$strType}{index} = 1;
+                    }
 
-                $iIndex = ${$self->{oReplaceHash}}{$strType}{index}++;
-                ${$self->{oReplaceHash}}{$strType}{$strReplacement}{index} = $iIndex;
+                    $iIndex = ${$self->{oReplaceHash}}{$strType}{index}++;
+                    ${$self->{oReplaceHash}}{$strType}{$strReplacement}{index} = $iIndex;
+                }
             }
         }
 
-        $strTypeReplacement = "[${strType}" . (defined($iIndex) ? "-${iIndex}" : '') . ']';
+        $strTypeReplacement = defined($strType) ? "[${strType}" . (defined($iIndex) ? "-${iIndex}" : '') . ']' : '';
 
         if (defined($strToken))
         {
@@ -331,9 +317,11 @@ sub regExpReplaceAll
 
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
-    $strLine =~ s/$self->{strCommandMain}/[BACKREST_BIN]/g;
-    $strLine =~ s/$self->{strCommandRemote}/[BACKREST_BIN]/g;
-    $strLine =~ s/$self->{strTestPath}/[TEST_PATH]/g;
+    $strLine =~ s/$self->{strCommandMain}/[BACKREST-BIN]/g;
+
+    # !!! Replace with a loop through all hosts
+    $strLine =~ s/$self->{strTestPath}\/db\-master/[TEST_PATH]/g;
+    $strLine =~ s/$self->{strTestPath}\/backup/[TEST_PATH]/g;
 
     if (defined($self->{strPgSqlBin}))
     {
@@ -342,6 +330,9 @@ sub regExpReplaceAll
 
     $strLine = $self->regExpReplace($strLine, 'BACKREST_NAME_VERSION', '^' . BACKREST_NAME . ' ' . BACKREST_VERSION,
                                                 undef, false);
+
+    $strLine = $self->regExpReplace($strLine, undef, '^docker exec -u [a-z]* test-[0-9]+\-', 'test-[0-9]+\-', false);
+    $strLine = $self->regExpReplace($strLine, 'CONTAINER-EXEC', '^docker exec -u [a-z]*', '^docker exec -u [a-z]*', false);
 
     $strLine = $self->regExpReplace($strLine, 'PROCESS-ID', 'process [0-9]+', '[0-9]+$', false);
     $strLine = $self->regExpReplace($strLine, 'MODIFICATION-TIME', 'lModificationTime = [0-9]+', '[0-9]+$');

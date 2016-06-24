@@ -31,15 +31,19 @@ use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use lib dirname($0) . '/lib';
-use pgBackRestTest::BackupTest;
+use pgBackRestTest::Backup::BackupTest;
+use pgBackRestTest::Backup::Common::HostBackupTest;
+use pgBackRestTest::Backup::Common::HostBaseTest;
+use pgBackRestTest::Backup::Common::HostDbCommonTest;
+use pgBackRestTest::Backup::Common::HostDbTest;
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::CommonTest;
-use pgBackRestTest::CompareTest;
-use pgBackRestTest::ConfigTest;
-use pgBackRestTest::Docker::ContainerTest;
-use pgBackRestTest::FileTest;
-use pgBackRestTest::HelpTest;
+use pgBackRestTest::Config::ConfigTest;
+use pgBackRestTest::File::FileTest;
+use pgBackRestTest::Help::HelpTest;
 
 ####################################################################################################################################
 # Usage
@@ -60,13 +64,11 @@ test.pl [options]
    --thread-max         max threads to run for backup/restore (default 4)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
-   --infinite           repeat selected tests forever
    --db-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --no-lint            Disable static source code analysis
 
  Configuration Options:
-   --exe                pgBackRest executable
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
    --test-path          path where tests are executed (defaults to ./test)
    --log-level          log level to use for tests (defaults to INFO)
@@ -94,15 +96,14 @@ my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
 my $iThreadMax = undef;
 my $iProcessMax = 1;
+my $iProcessId = undef;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
-my $strExe;
 my $strTestPath;
 my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
-my $bInfinite = false;
 my $strDbVersion = 'minimal';
 my $bLogForce = false;
 my $strVm = 'all';
@@ -110,13 +111,10 @@ my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
 
-my $strCommandLine = join(' ', @ARGV);
-
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
             'help' => \$bHelp,
             'pgsql-bin=s' => \$strPgSqlBin,
-            'exes=s' => \$strExe,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'vm=s' => \$strVm,
@@ -127,10 +125,10 @@ GetOptions ('q|quiet' => \$bQuiet,
             'test=s' => \$strModuleTest,
             'run=s' => \$iModuleTestRun,
             'thread-max=s' => \$iThreadMax,
+            'process-id=s' => \$iProcessId,
             'process-max=s' => \$iProcessMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
-            'infinite' => \$bInfinite,
             'db-version=s' => \$strDbVersion,
             'log-force' => \$bLogForce,
             'no-lint' => \$bNoLint)
@@ -161,11 +159,6 @@ if (@ARGV > 0)
 ####################################################################################################################################
 # Set a neutral umask so tests work as expected
 umask(0);
-
-if (defined($strExe) && !-e $strExe)
-{
-    confess '--exe must exist and be fully qualified'
-}
 
 # Set console log level
 if ($bQuiet)
@@ -212,115 +205,9 @@ if ($bVmBuild)
 eval
 {
     ################################################################################################################################
-    # Define tests
-    ################################################################################################################################
-    my $oTestDefinition =
-    {
-        module =>
-        [
-            # Help tests
-            {
-                name => 'help',
-                test =>
-                [
-                    {
-                        name => 'help'
-                    }
-                ]
-            },
-            # Config tests
-            {
-                name => 'config',
-                test =>
-                [
-                    {
-                        name => 'option'
-                    },
-                    {
-                        name => 'config'
-                    }
-                ]
-            },
-            # File tests
-            {
-                name => 'file',
-                test =>
-                [
-                    {
-                        name => 'path_create'
-                    },
-                    {
-                        name => 'move'
-                    },
-                    {
-                        name => 'compress'
-                    },
-                    {
-                        name => 'wait'
-                    },
-                    {
-                        name => 'manifest'
-                    },
-                    {
-                        name => 'list'
-                    },
-                    {
-                        name => 'remove'
-                    },
-                    {
-                        name => 'hash'
-                    },
-                    {
-                        name => 'exists'
-                    },
-                    {
-                        name => 'copy'
-                    }
-                ]
-            },
-            # Backup tests
-            {
-                name => 'backup',
-                test =>
-                [
-                    {
-                        name => 'archive-push',
-                        total => 8
-                    },
-                    {
-                        name => 'archive-stop',
-                        total => 6
-                    },
-                    {
-                        name => 'archive-get',
-                        total => 8
-                    },
-                    {
-                        name => 'expire',
-                        total => 1
-                    },
-                    {
-                        name => 'synthetic',
-                        total => 8,
-                        thread => true
-                    },
-                    {
-                        name => 'full',
-                        total => 8,
-                        thread => true,
-                        db => true
-                    }
-                ]
-            }
-        ]
-    };
-
-    my $oyTestRun = [];
-
-    ################################################################################################################################
     # Start VM and run
     ################################################################################################################################
-    if ($strVm ne 'none')
+    if (!defined($iProcessId))
     {
         # Load the doc module dynamically since it is not supported on all systems
         use lib dirname(abs_path($0)) . '/../doc/lib';
@@ -383,134 +270,24 @@ eval
             logFileSet(cwd() . "/test");
         }
 
-        my $oyVm = vmGet();
-
-        if ($strVm ne 'all' && !defined($${oyVm}{$strVm}))
-        {
-            confess &log(ERROR, "${strVm} is not a valid VM");
-        }
-
         # Determine which tests to run
-        my $iTestsToRun = 0;
-        my $stryTestOS = [];
+        #-----------------------------------------------------------------------------------------------------------------------
+        my $oyTestRun = testListGet($strVm, $strModule, $strModuleTest, $iModuleTestRun, $strDbVersion, $iThreadMax);
 
-        if ($strVm eq 'all')
-        {
-            $stryTestOS = [VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12];
-        }
-        else
-        {
-            $stryTestOS = [$strVm];
-        }
-
-        foreach my $strTestOS (@{$stryTestOS})
-        {
-            foreach my $oModule (@{$$oTestDefinition{module}})
-            {
-                if ($strModule eq $$oModule{name} || $strModule eq 'all')
-                {
-                    foreach my $oTest (@{$$oModule{test}})
-                    {
-                        if ($strModuleTest eq $$oTest{name} || $strModuleTest eq 'all')
-                        {
-                            my $iDbVersionMin = -1;
-                            my $iDbVersionMax = -1;
-
-                            # By default test every db version that is supported for each OS
-                            my $strDbVersionKey = 'db';
-
-                            # Run a reduced set of tests where each PG version is only tested on a single OS
-                            if ($strDbVersion eq 'minimal')
-                            {
-                                $strDbVersionKey = 'db-minimal';
-                                $strDbVersionKey = 'db-minimal';
-                            }
-
-                            if (defined($$oTest{db}) && $$oTest{db})
-                            {
-                                $iDbVersionMin = 0;
-                                $iDbVersionMax = @{$$oyVm{$strTestOS}{$strDbVersionKey}} - 1;
-                            }
-
-                            my $bFirstDbVersion = true;
-
-                            for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
-                            {
-                                if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' || $strDbVersion eq 'minimal' ||
-                                    ($strDbVersion ne 'all' &&
-                                        $strDbVersion eq ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx]))
-                                {
-                                    my $iTestRunMin = defined($iModuleTestRun) ?
-                                                          $iModuleTestRun : (defined($$oTest{total}) ? 1 : -1);
-                                    my $iTestRunMax = defined($iModuleTestRun) ?
-                                                          $iModuleTestRun : (defined($$oTest{total}) ? $$oTest{total} : -1);
-
-                                    if (defined($$oTest{total}) && $iTestRunMax > $$oTest{total})
-                                    {
-                                        confess &log(ERROR, "invalid run - must be >= 1 and <= $$oTest{total}")
-                                    }
-
-                                    for (my $iTestRunIdx = $iTestRunMin; $iTestRunIdx <= $iTestRunMax; $iTestRunIdx++)
-                                    {
-                                        my $iyThreadMax = [defined($iThreadMax) ? $iThreadMax : 1];
-
-                                        if (defined($$oTest{thread}) && $$oTest{thread} &&
-                                            !defined($iThreadMax) && $bFirstDbVersion)
-                                        {
-                                            $iyThreadMax = [1, 4];
-                                        }
-
-                                        foreach my $iThreadTestMax (@{$iyThreadMax})
-                                        {
-                                            my $strDbVersion =
-                                                $iDbVersionIdx == -1 ?
-                                                    undef : ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx];
-                                            my $strPgSqlBin;
-
-                                            if (defined($strDbVersion))
-                                            {
-                                                $strPgSqlBin = $$oyVm{$strTestOS}{&VMDEF_PGSQL_BIN};
-                                                $strPgSqlBin =~ s/\{\[version\]\}/$strDbVersion/g;
-                                            }
-
-                                            my $oTestRun =
-                                            {
-                                                os => $strTestOS,
-                                                module => $$oModule{name},
-                                                test => $$oTest{name},
-                                                run => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
-                                                thread => $iThreadTestMax,
-                                                pgsql_bin => $strPgSqlBin,
-                                                db => $strDbVersion,
-
-                                            };
-
-                                            push(@{$oyTestRun}, $oTestRun);
-                                            $iTestsToRun++;
-                                        }
-                                    }
-
-                                    $bFirstDbVersion = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if ($iTestsToRun == 0)
+        if (@{$oyTestRun} == 0)
         {
             confess &log(ERROR, 'no tests were selected');
         }
 
-        &log(INFO, $iTestsToRun . ' test' . ($iTestsToRun > 1 ? 's': '') . " selected\n");
+        &log(INFO, @{$oyTestRun} . ' test' . (@{$oyTestRun} > 1 ? 's': '') . " selected\n");
 
-        if ($bNoCleanup && $iTestsToRun > 1)
+        if ($bNoCleanup && @{$oyTestRun} > 1)
         {
             confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
         }
 
+        # Execute tests
+        #-----------------------------------------------------------------------------------------------------------------------
         my $iTestFail = 0;
         my $oyProcess = [];
 
@@ -611,16 +388,18 @@ eval
 
                     my $strTest = sprintf('P%0' . length($iProcessMax) . 'd-T%0' . length($iTestMax) . 'd/%0' .
                                           length($iTestMax) . "d - ", $iProcessIdx, $iTestIdx, $iTestMax) .
-                                          "vm=$$oTest{os}, module=$$oTest{module}, test=$$oTest{test}" .
-                                          (defined($$oTest{run}) ? ", run=$$oTest{run}" : '') .
-                                          (defined($$oTest{thread}) ? ", thread-max=$$oTest{thread}" : '') .
-                                          (defined($$oTest{db}) ? ", db=$$oTest{db}" : '');
+                                          'vm=' . $$oTest{&TEST_VM} .
+                                          ', module=' . $$oTest{&TEST_MODULE} .
+                                          ', test=' . $$oTest{&TEST_NAME} .
+                                          (defined($$oTest{&TEST_RUN}) ? ', run=' . $$oTest{&TEST_RUN} : '') .
+                                          (defined($$oTest{&TEST_THREAD}) ? ', thread-max=' . $$oTest{&TEST_THREAD} : '') .
+                                          (defined($$oTest{&TEST_DB}) ? ', db=' . $$oTest{&TEST_DB} : '');
 
                     my $strImage = 'test-' . $iProcessIdx;
-                    my $strDbVersion = (defined($$oTest{db}) ? $$oTest{db} : PG_VERSION_94);
+                    my $strDbVersion = (defined($$oTest{&TEST_DB}) ? $$oTest{&TEST_DB} : PG_VERSION_94);
                     $strDbVersion =~ s/\.//;
 
-                    &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DEBUG, "${strTest}" .
+                    &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DETAIL, "${strTest}" .
                          ($bVmOut || $bShowOutputAsync ? "\n" : ''));
 
                     my $strVmTestPath = "/home/vagrant/test/${strImage}";
@@ -633,43 +412,46 @@ eval
                         # Create host test directory
                         filePathCreate($strHostTestPath, '0770');
 
-                        executeTest(
-                            "docker run -itd -h $$oTest{os}-test --name=${strImage}" .
-                            " -v ${strHostTestPath}:${strVmTestPath}" .
-                            " -v ${strBackRestBase}:${strBackRestBase}" .
-                            " backrest/$$oTest{os}-" . (defined($$oTest{db}) ? "db-$$oTest{db}" : 'loop' ) . '-test-pre');
+                        if ($$oTest{&TEST_CONTAINER})
+                        {
+                            executeTest(
+                                'docker run -itd -h ' . $$oTest{&TEST_VM} . "-test --name=${strImage}" .
+                                " -v ${strHostTestPath}:${strVmTestPath}" .
+                                " -v ${strBackRestBase}:${strBackRestBase} backrest/" . $$oTest{&TEST_VM} . "-loop-test-pre");
+                        }
                     }
 
-                    # Build up command line for the individual test
-                    $strCommandLine =~ s/\-\-os\=\S*//g;
-                    $strCommandLine =~ s/\-\-test\-path\=\S*//g;
-                    $strCommandLine =~ s/\-\-module\=\S*//g;
-                    $strCommandLine =~ s/\-\-test\=\S*//g;
-                    $strCommandLine =~ s/\-\-run\=\S*//g;
-                    $strCommandLine =~ s/\-\-db\-version\=\S*//g;
-                    $strCommandLine =~ s/\-\-no\-lint\S*//g;
-                    $strCommandLine =~ s/\-\-process\-max\=\S*//g;
-
                     my $strCommand =
-                        "docker exec -i -u vagrant ${strImage} ${strBackRestBase}/test/test.pl ${strCommandLine}" .
-                        " --vm=none --module=$$oTest{module} --test=$$oTest{test}" .
-                        (defined($$oTest{run}) ? " --run=$$oTest{run}" : '') .
-                        (defined($$oTest{thread}) ? " --thread-max=$$oTest{thread}" : '') .
-                        (defined($$oTest{db}) ? " --db-version=$$oTest{db}" : '') .
-                        (defined($$oTest{pgsql_bin}) ? ' --pgsql-bin=' . $$oTest{pgsql_bin} : '') .
-                        ($bDryRun ? " --dry-run" : '') .
+                        ($$oTest{&TEST_CONTAINER} ? "docker exec -i -u vagrant ${strImage} " : '') . abs_path($0) .
                         " --test-path=${strVmTestPath}" .
-                        " --no-cleanup --vm-out";
+                        " --vm=$$oTest{&TEST_VM}" .
+                        " --process-id=${iProcessIdx}" .
+                        " --module=" . $$oTest{&TEST_MODULE} .
+                        ' --test=' . $$oTest{&TEST_NAME} .
+                        (defined($$oTest{&TEST_RUN}) ? ' --run=' . $$oTest{&TEST_RUN} : '') .
+                        (defined($$oTest{&TEST_DB}) ? ' --db-version=' . $$oTest{&TEST_DB} : '') .
+                        (defined($$oTest{&TEST_THREAD}) ? ' --thread-max=' . $$oTest{&TEST_THREAD} : '') .
+                        ($strLogLevel ne lc(INFO) ? " --log-level=${strLogLevel}" : '') .
+                        ' --pgsql-bin=' . $$oTest{&TEST_PGSQL_BIN} .
+                        ($bLogForce ? ' --log-force' : '') .
+                        ($bDryRun ? ' --dry-run' : '') .
+                        ($bVmOut ? ' --vm-out' : '') .
+                        ($bNoCleanup ? " --no-cleanup" : '');
 
-                    &log(DEBUG, $strCommand);
+                    &log(DETAIL, $strCommand);
 
                     if (!$bDryRun || $bVmOut)
                     {
                         my $fTestStartTime = gettimeofday();
 
+                        filePathCreate($strVmTestPath, '0777', undef, true);
+
                         # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
                         # Docker and the host VM.
+                        if ($$oTest{&TEST_CONTAINER})
+                        {
                             executeTest("docker exec ${strImage} chown vagrant:postgres -R ${strVmTestPath}");
+                        }
 
                         my $oExec = new pgBackRestTest::Common::ExecuteTest(
                             $strCommand,
@@ -682,6 +464,7 @@ eval
                             exec => $oExec,
                             test => $strTest,
                             idx => $iTestIdx,
+                            container => $$oTest{&TEST_CONTAINER},
                             start_time => $fTestStartTime
                         };
 
@@ -694,6 +477,8 @@ eval
         }
         while ($iProcessTotal > 0);
 
+        # Print test info and exit
+        #-----------------------------------------------------------------------------------------------------------------------
         if ($bDryRun)
         {
             &log(INFO, 'DRY RUN COMPLETED');
@@ -708,74 +493,65 @@ eval
     }
 
     ################################################################################################################################
-    # Clean whitespace only if test.pl is being run from the test directory in the backrest repo
-    ################################################################################################################################
-    # if (-e './test.pl' && -e '../bin/pgbackrest)
-    # {
-    #     BackRestTestCommon_Execute(
-    #         "find .. -type f -not -path \"../.git/*\" -not -path \"*.DS_Store\" -not -path \"../test/test/*\" " .
-    #         "-not -path \"../test/data/*\" " .
-    #         "-exec sh -c 'for i;do echo \"\$i\" && sed 's/[[:space:]]*\$//' \"\$i\">/tmp/.\$\$ && cat /tmp/.\$\$ " .
-    #         "> \"\$i\";done' arg0 {} + > /dev/null", false, true);
-    # }
-
-    ################################################################################################################################
     # Runs tests
     ################################################################################################################################
-    # &log(INFO, "Testing with test_path = " . BackRestTestCommon_TestPathGet() . ", host = {strHost}, user = {strUser}, " .
-    #            "group = {strGroup}");
-
     my $iRun = 0;
 
-    do
-    {
-        if (BackRestTestCommon_Setup($strExe, $strTestPath, $strPgSqlBin, $iModuleTestRun,
-                                 $bDryRun, $bNoCleanup, $bLogForce))
-        {
-            if (!$bVmOut &&
-                ($strModule eq 'all' ||
-                 $strModule eq 'backup' && $strModuleTest eq 'all' ||
-                 $strModule eq 'backup' && $strModuleTest eq 'full'))
-            {
-                &log(INFO, "TESTING psql-bin = $strPgSqlBin\n");
-            }
+    # Set parameters in host group
+    my $oHostGroup = hostGroupGet();
+    $oHostGroup->paramSet(HOST_PARAM_VM, $strVm);
+    $oHostGroup->paramSet(HOST_PARAM_PROCESS_ID, $iProcessId);
+    $oHostGroup->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
+    $oHostGroup->paramSet(HOST_PARAM_BACKREST_EXE, "${strBackRestBase}/bin/pgbackrest");
+    $oHostGroup->paramSet(HOST_PARAM_THREAD_MAX, $iThreadMax);
+    $oHostGroup->paramSet(HOST_DB_MASTER_USER, 'vagrant');
+    $oHostGroup->paramSet(HOST_BACKUP_USER, 'backrest');
 
-            if ($bInfinite)
-            {
-                    $iRun++;
-                    &log(INFO, "INFINITE - RUN ${iRun}\n");
-            }
+    if ($strDbVersion ne 'minimal')
+    {
+        $oHostGroup->paramSet(HOST_PARAM_DB_VERSION, $strDbVersion);
+        $oHostGroup->paramSet(HOST_PARAM_DB_BIN_PATH, $strPgSqlBin);
+    }
+
+    if (testSetup($strTestPath, $strPgSqlBin, $iModuleTestRun,
+                                 $bDryRun, $bNoCleanup, $bLogForce))
+    {
+        if (!$bVmOut &&
+            ($strModule eq 'all' ||
+             $strModule eq 'backup' && $strModuleTest eq 'all' ||
+             $strModule eq 'backup' && $strModuleTest eq 'full'))
+        {
+            &log(INFO, "TESTING psql-bin = $strPgSqlBin\n");
+        }
 
             if ($strModule eq 'all' || $strModule eq 'help')
             {
-                BackRestTestHelp_Test($strModuleTest, undef, $bVmOut);
+                helpTestRun($strModuleTest, undef, $bVmOut);
             }
 
             if ($strModule eq 'all' || $strModule eq 'config')
             {
-                BackRestTestConfig_Test($strModuleTest, undef, $bVmOut);
+                configTestRun($strModuleTest, undef, $bVmOut);
             }
 
-            if ($strModule eq 'all' || $strModule eq 'file')
-            {
-                BackRestTestFile_Test($strModuleTest, undef, $bVmOut);
-            }
+        if ($strModule eq 'all' || $strModule eq 'file')
+        {
+            fileTestRun($strModuleTest, undef, $bVmOut);
+        }
 
-            if ($strModule eq 'all' || $strModule eq 'backup')
-            {
-                if (!defined($iThreadMax) || $iThreadMax == 1)
-                {
-                    BackRestTestBackup_Test($strModuleTest, 1, $bVmOut);
-                }
-
-                if (!defined($iThreadMax) || $iThreadMax > 1)
-                {
-                    BackRestTestBackup_Test($strModuleTest, defined($iThreadMax) ? $iThreadMax : 4, $bVmOut);
-                }
-            }
+        if ($strModule eq 'all' || $strModule eq 'backup')
+        {
+            backupTestRun($strModuleTest, 1, $bVmOut);
         }
     }
-    while ($bInfinite);
+
+    if (!$bNoCleanup)
+    {
+        if ($oHostGroup->removeAll() > 0)
+        {
+            executeTest("sudo rm -rf ${strTestPath}");
+        }
+    }
 };
 
 if ($@)

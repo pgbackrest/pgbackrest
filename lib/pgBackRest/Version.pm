@@ -19,6 +19,8 @@ use constant BACKREST_NAME                                          => 'pgBackRe
     push @EXPORT, qw(BACKREST_NAME);
 use constant BACKREST_EXE                                           => lc(BACKREST_NAME);
     push @EXPORT, qw(BACKREST_EXE);
+use constant BACKREST_CONF                                          => BACKREST_EXE . '.conf';
+    push @EXPORT, qw(BACKREST_CONF);
 
 # BackRest Version Number
 #

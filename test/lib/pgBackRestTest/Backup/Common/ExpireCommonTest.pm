@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ExpireCommonTest.pm - Common code for expire tests
 ####################################################################################################################################
-package pgBackRestTest::ExpireCommonTest;
+package pgBackRestTest::Backup::Common::ExpireCommonTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -10,9 +10,6 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname);
-
-use lib dirname($0) . '/../lib';
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Common::Ini;
@@ -20,9 +17,13 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
+use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::FileTest;
+use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
@@ -52,12 +53,14 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
+        $self->{oHostBackup},
         $self->{oFile},
         $self->{oLogTest}
     ) =
         logDebugParam
         (
             OP_EXPIRE_COMMON_TEST_NEW, \@_,
+            {name => 'oHostBackup', trace => true},
             {name => 'oFile', trace => true},
             {name => 'oLogTest', required => false, trace => true}
         );
@@ -104,12 +107,8 @@ sub stanzaCreate
     $$oStanza{iControlVersion} = $strDbVersionTemp . '1';
 
     # Create the stanza backup path
-    my $strBackupClusterPath = BackRestTestCommon_RepoPathGet() . '/backup';
-    BackRestTestCommon_PathCreate($strBackupClusterPath, undef, true);
-
-    $strBackupClusterPath .= "/${strStanza}";
-    BackRestTestCommon_PathCreate($strBackupClusterPath, undef, true);
-    BackRestTestCommon_PathCreate("${strBackupClusterPath}/" . PATH_BACKUP_HISTORY, undef, true);
+    my $strBackupClusterPath = $self->{oHostBackup}->repoPath() . "/backup/${strStanza}";
+    filePathCreate("${strBackupClusterPath}/" . PATH_BACKUP_HISTORY, undef, undef, true);
 
     $$oStanza{strBackupClusterPath} = $strBackupClusterPath;
 
@@ -120,11 +119,8 @@ sub stanzaCreate
     $oBackupInfo->save();
 
     # Create the stanza archive path
-    my $strArchiveClusterPath = BackRestTestCommon_RepoPathGet() . '/archive';
-    BackRestTestCommon_PathCreate($strArchiveClusterPath, undef, true);
-
-    $strArchiveClusterPath .= "/${strStanza}";
-    BackRestTestCommon_PathCreate($strArchiveClusterPath, undef, true);
+    my $strArchiveClusterPath = $self->{oHostBackup}->repoPath() . "/archive/${strStanza}";
+    filePathCreate($strArchiveClusterPath, undef, undef, true);
 
     # Create the archive info object
     $$oStanza{oArchiveInfo} = new pgBackRest::ArchiveInfo($strArchiveClusterPath);
@@ -132,7 +128,7 @@ sub stanzaCreate
 
     # Create the stanza archive version path
     $strArchiveClusterPath .= '/' . $$oStanza{strDbVersion} . '-' . $$oStanza{iDbId};
-    BackRestTestCommon_PathCreate($strArchiveClusterPath, undef, true);
+    filePathCreate($strArchiveClusterPath, undef, undef, true);
 
     $$oStanza{strArchiveClusterPath} = $strArchiveClusterPath;
 
@@ -185,7 +181,7 @@ sub backupCreate
                           $lTimestamp);
 
     my $strBackupClusterSetPath .= "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
-    BackRestTestCommon_PathCreate($strBackupClusterSetPath);
+    filePathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");
 
@@ -324,14 +320,13 @@ sub archiveCreate
 
     push(my @stryArchive, $strArchive);
 
-
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        BackRestTestCommon_PathCreate($strPath, undef, true);
+        filePathCreate($strPath);
 
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
-        BackRestTestCommon_FileCreate($strFile, 'ARCHIVE');
+        testFileCreate($strFile, 'ARCHIVE');
 
         $iArchiveIdx++;
 
@@ -376,13 +371,16 @@ sub supplementalLog
 
     if (defined($self->{oLogTest}))
     {
-        $self->{oLogTest}->supplementalAdd(BackRestTestCommon_RepoPathGet() .
-                                           "/backup/${strStanza}/backup.info", undef, $$oStanza{strBackupDescription});
+        $self->{oLogTest}->supplementalAdd($self->{oHostBackup}->repoPath() .
+                                           "/backup/${strStanza}/backup.info", $$oStanza{strBackupDescription});
 
-        executeTest('ls ' . BackRestTestCommon_RepoPathGet() . "/backup/${strStanza} | grep -v \"backup.*\"",
-                    {oLogTest => $self->{oLogTest}});
-        executeTest('ls -R ' . BackRestTestCommon_RepoPathGet() . "/archive/${strStanza} | grep -v \"archive.info\"",
-                    {oLogTest => $self->{oLogTest}});
+        executeTest(
+            'ls ' . $self->{oHostBackup}->repoPath() . "/backup/${strStanza} | grep -v \"backup.*\"",
+            {oLogTest => $self->{oLogTest}});
+
+        executeTest(
+            'ls -R ' . $self->{oHostBackup}->repoPath() . "/archive/${strStanza} | grep -v \"archive.info\"",
+            {oLogTest => $self->{oLogTest}});
     }
 
     return logDebugReturn($strOperation);
@@ -423,8 +421,9 @@ sub process
 
     undef($$oStanza{strBackupDescription});
 
-    my $strCommand = BackRestTestCommon_CommandMainGet() .
-                     ' "--' . OPTION_CONFIG . '=' . BackRestTestCommon_RepoPathGet() . '/pgbackrest.conf"' .
+    my $oHostGroup = hostGroupGet();
+    my $strCommand = $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) .
+                     ' --' . OPTION_CONFIG . '="' . $self->{oHostBackup}->backrestConfig() . '"' .
                      ' --' . OPTION_STANZA . '=' . $strStanza .
                      ' --' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(DETAIL);
 
@@ -446,7 +445,7 @@ sub process
 
     $strCommand .= ' expire';
 
-    executeTest($strCommand, {strComment => $strDescription, oLogTest => $self->{oLogTest}});
+    $self->{oHostBackup}->executeSimple($strCommand, {strComment => $strDescription, oLogTest => $self->{oLogTest}});
 
     $self->supplementalLog($strStanza);
 

@@ -1,9 +1,9 @@
 run 003 - rmt 1, cmp 0, error version
 =====================================
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
+  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/pgbackrest.conf --config-remote=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000001 asynchronously
  DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/local, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -16,8 +16,8 @@ run 003 - rmt 1, cmp 0, error version
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = backup, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
   INFO: WAL segments to archive: total = 1, size = 16MB
  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031
@@ -39,9 +39,9 @@ run 003 - rmt 1, cmp 0, error version
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
+  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/pgbackrest.conf --config-remote=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000002 asynchronously
  DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000002
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/local, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -54,8 +54,8 @@ run 003 - rmt 1, cmp 0, error version
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = backup, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
   INFO: WAL segments to archive: total = 1, size = 16MB
  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031
@@ -68,9 +68,9 @@ run 003 - rmt 1, cmp 0, error version
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
+  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/pgbackrest.conf --config-remote=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000003 asynchronously
  DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000003
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/local, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -83,8 +83,8 @@ run 003 - rmt 1, cmp 0, error version
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = backup, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
   INFO: WAL segments to archive: total = 2, size = 32MB
  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031
@@ -98,17 +98,17 @@ run 003 - rmt 1, cmp 0, error version
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
+  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/pgbackrest.conf --config-remote=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
  ERROR: discarding 000000010000000100000004 due to the archive store max size exceeded - remove the archive stop file ([TEST_PATH]/local/stop/db-archive.stop) to resume archiving and be sure to take a new backup as soon as possible
  DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
+  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/pgbackrest.conf --config-remote=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000005 asynchronously
  DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/local, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -121,8 +121,8 @@ run 003 - rmt 1, cmp 0, error version
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = backup, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
   INFO: WAL segments to archive: total = 3, size = 48MB
  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031
@@ -156,9 +156,9 @@ run 003 - rmt 1, cmp 0, error version
   INFO: archive-push stop
  DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
 
-> [BACKREST_BIN] --config=[TEST_PATH]/db/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=127.0.0.1 --backup-user=backrest --cmd-remote=[BACKREST_BIN] --no-compress --config=[TEST_PATH]/db/pgbackrest.conf --config-remote=[TEST_PATH]/backrest/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
+  INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/pgbackrest.conf --config-remote=[TEST_PATH]/pgbackrest.conf --db-path=[TEST_PATH]/db/common --lock-path=[TEST_PATH]/local/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/local/log --no-fork --repo-path=[TEST_PATH]/backrest --spool-path=[TEST_PATH]/local --stanza=db
   INFO: push WAL segment [TEST_PATH]/db/common/pg_xlog/000000010000000100000006 asynchronously
  DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db/common/pg_xlog/000000010000000100000006
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/local, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
@@ -171,8 +171,8 @@ run 003 - rmt 1, cmp 0, error version
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/local/archive/db/out, strPathType = db:absolute
- DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = 127.0.0.1, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@127.0.0.1 '[BACKREST_BIN] --backup-host=127.0.0.1 --command=archive-push --config=[TEST_PATH]/backrest/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
+ DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote, strHost = backup, strUser = [USER-1]
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/pgbackrest.conf --repo-path=[TEST_PATH]/backrest --stanza=db remote', strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backrest, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
   INFO: WAL segments to archive: total = 1, size = 16MB
  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031

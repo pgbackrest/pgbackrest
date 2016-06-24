@@ -24,6 +24,7 @@ use pgBackRest::Version;
 use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostTest;
+use pgBackRestTest::Common::HostGroupTest;
 
 use BackRestDoc::Common::DocManifest;
 
@@ -951,9 +952,12 @@ sub sectionChildProcess
                     confess &log(ERROR, 'cannot add host ${strName} because the host already exists');
                 }
 
-                my $oHost =
-                    new pgBackRestTest::Common::HostTest(
-                        $$hCacheKey{name}, $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os}, $$hCacheKey{mount});
+                executeTest("rm -rf ~/data/$$hCacheKey{name}");
+                executeTest("mkdir -p ~/data/$$hCacheKey{name}/etc");
+
+                my $oHost = new pgBackRestTest::Common::HostTest(
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os},
+                    [$$hCacheKey{mount}]);
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);
@@ -965,30 +969,9 @@ sub sectionChildProcess
                     $self->execute($oSection, $$hCacheKey{name}, $oExecute, $iDepth + 1, false);
                 }
 
-                $oHost->executeSimple("sh -c 'echo \"\" >> /etc/hosts\'", undef, 'root');
-                $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'", undef, 'root');
-
-                # Add all other host IPs to this host
-                foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
-                {
-                    if ($strOtherHostName ne $$hCacheKey{name})
-                    {
-                        my $oOtherHost = $self->{host}{$strOtherHostName};
-
-                        $oHost->executeSimple("sh -c 'echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts'", undef, 'root');
-                    }
-                }
-
-                # Add this host IP to all other hosts
-                foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
-                {
-                    if ($strOtherHostName ne $$hCacheKey{name})
-                    {
-                        my $oOtherHost = $self->{host}{$strOtherHostName};
-
-                        $oOtherHost->executeSimple("sh -c 'echo \"$oHost->{strIP} $$hCacheKey{name}\" >> /etc/hosts'", undef, 'root');
-                    }
-                }
+                # Add to the host group
+                my $oHostGroup = hostGroupGet();
+                $oHostGroup->hostAdd($oHost);
 
                 $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
             }

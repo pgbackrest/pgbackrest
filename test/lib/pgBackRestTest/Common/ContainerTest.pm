@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ContainerTest.pm - Build docker containers for testing and documentation
+# ContainerTest.pm - Build containers for testing and documentation
 ####################################################################################################################################
-package pgBackRestTest::Docker::ContainerTest;
+package pgBackRestTest::Common::ContainerTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -199,7 +199,6 @@ sub repoSetup
            "RUN chown -R ${strUser}:${strGroup} /var/lib/pgbackrest\n" .
            "RUN chmod 750 /var/lib/pgbackrest";
 }
-
 
 ####################################################################################################################################
 # Sudo setup
@@ -509,21 +508,8 @@ sub containerBuild
             $strImageParent = "backrest/${strOS}-db-${strDbVersion}";
             $strImage = "${strOS}-db-${strDbVersion}-test";
 
-            # Create BackRest User
-            $strScript = backrestUserCreate($strOS);
-
             # Install SSH key
-            $strScript .=
-                "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
-
-            # Install SSH key
-            $strScript .=
-                "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
-
-            # Make test user home readable
-            $strScript .=
-                "\n\n# Make " . TEST_USER . " home dir readable\n" .
-                'RUN chmod g+r,g+x /home/' . TEST_USER;
+            $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP);
 
             # Write the image
             containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);

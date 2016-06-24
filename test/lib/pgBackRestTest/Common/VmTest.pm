@@ -10,13 +10,10 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use File::Basename qw(dirname);
-
-use lib dirname($0) . '/../lib';
-use pgBackRest::Db;
-
 use Exporter qw(import);
     our @EXPORT = qw();
+
+use pgBackRest::Db;
 
 ####################################################################################################################################
 # VM hash keywords

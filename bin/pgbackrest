@@ -177,7 +177,7 @@ eval
     {
         if (optionRemoteTypeTest(DB))
         {
-            confess &log(ASSERT, 'restore command must be performed locally on the db server');
+            confess &log(ERROR, 'restore command must be run on the db host', ERROR_HOST_INVALID);
         }
 
         # Load module dynamically
@@ -196,7 +196,7 @@ eval
         ############################################################################################################################
         if (optionRemoteTypeTest(BACKUP))
         {
-            confess &log(ERROR, 'backup and expire commands must run on the backup host', ERROR_HOST_INVALID);
+            confess &log(ERROR, 'backup and expire commands must be run on the backup host', ERROR_HOST_INVALID);
         }
 
         ############################################################################################################################

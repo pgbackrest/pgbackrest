@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # HelpTest.pm - Unit Tests for help
 ####################################################################################################################################
-package pgBackRestTest::HelpTest;
+package pgBackRestTest::Help::HelpTest;
 
 ####################################################################################################################################
 # Perl includes
@@ -11,31 +11,31 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
-use File::Basename qw(dirname);
+    our @EXPORT = qw();
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 
+use pgBackRestTest::Backup::Common::HostBackupTest;
+use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
-# BackRestTestHelp_ExecuteHelp
+# helpExecute
 ####################################################################################################################################
-sub BackRestTestHelp_ExecuteHelp
+sub helpExecute
 {
     my $strCommand = shift;
 
-    executeTest(BackRestTestCommon_CommandMainAbsGet() . ' --no-config ' . $strCommand);
+    my $oHostGroup = hostGroupGet();
+    executeTest($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --no-config ' . $strCommand);
 }
 
 ####################################################################################################################################
-# BackRestTestHelp_Test
+# helpTestRun
 ####################################################################################################################################
-our @EXPORT = qw(BackRestTestHelp_Test);
-
-sub BackRestTestHelp_Test
+sub helpTestRun
 {
     my $strTest = shift;
     my $iThreadMax = shift;
@@ -65,26 +65,21 @@ sub BackRestTestHelp_Test
             &log(INFO, "Test help\n");
         }
 
-        BackRestTestCommon_Drop(true);
-        BackRestTestCommon_Create();
-
         # Increment the run, log, and decide whether this unit test should be run
-        if (BackRestTestCommon_Run(++$iRun, 'base', $strModule, $strThisTest, undef, false))
+        if (testRun(++$iRun, 'base', $strModule, $strThisTest, undef, false))
         {
-            BackRestTestHelp_ExecuteHelp('version');
-            BackRestTestHelp_ExecuteHelp('help');
-            BackRestTestHelp_ExecuteHelp('help version');
-            BackRestTestHelp_ExecuteHelp('help --output=json --stanza=main info');
-            BackRestTestHelp_ExecuteHelp('help --output=json --stanza=main info output');
+            helpExecute('version');
+            helpExecute('help');
+            helpExecute('help version');
+            helpExecute('help --output=json --stanza=main info');
+            helpExecute('help --output=json --stanza=main info output');
         }
 
         # Cleanup
-        if (BackRestTestCommon_Cleanup())
-        {
-            &log(INFO, 'cleanup');
-            BackRestTestCommon_Drop(true);
-        }
+        testCleanup();
     }
 }
+
+push @EXPORT, qw(helpTestRun);
 
 1;

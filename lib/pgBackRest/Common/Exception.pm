@@ -134,6 +134,8 @@ use constant ERROR_DB_INVALID                                       => ERROR_MIN
     push @EXPORT, qw(ERROR_DB_INVALID);
 use constant ERROR_ARCHIVE_TIMEOUT                                  => ERROR_MINIMUM + 57;
     push @EXPORT, qw(ERROR_ARCHIVE_TIMEOUT);
+use constant ERROR_FILE_MODE                                        => ERROR_MINIMUM + 58;
+    push @EXPORT, qw(ERROR_FILE_MODE);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

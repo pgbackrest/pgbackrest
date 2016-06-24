@@ -177,8 +177,8 @@ eval
     }
 
     # Load the manifest
-    my $oManifest =
-        new BackRestDoc::Common::DocManifest(\@stryKeyword, \@stryRequire, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy, $bCacheOnly);
+    my $oManifest = new BackRestDoc::Common::DocManifest(
+        \@stryKeyword, \@stryRequire, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy, $bCacheOnly);
 
     if (!$bNoCache)
     {

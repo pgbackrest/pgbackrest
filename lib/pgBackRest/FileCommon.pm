@@ -21,6 +21,12 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################
+# Default modes
+####################################################################################################################################
+my $strPathModeDefault = '0750';
+my $strFileModeDefault = '0640';
+
+####################################################################################################################################
 # fileExists
 #
 # Check if a path or file exists.
@@ -278,6 +284,74 @@ sub fileList
 push @EXPORT, qw(fileList);
 
 ####################################################################################################################################
+# fileMode
+#
+# Set the file mode.
+####################################################################################################################################
+sub fileMode
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFile,
+        $strMode,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileModeDefaultSet', \@_,
+            {name => 'strFile', trace => true},
+            {name => 'strMode', default => $strFileModeDefault, trace => true},
+        );
+
+    # Change mode
+    if(!chmod(oct($strMode), $strFile))
+    {
+        my $strError = $!;
+
+        # If file exists then throw the error
+        if (fileExists($strFile))
+        {
+            confess &log(ERROR, "unable to chmod ${strFile}" . (defined($strError) ? ": $strError" : ''), ERROR_FILE_MODE);
+        }
+
+        confess &log(ERROR, "${strFile} does not exist", ERROR_FILE_MISSING);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push @EXPORT, qw(fileMode);
+
+####################################################################################################################################
+# fileModeDefaultSet
+#
+# Set the default mode to be used when creating files.
+####################################################################################################################################
+sub fileModeDefaultSet
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strMode,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileModeDefaultSet', \@_,
+            {name => 'strMode', trace => true},
+        );
+
+    $strFileModeDefault = $strMode;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push @EXPORT, qw(fileModeDefaultSet);
+
+####################################################################################################################################
 # fileMove
 #
 # Move a file.
@@ -371,7 +445,7 @@ sub fileOpen
             __PACKAGE__ . '::fileOpen', \@_,
             {name => 'strFile', trace => true},
             {name => 'lFlags', trace => true},
-            {name => 'strMode', default => '0640', trace => true},
+            {name => 'strMode', default => $strFileModeDefault, trace => true},
         );
 
     my $hFile;
@@ -690,6 +764,33 @@ sub pathAbsolute
 push @EXPORT, qw(pathAbsolute);
 
 ####################################################################################################################################
+# pathModeDefaultSet
+#
+# Set the default mode to be used when creating paths.
+####################################################################################################################################
+sub pathModeDefaultSet
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strMode
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::pathModeDefaultSet', \@_,
+            {name => 'strMode', trace => true},
+        );
+
+    $strPathModeDefault = $strMode;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push @EXPORT, qw(pathModeDefaultSet);
+
+####################################################################################################################################
 # filePathCreate
 #
 # Create a path.
@@ -709,7 +810,7 @@ sub filePathCreate
         (
             __PACKAGE__ . '::filePathCreate', \@_,
             {name => 'strPath', trace => true},
-            {name => 'strMode', default => '0750', trace => true},
+            {name => 'strMode', default => $strPathModeDefault, trace => true},
             {name => 'bIgnoreExists', default => false, trace => true},
             {name => 'bCreateParents', default => false, trace => true}
         );

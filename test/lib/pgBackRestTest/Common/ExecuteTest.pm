@@ -12,13 +12,11 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname);
 use IO::Select;
 use IPC::Open3;
 use POSIX ':sys_wait_h';
 use Symbol 'gensym';
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Protocol::IO;
@@ -47,13 +45,13 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{strCommandOriginal},
+        $self->{strCommand},
         my $oParam
     ) =
         logDebugParam
         (
             OP_EXECUTE_TEST_NEW, \@_,
-            {name => 'strCommandOriginal'},
+            {name => 'strCommand'},
             {name => 'oParam', required => false}
         );
 
@@ -64,16 +62,12 @@ sub new
     }
 
     # Set defaults
-    $self->{bRemote} = defined($self->{bRemote}) ? $self->{bRemote} : false;
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
     $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
     $self->{iRetrySeconds} = defined($self->{iRetrySeconds}) ? $self->{iRetrySeconds} : undef;
-
-    $self->{strUserBackRest} = 'backrest'; #BackRestTestCommon_UserBackRestGet();
-    $self->{strHost} = '127.0.0.1'; #BackRestTestCommon_HostGet();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -93,16 +87,6 @@ sub begin
     # Assign function parameters, defaults, and log debug info
     logDebugParam(OP_EXECUTE_TEST_BEGIN);
 
-    if ($self->{bRemote})
-    {
-        # $self->{strCommand} = "sudo -u $self->{strUserBackRest} $self->{strCommandOriginal}";
-        $self->{strCommand} = "ssh $self->{strUserBackRest}\@$self->{strHost} '$self->{strCommandOriginal}'";
-    }
-    else
-    {
-        $self->{strCommand} = $self->{strCommandOriginal};
-    }
-
     $self->{strErrorLog} = '';
     $self->{strOutLog} = '';
 
@@ -116,7 +100,7 @@ sub begin
         $self->{strFullLog} .= '> ' . $self->{oTestLog}->regExpAll($self->{strCommand}) . "\n" . ('-' x '132') . "\n";
     }
 
-    logDebugMisc("executing command: $self->{strCommand}");
+    &log(DETAIL, "executing command: $self->{strCommand}");
 
     # Execute the command
     $self->{hError} = gensym;
@@ -154,11 +138,10 @@ sub endRetry
         );
 
     # Drain the output and error streams and look for test points
-    # my $iWait = $bWait ? .05 : 0;
-
     while(waitpid($self->{pId}, WNOHANG) == 0)
     {
         my $bFound = false;
+
         # # Drain the stderr stream
         # ??? This is a good idea but can only be done when the IO object has separate buffers for stdin and stderr
         # while (my $strLine = $self->{oIO}->lineRead(0, false, false))
@@ -219,7 +202,7 @@ sub endRetry
     # Pass the log to the LogTest object
     if (defined($self->{oLogTest}))
     {
-        $self->{oLogTest}->logAdd($self->{strCommandOriginal}, $self->{strComment}, $self->{strOutLog});
+        $self->{oLogTest}->logAdd($self->{strCommand}, $self->{strComment}, $self->{strOutLog});
     }
 
     # If an error was expected then return success if that error occurred

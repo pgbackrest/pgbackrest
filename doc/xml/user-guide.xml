@@ -1137,7 +1137,7 @@
 
             <execute output="y">
                 <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
-                <exe-highlight>starting point-in-time recovery</exe-highlight>
+                <exe-highlight>starting point-in-time recovery|consistent recovery state reached</exe-highlight>
             </execute>
         </execute-list>
 
