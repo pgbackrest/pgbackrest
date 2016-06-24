@@ -136,6 +136,9 @@ sub threadGroupThread
                 }
             }
 
+            # Keep the protocol layer from timing out while checksumming
+            protocolGet()->keepAlive();
+
             # Even numbered threads move up when they have finished a queue, odd numbered threads move down
             $iQueueIdx += $iDirection;
 

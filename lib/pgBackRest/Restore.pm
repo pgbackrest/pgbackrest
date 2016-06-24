@@ -1310,6 +1310,9 @@ sub process
                 $lSizeCurrent = restoreFile($oRestoreHash{$strQueueKey}{$strFileKey}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
                                             optionGet(OPTION_FORCE), $self->{strBackupSet}, $bSourceCompression, $strCurrentUser,
                                             $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
+
+                # Keep the protocol layer from timing out while checksumming
+                protocolGet()->keepAlive();
             }
         }
     }

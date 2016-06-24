@@ -100,9 +100,10 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="parkinson.janice"/>
+                            <release-item-ideator id="barber.chris"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded operation and were completely absent during single-threaded operation when resuming from a previous incomplete backup.</p>
+                        <p>Fixed an issue where <id>keep-alives</id> could be starved out by lots of small files during multi-threaded operation and were completely absent during single/multi-threaded operation when resuming from a previous incomplete backup and checksumming during a delta restore.</p>
                     </release-item>
 
                     <release-item>
