@@ -4,7 +4,7 @@
     <!-- System-wide variables  -->
     <variable-list>
         <variable key="project">pgBackRest</variable>
-        <variable key="version" eval="y">use pgBackRest::Version; $VERSION</variable>
+        <variable key="version" eval="y">use pgBackRest::Version; BACKREST_VERSION</variable>
         <variable key="version-stable" eval="y">
             use BackRestDoc::Custom::DocCustomRelease;
 

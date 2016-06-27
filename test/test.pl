@@ -137,7 +137,7 @@ GetOptions ('q|quiet' => \$bQuiet,
 # Display version and exit if requested
 if ($bVersion || $bHelp)
 {
-    syswrite(*STDOUT, BACKREST_NAME . ' ' . $VERSION . " Test Engine\n");
+    syswrite(*STDOUT, BACKREST_NAME . ' ' . BACKREST_VERSION . " Test Engine\n");
 
     if ($bHelp)
     {

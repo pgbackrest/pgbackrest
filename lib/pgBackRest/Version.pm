@@ -27,18 +27,15 @@ use constant BACKREST_CONF                                          => BACKREST_
 # Defines the current version of the BackRest executable.  The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
-our # 'our' keyword is on a separate line to make the ExtUtils::MakeMaker parser happy.
-$VERSION = '1.03dev';
-
-push @EXPORT, qw($VERSION);
+use constant BACKREST_VERSION                                       => '1.03dev';
+    push @EXPORT, qw(BACKREST_VERSION);
 
 # Format Format Number
 #
 # Defines format for info and manifest files as well as on-disk structure.  If this number changes then the repository will be
 # invalid unless migration functions are written.
 #-----------------------------------------------------------------------------------------------------------------------------------
-our $FORMAT = 5;
-
-push @EXPORT, qw($FORMAT);
+use constant BACKREST_FORMAT                                        => 5;
+    push @EXPORT, qw(BACKREST_FORMAT);
 
 1;

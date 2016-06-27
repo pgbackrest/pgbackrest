@@ -143,6 +143,10 @@
                     <release-item>
                         <p>Option handling is now far more strict.  Previously it was possible for a command to use an option that was not explicitly assigned to it.  This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Minor refactor of version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
+                    </release-item>
                 </release-refactor-list>
              </release-core-list>
 

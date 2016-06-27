@@ -103,11 +103,10 @@ GetOptions ('help' => \$bHelp,
 ####################################################################################################################################
 eval
 {
-
     # Display version and exit if requested
     if ($bHelp || $bVersion)
     {
-        print BACKREST_NAME . ' ' . $VERSION . " Documentation Builder\n";
+        print BACKREST_NAME . ' ' . BACKREST_VERSION . " Documentation Builder\n";
 
         if ($bHelp)
         {

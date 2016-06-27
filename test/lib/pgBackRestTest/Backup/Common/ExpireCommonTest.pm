@@ -19,6 +19,7 @@ use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Version;
 
 use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Common::ExecuteTest;
