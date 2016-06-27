@@ -719,7 +719,14 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
-                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime, '660');
+
+            if ($bNeutralTest && !$bRemote)
+            {
+                executeTest('sudo chown 7777 ' . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
+                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
+                          {&MANIFEST_SUBKEY_USER} = INI_FALSE;
+            }
 
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
 
@@ -727,6 +734,13 @@ sub backupTestRun
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
                                                   PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+
+            if ($bNeutralTest && !$bRemote)
+            {
+                executeTest('sudo chown :7777 ' . $oHostDbMaster->dbBasePath() . '/base/16384/' . DB_FILE_PGVERSION);
+                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
+                          {&MANIFEST_SUBKEY_GROUP} = INI_FALSE;
+            }
 
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
@@ -950,6 +964,13 @@ sub backupTestRun
             my $bDelta = true;
             my $bForce = false;
 
+            # Munge permissions/modes on files that will be fixed by the restore
+            if ($bNeutralTest && !$bRemote)
+            {
+                executeTest("sudo chown :7777 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
+                executeTest("sudo chmod 600 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
+            }
+
             # Create a path and file that are not in the manifest
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'deleteme');
             $oHostDbMaster->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'deleteme/deleteme.txt', 'DELETEME');
@@ -957,19 +978,38 @@ sub backupTestRun
             # Change path mode
             $oHostDbMaster->dbPathMode(\%oManifest, MANIFEST_TARGET_PGDATA, 'base', '0777');
 
-            # Change an existing link to the wrong directory
-            $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat');
-            $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../wrong');
-
             # Remove a path
             $oHostDbMaster->dbPathRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
 
             # Remove a file
             $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
+            # Restore will reset invalid user and group so do the same in the manifest
+            if ($bNeutralTest && !$bRemote)
+            {
+                delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
+                       {&MANIFEST_SUBKEY_USER});
+                delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
+                       {&MANIFEST_SUBKEY_GROUP});
+            }
+
             $oHostDbMaster->restore(
                 $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'add and delete files', undef, ' --link-all');
+                'add and delete files', undef, ' --link-all', undef, $bNeutralTest && !$bRemote ? 'root' : undef);
+
+            # Fix permissions on the restore log
+            if ($bNeutralTest && !$bRemote)
+            {
+                executeTest('sudo chown -R vagrant:postgres ' . $oHostBackup->logPath());
+            }
+
+            # Change an existing link to the wrong directory
+            $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat');
+            $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../wrong');
+
+            $oHostDbMaster->restore(
+                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                'fix broken symlink', undef, ' --link-all --log-level-console=detail');
 
             # Additional restore tests that don't need to be performed for every permutation
             if ($bNeutralTest && !$bRemote)

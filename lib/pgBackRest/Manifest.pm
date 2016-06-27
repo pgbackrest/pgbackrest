@@ -661,8 +661,23 @@ sub build
         }
 
         # User and group required for all types
-        $self->set($strSection, $strFile, MANIFEST_SUBKEY_USER, $oManifestHash{name}{$strName}{user});
-        $self->set($strSection, $strFile, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{$strName}{group});
+        if (defined($oManifestHash{name}{$strName}{user}))
+        {
+            $self->set($strSection, $strFile, MANIFEST_SUBKEY_USER, $oManifestHash{name}{$strName}{user});
+        }
+        else
+        {
+            $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_USER, false);
+        }
+
+        if (defined($oManifestHash{name}{$strName}{group}))
+        {
+            $self->set($strSection, $strFile, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{$strName}{group});
+        }
+        else
+        {
+            $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_GROUP, false);
+        }
 
         # Mode for required file and path type only
         if ($cType eq 'f' || $cType eq 'd')
@@ -795,9 +810,10 @@ sub build
 
         # Record the time when copying will start
         $self->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef, $lTimeBegin + ($bOnline ? 1 : 0));
-    }
 
-    $self->buildDefault();
+        # Build default sections
+        $self->buildDefault();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -873,15 +889,31 @@ sub fileAdd
         );
 
     # Set manifest values
-    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_USER,
-               $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER));
-    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_GROUP,
-               $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP));
-    $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_MODE, '0600');
+    if (!$self->test(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_USER) ||
+        !$self->test(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_USER, undef,
+                     $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER)))
+    {
+        $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_USER,
+                   $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER));
+    }
+
+    if (!$self->test(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_GROUP) ||
+        !$self->test(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_GROUP, undef,
+                     $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP)))
+    {
+        $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_GROUP,
+                   $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP));
+    }
+
+    if (!$self->test(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_MODE) ||
+        !$self->test(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_MODE, undef, '0600'))
+    {
+        $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_MODE, '0600');
+    }
+
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_TIMESTAMP, $lModificationTime);
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_SIZE, $lSize);
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-    $self->buildDefault();
 }
 
 ####################################################################################################################################
@@ -901,15 +933,18 @@ sub buildDefault
     {
         foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE)
         {
+            # Links don't have a mode so skip
+            next if ($strSection eq MANIFEST_SECTION_TARGET_LINK && $strSubKey eq &MANIFEST_SUBKEY_MODE);
+
             my %oDefault;
             my $iSectionTotal = 0;
 
             foreach my $strFile ($self->keys($strSection))
             {
-                my $strValue = $self->get($strSection, $strFile, $strSubKey, false);
-
-                if (defined($strValue))
+                if (!$self->boolTest($strSection, $strFile, $strSubKey, false))
                 {
+                    my $strValue = $self->get($strSection, $strFile, $strSubKey);
+
                     if (defined($oDefault{$strValue}))
                     {
                         $oDefault{$strValue}++;

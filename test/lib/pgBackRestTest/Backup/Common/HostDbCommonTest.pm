@@ -306,6 +306,7 @@ sub restore
     my $iExpectedExitStatus = shift;
     my $strOptionalParam = shift;
     my $bTablespace = shift;
+    my $strUser = shift;
 
     # Set defaults
     $bDelta = defined($bDelta) ? $bDelta : false;
@@ -370,7 +371,8 @@ sub restore
         (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
             ? ' --' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
-        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest}});
+        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest}},
+        $strUser);
 
     if (!defined($iExpectedExitStatus))
     {

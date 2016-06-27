@@ -145,6 +145,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improved handling of users/groups captured during backup that do not exist on the restore host.  Also explicitly handle the case where user/group is not mapped to a name.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Minor refactor of version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
                     </release-item>
                 </release-refactor-list>

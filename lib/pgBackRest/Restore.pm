@@ -125,13 +125,40 @@ sub manifestOwnershipCheck
     # Create hashes to track valid/invalid users/groups
     my %oOwnerHash = ();
 
-    # Create hash for each type and owner to be checked
-    my $strDefaultUser = getpwuid($<);
-    my $strDefaultGroup = getgrgid($();
+    # Create hash for each type to be checked
+    my %oFileTypeHash =
+    (
+        &MANIFEST_SECTION_TARGET_PATH => true,
+        &MANIFEST_SECTION_TARGET_LINK => true,
+        &MANIFEST_SECTION_TARGET_FILE => true
+    );
 
-    my %oFileTypeHash = (&MANIFEST_SECTION_TARGET_PATH => true, &MANIFEST_SECTION_TARGET_LINK => true,
-                         &MANIFEST_SECTION_TARGET_FILE => true);
-    my %oOwnerTypeHash = (&MANIFEST_SUBKEY_USER => $strDefaultUser, &MANIFEST_SUBKEY_GROUP => $strDefaultGroup);
+    # Create hash for default owners (user, group) for when the owner in the manifest cannot be used because it does not exist or
+    # was not mapped to a name during the original backup.  It's preferred to use the owner of the PGDATA directory but if that was
+    # not valid in the original backup then the current user/group will be used as a last resort.
+    my %oOwnerTypeHash;
+
+    if ($oManifest->test(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER) &&
+        !$oManifest->boolTest(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER, false))
+    {
+        $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} =
+            $oManifest->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER);
+    }
+    else
+    {
+        $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} = getpwuid($<);
+    }
+
+    if ($oManifest->test(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP) &&
+        !$oManifest->boolTest(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP, false))
+    {
+        $oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP} =
+            $oManifest->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP);
+    }
+    else
+    {
+        $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} = getgrgid($();
+    }
 
     # Loop through owner types (user, group)
     foreach my $strOwnerType (sort (keys %oOwnerTypeHash))
@@ -142,6 +169,15 @@ sub manifestOwnershipCheck
             foreach my $strName ($oManifest->keys($strSection))
             {
                 my $strOwner = $oManifest->get($strSection, $strName, $strOwnerType);
+
+                # If the owner was invalid then set it to something valid
+                if ($oManifest->boolTest($strSection, $strName, $strOwnerType, false))
+                {
+                    $strOwner = $oOwnerTypeHash{$strOwnerType};
+
+                    &log(WARN, "backup ${strOwnerType} for ${strName} was not mapped to a name, set to ${strOwner}");
+                    $oManifest->set($strSection, $strName, $strOwnerType, $strOwner);
+                }
 
                 # If root then test to see if the user/group is valid
                 if ($< == 0)
@@ -188,7 +224,7 @@ sub manifestOwnershipCheck
                 if (!$oOwnerHash{$strOwnerType}{$strOwner})
                 {
                     &log(WARN, "${strOwnerType} ${strOwner} in manifest " . ($< == 0 ? 'does not exist locally ' : '') .
-                               "cannot be used for restore, changed to $oOwnerTypeHash{$strOwnerType}");
+                               "cannot be used for restore, set to $oOwnerTypeHash{$strOwnerType}");
                 }
             }
         }
@@ -622,7 +658,9 @@ sub clean
                     my $strGroup = $oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_GROUP);
 
                     # If ownership does not match, fix it
-                    if ($strUser ne $oTargetManifest{name}{$strName}{user} ||
+                    if (!defined($oTargetManifest{name}{$strName}{user}) ||
+                        $strUser ne $oTargetManifest{name}{$strName}{user} ||
+                        !defined($oTargetManifest{name}{$strName}{group}) ||
                         $strGroup ne $oTargetManifest{name}{$strName}{group})
                     {
                         &log(DETAIL, "set ownership ${strUser}:${strGroup} on ${strOsFile}");
