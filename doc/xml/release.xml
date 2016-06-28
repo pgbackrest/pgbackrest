@@ -183,6 +183,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow a static date to be used for documentation to generate reproducible builds.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update TeX Live to 2016 version.</p>
                     </release-item>
                 </release-feature-list>

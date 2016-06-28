@@ -30,6 +30,9 @@ use pgBackRest::Db;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
+use lib dirname($0) . '/../doc/lib';
+use BackRestDoc::Custom::DocCustomRelease;
+
 use lib dirname($0) . '/lib';
 use pgBackRestTest::Backup::BackupTest;
 use pgBackRestTest::Backup::Common::HostBackupTest;
@@ -216,28 +219,22 @@ eval
 
         # Make sure version number matches the latest release
         my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
-        my $oReleaseDoc = new BackRestDoc::Common::Doc($strReleaseFile);
+        my $oRelease = (new BackRestDoc::Custom::DocCustomRelease(new BackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
+        my $strVersion = $oRelease->paramGet('version');
 
-        foreach my $oRelease ($oReleaseDoc->nodeGet('release-list')->nodeList('release'))
+        if ($strVersion =~ /dev$/ && BACKREST_VERSION !~ /dev$/)
         {
-            my $strVersion = $oRelease->paramGet('version');
-
-            if ($strVersion =~ /dev$/ && BACKREST_VERSION !~ /dev$/)
+            if ($oRelease->nodeTest('release-core-list'))
             {
-                if ($oRelease->nodeTest('release-core-list'))
-                {
-                    confess "dev release ${strVersion} must match the program version when core changes have been made";
-                }
-
-                next;
+                confess "dev release ${strVersion} must match the program version when core changes have been made";
             }
 
-            if ($strVersion ne BACKREST_VERSION)
-            {
-                confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
-            }
+            next;
+        }
 
-            last;
+        if ($strVersion ne BACKREST_VERSION)
+        {
+            confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
         }
 
         if (!$bDryRun)

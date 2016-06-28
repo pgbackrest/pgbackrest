@@ -120,6 +120,24 @@ sub currentStableVersion
     confess &log(ERROR, "unable to find non-development version");
 }
 
+
+####################################################################################################################################
+# releaseLast
+#
+# Get the last release.
+####################################################################################################################################
+sub releaseLast
+{
+    my $self = shift;
+
+    my $oDoc = $self->{oDoc};
+
+    foreach my $oRelease ($oDoc->nodeGet('release-list')->nodeList('release'))
+    {
+        return $oRelease;
+    }
+}
+
 ####################################################################################################################################
 # contributorTextGet
 #

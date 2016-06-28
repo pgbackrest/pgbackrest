@@ -18,14 +18,45 @@
         <variable key="project-logo">logo.png</variable>
         <variable key="project-favicon">favicon.png</variable>
 
+        <!-- Release date - static allows for reproducible builds -->
+        <variable key="release-date-static">n</variable>
+        <variable key="release-epoch" eval="y">
+            use Time::Local;
+            use BackRestDoc::Custom::DocCustomRelease;
+
+            my ($second, $minute , $hour, $mday, $month, $year) = localtime();
+
+            if ('{[release-date-static]}' eq 'y')
+            {
+                my $strDate = (new BackRestDoc::Custom::DocCustomRelease(
+                    new BackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->releaseLast()->paramGet('date');
+
+                if ($strDate eq 'XXXX-XX-XX')
+                {
+                    confess &amp;log(ERROR, 'not possible to use static release dates on a dev build');
+                }
+                else
+                {
+                    ($year, $month, $mday) = split(/[\s.\-]+/, $strDate);
+                    $month -= 1;
+                }
+            }
+
+            timelocal(0, 0, 0, $mday, $month, $year);
+        </variable>
+
         <!-- Logo locations -->
         <variable key="logo">{[doc-path]}/output/latex/logo</variable>
 
         <!-- HTML variables  -->
         <variable key="html-footer" eval='y'>
-        use POSIX qw(strftime); 'Copyright &amp;copy; 2015' . '-' . strftime('%Y', localtime) .
-        ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
-        strftime('%B ', localtime) . trim(strftime('%e,', localtime)) . strftime(' %Y.', localtime)</variable>
+            use POSIX qw(strftime);
+
+            'Copyright &amp;copy; 2015' . '-' . strftime('%Y', localtime({[release-epoch]})) .
+            ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
+            strftime('%B ', localtime({[release-epoch]})) . trim(strftime('%e,', localtime({[release-epoch]}))) .
+            strftime(' %Y.', localtime({[release-epoch]}))
+        </variable>
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
         <!-- PDF variables  -->
