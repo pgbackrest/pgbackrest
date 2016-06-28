@@ -131,7 +131,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Failure to shutdown remotes at the end of the backup no longer throws an exception.  A warning is still generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
+                        <p>Failure to shutdown remotes at the end of the backup no longer throws an exception.  Instead a warning is generated that recommends a higher <br-option>protocol-timeout</br-option>.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -149,7 +149,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Minor refactor of version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
+                        <p>Changed version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
                     </release-item>
                 </release-refactor-list>
              </release-core-list>
