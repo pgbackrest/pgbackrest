@@ -189,6 +189,15 @@
                     <release-item>
                         <p>Update TeX Live to 2016 version.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-reviewer id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Added documentation for asynchronous archiving to the user guide.</p>
+                    </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>

@@ -26,6 +26,8 @@
         <variable key="db-path" keyword="default">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
         <variable key="db-path" keyword="co6">/var/lib/pgsql/{[pg-version]}/data</variable>
 
+        <variable key="spool-path">/var/spool/pgbackrest</variable>
+
         <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[db-path]}/postgresql.conf</variable>
 
@@ -398,21 +400,6 @@
                     <exe-cmd>{[db-cluster-wait]}</exe-cmd>
                 </execute>
             </execute-list>
-
-<!--        It would be good if the info command showed xlogs so we don't have to examine directories
-            <execute-list host="{[host-db-master]}">
-                <execute output="y">
-                    <exe-cmd>psql -c "select pg_switch_xlog()"</exe-cmd>
-                </execute>
-            </execute-list>
-
-            <execute-list host="{[host-db-master]}">
-                <execute output="y">
-                    <exe-cmd>ls -lahR {[backrest-repo-path]}/archive/{[postgres-cluster-demo]}/{[pg-version]}-1</exe-cmd>
-                    <exe-retry/>
-                </execute>
-            </execute-list> -->
-
         </section>
 
         <!-- SECTION => QUICKSTART - CHECK CONFIGURATION -->
@@ -1352,6 +1339,46 @@
                 </execute>
             </execute-list>
         </section>
+
+        <!-- SECTION => BACKUP HOST - ASYNCHRONOUS ARCHIVING -->
+        <section id="async-archiving" depend="install-config">
+            <title>Asynchronous Archiving</title>
+
+            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process to improve throughput. WAL segments are temporarily stored in a local queue on the database server, specified by the <br-option>spool-path</br-option> option, before being transferred to the repository on the backup server.</p>
+
+            <p>The spool directory is created to hold the WAL segments while they are waiting to be (optionally) compressed and transferred.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Create the spool directory</title>
+
+                <execute user="root">
+                    <exe-cmd>mkdir -m 750 {[spool-path]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>The spool path must be configured and asynchronous archiving enabled.</p>
+
+            <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
+                <title>Configure the spool path and asynchronous archiving</title>
+
+                <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+            </backrest-config>
+
+            <p>The <cmd>check</cmd> command ensures that asynchronous archiving is working.</p>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Check asynchronous archiving</title>
+
+                <execute>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>WAL segment</exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
     </section>
 
     <!-- SECTION => START/STOP -->
@@ -1789,18 +1816,4 @@
         </section>
     </section>
 
-    <!-- SECTION => INFO -->
-    <!-- <section id="info">
-        <title>Repository Information</title>
-
-        <p></p>
-
-        <execute-list host="{[host-db-master]}">
-            <title>Get detailed information</title>
-
-            <execute output="y" filter="n">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-output=json info</exe-cmd>
-            </execute>
-        </execute-list>
-    </section> -->
 </doc>
