@@ -94,7 +94,7 @@ my $oPgControlVersionHash =
     {
         201409291 => PG_VERSION_94,
         201510051 => PG_VERSION_95,
-        201605051 => PG_VERSION_96,
+        201606171 => PG_VERSION_96,
     },
 };
 
