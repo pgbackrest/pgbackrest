@@ -94,6 +94,16 @@
     </contributor-list>
 
     <release-list>
+         <release date="XXX-XX-XX" version="1.04dev" title="UNDER DEVELOPMENT">
+             <release-doc-list>
+                 <release-feature-list>
+                    <release-item>
+                        <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-doc-list>
+         </release>
+
          <release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
              <release-core-list>
                 <release-bug-list>

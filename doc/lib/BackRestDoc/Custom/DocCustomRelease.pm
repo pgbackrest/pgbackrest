@@ -290,7 +290,7 @@ sub docGet
                 confess &log(ERROR, 'only one development release is allowed');
             }
 
-            $oSection = $oDoc->nodeAdd('section', undef, {id => 'development'});
+            $oSection = $oDoc->nodeAdd('section', undef, {id => 'development', keyword => 'dev'});
             $oSection->nodeAdd('title')->textSet("Development Notes");
 
             $iDevReleaseTotal++;
@@ -329,17 +329,17 @@ sub docGet
         my @stryMonth = ('January', 'February', 'March', 'April', 'May', 'June',
                          'July', 'August', 'September', 'October', 'November', 'December');
 
-        if ($strDate !~ /^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$/)
-        {
-            confess &log(ASSERT, "invalid date ${strDate} for release {$strVersion}");
-        }
-
         if ($strDate =~ /^X/)
         {
             $strDateOut .= 'No Release Date Set';
         }
         else
         {
+            if ($strDate !~ /^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$/)
+            {
+                confess &log(ASSERT, "invalid date ${strDate} for release {$strVersion}");
+            }
+
             $strDateOut .= 'Released ' . $stryMonth[(substr($strDate, 5, 2) - 1)] . ' ' .
                           (substr($strDate, 8, 2) + 0) . ', ' . substr($strDate, 0, 4);
         }

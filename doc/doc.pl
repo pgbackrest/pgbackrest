@@ -131,17 +131,8 @@ eval
         !$bNoExe
             or confess "--no-exe ${strError}";
 
-        !$bNoCache
-            or confess "--no-cache ${strError}";
-
         !@stryRequire
             or confess "--require ${strError}";
-
-        !@stryOutput
-            or confess "--out ${strError}";
-
-        !@stryExclude
-            or confess "--exclude ${strError}";
     }
 
     # Set console log level
