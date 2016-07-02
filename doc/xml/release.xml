@@ -113,6 +113,10 @@
 
                         <p>Fixed an issue where the <cmd>expire</cmd> command would refuse to run when explicitly called from the command line if the <br-option>db-host</br-option> option was set.  This was not an issue when <cmd>expire</cmd> was run after a <cmd>backup</cmd>, which is the usual case.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where validation was being running on <pg-setting>archive_command</pg-setting> even when the <br-option>archive-check</br-option> option was disabled.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

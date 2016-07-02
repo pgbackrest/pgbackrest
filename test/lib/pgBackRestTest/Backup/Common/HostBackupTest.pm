@@ -511,6 +511,7 @@ sub check
         ' --config=' . $self->backrestConfig() .
         ' --log-level-console=detail' .
         (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' --stanza=' . $self->stanza() . ' check',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest}});
 

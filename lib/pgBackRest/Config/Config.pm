@@ -605,12 +605,11 @@ my %oOptionRule =
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_NEGATE => true,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ONLINE,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ONLINE
-            }
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
         }
     },
 
@@ -1258,17 +1257,16 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_ONLINE,
+            &OPTION_RULE_DEPEND_VALUE   => true,
+        },
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_ONLINE,
-                    &OPTION_RULE_DEPEND_VALUE   => true
-                }
-            }
-        }
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+        },
     },
 
     &OPTION_BACKUP_ARCHIVE_COPY =>

@@ -1604,7 +1604,7 @@ sub backupTestRun
             # Stop the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterStop({bIgnoreLogError => true});
 
-            # Check archive_command_not_set error
+            # Check ERROR_ARCHIVE_COMMAND_INVALID error
             $strComment = 'fail on invalid archive_command';
             $oHostDbMaster->clusterStart({bArchive => false});
 
@@ -1617,6 +1617,12 @@ sub backupTestRun
             {
                 $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
             }
+
+            # When archive-check=n then ERROR_FILE_MISSING will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
+            $strComment = 'fail on file missing when archive-check=n';
+            $oHostDbMaster->check(
+                $strComment,
+                {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-archive-check'});
 
             # Stop the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterStop({bIgnoreLogError => true});

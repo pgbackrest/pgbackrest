@@ -547,6 +547,18 @@
 
                     <example>main</example>
                 </option>
+
+
+                <!-- OPERATION - GENERAL - ONLINE OPTION -->
+                <option id="online" name="Online">
+                    <summary>Perform an online backup.</summary>
+
+                    <text>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
+
+                    The purpose of this option is to allow offline backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
+
+                    <example>n</example>
+                </option>
             </option-list>
         </operation-general>
 
@@ -570,17 +582,6 @@
                             </ul></text>
 
                         <example>full</example>
-                    </option>
-
-                    <!-- OPERATION - BACKUP COMMAND - ONLINE OPTION -->
-                    <option id="online" name="Online">
-                        <summary>Perform an online backup.</summary>
-
-                        <text>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
-
-                        The purpose of this option is to allow offline backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
-
-                        <example>n</example>
                     </option>
 
                     <!-- OPERATION - BACKUP COMMAND - FORCE OPTION -->

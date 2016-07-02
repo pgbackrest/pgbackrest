@@ -439,6 +439,21 @@ my $oConfigHelpData =
                     "the command line."
         },
 
+        # ONLINE Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'online' =>
+        {
+            summary =>
+                "Perform an online backup.",
+            description =>
+                "Specifying --no-online prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the database " .
+                    "cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will generate an error if " .
+                    "it is not.\n" .
+                "\n" .
+                "The purpose of this option is to allow offline backups. The pg_xlog directory is copied as-is and " .
+                    "archive-check is automatically disabled for the backup."
+        },
+
         # PROTOCOL-TIMEOUT Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'protocol-timeout' =>
@@ -800,22 +815,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'manifest-save-threshold' => 'section',
                 'neutral-umask' => 'section',
-
-                # ONLINE Option Help
-                #-------------------------------------------------------------------------------------------------------------------
-                'online' =>
-                {
-                    summary =>
-                        "Perform an online backup.",
-                    description =>
-                        "Specifying --no-online prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the " .
-                            "database cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will " .
-                            "generate an error if it is not.\n" .
-                        "\n" .
-                        "The purpose of this option is to allow offline backups. The pg_xlog directory is copied as-is and " .
-                            "archive-check is automatically disabled for the backup."
-                },
-
+                'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'resume' => 'section',
@@ -864,6 +864,7 @@ my $oConfigHelpData =
 
             option =>
             {
+                'archive-check' => 'section',
                 'archive-timeout' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
@@ -883,6 +884,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
