@@ -452,7 +452,7 @@ sub containerBuild
             $bDocBuild = true;
         }
 
-        foreach my $strDbVersion (@stryDbBuild)
+        foreach my $strDbVersion (sort(@stryDbBuild))
         {
             my $strDbVersionNoDot = $strDbVersion;
             $strDbVersionNoDot =~ s/\.//;
