@@ -442,27 +442,48 @@ sub get
 sub getCheck
 {
     my $self = shift;
-    my $oFile = shift;
 
     # Assign function parameters, defaults, and log debug info
     my
     (
-        $strOperation
+        $strOperation,
+        $oFile,
+        $strDbVersion,
+        $ullDbSysId
     ) =
         logDebugParam
     (
-        OP_ARCHIVE_GET_CHECK
+        OP_ARCHIVE_GET_CHECK, \@_,
+        {name => 'oFile'},
+        {name => 'strDbVersion', required => false},
+        {name => 'ullDbSysId', required => false}
     );
 
     my $strArchiveId;
 
+    # If the dbVersion/dbSysId are not passed, then we need to retrieve the database information
+    if (!defined($strDbVersion) || !defined($ullDbSysId) )
+    {
+        # get DB info for comparison
+        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
+            (new pgBackRest::Db())->info($oFile), optionGet(OPTION_DB_PATH));
+    }
+
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
     {
-        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_CHECK, undef, true);
+        # Build param hash
+        my %oParamHash;
+
+        # Pass the database information to the remote server
+        $oParamHash{'db-version'} = $strDbVersion;
+        $oParamHash{'db-sys-id'} = $ullDbSysId;
+
+        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_CHECK, \%oParamHash, true);
     }
     else
     {
-        $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->archiveId();
+        $strArchiveId =
+            (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
     }
 
     # Return from function and log return values if any
@@ -753,7 +774,7 @@ sub pushCheck
         # Create the archive path if it does not exist
         $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
 
-        # If the info file exists check db version and system-id
+        # If the info file exists check db version and system-id, else create it with the db version and system-id passed and the history
         $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive
@@ -1108,7 +1129,7 @@ sub check
             # Clear any previous errors if we've found the archive.info
             $iResult = 0;
         };
-
+#CSHANG Need to ignore the ERROR_FILE_MISSING ONLY!
         if ($@)
         {
             my $oMessage = $@;

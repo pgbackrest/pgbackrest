@@ -108,7 +108,10 @@ sub new
     }
     else
     {
+        # CSHANG this constructor is called many places so this is always set regardless of the file, although I don't know if the oContent is always written
+        #CSHANG this will set the $self->{oContent}{backrest}{backrest-format}=5
         $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
+        #CSHANG this will set the $self->{oContent}{backrest}{backrest-version}=1.03
         $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
     }
 
@@ -209,7 +212,7 @@ sub iniLoad
 ####################################################################################################################################
 # save
 #
-# Save the manifest.
+# Save the file.
 ####################################################################################################################################
 sub save
 {

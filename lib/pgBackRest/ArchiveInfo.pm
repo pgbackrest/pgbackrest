@@ -101,7 +101,7 @@ sub new
 ####################################################################################################################################
 # check
 #
-# Check archive info and make it is compatible.
+# Check archive info file and make sure it is compatible. If the file does not exist it will be created with the values passed.
 ####################################################################################################################################
 sub check
 {
@@ -118,11 +118,13 @@ sub check
         (
             OP_ARCHIVE_INFO_CHECK, \@_,
             {name => 'strDbVersion'},
-            {name => 'ullDbSysId'}
+            {name => 'ullDbSysId'},
+            {name => 'bCreateFile', default => true}
         );
 
     my $bSave = false;
 
+&log(INFO, "strDbVersion='$strDbVersion', ullDbSysId='$ullDbSysId'"); #CSHANG
     if ($self->test(INFO_ARCHIVE_SECTION_DB))
     {
         my $strError = undef;
@@ -179,7 +181,7 @@ sub check
 ####################################################################################################################################
 # archiveId
 #
-# Get the archive id.
+# Get the archive id which is a combination of the DB version and the db-id setting (e.g. 9.4-1)
 ####################################################################################################################################
 sub archiveId
 {
