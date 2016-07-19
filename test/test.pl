@@ -228,11 +228,8 @@ eval
             {
                 confess "dev release ${strVersion} must match the program version when core changes have been made";
             }
-
-            next;
         }
-
-        if ($strVersion ne BACKREST_VERSION)
+        elsif ($strVersion ne BACKREST_VERSION)
         {
             confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
         }

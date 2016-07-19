@@ -102,6 +102,14 @@
                     </release-item>
                 </release-feature-list>
             </release-doc-list>
+
+             <release-test-list>
+                 <release-bug-list>
+                    <release-item>
+                        <p>Fixed a version checking issue in <file>test.pl</file>.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-test-list>
          </release>
 
          <release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
