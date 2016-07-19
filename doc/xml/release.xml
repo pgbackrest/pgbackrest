@@ -82,6 +82,11 @@
             <contributor-id type="github">gregscds</contributor-id>
         </contributor>
 
+        <contributor id="vitale.michael">
+            <contributor-name-display>Michael Vitale</contributor-name-display>
+            <contributor-id type="github">MichaelDBA</contributor-id>
+        </contributor>
+
         <contributor id="vondendriesch.adrian">
             <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
             <contributor-id type="github">disco-stu</contributor-id>
@@ -95,6 +100,18 @@
 
     <release-list>
          <release date="XXX-XX-XX" version="1.04dev" title="UNDER DEVELOPMENT">
+             <release-core-list>
+                 <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was thrown when it was missing rather than a polite error message.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
              <release-doc-list>
                  <release-feature-list>
                     <release-item>
@@ -102,6 +119,14 @@
                     </release-item>
                 </release-feature-list>
             </release-doc-list>
+
+             <release-test-list>
+                 <release-bug-list>
+                    <release-item>
+                        <p>Fixed a version checking issue in <file>test.pl</file>.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-test-list>
          </release>
 
          <release date="2016-07-02" version="1.03" title="Check Command and Bug Fixes">
