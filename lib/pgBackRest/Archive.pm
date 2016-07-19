@@ -460,17 +460,20 @@ sub getCheck
     );
 
     my $strArchiveId;
+                &log(INFO, "PASSED strDbVersion=". (defined($strDbVersion) ? $strDbVersion : 'not def').", ullDbSysId=". (defined($ullDbSysId) ? $ullDbSysId : 'not def')); #CSHANG
 
     # If the dbVersion/dbSysId are not passed, then we need to retrieve the database information
     if (!defined($strDbVersion) || !defined($ullDbSysId) )
     {
         # get DB info for comparison
-        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-            (new pgBackRest::Db())->info($oFile), optionGet(OPTION_DB_PATH));
+        ($strDbVersion, my $iControlVersion, my $iCatalogVersion, $ullDbSysId) =
+            (new pgBackRest::Db())->info($oFile, optionGet(OPTION_DB_PATH));
+        &log(INFO, "get DB Info strDbVersion='$strDbVersion', ullDbSysId='$ullDbSysId'"); #CSHANG
     }
 
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
     {
+                &log(INFO, "isRemote strDbVersion=". (defined($strDbVersion) ? $strDbVersion : 'not def').", ullDbSysId=". (defined($ullDbSysId) ? $ullDbSysId : 'not def')); #CSHANG
         # Build param hash
         my %oParamHash;
 
@@ -482,6 +485,7 @@ sub getCheck
     }
     else
     {
+                        &log(INFO, "ELSE strDbVersion=". (defined($strDbVersion) ? $strDbVersion : 'not def').", ullDbSysId=". (defined($ullDbSysId) ? $ullDbSysId : 'not def')); #CSHANG
         $strArchiveId =
             (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
     }
@@ -1117,7 +1121,7 @@ sub check
     my $strArchiveFile = undef;
 
     # Turn off console logging to control when to display the error
-    logLevelSet(undef, OFF);
+    #logLevelSet(undef, OFF); CSHANG
 
     # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
     do
@@ -1129,13 +1133,13 @@ sub check
             # Clear any previous errors if we've found the archive.info
             $iResult = 0;
         };
-#CSHANG Need to ignore the ERROR_FILE_MISSING ONLY!
+
         if ($@)
         {
             my $oMessage = $@;
 
-            # If this is a backrest error then capture the last code and message else confess
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+            # If this is a backrest error that the file is missing then capture the code and message else confess
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') && ($oMessage->code() == ERROR_FILE_MISSING))
             {
                 $iResult = $oMessage->code();
                 $strResultMessage = $oMessage->message();

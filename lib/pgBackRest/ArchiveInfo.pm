@@ -137,7 +137,7 @@ sub check
 
         if (!$self->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId))
         {
-            $strError = "WAL segment system-id ${ullDbSysId} does not match archive system-id " .
+            $strError += "WAL segment system-id ${ullDbSysId} does not match archive system-id " .
                         $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
         }
 
