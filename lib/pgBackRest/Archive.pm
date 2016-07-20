@@ -1207,7 +1207,7 @@ sub check
                 my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
                     $self->{oDb}->info($self->{oFile}, optionGet(OPTION_DB_PATH));
 
-                # Check the stanza backup info is compatible with the current version of the database
+                # Check that the stanza backup info is compatible with the current version of the database
                 # If not, an error will be thrown
                 my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
             }

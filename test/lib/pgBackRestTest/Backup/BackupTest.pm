@@ -1627,6 +1627,12 @@ sub backupTestRun
             # Stop the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterStop({bIgnoreLogError => true});
 
+            #CSHANG1: With a valid archive info, can we munge the backup.info file so we hit the check for ERROR_BACKUP_MISMATCH
+            # -- not sure if backup info file is created at this point, so it may have to be later.
+            #CSHANG2: Add test so check command throws ERROR_ARCHIVE_MISMATCH but 1) can't change db-path b/c that results in
+            # 'unable to open /var/lib/postgresql/9.5/demo/global/pg_control' and 2) can't just change db-version of archive.info
+            # because that results in "checksum is invalid"
+
             # Providing a sufficient archive-timeout, verify that the check command runs successfully.
             $strComment = 'verify success';
 
