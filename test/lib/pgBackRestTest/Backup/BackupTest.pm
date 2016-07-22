@@ -1592,7 +1592,7 @@ sub backupTestRun
             $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
             $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
 
-            # Test invalid archive command
+            # Test invalid check command
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
 
@@ -1641,7 +1641,7 @@ sub backupTestRun
 
             # Check archive mismatch due to upgrade error
             $strComment = 'fail on archive mismatch after upgrade';
-            
+
             # load the archive info file so it can be munged for testing
             my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
             executeTest("sudo chmod 660 ${strInfoFile}");
@@ -1667,10 +1667,7 @@ sub backupTestRun
             $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
             testIniSave($strInfoFile, \%oInfo, true);
 
-            #CSHANG: With a valid archive info, can we munge the backup.info file so we hit the check for ERROR_BACKUP_MISMATCH
-            # -- is a backup info created at this point? Probably not - trick is to have both so it may have to be later.
-
-            # Check archive_timeout error
+            # Check archive_timeout error when WAL segment is not found
             $strComment = 'fail on archive timeout';
 
             $oHostDbMaster->clusterRestart({bArchiveInvalid => true});
@@ -1684,6 +1681,48 @@ sub backupTestRun
 
             # Restart the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+            # With a valid archive info, create the backup.info file by running a backup then munge the backup.info file
+            # Check backup mismatch error
+            $strComment = 'fail on backup info mismatch';
+
+            # First run a successful backup to create the backup.info file
+            $oHostBackup->backup($strType, 'run a successful backup');
+
+            # Load the backup.info file
+            $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
+            executeTest("sudo chmod 660 $strInfoFile");
+            iniLoad($strInfoFile, \%oInfo);
+
+            # Break the database version and system id
+            $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
+            $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
+            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
+            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
+            testIniSave($strInfoFile, \%oInfo, true);
+
+            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+
+            # Restore the backup.info file
+            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
+            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
+            testIniSave($strInfoFile, \%oInfo, true);
+
+            # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
+            # archive.info and backup.info files
+            $strComment = 'verify success after backup';
+
+            $oHostDbMaster->check($strComment, {iTimeout => 5});
+
+            # If running the remote tests then also need to run check locally
+            if ($bRemote)
+            {
+                $oHostBackup->check($strComment, {iTimeout => 5});
+            }
+
+            # Clear cluster for next set of tests
+            $oHostDbMaster->clusterStop();
+            $oHostDbMaster->clusterStart();
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
