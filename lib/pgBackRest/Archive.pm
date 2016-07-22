@@ -1137,7 +1137,7 @@ sub check
         {
             my $oMessage = $@;
 
-            # If this is a backrest error then capture the code and message else confess
+            # If this is a backrest error then capture the last code and message else confess
             if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
             {
                 $iResult = $oMessage->code();
@@ -1158,7 +1158,7 @@ sub check
             $strArchiveFile = $self->walFileName($self->{oFile}, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
         };
 
-        # If this is a backrest error then capture the last code and message else confess
+        # If this is a backrest error then capture the code and message else confess
         if ($@)
         {
             my $oMessage = $@;

@@ -1627,12 +1627,6 @@ sub backupTestRun
             # Stop the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterStop({bIgnoreLogError => true});
 
-            #CSHANG1: With a valid archive info, can we munge the backup.info file so we hit the check for ERROR_BACKUP_MISMATCH
-            # -- not sure if backup info file is created at this point, so it may have to be later.
-            #CSHANG2: Add test so check command throws ERROR_ARCHIVE_MISMATCH but 1) can't change db-path b/c that results in
-            # 'unable to open /var/lib/postgresql/9.5/demo/global/pg_control' and 2) can't just change db-version of archive.info
-            # because that results in "checksum is invalid"
-
             # Providing a sufficient archive-timeout, verify that the check command runs successfully.
             $strComment = 'verify success';
 
@@ -1644,6 +1638,37 @@ sub backupTestRun
             {
                 $oHostBackup->check($strComment, {iTimeout => 5});
             }
+
+            # Check archive mismatch due to upgrade error
+            $strComment = 'fail on archive mismatch after upgrade';
+            
+            # load the archive info file so it can be munged for testing
+            my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
+            executeTest("sudo chmod 660 ${strInfoFile}");
+            my %oInfo;
+            iniLoad($strInfoFile, \%oInfo);
+            my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
+            my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
+
+            # Break the database version and system id
+            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
+            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = '5000900090001855000';
+            testIniSave($strInfoFile, \%oInfo, true);
+
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+            # If running the remote tests then also need to run check locally
+            if ($bRemote)
+            {
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+            }
+
+            # Restore the archive.info file
+            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = $strDbVersion;
+            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
+            testIniSave($strInfoFile, \%oInfo, true);
+
+            #CSHANG: With a valid archive info, can we munge the backup.info file so we hit the check for ERROR_BACKUP_MISMATCH
+            # -- is a backup info created at this point? Probably not - trick is to have both so it may have to be later.
 
             # Check archive_timeout error
             $strComment = 'fail on archive timeout';
