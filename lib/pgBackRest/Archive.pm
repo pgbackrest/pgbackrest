@@ -1087,7 +1087,7 @@ sub check
     my $strOperation = logDebugParam(__PACKAGE__ . '->check');
 
     # Initialize default file object
-    $self->{oFile} = new pgBackRest::File
+    my $oFile = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
@@ -1096,13 +1096,13 @@ sub check
     );
 
     # Initialize the database object
-    $self->{oDb} = new pgBackRest::Db();
+    my $oDb = new pgBackRest::Db();
 
     # Validate the database configuration
-    $self->{oDb}->configValidate($self->{oFile}, optionGet(OPTION_DB_PATH));
+    $oDb->configValidate($oFile, optionGet(OPTION_DB_PATH));
 
     # Force archiving
-    my $strWalSegment = $self->{oDb}->xlogSwitch();
+    my $strWalSegment = $oDb->xlogSwitch();
 
     # Get the timeout and error message to display - if it is 0 we are testing
     my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
@@ -1127,7 +1127,7 @@ sub check
         eval
         {
             # check that the archive info file is written and is valid for the current database of the stanza
-            $strArchiveId = $self->getCheck($self->{oFile});
+            $strArchiveId = $self->getCheck($oFile);
 
             # Clear any previous errors if we've found the archive.info
             $iResult = 0;
@@ -1155,7 +1155,7 @@ sub check
     {
         eval
         {
-            $strArchiveFile = $self->walFileName($self->{oFile}, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
+            $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
         };
 
         # If this is a backrest error then capture the code and message else confess
@@ -1188,7 +1188,7 @@ sub check
             # Load or build backup.info
             eval
             {
-                $oBackupInfo = new pgBackRest::BackupInfo($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
+                $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
             };
             if ($@)
             {
@@ -1205,7 +1205,7 @@ sub check
             {
                 # Get the current database info
                 my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-                    $self->{oDb}->info($self->{oFile}, optionGet(OPTION_DB_PATH));
+                    $oDb->info($oFile, optionGet(OPTION_DB_PATH));
 
                 # Check that the stanza backup info is compatible with the current version of the database
                 # If not, an error will be thrown
@@ -1216,7 +1216,7 @@ sub check
         # If the backup and archive checks were successful, then indicate success
         &log(INFO,
             "Backup info is up to date and WAL segment ${strWalSegment} successfully stored in the archive at '" .
-            $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+            $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
     }
     else
     {

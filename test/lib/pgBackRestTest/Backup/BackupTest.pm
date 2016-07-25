@@ -1682,42 +1682,40 @@ sub backupTestRun
             # Restart the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
 
-            # With a valid archive info, create the backup.info file by running a backup then munge the backup.info file
-            # Check backup mismatch error
-            $strComment = 'fail on backup info mismatch';
-
-            # First run a successful backup to create the backup.info file
-            $oHostBackup->backup($strType, 'run a successful backup');
-
-            # Load the backup.info file
-            $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
-            executeTest("sudo chmod 660 $strInfoFile");
-            iniLoad($strInfoFile, \%oInfo);
-
-            # Break the database version and system id
-            $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
-            $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
-            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
-            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
-            testIniSave($strInfoFile, \%oInfo, true);
-
-            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
-
-            # Restore the backup.info file
-            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
-            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
-            testIniSave($strInfoFile, \%oInfo, true);
-
-            # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
-            # archive.info and backup.info files
-            $strComment = 'verify success after backup';
-
-            $oHostDbMaster->check($strComment, {iTimeout => 5});
-
-            # If running the remote tests then also need to run check locally
-            if ($bRemote)
+            # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
+            # backup.info file.
+            if (!$bRemote)
             {
-                $oHostBackup->check($strComment, {iTimeout => 5});
+                # Check backup mismatch error
+                $strComment = 'fail on backup info mismatch';
+
+                # First run a successful backup to create the backup.info file
+                $oHostBackup->backup($strType, 'run a successful backup');
+
+                # Load the backup.info file
+                $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
+                executeTest("sudo chmod 660 $strInfoFile");
+                iniLoad($strInfoFile, \%oInfo);
+
+                # Break the database version and system id
+                $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
+                $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
+                $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
+                $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
+                testIniSave($strInfoFile, \%oInfo, true);
+
+                $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+
+                # Restore the backup.info file
+                $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
+                $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
+                testIniSave($strInfoFile, \%oInfo, true);
+
+                # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
+                # archive.info and backup.info files
+                $strComment = 'verify success after backup';
+
+                $oHostDbMaster->check($strComment, {iTimeout => 5});
             }
 
             # Clear cluster for next set of tests
