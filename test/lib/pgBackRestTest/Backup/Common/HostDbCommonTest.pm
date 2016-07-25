@@ -32,6 +32,7 @@ use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
 # Host constants
@@ -116,7 +117,7 @@ sub new
     }
 
     # Create a placeholder hash for info file munging
-    $self->{hInfoFile} = {};
+    $self->{hInfoFile} = ();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -614,48 +615,68 @@ sub restoreCompare
 sub mungeInfo
 {
     my $self = shift;
-    my $strFileName = shift;
-    my $oParam = shift;
 
-    # # Assign function parameters, defaults, and log debug info
-    # my
-    # (
-    #     $strOperation,
-    #     $strFileName,
-    #     $oParam
-    # ) =
-    #     logDebugParam
-    #     (
-    #         __PACKAGE__ . '->mungeInfo', \@_,
-    #         {name => 'strFileName'},
-    #         {name => 'oParam'}
-    #     );
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileName,
+        $oParam
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->mungeInfo', \@_,
+            {name => 'strFileName'},
+            {name => 'oParam'}
+        );
 
-    $self->{hInfoFile}{strFileName} = $strFileName;
-    $self->{hInfoFile}{oContent} = {};
-
-    executeTest("sudo chmod 660 ${strFileName}");
-    my %oInfo;
-    iniLoad($strFileName, \%oInfo);
-
-    # Load params
-    foreach my $strSection (sort(keys(%{$oParam})))
+    my $oContent = {};
+    foreach my $oFileContent ( @{$self->{hInfoFile}} )
     {
-        foreach my $strKey (keys(%{$$oParam{$strSection}}))
+        if ($oFileContent->{strFileName} eq $strFileName)
         {
-            # Save the original values
-            $self->{hInfoFile}{oContent}{$strSection}{$strKey} = $oInfo{$strSection}{$strKey};
-
-            # munge the file with the new values
-            $oInfo{$strSection}{$strKey} = $$oParam{$strSection}{$strKey};
+            $oContent = $oFileContent;
+                &log(INFO, "HERE");
+            last;
         }
     }
-use Data::Dumper; confess Dumper($self->{hInfoFile});
-    # Save the munged data to the file
-    testIniSave($strFileName, \%oInfo, true);
+
+    # If the content does not exist, then munge the file
+    if (!defined(${$oContent->{strFileName}}))
+    {
+        # Store the file name
+        $oContent->{strFileName} = $strFileName;
+
+        # Change file permissions and load the file contents
+        executeTest("sudo chmod 660 ${strFileName}");
+        my %oInfo;
+        iniLoad($strFileName, \%oInfo);
+
+        # Load params
+        foreach my $strSection (sort(keys(%{$oParam})))
+        {
+            foreach my $strKey (keys(%{$$oParam{$strSection}}))
+            {
+                # Save the original values
+                $oContent->{$strSection}{$strKey} = $oInfo{$strSection}{$strKey};
+
+                # munge the file with the new values
+                $oInfo{$strSection}{$strKey} = $$oParam{$strSection}{$strKey};
+            }
+        }
+
+        # Cache the original values
+        push @{$self->{hInfoFile}}, $oContent;
+        # Save the munged data to the file
+        testIniSave($strFileName, \%oInfo, true);
+    }
+    else
+    {
+        confess &log(ASSERT, "Cached data already exists for $strFileName. Call restoreInfo before proceeding");
+    }
 
     # Return from function and log return values if any
-    # return logDebugReturn($strOperation);
+    return logDebugReturn($strOperation);
 }
 
 sub restoreInfo
