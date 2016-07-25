@@ -115,6 +115,9 @@ sub new
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->repoPath());
     }
 
+    # Create a placeholder hash for info file munging
+    $self->{hInfoFile} = {};
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -599,6 +602,85 @@ sub restoreCompare
 
     fileRemove("${strTestPath}/expected.manifest");
     fileRemove("${strTestPath}/actual.manifest");
+}
+
+####################################################################################################################################
+# mungeInfo
+#
+# With the file name specified (e.g. archive.info) save the current values within the file into the global variable and replace them
+# in the file with the values passed ito the function. Later, using restoreInfo, the global variables will be used to restore the
+# file to its original state.
+####################################################################################################################################
+sub mungeInfo
+{
+    my $self = shift;
+    my $strFileName = shift;
+    my $oParam = shift;
+
+    # # Assign function parameters, defaults, and log debug info
+    # my
+    # (
+    #     $strOperation,
+    #     $strFileName,
+    #     $oParam
+    # ) =
+    #     logDebugParam
+    #     (
+    #         __PACKAGE__ . '->mungeInfo', \@_,
+    #         {name => 'strFileName'},
+    #         {name => 'oParam'}
+    #     );
+
+    $self->{hInfoFile}{strFileName} = $strFileName;
+    $self->{hInfoFile}{oContent} = {};
+
+    executeTest("sudo chmod 660 ${strFileName}");
+    my %oInfo;
+    iniLoad($strFileName, \%oInfo);
+
+    # Load params
+    foreach my $strSection (sort(keys(%{$oParam})))
+    {
+        foreach my $strKey (keys(%{$$oParam{$strSection}}))
+        {
+            # Save the original values
+            $self->{hInfoFile}{oContent}{$strSection}{$strKey} = $oInfo{$strSection}{$strKey};
+
+            # munge the file with the new values
+            $oInfo{$strSection}{$strKey} = $$oParam{$strSection}{$strKey};
+        }
+    }
+use Data::Dumper; confess Dumper($self->{hInfoFile});
+    # Save the munged data to the file
+    testIniSave($strFileName, \%oInfo, true);
+
+    # Return from function and log return values if any
+    # return logDebugReturn($strOperation);
+}
+
+sub restoreInfo
+{
+    my $self = shift;
+
+    #     foreach my $strSection1 (sort(keys(%{$self->{hInfoFile}{oContent}})))
+    #     {
+    #         &log(INFO, "TEST1 $strSection1");
+    #         foreach my $strKey1 (keys(%{$self->{hInfoFile}{oContent}{$strSection1}}))
+    #         {
+    #             # Save the original values
+    #             # $$self->{hInfoFile}{strFileName}{$strSection}{$strKey} = $oInfo{$strSection}{$strKey};
+    #             # use Data::Dumper; confess Dumper(${$self}{hInfoFile}{strFileName} );
+    #             # $self->{hInfoFile}{oContent}{$strSection}{$strKey} = $oInfo{$strSection}{$strKey};
+    # #&log(INFO, "TEST1 ".$strKey1."=". $self->{hInfoFile}{oContent}{$strSection1}{$strKey1});
+    #              &log(INFO, "TEST1 ".$strKey1."=". $oInfo{$strSection1}{$strKey1});
+    #             # &log(INFO, "TEST2 $self->{hInfoFile}{strFileName}: ${strSection}, ${strKey}, $$oParam{$strSection}{$strKey}");
+    #                         # # Break the database version and system id
+    #                         # $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
+    #
+    #             #$self->{strInfoFile}{$strSection}{$strKey} = $$oParam{$strParam}; , $oParam{$strSection}{$strKey}
+    #         }
+    #     }
+    return;
 }
 
 ####################################################################################################################################
