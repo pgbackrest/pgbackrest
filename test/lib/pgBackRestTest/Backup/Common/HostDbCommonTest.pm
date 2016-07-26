@@ -32,7 +32,6 @@ use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
 # Host constants
@@ -63,12 +62,6 @@ use constant HOST_PATH_DB                                           => 'db';
     push @EXPORT, qw(HOST_PATH_DB);
 use constant HOST_PATH_DB_BASE                                      => 'base';
     push @EXPORT, qw(HOST_PATH_DB_BASE);
-
-####################################################################################################################################
-# Cached data sections
-####################################################################################################################################
-use constant SECTION_FILE_NAME                                        => 'strFileName';
-    push @EXPORT, qw(SECTION_FILE_NAME);
 
 ####################################################################################################################################
 # new
@@ -121,9 +114,6 @@ sub new
     {
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->repoPath());
     }
-#CSHANG I am using an array for the hash in case we need to update more than one file for any test, but this may be overkill...
-    # Create a placeholder array hash for info file munging
-    $self->{hyInfoFile} = ();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -609,165 +599,6 @@ sub restoreCompare
 
     fileRemove("${strTestPath}/expected.manifest");
     fileRemove("${strTestPath}/actual.manifest");
-}
-
-####################################################################################################################################
-# mungeInfo
-#
-# With the file name specified (e.g. archive.info) save the current values within the file into the global variable and replace them
-# in the file with the values passed ito the function. Later, using restoreInfo, the global variables will be used to restore the
-# file to its original state.
-####################################################################################################################################
-sub mungeInfo
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileName,
-        $oParam
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->mungeInfo', \@_,
-            {name => 'strFileName'},
-            {name => 'oParam'}
-        );
-
-    my $hContent = {};
-    foreach my $hFileContent ( @{$self->{hyInfoFile}} )
-    {
-        if ($hFileContent->{&SECTION_FILE_NAME} eq $strFileName)
-        {
-            $hContent = $hFileContent;
-            last;
-        }
-    }
-#CSHANG Not sure I like this - I know we need to be sure to clean up, but it would also be nice to be able to manipulate different data without having to reload the file each time, i.e. just overwrite the cached values but then I worry that if we forget to clean up with restoreInfo we could be left in a bad state
-    # If the content does not exist, then munge the file
-    if (!defined($hContent->{&SECTION_FILE_NAME}))
-    {
-        # Store the file name
-        $hContent->{&SECTION_FILE_NAME} = $strFileName;
-
-        # Change file permissions and load the file contents
-        executeTest("sudo chmod 660 ${strFileName}");
-        my %hInfo;
-        iniLoad($strFileName, \%hInfo);
-
-        # Load params
-        foreach my $strSection (sort(keys(%{$oParam})))
-        {
-            foreach my $strKey (keys(%{$oParam->{$strSection}}))
-            {
-                # Save the original values
-                $hContent->{$strSection}{$strKey} = $hInfo{$strSection}{$strKey};
-
-                # Munge the file with the new values
-                $hInfo{$strSection}{$strKey} = $oParam->{$strSection}{$strKey};
-            }
-        }
-
-        # Cache the original values
-        push @{$self->{hyInfoFile}}, $hContent;
-
-        # Save the munged data to the file
-        testIniSave($strFileName, \%hInfo, true);
-    }
-    else
-    {
-        confess &log(ASSERT, "Cached data already exists for $strFileName. Call restoreInfo before proceeding");
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# restoreInfo
-#
-# With the file name specified (e.g. archive.info) uses the cached variable global to restore the file to its original state after
-# modifying the values with mungeInfo.
-####################################################################################################################################
-sub restoreInfo
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileName
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->restoreInfo', \@_,
-            {name => 'strFileName'}
-        );
-
-
-    # Load the current file contents
-    my %hInfo;
-    iniLoad($strFileName, \%hInfo);
-
-    # Find the original values in the cache
-    my $hContent = {};
-    foreach my $hFileContent ( @{$self->{hyInfoFile}} )
-    {
-        if ($hFileContent->{&SECTION_FILE_NAME} eq $strFileName)
-        {
-            $hContent = $hFileContent;
-            last;
-        }
-    }
-
-    # If the content exists, then restore the file
-    if (defined($hContent->{&SECTION_FILE_NAME}))
-    {
-        # Load params
-        foreach my $strSection (sort(keys(%{$hContent})))
-        {
-            if ($strSection ne SECTION_FILE_NAME)
-            {
-                # If the section to restore exists in the file then check the values
-                if (exists($hInfo{$strSection}))
-                {
-                    # For each value stored in the cache, restore it to the file
-                    foreach my $strKey (keys(%{$$hContent{$strSection}}))
-                    {
-                        if (exists($hInfo{$strSection}{$strKey}))
-                        {
-                            # Restore the original values
-                            $hInfo{$strSection}{$strKey} = $hContent->{$strSection}{$strKey};
-                        }
-                        else
-                        {
-                            confess &log(ASSERT, "The cached key does not already exists for $strFileName.");
-                        }
-                    }
-                }
-                else
-                {
-                    confess &log(ASSERT, "The cached section does not already exists for $strFileName.");
-                }
-            }
-        }
-        testIniSave($strFileName, \%hInfo, true);
-
-        # Get the index for the cached data to remove
-        my ($index) = grep { $self->{hyInfoFile}[$_]->{strFileName} eq $strFileName } (0 ..  @{$self->{hyInfoFile}}-1);
-
-        # Remove the element from the array
-        splice(@{$self->{hyInfoFile}}, $index, 1);
-    }
-    else
-    {
-        confess &log(ASSERT, "There is no original data cached for $strFileName. You must call mungeInfo first.");
-    }
-
-    return;
 }
 
 ####################################################################################################################################
