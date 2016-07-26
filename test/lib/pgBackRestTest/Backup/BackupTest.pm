@@ -1080,8 +1080,11 @@ sub backupTestRun
             $strType = BACKUP_TYPE_INCR;
             $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
 #CSHANG - can I use $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)? Or is that different than $oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO
-#CSHANG Also not sure if I should be using $oHostBackup or $oHostDbMaster for the mungeInfo/restoreInfo
-            $oHostBackup->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+#CSHANG Also not sure if I should be using $oHostBackup or $oHostDbMaster for the mungeInfo/restoreInfo - here the oHostBackup did not work so had to use oHostDbMaster - but why?
+            # $oHostBackup->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            #                 {&INFO_BACKUP_SECTION_DB =>
+            #                     {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
+            $oHostDbMaster->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
@@ -1091,10 +1094,10 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostBackup->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostDbMaster->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
 
             # Break the database system id
-            $oHostBackup->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            $oHostDbMaster->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
 
@@ -1104,10 +1107,10 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostBackup->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostDbMaster->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
 
             # Break the control version
-            $oHostBackup->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            $oHostDbMaster->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_CONTROL => 842}});
 
@@ -1117,10 +1120,10 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostBackup->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostDbMaster->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
 
             # Break the catalog version
-            $oHostBackup->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            $oHostDbMaster->mungeInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_CATALOG => 197208141}});
 
@@ -1130,7 +1133,7 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostBackup->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostDbMaster->restoreInfo(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
 
             # Test broken tablespace configuration
             #-----------------------------------------------------------------------------------------------------------------------

@@ -122,8 +122,7 @@ sub check
         (
             OP_ARCHIVE_INFO_CHECK, \@_,
             {name => 'strDbVersion'},
-            {name => 'ullDbSysId'},
-            {name => 'bCreateFile', default => true}
+            {name => 'ullDbSysId'}
         );
 
     my $bSave = false;
