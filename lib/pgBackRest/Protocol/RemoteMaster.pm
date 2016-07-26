@@ -54,7 +54,7 @@ sub new
         );
 
     # Create SSH command
-    $strCommand = "ssh -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
+    $strCommand = "ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
     my $self = $class->SUPER::new('remote', $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);

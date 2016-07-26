@@ -176,7 +176,6 @@ sub sshSetup
         "COPY id_rsa.pub  /home/${strUser}/.ssh/authorized_keys\n" .
         "RUN echo 'Host *' > /home/${strUser}/.ssh/config\n" .
         "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    LogLevel quiet' >> /home/${strUser}/.ssh/config\n" .
         "RUN echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config\n" .
         "RUN echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config\n" .
         "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config\n" .
@@ -372,6 +371,15 @@ sub containerBuild
             "\n\n# Regenerate SSH keys\n" .
             "RUN rm -f /etc/ssh/ssh_host_rsa_key*\n" .
             "RUN ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
+
+        $strScript .=
+            "\n\n# Add banner to make sure protocol ignores it\n" .
+            "RUN echo '***********************************************' >  /etc/issue.net\n" .
+            "RUN echo 'Sample banner to make sure banners are skipped.' >> /etc/issue.net\n" .
+            "RUN echo ''                                                >> /etc/issue.net\n" .
+            "RUN echo 'More banner after a blank line.'                 >> /etc/issue.net\n" .
+            "RUN echo '***********************************************' >> /etc/issue.net\n" .
+            "RUN echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
         # Create PostgreSQL Group
         $strScript .= "\n\n" . postgresGroupCreate($strOS);

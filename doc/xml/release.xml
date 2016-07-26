@@ -131,6 +131,10 @@
                     <release-item>
                         <p>Reduce calls to <code>protocolGet()</code> in backup/restore.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Suppress banners on SSH protocol connections.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
