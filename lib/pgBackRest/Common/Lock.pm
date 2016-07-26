@@ -119,7 +119,7 @@ sub lockAcquire
 
             if (!defined($bFailOnNoLock) || $bFailOnNoLock)
             {
-                confess &log(ERROR, "unable to acquire ${strLockType} lock", ERROR_LOCK_ACQUIRE);
+                confess &log(ERROR, "unable to acquire ${strLockType} lock on file ${strCurrentLockFile}", ERROR_LOCK_ACQUIRE);
             }
         }
         else

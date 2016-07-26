@@ -123,6 +123,10 @@
                     <release-item>
                         <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Output lock file name when a lock cannot be acquired to aid in debugging.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
