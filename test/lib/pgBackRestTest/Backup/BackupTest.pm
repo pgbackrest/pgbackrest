@@ -1644,22 +1644,10 @@ sub backupTestRun
 
             # Check archive mismatch due to upgrade error
             $strComment = 'fail on archive mismatch after upgrade';
-#CSHANG munge info begin
-#CSHANG Test
-$oHostDbMaster->mungeInfo(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)), {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0', &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => '9999'}});
-exit;
-            # load the archive info file so it can be munged for testing
-            my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
-            executeTest("sudo chmod 660 ${strInfoFile}");
-            my %oInfo;
-            iniLoad($strInfoFile, \%oInfo);
-            my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
-            my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
 
-            # Break the database version and system id
-            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
-            testIniSave($strInfoFile, \%oInfo, true);
-#CSHANG munge info End
+            # load the archive info file and munge it for testing by breaking the database version
+            $oHostDbMaster->mungeInfo(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
+                                        {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
             $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
             # If running the remote tests then also need to run check locally
             if ($bRemote)
@@ -1667,9 +1655,11 @@ exit;
                 $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
             }
 #CSHANG restore info begin
-            # Restore the archive.info file
-            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostDbMaster->restoreInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+exit;
+            # # Restore the archive.info file
+            # $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
+            # testIniSave($strInfoFile, \%oInfo, true);
 #CSHANG restore info end
             # Check archive_timeout error when WAL segment is not found
             $strComment = 'fail on archive timeout';
@@ -1688,39 +1678,39 @@ exit;
 
             # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
             # backup.info file.
-            if (!$bRemote)
-            {
-                # Check backup mismatch error
-                $strComment = 'fail on backup info mismatch';
-
-                # First run a successful backup to create the backup.info file
-                $oHostBackup->backup($strType, 'run a successful backup');
-#CSHANG munge info begin INFO_BACKUP_KEY_DB_VERSION
-                # Load the backup.info file
-                $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
-                executeTest("sudo chmod 660 $strInfoFile");
-                iniLoad($strInfoFile, \%oInfo);
-
-                # Break the database version and system id
-                $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
-                $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
-                $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
-                $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
-                testIniSave($strInfoFile, \%oInfo, true);
-#CSHANG munge info end
-                $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
-#CSHANG restore info begin
-                # Restore the backup.info file
-                $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
-                $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
-                testIniSave($strInfoFile, \%oInfo, true);
-#CSHANG restore info end
-                # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
-                # archive.info and backup.info files
-                $strComment = 'verify success after backup';
-
-                $oHostDbMaster->check($strComment, {iTimeout => 5});
-            }
+#             if (!$bRemote)
+#             {
+#                 # Check backup mismatch error
+#                 $strComment = 'fail on backup info mismatch';
+#
+#                 # First run a successful backup to create the backup.info file
+#                 $oHostBackup->backup($strType, 'run a successful backup');
+# #CSHANG munge info begin INFO_BACKUP_KEY_DB_VERSION
+#                 # Load the backup.info file
+#                 $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
+#                 executeTest("sudo chmod 660 $strInfoFile");
+#                 iniLoad($strInfoFile, \%oInfo);
+#
+#                 # Break the database version and system id
+#                 $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
+#                 $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
+#                 $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
+#                 $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
+#                 testIniSave($strInfoFile, \%oInfo, true);
+# #CSHANG munge info end
+#                 $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+# #CSHANG restore info begin
+#                 # Restore the backup.info file
+#                 $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
+#                 $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
+#                 testIniSave($strInfoFile, \%oInfo, true);
+# #CSHANG restore info end
+#                 # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
+#                 # archive.info and backup.info files
+#                 $strComment = 'verify success after backup';
+#
+#                 $oHostDbMaster->check($strComment, {iTimeout => 5});
+#             }
 
             # Clear cluster for next set of tests
             $oHostDbMaster->clusterStop();
