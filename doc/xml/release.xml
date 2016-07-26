@@ -118,6 +118,12 @@
                         <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was thrown when it was missing rather than a polite error message.</p>
                     </release-item>
                 </release-bug-list>
+
+                 <release-refactor-list>
+                    <release-item>
+                        <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
              <release-doc-list>
