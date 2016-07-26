@@ -153,6 +153,10 @@
                     <release-item>
                         <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added clarification on why the default for the <br-option>backrest-user</br-option> option is <id>backrest</id>.</p>
+                    </release-item>
                 </release-feature-list>
 
                  <release-refactor-list>

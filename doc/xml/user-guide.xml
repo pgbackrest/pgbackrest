@@ -1233,12 +1233,13 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
                 <backrest-config-option section="demo" key="db-host">{[host-db-master]}</backrest-config-option>
+                <backrest-config-option section="demo" key="db-user">postgres</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <!-- <backrest-config-option section="global:log" key="log-level-console">info</backrest-config-option> -->
             </backrest-config>
 
-            <p>The database host must be configured with the backup host/user.</p>
+            <p>The database host must be configured with the backup host/user.  The default for the <br-option>backup-user</br-option> option is <id>backrest</id>.  If the <id>postgres</id> user does restores on the backup host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>backrest</id> user.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}" reset="y">
                 <title>Configure <br-option>backup-host</br-option>/<br-option>backup-user</br-option></title>
@@ -1252,6 +1253,7 @@
                 <backrest-config-option section="global" key="log-level-console">warn</backrest-config-option> -->
 
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
+                <backrest-config-option section="global" key="backup-user">backrest</backrest-config-option>
             </backrest-config>
 
             <p>The repository directory will also be removed from the database host.  It will not be used anymore so leaving it around may be confusing later on.</p>
