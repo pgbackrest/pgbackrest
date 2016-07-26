@@ -121,7 +121,7 @@ sub new
     {
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->repoPath());
     }
-
+#CSHANG I am using an array for the hash in case we need to update more than one file for any test, but this may be overkill...
     # Create a placeholder array hash for info file munging
     $self->{hyInfoFile} = ();
 
@@ -645,7 +645,7 @@ sub mungeInfo
             last;
         }
     }
-
+#CSHANG Not sure I like this - I know we need to be sure to clean up, but it would also be nice to be able to manipulate different data without having to reload the file each time, i.e. just overwrite the cached values but then I worry that if we forget to clean up with restoreInfo we could be left in a bad state
     # If the content does not exist, then munge the file
     if (!defined($hContent->{&SECTION_FILE_NAME}))
     {
