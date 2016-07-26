@@ -20,11 +20,12 @@
 
         <!-- Release date - static allows for reproducible builds -->
         <variable key="release-date-static">n</variable>
-        <variable key="release-epoch" eval="y">
+        <variable key="release-date" eval="y">
             use Time::Local;
             use BackRestDoc::Custom::DocCustomRelease;
 
             my ($second, $minute , $hour, $mday, $month, $year) = localtime();
+            $year += 1900;
 
             if ('{[release-date-static]}' eq 'y')
             {
@@ -42,7 +43,10 @@
                 }
             }
 
-            timelocal(0, 0, 0, $mday, $month, $year);
+            my @stryMonth = ('January', 'February', 'March', 'April', 'May', 'June',
+                             'July', 'August', 'September', 'October', 'November', 'December');
+
+            $stryMonth[$month] . ' ' . $mday . ', ' . $year;
         </variable>
 
         <!-- Logo locations -->
@@ -50,12 +54,9 @@
 
         <!-- HTML variables  -->
         <variable key="html-footer" eval='y'>
-            use POSIX qw(strftime);
-
-            'Copyright &amp;copy; 2015' . '-' . strftime('%Y', localtime({[release-epoch]})) .
+            'Copyright &amp;copy; 2015' . '-' . substr('{[release-date]}', length('{[release-date]}') - 4) .
             ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>.  Updated ' .
-            strftime('%B ', localtime({[release-epoch]})) . trim(strftime('%e,', localtime({[release-epoch]}))) .
-            strftime(' %Y.', localtime({[release-epoch]}))
+            '{[release-date]}';
         </variable>
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
 
