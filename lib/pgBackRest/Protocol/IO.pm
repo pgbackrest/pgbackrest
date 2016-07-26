@@ -54,6 +54,7 @@ sub new
         $self->{hOut},                              # Output stream
         $self->{hErr},                              # Error stream
         $self->{pId},                               # Process ID
+        $self->{strId},                             # Id for messages
         $self->{iProtocolTimeout},                  # Protocol timeout
         $self->{iBufferMax}                         # Maximum buffer size
     ) =
@@ -64,6 +65,7 @@ sub new
             {name => 'hOut', required => false, trace => true},
             {name => 'hErr', required => false, trace => true},
             {name => 'pId', required => false, trace => true},
+            {name => 'strId', required => false, trace => true},
             {name => 'iProtocolTimeout', trace => true},
             {name => 'iBufferMax', trace => true}
         );
@@ -95,6 +97,7 @@ sub new3
     my
     (
         $strOperation,
+        $strId,
         $strCommand,
         $iProtocolTimeout,                           # Protocol timeout
         $iBufferMax                                  # Maximum buffer Size
@@ -102,6 +105,7 @@ sub new3
         logDebugParam
         (
             OP_IO_PROTOCOL_NEW3, \@_,
+            {name => 'strId', trace => true},
             {name => 'strCommand', trace => true},
             {name => 'iProtocolTimeout', trace => true},
             {name => 'iBufferMax', trace => true}
@@ -117,7 +121,7 @@ sub new3
     return logDebugReturn
     (
         $strOperation,
-        {name => 'self', value => $class->new($hOut, $hIn, $hErr, $pId, $iProtocolTimeout, $iBufferMax)}
+        {name => 'self', value => $class->new($hOut, $hIn, $hErr, $pId, $strId, $iProtocolTimeout, $iBufferMax)}
     );
 }
 
@@ -569,11 +573,11 @@ sub waitPid
                     $self->{hErr} = undef;
 
                     # Finally, confess the error
-                    confess &log(ERROR, 'remote process terminated' .
-                                 ($iExitStatus < ERROR_MINIMUM && $iExitStatus > ERROR_MAXIMUM ?
-                                    " (exit status ${iExitStatus}" : '') .
-                                 ": ${strError}",
-                                 $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_HOST_CONNECT);
+                    confess &log(
+                        ERROR, 'remote process terminated on ' . $self->{strId} . ' host' .
+                        ($iExitStatus < ERROR_MINIMUM || $iExitStatus > ERROR_MAXIMUM ? " (exit status ${iExitStatus})" : '') .
+                        ": ${strError}",
+                        $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_HOST_CONNECT);
                 }
 
                 return true;

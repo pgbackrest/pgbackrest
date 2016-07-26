@@ -57,7 +57,8 @@ sub new
     $strCommand = "ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
-    my $self = $class->SUPER::new('remote', $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
+    my $self = $class->SUPER::new(
+        'remote', $strHost, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
 
     # Return from function and log return values if any

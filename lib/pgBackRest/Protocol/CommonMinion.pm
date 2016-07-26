@@ -63,7 +63,7 @@ sub new
     $self->{strCommand} = $strCommand;
 
     # Create the IO object with std io
-    $self->{io} = new pgBackRest::Protocol::IO(*STDIN, *STDOUT, *STDERR, undef, $iProtocolTimeout, $iBufferMax);
+    $self->{io} = new pgBackRest::Protocol::IO(*STDIN, *STDOUT, *STDERR, undef, undef, $iProtocolTimeout, $iBufferMax);
 
     # Write the greeting so master process knows who we are
     $self->greetingWrite();

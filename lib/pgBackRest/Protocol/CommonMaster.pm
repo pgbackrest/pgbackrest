@@ -41,6 +41,7 @@ sub new
     (
         $strOperation,
         $strName,                                   # Name of the protocol
+        $strId,                                     # Id of this process for error messages
         $strCommand,                                # Command to execute on local/remote
         $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
@@ -51,6 +52,7 @@ sub new
         (
             OP_PROTOCOL_COMMON_MASTER_NEW, \@_,
             {name => 'strName'},
+            {name => 'strId'},
             {name => 'strCommand'},
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
@@ -69,7 +71,7 @@ sub new
     }
 
     # Execute the command
-    $self->{io} = pgBackRest::Protocol::IO->new3($strCommand, $iProtocolTimeout, $iBufferMax);
+    $self->{io} = pgBackRest::Protocol::IO->new3($strId, $strCommand, $iProtocolTimeout, $iBufferMax);
 
     # Check greeting to be sure the protocol matches
     $self->greetingRead();
@@ -77,6 +79,9 @@ sub new
     # Setup the keepalive timer
     $self->{fKeepAliveTimeout} = $iProtocolTimeout / 2 > 120 ? 120 : $iProtocolTimeout / 2;
     $self->{fKeepAliveTime} = gettimeofday();
+
+    # Set the id to be used for messages (especially error messages)
+    $self->{strId} = $strId;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -343,11 +348,10 @@ sub cmdExecute
     my $strCommand = shift;
     my $oParamRef = shift;
     my $bOutputRequired = shift;
-    my $strErrorPrefix = shift;
 
     $self->cmdWrite($strCommand, $oParamRef);
 
-    return $self->outputRead($bOutputRequired, $strErrorPrefix);
+    return $self->outputRead($bOutputRequired, 'raised on ' . $self->{strId} . ' host');
 }
 
 ####################################################################################################################################
