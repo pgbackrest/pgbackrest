@@ -127,6 +127,10 @@
                     <release-item>
                         <p>Output lock file name when a lock cannot be acquired to aid in debugging.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Reduce calls to <code>protocolGet()</code> in backup/restore.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

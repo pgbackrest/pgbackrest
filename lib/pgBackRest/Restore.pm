@@ -53,13 +53,16 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(OP_RESTORE_NEW);
 
+    # Initialize protocol
+    $self->{oProtocol} = protocolGet();
+
     # Initialize default file object
     $self->{oFile} = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
         optionRemoteType(),
-        protocolGet()
+        $self->{oProtocol}
     );
 
     # Initialize variables
@@ -1330,7 +1333,7 @@ sub process
         while (!threadGroupComplete())
         {
             # Keep the protocol layer from timing out
-            protocolGet()->keepAlive();
+            $self->{oProtocol}->keepAlive();
         };
     }
     else
@@ -1350,7 +1353,7 @@ sub process
                                             $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
 
                 # Keep the protocol layer from timing out while checksumming
-                protocolGet()->keepAlive();
+                $self->{oProtocol}->keepAlive();
             }
         }
     }

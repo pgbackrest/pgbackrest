@@ -58,13 +58,16 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(OP_BACKUP_NEW);
 
+    # Initialize protocol
+    $self->{oProtocol} = protocolGet();
+
     # Initialize default file object
     $self->{oFile} = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
         optionRemoteType(),
-        protocolGet()
+        $self->{oProtocol}
     );
 
     # Initialize variables
@@ -451,7 +454,7 @@ sub processManifest
 
                     # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
                     # then the remote might timeout while waiting for a command.
-                    protocolGet()->keepAlive();
+                    $self->{oProtocol}->keepAlive();
                 }
             }
         }
@@ -472,13 +475,13 @@ sub processManifest
                 $oParam{result_queue} = $oResultQueue;
 
                 # Keep the protocol layer from timing out
-                protocolGet()->keepAlive();
+                $self->{oProtocol}->keepAlive();
 
                 threadGroupRun($iThreadIdx, 'backup', \%oParam);
             }
 
             # Keep the protocol layer from timing out
-            protocolGet()->keepAlive();
+            $self->{oProtocol}->keepAlive();
 
             # Start backup test point
             &log(TEST, TEST_BACKUP_START);
@@ -503,14 +506,14 @@ sub processManifest
 
                     # A keep-alive is required inside the loop because a flood of thread messages could prevent the keep-alive
                     # outside the loop from running in a timely fashion.
-                    protocolGet()->keepAlive();
+                    $self->{oProtocol}->keepAlive();
                     $bKeepAlive = true;
                 }
 
                 # This keep-alive only runs if the keep-alive in the loop did not run
                 if (!$bKeepAlive)
                 {
-                    protocolGet()->keepAlive();
+                    $self->{oProtocol}->keepAlive();
                 }
             }
             while (!$bDone);
