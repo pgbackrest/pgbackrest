@@ -119,6 +119,12 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta3.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+                </release-feature-list>
+
                  <release-refactor-list>
                     <release-item>
                         <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
