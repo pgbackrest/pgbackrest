@@ -79,13 +79,16 @@ sub threadGroupThread
 
         &log(TRACE, "$$oCommand{function} thread started");
 
+        # Get the protocol object
+        my $oProtocol = protocolGet(undef, false, $iThreadIdx + 1);
+
         # Create a file object
         my $oFile = new pgBackRest::File
         (
             optionGet(OPTION_STANZA),
             optionGet(OPTION_REPO_PATH),
             optionRemoteType(),
-            protocolGet(undef, false, $iThreadIdx + 1),
+            $oProtocol,
             undef, undef,
             $iThreadIdx + 1
         );
@@ -134,10 +137,10 @@ sub threadGroupThread
                 {
                     confess &log(ERROR, "unknown command");
                 }
-            }
 
-            # Keep the protocol layer from timing out while checksumming
-            protocolGet()->keepAlive();
+                # Keep the protocol layer from timing out while checksumming
+                $oProtocol->keepAlive();
+            }
 
             # Even numbered threads move up when they have finished a queue, odd numbered threads move down
             $iQueueIdx += $iDirection;

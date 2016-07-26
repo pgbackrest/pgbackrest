@@ -107,6 +107,14 @@
                             <release-item-ideator id="vitale.michael"/>
                         </release-item-contributor-list>
 
+                        <p>Fixed an issue an where an extraneous remote was created causing threaded backup/restore to possibly timeout and/or throw a lock conflict.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
                         <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was thrown when it was missing rather than a polite error message.</p>
                     </release-item>
                 </release-bug-list>
