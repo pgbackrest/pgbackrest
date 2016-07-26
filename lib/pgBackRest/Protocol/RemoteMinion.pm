@@ -252,7 +252,7 @@ sub process
             }
             elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
             {
-                $self->outputWrite($oArchive->getCheck($oFile, 
+                $self->outputWrite($oArchive->getCheck($oFile,
                                                        paramGet(\%oParamHash, 'db-version'),
                                                        paramGet(\%oParamHash, 'db-sys-id')));
             }
