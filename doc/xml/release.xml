@@ -155,7 +155,19 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
                         <p>Added clarification on why the default for the <br-option>backrest-user</br-option> option is <id>backrest</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Updated information about package availability on supported platforms.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -163,7 +175,6 @@
                     <release-item>
                         <p>HTML footer dates are statically created in English in order to be reproducible.</p>
                     </release-item>
-
                  </release-refactor-list>
             </release-doc-list>
 

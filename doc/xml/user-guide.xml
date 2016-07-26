@@ -183,9 +183,9 @@
             </execute>
         </execute-list>
 
-        <p keyword="default">No {[user-guide-os]} packages are currently available for <backrest/> but it is easy to download the source and install manually.</p>
+        <p keyword="default">{[user-guide-os]} packages for <backrest/> are available, but if they are not provided on your distribution/version it is easy to download the source and install manually.</p>
 
-        <p keyword="co6">No {[user-guide-os]} packages are currently available for <backrest/> but it is easy to download the source and install manually.</p>
+        <p keyword="co6">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
 
         <execute-list host="{[host-db-master]}">
             <title>Download version <id>{[version]}</id> of <backrest/></title>
