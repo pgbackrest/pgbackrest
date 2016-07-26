@@ -226,7 +226,7 @@ sub backupTestRun
                         if ($iArchive == $iBackup)
                         {
                             # load the archive info file and munge it for testing by breaking the database version
-                            $oHostDbMaster->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
+                            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
                                                     {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
                             &log(INFO, '        test db version mismatch error');
@@ -236,10 +236,10 @@ sub backupTestRun
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
                             # Restore the file to its original condition
-                            $oHostDbMaster->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+                            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
                             # load the archive info file and munge it for testing by breaking the system id
-                            $oHostDbMaster->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
+                            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
                                                        {&INFO_ARCHIVE_SECTION_DB =>
                                                         {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
 
@@ -250,7 +250,7 @@ sub backupTestRun
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
                             # Restore the file to its original condition
-                            $oHostDbMaster->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+                            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
                             # Fail because the process was killed
                             if ($iBackup == 1 && !$bCompress)
@@ -1079,12 +1079,9 @@ sub backupTestRun
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_INCR;
             $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
-#CSHANG - can I use $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)? Or is that different than $oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO
-#CSHANG Also not sure if I should be using $oHostBackup or $oHostDbMaster for the infoMunge/infoRestore - here the oHostBackup did not work so had to use oHostDbMaster - but why?
-            # $oHostBackup->infoMunge(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
-            #                 {&INFO_BACKUP_SECTION_DB =>
-            #                     {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
-            $oHostDbMaster->infoMunge(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+
+            # Break the database version
+            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
@@ -1094,10 +1091,10 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostDbMaster->infoRestore(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostBackup->infoRestore(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)));
 
             # Break the database system id
-            $oHostDbMaster->infoMunge(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
 
@@ -1107,10 +1104,10 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostDbMaster->infoRestore(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostBackup->infoRestore(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)));
 
             # Break the control version
-            $oHostDbMaster->infoMunge(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_CONTROL => 842}});
 
@@ -1120,10 +1117,10 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostDbMaster->infoRestore(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostBackup->infoRestore(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)));
 
             # Break the catalog version
-            $oHostDbMaster->infoMunge(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)),
                             {&INFO_BACKUP_SECTION_DB =>
                                 {&INFO_BACKUP_KEY_CATALOG => 197208141}});
 
@@ -1133,7 +1130,7 @@ sub backupTestRun
                     strOptionalParam => '--log-level-console=detail'});
 
             # Restore the file to its original condition
-            $oHostDbMaster->infoRestore(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+            $oHostBackup->infoRestore(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)));
 
             # Test broken tablespace configuration
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1640,7 +1637,7 @@ sub backupTestRun
             $strComment = 'fail on archive mismatch after upgrade';
 
             # load the archive info file and munge it for testing by breaking the database version
-            $oHostDbMaster->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
+            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
                                         {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
             $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
             # If running the remote tests then also need to run check locally
@@ -1649,7 +1646,7 @@ sub backupTestRun
                 $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
             }
             # Restore the file to its original condition
-            $oHostDbMaster->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
             # Check archive_timeout error when WAL segment is not found
             $strComment = 'fail on archive timeout';
@@ -1668,7 +1665,6 @@ sub backupTestRun
 
             # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
             # backup.info file.
-    # CSHANG If not remote can I assume oHostDbMaster and oHostBackup are the same?
             if (!$bRemote)
             {
                 # Check backup mismatch error
@@ -1677,9 +1673,8 @@ sub backupTestRun
                 # First run a successful backup to create the backup.info file
                 $oHostBackup->backup($strType, 'run a successful backup');
 
-#CSHANG should these be DBmaster or HostBackup? Does it matter if !$bRemote?
                 # Load the backup.info file and munge it for testing by breaking the database version and system id
-                $oHostBackup->infoMunge(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO),
+                $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)),
                                             {&INFO_BACKUP_SECTION_DB =>
                                                 {&INFO_BACKUP_KEY_DB_VERSION => '8.0',
                                                  &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
@@ -1688,7 +1683,7 @@ sub backupTestRun
                 $oHostBackup->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
 
                 # Restore the file to its original condition
-                $oHostBackup->infoRestore(($oHostBackup->repoPath() . "/backup/${strStanza}/" . FILE_BACKUP_INFO));
+                $oHostBackup->infoRestore(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)));
 
                 # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
                 # archive.info and backup.info files
