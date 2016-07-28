@@ -256,6 +256,10 @@ sub process
                                                        paramGet(\%oParamHash, 'db-version'),
                                                        paramGet(\%oParamHash, 'db-sys-id')));
             }
+            elsif ($strCommand eq OP_ARCHIVE_GET_ARCHIVE_ID)
+            {
+                $self->outputWrite($oArchive->getArchiveId($oFile));
+            }
             # Info list stanza
             elsif ($strCommand eq OP_INFO_STANZA_LIST)
             {

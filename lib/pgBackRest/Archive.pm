@@ -31,6 +31,8 @@ use pgBackRest::FileCommon;
 use constant OP_ARCHIVE                                             => 'Archive';
 
 use constant OP_ARCHIVE_GET                                         => OP_ARCHIVE . '->get';
+use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => OP_ARCHIVE . '->getArchiveId';
+    push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
 use constant OP_ARCHIVE_GET_CHECK                                   => OP_ARCHIVE . '->getCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 use constant OP_ARCHIVE_GET_PROCESS                                 => OP_ARCHIVE . '->getProcess';
@@ -485,6 +487,47 @@ sub getCheck
         # check that the archive info is compatible with the database and create the file if it does not exist
         $strArchiveId =
             (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strArchiveId', value => $strArchiveId, trace => true}
+    );
+}
+
+####################################################################################################################################
+# getArchiveId
+#
+# CAUTION: Only to be used by commands where the DB Version and DB System ID are not important such that the
+# db-path is not valid for the command  (i.e. Expire command). Since this function will not check validity of the database version
+# call getCheck function instead.
+####################################################################################################################################
+sub getArchiveId
+{
+    my $self = shift;
+    my $oFile = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation
+    ) =
+        logDebugParam
+    (
+        OP_ARCHIVE_GET_ARCHIVE_ID
+    );
+
+    my $strArchiveId;
+
+    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
+    {
+        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
+    }
+    else
+    {
+        $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->archiveId();
     }
 
     # Return from function and log return values if any
