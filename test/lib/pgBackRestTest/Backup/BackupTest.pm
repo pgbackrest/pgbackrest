@@ -235,10 +235,8 @@ sub backupTestRun
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
-                            # Restore the file to its original condition
-                            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
-                            # load the archive info file and munge it for testing by breaking the system id
+                            # break the system id
                             $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
                                                        {&INFO_ARCHIVE_SECTION_DB =>
                                                         {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
@@ -1097,9 +1095,6 @@ sub backupTestRun
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
 
-            # Restore the file to its original condition
-            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-
             # Break the database system id
             $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
                             {&INFO_BACKUP_SECTION_DB =>
@@ -1110,9 +1105,6 @@ sub backupTestRun
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
 
-            # Restore the file to its original condition
-            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-
             # Break the control version
             $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
                             {&INFO_BACKUP_SECTION_DB =>
@@ -1122,9 +1114,6 @@ sub backupTestRun
                 $strType, 'invalid control version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-
-            # Restore the file to its original condition
-            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
 
             # Break the catalog version
             $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
