@@ -7,7 +7,7 @@ run 005 - rmt 1, cmp 0, arc_async 0
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -24,12 +24,12 @@ run 005 - rmt 1, cmp 0, arc_async 0
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
+ ERROR: [119]: raised on backup host: WAL segment version 9.3 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
  DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
   INFO: archive-push stop
@@ -41,12 +41,12 @@ run 005 - rmt 1, cmp 0, arc_async 0
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 5947969990501855219
- ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
+ ERROR: [119]: raised on backup host: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
  DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
   INFO: archive-push stop
@@ -66,7 +66,7 @@ stop db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  ERROR: [137]: stop file exists for stanza db
  DEBUG:     Exit::exitSafe(): iExitCode = 137, strSignal = [undef]
@@ -87,7 +87,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -108,7 +108,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -127,7 +127,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -144,7 +144,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -165,7 +165,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -184,7 +184,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -201,7 +201,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -218,7 +218,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -235,7 +235,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -252,12 +252,12 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
+ ERROR: [119]: raised on backup host: WAL segment version 9.3 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
  DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
   INFO: archive-push stop
@@ -269,12 +269,12 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 5947969990501855219
- ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
+ ERROR: [119]: raised on backup host: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
  DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
   INFO: archive-push stop
@@ -286,7 +286,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -307,7 +307,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -326,7 +326,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -343,7 +343,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -364,7 +364,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -383,7 +383,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -400,7 +400,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -417,7 +417,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -434,7 +434,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -451,12 +451,12 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
+ ERROR: [119]: raised on backup host: WAL segment version 9.3 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
  DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
   INFO: archive-push stop
@@ -468,12 +468,12 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 5947969990501855219
- ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
+ ERROR: [119]: raised on backup host: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
  DEBUG:     Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
   INFO: archive-push stop
@@ -485,7 +485,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -506,7 +506,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -525,7 +525,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -542,7 +542,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219
@@ -563,7 +563,7 @@ start db stanza (db-master host)
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->pushProcess(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
  DEBUG:     Archive->walInfo=>: strDbVersion = 9.3, ullDbSysId = 5947969990501855219

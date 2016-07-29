@@ -378,7 +378,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
 
     $strLine = $self->regExpReplace($strLine, 'REMOTE-PROCESS-TERMINATED-MESSAGE',
-        'remote process terminated: (ssh.*|no output from terminated process)$',
+        'remote process terminated.*: (ssh.*|no output from terminated process)$',
         '(ssh.*|no output from terminated process)$', false);
 
     return $strLine;

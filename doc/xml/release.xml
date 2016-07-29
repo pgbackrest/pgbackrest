@@ -99,7 +99,7 @@
     </contributor-list>
 
     <release-list>
-         <release date="XXX-XX-XX" version="1.04dev" title="UNDER DEVELOPMENT">
+         <release date="XXXX-XX-XX" version="1.04dev" title="UNDER DEVELOPMENT">
              <release-core-list>
                  <release-bug-list>
                     <release-item>
@@ -107,7 +107,15 @@
                             <release-item-ideator id="vitale.michael"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was thrown when it was missing rather than a polite error message.</p>
+                        <p>Fixed an issue an where an extraneous remote was created causing threaded backup/restore to possibly timeout and/or throw a lock conflict.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was raised when it was missing rather than a polite error message.</p>
                     </release-item>
 
                     <release-item>
@@ -120,6 +128,34 @@
                         <p>Fixed <cmd>check</cmd> command to throw an error when database version does not match that of the archive.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta3.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+                </release-feature-list>
+
+                 <release-refactor-list>
+                    <release-item>
+                        <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Output lock file name when a lock cannot be acquired to aid in debugging.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Reduce calls to <code>protocolGet()</code> in backup/restore.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Suppress banners on SSH protocol connections.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved remote error messages to identify the host where the error was raised.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
              <release-doc-list>
@@ -127,7 +163,29 @@
                     <release-item>
                         <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Added clarification on why the default for the <br-option>backrest-user</br-option> option is <id>backrest</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Updated information about package availability on supported platforms.</p>
+                    </release-item>
                 </release-feature-list>
+
+                 <release-refactor-list>
+                    <release-item>
+                        <p>HTML footer dates are statically created in English in order to be reproducible.</p>
+                    </release-item>
+                 </release-refactor-list>
             </release-doc-list>
 
              <release-test-list>

@@ -193,8 +193,9 @@ sub binaryXfer
     }
     else
     {
-        $oIn = new pgBackRest::Protocol::IO($hIn, undef, $self->{io}->{hErr}, $self->{io}->{pid},
-                                          $self->{iProtocolTimeout}, $self->{iBufferMax});
+        $oIn = new pgBackRest::Protocol::IO(
+            $hIn, undef, $self->{io}->{hErr}, $self->{io}->{pid}, $self->{io}->{strId}, $self->{iProtocolTimeout},
+            $self->{iBufferMax});
     }
 
     # The output stream must be defined unless 'none' is passed
@@ -206,8 +207,9 @@ sub binaryXfer
     }
     elsif ($hOut ne 'none')
     {
-        $oOut = new pgBackRest::Protocol::IO(undef, $hOut, $self->{io}->{hErr}, $self->{io}->{pid},
-                                           $self->{iProtocolTimeout}, $self->{iBufferMax});
+        $oOut = new pgBackRest::Protocol::IO(
+            undef, $hOut, $self->{io}->{hErr}, $self->{io}->{pid}, $self->{io}->{strId}, $self->{iProtocolTimeout},
+            $self->{iBufferMax});
     }
 
     # If no remote is defined then set to none

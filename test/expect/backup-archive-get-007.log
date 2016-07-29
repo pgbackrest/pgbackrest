@@ -7,12 +7,12 @@ run 007 - rmt 1, cmp 1, exists 0
   INFO: get WAL segment 000000010000000100000001
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
- ERROR: [130]: archive.info does not exist but is required to get WAL segments
+ ERROR: [130]: raised on backup host: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
  DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
@@ -66,7 +66,7 @@ start all stanzas (db-master host)
   INFO: get WAL segment 000000090000000900000009
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-host=backup --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = backup, strUser = [USER-1]
- DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strName = remote
+ DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --backup-host=backup --command=archive-get --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = backup, strName = remote
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = backup, strStanza = db
  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
  DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base

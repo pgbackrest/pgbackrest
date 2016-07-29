@@ -81,11 +81,8 @@ eval
             optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
 
-        # ??? Would like to remove this check and allow a test lock
-        if (optionGet(OPTION_COMMAND) ne 'test' && !optionTest(OPTION_PROCESS))
-        {
-            lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
-        }
+        # Acquire a remote lock
+        lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
 
         # Process remote requests
         exitSafe($oRemote->process());
