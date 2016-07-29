@@ -127,6 +127,10 @@
 
                         <p>Fixed <cmd>check</cmd> command to throw an error when database version/id does not match that of the archive.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where the contents of <path>pg_xlog</path> were being copied if the directory was symlinked.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

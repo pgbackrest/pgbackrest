@@ -164,9 +164,8 @@ use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
-####################################################################################################################################
-use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
-    push @EXPORT, qw(DB_FILE_POSTMASTERPID);
+use constant DB_PATH_PGXLOG                                         => 'pg_xlog';
+    push @EXPORT, qw(DB_PATH_PGXLOG);
 
 use constant DB_FILE_BACKUPLABEL                                    => 'backup_label';
     push @EXPORT, qw(DB_FILE_BACKUPLABEL);
@@ -176,6 +175,10 @@ use constant DB_FILE_PGCONTROL                                      => DB_PATH_G
     push @EXPORT, qw(DB_FILE_PGCONTROL);
 use constant DB_FILE_PGVERSION                                      => 'PG_VERSION';
     push @EXPORT, qw(DB_FILE_PGVERSION);
+use constant DB_FILE_POSTMASTEROPTS                                 => 'postmaster.opts';
+    push @EXPORT, qw(DB_FILE_POSTMASTEROPTS);
+use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
+    push @EXPORT, qw(DB_FILE_POSTMASTERPID);
 use constant DB_FILE_RECOVERYCONF                                   => 'recovery.conf';
     push @EXPORT, qw(DB_FILE_RECOVERYCONF);
 use constant DB_FILE_RECOVERYDONE                                   => 'recovery.done';
@@ -186,6 +189,9 @@ use constant DB_FILE_TABLESPACEMAP                                  => 'tablespa
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
+use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
+    push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
+
 use constant MANIFEST_FILE_BACKUPLABEL                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_BACKUPLABEL;
     push @EXPORT, qw(MANIFEST_FILE_BACKUPLABEL);
 use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL;
@@ -608,9 +614,10 @@ sub build
         }
 
         # Skip certain files during backup
-        if ($strLevel eq MANIFEST_TARGET_PGDATA &&
-            (($strName =~ /^pg\_xlog\/.*/ && $bOnline) ||           # pg_xlog/ - this will be reconstructed
-             $strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
+        if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '.*\/') && $bOnline ||  # pg_xlog/ - this will be reconstructed
+            $strLevel eq MANIFEST_TARGET_PGDATA &&
+            ($strName eq DB_FILE_BACKUPLABELOLD ||                  # backup_label.old - old backup labels are not useful
+             $strName eq DB_FILE_POSTMASTEROPTS ||                  # postmaster.opts - not useful for backup
              $strName eq DB_FILE_POSTMASTERPID ||                   # postmaster.pid - to avoid confusing postgres after restore
              $strName eq DB_FILE_RECOVERYCONF ||                    # recovery.conf - doesn't make sense to backup this file
              $strName eq DB_FILE_RECOVERYDONE))                     # recovery.done - doesn't make sense to backup this file
