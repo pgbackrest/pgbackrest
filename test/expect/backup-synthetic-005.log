@@ -503,8 +503,8 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_clog, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_stat, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_tblspc, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
- DEBUG:     Backup->fileNotInManifest=>: stryFile = (file.tmp)
- DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/file.tmp
+ DEBUG:     Backup->fileNotInManifest=>: stryFile = (pg_data/postgresql.conf.tmp)
+ DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/postgresql.conf.tmp
  DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = false, oBackupManifest = [object], strDbPath = [TEST_PATH]/db-master/db/base, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
