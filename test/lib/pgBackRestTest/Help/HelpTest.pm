@@ -38,7 +38,6 @@ sub helpExecute
 sub helpTestRun
 {
     my $strTest = shift;
-    my $iThreadMax = shift;
     my $bVmOut = shift;
 
     # Setup test variables

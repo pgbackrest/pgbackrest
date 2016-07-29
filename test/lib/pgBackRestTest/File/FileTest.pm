@@ -71,7 +71,6 @@ sub fileTestSetup
 sub fileTestRun
 {
     my $strTest = shift;
-    my $iThreadMax = shift;
     my $bVmOut = shift;
 
     # If no test was specified, then run them all

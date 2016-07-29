@@ -193,6 +193,10 @@
                     <release-item>
                         <p>Fixed a version checking issue in <file>test.pl</file>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where multi-threaded tests were not being run when requested.</p>
+                    </release-item>
                 </release-bug-list>
             </release-test-list>
          </release>

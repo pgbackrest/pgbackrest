@@ -13,7 +13,6 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-
 use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
@@ -684,7 +683,6 @@ sub configCreate
     my $oHostRemote = shift;
     my $bCompress = shift;
     my $bHardlink = shift;
-    my $iThreadMax = shift;
     my $bArchiveAsync = shift;
     my $bCompressAsync = shift;
 
@@ -753,9 +751,9 @@ sub configCreate
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_CONFIG_REMOTE} = $oHostRemote->backrestConfig();
     }
 
-    if (defined($iThreadMax) && $iThreadMax > 1)
+    if ($self->threadMax() > 1)
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = $iThreadMax;
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = $self->threadMax();
     }
 
     if ($self->nameTest(HOST_BACKUP) || !defined($oHostRemote))

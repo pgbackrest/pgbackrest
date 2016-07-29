@@ -518,24 +518,24 @@ eval
             &log(INFO, "TESTING psql-bin = $strPgSqlBin\n");
         }
 
-            if ($strModule eq 'all' || $strModule eq 'help')
-            {
-                helpTestRun($strModuleTest, undef, $bVmOut);
-            }
+        if ($strModule eq 'all' || $strModule eq 'help')
+        {
+            helpTestRun($strModuleTest, $bVmOut);
+        }
 
-            if ($strModule eq 'all' || $strModule eq 'config')
-            {
-                configTestRun($strModuleTest, undef, $bVmOut);
-            }
+        if ($strModule eq 'all' || $strModule eq 'config')
+        {
+            configTestRun($strModuleTest, $bVmOut);
+        }
 
         if ($strModule eq 'all' || $strModule eq 'file')
         {
-            fileTestRun($strModuleTest, undef, $bVmOut);
+            fileTestRun($strModuleTest, $bVmOut);
         }
 
         if ($strModule eq 'all' || $strModule eq 'backup')
         {
-            backupTestRun($strModuleTest, 1, $bVmOut);
+            backupTestRun($strModuleTest, $bVmOut);
         }
     }
 

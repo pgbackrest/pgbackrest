@@ -110,7 +110,6 @@ sub archiveCheck
 sub backupTestRun
 {
     my $strTest = shift;
-    my $iThreadMax = shift;
     my $bVmOut = shift;
 
     # If no test was specified, then run them all
@@ -122,6 +121,7 @@ sub backupTestRun
     # Setup global variables
     my $oHostGroup = hostGroupGet();
     my $strTestPath = $oHostGroup->paramGet(HOST_PARAM_TEST_PATH);
+    my $iThreadMax = $oHostGroup->paramGet(HOST_PARAM_THREAD_MAX);
 
     # Setup test variables
     my $iRun;
@@ -678,7 +678,7 @@ sub backupTestRun
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
-                $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink, iThreadMax => $iThreadMax});
+                $bRemote, true, $oLogTest, {bCompress => $bCompress, bHardLink => $bHardLink});
 
             # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
             # that options such as compression and hardlinks are disabled
@@ -853,7 +853,7 @@ sub backupTestRun
                 my $oExecuteBackup = $oHostBackup->backupBegin(
                     $strType, 'abort backup - local',
                     {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                        iExpectedExitStatus => ERROR_TERM});
+                        iExpectedExitStatus => $bRemote && $iThreadMax > 1 ? ERROR_STOP : ERROR_TERM});
 
                 $oHostDbMaster->stop({bForce => true});
 
@@ -1548,7 +1548,8 @@ sub backupTestRun
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostBackup, $oFile) = backupTestSetup(
                 $bRemote, false, undef,
-                {bCompress => $bCompress, iThreadMax => $iThreadMax, bArchiveAsync => $bArchiveAsync});
+                {bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
             $oHostDbMaster->clusterCreate({bArchiveInvalid => true});

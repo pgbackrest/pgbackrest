@@ -234,7 +234,6 @@ sub optionTestExpect
 sub configTestRun
 {
     my $strTest = shift;
-    my $iThreadMax = shift;
     my $bVmOut = shift;
 
     # Setup test variables

@@ -82,8 +82,7 @@ sub backupTestSetup
     $oHostDbMaster->configCreate(
         ($bRemote ? $oHostBackup : undef),
         $$oConfigParam{bCompress},
-        $bRemote ? undef : $$oConfigParam{bHardLink},               # hardlink
-        undef,                                                      # thread-max
+        $bRemote ? undef : $$oConfigParam{bHardLink},
         $$oConfigParam{bArchiveAsync},
         undef);
 
@@ -92,9 +91,8 @@ sub backupTestSetup
     {
         $oHostBackup->configCreate(
             $oHostDbMaster,
-            $$oConfigParam{bCompress},                              # compress
-            $$oConfigParam{bHardLink},                              # hardlink
-            $$oConfigParam{iThreadMax});                            # thread-max
+            $$oConfigParam{bCompress},
+            $$oConfigParam{bHardLink});
     }
 
     return $oHostDbMaster, $oHostBackup, $oFile;
