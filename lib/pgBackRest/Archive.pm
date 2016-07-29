@@ -1258,7 +1258,7 @@ sub check
 
         # If the backup and archive checks were successful, then indicate success
         &log(INFO,
-            "Backup info is up to date and WAL segment ${strWalSegment} successfully stored in the archive at '" .
+            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
             $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
     }
     else

@@ -472,8 +472,7 @@ sub backupTestRun
                 filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
 
                 # Copy pg_control
-                executeTest('cp ' . testDataPath() . '/pg_control ' .
-                            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
                 my $strCommand =
                     $oHostDbMaster->backrestExe() .
@@ -756,8 +755,7 @@ sub backupTestRun
                                                   '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
 
             # Copy pg_control
-            executeTest('cp ' . testDataPath() . '/pg_control ' .
-                        $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
             utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}

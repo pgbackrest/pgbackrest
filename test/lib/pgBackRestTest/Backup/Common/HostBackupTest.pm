@@ -166,7 +166,7 @@ sub new
         ));
 
     # Create a placeholder hash for file munging
-    $self->{hInfoFile} = ();
+    $self->{hInfoFile} = {};
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -897,10 +897,10 @@ sub infoMunge
     # Load params
     foreach my $strSection (sort(keys(%{$hParam})))
     {
-        foreach my $strKey (keys(%{$hParam->{$strSection}}))
+        foreach my $strKey (keys(%{$$hParam{$strSection}}))
         {
             # Munge the copy with the new parameter values
-            $hContent->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+            $$hContent{$strSection}{$strKey} = $$hParam{$strSection}{$strKey};
         }
     }
 
