@@ -97,7 +97,7 @@ sub lockAcquire
         # Cannot proceed if a lock is currently held
         if (defined($strCurrentLockType))
         {
-            confess &lock(ASSERT, "${strCurrentLockType} lock is already held");
+            confess &log(ASSERT, "${strCurrentLockType} lock is already held");
         }
 
         # Check if processes are currently stopped
