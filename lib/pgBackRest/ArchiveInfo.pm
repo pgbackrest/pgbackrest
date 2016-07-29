@@ -1,5 +1,9 @@
 ####################################################################################################################################
 # ARCHIVE INFO MODULE
+#
+# The archive.info file is created when archiving begins. It is located under the stanza directory. The file contains information
+# regarding the stanza database version, database WAL segment system id and other information to ensure that archiving is being
+# performed on the proper database.
 ####################################################################################################################################
 package pgBackRest::ArchiveInfo;
 use parent 'pgBackRest::Common::Ini';
@@ -101,7 +105,8 @@ sub new
 ####################################################################################################################################
 # check
 #
-# Check archive info and make it is compatible.
+# Check archive info file and make sure it is compatible with the current version of the database for the stanza. If the file does
+# not exist it will be created with the values passed.
 ####################################################################################################################################
 sub check
 {
@@ -135,7 +140,8 @@ sub check
 
         if (!$self->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId))
         {
-            $strError = "WAL segment system-id ${ullDbSysId} does not match archive system-id " .
+            $strError = (defined($strError) ? ($strError . "\n") : "") .
+                        "WAL segment system-id ${ullDbSysId} does not match archive system-id " .
                         $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
         }
 
@@ -144,7 +150,7 @@ sub check
             confess &log(ERROR, "${strError}\nHINT: are you archiving to the correct stanza?", ERROR_ARCHIVE_MISMATCH);
         }
     }
-    # Else create the info file from the current WAL segment
+    # Else create the info file from the parameters passed which are usually derived from the current WAL segment
     else
     {
         my $iDbId = 1;
@@ -179,7 +185,7 @@ sub check
 ####################################################################################################################################
 # archiveId
 #
-# Get the archive id.
+# Get the archive id which is a combination of the DB version and the db-id setting (e.g. 9.4-1)
 ####################################################################################################################################
 sub archiveId
 {

@@ -252,7 +252,13 @@ sub process
             }
             elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
             {
-                $self->outputWrite($oArchive->getCheck($oFile));
+                $self->outputWrite($oArchive->getCheck($oFile,
+                                                       paramGet(\%oParamHash, 'db-version'),
+                                                       paramGet(\%oParamHash, 'db-sys-id')));
+            }
+            elsif ($strCommand eq OP_ARCHIVE_GET_ARCHIVE_ID)
+            {
+                $self->outputWrite($oArchive->getArchiveId($oFile));
             }
             # Info list stanza
             elsif ($strCommand eq OP_INFO_STANZA_LIST)

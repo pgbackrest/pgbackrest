@@ -187,7 +187,7 @@ sub validate
         }
     }
 
-    # Remove backups from FILE_BACKUP_INFO that are not longer in the repository
+    # Remove backups from FILE_BACKUP_INFO that are no longer in the repository
     foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
     {
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;

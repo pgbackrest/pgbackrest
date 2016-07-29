@@ -314,7 +314,7 @@ sub process
                 {
                     # Get archive info
                     my $oArchive = new pgBackRest::Archive();
-                    my $strArchiveId = $oArchive->getCheck($oFile);
+                    my $strArchiveId = $oArchive->getArchiveId($oFile);
 
                     my $strArchiveExpireMax;
 
