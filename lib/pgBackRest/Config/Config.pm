@@ -2487,7 +2487,7 @@ sub protocolGet
     my $iProcessIdx = shift;
 
     # If force local or remote = NONE then create a local remote and return it
-    if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
+    if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE) || commandTest(CMD_REMOTE))
     {
         return new pgBackRest::Protocol::Common
         (

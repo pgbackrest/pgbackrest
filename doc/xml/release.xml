@@ -135,6 +135,10 @@
                     <release-item>
                         <p>Fixed an invalid log call in lock routines.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed a issue where a remote could try to start its own remote.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
