@@ -341,11 +341,11 @@ sub pathGet
         if (!($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP || $bAbsolute))
         {
             confess &log(ASSERT, 'temp file not supported for path type ' . $strType);
-    }
+        }
 
         # The file must be defined
         if (!defined($strFile))
-    {
+        {
             confess &log(ASSERT, 'strFile must be defined when temp file requested');
         }
     }
@@ -742,7 +742,7 @@ sub pathCreate
         }
 
         # Execute the command
-        $self->{oProtocol}->cmdExecute(OP_FILE_PATH_CREATE, \%oParamHash, false);
+        $self->{oProtocol}->cmdExecute(OP_FILE_PATH_CREATE, \%oParamHash);
     }
     else
     {
@@ -1065,7 +1065,7 @@ sub list
         }
 
         # Execute the command
-        my $strOutput = $self->{oProtocol}->cmdExecute(OP_FILE_LIST, \%oParamHash, false);
+        my $strOutput = $self->{oProtocol}->cmdExecute(OP_FILE_LIST, \%oParamHash);
 
         if (defined($strOutput))
         {
@@ -1658,7 +1658,7 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oProtocol}->outputRead(true, undef, true);
+                $strOutput = $self->{oProtocol}->outputRead(true, true);
 
                 # Check the result of the remote call
                 if (substr($strOutput, 0, 1) eq 'Y')

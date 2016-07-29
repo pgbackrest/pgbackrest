@@ -83,6 +83,9 @@ sub new
     # Set the id to be used for messages (especially error messages)
     $self->{strId} = $strId;
 
+    # Set the error prefix used when raising error messages
+    $self->{strErrorPrefix} = 'raised on ' . $self->{strId} . ' host';
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -162,7 +165,7 @@ sub greetingRead
     my $self = shift;
 
     # Get the first line of output from the remote if possible
-    my $strLine = $self->{io}->lineRead();
+    my $strLine = $self->{io}->lineRead(undef, undef, undef, true);
 
     # If the line could not be read or does equal the greeting then error and exit
     if (!defined($strLine) || $strLine ne $self->{strGreeting})
@@ -171,6 +174,8 @@ sub greetingRead
 
         confess &log(ERROR, 'protocol version mismatch' . (defined($strLine) ? ": ${strLine}" : ''), ERROR_HOST_CONNECT);
     }
+
+    $self->outputRead();
 }
 
 ####################################################################################################################################
@@ -187,14 +192,12 @@ sub outputRead
     (
         $strOperation,
         $bOutputRequired,
-        $strErrorPrefix,
         $bSuppressLog
     ) =
         logDebugParam
         (
             OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ, \@_,
             {name => 'bOutputRequired', default => false, trace => true},
-            {name => 'strErrorPrefix', required => false, trace => true},
             {name => 'bSuppressLog', required => false, trace => true}
         );
 
@@ -228,7 +231,7 @@ sub outputRead
     # Raise any errors
     if ($bError)
     {
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') .
+        confess &log(ERROR, (defined($self->{strErrorPrefix}) ? "$self->{strErrorPrefix}: " : '') .
                             (defined($strOutput) ? "${strOutput}" : ''), $iErrorCode, $bSuppressLog);
     }
 
@@ -239,7 +242,7 @@ sub outputRead
     if (defined($bOutputRequired) && $bOutputRequired && !defined($strOutput))
     {
         $self->{io}->waitPid();
-        confess &log(ERROR, (defined($strErrorPrefix) ? "${strErrorPrefix}: " : '') . 'output is not defined');
+        confess &log(ERROR, (defined($self->{strErrorPrefix}) ? "$self->{strErrorPrefix}: " : '') . 'output is not defined');
     }
 
     # Return from function and log return values if any
@@ -351,7 +354,7 @@ sub cmdExecute
 
     $self->cmdWrite($strCommand, $oParamRef);
 
-    return $self->outputRead($bOutputRequired, 'raised on ' . $self->{strId} . ' host');
+    return $self->outputRead($bOutputRequired);
 }
 
 ####################################################################################################################################
@@ -365,12 +368,24 @@ sub keepAlive
 
     if (gettimeofday() - $self->{fKeepAliveTimeout} > $self->{fKeepAliveTime})
     {
-        $self->cmdExecute(OP_NOOP, undef, false);
+        $self->noOp();
         $self->{fKeepAliveTime} = gettimeofday();
 
         # Keep alive test point
         &log(TEST, TEST_KEEP_ALIVE);
     }
+}
+
+####################################################################################################################################
+# noOp
+#
+# Send noop to test connection or keep it alive.
+####################################################################################################################################
+sub noOp
+{
+    my $self = shift;
+
+    $self->cmdExecute(OP_NOOP, undef, false);
 }
 
 1;

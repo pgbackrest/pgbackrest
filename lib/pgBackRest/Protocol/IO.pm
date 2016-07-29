@@ -178,6 +178,7 @@ sub lineRead
     my $iTimeout = shift;
     my $bInRead = shift;
     my $bError = shift;
+    my $bIgnoreEOF = shift;
 
     # If there's already data in the buffer try to find the next linefeed
     my $iLineFeedPos = defined($self->{strBuffer}) ? index($self->{strBuffer}, "\n", $self->{iBufferPos}) : -1;
@@ -257,13 +258,13 @@ sub lineRead
                 }
 
                 # Error on EOF (unless reading from error stream)
-                if ($iBufferRead == 0)
+                if ($iBufferRead == 0 && (!defined($bIgnoreEOF) || !$bIgnoreEOF))
                 {
                     # Check if the remote process exited unexpectedly
-                    $self->waitPid(0);
+                    $self->waitPid();
 
                     # Only error if reading from the input stream
-                    if (defined($bError) && $bError)
+                    if (!defined($bError) || $bError)
                     {
                         confess &log(ERROR, "unexpected EOF", ERROR_FILE_READ);
                     }
@@ -541,8 +542,8 @@ sub waitPid
                     # If the error stream is already closed then we can't fetch the real error
                     if (!defined($self->{hErr}))
                     {
-                        $strError = 'no error captured because stderr is already closed';
-                    }
+                            $strError = 'no error captured because stderr is already closed';
+                        }
                     # Get whatever text we can from the error stream
                     else
                     {
@@ -563,7 +564,11 @@ sub waitPid
 
                         if ($@ || !defined($strError))
                         {
-                            $strError = 'no output from terminated process' . (defined($@) && $@ ne '' ? ": $@" : '');
+                            my $strMessage = $@;
+
+                            $strError =
+                                'no output from terminated process' .
+                                (defined($strMessage) && ${strMessage} ne '' ? ": ${strMessage}" : '');
                         }
                     }
 

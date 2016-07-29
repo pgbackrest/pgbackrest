@@ -149,6 +149,10 @@
 
                  <release-refactor-list>
                     <release-item>
+                        <p>Enhancements to the protocol layer for improved reliability and error handling.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
                     </release-item>
 
