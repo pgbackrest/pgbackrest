@@ -117,6 +117,16 @@
 
                         <p>Fixed an issue where db-path was not required for the <cmd>check</cmd> command so an assert was raised when it was missing rather than a polite error message.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="steele.david"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-reviewer id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed <cmd>check</cmd> command to throw an error when database version does not match that of the archive.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

@@ -14,6 +14,8 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use Storable qw(dclone);
+
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -26,6 +28,7 @@ use pgBackRest::Version;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
 # Host constants
@@ -70,6 +73,12 @@ use constant HOST_STANZA                                            => 'db';
     push @EXPORT, qw(HOST_STANZA);
 use constant HOST_PROTOCOL_TIMEOUT                                  => 10;
     push @EXPORT, qw(HOST_PROTOCOL_TIMEOUT);
+
+####################################################################################################################################
+# Cached data sections
+####################################################################################################################################
+use constant SECTION_FILE_NAME                                        => 'strFileName';
+    push @EXPORT, qw(SECTION_FILE_NAME);
 
 ####################################################################################################################################
 # new
@@ -155,6 +164,9 @@ sub new
             OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
             HOST_PROTOCOL_TIMEOUT                       # Protocol timeout
         ));
+
+    # Create a placeholder hash for file munging
+    $self->{hInfoFile} = {};
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -844,6 +856,98 @@ sub manifestMunge
 
     # Resave the manifest
     iniSave($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strManifestFile), \%oManifest);
+}
+
+####################################################################################################################################
+# infoMunge
+#
+# With the file name specified (e.g. /repo/archive/db/archive.info) copy the current values from the file into the global hash and
+# update the file with the new values passed. Later, using infoRestore, the global variable will be used to restore the file to its
+# original state.
+####################################################################################################################################
+sub infoMunge
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileName,
+        $hParam
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->infoMunge', \@_,
+            {name => 'strFileName'},
+            {name => 'hParam'}
+        );
+
+    # If the original file content does not exist then load it
+    if (!defined($self->{hInfoFile}{$strFileName}))
+    {
+        $self->{hInfoFile}{$strFileName} = iniLoad($strFileName);
+        # Modify the file permissions so it can be saved
+        executeTest("sudo chmod 660 ${strFileName}");
+    }
+
+    # Make a copy of the original file contents
+    my $hContent = dclone($self->{hInfoFile}{$strFileName});
+
+    # Load params
+    foreach my $strSection (sort(keys(%{$hParam})))
+    {
+        foreach my $strKey (keys(%{$$hParam{$strSection}}))
+        {
+            # Munge the copy with the new parameter values
+            $$hContent{$strSection}{$strKey} = $$hParam{$strSection}{$strKey};
+        }
+    }
+
+    # Save the munged data to the file
+    testIniSave($strFileName, \%{$hContent}, true);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# infoRestore
+#
+# With the file name specified (e.g. /repo/archive/db/archive.info) use the original file contents in the global hash to restore the
+# file to its original state after modifying the values with infoMunge.
+####################################################################################################################################
+sub infoRestore
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileName
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->infoRestore', \@_,
+            {name => 'strFileName'}
+        );
+
+    # If the original file content exists in the global hash, then save it to the file
+    if (defined($self->{hInfoFile}{$strFileName}))
+    {
+        iniSave($strFileName, $self->{hInfoFile}{$strFileName});
+    }
+    else
+    {
+        confess &log(ASSERT, "There is no original data cached for $strFileName. infoMunge must be called first.");
+    }
+
+    # Remove the element from the hash
+    delete($self->{hInfoFile}{$strFileName});
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

@@ -209,7 +209,7 @@ sub iniLoad
 ####################################################################################################################################
 # save
 #
-# Save the manifest.
+# Save the file.
 ####################################################################################################################################
 sub save
 {
@@ -358,7 +358,7 @@ sub hash
     # Remove the old checksum
     $self->remove(INI_SECTION_BACKREST, INI_KEY_CHECKSUM);
 
-    # Caculate the checksum
+    # Calculate the checksum
     my $oChecksumContent = dclone($self->{oContent});
 
     foreach my $strSection (keys(%$oChecksumContent))

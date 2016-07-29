@@ -12,6 +12,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 use Getopt::Long qw(GetOptions);
+use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
@@ -2429,7 +2430,6 @@ push @EXPORT, qw(optionTest);
 ####################################################################################################################################
 sub optionRuleGet
 {
-    use Storable qw(dclone);
     return dclone(\%oOptionRule);
 }
 
@@ -2733,9 +2733,6 @@ sub commandWriteOptionFormat
 ####################################################################################################################################
 sub commandHashGet
 {
-    require Storable;
-    Storable->import();
-
     return dclone(\%oCommandHash);
 }
 

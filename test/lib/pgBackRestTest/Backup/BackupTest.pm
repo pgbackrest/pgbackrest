@@ -20,6 +20,7 @@ use Time::HiRes qw(gettimeofday);
 
 use pgBackRest::Archive;
 use pgBackRest::ArchiveInfo;
+use pgBackRest::BackupInfo;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -224,17 +225,9 @@ sub backupTestRun
 
                         if ($iArchive == $iBackup)
                         {
-                            # load the archive info file so it can be munged for testing
-                            my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
-                            executeTest("sudo chmod 660 ${strInfoFile}");
-                            my %oInfo;
-                            iniLoad($strInfoFile, \%oInfo);
-                            my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
-                            my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
-
-                            # Break the database version
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
-                            testIniSave($strInfoFile, \%oInfo, true);
+                            # load the archive info file and munge it for testing by breaking the database version
+                            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
+                                                    {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
                             &log(INFO, '        test db version mismatch error');
 
@@ -242,10 +235,11 @@ sub backupTestRun
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
-                            # Break the system id
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = $strDbVersion;
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = '5000900090001855000';
-                            testIniSave($strInfoFile, \%oInfo, true);
+
+                            # break the system id
+                            $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE)),
+                                                       {&INFO_ARCHIVE_SECTION_DB =>
+                                                        {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
 
                             &log(INFO, '        test db system-id mismatch error');
 
@@ -253,9 +247,8 @@ sub backupTestRun
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
-                            # Move settings back to original
-                            $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID} = $ullDbSysId;
-                            testIniSave($strInfoFile, \%oInfo, true);
+                            # Restore the file to its original condition
+                            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
                             # Fail because the process was killed
                             if ($iBackup == 1 && !$bCompress)
@@ -475,6 +468,12 @@ sub backupTestRun
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
+                # Create the test path for pg_control
+                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+
+                # Copy pg_control
+                executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
                 my $strCommand =
                     $oHostDbMaster->backrestExe() .
                     ' --config=' . $oHostDbMaster->backrestConfig() .
@@ -486,7 +485,7 @@ sub backupTestRun
 
                 # Create the archive info file
                 filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 1234567890123456789);
+                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 6156904820763115222);
 
                 if (defined($oLogTest))
                 {
@@ -756,8 +755,7 @@ sub backupTestRun
                                                   '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
 
             # Copy pg_control
-            executeTest('cp ' . testDataPath() . '/pg_control ' .
-                        $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
             utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
@@ -1085,58 +1083,48 @@ sub backupTestRun
             $strType = BACKUP_TYPE_INCR;
             $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
 
-            my $strInfoFile = $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info";
-            executeTest("sudo chmod 660 $strInfoFile");
-            my %oInfo;
-            iniLoad($strInfoFile, \%oInfo);
-
             # Break the database version
-            my $strDbVersion = $oInfo{'db'}{&MANIFEST_KEY_DB_VERSION};
-
-            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = '8.0';
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                            {&INFO_BACKUP_SECTION_DB =>
+                                {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
             $oHostBackup->backup(
                 $strType, 'invalid database version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-            $oInfo{db}{&MANIFEST_KEY_DB_VERSION} = $strDbVersion;
 
             # Break the database system id
-            my $ullDbSysId = $oInfo{'db'}{&MANIFEST_KEY_SYSTEM_ID};
-            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = 6999999999999999999;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                            {&INFO_BACKUP_SECTION_DB =>
+                                {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
 
             $oHostBackup->backup(
                 $strType, 'invalid system id',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-            $oInfo{db}{&MANIFEST_KEY_SYSTEM_ID} = $ullDbSysId;
 
             # Break the control version
-            my $iControlVersion = $oInfo{'db'}{&MANIFEST_KEY_CONTROL};
-            $oInfo{db}{&MANIFEST_KEY_CONTROL} = 842;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                            {&INFO_BACKUP_SECTION_DB =>
+                                {&INFO_BACKUP_KEY_CONTROL => 842}});
 
             $oHostBackup->backup(
                 $strType, 'invalid control version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
-            $oInfo{db}{&MANIFEST_KEY_CONTROL} = $iControlVersion;
 
             # Break the catalog version
-            my $iCatalogVersion = $oInfo{'db'}{&MANIFEST_KEY_CATALOG};
-            $oInfo{db}{&MANIFEST_KEY_CATALOG} = 197208141;
-            testIniSave($strInfoFile, \%oInfo, true);
+            $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                            {&INFO_BACKUP_SECTION_DB =>
+                                {&INFO_BACKUP_KEY_CATALOG => 197208141}});
 
             $oHostBackup->backup(
                 $strType, 'invalid catalog version',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                     strOptionalParam => '--log-level-console=detail'});
 
-            # Fix up info file for next test
-            $oInfo{db}{&MANIFEST_KEY_CATALOG} = $iCatalogVersion;
-            testIniSave($strInfoFile, \%oInfo, true);
+            # Restore the file to its original condition
+            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
 
             # Test broken tablespace configuration
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1592,7 +1580,7 @@ sub backupTestRun
             $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
             $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
 
-            # Test invalid archive command
+            # Test invalid check command
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
 
@@ -1639,7 +1627,22 @@ sub backupTestRun
                 $oHostBackup->check($strComment, {iTimeout => 5});
             }
 
-            # Check archive_timeout error
+            # Check archive mismatch due to upgrade error
+            $strComment = 'fail on archive mismatch after upgrade';
+
+            # load the archive info file and munge it for testing by breaking the database version
+            $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                                        {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
+            $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+            # If running the remote tests then also need to run check locally
+            if ($bRemote)
+            {
+                $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
+            }
+            # Restore the file to its original condition
+            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+
+            # Check archive_timeout error when WAL segment is not found
             $strComment = 'fail on archive timeout';
 
             $oHostDbMaster->clusterRestart({bArchiveInvalid => true});
@@ -1653,6 +1656,39 @@ sub backupTestRun
 
             # Restart the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+            # If local, then with a valid archive info, create the backup.info file by running a backup then munge the
+            # backup.info file.
+            if (!$bRemote)
+            {
+                # Check backup mismatch error
+                $strComment = 'fail on backup info mismatch';
+
+                # First run a successful backup to create the backup.info file
+                $oHostBackup->backup($strType, 'run a successful backup');
+
+                # Load the backup.info file and munge it for testing by breaking the database version and system id
+                $oHostBackup->infoMunge(($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO)),
+                                            {&INFO_BACKUP_SECTION_DB =>
+                                                {&INFO_BACKUP_KEY_DB_VERSION => '8.0',
+                                                 &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
+
+                # Run the test
+                $oHostBackup->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_BACKUP_MISMATCH});
+
+                # Restore the file to its original condition
+                $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+
+                # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
+                # archive.info and backup.info files
+                $strComment = 'verify success after backup';
+
+                $oHostBackup->check($strComment, {iTimeout => 5});
+            }
+
+            # Clear cluster for next set of tests
+            $oHostDbMaster->clusterStop();
+            $oHostDbMaster->clusterStart();
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------

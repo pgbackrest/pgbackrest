@@ -7,6 +7,9 @@ run 002 - rmt 0, cmp 0, exists 1
   INFO: get WAL segment 000000010000000100000001
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+ DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
  ERROR: [130]: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
@@ -24,11 +27,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=1234567890123456789
+db-system-id=6156904820763115222
 db-version="9.3"
 
 [db:history]
-1={"db-id":1234567890123456789,"db-version":"9.3"}
+1={"db-id":6156904820763115222,"db-version":"9.3"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -36,8 +39,13 @@ db-version="9.3"
   INFO: get WAL segment 000000010000000100000001
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+ DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+ DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+ DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000001
  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
  DEBUG:     File->list=>: stryFileList = (000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031)
@@ -54,8 +62,13 @@ db-version="9.3"
   INFO: get WAL segment 000000010000000100000002
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourceArchive = 000000010000000100000002
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+ DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+ DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+ DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
  DEBUG:     File->list=>: stryFileList = (000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031)
@@ -72,8 +85,13 @@ db-version="9.3"
   INFO: get WAL segment 000000010000000100000003
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourceArchive = 000000010000000100000003
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
+ DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+ DEBUG:     Db->info(): oFile = [object], strDbPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+ DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 6156904820763115222
  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+ DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000003
  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000003(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001, strPathType = backup:absolute, strSortOrder = <forward>
  DEBUG:     File->list=>: stryFileList = (000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031)
