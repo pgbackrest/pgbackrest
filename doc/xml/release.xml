@@ -222,6 +222,12 @@
                         <p>Fixed an issue where multi-threaded tests were not being run when requested.</p>
                     </release-item>
                 </release-bug-list>
+
+                 <release-refactor-list>
+                    <release-item>
+                        <p>Reduce the frequency that certain tests are run to save time in regression.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-test-list>
          </release>
 
