@@ -153,6 +153,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Exceptions are now passed back from threads as messages when possible rather than raised directly.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Temp files created during backup are now placed in the same directory as the target file.</p>
                     </release-item>
 
