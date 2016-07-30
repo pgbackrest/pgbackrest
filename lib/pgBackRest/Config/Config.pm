@@ -1301,7 +1301,6 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
-            &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
@@ -1539,7 +1538,6 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
-            &CMD_REMOTE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         }
@@ -1740,6 +1738,12 @@ sub configLoad
     else
     {
         $strRemoteType = NONE;
+    }
+
+    # Remote type should always be none when command is remote
+    if (commandTest(CMD_REMOTE) && !optionRemoteTypeTest(NONE))
+    {
+        confess &log(ASSERT, 'Remote type must be none for remote command');
     }
 
     return true;
@@ -2487,7 +2491,7 @@ sub protocolGet
     my $iProcessIdx = shift;
 
     # If force local or remote = NONE then create a local remote and return it
-    if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE) || commandTest(CMD_REMOTE))
+    if ((defined($bForceLocal) && $bForceLocal) || optionRemoteTypeTest(NONE))
     {
         return new pgBackRest::Protocol::Common
         (

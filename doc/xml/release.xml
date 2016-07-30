@@ -137,7 +137,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fixed a issue where a remote could try to start its own remote.</p>
+                        <p>Fixed an issue where a remote could try to start its own remote.</p>
                     </release-item>
                 </release-bug-list>
 
