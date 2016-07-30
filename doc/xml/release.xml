@@ -52,6 +52,11 @@
             <contributor-id type="github">crunchyjohn</contributor-id>
         </contributor>
 
+        <contributor id="lardiere.sebastien">
+            <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
+            <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
         <contributor id="odonnell.jason">
             <contributor-name-display>Jason O'Donnell</contributor-name-display>
             <contributor-id type="github">Dwaligon</contributor-id>
@@ -99,7 +104,7 @@
     </contributor-list>
 
     <release-list>
-         <release date="XXXX-XX-XX" version="1.04dev" title="UNDER DEVELOPMENT">
+         <release date="2016-07-30" version="1.04" title="Various Bug Fixes">
              <release-core-list>
                  <release-bug-list>
                     <release-item>
@@ -129,15 +134,19 @@
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an issue where the contents of <path>pg_xlog</path> were being copied if the directory was symlinked.</p>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lardiere.sebastien"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where a remote could try to start its own remote when the <br-option>backup-host</br-option> option was not present in <file>pgbackrest.conf</file> on the database server.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an invalid log call in lock routines.</p>
+                        <p>Fixed an issue where the contents of <path>pg_xlog</path> were being backed up if the directory was symlinked.  This didn't cause any issues during restore but was a waste of space.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Fixed an issue where a remote could try to start its own remote.</p>
+                        <p>Fixed an invalid <code>log()</code> call in lock routines.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -207,6 +216,11 @@
 
                  <release-refactor-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
                         <p>HTML footer dates are statically created in English in order to be reproducible.</p>
                     </release-item>
                  </release-refactor-list>
@@ -332,6 +346,11 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
                         <p>Allow a static date to be used for documentation to generate reproducible builds.</p>
                     </release-item>
 

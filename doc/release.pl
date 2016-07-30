@@ -133,7 +133,7 @@ eval
         # Generate deployment docs for RHEL/Centos 6
         &log(INFO, "Generate RHEL/CentOS 6 documentation");
 
-        executeTest("${strDocExe} --deploy --keyword=co6");
+        executeTest("${strDocExe} --deploy --keyword=co6 --out=pdf");
         executeTest("${strDocExe} --deploy --cache-only --keyword=co6 --out=pdf --var=\"project-name=Crunchy BackRest\"");
 
         # Generate deployment docs for Debian
