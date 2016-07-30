@@ -168,20 +168,30 @@ sub sshSetup
     my $strOS = shift;
     my $strUser = shift;
     my $strGroup = shift;
+    my $bControlMaster = shift;
 
-    return
+    my $strScript =
         "# Setup SSH\n" .
         "RUN mkdir /home/${strUser}/.ssh\n" .
         "COPY id_rsa  /home/${strUser}/.ssh/id_rsa\n" .
         "COPY id_rsa.pub  /home/${strUser}/.ssh/authorized_keys\n" .
         "RUN echo 'Host *' > /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config\n" .
+        "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n";
+
+    if ($bControlMaster)
+    {
+        $strScript .=
+            "RUN echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config\n" .
+            "RUN echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config\n" .
+            "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config\n";
+    }
+
+    $strScript .=
         "RUN chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh\n" .
         "RUN chmod 700 /home/${strUser}/.ssh\n" .
         "RUN chmod 600 /home/${strUser}/.ssh/*";
+
+    return $strScript;
 }
 
 ####################################################################################################################################
@@ -502,7 +512,7 @@ sub containerBuild
                 $strImage = "${strOS}-db-${strDbVersion}-doc";
 
                 # Install SSH key
-                $strScript = sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP);
+                $strScript = sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
                 # Setup sudo
                 $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
@@ -517,7 +527,7 @@ sub containerBuild
             $strImage = "${strOS}-db-${strDbVersion}-test";
 
             # Install SSH key
-            $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP);
+            $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
             # Write the image
             containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
@@ -529,7 +539,7 @@ sub containerBuild
         $strImage = "${strOS}-db-test";
 
         # Install SSH key
-        $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP);
+        $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
         # Write the image
         containerWrite($strTempPath, $strOS, 'Db Synthetic Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
@@ -544,11 +554,11 @@ sub containerBuild
 
         # Install SSH key
         $strScript .=
-            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
+            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
         # Install SSH key
         $strScript .=
-            "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP);
+            "\n\n" . sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
         # Make test user home readable
         $strScript .=
@@ -569,7 +579,7 @@ sub containerBuild
 
         # Install SSH key
         $strScript .=
-            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP);
+            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
         # Write the image
         containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bVmForce,

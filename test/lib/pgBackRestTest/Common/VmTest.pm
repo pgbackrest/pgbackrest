@@ -13,6 +13,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Log;
 use pgBackRest::Db;
 
 ####################################################################################################################################
@@ -24,6 +25,8 @@ use constant VM_DB_DOC                                              => 'db-doc';
     push @EXPORT, qw(VM_DB_DOC);
 use constant VM_DB_MINIMAL                                          => 'db-minimal';
     push @EXPORT, qw(VM_DB_MINIMAL);
+use constant VM_CONTROL_MASTER                                      => 'control-master';
+    push @EXPORT, qw(VM_CONTROL_MASTER);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
 use constant VM_OS                                                  => 'os';
@@ -77,6 +80,7 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:6',
+        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VM_DB =>
@@ -108,6 +112,7 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
+        &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VM_DB =>
@@ -132,6 +137,7 @@ my $oyVm =
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'jessie',
         &VM_IMAGE => 'debian:8',
+        &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VM_DB =>
@@ -188,6 +194,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'trusty',
         &VM_IMAGE => 'ubuntu:14.04',
+        &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VM_DB =>
@@ -219,6 +226,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'xenial',
         &VM_IMAGE => 'ubuntu:16.04',
+        &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VM_DB =>
