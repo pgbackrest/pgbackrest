@@ -766,6 +766,20 @@
                 </execute>
             </execute-list>
         </section>
+
+        <!-- SECTION => RETENTION - AUTOMATION -->
+        <section id="automation">
+            <title>Automation</title>
+
+            <p>Once pgBackRest retention has been configured, backups can be automated with utilities such as cron.</p>
+
+            <p>In the following example, two cron jobs are configured to run; full backups are scheduled for 6:30 AM every Sunday with differential backups scheduled for 6:30 AM Monday through Saturday. If this cron is first implemented mid-week, then pgBackRest will run a full backup the first time the differential job is executed, followed the next day by a differential backup.</p>
+
+            <code-block title="crontab"># m h  dom mon dow   command
+                30 06  *   *   0     pgbackrest --type=full --stanza=db backup
+                30 06  *   *   1-6   pgbackrest --type=diff --stanza=db backup
+            </code-block>
+        </section>
     </section>
 
     <!-- SECTION => RESTORE -->
