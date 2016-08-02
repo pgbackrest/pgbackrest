@@ -106,6 +106,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.05dev" title="UNDER DEVELOPMENT">
             <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added documentation for scheduling backups with cron.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <release-item-contributor-list>

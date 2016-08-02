@@ -467,6 +467,23 @@
             <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section.</p>
         </section>
 
+        <!-- SECTION => QUICKSTART - SCHEDULE BACKUP -->
+        <section id="schedule-backup">
+            <title>Schedule a Backup</title>
+
+            <p>Backups can be scheduled with utilities such as cron.</p>
+
+            <p>In the following example, two cron jobs are configured to run; full backups are scheduled for 6:30 AM every Sunday with differential backups scheduled for 6:30 AM Monday through Saturday. If this crontab is installed for the first time mid-week, then pgBackRest will run a full backup the first time the differential job is executed, followed the next day by a differential backup.</p>
+
+            <code-block title="crontab">
+                #m h   dom mon dow   command
+                30 06  *   *   0     pgbackrest --type=full --stanza=demo backup
+                30 06  *   *   1-6   pgbackrest --type=diff --stanza=demo backup
+            </code-block>
+
+            <p>Once backups are scheduled it's important to configure retention so backups are expired on a regular schedule, see <link section="/retention">Retention</link>.</p>
+        </section>
+
         <!-- SECTION => QUICKSTART - BACKUP INFO -->
         <section id="backup-info" depend="perform-backup">
             <title>Backup Information</title>
