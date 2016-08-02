@@ -104,6 +104,20 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.05dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Moved the backlog from the <backrest/> website to the GitHub repository wiki.</p>
+                    </release-item>
+                 </release-refactor-list>
+            </release-doc-list>
+        </release>
+
          <release date="2016-07-30" version="1.04" title="Various Bug Fixes">
              <release-core-list>
                  <release-bug-list>

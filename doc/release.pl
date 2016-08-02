@@ -140,7 +140,7 @@ eval
         &log(INFO, "Generate Debian/Ubuntu documentation");
 
         executeTest("${strDocExe} --deploy");
-        executeTest("${strDocExe} --deploy --cache-only --out=man --out=html --var=project-url-root=index.html --exclude=backlog");
+        executeTest("${strDocExe} --deploy --cache-only --out=man --out=html --var=project-url-root=index.html");
     }
 
     if ($bDeploy)
@@ -150,7 +150,7 @@ eval
 
         executeTest(
             $strDocExe . ($bDev ? '' : ' --deploy --cache-only') . ' --out=html --var=project-url-root=index.html' .
-            ($bDev ? ' --keyword=default --keyword=dev' :  ' --exclude=backlog --exclude=release'));
+            ($bDev ? ' --keyword=default --keyword=dev' :  ' --exclude=release'));
 
         # Deploy to server
         &log(INFO, '...Deploy to server');

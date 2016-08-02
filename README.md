@@ -80,7 +80,7 @@ pgBackRest strives to be easy to configure and operate:
 
 Contributions to pgBackRest are always welcome!
 
-Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). You may want to check the [Feature Backlog](http://www.pgbackrest.org/backlog.html) to see if your suggestion has already been submitted.
+Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). You may want to check the [Feature Backlog](https://github.com/pgbackrest/pgbackrest/wiki#backlog) to see if your suggestion has already been submitted.
 
 Bug reports should be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). Please provide as much information as possible to aid in determining the cause of the problem.
 
