@@ -342,9 +342,31 @@ sub sectionProcess
         # Add code block
         elsif ($oChild->nameGet() eq 'code-block')
         {
-            $oSectionBodyElement->
-                addNew(HTML_DIV, 'code-block',
-                       {strContent => $oChild->valueGet()});
+            my $strValue = $oChild->valueGet();
+
+            # Trim linefeeds from the beginning and all whitespace from the end
+            $strValue =~ s/^\n+|\s+$//g;
+
+            # Find the line with the fewest leading spaces
+            my $iSpaceMin = undef;
+
+            foreach my $strLine (split("\n", $strValue))
+            {
+                $strLine =~ s/\s+$//;
+
+                my $iSpaceMinTemp = length($strLine) - length(trim($strLine));
+
+                if (!defined($iSpaceMin) || $iSpaceMinTemp < $iSpaceMin)
+                {
+                    $iSpaceMin = $iSpaceMinTemp;
+                }
+            }
+
+            # Replace the leading spaces
+            $strValue =~ s/^( ){$iSpaceMin}//smg;
+
+            $oSectionBodyElement->addNew(
+                HTML_PRE, 'code-block', {strContent => $strValue, bPre => true});
         }
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')

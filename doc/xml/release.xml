@@ -114,6 +114,10 @@
 
                         <p>Moved the backlog from the <backrest/> website to the GitHub repository wiki.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improved rendering of spaces in code blocks.</p>
+                    </release-item>
                  </release-refactor-list>
             </release-doc-list>
         </release>
