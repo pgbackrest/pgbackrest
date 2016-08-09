@@ -37,6 +37,11 @@
             <contributor-id type="github">anarazel</contributor-id>
         </contributor>
 
+        <contributor id="fort.chris">
+            <contributor-name-display>Chris Fort</contributor-name-display>
+            <contributor-id type="github">the1forte</contributor-id>
+        </contributor>
+
         <contributor id="freund.andres">
             <contributor-name-display>Andres Freund</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
@@ -105,6 +110,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.05dev" title="UNDER DEVELOPMENT">
+             <release-core-list>
+                 <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="fort.chris"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where tablespace paths that had $PGDATA as a substring would be identified as a subdirectories of $PGDATA even when they were not.  Also hardened relative path checking a bit.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-feature-list>
                     <release-item>

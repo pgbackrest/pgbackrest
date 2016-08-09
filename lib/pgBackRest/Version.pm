@@ -27,7 +27,7 @@ use constant BACKREST_CONF                                          => BACKREST_
 # Defines the current version of the BackRest executable.  The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_VERSION                                       => '1.04';
+use constant BACKREST_VERSION                                       => '1.05dev';
     push @EXPORT, qw(BACKREST_VERSION);
 
 # Format Format Number

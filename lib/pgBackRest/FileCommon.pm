@@ -738,10 +738,15 @@ sub pathAbsolute
             confess &log(ERROR, "${strBasePath} is not an absolute path", ERROR_PATH_TYPE);
         }
 
-        while (index($strPath, '../') == 0)
+        while (index($strPath, '..') == 0)
         {
             $strBasePath = dirname($strBasePath);
-            $strPath = substr($strPath, 3);
+            $strPath = substr($strPath, 2);
+
+            if (index($strPath, '/') == 0)
+            {
+                $strPath = substr($strPath, 1);
+            }
         }
 
         $strAbsolutePath = "${strBasePath}/${strPath}";

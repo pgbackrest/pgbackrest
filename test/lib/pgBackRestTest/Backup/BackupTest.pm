@@ -1142,6 +1142,46 @@ sub backupTestRun
 
             testPathRemove("${strTblSpcPath}/path");
 
+            # Create a relative link is PGDATA
+            if ($bNeutralTest && !$bRemote)
+            {
+                testLinkCreate("${strTblSpcPath}/99999", '../');
+
+                $oHostBackup->backup(
+                    $strType, 'invalid relative tablespace is ../',
+                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                testFileRemove("${strTblSpcPath}/99999");
+
+                testLinkCreate("${strTblSpcPath}/99999", '..');
+
+                $oHostBackup->backup(
+                    $strType, 'invalid relative tablespace is ..',
+                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                testFileRemove("${strTblSpcPath}/99999");
+
+                testLinkCreate("${strTblSpcPath}/99999", '../../base/');
+
+                $oHostBackup->backup(
+                    $strType, 'invalid relative tablespace is ../../$PGDATA',
+                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                testFileRemove("${strTblSpcPath}/99999");
+
+                testLinkCreate("${strTblSpcPath}/99999", '../../base');
+
+                $oHostBackup->backup(
+                    $strType, 'invalid relative tablespace is ../../$PGDATA',
+                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                testFileRemove("${strTblSpcPath}/99999");
+            }
+
             # Create a relative link in PGDATA
             testLinkCreate("${strTblSpcPath}/99999", '../invalid_tblspc');
 
@@ -1152,8 +1192,20 @@ sub backupTestRun
 
             testFileRemove("${strTblSpcPath}/99999");
 
+            # Create tablespace with same initial dir name as $PGDATA
+            if ($bNeutralTest && !$bRemote)
+            {
+                testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbBasePath() . '_tbs');
+
+                $oHostBackup->backup(
+                    $strType, '$PGDATA is a substring of valid tblspc excluding / (file open err expected)',
+                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_OPEN,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                testFileRemove("${strTblSpcPath}/99999");
+            }
+
             # Create tablespace in PGDATA
-            filePathCreate($oHostDbMaster->dbBasePath() . '/invalid_tblspc');
             testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbBasePath() . '/invalid_tblspc');
 
             $oHostBackup->backup(
@@ -1161,7 +1213,6 @@ sub backupTestRun
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
                     strOptionalParam => '--log-level-console=detail'});
 
-            testPathRemove($oHostDbMaster->dbBasePath() . '/invalid_tblspc');
             testFileRemove("${strTblSpcPath}/99999");
 
             # Incr backup

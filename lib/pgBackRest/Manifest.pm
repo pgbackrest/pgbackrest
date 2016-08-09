@@ -657,10 +657,10 @@ sub build
             }
 
             # Check for tablespaces in PGDATA
-            if (index($oManifestHash{name}{$strName}{link_destination}, $strPath) == 0 ||
+            if (index($oManifestHash{name}{$strName}{link_destination}, "${strPath}/") == 0 ||
                 (index($oManifestHash{name}{$strName}{link_destination}, '/') != 0 &&
                  index(pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
-                       $oManifestHash{name}{$strName}{link_destination}), $strPath) == 0))
+                       $oManifestHash{name}{$strName}{link_destination}) . '/', "${strPath}/") == 0))
             {
                 confess &log(ERROR, 'tablespace symlink ' . $oManifestHash{name}{$strName}{link_destination} .
                              ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);

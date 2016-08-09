@@ -1007,12 +1007,52 @@ incr backup - invalid path in pg_tblspc (db-master host)
  ERROR: [144]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
   INFO: backup stop
 
+incr backup - invalid relative tablespace is ../ (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ ERROR: [146]: tablespace symlink ../ destination must not be in $PGDATA
+  INFO: backup stop
+
+incr backup - invalid relative tablespace is .. (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ ERROR: [146]: tablespace symlink .. destination must not be in $PGDATA
+  INFO: backup stop
+
+incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ ERROR: [146]: tablespace symlink ../../base/ destination must not be in $PGDATA
+  INFO: backup stop
+
+incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ ERROR: [146]: tablespace symlink ../../base destination must not be in $PGDATA
+  INFO: backup stop
+
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [146]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
+  INFO: backup stop
+
+incr backup - $PGDATA is a substring of valid tblspc excluding / (file open err expected) (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+  INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+  INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+ ERROR: [116]: unable to read [TEST_PATH]/db-master/db/base_tbs: No such file or directory
   INFO: backup stop
 
 incr backup - invalid tablespace in $PGDATA (db-master host)
