@@ -21,13 +21,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_PROTOCOL_COMMON_MINION                              => 'Protocol::CommonMinion';
-
-use constant OP_PROTOCOL_COMMON_MINION_NEW                          => OP_PROTOCOL_COMMON_MINION . "->new";
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -47,7 +40,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_COMMON_MINION_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strName'},
             {name => 'strCommand'},
             {name => 'iBufferMax'},
@@ -68,7 +61,12 @@ sub new
     # Write the greeting so master process knows who we are
     $self->greetingWrite();
 
-    return $self;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'self', value => $self}
+    );
 }
 
 ####################################################################################################################################

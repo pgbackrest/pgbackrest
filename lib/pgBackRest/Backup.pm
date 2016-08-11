@@ -33,18 +33,6 @@ use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_BACKUP                                              => 'Backup';
-
-use constant OP_BACKUP_DESTROY                                      => OP_BACKUP . '->DESTROY';
-use constant OP_BACKUP_FILE_NOT_IN_MANIFEST                         => OP_BACKUP . '->fileNotInManifest';
-use constant OP_BACKUP_NEW                                          => OP_BACKUP . '->new';
-use constant OP_BACKUP_PROCESS                                      => OP_BACKUP . '->process';
-use constant OP_BACKUP_PROCESS_MANIFEST                             => OP_BACKUP . '->processManifest';
-use constant OP_BACKUP_TMP_CLEAN                                    => OP_BACKUP . '->tmpClean';
-
-####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -56,7 +44,7 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_BACKUP_NEW);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize protocol
     $self->{oProtocol} = protocolGet();
@@ -89,23 +77,13 @@ sub DESTROY
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_BACKUP_DESTROY
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
 
     undef($self->{oFile});
     undef($self->{oDb});
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -127,7 +105,7 @@ sub fileNotInManifest
     ) =
         logDebugParam
         (
-            OP_BACKUP_FILE_NOT_IN_MANIFEST, \@_,
+            __PACKAGE__ . '->fileNotInManifest', \@_,
             {name => 'strPathType', trace => true},
             {name => 'oManifest', trace => true},
             {name => 'oAbortedManifest', trace => true}
@@ -224,7 +202,7 @@ sub tmpClean
     ) =
         logDebugParam
     (
-        OP_BACKUP_TMP_CLEAN, \@_,
+        __PACKAGE__ . '->tmpClean', \@_,
         {name => 'oManifest', trace => true},
         {name => 'oAbortedManifest', trace => true}
     );
@@ -255,10 +233,7 @@ sub tmpClean
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -283,7 +258,7 @@ sub processManifest
     ) =
         logDebugParam
     (
-        OP_BACKUP_PROCESS_MANIFEST, \@_,
+        __PACKAGE__ . '->processManifest', \@_,
         {name => 'strDbPath'},
         {name => 'strType'},
         {name => 'bCompress'},
@@ -552,14 +527,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_BACKUP_PROCESS
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     # Record timestamp start
     my $lTimestampStart = time();
@@ -977,10 +945,7 @@ sub process
     $oBackupInfo->add($oBackupManifest);
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 1;

@@ -23,13 +23,6 @@ use pgBackRest::Version;
 ####################################################################################################################################
 # Operation constants
 ####################################################################################################################################
-use constant OP_PROTOCOL_COMMON                                     => 'Protocol::Common';
-
-use constant OP_PROTOCOL_COMMON_NEW                                 => OP_PROTOCOL_COMMON . "->new";
-
-####################################################################################################################################
-# Operation constants
-####################################################################################################################################
 use constant OP_NOOP                                                => 'noop';
     push @EXPORT, qw(OP_NOOP);
 use constant OP_EXIT                                                => 'exit';
@@ -57,7 +50,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_COMMON_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'iBufferMax', trace => true},
             {name => 'iCompressLevel', trace => true},
             {name => 'iCompressNetworkLevel', trace => true},

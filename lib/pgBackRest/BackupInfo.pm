@@ -24,19 +24,6 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_BACKUP_INFO                                         => 'BackupInfo';
-
-use constant OP_INFO_BACKUP_ADD                                     => OP_BACKUP_INFO . "->add";
-use constant OP_INFO_BACKUP_CHECK                                   => OP_BACKUP_INFO . "->check";
-use constant OP_INFO_BACKUP_CURRENT                                 => OP_BACKUP_INFO . "->current";
-use constant OP_INFO_BACKUP_DELETE                                  => OP_BACKUP_INFO . "->delete";
-use constant OP_INFO_BACKUP_LAST                                    => OP_BACKUP_INFO . "->last";
-use constant OP_INFO_BACKUP_LIST                                    => OP_BACKUP_INFO . "->list";
-use constant OP_INFO_BACKUP_NEW                                     => OP_BACKUP_INFO . "->new";
-
-####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
 use constant FILE_BACKUP_INFO                                       => 'backup.info';
@@ -121,7 +108,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strBackupClusterPath'},
             {name => 'bValidate', default => true}
         );
@@ -160,14 +147,7 @@ sub validate
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-    ) =
-        logDebugParam
-        (
-            OP_INFO_BACKUP_NEW
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->validate');
 
     # Check for backups that are not in FILE_BACKUP_INFO
     my $strPattern = backupRegExpGet(true, true, true);
@@ -231,7 +211,7 @@ sub check
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_CHECK, \@_,
+            __PACKAGE__ . '->check', \@_,
             {name => 'strDbVersion', trace => true},
             {name => 'iControlVersion', trace => true},
             {name => 'iCatalogVersion', trace => true},
@@ -305,7 +285,7 @@ sub add
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_ADD, \@_,
+            __PACKAGE__ . '->add', \@_,
             {name => 'oBackupManifest', trace => true}
         );
 
@@ -419,7 +399,7 @@ sub current
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_CURRENT, \@_,
+            __PACKAGE__ . '->current', \@_,
             {name => 'strBackup'}
         );
 
@@ -449,7 +429,7 @@ sub list
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_LIST, \@_,
+            __PACKAGE__ . '->list', \@_,
             {name => 'strFilter', required => false},
             {name => 'strOrder', default => 'forward'}
         );
@@ -499,7 +479,7 @@ sub last
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_LAST, \@_,
+            __PACKAGE__ . '->last', \@_,
             {name => 'strType'}
         );
 
@@ -531,7 +511,7 @@ sub delete
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_DELETE, \@_,
+            __PACKAGE__ . '->delete', \@_,
             {name => 'strBackupLabel'}
         );
 

@@ -22,15 +22,6 @@ use pgBackRest::Version;
 use pgBackRestTest::Common::ExecuteTest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_LOG_TEST                                            => 'LogTest';
-
-use constant OP_LOG_TEST_LOG_ADD                                    => OP_LOG_TEST . "->logAdd";
-use constant OP_LOG_TEST_LOG_WRITE                                  => OP_LOG_TEST . "->logWrite";
-use constant OP_LOG_TEST_NEW                                        => OP_LOG_TEST . "->new";
-
-####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -56,7 +47,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_LOG_TEST_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strModule', trace => true},
             {name => 'strTest', trace => true},
             {name => 'iRun', trace => true},
@@ -100,7 +91,7 @@ sub logAdd
     ) =
         logDebugParam
         (
-            OP_LOG_TEST_LOG_ADD, \@_,
+            __PACKAGE__ . '->logAdd', \@_,
             {name => 'strCommand', trace => true},
             {name => 'strComment', required => false, trace => true},
             {name => 'strLog', required => false, trace => true}
@@ -185,7 +176,7 @@ sub logWrite
     ) =
         logDebugParam
         (
-            OP_LOG_TEST_LOG_WRITE, \@_,
+            __PACKAGE__ . '->logWrite', \@_,
             {name => 'strBasePath', trace => true},
             {name => 'strTestPath', trace => true},
             {name => 'strFileName',

@@ -5,13 +5,13 @@ run 006 - rmt 1, cmp 1, error connect
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --config-remote=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --no-fork --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 asynchronously
- DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+ DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000001, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
  DEBUG:     Archive->pushProcess: start async archive-push
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
@@ -34,22 +34,22 @@ run 006 - rmt 1, cmp 1, error connect
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db --backup-host=bogus archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=bogus --backup-user=backrest --cmd-remote=[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --config-remote=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --no-fork --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 asynchronously
- DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+ DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000002, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
  DEBUG:     Archive->pushProcess: start async archive-push
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
@@ -57,21 +57,21 @@ run 006 - rmt 1, cmp 1, error connect
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote, strHost = bogus, strUser = [USER-1]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@bogus '[BACKREST-BIN] --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = bogus, strName = remote
  ERROR: [124]: remote process terminated on bogus host (exit status 255): [REMOTE-PROCESS-TERMINATED-MESSAGE]
- DEBUG:     Exit::exitSafe(): iExitCode = 124, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 124, strSignal = [undef]
   INFO: archive-push stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db --backup-host=bogus archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=bogus --backup-user=backrest --cmd-remote=[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --config-remote=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --no-fork --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003 asynchronously
- DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
+ DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000003, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
  DEBUG:     Archive->pushProcess: start async archive-push
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
@@ -80,29 +80,29 @@ run 006 - rmt 1, cmp 1, error connect
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@bogus '[BACKREST-BIN] --command=archive-push --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db remote', strId = bogus, strName = remote
  ERROR: [124]: remote process terminated on bogus host (exit status 255): [REMOTE-PROCESS-TERMINATED-MESSAGE]
  ERROR: local archive queue has exceeded limit of 24MB - WAL segments will be discarded until the stop file ([TEST_PATH]/db-master/spool/stop/db-archive.stop) is removed
- DEBUG:     Exit::exitSafe(): iExitCode = 124, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 124, strSignal = [undef]
   INFO: archive-push stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --config-remote=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --no-fork --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
  ERROR: discarding 000000010000000100000004 due to the archive store max size exceeded - remove the archive stop file ([TEST_PATH]/db-master/spool/stop/db-archive.stop) to resume archiving and be sure to take a new backup as soon as possible
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --config-remote=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --no-fork --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005 asynchronously
- DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
+ DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000005, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
  DEBUG:     Archive->pushProcess: start async archive-push
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
@@ -137,22 +137,22 @@ run 006 - rmt 1, cmp 1, error connect
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-max-mb=24 --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: archive-push start: --archive-async --archive-max-mb=24 --backup-host=backup --backup-user=backrest --cmd-remote=[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --config-remote=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --no-fork --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006 asynchronously
- DEBUG:     Archive->pushProcess(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
+ DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000006, strDestinationPathType = backup:archive:out, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
  DEBUG:     Archive->pushProcess: start async archive-push
- DEBUG:     Common:::Lock::lockAquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
- DEBUG:     Common:::Lock::lockAquire=>: bResult = true
+ DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+ DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRemote = none, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
@@ -175,7 +175,7 @@ run 006 - rmt 1, cmp 1, error connect
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-push stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false

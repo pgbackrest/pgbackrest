@@ -26,26 +26,16 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
+# Remote operation constants
 ####################################################################################################################################
 use constant OP_ARCHIVE                                             => 'Archive';
 
-use constant OP_ARCHIVE_GET                                         => OP_ARCHIVE . '->get';
 use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => OP_ARCHIVE . '->getArchiveId';
     push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
 use constant OP_ARCHIVE_GET_CHECK                                   => OP_ARCHIVE . '->getCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
-use constant OP_ARCHIVE_GET_PROCESS                                 => OP_ARCHIVE . '->getProcess';
-use constant OP_ARCHIVE_NEW                                         => OP_ARCHIVE . '->new';
-use constant OP_ARCHIVE_PROCESS                                     => OP_ARCHIVE . '->process';
-use constant OP_ARCHIVE_PUSH                                        => OP_ARCHIVE . '->pushProcess';
 use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
-use constant OP_ARCHIVE_PUSH_PROCESS                                => OP_ARCHIVE . '->pushProcess';
-use constant OP_ARCHIVE_RANGE                                       => OP_ARCHIVE . '->range';
-use constant OP_ARCHIVE_WAL_FILE_NAME                               => OP_ARCHIVE . '->walFileName';
-use constant OP_ARCHIVE_WAL_INFO                                    => OP_ARCHIVE . '->walInfo';
-use constant OP_ARCHIVE_XFER                                        => OP_ARCHIVE . '->xfer';
 
 ####################################################################################################################################
 # PostgreSQL WAL magic
@@ -77,14 +67,7 @@ sub new
     my $class = shift;          # Class name
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_ARCHIVE_NEW
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Create the class hash
     my $self = {};
@@ -108,14 +91,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_ARCHIVE_PROCESS
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     my $iResult;
 
@@ -151,14 +127,7 @@ sub getProcess
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_ARCHIVE_GET_PROCESS
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getProcess');
 
     # Make sure the archive file is defined
     if (!defined($ARGV[1]))
@@ -205,7 +174,7 @@ sub walFileName
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_WAL_FILE_NAME, \@_,
+            __PACKAGE__ . '->walFileName', \@_,
             {name => 'oFile'},
             {name => 'strArchiveId'},
             {name => 'strWalSegment'},
@@ -284,7 +253,7 @@ sub walInfo
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_WAL_INFO, \@_,
+            __PACKAGE__ . '->walInfo', \@_,
             {name => 'strWalFile'}
         );
 
@@ -372,7 +341,7 @@ sub get
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_GET, \@_,
+            __PACKAGE__ . '->get', \@_,
             {name => 'strSourceArchive'},
             {name => 'strDestinationFile'}
         );
@@ -455,7 +424,7 @@ sub getCheck
     ) =
         logDebugParam
     (
-        OP_ARCHIVE_GET_CHECK, \@_,
+        __PACKAGE__ . '->getCheck', \@_,
         {name => 'oFile'},
         {name => 'strDbVersion', required => false},
         {name => 'ullDbSysId', required => false}
@@ -510,14 +479,7 @@ sub getArchiveId
     my $oFile = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_ARCHIVE_GET_ARCHIVE_ID
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getArchiveId');
 
     my $strArchiveId;
 
@@ -546,14 +508,7 @@ sub pushProcess
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_ARCHIVE_PUSH_PROCESS
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->pushProcess');
 
     # Make sure the archive push command happens on the db side
     if (optionRemoteTypeTest(DB))
@@ -673,7 +628,7 @@ sub push
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_PUSH, \@_,
+            __PACKAGE__ . '->push', \@_,
             {name => 'strSourceFile'},
             {name => 'bAsync'}
         );
@@ -779,7 +734,7 @@ sub pushCheck
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_PUSH_CHECK, \@_,
+            __PACKAGE__ . '->pushCheck', \@_,
             {name => 'oFile'},
             {name => 'strWalSegment'},
             {name => 'bPartial'},
@@ -870,7 +825,7 @@ sub xfer
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_XFER, \@_,
+            __PACKAGE__ . '->xfer', \@_,
             {name => 'strArchivePath'},
             {name => 'strStopFile'}
         );
@@ -1071,7 +1026,7 @@ sub range
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_RANGE, \@_,
+            __PACKAGE__ . '->', \@_,
             {name => 'strArchiveStart'},
             {name => 'strArchiveStop'},
             {name => 'bSkipFF', default => false}

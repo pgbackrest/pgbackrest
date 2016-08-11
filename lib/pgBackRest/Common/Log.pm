@@ -240,6 +240,9 @@ sub logDebugProcess
     # Process each parameter hash
     my $oParam = shift;
 
+    # Strip the package name off strFunction if it's pgBackRest
+    $strFunction =~ s/^pgBackRest[^\:]*\:\://;
+
     while (defined($oParam))
     {
         my $strParamName = $$oParam{name};

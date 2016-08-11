@@ -22,14 +22,6 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_BACKUP_FILE                                         => 'BackupFile';
-
-use constant OP_BACKUP_FILE_BACKUP_FILE                             => OP_BACKUP_FILE . '::backupFile';
-use constant OP_BACKUP_FILE_BACKUP_MANIFEST_UPDATE                  => OP_BACKUP_FILE . '::backupManifestUpdate';
-
-####################################################################################################################################
 # backupFile
 ####################################################################################################################################
 sub backupFile
@@ -50,7 +42,7 @@ sub backupFile
     ) =
         logDebugParam
         (
-            OP_BACKUP_FILE_BACKUP_FILE, \@_,
+            __PACKAGE__ . '::backupFile', \@_,
             {name => 'oFile', trace => true},
             {name => 'strDbFile', trace => true},
             {name => 'strRepoFile', trace => true},
@@ -162,7 +154,7 @@ sub backupManifestUpdate
     ) =
         logDebugParam
         (
-            OP_BACKUP_FILE_BACKUP_MANIFEST_UPDATE, \@_,
+            __PACKAGE__ . '::backupManifestUpdate', \@_,
             {name => 'oManifest', trace => true},
             {name => 'strFile', trace => true},
             {name => 'bCopied', trace => true},

@@ -25,23 +25,14 @@ use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Operation constants
+# Remote operation constants
 ####################################################################################################################################
 use constant OP_DB                                                  => 'Db';
 
-use constant OP_DB_NEW                                              => OP_DB . "->new";
-use constant OP_DB_BACKUP_START                                     => OP_DB . "->backupStart";
-use constant OP_DB_BACKUP_STOP                                      => OP_DB . "->backupStop";
-use constant OP_DB_DESTROY                                          => OP_DB . "->DESTROY";
-use constant OP_DB_EXECUTE_SQL                                      => OP_DB . "->executeSql";
+use constant OP_DB_EXECUTE_SQL                                      => OP_DB . '->executeSql';
     push @EXPORT, qw(OP_DB_EXECUTE_SQL);
-use constant OP_DB_EXECUTE_SQL_ONE                                  => OP_DB . "->executeSqlOne";
-use constant OP_DB_EXECUTE_SQL_ROW                                  => OP_DB . "->executeSqlRow";
-use constant OP_DB_INFO                                             => OP_DB . "->info";
+use constant OP_DB_INFO                                             => OP_DB . '->info';
     push @EXPORT, qw(OP_DB_INFO);
-use constant OP_DB_TABLESPACE_MAP_GET                               => OP_DB . "->tablespaceMapGet";
-use constant OP_DB_VERSION_GET                                      => OP_DB . "->versionGet";
-use constant OP_DB_VERSION_SUPPORT                                  => OP_DB . "->versionSupport";
 
 ####################################################################################################################################
 # Backup advisory lock
@@ -113,13 +104,7 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    (
-        my $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_DB_NEW
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -137,14 +122,7 @@ sub DESTROY
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_DB_DESTROY
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
 
     if (defined($self->{hDb}))
     {
@@ -153,10 +131,7 @@ sub DESTROY
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -167,14 +142,7 @@ sub DESTROY
 sub versionSupport
 {
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_DB_VERSION_SUPPORT
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->versionSupport');
 
     my @strySupportVersion = (PG_VERSION_83, PG_VERSION_84, PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93,
                               PG_VERSION_94, PG_VERSION_95, PG_VERSION_96);
@@ -205,7 +173,7 @@ sub executeSql
     ) =
         logDebugParam
         (
-            OP_DB_EXECUTE_SQL, \@_,
+            __PACKAGE__ . '->executeSql', \@_,
             {name => 'strSql'},
             {name => 'bIgnoreError', default => false}
         );
@@ -356,7 +324,7 @@ sub executeSqlRow
     ) =
         logDebugParam
         (
-            OP_DB_EXECUTE_SQL_ROW, \@_,
+            __PACKAGE__ . '->executeSqlRow', \@_,
             {name => 'strSql', trace => true}
         );
 
@@ -386,7 +354,7 @@ sub executeSqlOne
     ) =
         logDebugParam
         (
-            OP_DB_EXECUTE_SQL_ONE, \@_,
+            __PACKAGE__ . '->executeSqlOne', \@_,
             {name => 'strSql', trace => true}
         );
 
@@ -408,14 +376,7 @@ sub tablespaceMapGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_DB_TABLESPACE_MAP_GET
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->tablespaceMapGet');
 
     dataHashBuild(my $oTablespaceMapRef = {}, "oid\tname\n" . $self->executeSql(
                   'select oid, spcname from pg_tablespace'), "\t");
@@ -467,7 +428,7 @@ sub info
     ) =
         logDebugParam
         (
-            OP_DB_INFO, \@_,
+            __PACKAGE__ . '->info', \@_,
             {name => 'oFile'},
             {name => 'strDbPath'}
         );
@@ -569,14 +530,7 @@ sub versionGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_DB_VERSION_GET
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->versionGet');
 
     # Get data from the cache if possible
     if (defined($self->{strDbVersion}) && defined($self->{strDbPath}))
@@ -623,7 +577,7 @@ sub backupStart
     ) =
         logDebugParam
         (
-            OP_DB_BACKUP_START, \@_,
+            __PACKAGE__ . '->backupStart', \@_,
             {name => 'oFile'},
             {name => 'strDbPath'},
             {name => 'strLabel'},
@@ -699,14 +653,7 @@ sub backupStop
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_DB_BACKUP_STOP
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->backupStop');
 
     # Stop the backup
     &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .

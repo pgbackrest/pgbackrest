@@ -22,16 +22,6 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Protocol::IO;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_EXECUTE_TEST                                        => 'ExecuteTest';
-
-use constant OP_EXECUTE_TEST_BEGIN                                  => OP_EXECUTE_TEST . "->begin";
-use constant OP_EXECUTE_TEST_END                                    => OP_EXECUTE_TEST . "->end";
-use constant OP_EXECUTE_TEST_END_RETRY                              => OP_EXECUTE_TEST . "->endRetry";
-use constant OP_EXECUTE_TEST_NEW                                    => OP_EXECUTE_TEST . "->new";
-
-####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -50,7 +40,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_EXECUTE_TEST_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strCommand'},
             {name => 'oParam', required => false}
         );
@@ -85,7 +75,7 @@ sub begin
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    logDebugParam(OP_EXECUTE_TEST_BEGIN);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->begin');
 
     $self->{strErrorLog} = '';
     $self->{strOutLog} = '';
@@ -114,6 +104,8 @@ sub begin
     {
         confess 'STDERR handle is undefined';
     }
+
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -132,7 +124,7 @@ sub endRetry
     ) =
         logDebugParam
         (
-            OP_EXECUTE_TEST_END_RETRY, \@_,
+            __PACKAGE__ . '->endRetry', \@_,
             {name => 'strTest', required => false, trace => true},
             {name => 'bWait', required => false, default => true, trace => true}
         );
@@ -262,7 +254,12 @@ sub endRetry
         confess &log(ASSERT, "test point ${strTest} was not found");
     }
 
-    return $iExitStatus;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iExitStatus', value => $iExitStatus, trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -281,7 +278,7 @@ sub end
     ) =
         logDebugParam
         (
-            OP_EXECUTE_TEST_END, \@_,
+            __PACKAGE__ . '->end', \@_,
             {name => 'strTest', required => false, trace => true},
             {name => 'bWait', required => false, default => true, trace => true}
         );
@@ -318,7 +315,12 @@ sub end
         }
     }
 
-    return $iExitStatus;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iExitStatus', value => $iExitStatus, trace => true}
+    );
 }
 
 ####################################################################################################################################

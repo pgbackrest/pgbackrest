@@ -22,15 +22,6 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_MANIFEST                                            => 'Manifest';
-
-use constant OP_MANIFEST_BUILD                                      => OP_MANIFEST . '->build';
-use constant OP_MANIFEST_NEW                                        => OP_MANIFEST . '->new';
-use constant OP_MANIFEST_SAVE                                       => OP_MANIFEST . '->save';
-
-####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
 use constant PATH_BACKUP_HISTORY                                    => 'backup.history';
@@ -221,7 +212,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_MANIFEST_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strFileName', trace => true},
             {name => 'bLoad', required => false, trace => true}
         );
@@ -250,25 +241,14 @@ sub save
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-    ) =
-        logDebugParam
-        (
-            OP_MANIFEST_SAVE
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->save');
 
     # Call inherited save
     $self->SUPER::save();
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
-
 
 ####################################################################################################################################
 # get
@@ -503,7 +483,7 @@ sub build
     ) =
         logDebugParam
         (
-            OP_MANIFEST_BUILD, \@_,
+            __PACKAGE__ . '->build', \@_,
             {name => 'oFile'},
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
@@ -837,7 +817,7 @@ sub linkCheck
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_MANIFEST . '->linkCheck');
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->linkCheck');
 
     # Working variable
     my $strBasePath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
@@ -933,7 +913,7 @@ sub buildDefault
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_MANIFEST . '->buildDefault');
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->buildDefault');
 
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)

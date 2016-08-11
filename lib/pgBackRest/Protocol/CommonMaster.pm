@@ -21,15 +21,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_PROTOCOL_COMMON_MASTER                              => 'Protocol::CommonMaster';
-
-use constant OP_PROTOCOL_COMMON_MASTER_NEW                          => OP_PROTOCOL_COMMON_MASTER . "->new";
-use constant OP_PROTOCOL_COMMON_MASTER_COMMAND_WRITE                => OP_PROTOCOL_COMMON_MASTER . "->commandWrite";
-use constant OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ                  => OP_PROTOCOL_COMMON_MASTER . "->outputRead";
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -50,7 +41,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_COMMON_MASTER_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strName'},
             {name => 'strId'},
             {name => 'strCommand'},
@@ -196,7 +187,7 @@ sub outputRead
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_COMMON_MASTER_OUTPUT_READ, \@_,
+            __PACKAGE__ . '->outputRead', \@_,
             {name => 'bOutputRequired', default => false, trace => true},
             {name => 'bSuppressLog', required => false, trace => true}
         );
@@ -295,7 +286,7 @@ sub cmdWrite
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_COMMON_MASTER_COMMAND_WRITE, \@_,
+            __PACKAGE__ . '->cmdWrite', \@_,
             {name => 'strCommand', trace => true},
             {name => 'oParamRef', required => false, trace => true}
         );

@@ -22,13 +22,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::CommonMinion;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_PROTOCOL_REMOTE_MINION                              => 'Protocol::RemoteMinion';
-
-use constant OP_PROTOCOL_REMOTE_MINION_NEW                          => OP_PROTOCOL_REMOTE_MINION . "->new";
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -47,7 +40,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_REMOTE_MINION_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strCommand'},
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},

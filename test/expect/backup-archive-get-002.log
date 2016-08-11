@@ -14,9 +14,9 @@ run 002 - rmt 0, cmp 0, exists 1
  ERROR: [130]: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
- DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -52,9 +52,9 @@ db-version="9.3"
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -75,9 +75,9 @@ db-version="9.3"
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -98,6 +98,6 @@ db-version="9.3"
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false

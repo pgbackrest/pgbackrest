@@ -26,15 +26,6 @@ use pgBackRest::File;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_ARCHIVE_INFO                                        => 'ArchiveInfo';
-
-use constant OP_ARCHIVE_INFO_ARCHIVE_ID                             => OP_ARCHIVE_INFO . "->archiveId";
-use constant OP_ARCHIVE_INFO_CHECK                                  => OP_ARCHIVE_INFO . "->check";
-use constant OP_ARCHIVE_INFO_NEW                                    => OP_ARCHIVE_INFO . "->new";
-
-####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
 use constant ARCHIVE_INFO_FILE                                      => 'archive.info';
@@ -71,7 +62,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_INFO_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
             {name => 'bRequired', default => false}
         );
@@ -121,7 +112,7 @@ sub check
     ) =
         logDebugParam
         (
-            OP_ARCHIVE_INFO_CHECK, \@_,
+            __PACKAGE__ . '->check', \@_,
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'}
         );
@@ -192,14 +183,7 @@ sub archiveId
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_ARCHIVE_INFO_ARCHIVE_ID
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->archiveId');
 
     # Return from function and log return values if any
     return logDebugReturn

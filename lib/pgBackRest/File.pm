@@ -26,38 +26,24 @@ use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
+# Remote operation constants
 ####################################################################################################################################
 use constant OP_FILE                                                => 'File';
 
-use constant OP_FILE_CLONE                                          => OP_FILE . '->clone';
-use constant OP_FILE_COMPRESS                                       => OP_FILE . '->compress';
 use constant OP_FILE_COPY                                           => OP_FILE . '->copy';
     push @EXPORT, qw(OP_FILE_COPY);
 use constant OP_FILE_COPY_IN                                        => OP_FILE . '->copyIn';
     push @EXPORT, qw(OP_FILE_COPY_IN);
 use constant OP_FILE_COPY_OUT                                       => OP_FILE . '->copyOut';
     push @EXPORT, qw(OP_FILE_COPY_OUT);
-use constant OP_FILE_DESTROY                                        => OP_FILE . '->DESTROY';
 use constant OP_FILE_EXISTS                                         => OP_FILE . '->exists';
     push @EXPORT, qw(OP_FILE_EXISTS);
-use constant OP_FILE_HASH                                           => OP_FILE . '->hash';
-use constant OP_FILE_HASH_SIZE                                      => OP_FILE . '->hashSize';
-use constant OP_FILE_LINK_CREATE                                    => OP_FILE . '->linkCreate';
 use constant OP_FILE_LIST                                           => OP_FILE . '->list';
     push @EXPORT, qw(OP_FILE_LIST);
 use constant OP_FILE_MANIFEST                                       => OP_FILE . '->manifest';
     push @EXPORT, qw(OP_FILE_MANIFEST);
-use constant OP_FILE_MANIFEST_RECURSE                               => OP_FILE . '->manifestRecurse';
-use constant OP_FILE_MOVE                                           => OP_FILE . '->move';
-use constant OP_FILE_NEW                                            => OP_FILE . '->new';
-use constant OP_FILE_OWNER                                          => OP_FILE . '->owner';
 use constant OP_FILE_PATH_CREATE                                    => OP_FILE . '->pathCreate';
     push @EXPORT, qw(OP_FILE_PATH_CREATE);
-use constant OP_FILE_PATH_GET                                       => OP_FILE . '->pathGet';
-use constant OP_FILE_PATH_TYPE_GET                                  => OP_FILE . '->pathTypeGet';
-use constant OP_FILE_REMOVE                                         => OP_FILE . '->remove';
-use constant OP_FILE_STANZA                                         => OP_FILE . '->stanza';
 use constant OP_FILE_WAIT                                           => OP_FILE . '->wait';
     push @EXPORT, qw(OP_FILE_WAIT);
 
@@ -129,7 +115,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_FILE_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strStanza', required => false},
             {name => 'strBackupPath'},
             {name => 'strRemote', required => false},
@@ -175,14 +161,7 @@ sub DESTROY
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_FILE_DESTROY
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
 
     if (defined($self->{oProtocol}))
     {
@@ -190,10 +169,7 @@ sub DESTROY
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -211,7 +187,7 @@ sub clone
     ) =
         logDebugParam
     (
-        OP_FILE_CLONE, \@_,
+        __PACKAGE__ . '->clone', \@_,
         {name => 'iThreadidx', required => false}
     );
 
@@ -240,14 +216,7 @@ sub stanza
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-    (
-        OP_FILE_STANZA
-    );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanza');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -272,7 +241,7 @@ sub pathTypeGet
     ) =
         logDebugParam
     (
-        OP_FILE_PATH_TYPE_GET, \@_,
+        __PACKAGE__ . '->pathTypeGet', \@_,
         {name => 'strType', trace => true}
     );
 
@@ -325,7 +294,7 @@ sub pathGet
     ) =
         logDebugParam
     (
-        OP_FILE_PATH_GET, \@_,
+        __PACKAGE__ . '->pathGet', \@_,
         {name => 'strType', trace => true},
         {name => 'strFile', required => false, trace => true},
         {name => 'bTemp', default => false, trace => true}
@@ -466,7 +435,7 @@ sub isRemote
     ) =
         logDebugParam
     (
-        OP_FILE_CLONE, \@_,
+        __PACKAGE__ . '->isRemote', \@_,
         {name => 'strPathType', trace => true}
     );
 
@@ -501,7 +470,7 @@ sub linkCreate
     ) =
         logDebugParam
         (
-            OP_FILE_LINK_CREATE, \@_,
+            __PACKAGE__ . '->linkCreate', \@_,
             {name => 'strSourcePathType'},
             {name => 'strSourceFile'},
             {name => 'strDestinationPathType'},
@@ -524,7 +493,7 @@ sub linkCreate
     # Run remotely
     if ($self->isRemote($strSourcePathType))
     {
-        confess &log(ASSERT, 'remote operation not supported');
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
     # Run locally
     else
@@ -583,10 +552,7 @@ sub linkCreate
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -610,7 +576,7 @@ sub move
     ) =
         logDebugParam
         (
-            OP_FILE_MOVE, \@_,
+            __PACKAGE__ . '->move', \@_,
             {name => 'strSourcePathType'},
             {name => 'strSourceFile', required => false},
             {name => 'strDestinationPathType'},
@@ -631,7 +597,7 @@ sub move
     # Run remotely
     if ($self->isRemote($strSourcePathType))
     {
-        confess &log(ASSERT, 'remote operation not supported');
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
     # Run locally
     else
@@ -663,7 +629,7 @@ sub compress
     ) =
         logDebugParam
         (
-            OP_FILE_COMPRESS, \@_,
+            __PACKAGE__ . '->compress', \@_,
             {name => 'strPathType'},
             {name => 'strFile'},
             {name => 'bRemoveSource', default => true}
@@ -675,7 +641,7 @@ sub compress
     # Run remotely
     if ($self->isRemote($strPathType))
     {
-        confess &log(ASSERT, 'remote operation not supported');
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
     # Run locally
     else
@@ -718,7 +684,7 @@ sub pathCreate
     ) =
         logDebugParam
         (
-            OP_FILE_PATH_CREATE, \@_,
+            __PACKAGE__ . '->pathCreate', \@_,
             {name => 'strPathType'},
             {name => 'strPath', required => false},
             {name => 'strMode', default => '0750'},
@@ -776,7 +742,7 @@ sub exists
     ) =
         logDebugParam
         (
-            OP_FILE_EXISTS, \@_,
+            __PACKAGE__ . '->exists', \@_,
             {name => 'strPathType'},
             {name => 'strPath', required => false}
         );
@@ -794,7 +760,7 @@ sub exists
         $oParamHash{path} = $strPathOp;
 
         # Execute the command
-        $bExists = $self->{oProtocol}->cmdExecute($strOperation, \%oParamHash, true) eq 'Y' ? true : false;
+        $bExists = $self->{oProtocol}->cmdExecute(OP_FILE_EXISTS, \%oParamHash, true) eq 'Y' ? true : false;
     }
     # Run locally
     else
@@ -828,7 +794,7 @@ sub remove
     ) =
         logDebugParam
         (
-            OP_FILE_REMOVE, \@_,
+            __PACKAGE__ . '->remove', \@_,
             {name => 'strPathType'},
             {name => 'strPath'},
             {name => 'bTemp', required => false},
@@ -842,7 +808,7 @@ sub remove
     # Run remotely
     if ($self->isRemote($strPathType))
     {
-        confess &log(ASSERT, OP_FILE_REMOVE . ": remote operation not supported");
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
     # Run locally
     else
@@ -876,7 +842,7 @@ sub hash
     ) =
         logDebugParam
         (
-            OP_FILE_HASH, \@_,
+            __PACKAGE__ . '->hash', \@_,
             {name => 'strPathType'},
             {name => 'strFile'},
             {name => 'bCompressed', required => false},
@@ -911,7 +877,7 @@ sub hashSize
     ) =
         logDebugParam
         (
-            OP_FILE_HASH_SIZE, \@_,
+            __PACKAGE__ . '->hashSize', \@_,
             {name => 'strPathType'},
             {name => 'strFile'},
             {name => 'bCompressed', default => false},
@@ -925,7 +891,7 @@ sub hashSize
 
     if ($self->isRemote($strPathType))
     {
-        confess &log(ASSERT, OP_FILE_HASH_SIZE . ": remote operation not supported");
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
     else
     {
@@ -959,7 +925,7 @@ sub owner
     ) =
         logDebugParam
         (
-            OP_FILE_OWNER, \@_,
+            __PACKAGE__ . '->owner', \@_,
             {name => 'strPathType'},
             {name => 'strFile'},
             {name => 'strUser'},
@@ -971,7 +937,7 @@ sub owner
 
     if ($self->isRemote($strPathType))
     {
-        confess &log(ASSERT, OP_FILE_OWNER . ": remote operation not supported");
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
     else
     {
@@ -1037,7 +1003,7 @@ sub list
     ) =
         logDebugParam
         (
-            OP_FILE_LIST, \@_,
+            __PACKAGE__ . '->list', \@_,
             {name => 'strPathType'},
             {name => 'strPath', required => false},
             {name => 'strExpression', required => false},
@@ -1107,7 +1073,7 @@ sub wait
     ) =
         logDebugParam
         (
-            OP_FILE_WAIT, \@_,
+            __PACKAGE__ . '->wait', \@_,
             {name => 'strPathType'},
             {name => 'bWait', default => true}
         );
@@ -1160,7 +1126,7 @@ sub manifest
     ) =
         logDebugParam
         (
-            OP_FILE_MANIFEST, \@_,
+            __PACKAGE__ . '->manifest', \@_,
             {name => 'strPathType'},
             {name => 'strPath', required => false},
             {name => 'oManifestHashRef'}
@@ -1209,7 +1175,7 @@ sub manifestRecurse
     ) =
         logDebugParam
         (
-            OP_FILE_MANIFEST_RECURSE, \@_,
+            __PACKAGE__ . '->manifestRecurse', \@_,
             {name => 'strPathType'},
             {name => 'strPathOp'},
             {name => 'strPathFileOp', required => false},
@@ -1388,10 +1354,7 @@ sub manifestRecurse
     }
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -1429,7 +1392,7 @@ sub copy
     ) =
         logDebugParam
         (
-            OP_FILE_COPY, \@_,
+            __PACKAGE__ . '->copy', \@_,
             {name => 'strSourcePathType'},
             {name => 'strSourceFile', required => false},
             {name => 'strDestinationPathType'},
@@ -1549,13 +1512,13 @@ sub copy
         my $hIn,
         my $hOut;
         my $strRemote;
-        my $strOperation;
+        my $strRemoteOp;
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
         {
             $hOut = $hDestinationFile;
-            $strOperation = OP_FILE_COPY_OUT;
+            $strRemoteOp = OP_FILE_COPY_OUT;
             $strRemote = 'in';
 
             if ($strSourcePathType ne PIPE_STDIN)
@@ -1569,7 +1532,7 @@ sub copy
         elsif (!$bSourceRemote && $bDestinationRemote)
         {
             $hIn = $hSourceFile;
-            $strOperation = OP_FILE_COPY_IN;
+            $strRemoteOp = OP_FILE_COPY_IN;
             $strRemote = 'out';
 
             if ($strDestinationPathType ne PIPE_STDOUT)
@@ -1603,7 +1566,7 @@ sub copy
         # Else source and destination are remote
         else
         {
-            $strOperation = OP_FILE_COPY;
+            $strRemoteOp = OP_FILE_COPY;
 
             $oParamHash{source_file} = $strSourceOp;
             $oParamHash{source_compressed} = $bSourceCompressed;
@@ -1640,11 +1603,11 @@ sub copy
         # If an operation is defined then write it
         if (%oParamHash)
         {
-            $self->{oProtocol}->cmdWrite($strOperation, \%oParamHash);
+            $self->{oProtocol}->cmdWrite($strRemoteOp, \%oParamHash);
         }
 
         # Transfer the file (skip this for copies where both sides are remote)
-        if ($strOperation ne OP_FILE_COPY)
+        if ($strRemoteOp ne OP_FILE_COPY)
         {
             ($strChecksum, $iFileSize) =
                 $self->{oProtocol}->binaryXfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
@@ -1664,8 +1627,8 @@ sub copy
                 if (substr($strOutput, 0, 1) eq 'Y')
                 {
                     # If the operation was purely remote, get checksum/size
-                    if ($strOperation eq OP_FILE_COPY ||
-                        $strOperation eq OP_FILE_COPY_IN && $bSourceCompressed && !$bDestinationCompress)
+                    if ($strRemoteOp eq OP_FILE_COPY ||
+                        $strRemoteOp eq OP_FILE_COPY_IN && $bSourceCompressed && !$bDestinationCompress)
                     {
                         # Checksum shouldn't already be set
                         if (defined($strChecksum) || defined($iFileSize))

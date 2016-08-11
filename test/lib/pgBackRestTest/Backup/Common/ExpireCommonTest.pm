@@ -28,19 +28,6 @@ use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_EXPIRE_COMMON_TEST                                  => 'ExpireCommonTest';
-
-use constant OP_EXPIRE_COMMON_TEST_ARCHIVE_CREATE                   => OP_EXPIRE_COMMON_TEST . "->archiveCreate";
-use constant OP_EXPIRE_COMMON_TEST_ARCHIVE_NEXT                     => OP_EXPIRE_COMMON_TEST . "->archiveNext";
-use constant OP_EXPIRE_COMMON_TEST_BACKUP_CREATE                    => OP_EXPIRE_COMMON_TEST . "->backupCreate";
-use constant OP_EXPIRE_COMMON_TEST_NEW                              => OP_EXPIRE_COMMON_TEST . "->new";
-use constant OP_EXPIRE_COMMON_TEST_PROCESS                          => OP_EXPIRE_COMMON_TEST . "->process";
-use constant OP_EXPIRE_COMMON_TEST_STANZA_CREATE                    => OP_EXPIRE_COMMON_TEST . "->stanzaCreate";
-use constant OP_EXPIRE_COMMON_TEST_SUPPLEMENTAL_LOG                 => OP_EXPIRE_COMMON_TEST . "->supplementalLog";
-
-####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -60,7 +47,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'oHostBackup', trace => true},
             {name => 'oFile', trace => true},
             {name => 'oLogTest', required => false, trace => true}
@@ -90,7 +77,7 @@ sub stanzaCreate
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_STANZA_CREATE, \@_,
+            __PACKAGE__ . '->sanzaCreate', \@_,
             {name => 'strStanza'},
             {name => 'strDbVersion'}
         );
@@ -136,10 +123,7 @@ sub stanzaCreate
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -161,7 +145,7 @@ sub backupCreate
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_BACKUP_CREATE, \@_,
+            __PACKAGE__ . '->backupCreate', \@_,
             {name => 'strStanza'},
             {name => 'strType'},
             {name => 'lTimestamp'},
@@ -242,10 +226,7 @@ sub backupCreate
     $self->archiveCreate($strStanza, $iArchiveBetweenTotal);
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -264,7 +245,7 @@ sub archiveNext
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_ARCHIVE_NEXT, \@_,
+            __PACKAGE__ . '->archiveNext', \@_,
             {name => 'strArchive', trace => true},
             {name => 'bSkipFF', trace => true}
         );
@@ -307,7 +288,7 @@ sub archiveCreate
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_ARCHIVE_CREATE, \@_,
+            __PACKAGE__ . '->archiveCreate', \@_,
             {name => 'strStanza'},
             {name => 'iArchiveTotal'}
         );
@@ -364,7 +345,7 @@ sub supplementalLog
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_SUPPLEMENTAL_LOG, \@_,
+            __PACKAGE__ . '->supplementalLog', \@_,
             {name => 'strStanza'}
         );
 
@@ -407,7 +388,7 @@ sub process
     ) =
         logDebugParam
         (
-            OP_EXPIRE_COMMON_TEST_PROCESS, \@_,
+            __PACKAGE__ . '->process', \@_,
             {name => 'strStanza'},
             {name => 'iExpireFull'},
             {name => 'iExpireDiff'},

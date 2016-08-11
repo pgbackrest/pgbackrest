@@ -15,9 +15,9 @@ run 007 - rmt 1, cmp 1, exists 0
  ERROR: [130]: raised on backup host: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
- DEBUG:     Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -38,9 +38,9 @@ stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: stop start: --backup-host=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: stop stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -48,17 +48,17 @@ stop all stanzas (db-master host)
   INFO: get WAL segment 000000090000000900000009
  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
  ERROR: [137]: stop file exists for all stanzas
- DEBUG:     Exit::exitSafe(): iExitCode = 137, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 137, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 start all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: start start: --backup-host=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo
- DEBUG:     Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
   INFO: start stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -77,6 +77,6 @@ start all stanzas (db-master host)
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
   INFO: unable to find 000000090000000900000009 in the archive
  DEBUG:     Archive->get=>: iResult = 1
- DEBUG:     Exit::exitSafe(): iExitCode = 1, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 1, strSignal = [undef]
   INFO: archive-get stop
- DEBUG:     Common:::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false

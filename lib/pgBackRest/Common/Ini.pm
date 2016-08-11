@@ -23,14 +23,6 @@ use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_INI                                                 => 'Ini';
-
-use constant OP_INI_INI_SAVE                                        => OP_INI . "::iniSave";
-use constant OP_INI_SET                                             => OP_INI . "->set";
-
-####################################################################################################################################
 # Boolean constants
 ####################################################################################################################################
 use constant INI_TRUE                                               => JSON::PP::true;
@@ -239,7 +231,7 @@ sub iniSave
     ) =
         logDebugParam
         (
-            OP_INI_INI_SAVE, \@_,
+            __PACKAGE__ . '::iniSave', \@_,
             {name => 'strFileName', trace => true},
             {name => 'oContent', trace => true},
             {name => 'bRelaxed', default => false, trace => true},
@@ -340,10 +332,7 @@ sub iniSave
     filePathSync(dirname($strFileName));
 
     # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
-    );
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

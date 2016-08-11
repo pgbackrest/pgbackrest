@@ -16,13 +16,6 @@ use pgBackRest::Config::Config;
 use pgBackRest::Protocol::CommonMaster;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_PROTOCOL_REMOTE_MASTER                              => 'Protocol::RemoteMaster';
-
-use constant OP_PROTOCOL_REMOTE_MASTER_NEW                          => OP_PROTOCOL_REMOTE_MASTER . "->new";
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -43,7 +36,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_PROTOCOL_REMOTE_MASTER_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'strCommand'},
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},

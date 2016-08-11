@@ -17,14 +17,6 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_BACKUP_COMMON                                       => 'BackupCommon';
-
-use constant OP_BACKUP_COMMON_REG_EXP_GET                           => OP_BACKUP_COMMON . '::backupRegExpGet';
-use constant OP_BACKUP_COMMON_BACKUP_LABEL_FORMAT                   => OP_BACKUP_COMMON . '::backupLabelFormat';
-
-####################################################################################################################################
 # backupRegExpGet - Generate a regexp depending on the backups that need to be found
 ####################################################################################################################################
 sub backupRegExpGet
@@ -40,7 +32,7 @@ sub backupRegExpGet
     ) =
         logDebugParam
         (
-            OP_BACKUP_COMMON_REG_EXP_GET, \@_,
+            __PACKAGE__ . '::backupRegExpGet', \@_,
             {name => 'bFull', default => false},
             {name => 'bDifferential', default => false},
             {name => 'bIncremental', default => false},
@@ -119,7 +111,7 @@ sub backupLabelFormat
     ) =
         logDebugParam
         (
-            OP_BACKUP_COMMON_BACKUP_LABEL_FORMAT, \@_,
+            __PACKAGE__ . '::backupLabelFormat', \@_,
             {name => 'strType', trace => true},
             {name => 'strBackupLabelLast', required => false, trace => true},
             {name => 'lTimestampStop', trace => true}

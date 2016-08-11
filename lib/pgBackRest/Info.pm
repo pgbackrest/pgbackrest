@@ -22,12 +22,11 @@ use pgBackRest::File;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
-# Operation constants
+# Remote operation constants
 ####################################################################################################################################
-use constant OP_INFO_BACKUP_LIST                                    => 'Info->backupList';
-use constant OP_INFO_NEW                                            => 'Info->new';
-use constant OP_INFO_PROCESS                                        => 'Info->process';
-use constant OP_INFO_STANZA_LIST                                    => 'Info->stanzaList';
+use constant OP_INFO                                                => 'Info';
+
+use constant OP_INFO_STANZA_LIST                                    => OP_INFO . '->stanzaList';
     push @EXPORT, qw(OP_INFO_STANZA_LIST);
 
 ####################################################################################################################################
@@ -80,13 +79,7 @@ sub new
     bless $self, $class;
 
     # Assign function parameters, defaults, and log debug info
-    (
-        my $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_INFO_NEW
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -104,14 +97,7 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation
-    ) =
-        logDebugParam
-        (
-            OP_INFO_PROCESS
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     # Get stanza if specified
     my $strStanza = optionTest(OPTION_STANZA) ? optionGet(OPTION_STANZA) : undef;
@@ -229,7 +215,7 @@ sub stanzaList
     ) =
         logDebugParam
         (
-            OP_INFO_STANZA_LIST, \@_,
+            __PACKAGE__ . '->stanzaList', \@_,
             {name => 'oFile'},
             {name => 'strStanza', required => false}
         );
@@ -337,7 +323,7 @@ sub backupList
     ) =
         logDebugParam
         (
-            OP_INFO_BACKUP_LIST, \@_,
+            __PACKAGE__ . '->backupList', \@_,
             {name => 'oFile'},
             {name => 'strStanza'}
         );

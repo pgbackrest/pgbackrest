@@ -26,13 +26,6 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_RESTORE_FILE                                        => 'RestoreFile';
-
-use constant OP_RESTORE_FILE_RESTORE_FILE                           => OP_RESTORE_FILE . '::restoreFile';
-
-####################################################################################################################################
 # restoreFile
 #
 # Restores a single file.
@@ -58,7 +51,7 @@ sub restoreFile
     ) =
         logDebugParam
         (
-            OP_RESTORE_FILE_RESTORE_FILE, \@_,
+            __PACKAGE__ . '->restoreFile', \@_,
             {name => 'lCopyTimeBegin', trace => true},
             {name => 'bDelta', trace => true},
             {name => 'bForce', trace => true},

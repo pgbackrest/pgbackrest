@@ -23,14 +23,6 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_IO_PROTOCOL                                                  => 'IO';
-
-use constant OP_IO_PROTOCOL_NEW                                              => OP_IO_PROTOCOL . "->new";
-use constant OP_IO_PROTOCOL_NEW3                                             => OP_IO_PROTOCOL . "->new3";
-
-####################################################################################################################################
 # Amount of time to attempt to retrieve errors when a process terminates unexpectedly
 ####################################################################################################################################
 use constant IO_ERROR_TIMEOUT                                                => 5;
@@ -60,7 +52,7 @@ sub new
     ) =
         logDebugParam
         (
-            OP_IO_PROTOCOL_NEW, \@_,
+            __PACKAGE__ . '->new', \@_,
             {name => 'hIn', required => false, trace => true},
             {name => 'hOut', required => false, trace => true},
             {name => 'hErr', required => false, trace => true},
@@ -104,7 +96,7 @@ sub new3
     ) =
         logDebugParam
         (
-            OP_IO_PROTOCOL_NEW3, \@_,
+            __PACKAGE__ . '->new3', \@_,
             {name => 'strId', trace => true},
             {name => 'strCommand', trace => true},
             {name => 'iProtocolTimeout', trace => true},

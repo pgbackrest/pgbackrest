@@ -20,15 +20,6 @@ use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_LOCK                                                => 'Common:::Lock';
-
-use constant OP_LOCK_ACQUIRE                                        => OP_LOCK . "::lockAquire";
-use constant OP_LOCK_RELEASE                                        => OP_LOCK . "::lockRelease";
-use constant OP_LOCK_STOP_TEST                                      => OP_LOCK . "::lockStopTest";
-
-####################################################################################################################################
 # Global lock type and handle
 ####################################################################################################################################
 my $strCurrentLockType;
@@ -80,7 +71,7 @@ sub lockAcquire
     ) =
         logDebugParam
         (
-            OP_LOCK_ACQUIRE, \@_,
+            __PACKAGE__ . '::lockAcquire', \@_,
             {name => 'strLockType'},
             {name => 'bFailOnNoLock', default => true},
             {name => 'bRemote', default => false},
@@ -159,7 +150,7 @@ sub lockRelease
     ) =
         logDebugParam
         (
-            OP_LOCK_RELEASE, \@_,
+            __PACKAGE__ . '::lockRelease', \@_,
             {name => 'bFailOnNoLock', default => true}
         );
 
@@ -176,12 +167,6 @@ sub lockRelease
         }
         else
         {
-            # # Fail if the lock being released is not the one held
-            # if ($strLockType ne $strCurrentLockType)
-            # {
-            #     confess &log(ASSERT, "cannot remove lock ${strLockType} since ${strCurrentLockType} is currently held");
-            # }
-
             # Remove the file
             unlink($strCurrentLockFile);
             close($hCurrentLockHandle);
@@ -310,7 +295,7 @@ push @EXPORT, qw(lockStop);
 sub lockStopTest
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(OP_LOCK_STOP_TEST);
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::lockStopTest');
 
     # Check the stanza first if it is specified
     if (optionTest(OPTION_STANZA))
