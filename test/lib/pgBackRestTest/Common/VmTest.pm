@@ -14,7 +14,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::Common::Log;
-use pgBackRest::Db;
+use pgBackRest::DbVersion;
 
 ####################################################################################################################################
 # VM hash keywords

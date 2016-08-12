@@ -22,7 +22,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Db;
+use pgBackRest::DbVersion;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;

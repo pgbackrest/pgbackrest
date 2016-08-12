@@ -26,7 +26,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::Manifest;
 

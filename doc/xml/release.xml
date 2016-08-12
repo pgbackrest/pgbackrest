@@ -117,6 +117,18 @@
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
+
+             <release-test-list>
+                 <release-refactor-list>
+                    <release-item>
+                        <p>Refactor db version constants into a separate module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update synthetic backup tests to <postgres/> 9.4.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2016-08-09" version="1.05" title="Bug Fix for Tablespace Link Checking">

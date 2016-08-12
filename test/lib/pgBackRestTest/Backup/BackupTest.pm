@@ -25,8 +25,9 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Db;
 use pgBackRest::Config::Config;
+use pgBackRest::Db;
+use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
@@ -473,7 +474,7 @@ sub backupTestRun
                 filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
 
                 # Copy pg_control
-                executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                executeTest('cp ' . testDataPath() . '/pg_control_93 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
                 my $strCommand =
                     $oHostDbMaster->backrestExe() .
@@ -697,10 +698,10 @@ sub backupTestRun
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardLink ? JSON::PP::true : JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
 
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201306121;
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 937;
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6156904820763115222;
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_93;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6317709442043514973;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
             $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} =
@@ -709,8 +710,8 @@ sub backupTestRun
 
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA);
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_93,
-                                                  'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_94,
+                                                  '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
             # Create base path
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
@@ -719,7 +720,7 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
-                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime, '660');
+                                                  PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, '660');
 
             if ($bNeutralTest && !$bRemote)
             {
@@ -733,7 +734,7 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
                                                   'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
-                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+                                                  PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
             if ($bNeutralTest && !$bRemote)
             {
@@ -747,16 +748,16 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', '33000',
                                                   '7f4c74dc10f61eef43e6ae642606627df1999b34', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/' . DB_FILE_PGVERSION,
-                                                  PG_VERSION_93, 'e1f7a3a299f62225cba076fc6d3d6e677f303482', $lTime);
+                                                  PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
             # Create global path
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-                                                  '56fe5780b8dca9705e0c22032a83828860a21235', $lTime - 100);
+                                                  '2ee0de0a5fb5cf15f4a24e72b368c41f7e187003', $lTime - 100);
 
             # Copy pg_control
-            executeTest('cp ' . testDataPath() . '/pg_control ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest('cp ' . testDataPath() . '/pg_control_94 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
             utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
@@ -1476,9 +1477,9 @@ sub backupTestRun
 
             # Remove checksum to match zeroed files
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2.txt'}
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2.txt'}
                              {&MANIFEST_SUBKEY_CHECKSUM});
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2c.txt'}
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2c.txt'}
                              {&MANIFEST_SUBKEY_CHECKSUM});
 
             $oHostDbMaster->restore(
@@ -1488,9 +1489,9 @@ sub backupTestRun
             # Restore checksum values for next test
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
                 '7f4c74dc10f61eef43e6ae642606627df1999b34';
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2.txt'}
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2.txt'}
                       {&MANIFEST_SUBKEY_CHECKSUM} = 'dc7f76e43c46101b47acc55ae4d593a9e6983578';
-            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.3_201306121/32768/tablespace2c.txt'}
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2c.txt'}
                       {&MANIFEST_SUBKEY_CHECKSUM} = 'dfcb8679956b734706cf87259d50c88f83e80e66';
 
             # Remove chacksum to match zeroed file
