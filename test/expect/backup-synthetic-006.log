@@ -22,7 +22,7 @@ full backup - error on link to a link (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --cmd-remote=[BACKREST-BIN] --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --config-remote=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=vagrant --hardlink --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --type=full
- ERROR: [145]: link [TEST_PATH]/db-master/db/base/postgresql.conf.bad (../pg_config/postgresql.conf.link) cannot reference another link
+ ERROR: [145]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
   INFO: backup stop
 
 full backup - create pg_stat link, pg_clog dir (backup host)

@@ -566,11 +566,11 @@ sub build
         {
             if ($strManifestType eq MANIFEST_VALUE_LINK && $oManifestHash{name}{$strName}{type} eq 'l')
             {
-                confess &log(ERROR, 'link ' .
+                confess &log(ERROR, 'link \'' .
                     $self->dbPathGet(
                         $self->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH), $strLevel) .
-                        ' (' . $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_PATH) . ')' .
-                        ' cannot reference another link', ERROR_LINK_DESTINATION);
+                        '\' -> \'' . $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_PATH) .
+                        '\' cannot reference another link', ERROR_LINK_DESTINATION);
             }
 
             # Make sure the current file matches the filter or any files under the filter

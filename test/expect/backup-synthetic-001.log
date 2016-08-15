@@ -22,7 +22,7 @@ full backup - error on link to a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
- ERROR: [145]: link [TEST_PATH]/db-master/db/base/postgresql.conf.bad (../pg_config/postgresql.conf.link) cannot reference another link
+ ERROR: [145]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
   INFO: backup stop
 
 full backup - create pg_stat link, pg_clog dir (db-master host)
@@ -1044,7 +1044,7 @@ incr backup - tablespace link references a link (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
- ERROR: [145]: link [TEST_PATH]/db-master/db/base/pg_tblspc/99999 ([TEST_PATH]/db-master/db/intermediate_link) cannot reference another link
+ ERROR: [145]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' -> '[TEST_PATH]/db-master/db/intermediate_link' cannot reference another link
   INFO: backup stop
 
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
