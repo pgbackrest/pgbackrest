@@ -67,7 +67,7 @@ my $oPgControlVersionHash =
     },
     960 =>
     {
-        201607071 => PG_VERSION_96,
+        201608031 => PG_VERSION_96,
     },
 };
 

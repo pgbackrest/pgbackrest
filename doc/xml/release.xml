@@ -111,7 +111,13 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.06dev" title="UNDER DEVELOPMENT">
              <release-core-list>
-                 <release-refactor-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta4.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
                     <release-item>
                         <p>Removed all <code>OP_*</code> function constants that were used only for debugging, not in the protocol, and replaced with <code>__PACKAGE__</code>.</p>
                     </release-item>
