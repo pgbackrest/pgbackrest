@@ -30,6 +30,8 @@ use pgBackRest::Version;
 ####################################################################################################################################
 use constant OP_DB                                                  => 'Db';
 
+use constant OP_DB_CONNECT                                          => OP_DB . '->connect';
+    push @EXPORT, qw(OP_DB_CONNECT);
 use constant OP_DB_EXECUTE_SQL                                      => OP_DB . '->executeSql';
     push @EXPORT, qw(OP_DB_EXECUTE_SQL);
 use constant OP_DB_INFO                                             => OP_DB . '->info';
@@ -114,6 +116,100 @@ sub DESTROY
 }
 
 ####################################################################################################################################
+# connect
+####################################################################################################################################
+sub connect
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bWarnOnError,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::connect', \@_,
+            {name => 'bWarnOnError', default => false},
+        );
+
+    # Only connect if not already connected
+    my $bResult = true;
+
+    # Run remotely
+    if (optionRemoteTypeTest(DB))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{'warn-on-error'} = $bWarnOnError;
+
+        # Execute the command
+        $bResult = protocolGet()->cmdExecute(OP_DB_CONNECT, \%oParamHash, false, $bWarnOnError);
+
+        if (!defined($bResult))
+        {
+            $bResult = false;
+        }
+    }
+    # Else run locally
+    else
+    {
+        if (!defined($self->{hDb}))
+        {
+            # Connect to the db
+            my $strDbName = 'postgres';
+            my $strDbUser = getpwuid($<);
+            my $strDbSocketPath = optionGet(OPTION_DB_SOCKET_PATH, false);
+
+            # Make sure the socket path is absolute
+            if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
+            {
+                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . OPTION_DB_SOCKET_PATH . "' option:" .
+                                    " path must be absolute", ERROR_OPTION_INVALID_VALUE);
+            }
+
+            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(OPTION_DB_PORT) .
+                           (optionTest(OPTION_DB_SOCKET_PATH) ? ';host=' . optionGet(OPTION_DB_SOCKET_PATH) : '');
+
+            logDebugMisc
+            (
+                $strOperation, undef,
+                {name => 'strDbUri', value => $strDbUri},
+                {name => 'strDbUser', value => $strDbUser}
+            );
+
+            $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef,
+                                        {AutoCommit => 1, RaiseError => 0, PrintError => 0, Warn => 0});
+
+            # If db handle is not valid then check error
+            if (!$self->{hDb})
+            {
+                # Throw an error unless a warning was requested
+                if (!$bWarnOnError)
+                {
+                    confess &log(ERROR, $DBI::errstr, ERROR_DB_CONNECT);
+                }
+
+                # Log a warning
+                &log(WARN, $DBI::errstr);
+
+                $bResult = false;
+                undef($self->{hDb});
+            }
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $bResult}
+    );
+}
+
+####################################################################################################################################
 # executeSql
 ####################################################################################################################################
 sub executeSql
@@ -125,13 +221,15 @@ sub executeSql
     (
         $strOperation,
         $strSql,
-        $bIgnoreError
+        $bIgnoreError,
+        $bResult,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->executeSql', \@_,
+            __PACKAGE__ . '::executeSql', \@_,
             {name => 'strSql'},
-            {name => 'bIgnoreError', default => false}
+            {name => 'bIgnoreError', default => false},
+            {name => 'bResult', default => true},
         );
 
     # Get the user-defined command for psql
@@ -145,51 +243,23 @@ sub executeSql
 
         $oParamHash{'script'} = $strSql;
         $oParamHash{'ignore-error'} = $bIgnoreError;
+        $oParamHash{'result'} = $bResult;
 
         # Execute the command
-        $strResult = protocolGet()->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, true);
+        $strResult = protocolGet()->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, $bResult);
     }
     # Else run locally
     else
     {
-        if (!defined($self->{hDb}))
-        {
-            # Connect to the db
-            my $strDbName = 'postgres';
-            my $strDbUser = getpwuid($<);
-            my $strDbSocketPath = optionGet(OPTION_DB_SOCKET_PATH, false);
-
-            if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
-            {
-                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . OPTION_DB_SOCKET_PATH . "' option:" .
-                                    " path must be absolute", ERROR_OPTION_INVALID_VALUE);
-            }
-
-            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(OPTION_DB_PORT) .
-                           (optionTest(OPTION_DB_SOCKET_PATH) ? ';host=' . optionGet(OPTION_DB_SOCKET_PATH) : '');
-
-            logDebugMisc
-            (
-                $strOperation, 'db connect',
-                {name => 'strDbUri', value => $strDbUri},
-                {name => 'strDbUser', value => $strDbUser}
-            );
-
-            $self->{hDb} = DBI->connect($strDbUri, $strDbUser, undef,
-                                        {AutoCommit => 1, RaiseError => 0, PrintError => 0, Warn => 0});
-
-            if (!$self->{hDb})
-            {
-                    confess &log(ERROR, $DBI::errstr, ERROR_DB_CONNECT);
-                }
-    }
+        $self->connect();
 
         # Prepare the query
         my $hStatement = $self->{hDb}->prepare($strSql, {pg_async => PG_ASYNC})
-            or confess &log(ERROR, $DBI::errstr, ERROR_DB_QUERY);
+            or confess &log(ERROR, $DBI::errstr . ":\n${strSql}", ERROR_DB_QUERY);
 
         # Execute the query
-        $hStatement->execute();
+        $hStatement->execute()
+            or confess &log(ERROR, $DBI::errstr. ":\n${strSql}", ERROR_DB_QUERY);
 
         # Wait for the query to return
         my $oWait = waitInit(optionGet(OPTION_DB_TIMEOUT));
@@ -200,6 +270,12 @@ sub executeSql
             # Is the statement done?
             if ($hStatement->pg_ready())
             {
+                # return now if there is no result expected
+                if (!$bResult)
+                {
+                    return;
+                }
+
                 if (!$hStatement->pg_result())
                 {
                     # Return if the error should be ignored
@@ -717,7 +793,7 @@ sub xlogSwitch
     # the user if there have been no writes since the last xlog switch.
     if ($self->{strDbVersion} >= PG_VERSION_91)
     {
-        $self->executeSql("select pg_create_restore_point('pgBackRest Archive Check');");
+        $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Archive Check');");
     }
 
     my $strWalFileName = $self->executeSqlRow('select pg_xlogfile_name from pg_xlogfile_name(pg_switch_xlog());');

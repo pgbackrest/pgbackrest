@@ -133,6 +133,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improvements in <code>Db</code> module: separated out <code>connect()</code> function, allow <code>executeSql()</code> calls that do not return data, and improve error handling.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve error message for links that reference links in manifest build.</p>
                     </release-item>
                 </release-refactor-list>
