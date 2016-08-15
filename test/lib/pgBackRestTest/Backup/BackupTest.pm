@@ -1143,9 +1143,9 @@ sub backupTestRun
 
             testPathRemove("${strTblSpcPath}/path");
 
-            # Create a relative link is PGDATA
             if ($bNeutralTest && !$bRemote)
             {
+                # Create a relative link in PGDATA
                 testLinkCreate("${strTblSpcPath}/99999", '../');
 
                 $oHostBackup->backup(
@@ -1180,6 +1180,18 @@ sub backupTestRun
                     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_TABLESPACE_IN_PGDATA,
                         strOptionalParam => '--log-level-console=detail'});
 
+                testFileRemove("${strTblSpcPath}/99999");
+
+                # Create a link to a link
+                testLinkCreate($oHostDbMaster->dbPath() . "/intermediate_link", $oHostDbMaster->dbPath() . '/tablespace/ts1');
+                testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbPath() . "/intermediate_link");
+
+                $oHostBackup->backup(
+                    $strType, 'tablespace link references a link',
+                    {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                testFileRemove($oHostDbMaster->dbPath() . "/intermediate_link");
                 testFileRemove("${strTblSpcPath}/99999");
             }
 

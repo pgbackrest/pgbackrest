@@ -111,6 +111,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.06dev" title="UNDER DEVELOPMENT">
              <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where a tablespace link that referenced another link would not produce an error, but instead skip the tablespace entirely.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta4.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>

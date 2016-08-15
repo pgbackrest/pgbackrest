@@ -564,6 +564,15 @@ sub build
 
         if ($strName ne '.')
         {
+            if ($strManifestType eq MANIFEST_VALUE_LINK && $oManifestHash{name}{$strName}{type} eq 'l')
+            {
+                confess &log(ERROR, 'link ' .
+                    $self->dbPathGet(
+                        $self->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH), $strLevel) .
+                        ' (' . $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_PATH) . ')' .
+                        ' cannot reference another link', ERROR_LINK_DESTINATION);
+            }
+
             # Make sure the current file matches the filter or any files under the filter
             if (defined($strFilter) && $strName ne $strFilter && index($strName, "${strFilter}/") != 0)
             {
@@ -572,15 +581,6 @@ sub build
 
             if ($strManifestType eq MANIFEST_VALUE_LINK)
             {
-                if ($oManifestHash{name}{$strName}{type} eq 'l')
-                {
-                    confess &log(ERROR, 'link ' .
-                        $self->dbPathGet(
-                            $self->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH), $strLevel) .
-                            ' (' . $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_PATH) . ')' .
-                            ' cannot reference another link', ERROR_LINK_DESTINATION);
-                }
-
                 $strFile = dirname($strFile);
                 $self->set(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_PATH,
                            dirname($self->get(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_PATH)));
