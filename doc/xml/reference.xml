@@ -457,7 +457,7 @@
                     <config-key id="retention-archive" name="Archive Retention">
                         <summary>Number of backups worth of WAL to retain.</summary>
 
-                        <text>Number of backups worth of archive log to keep.</text>
+                        <text>If this value is not set, it will default to the value of <setting>retention-full</setting> regardless of the <setting>retention-archive-type</setting> setting.</text>
 
                         <example>2</example>
                     </config-key>
