@@ -2011,6 +2011,12 @@ sub optionValidate
                                 $$strValue{$strHashKey} = $strHashValue;
                             }
                         }
+                        # In all other cases the value should be scalar
+                        elsif (ref(\$strValue) ne 'SCALAR')
+                        {
+                            confess &log(
+                                ERROR, "option '${strOption}' cannot be specified multiple times", ERROR_OPTION_MULTIPLE_VALUE);
+                        }
 
                         $oOption{$strOption}{source} = SOURCE_CONFIG;
                     }

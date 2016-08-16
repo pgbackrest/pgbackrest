@@ -119,6 +119,14 @@
 
                         <p>Fixed an issue where a tablespace link that referenced another link would not produce an error, but instead skip the tablespace entirely.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where options that should not allow multiple values could be specified multiple times in <file>pgbackrest.conf</file> without an error being raised.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

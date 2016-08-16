@@ -156,6 +156,10 @@ sub configLoadExpect
                 $strError = "'${strErrorParam1}' is not valid for '${strErrorParam2}' option" .
                             (defined($strErrorParam3) ? "\nHINT: ${strErrorParam3}." : '');
             }
+            elsif ($iExpectedError == ERROR_OPTION_MULTIPLE_VALUE)
+            {
+                $strError = "option '${strErrorParam1}' cannot be specified multiple times";
+            }
             elsif ($iExpectedError == ERROR_OPTION_INVALID_RANGE)
             {
                 $strError = "'${strErrorParam1}' is not valid for '${strErrorParam2}' option";
@@ -646,7 +650,6 @@ sub configTestRun
             optionTestExpect(OPTION_THREAD_MAX, 3);
         }
 
-
         if (testRun(++$iRun, 'load from config global command section - option ' . OPTION_THREAD_MAX))
         {
             $oConfig = {};
@@ -886,6 +889,19 @@ sub configTestRun
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_REPO_PATH, '/repo');
+        }
+
+        if (testRun(++$iRun, CMD_BACKUP . ' option ' . OPTION_REPO_PATH . ' multiple times'))
+        {
+            $oConfig = {};
+            $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = ['/repo', '/repo2'];
+            iniSave($strConfigFile, $oConfig, true);
+
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
+
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_MULTIPLE_VALUE, OPTION_REPO_PATH);
         }
 
         # Cleanup
