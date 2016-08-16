@@ -666,7 +666,7 @@ sub process
     }
 
     # Build the manifest
-    $oBackupManifest->build($self->{oFile}, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
+    $oBackupManifest->build($self->{oFile}, $strDbVersion, optionGet(OPTION_DB_PATH), $oLastManifest, optionGet(OPTION_ONLINE),
                             $oTablespaceMap, $oDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 

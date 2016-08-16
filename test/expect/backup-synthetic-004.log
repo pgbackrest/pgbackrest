@@ -43,7 +43,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -55,10 +55,10 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/pg_config/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
@@ -267,7 +267,7 @@ full backup - resume (db-master host)
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -279,10 +279,10 @@ full backup - resume (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/pg_stat, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_stat
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/pg_config/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf, strPathType = db:absolute
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
@@ -817,7 +817,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     Manifest->build: found tablespace 1
@@ -831,7 +831,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
@@ -1059,7 +1059,7 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
  DEBUG:     Manifest->build: found tablespace 1
@@ -1074,12 +1074,12 @@ incr backup - resume and add tablespace 2 (db-master host)
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_stat, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/16384, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
- DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
+ DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
