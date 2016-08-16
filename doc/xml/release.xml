@@ -147,6 +147,10 @@
                     <release-item>
                         <p>Improve error message for links that reference links in manifest build.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added hints to error message when relative paths are detected in <cmd>archive-push</cmd> or <cmd>archive-get</cmd>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

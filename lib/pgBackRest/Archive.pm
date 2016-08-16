@@ -361,11 +361,13 @@ sub get
     # If the destination file path is not absolute then it is relative to the db data path
     if (index($strDestinationFile, '/',) != 0)
     {
-        # ??? If db-path is required this is can be removed.
-        # ??? db-path should be added as a requirement for the remote settings work.
         if (!optionTest(OPTION_DB_PATH))
         {
-            confess &log(ERROR, 'option db-path must be set when relative xlog paths are used');
+            confess &log(
+                ERROR, "option db-path must be set when relative xlog paths are used\n" .
+                "HINT: Are \%f and \%p swapped when passed to archive-get?\n" .
+                'HINT: PostgreSQL generally passes an absolute path to archive-push but in some environments does not, in which' .
+                " case the 'db-path' option must be specified (this is rare).");
         }
 
         $strDestinationFile = optionGet(OPTION_DB_PATH) . "/${strDestinationFile}";
@@ -646,11 +648,15 @@ sub push
     lockStopTest();
 
     # If the source file path is not absolute then it is relative to the data path
-    if (index($strSourceFile, '/',) != 0)
+    if (index($strSourceFile, '/') != 0)
     {
         if (!optionTest(OPTION_DB_PATH))
         {
-            confess &log(ERROR, 'option db-path must be set when relative xlog paths are used');
+            confess &log(
+                ERROR, "option 'db-path' must be set when relative xlog paths are used\n" .
+                "HINT: Is \%f passed to archive-push instead of \%p?\n" .
+                'HINT: PostgreSQL generally passes an absolute path to archive-push but in some environments does not, in which' .
+                " case the 'db-path' option must be specified (this is rare).");
         }
 
         $strSourceFile = optionGet(OPTION_DB_PATH) . "/${strSourceFile}";
