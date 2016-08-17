@@ -1401,7 +1401,6 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => true,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE,
         &OPTION_RULE_COMMAND =>
         {
@@ -1413,10 +1412,6 @@ my %oOptionRule =
             &BACKUP_TYPE_FULL => 1,
             &BACKUP_TYPE_DIFF => 1,
             &BACKUP_TYPE_INCR => 1
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_RETENTION_ARCHIVE
         }
     },
 
