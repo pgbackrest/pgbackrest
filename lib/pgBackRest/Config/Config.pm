@@ -1765,7 +1765,13 @@ sub configLoad
     {
         confess &log(ASSERT, 'Remote type must be none for remote command');
     }
-
+#CSHANG - this will not work. It all has to be done before optionValidate in order for the values to show in the logs as part of
+# the command. Can't set the values before optionValidate since we'd have to test if they already exist on the command line or as
+# part of the config file so we don't over write if already there. The best we can do is maybe have a function for the inner
+# contents of the IF statement that can be called here and in expire, passing a parameter to tell where it is coming from: if
+# from here, then issue log messages but don't set values, if from expire, set the funtion parameters values but don't have log
+# messages but Keep the log info message in expire so we can see what the prameters are.  This really defeats the purpose of
+# putting it here in that these log messages will be well before the actual call to the expire function.
     # Test that archive retention for expire/backup commands is configured properly
     if (commandTest(CMD_BACKUP) || commandTest(CMD_EXPIRE))
     {
@@ -1779,7 +1785,10 @@ sub configLoad
         {
             if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && defined($iFullRetention))
             {
-                optionSet(OPTION_RETENTION_ARCHIVE, $iFullRetention);
+                $oOption{&OPTION_RETENTION_ARCHIVE}{valid} = true;
+                $oOption{&OPTION_RETENTION_ARCHIVE}{value} = $iFullRetention;
+# CSHANG can't use optionSet(OPTION_RETENTION_ARCHIVE, $iFullRetention); since it expects the option to be there and valid
+# - it appears it is only used to overwrite and existing value.
                 # log and info message to indicate the setting for retention-full is being used since retention-archive is not set
                 &log(INFO, "option '". &OPTION_RETENTION_ARCHIVE . "' for '" . &OPTION_RETENTION_ARCHIVE_TYPE .
                      "=${strArchiveRetentionType}' is being set to the value of '" . &OPTION_RETENTION_FULL . "' since '" .
@@ -1789,7 +1798,9 @@ sub configLoad
             {
                 if  (defined($iDifferentialRetention))
                 {
-                    optionSet(OPTION_RETENTION_ARCHIVE, $iDifferentialRetention);
+                $oOption{&OPTION_RETENTION_ARCHIVE}{valid} = true;
+                $oOption{&OPTION_RETENTION_ARCHIVE}{value} = $iDifferentialRetention;
+# optionSet(OPTION_RETENTION_ARCHIVE, $iDifferentialRetention);
                     # log and info message to indicate the setting for retention-diff is being used since retention-archive
                     # is not set
                     &log(INFO, "option '". &OPTION_RETENTION_ARCHIVE . "' for '" . &OPTION_RETENTION_ARCHIVE_TYPE .
