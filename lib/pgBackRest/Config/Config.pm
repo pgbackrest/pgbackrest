@@ -522,11 +522,36 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 ####################################################################################################################################
 # Option Rule Hash
 #
-# pgbackrest will throw an error if:
-#   1) an option is provided when executing the command that is not listed in the OPTION_RULE_COMMAND section of the Option Rule Hash
-#   2) or an option is not provided when executing the command and it is listed in the OPTION_RULE_COMMAND section as "true"
-# If an OPTION_RULE_COMMAND is set to "false" then pgbackrest will not throw an error if the option is missing and also will not throw an
-# error if it exists.
+# Contains the rules for options: which commands the option is can/cannot be specified, for which commands it is required, default
+# settings, types, ranges, whether the option is negatable, etc. The initial section is the global section meaning the rule applies
+# to all commands listed for the option.
+#
+# For example, if an option is required for a command, OPTION_RULE_REQUIRED is set to true for the command individually or if it is
+# required for all commands listed, then OPTION_RULE_REQUIRED is set to true in the global section.
+#
+# Examples:
+# 1) Option MYOPTION is required for CMD_CHECK
+#    &OPTION_MYOPTION =>
+#    {
+#       &OPTION_RULE_REQUIRED => true
+#       &OPTION_RULE_COMMAND =>
+#         {
+# 	        &CMD_CHECK =>
+# 	      }
+#    }
+#
+#  &CMD_CHECK =>
+#             {
+#                 &OPTION_RULE_REQUIRED => true  -- must be specified  (if this is outside, then it is required for all commands
+#             },
+# different than this:
+#         &OPTION_RULE_COMMAND =>
+#         {
+# 	        &CMD_CHECK => true,  -- can be specified
+# and what does this mean:
+#         &OPTION_RULE_COMMAND =>
+#         {
+# 	        &CMD_CHECK => false, -- can't be specified so can't use it for this option
 ####################################################################################################################################
 my %oOptionRule =
 (
@@ -1614,7 +1639,7 @@ my $oProtocol;              # Global remote object that is created on first requ
 ####################################################################################################################################
 # configLoad
 #
-# Load configuration.
+# Load configuration. Additional conditions that cannot be codified by the OptionRule hash are also tested here.
 ####################################################################################################################################
 sub configLoad
 {
@@ -1739,6 +1764,73 @@ sub configLoad
     if (commandTest(CMD_REMOTE) && !optionRemoteTypeTest(NONE))
     {
         confess &log(ASSERT, 'Remote type must be none for remote command');
+    }
+
+    # Test that archive retention for expire/backup commands is configured properly
+    if (commandTest(CMD_BACKUP) || commandTest(CMD_EXPIRE))
+    {
+        my $iFullRetention = optionGet(OPTION_RETENTION_FULL, false);
+        my $iDifferentialRetention = optionGet(OPTION_RETENTION_DIFF, false);
+        my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
+        my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
+
+        # if the archive retention is not explicitly set then determine what it should be set to so the user does not have to.
+        if (!defined($iArchiveRetention))
+        {
+            if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && defined($iFullRetention))
+            {
+                optionSet(OPTION_RETENTION_ARCHIVE, $iFullRetention);
+                # log and info message to indicate the setting for retention-full is being used since retention-archive is not set
+                &log(INFO, "option '". &OPTION_RETENTION_ARCHIVE . "' for '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+                     "=${strArchiveRetentionType}' is being set to the value of '" . &OPTION_RETENTION_FULL . "' since '" .
+                     &OPTION_RETENTION_ARCHIVE ."' is not set");
+            }
+            elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
+            {
+                if  (defined($iDifferentialRetention))
+                {
+                    optionSet(OPTION_RETENTION_ARCHIVE, $iDifferentialRetention);
+                    # log and info message to indicate the setting for retention-diff is being used since retention-archive
+                    # is not set
+                    &log(INFO, "option '". &OPTION_RETENTION_ARCHIVE . "' for '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+                         "=${strArchiveRetentionType}' is being set to the value of '" . &OPTION_RETENTION_DIFF . "' since '" .
+                         &OPTION_RETENTION_ARCHIVE ."' is not set");
+                }
+                else
+                {
+# CSHANG I know you said a warning, but I would argue that we should enforce proper configuration before they wonder why
+# archiving is not occuring. In essence I see this misconfiguration the same as INCR - invalid
+                    &log(WARN, "Archiving will not be performed for option '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+                         "=${strArchiveRetentionType}' since neither option '" . &OPTION_RETENTION_ARCHIVE .
+                         "' nor option '" .  &OPTION_RETENTION_DIFF . "' are set");
+                }
+            }
+            elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
+            {
+                confess &log(ERROR, "option '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+                             "=${strArchiveRetentionType}' is not valid without option '" .
+                             &OPTION_RETENTION_ARCHIVE . "'", ERROR_OPTION_INVALID);
+            }
+        }
+        else
+        {
+            # Issue a warning if OPTION_RETENTION_ARCHIVE_TYPE is different from the default and the OPTION_RETENTION_ARCHIVE is
+            # set and it is greater than the value of the corresponding retention setting.
+            if ($strArchiveRetentionType ne optionDefault(&OPTION_RETENTION_ARCHIVE_TYPE, commandGet()))
+            {
+                if (($strArchiveRetentionType eq BACKUP_TYPE_FULL &&
+                    ($iArchiveRetention > (defined($iFullRetention) ? $iFullRetention : 0))) ||
+                    ($strArchiveRetentionType eq BACKUP_TYPE_DIFF &&
+                    ($iArchiveRetention > (defined($iDifferentialRetention) ? $iDifferentialRetention : 0))))
+                {
+                    &log(WARN, "Archiving will not be performed for option '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+                         "=${strArchiveRetentionType}' since option '" . &OPTION_RETENTION_ARCHIVE .
+                         "=${iArchiveRetention}' is greater than the value of backup option '" .
+                         (($strArchiveRetentionType eq BACKUP_TYPE_FULL) ? &OPTION_RETENTION_FULL : &OPTION_RETENTION_DIFF) . "=" .
+                         (($strArchiveRetentionType eq BACKUP_TYPE_FULL) ? $iFullRetention : $iDifferentialRetention) . "'");
+                }
+            }
+        }
     }
 
     return true;

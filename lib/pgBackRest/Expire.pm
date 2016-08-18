@@ -131,12 +131,6 @@ sub process
     my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
     my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
 
-    # If no archive retention type is set (default is BACKUP_TYPE_FULL) then error
-    if (!defined($strArchiveRetentionType))
-    {
-        confess &log(ASSERT, 'archive retention type default is not set');
-    }
-
     # Load or build backup.info
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
 
@@ -256,24 +250,10 @@ sub process
     # if archive retention is still undefined, then ignore archiving
     if  (!defined($iArchiveRetention))
     {
-         &log(INFO, 'archive retention not set - archive logs will not be expired');
+         &log(INFO, "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set - archive logs will not be expired");
     }
     else
     {
-        # Determine which backup type to use for archive retention (full, differential, incremental)
-        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
-        {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
-        }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
-        {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true, true), 'reverse');
-        }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
-        {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
-        }
-
         # if no backups were found then preserve current archive logs - too soon to expire them
         my $iBackupTotal = scalar @stryPath;
 
