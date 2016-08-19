@@ -524,7 +524,8 @@ my $oConfigHelpData =
             summary =>
                 "Number of backups worth of WAL to retain.",
             description =>
-                "Number of backups worth of archive log to keep."
+                "If this value is not set, it will default to the value of retention-full regardless of the " .
+                    "retention-archive-type setting."
         },
 
         # RETENTION-ARCHIVE-TYPE Option Help

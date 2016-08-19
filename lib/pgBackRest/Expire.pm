@@ -224,41 +224,36 @@ sub process
         }
     }
 
-    # Default archive retention if not explicily set
-    if (defined($iFullRetention))
+    # if the archive retention is not explicitly set then determine what it should be set to
+    if (!defined($iArchiveRetention))
     {
-        if (!defined($iArchiveRetention))
+        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && defined($iFullRetention))
         {
             $iArchiveRetention = $iFullRetention;
         }
-
-        if (!defined($strArchiveRetentionType))
+        elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF && defined($iDifferentialRetention))
         {
-            $strArchiveRetentionType = BACKUP_TYPE_FULL;
-        }
-    }
-
-    # If no archive retention type is set then exit
-    if (!defined($strArchiveRetentionType))
-    {
-        &log(INFO, 'archive retention type not set - archive logs will not be expired');
-    }
-    else
-    {
-        # Determine which backup type to use for archive retention (full, differential, incremental)
-        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
-        {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
-        }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
-        {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true, true), 'reverse');
+            $iArchiveRetention = $iDifferentialRetention;
         }
         elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
         {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
+            confess &log(ERROR, &OPTION_RETENTION_ARCHIVE_TYPE . " (${strArchiveRetentionType}) not valid without option ".
+                         &OPTION_RETENTION_ARCHIVE, ERROR_OPTION_INVALID);
         }
+    }
 
+&log (INFO, "retention-full: ".(defined($iFullRetention) ? $iFullRetention : 'UNDEF').
+            " retention-diff: ".(defined($iDifferentialRetention) ? $iDifferentialRetention : 'UNDEF').
+            " archive-type: ".(defined($strArchiveRetentionType) ? uc($strArchiveRetentionType) : 'UNDEF').
+            " retention-archive: ".(defined($iFullRetention) ? $iFullRetention : 'UNDEF'));
+
+    # if archive retention is still undefined, then ignore archiving
+    if  (!defined($iArchiveRetention))
+    {
+         &log(INFO, "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set - archive logs will not be expired");
+    }
+    else
+    {
         # if no backups were found then preserve current archive logs - too soon to expire them
         my $iBackupTotal = scalar @stryPath;
 
