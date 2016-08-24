@@ -155,6 +155,10 @@
                     <release-item>
                         <p>Added hints to error message when relative paths are detected in <cmd>archive-push</cmd> or <cmd>archive-get</cmd>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve backup log messages to indicated which host the files are being copied from.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
