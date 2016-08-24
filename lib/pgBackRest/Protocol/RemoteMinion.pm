@@ -94,8 +94,7 @@ sub process
     (
         optionGet(OPTION_STANZA, false),
         optionGet(OPTION_REPO_PATH, false),
-        undef,
-        $self,
+        $self
     );
 
     # Create objects
@@ -264,7 +263,7 @@ sub process
             elsif ($strCommand eq OP_DB_INFO)
             {
                 my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-                    $oDb->info($oFile, paramGet(\%oParamHash, 'db-path'));
+                    $oDb->info(paramGet(\%oParamHash, 'db-path'));
 
                 $self->outputWrite("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
             }

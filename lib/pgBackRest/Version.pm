@@ -8,6 +8,7 @@ package pgBackRest::Version;
 use strict;
 use warnings FATAL => qw(all);
 
+use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
 
@@ -21,6 +22,13 @@ use constant BACKREST_EXE                                           => lc(BACKRE
     push @EXPORT, qw(BACKREST_EXE);
 use constant BACKREST_CONF                                          => BACKREST_EXE . '.conf';
     push @EXPORT, qw(BACKREST_CONF);
+
+# Binary location
+#
+# Stores the exe location.
+#-----------------------------------------------------------------------------------------------------------------------------------
+use constant BACKREST_BIN                                           => abs_path($0);
+    push @EXPORT, qw(BACKREST_BIN);
 
 # BackRest Version Number
 #

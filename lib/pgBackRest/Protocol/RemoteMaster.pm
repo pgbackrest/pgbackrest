@@ -26,6 +26,7 @@ sub new
     my
     (
         $strOperation,
+        $strRemoteType,                             # Type of remote (DB or BACKUP)
         $strCommand,                                # Command to execute on local/remote
         $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
@@ -37,6 +38,7 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'strRemoteType'},
             {name => 'strCommand'},
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
@@ -51,7 +53,7 @@ sub new
 
     # Init object and store variables
     my $self = $class->SUPER::new(
-        'remote', $strHost, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
+        $strRemoteType, 'remote', $strHost, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
 
     # Store the host

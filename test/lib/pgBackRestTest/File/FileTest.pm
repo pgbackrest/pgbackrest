@@ -103,8 +103,9 @@ sub fileTestRun
         or confess "Unable to create repo directory: ${strRepoPath}";
 
     my $oRemote = new pgBackRest::Protocol::RemoteMaster(
+        BACKUP,
         $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --stanza=' . HOST_STANZA .
-            " --repo-path=${strRepoPath} --no-config --command=test remote",
+            " --type=backup --repo-path=${strRepoPath} --no-config --command=test remote",
         OPTION_DEFAULT_BUFFER_SIZE,
         OPTION_DEFAULT_COMPRESS_LEVEL,
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,
@@ -138,7 +139,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -249,7 +249,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             ))->clone(1);
 
@@ -350,7 +349,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -444,7 +442,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'db' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -515,7 +512,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -659,7 +655,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -787,7 +782,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -892,7 +886,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -985,7 +978,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $bRemote ? 'backup' : undef,
                 $bRemote ? $oRemote : $oLocal
             );
 
@@ -1086,7 +1078,6 @@ sub fileTestRun
             (
                 $strStanza,
                 $strTestPath,
-                $strRemote,
                 defined($strRemote) ? $oRemote : $oLocal
             );
 

@@ -58,6 +58,7 @@ sub new
     $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
     $self->{iRetrySeconds} = defined($self->{iRetrySeconds}) ? $self->{iRetrySeconds} : undef;
+    $self->{bLogOutput} = defined($self->{bLogOutput}) ? $self->{bLogOutput} : true;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -194,7 +195,7 @@ sub endRetry
     # Pass the log to the LogTest object
     if (defined($self->{oLogTest}))
     {
-        $self->{oLogTest}->logAdd($self->{strCommand}, $self->{strComment}, $self->{strOutLog});
+        $self->{oLogTest}->logAdd($self->{strCommand}, $self->{strComment}, $self->{bLogOutput} ? $self->{strOutLog} : undef);
     }
 
     # If an error was expected then return success if that error occurred

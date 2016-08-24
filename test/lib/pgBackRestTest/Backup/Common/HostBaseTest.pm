@@ -27,6 +27,12 @@ use pgBackRestTest::Common::HostGroupTest;
 ####################################################################################################################################
 use constant HOST_BASE                                              => 'base';
     push @EXPORT, qw(HOST_BASE);
+use constant HOST_DB_MASTER                                         => 'db-master';
+    push @EXPORT, qw(HOST_DB_MASTER);
+use constant HOST_DB_STANDBY                                        => 'db-standby';
+    push @EXPORT, qw(HOST_DB_STANDBY);
+use constant HOST_BACKUP                                            => 'backup';
+    push @EXPORT, qw(HOST_BACKUP);
 
 ####################################################################################################################################
 # Host parameters

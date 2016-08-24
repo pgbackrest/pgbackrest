@@ -498,7 +498,7 @@ eval
     $oHostGroup->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
     $oHostGroup->paramSet(HOST_PARAM_BACKREST_EXE, "${strBackRestBase}/bin/pgbackrest");
     $oHostGroup->paramSet(HOST_PARAM_THREAD_MAX, $iThreadMax);
-    $oHostGroup->paramSet(HOST_DB_MASTER_USER, 'vagrant');
+    $oHostGroup->paramSet(HOST_DB_USER, 'vagrant');
     $oHostGroup->paramSet(HOST_BACKUP_USER, 'backrest');
 
     if ($strDbVersion ne 'minimal')

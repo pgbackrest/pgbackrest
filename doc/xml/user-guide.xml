@@ -1243,14 +1243,14 @@
                 <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository. The <host>backup</host> host must also be configured with the database host/user and database path.</p>
+            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository. The <host>backup</host> host must also be configured with the <host>db-master</host> host/user and database path.  The master database will be configured as <id>db1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
-                <title>Configure <br-option>db-host</br-option>/<br-option>db-user</br-option> and <br-option>db-path</br-option></title>
+                <title>Configure <br-option>db1-host</br-option>/<br-option>db1-user</br-option> and <br-option>db1-path</br-option></title>
 
-                <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
-                <backrest-config-option section="demo" key="db-host">{[host-db-master]}</backrest-config-option>
-                <backrest-config-option section="demo" key="db-user">postgres</backrest-config-option>
+                <backrest-config-option section="demo" key="db1-path">{[db-path]}</backrest-config-option>
+                <backrest-config-option section="demo" key="db1-host">{[host-db-master]}</backrest-config-option>
+                <backrest-config-option section="demo" key="db1-user">postgres</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <!-- <backrest-config-option section="global:log" key="log-level-console">info</backrest-config-option> -->

@@ -24,6 +24,8 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
@@ -61,8 +63,8 @@ eval
         # Set log levels
         logLevelSet(OFF, REMOTE);
 
-        # Check that the remote repo path exists
-        if (optionRemoteTypeTest(DB) && !-e optionGet(OPTION_REPO_PATH))
+        # Check that the repo path exists if this is a backup remote
+        if (optionTest(OPTION_TYPE, BACKUP) && !-e optionGet(OPTION_REPO_PATH))
         {
             confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }
@@ -95,7 +97,7 @@ eval
     commandStart();
 
     # Check that the repo path exists
-    if ((optionRemoteTypeTest(DB) || optionRemoteTypeTest(NONE)) && !-e optionGet(OPTION_REPO_PATH))
+    if (isRepoLocal() && !-e optionGet(OPTION_REPO_PATH))
     {
         confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }
@@ -105,6 +107,11 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET))
     {
+        if (!isDbLocal())
+        {
+            confess &log(ERROR, commandGet() . ' command must be run on the db host', ERROR_HOST_INVALID);
+        }
+
         exitSafe(new pgBackRest::Archive()->process());
     }
 
@@ -172,7 +179,7 @@ eval
     ################################################################################################################################
     if (commandTest(CMD_RESTORE))
     {
-        if (optionRemoteTypeTest(DB))
+        if (!isDbLocal())
         {
             confess &log(ERROR, 'restore command must be run on the db host', ERROR_HOST_INVALID);
         }
@@ -191,7 +198,7 @@ eval
         ############################################################################################################################
         # Make sure backup and expire commands happen on the backup side
         ############################################################################################################################
-        if (optionRemoteTypeTest(BACKUP))
+        if (!isRepoLocal())
         {
             confess &log(ERROR, 'backup and expire commands must be run on the backup host', ERROR_HOST_INVALID);
         }

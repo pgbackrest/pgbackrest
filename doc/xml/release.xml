@@ -131,6 +131,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the master.  This means no configuration changes for backup are required after failing over from a master to standby when a separate backup server is used.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup.  These include <path>pgsql_tmp</path> and <path>pg_stat_tmp</path>.  The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
                     </release-item>
 
@@ -140,6 +144,10 @@
                 </release-feature-list>
 
                 <release-refactor-list>
+                    <release-item>
+                        <p>Simplify protocol creation and identifying which host is local/remote.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Removed all <code>OP_*</code> function constants that were used only for debugging, not in the protocol, and replaced with <code>__PACKAGE__</code>.</p>
                     </release-item>

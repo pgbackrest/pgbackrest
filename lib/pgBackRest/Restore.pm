@@ -24,6 +24,8 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -40,14 +42,13 @@ sub new
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize protocol
-    $self->{oProtocol} = protocolGet();
+    $self->{oProtocol} = protocolGet(BACKUP);
 
     # Initialize default file object
     $self->{oFile} = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
         $self->{oProtocol}
     );
 
@@ -408,13 +409,22 @@ sub manifestLoad
                     # Set the file part
                     $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE,
                                     substr(${$oLinkRemap}{$strTarget}, length($strTargetPath) + 1));
+
+                    # Set the link target
+                    $oManifest->set(
+                        MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, ${$oLinkRemap}{$strTarget});
+                }
+                else
+                {
+                    # Set the link target
+                    $oManifest->set(MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strTargetPath);
+
+                    # Since this will be a link remove the associated path (??? perhaps this should be in build like it is for ts?)
+                    $oManifest->remove(MANIFEST_SECTION_TARGET_PATH, $strTarget);
                 }
 
                 # Set the target path
                 $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strTargetPath);
-
-                # Since this will be a link remove the associated path (??? perhaps this should be in build like it is for ts?)
-                $oManifest->remove(MANIFEST_SECTION_TARGET_PATH, $strTarget);
             }
             # Else the link will be restored directly into $PGDATA instead
             else
@@ -1289,6 +1299,7 @@ sub process
         # Initialize the param hash
         my %oParam;
 
+        $oParam{remote_type} = BACKUP;
         $oParam{copy_time_begin} = $lCopyTimeBegin;
         $oParam{size_total} = $lSizeTotal;
         $oParam{delta} = optionGet(OPTION_DELTA);

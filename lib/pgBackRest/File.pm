@@ -22,8 +22,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
+use pgBackRest::Protocol::Common;
 
 ####################################################################################################################################
 # Remote operation constants
@@ -107,7 +107,6 @@ sub new
         my $strOperation,
         $self->{strStanza},
         $self->{strBackupPath},
-        $self->{strRemote},
         $self->{oProtocol},
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
@@ -118,7 +117,6 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'strStanza', required => false},
             {name => 'strBackupPath'},
-            {name => 'strRemote', required => false},
             {name => 'oProtocol'},
             {name => 'strDefaultPathMode', default => '0750'},
             {name => 'strDefaultFileMode', default => '0640'},
@@ -132,17 +130,6 @@ sub new
     if (!defined($self->{oProtocol}))
     {
         confess &log(ASSERT, 'oProtocol must be defined');
-    }
-
-    # If remote is defined check parameters and open session
-    if (defined($self->{strRemote}) && $self->{strRemote} ne NONE)
-    {
-        # Make sure remote is valid
-        if ($self->{strRemote} ne DB && $self->{strRemote} ne BACKUP)
-        {
-            confess &log(ASSERT, 'strRemote must be "' . DB . '" or "' . BACKUP .
-                                 "\", $self->{strRemote} was passed");
-        }
     }
 
     # Return from function and log return values if any
@@ -195,16 +182,16 @@ sub clone
     return logDebugReturn
     (
         $strOperation,
-        {name => 'self', value => pgBackRest::File->new
-                                  (
-                                      $self->{strStanza},
-                                      $self->{strBackupPath},
-                                      $self->{strRemote},
-                                      $self->{oProtocol},
-                                      $self->{strDefaultPathMode},
-                                      $self->{strDefaultFileMode},
-                                      $iThreadIdx
-                                  )}
+        {
+            name => 'self',
+            value => pgBackRest::File->new(
+                $self->{strStanza},
+                $self->{strBackupPath},
+                $self->{oProtocol},
+                $self->{strDefaultPathMode},
+                $self->{strDefaultFileMode},
+                $iThreadIdx)
+        }
     );
 }
 
@@ -439,7 +426,7 @@ sub isRemote
         {name => 'strPathType', trace => true}
     );
 
-    my $bRemote = defined($self->{strRemote}) && $self->pathTypeGet($strPathType) eq $self->{strRemote};
+    my $bRemote = $self->{oProtocol}->isRemote() && $self->{oProtocol}->remoteTypeTest($self->pathTypeGet($strPathType));
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1621,7 +1608,7 @@ sub copy
 
             eval
             {
-                $strOutput = $self->{oProtocol}->outputRead(true, true);
+                $strOutput = $self->{oProtocol}->outputRead(true, $bIgnoreMissingSource);
 
                 # Check the result of the remote call
                 if (substr($strOutput, 0, 1) eq 'Y')

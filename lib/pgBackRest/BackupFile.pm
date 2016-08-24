@@ -39,6 +39,7 @@ sub backupFile
         $lSizeFile,                                 # File size
         $lSizeTotal,                                # Total size of the files to be copied
         $lSizeCurrent,                              # Size of files copied so far
+        $bIgnoreMissing,                            # Is it OK if the file is missing?
     ) =
         logDebugParam
         (
@@ -51,7 +52,8 @@ sub backupFile
             {name => 'lModificationTime', trace => true},
             {name => 'lSizeFile', trace => true},
             {name => 'lSizeTotal', default => 0, trace => true},
-            {name => 'lSizeCurrent', required => false, trace => true}
+            {name => 'lSizeCurrent', required => false, trace => true},
+            {name => 'bIgnoreMissing', default => true, trace => true},
         );
 
     my $bCopyResult = true;                         # Copy result
@@ -94,7 +96,7 @@ sub backupFile
                          PATH_BACKUP_TMP, $strFileOp,
                          false,                   # Source is not compressed since it is the db directory
                          $bDestinationCompress,   # Destination should be compressed based on backup settings
-                         true,                    # Ignore missing files
+                         $bIgnoreMissing,         # Ignore missing files
                          $lModificationTime,      # Set modification time - this is required for resume
                          undef,                   # Do not set original mode
                          true);                   # Create the destination directory if it does not exist

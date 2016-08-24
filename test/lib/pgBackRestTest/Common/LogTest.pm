@@ -248,8 +248,17 @@ sub regExpReplace
 
                 if (@stryReplacement != 1)
                 {
-                    confess &log(ASSERT, "'${strToken}' is not a sub-regexp of '${strExpression}' or" .
-                                         " matches multiple times on '${strReplace}'");
+                    my $strError = "'${strToken}'";
+
+                    if (@stryReplacement == 0)
+                    {
+                        confess &log(ASSERT, $strError . "is not a sub-regexp of '${strExpression}' or" .
+                                             " matches " . @stryReplacement . " times on {[${strReplace}]}");
+                    }
+
+                    confess &log(
+                        ASSERT, $strError . " matches '${strExpression}'" . @stryReplacement . " times on '${strReplace}': " .
+                        join(',', @stryReplacement));
                 }
 
                 $strReplacement = $stryReplacement[0];
@@ -371,6 +380,16 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'REMOTE-PROCESS-TERMINATED-MESSAGE',
         'remote process terminated.*: (ssh.*|no output from terminated process)$',
         '(ssh.*|no output from terminated process)$', false);
+
+    # Full test time-based recovery
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', "\\, target \\'.*UTC", "[^\\']+UTC\$");
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', " \\-\\-target\\=\\\".*UTC", "[^\\\"]+UTC\$");
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-TARGET', "^recovery_target_time \\= \\'.*UTC", "[^\\']+UTC\$");
+
+    # Full test xid-based recovery (this expressions only work when time-based expressions above have already been applied
+    $strLine = $self->regExpReplace($strLine, 'XID-TARGET', "\\, target \\'[0-9]+", "[0-9]+\$");
+    $strLine = $self->regExpReplace($strLine, 'XID-TARGET', " \\-\\-target\\=\\\"[0-9]+", "[0-9]+\$");
+    $strLine = $self->regExpReplace($strLine, 'XID-TARGET', "^recovery_target_xid \\= \\'[0-9]+", "[0-9]+\$");
 
     return $strLine;
 }

@@ -138,6 +138,8 @@ use constant ERROR_FILE_MODE                                        => ERROR_MIN
     push @EXPORT, qw(ERROR_FILE_MODE);
 use constant ERROR_OPTION_MULTIPLE_VALUE                            => ERROR_MINIMUM + 59;
     push @EXPORT, qw(ERROR_OPTION_MULTIPLE_VALUE);
+use constant ERROR_PROTOCOL_OUTPUT_REQUIRED                         => ERROR_MINIMUM + 60;
+    push @EXPORT, qw(ERROR_PROTOCOL_OUTPUT_REQUIRED);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

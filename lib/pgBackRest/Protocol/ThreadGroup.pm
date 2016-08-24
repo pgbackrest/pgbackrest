@@ -19,6 +19,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::BackupFile;
+use pgBackRest::Protocol::Protocol;
 use pgBackRest::RestoreFile;
 
 ####################################################################################################################################
@@ -85,14 +86,14 @@ sub threadGroupThread
         eval
         {
             # Get the protocol object
-            my $oProtocol = protocolGet(undef, false, $iThreadIdx + 1);
+            my $oProtocol = protocolGet(
+                $$oCommand{param}{remote_type}, $$oCommand{param}{remote_index}, {bCache => false, iProcessIdx => $iThreadIdx + 1});
 
             # Create a file object
             $oFile = new pgBackRest::File
             (
                 optionGet(OPTION_STANZA),
                 optionGet(OPTION_REPO_PATH),
-                optionRemoteType(),
                 $oProtocol,
                 undef, undef,
                 $iThreadIdx + 1

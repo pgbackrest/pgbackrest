@@ -16,7 +16,6 @@ use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::Protocol::IO;
 use pgBackRest::Version;
 
@@ -27,6 +26,16 @@ use constant OP_NOOP                                                => 'noop';
     push @EXPORT, qw(OP_NOOP);
 use constant OP_EXIT                                                => 'exit';
     push @EXPORT, qw(OP_EXIT);
+
+####################################################################################################################################
+# DB/BACKUP Constants
+####################################################################################################################################
+use constant DB                                                     => 'db';
+    push @EXPORT, qw(DB);
+use constant BACKUP                                                 => 'backup';
+    push @EXPORT, qw(BACKUP);
+use constant NONE                                                   => 'none';
+    push @EXPORT, qw(NONE);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -57,6 +66,9 @@ sub new
             {name => 'iProtocolTimeout', trace => true},
             {name => 'strName', required => false, trace => true}
         );
+
+    # By default remote type is NONE
+    $self->{strRemoteType} = NONE;
 
     # Create the greeting that will be used to check versions with the remote
     if (defined($self->{strName}))
@@ -601,6 +613,39 @@ sub binaryXfer
 
     # Return the checksum and size if they are available
     return $strChecksum, $iFileSize;
+}
+
+####################################################################################################################################
+# remoteType
+#
+# Return the remote type.
+####################################################################################################################################
+sub remoteType
+{
+    return shift->{strRemoteType};
+}
+
+####################################################################################################################################
+# remoteTypeTest
+#
+# Determine if the remote matches the specified remote.
+####################################################################################################################################
+sub remoteTypeTest
+{
+    my $self = shift;
+    my $strRemoteType = shift;
+
+    return $self->{strRemoteType} eq $strRemoteType ? true : false;
+}
+
+####################################################################################################################################
+# isRemote
+#
+# Determine if the protocol object is communicating with a remote.
+####################################################################################################################################
+sub isRemote
+{
+    return shift->{strRemoteType} ne NONE ? true : false;
 }
 
 1;

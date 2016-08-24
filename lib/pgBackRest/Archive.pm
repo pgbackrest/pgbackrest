@@ -17,6 +17,7 @@ use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::ArchiveInfo;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
@@ -25,6 +26,8 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Remote operation constants
@@ -354,8 +357,7 @@ sub get
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
-        protocolGet()
+        protocolGet(BACKUP)
     );
 
     # If the destination file path is not absolute then it is relative to the db data path
@@ -440,7 +442,7 @@ sub getCheck
     {
         # get DB info for comparison
         ($strDbVersion, my $iControlVersion, my $iCatalogVersion, $ullDbSysId) =
-            (new pgBackRest::Db())->info($oFile, optionGet(OPTION_DB_PATH));
+            (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
     }
 
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
@@ -514,7 +516,7 @@ sub pushProcess
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->pushProcess');
 
     # Make sure the archive push command happens on the db side
-    if (optionRemoteTypeTest(DB))
+    if (!isDbLocal())
     {
         confess &log(ERROR, CMD_ARCHIVE_PUSH . ' operation must run on the db host');
     }
@@ -641,8 +643,7 @@ sub push
     (
         optionGet(OPTION_STANZA),
         $bAsync ? optionGet(OPTION_SPOOL_PATH) : optionGet(OPTION_REPO_PATH),
-        $bAsync ? NONE : optionRemoteType(),
-        protocolGet($bAsync)
+        protocolGet($bAsync ? NONE : BACKUP)
     );
 
     lockStopTest();
@@ -842,8 +843,7 @@ sub xfer
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        NONE,
-        protocolGet(true)
+        protocolGet(NONE)
     );
 
     # Load the archive manifest - all the files that need to be pushed
@@ -881,14 +881,13 @@ sub xfer
             &log(TEST, TEST_ARCHIVE_PUSH_ASYNC_START);
 
             # If the archive repo is remote create a new file object to do the copies
-            if (!optionRemoteTypeTest(NONE))
+            if (!isRepoLocal())
             {
                 $oFile = new pgBackRest::File
                 (
                     optionGet(OPTION_STANZA),
                     optionGet(OPTION_REPO_PATH),
-                    optionRemoteType(),
-                    protocolGet()
+                    protocolGet(BACKUP)
                 );
             }
 
@@ -1014,70 +1013,6 @@ sub xfer
 }
 
 ####################################################################################################################################
-# range
-#
-# Generates a range of archive log file names given the start and end log file name.  For pre-9.3 databases, use bSkipFF to exclude
-# the FF that prior versions did not generate.
-####################################################################################################################################
-sub range
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strArchiveStart,
-        $strArchiveStop,
-        $bSkipFF
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->', \@_,
-            {name => 'strArchiveStart'},
-            {name => 'strArchiveStop'},
-            {name => 'bSkipFF', default => false}
-        );
-
-    # Working variables
-    my @stryArchive;
-    my $iArchiveIdx = 0;
-
-    # Iterate through all archive logs between start and stop
-    my @stryArchiveSplit = split('/', $strArchiveStart);
-    my $iStartMajor = hex($stryArchiveSplit[0]);
-    my $iStartMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
-
-    @stryArchiveSplit = split('/', $strArchiveStop);
-    my $iStopMajor = hex($stryArchiveSplit[0]);
-    my $iStopMinor = hex(substr(sprintf("%08s", $stryArchiveSplit[1]), 0, 2));
-
-    $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
-    $iArchiveIdx += 1;
-
-    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
-    {
-        $iStartMinor += 1;
-
-        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
-        {
-            $iStartMajor += 1;
-            $iStartMinor = 0;
-        }
-
-        $stryArchive[$iArchiveIdx] = uc(sprintf("%08x%08x", $iStartMajor, $iStartMinor));
-        $iArchiveIdx += 1;
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'stryArchive', value => \@stryArchive}
-    );
-}
-
-####################################################################################################################################
 # check
 #
 # Validates the database configuration and checks that the archive logs can be read by backup. This will alert the user to any
@@ -1096,15 +1031,14 @@ sub check
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
-        protocolGet()
+        protocolGet(isRepoLocal() ? DB : BACKUP)
     );
 
     # Initialize the database object
-    my $oDb = new pgBackRest::Db();
+    my $oDb = new pgBackRest::Db(1);
 
     # Validate the database configuration
-    $oDb->configValidate($oFile, optionGet(OPTION_DB_PATH));
+    $oDb->configValidate(optionGet(OPTION_DB_PATH));
 
     # Force archiving
     my $strWalSegment = $oDb->xlogSwitch();
@@ -1188,7 +1122,7 @@ sub check
     if ($iResult == 0)
     {
         # If backup repo is local, then check the backup info
-        if (!optionRemoteTypeTest(BACKUP))
+        if (isRepoLocal())
         {
             # Load or build backup.info
             eval
@@ -1210,7 +1144,7 @@ sub check
             {
                 # Get the current database info
                 my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-                    $oDb->info($oFile, optionGet(OPTION_DB_PATH));
+                    $oDb->info(optionGet(OPTION_DB_PATH));
 
                 # Check that the stanza backup info is compatible with the current version of the database
                 # If not, an error will be thrown

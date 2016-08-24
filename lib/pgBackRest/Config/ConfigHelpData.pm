@@ -103,6 +103,30 @@ my $oConfigHelpData =
                     "be archived."
         },
 
+        # BACKUP-CMD Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'backup-cmd' =>
+        {
+            section => 'backup',
+            summary =>
+                "pgBackRest exe path on the backup host.",
+            description =>
+                "Required only if the path to pgbackrest is different on the local and backup hosts. If not defined, the backup " .
+                    "host exe path will be set the same as the local exe path."
+        },
+
+        # BACKUP-CONFIG Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'backup-config' =>
+        {
+            section => 'backup',
+            summary =>
+                "pgBackRest backup host configuration file.",
+            description =>
+                "Sets the location of the configuration file on the backup host. This is only required if the backup host " .
+                    "configuration file is in a different location than the local configuration file."
+        },
+
         # BACKUP-HOST Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-host' =>
@@ -140,18 +164,6 @@ my $oConfigHelpData =
             description =>
                 "Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use " .
                     "at a time per thread. An additional maximum of 256K per thread may be used for zlib buffers."
-        },
-
-        # CMD-REMOTE Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'cmd-remote' =>
-        {
-            section => 'command',
-            summary =>
-                "pgBackRest exe path on the remote host.",
-            description =>
-                "Required only if the path to pgbackrest is different on the local and remote systems. If not defined, the " .
-                    "remote exe path will be set the same as the local exe path."
         },
 
         # COMPRESS Option Help
@@ -200,16 +212,28 @@ my $oConfigHelpData =
                 "Use this option to specify a different configuration file than the default."
         },
 
-        # CONFIG-REMOTE Option Help
+        # DB-CMD Option Help
         #---------------------------------------------------------------------------------------------------------------------------
-        'config-remote' =>
+        'db-cmd' =>
         {
-            section => 'general',
+            section => 'stanza',
             summary =>
-                "pgBackRest remote configuration file.",
+                "pgBackRest exe path on the database host.",
             description =>
-                "Sets the location of the remote configuration file. This is only required if the remote configuration file is " .
-                    "in a different location than the local configuration file."
+                "Required only if the path to pgbackrest is different on the local and database hosts. If not defined, the " .
+                    "database host exe path will be set the same as the local exe path."
+        },
+
+        # DB-CONFIG Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'db-config' =>
+        {
+            section => 'stanza',
+            summary =>
+                "pgBackRest database host configuration file.",
+            description =>
+                "Sets the location of the configuration file on the database host. This is only required if the database host " .
+                    "configuration file is in a different location than the local configuration file."
         },
 
         # DB-HOST Option Help
@@ -704,15 +728,15 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
-                'cmd-remote' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'config-remote' => 'section',
                 'db-path' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
@@ -739,15 +763,15 @@ my $oConfigHelpData =
             {
                 'archive-async' => 'section',
                 'archive-max-mb' => 'section',
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
-                'cmd-remote' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'config-remote' => 'section',
                 'db-path' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
@@ -776,14 +800,16 @@ my $oConfigHelpData =
                 'archive-check' => 'section',
                 'archive-copy' => 'section',
                 'archive-timeout' => 'section',
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
                 'buffer-size' => 'section',
-                'cmd-remote' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'config-remote' => 'section',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
                 'db-host' => 'section',
                 'db-path' => 'section',
                 'db-port' => 'section',
@@ -866,14 +892,16 @@ my $oConfigHelpData =
             {
                 'archive-check' => 'section',
                 'archive-timeout' => 'section',
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
-                'cmd-remote' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'config-remote' => 'section',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
                 'db-host' => 'section',
                 'db-path' => 'section',
                 'db-port' => 'section',
@@ -906,6 +934,8 @@ my $oConfigHelpData =
             {
                 'backup-host' => 'section',
                 'config' => 'default',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
                 'db-host' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
@@ -950,14 +980,14 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
-                'cmd-remote' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'config-remote' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -993,15 +1023,15 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
-                'cmd-remote' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
-                'config-remote' => 'section',
                 'db-include' => 'section',
                 'db-path' => 'section',
 
@@ -1154,8 +1184,13 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-user' => 'section',
                 'config' => 'default',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
                 'db-host' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
@@ -1180,8 +1215,13 @@ my $oConfigHelpData =
 
             option =>
             {
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-user' => 'section',
                 'config' => 'default',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
                 'db-host' => 'section',
 
                 # FORCE Option Help

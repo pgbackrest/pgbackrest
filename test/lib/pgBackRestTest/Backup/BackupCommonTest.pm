@@ -13,6 +13,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 
 use pgBackRestTest::Backup::Common::HostBackupTest;
@@ -28,7 +29,6 @@ use pgBackRestTest::CommonTest;
 ####################################################################################################################################
 sub backupTestSetup
 {
-    my $bRemote = shift;
     my $bSynthetic = shift;
     my $oLogTest = shift;
     my $oConfigParam = shift;
@@ -36,31 +36,51 @@ sub backupTestSetup
     # Get host group
     my $oHostGroup = hostGroupGet();
 
-    # Create the backup container
+    # Create the backup host
+    my $strBackupDestination;
+    my $bHostBackup = defined($$oConfigParam{bHostBackup}) ? $$oConfigParam{bHostBackup} : false;
     my $oHostBackup = undef;
 
-    if ($bRemote)
+    if ($bHostBackup)
     {
+        $strBackupDestination = defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_BACKUP;
+
         $oHostBackup = new pgBackRestTest::Backup::Common::HostBackupTest(
-            {strDbMaster => HOST_DB_MASTER, bSynthetic => $bSynthetic, oLogTest => $bSynthetic ? $oLogTest : undef});
+            {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest});
         $oHostGroup->hostAdd($oHostBackup);
     }
+    else
+    {
+        $strBackupDestination =
+            defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_DB_MASTER;
+    }
 
-    # Create the db-master container
+    # Create the db-master host
     my $oHostDbMaster = undef;
 
     if ($bSynthetic)
     {
         $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
-            {oHostBackup => $oHostBackup, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
     }
     else
     {
-        $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbTest({oHostBackup => $oHostBackup});
+        $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbTest(
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
     }
 
     $oHostGroup->hostAdd($oHostDbMaster);
-    $oHostBackup = defined($oHostBackup) ? $oHostBackup : $oHostDbMaster;
+
+    # Create the db-standby host
+    my $oHostDbStandby = undef;
+
+    if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
+    {
+        $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbTest(
+            {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest});
+
+        $oHostGroup->hostAdd($oHostDbStandby);
+    }
 
     # Create the local file object
     my $oFile =
@@ -68,7 +88,6 @@ sub backupTestSetup
         (
             $oHostDbMaster->stanza(),
             $oHostDbMaster->repoPath(),
-            undef,
             new pgBackRest::Protocol::Common
             (
                 OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
@@ -79,23 +98,36 @@ sub backupTestSetup
         );
 
     # Create db master config
-    $oHostDbMaster->configCreate(
-        ($bRemote ? $oHostBackup : undef),
-        $$oConfigParam{bCompress},
-        $bRemote ? undef : $$oConfigParam{bHardLink},
-        $$oConfigParam{bArchiveAsync},
-        undef);
+    $oHostDbMaster->configCreate({
+        strBackupSource => $$oConfigParam{strBackupSource},
+        bCompress => $$oConfigParam{bCompress},
+        bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
+        bArchiveAsync => $$oConfigParam{bArchiveAsync}});
 
-    # Create backup config
-    if ($bRemote)
+    # Create backup config if backup host exists
+    if (defined($oHostBackup))
     {
-        $oHostBackup->configCreate(
-            $oHostDbMaster,
-            $$oConfigParam{bCompress},
-            $$oConfigParam{bHardLink});
+        $oHostBackup->configCreate({
+            bCompress => $$oConfigParam{bCompress},
+            bHardlink => $$oConfigParam{bHardLink}});
+    }
+    # If backup host is not defined set it to db-master
+    else
+    {
+        $oHostBackup = $strBackupDestination eq HOST_DB_MASTER ? $oHostDbMaster : $oHostDbStandby;
     }
 
-    return $oHostDbMaster, $oHostBackup, $oFile;
+    # Create db-standby config
+    if (defined($oHostDbStandby))
+    {
+        $oHostDbStandby->configCreate({
+            strBackupSource => $$oConfigParam{strBackupSource},
+            bCompress => $$oConfigParam{bCompress},
+            bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
+            bArchiveAsync => $$oConfigParam{bArchiveAsync}});
+    }
+
+    return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;
 }
 
 push @EXPORT, qw(backupTestSetup);

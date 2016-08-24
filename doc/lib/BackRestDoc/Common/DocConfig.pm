@@ -917,11 +917,11 @@ sub helpOptionGet
     {
         my $strDefault;
 
-        if ($strOption eq OPTION_CONFIG || $strOption eq OPTION_CONFIG_REMOTE)
+        if ($strOption eq OPTION_CONFIG || $strOption eq OPTION_BACKUP_CONFIG || $strOption eq OPTION_DB_CONFIG)
         {
             $strDefault = '/etc/{[backrest-exe]}.conf';
         }
-        elsif ($strOption eq OPTION_COMMAND_REMOTE)
+        elsif ($strOption eq OPTION_BACKUP_CMD || $strOption eq OPTION_DB_CMD)
         {
             $strDefault = '[INSTALL-PATH]/{[backrest-exe]}';
         }

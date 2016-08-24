@@ -8,23 +8,6 @@
         <text><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest.conf</file>.</text>
 
         <config-section-list title="Settings">
-            <!-- CONFIG - COMMAND SECTION -->
-            <config-section id="command" name="Command">
-                <text>The <setting>command</setting> section defines the location of external commands that are used by <backrest/>.</text>
-
-                <config-key-list>
-                    <!-- CONFIG - COMMAND SECTION - CMD-REMOTE KEY -->
-                    <config-key id="cmd-remote" name="Remote Command">
-                        <summary><backrest/> exe path on the remote host.</summary>
-
-                        <text>Required only if the path to <exe/> is different on the local and remote systems.  If not defined, the remote exe path will be set the same as the local exe path.</text>
-
-                        <default>same as local</default>
-                        <example>/usr/lib/backrest/bin/pgbackrest</example>
-                    </config-key>
-                </config-key-list>
-            </config-section>
-
             <!-- CONFIG - LOG -->
             <config-section id="log" name="Log">
                 <text>The <setting>log</setting> section defines logging-related settings.</text>
@@ -118,15 +101,6 @@
 
                         <allow>0-9</allow>
                         <example>1</example>
-                    </config-key>
-
-                    <!-- CONFIG - GENERAL SECTION - CONFIG_REMOTE KEY -->
-                    <config-key id="config-remote" name="Remote Config">
-                        <summary><backrest/> remote configuration file.</summary>
-
-                        <text>Sets the location of the remote configuration file.  This is only required if the remote configuration file is in a different location than the local configuration file.</text>
-
-                        <example>/etc/pgbackrest_remote.conf</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - DB-TIMEOUT KEY -->
@@ -239,6 +213,25 @@
                         Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in pg_xlog.  This will get the database cluster to a consistent state.</text>
 
                         <example>y</example>
+                    </config-key>
+
+                    <!-- CONFIG - BACKUP SECTION - BACKUP-CMD KEY -->
+                    <config-key id="backup-cmd" name="Backup Host Command">
+                        <summary><backrest/> exe path on the backup host.</summary>
+
+                        <text>Required only if the path to <exe/> is different on the local and backup hosts.  If not defined, the backup host exe path will be set the same as the local exe path.</text>
+
+                        <default>same as local</default>
+                        <example>/usr/lib/backrest/bin/pgbackrest</example>
+                    </config-key>
+
+                    <!-- CONFIG - BACKUP SECTION - BACKUP-CONFIG KEY -->
+                    <config-key id="backup-config" name="Backup Host Configuration">
+                        <summary><backrest/> backup host configuration file.</summary>
+
+                        <text>Sets the location of the configuration file on the backup host.  This is only required if the backup host configuration file is in a different location than the local configuration file.</text>
+
+                        <example>/etc/pgbackrest_backup.conf</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - BACKUP-HOST KEY -->
@@ -468,8 +461,27 @@
             <config-section id="stanza" name="Stanza">
                 <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
 
-                <!-- CONFIG - RETENTION SECTION - DB-HOST KEY -->
                 <config-key-list>
+                    <!-- CONFIG - STANZA SECTION - DB-CMD KEY -->
+                    <config-key id="db-cmd" name="Database Host Command">
+                        <summary><backrest/> exe path on the database host.</summary>
+
+                        <text>Required only if the path to <exe/> is different on the local and database hosts.  If not defined, the database host exe path will be set the same as the local exe path.</text>
+
+                        <default>same as local</default>
+                        <example>/usr/lib/backrest/bin/pgbackrest</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - DB_CONFIG KEY -->
+                    <config-key id="db-config" name="Database Host Configuration">
+                        <summary><backrest/> database host configuration file.</summary>
+
+                        <text>Sets the location of the configuration file on the database host.  This is only required if the database host configuration file is in a different location than the local configuration file.</text>
+
+                        <example>/etc/pgbackrest_db.conf</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - DB-HOST KEY -->
                     <config-key id="db-host" name="Database Host">
                         <summary>Cluster host for operating remotely via SSH.</summary>
 
@@ -478,7 +490,7 @@
                         <example>db.domain.com</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-USER KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-USER KEY -->
                     <config-key id="db-user" name="Database User">
                         <summary>Cluster host logon user when <setting>db-host</setting> is set.</summary>
 
@@ -487,7 +499,7 @@
                         <example>db_owner</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-PATH KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-PATH KEY -->
                     <config-key id="db-path" name="Database Path">
                         <summary>Cluster data directory.</summary>
 
@@ -498,7 +510,7 @@
                         <example>/data/db</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-PORT KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-PORT KEY -->
                     <config-key id="db-port" name="Database Port">
                         <summary>Cluster port.</summary>
 
@@ -507,7 +519,7 @@
                         <example>6543</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - DB-SOCKET-PATH KEY -->
+                    <!-- CONFIG - STANZA SECTION - DB-SOCKET-PATH KEY -->
                     <config-key id="db-socket-path" name="Database Socket Path">
                         <summary>Cluster unix socket path.</summary>
 

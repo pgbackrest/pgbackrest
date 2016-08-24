@@ -17,6 +17,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # Signal constants

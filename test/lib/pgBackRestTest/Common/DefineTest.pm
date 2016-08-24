@@ -139,7 +139,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_TEST_NAME => 'full',
-                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_TOTAL => 11,
                     &TESTDEF_TEST_THREAD => true,
                     &TESTDEF_TEST_DB => true
                 }

@@ -14,6 +14,7 @@ use Carp qw(confess);
 use DBI;
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(basename);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
@@ -80,11 +81,10 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strName => HOST_DB_MASTER,
             strImage => 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-${strDbVersion}-test-pre",
-            strUser => $oHostGroup->paramGet(HOST_DB_MASTER_USER),
-            strVm => $oHostGroup->paramGet(HOST_PARAM_VM),
-            oHostBackup => $$oParam{oHostBackup},
+            strBackupDestination => $$oParam{strBackupDestination},
+            oLogTest => $$oParam{oLogTest},
+            bStandby => $$oParam{bStandby},
         });
     bless $self, $class;
 
@@ -131,6 +131,9 @@ sub new
             confess &log(ERROR, "actual database version ${strDbVersionActual} does not match expected version ${strDbVersion}");
         }
     }
+
+    # Create pg_xlog directory
+    filePathCreate($self->dbPath() . '/pg_xlog');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -351,12 +354,25 @@ sub clusterCreate
 
     # Don't link pg_xlog for versions < 9.2 because some recovery scenarios won't work.
     $self->executeSimple(
-        $self->dbBinPath() . '/initdb' . ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
+        $self->dbBinPath() . '/initdb ' .
+        ($self->dbVersion() >= PG_VERSION_93 ? ' -k' : '') .
+        ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
+
+    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_HOT_STANDBY)
+    {
+        $self->executeSimple(
+            "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
+    }
 
     $self->clusterStart(
         {bHotStandby => $$hParam{bHotStandby}, bArchive => $$hParam{bArchive}, bArchiveAlways => $$hParam{bArchiveAlways},
          bArchiveInvalid => $$hParam{bArchiveInvalid}});
+
+    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_HOT_STANDBY)
+    {
+        $self->sqlExecute("create user replicator replication", {bCommit =>true});
+    }
 }
 
 ####################################################################################################################################
@@ -423,8 +439,14 @@ sub clusterStart
     }
 
     $strCommand .=
-        " -c log_error_verbosity=verbose" .
-        " -c unix_socket_director" . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
+        ($self->dbVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
+        ' -c listen_addresses=\'*\'' .
+        ' -c log_directory=\'' . $self->dbLogPath() . "'" .
+        ' -c log_filename=\'' . basename($self->dbLogFile()) . "'" .
+        ' -c log_rotation_age=0' .
+        ' -c log_rotation_size=0' .
+        ' -c log_error_verbosity=verbose' .
+        ' -c unix_socket_director' . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->dbLogFile() . ' -s';
 
     $self->executeSimple($strCommand);

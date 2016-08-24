@@ -531,13 +531,16 @@ sub backrestConfig
                     my $oOption = optionRuleGet();
 
                     # Make sure the specified option exists
-                    if (!defined($$oOption{$strKey}))
-                    {
-                        confess &log(ERROR, "option ${strKey} does not exist");
-                    }
+                    # ??? This is too simplistic to handle new indexed options.  The check below works for now but it would be good
+                    # ??? to bring back more sophisticated checking in the future.
+                    # if (!defined($$oOption{$strKey}))
+                    # {
+                    #     confess &log(ERROR, "option ${strKey} does not exist");
+                    # }
 
                     # If this option is a hash and the value is already set then append to the array
-                    if ($$oOption{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH &&
+                    if (defined($$oOption{$strKey}) &&
+                        $$oOption{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();

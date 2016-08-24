@@ -36,10 +36,8 @@ use pgBackRestTest::Common::HostGroupTest;
 ####################################################################################################################################
 # Host constants
 ####################################################################################################################################
-use constant HOST_DB_MASTER                                         => 'db-master';
-    push @EXPORT, qw(HOST_DB_MASTER);
-use constant HOST_DB_MASTER_USER                                    => 'db-master-user';
-    push @EXPORT, qw(HOST_DB_MASTER_USER);
+use constant HOST_DB_USER                                           => 'db-user';
+    push @EXPORT, qw(HOST_DB_USER);
 
 ####################################################################################################################################
 # Host parameters
@@ -82,28 +80,35 @@ sub new
             {name => 'oParam', required => false, trace => true},
         );
 
+    # Get host group
+    my $oHostGroup = hostGroupGet();
+
+    # Is standby?
+    my $bStandby = defined($$oParam{bStandby}) && $$oParam{bStandby} ? true : false;
+
     my $self = $class->SUPER::new(
         {
-            strName => $$oParam{strName},
+            strName => $bStandby ? HOST_DB_STANDBY : HOST_DB_MASTER,
             strImage => $$oParam{strImage},
-            strUser => $$oParam{strUser},
-            strVm => $$oParam{strVm},
+            strUser => $oHostGroup->paramGet(HOST_DB_USER),
+            strVm => $oHostGroup->paramGet(HOST_PARAM_VM),
+            strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
-            oHostBackup => $$oParam{oHostBackup},
         });
     bless $self, $class;
 
     # Set parameters
+    $self->{bStandby} = $bStandby;
+
     $self->paramSet(HOST_PARAM_DB_PATH, $self->testPath() . '/' . HOST_PATH_DB);
     $self->paramSet(HOST_PARAM_DB_BASE_PATH, $self->dbPath() . '/' . HOST_PATH_DB_BASE);
     $self->paramSet(HOST_PARAM_TABLESPACE_PATH, $self->dbPath() . '/tablespace');
 
     filePathCreate($self->dbBasePath(), undef, undef, true);
 
-    if (defined($$oParam{oHostBackup}))
+    if ($$oParam{strBackupDestination} ne $self->nameGet())
     {
-        $self->paramSet(HOST_PARAM_REPO_PATH, $$oParam{oHostBackup}->repoPath());
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->testPath() . '/' . HOST_PATH_SPOOL);
         $self->paramSet(HOST_PARAM_LOG_PATH, $self->spoolPath() . '/' . HOST_PATH_LOG);
         $self->paramSet(HOST_PARAM_LOCK_PATH, $self->spoolPath() . '/' . HOST_PATH_LOCK);
@@ -114,6 +119,9 @@ sub new
     {
         $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->repoPath());
     }
+
+    # Initialize linkRemap Hashes
+    $self->{hLinkRemap} = {};
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -164,7 +172,7 @@ sub archivePush
         ' --archive-max-mb=24 --no-fork --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ? ' --backup-host=bogus' : '') .
         " archive-push ${strSourceFile}",
-        {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}});
+        {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -223,7 +231,6 @@ sub configRecovery
 sub configRemap
 {
     my $self = shift;
-    my $oHostBackup = shift;
     my $oRemapHashRef = shift;
     my $oManifestRef = shift;
 
@@ -236,8 +243,11 @@ sub configRemap
 
     # Load backup config file
     my %oRemoteConfig;
+    my $oHostBackup =
+        !$self->standby() && !$self->nameTest($self->backupDestination()) ?
+            hostGroupGet()->hostGet($self->backupDestination()) : undef;
 
-    if ($oHostBackup->nameTest(HOST_BACKUP))
+    if (defined($oHostBackup))
     {
         iniLoad($oHostBackup->backrestConfig(), \%oRemoteConfig, true);
     }
@@ -252,12 +262,13 @@ sub configRemap
 
         if ($strRemap eq MANIFEST_TARGET_PGDATA)
         {
-            $oConfig{$strStanza}{'db-path'} = $strRemapPath;
+            $oConfig{$strStanza}{&OPTION_DB_PATH} = $strRemapPath;
             ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
-            if ($oHostBackup->nameTest(HOST_BACKUP))
+            if (defined($oHostBackup))
             {
-                $oRemoteConfig{$strStanza}{'db-path'} = $strRemapPath;
+                my $bForce = $oHostBackup->nameTest(HOST_BACKUP) && defined(hostGroupGet()->hostGet(HOST_DB_STANDBY, true));
+                $oRemoteConfig{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $strRemapPath;
             }
         }
         else
@@ -278,11 +289,38 @@ sub configRemap
     # Save db config file
     iniSave($self->backrestConfig(), \%oConfig, true);
 
-    # Save backup config file
-    if ($oHostBackup->nameTest(HOST_BACKUP))
+    # Save backup config file (but not is this is the standby which is not the source of backups)
+    if (defined($oHostBackup))
     {
         iniSave($oHostBackup->backrestConfig(), \%oRemoteConfig, true);
     }
+}
+
+####################################################################################################################################
+# linkRemap
+####################################################################################################################################
+sub linkRemap
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strTarget,
+        $strDestination
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->linkRemap', \@_,
+            {name => 'strTarget'},
+            {name => 'strDestination'},
+        );
+
+    ${$self->{hLinkRemap}}{$strTarget} = $strDestination;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -312,6 +350,14 @@ sub restore
     $bDelta = defined($bDelta) ? $bDelta : false;
     $bForce = defined($bForce) ? $bForce : false;
 
+    # Build link map options
+    my $strLinkMap;
+
+    foreach my $strTarget (sort(keys(%{$self->{hLinkRemap}})))
+    {
+        $strLinkMap .= " --link-map=\"${strTarget}=${$self->{hLinkRemap}}{$strTarget}\"";
+    }
+
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
@@ -332,22 +378,61 @@ sub restore
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = defined($oHostGroup->hostGet(HOST_BACKUP, true)) ? $oHostGroup->hostGet(HOST_BACKUP) : $self;
 
+    # Load the expected manifest if it was not defined
+    my $oExpectedManifest = undef;
+
     if (!defined($oExpectedManifestRef))
     {
         # Change mode on the backup path so it can be read
         my $oExpectedManifest = new pgBackRest::Manifest(
             $self->{oFile}->pathGet(
-                PATH_BACKUP_CLUSTER,
-                ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
-                true);
+                PATH_BACKUP_CLUSTER, ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
+            true);
 
         $oExpectedManifestRef = $oExpectedManifest->{oContent};
+
+        # Remap links in the expected manifest
+        foreach my $strTarget (sort(keys(%{$self->{hLinkRemap}})))
+        {
+            my $strDestination = ${$self->{hLinkRemap}}{$strTarget};
+            my $strTarget = 'pg_data/' . $strTarget;
+            my $strTargetPath = $strDestination;
+
+            # If this link is to a file then the specified path must be split into file and path parts
+            if ($oExpectedManifest->isTargetFile($strTarget))
+            {
+                $strTargetPath = dirname($strTargetPath);
+
+                # Error when the path is not deep enough to be valid
+                if (!defined($strTargetPath))
+                {
+                    confess &log(ERROR, "${strDestination} is not long enough to be target for ${strTarget}");
+                }
+
+                # Set the file part
+                $oExpectedManifest->set(
+                    MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_FILE,
+                    substr($strDestination, length($strTargetPath) + 1));
+
+                # Set the link target
+                $oExpectedManifest->set(
+                    MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strDestination);
+            }
+            else
+            {
+                # Set the link target
+                $oExpectedManifest->set(MANIFEST_SECTION_TARGET_LINK, $strTarget, MANIFEST_SUBKEY_DESTINATION, $strTargetPath);
+            }
+
+            # Set the target path
+            $oExpectedManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH, $strTargetPath);
+        }
     }
 
     # Get the backup host
     if (defined($oRemapHashRef))
     {
-        $self->configRemap($oHostBackup, $oRemapHashRef, $oExpectedManifestRef);
+        $self->configRemap($oRemapHashRef, $oExpectedManifestRef);
     }
 
     if (defined($oRecoveryHashRef))
@@ -367,11 +452,13 @@ sub restore
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
         (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
         (defined($bTargetExclusive) && $bTargetExclusive ? ' --target-exclusive' : '') .
+        (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
         (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
             ? ' --' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
-        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest}},
+        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
+         bLogOutput => $self->synthetic()},
         $strUser);
 
     if (!defined($iExpectedExitStatus))
@@ -624,6 +711,7 @@ sub dbBasePath
 }
 
 sub spoolPath {return shift->paramGet(HOST_PARAM_SPOOL_PATH);}
+sub standby {return shift->{bStandby}}
 
 sub tablespacePath
 {

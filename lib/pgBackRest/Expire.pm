@@ -22,6 +22,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # new
@@ -42,8 +44,7 @@ sub new
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
-        protocolGet(true)
+        protocolGet(NONE)
     );
 
     # Initialize total archive expired

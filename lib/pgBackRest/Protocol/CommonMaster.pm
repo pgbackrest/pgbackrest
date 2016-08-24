@@ -16,7 +16,6 @@ use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
 
@@ -31,6 +30,7 @@ sub new
     my
     (
         $strOperation,
+        $strRemoteType,                             # Type of remote (DB or BACKUP)
         $strName,                                   # Name of the protocol
         $strId,                                     # Id of this process for error messages
         $strCommand,                                # Command to execute on local/remote
@@ -42,6 +42,7 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'strRemoteType'},
             {name => 'strName'},
             {name => 'strId'},
             {name => 'strCommand'},
@@ -54,6 +55,9 @@ sub new
     # Create the class hash
     my $self = $class->SUPER::new($iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout, $strName);
     bless $self, $class;
+
+    # Set remote to specificied value
+    $self->{strRemoteType} = $strRemoteType;
 
     # Set command
     if (!defined($strCommand))
@@ -92,8 +96,12 @@ sub close
 {
     my $self = shift;
 
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->close');
+
     # Exit status defaults to success
     my $iExitStatus = 0;
+    my $bClosed = false;
 
     # Only send the exit command if the process is running
     if (defined($self->{io}) && defined($self->{io}->pIdGet()))
@@ -131,9 +139,15 @@ sub close
         }
 
         undef($self->{io});
+        $bClosed = true;
     }
 
-    return $iExitStatus;
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iExitStatus', value => $iExitStatus, trace => !$bClosed}
+    );
 }
 
 ####################################################################################################################################
@@ -183,13 +197,15 @@ sub outputRead
     (
         $strOperation,
         $bOutputRequired,
-        $bSuppressLog
+        $bSuppressLog,
+        $bWarnOnError,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->outputRead', \@_,
             {name => 'bOutputRequired', default => false, trace => true},
-            {name => 'bSuppressLog', required => false, trace => true}
+            {name => 'bSuppressLog', required => false, trace => true},
+            {name => 'bWarnOnError', default => false, trace => true},
         );
 
     my $strLine;
@@ -222,18 +238,26 @@ sub outputRead
     # Raise any errors
     if ($bError)
     {
-        confess &log(ERROR, (defined($self->{strErrorPrefix}) ? "$self->{strErrorPrefix}: " : '') .
-                            (defined($strOutput) ? "${strOutput}" : ''), $iErrorCode, $bSuppressLog);
+        my $strError = $self->{strErrorPrefix} . (defined($strOutput) ? ": ${strOutput}" : '');
+
+        # Raise the error if a warning is not requested
+        if (!$bWarnOnError)
+        {
+            confess &log(ERROR, $strError, $iErrorCode, $bSuppressLog);
+        }
+
+        &log(WARN, $strError, $iErrorCode);
+        undef($strOutput);
     }
 
     # Reset the keep alive time
     $self->{fKeepAliveTime} = gettimeofday();
 
     # If output is required and there is no output, raise exception
-    if (defined($bOutputRequired) && $bOutputRequired && !defined($strOutput))
+    if ($bOutputRequired && !defined($strOutput))
     {
         $self->{io}->waitPid();
-        confess &log(ERROR, (defined($self->{strErrorPrefix}) ? "$self->{strErrorPrefix}: " : '') . 'output is not defined');
+        confess &log(ERROR, "$self->{strErrorPrefix}: output is not defined", ERROR_PROTOCOL_OUTPUT_REQUIRED);
     }
 
     # Return from function and log return values if any
@@ -327,6 +351,9 @@ sub cmdWrite
     # Write out the command
     $self->{io}->lineWrite($strCommand);
 
+    # Reset the keep alive time
+    $self->{fKeepAliveTime} = gettimeofday();
+
     # Return from function and log return values if any
     logDebugReturn($strOperation);
 }
@@ -342,10 +369,11 @@ sub cmdExecute
     my $strCommand = shift;
     my $oParamRef = shift;
     my $bOutputRequired = shift;
+    my $bWarnOnError = shift;
 
     $self->cmdWrite($strCommand, $oParamRef);
 
-    return $self->outputRead($bOutputRequired);
+    return $self->outputRead($bOutputRequired, undef, $bWarnOnError);
 }
 
 ####################################################################################################################################
