@@ -131,7 +131,7 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup.  These include (depending on the version where they were introduced): <path>pgsql_tmp</path>, <path>pg_dynshmem</path>, <path>pg_notify</path>, <path>pg_replslot</path>, <path>pg_serial</path>, <path>pg_snapshots</path>, <path>pg_stat_tmp</path>, <path>pg_subtrans</path>.  The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
+                        <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup.  These include <path>pgsql_tmp</path> and <path>pg_stat_tmp</path>.  The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
                     </release-item>
 
                     <release-item>

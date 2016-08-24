@@ -650,21 +650,6 @@ sub build
         # and let the server recreate them when they are needed.
         next if $strName =~ ('(^|\/)' . DB_FILE_PREFIX_TMP);
 
-        # Skip pg_dynshmem/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/') && $strDbVersion >= PG_VERSION_94;
-
-        # Skip pg_notify/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/') && $strDbVersion >= PG_VERSION_90;
-
-        # Skip pg_replslot/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $strDbVersion >= PG_VERSION_94;
-
-        # Skip pg_serial/* since these files are reset
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/') && $strDbVersion >= PG_VERSION_91;
-
-        # Skip pg_snapshots/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $strDbVersion >= PG_VERSION_92;
-
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $strDbVersion >= PG_VERSION_84;
