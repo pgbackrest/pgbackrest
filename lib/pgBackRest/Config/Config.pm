@@ -1832,10 +1832,18 @@ sub configLoad
     if (optionTest(OPTION_DB_TIMEOUT) && optionTest(OPTION_PROTOCOL_TIMEOUT) &&
         optionGet(OPTION_PROTOCOL_TIMEOUT) <= optionGet(OPTION_DB_TIMEOUT))
     {
-        confess &log(ERROR,
-            "'" . optionGet(OPTION_PROTOCOL_TIMEOUT) . "' is not valid for '" . OPTION_PROTOCOL_TIMEOUT . "' option\n" .
-            "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
-            ERROR_OPTION_INVALID_VALUE);
+        # If protocol-timeout is default then increase it to be greater than db-timeout
+        if (optionSource(OPTION_PROTOCOL_TIMEOUT) eq SOURCE_DEFAULT)
+        {
+            optionSet(OPTION_PROTOCOL_TIMEOUT, optionGet(OPTION_DB_TIMEOUT) + 30);
+        }
+        else
+        {
+            confess &log(ERROR,
+                "'" . optionGet(OPTION_PROTOCOL_TIMEOUT) . "' is not valid for '" . OPTION_PROTOCOL_TIMEOUT . "' option\n" .
+                "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
+                ERROR_OPTION_INVALID_VALUE);
+        }
     }
 
     # Make sure that backup and db are not both remote

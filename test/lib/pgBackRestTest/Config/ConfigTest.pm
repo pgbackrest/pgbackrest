@@ -569,6 +569,16 @@ sub configTestRun
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_REQUIRED, OPTION_DB_PATH, 'does this stanza exist?');
         }
+
+        if (testRun(++$iRun, CMD_BACKUP . ' automatically increase ' . OPTION_PROTOCOL_TIMEOUT))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, OPTION_DB_TIMEOUT, OPTION_DEFAULT_PROTOCOL_TIMEOUT + 30);
+
+            configLoadExpect($oOption, CMD_BACKUP);
+            optionTestExpect(OPTION_PROTOCOL_TIMEOUT, OPTION_DEFAULT_PROTOCOL_TIMEOUT + 60);
+        }
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------

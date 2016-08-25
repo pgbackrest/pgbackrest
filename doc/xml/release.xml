@@ -92,6 +92,11 @@
             <contributor-id type="github">gregscds</contributor-id>
         </contributor>
 
+        <contributor id="vernick.todd">
+            <contributor-name-display>Todd Vernick</contributor-name-display>
+            <contributor-id type="github">gintoddic</contributor-id>
+        </contributor>
+
         <contributor id="vitale.michael">
             <contributor-name-display>Michael Vitale</contributor-name-display>
             <contributor-id type="github">MichaelDBA</contributor-id>
@@ -126,6 +131,14 @@
                         </release-item-contributor-list>
 
                         <p>Fixed an issue where options that should not allow multiple values could be specified multiple times in <file>pgbackrest.conf</file> without an error being raised.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vernick.todd"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where the <br-option>protocol-timeout</br-option> option was not automatically increased when the <br-option>db-timeout</br-option> option was increased.</p>
                     </release-item>
                 </release-bug-list>
 
