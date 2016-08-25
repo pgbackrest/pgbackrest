@@ -116,7 +116,7 @@
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section keyword CDATA "">
     <!ATTLIST section depend CDATA "">
-<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
+<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
                  pg-option|pg-setting|link|user)*>
 
 <!ELEMENT default (#PCDATA)>

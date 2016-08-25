@@ -170,6 +170,14 @@
                 </release-refactor-list>
             </release-core-list>
 
+             <release-doc-list>
+                 <release-refactor-list>
+                    <release-item>
+                        <p>Improve host tag rendering.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
              <release-test-list>
                  <release-refactor-list>
                     <release-item>
