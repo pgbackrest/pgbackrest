@@ -49,6 +49,8 @@ use constant INFO_BACKUP_KEY_ARCHIVE_START                          => MANIFEST_
     push @EXPORT, qw(INFO_BACKUP_KEY_ARCHIVE_START);
 use constant INFO_BACKUP_KEY_ARCHIVE_STOP                           => MANIFEST_KEY_ARCHIVE_STOP;
     push @EXPORT, qw(INFO_BACKUP_KEY_ARCHIVE_STOP);
+use constant INFO_BACKUP_KEY_BACKUP_STANDBY                         => MANIFEST_KEY_BACKUP_STANDBY;
+    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_STANDBY);
 use constant INFO_BACKUP_KEY_BACKUP_REPO_SIZE                       => 'backup-info-repo-size';
      push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE);
 use constant INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA                 => 'backup-info-repo-size-delta';
@@ -347,6 +349,8 @@ sub add
         $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, false));
     $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_ARCHIVE_STOP,
         $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, false));
+    $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_BACKUP_STANDBY,
+        $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY));
     $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_COMPRESS,
         $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS));
     $self->numericSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_FORMAT,

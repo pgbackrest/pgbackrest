@@ -131,6 +131,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Backup from a standby cluster.  A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the master.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the master.  This means no configuration changes for backup are required after failing over from a master to standby when a separate backup server is used.</p>
                     </release-item>
 

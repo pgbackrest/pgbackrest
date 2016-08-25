@@ -73,7 +73,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = full
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -85,35 +85,39 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/postgresql.conf.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/32768/33000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/16384/17000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/1/12000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/1/12000, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/32768/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/16384/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/1/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/postgresql.conf.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 21, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/pg_stat/global.stat.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/pg_stat/global.stat.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/32768/33000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
- DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/16384/17000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
- DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/1/12000.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/1/12000, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/base/1/12000 (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
- DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/32768/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 82%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/16384/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 88%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
- DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/base/1/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 94%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
- DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
- DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = false, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/global/pg_control.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = false, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/global/pg_control.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+ DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 8192, lManifestSaveSize = 3
  DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
   INFO: full backup size = 8KB
   INFO: new backup label = [BACKUP-FULL-1]
@@ -190,6 +194,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -248,7 +253,7 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -325,7 +330,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = (file.tmp.gz, pg_data/PG_VERSION.gz)
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/PG_VERSION.gz
  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/file.tmp.gz
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = full
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = full
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
@@ -337,35 +342,38 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/postgresql.conf.gz, strHashType = <sha1>, strPathType = backup:tmp
- DEBUG:     File->hashSize=>: iSize = 21, strHash = 6721d92c9fcdf4248acff1f9a1377127d9064807
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
- DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/pg_stat/global.stat.gz, strHashType = <sha1>, strPathType = backup:tmp
- DEBUG:     File->hashSize=>: iSize = 5, strHash = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/32768/33000.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 5, strHash = 7f4c74dc10f61eef43e6ae642606627df1999b34
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/16384/17000.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 4, strHash = a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/1/12000.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 4, strHash = a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/12000 (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/32768/PG_VERSION.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 3, strHash = 184473f470864e067ee3a22e64b47b0a1c356f29
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 82%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/16384/PG_VERSION.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 3, strHash = 184473f470864e067ee3a22e64b47b0a1c356f29
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 88%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/base/1/PG_VERSION.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 3, strHash = 184473f470864e067ee3a22e64b47b0a1c356f29
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 94%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+ DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/postgresql.conf.gz, strHashType = <sha1>, strPathType = backup:tmp
+ DEBUG:     File->hashSize=>: iSize = 21, strHash = 6721d92c9fcdf4248acff1f9a1377127d9064807
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+ DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/pg_stat/global.stat.gz, strHashType = <sha1>, strPathType = backup:tmp
+ DEBUG:     File->hashSize=>: iSize = 5, strHash = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/PG_VERSION.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/global/pg_control.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 8192, strHash = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8KB) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
  DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
   INFO: full backup size = 8KB
   INFO: new backup label = [BACKUP-FULL-2]
@@ -442,6 +450,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -500,7 +509,7 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -635,7 +644,7 @@ DETAIL: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat - exists 
 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches backup (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/base/16384/17000, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000.gz, strSourcePathType = backup:cluster, strUser = [USER-1]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000.gz, strSourcePathType = backup:cluster, strUser = [USER-1]
  DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/base/16384/17000.backrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
   INFO: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/base/1/12000, strPathType = db:absolute
@@ -671,7 +680,7 @@ DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and match
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/global/pg_control, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = [TEST_PATH]/db-master/db/base/global/pg_control, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control.gz, strSourcePathType = backup:cluster, strUser = [USER-1]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = [TEST_PATH]/db-master/db/base/global/pg_control, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control.gz, strSourcePathType = backup:cluster, strUser = [USER-1]
  DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/global/pg_control.backrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.manifest, strPathType = db:absolute
@@ -746,12 +755,12 @@ DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat
   INFO: cleanup removed 2 links
   INFO: restore file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 41%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
   INFO: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 50%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches size 5 and modification time [MODIFICATION-TIME-2] (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 82%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 88%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 94%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches size 5 and modification time [MODIFICATION-TIME-1] (5B, 60%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches size 4 and modification time [MODIFICATION-TIME-1] (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches size 4 and modification time [MODIFICATION-TIME-1] (4B, 76%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 82%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 88%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 94%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -880,7 +889,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = incr
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = incr
  DEBUG:     Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -893,9 +902,12 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/badchecksum.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/badchecksum.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
  DEBUG:     Backup->processManifest=>: lSizeTotal = 18
   INFO: incr backup size = 18B
@@ -978,6 +990,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -1040,8 +1053,8 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -1127,7 +1140,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/db-master/repo/temp/db.tmp, strPathType = backup:tmp
  DEBUG:     Backup->fileNotInManifest=>: stryFile = ()
- DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbMasterPath = [TEST_PATH]/db-master/db/base, strType = incr
+ DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = incr
  DEBUG:     Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -1140,12 +1153,15 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+ DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+ DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_data/badchecksum.txt.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 11, strHash = f927212cd08d11a42a666b2f04235398e9ceeb51
   WARN: resumed backup file pg_data/badchecksum.txt should have checksum bogus but actually has checksum f927212cd08d11a42a666b2f04235398e9ceeb51.  The file will be recopied and backup will continue but this may be an issue unless the backup temp path is known to be corrupted.
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_data/badchecksum.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/badchecksum.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
  DEBUG:     File->hashSize(): bCompressed = true, strFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt.gz, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 7, strHash = d85de07d6421d90aa9191c11c889bfde43680f0f
@@ -1231,6 +1247,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -1299,8 +1316,8 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -1370,6 +1387,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -1438,8 +1456,8 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-1]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -1509,6 +1527,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -1577,8 +1596,8 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -1688,8 +1707,8 @@ incr backup - add files and remove tablespace 2 (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
   INFO: incr backup size = 13B
   INFO: new backup label = [BACKUP-INCR-3]
   INFO: backup stop
@@ -1742,6 +1761,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -1806,9 +1826,9 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -1878,6 +1898,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -1942,10 +1963,10 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -1962,11 +1983,11 @@ diff backup - updates since last full (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 28%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 48%) checksum e324463005236d83e6e54795dbddd20a74533bf3
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 69%) checksum 9a53d532e27785e681766c98516a5e93f096a501
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 87%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 20%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 33%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 82%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
   INFO: diff backup size = 39B
   INFO: new backup label = [BACKUP-DIFF-3]
   INFO: backup stop
@@ -2019,6 +2040,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -2083,11 +2105,11 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -2156,6 +2178,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -2220,12 +2243,12 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -2242,10 +2265,10 @@ diff backup - remove files during backup (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 35%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 61%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 83%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 DETAIL: skip file removed by database: [TEST_PATH]/db-master/db/base-2/base/base2.txt
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 51%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 77%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
   INFO: diff backup size = 31B
   INFO: new backup label = [BACKUP-DIFF-4]
   INFO: backup stop
@@ -2298,6 +2321,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -2360,13 +2384,13 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -2382,19 +2406,19 @@ full backup - update file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 24%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 38%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 51%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 61%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 69%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 75%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 81%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 86%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 89%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 93%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 96%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 0%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 0%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 0%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 1%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 1%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
   INFO: full backup size = 8KB
   INFO: new backup label = [BACKUP-FULL-3]
   INFO: backup stop
@@ -2446,6 +2470,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -2509,14 +2534,14 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-2]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-2]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-INCR-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-2]","[BACKUP-INCR-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-3]","backup-reference":["[BACKUP-FULL-2]","[BACKUP-DIFF-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-2]","backup-reference":["[BACKUP-FULL-2]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291
@@ -2922,6 +2947,7 @@ db-version="9.4"
 [backup:option]
 option-archive-check=true
 option-archive-copy=true
+option-backup-standby=false
 option-compress=true
 option-hardlink=false
 option-online=false
@@ -2986,8 +3012,8 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup:current]
-[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":true,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291

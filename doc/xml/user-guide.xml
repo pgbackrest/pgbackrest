@@ -1835,4 +1835,35 @@
         </section>
     </section>
 
+    <!-- SECTION => STANDBY-BACKUP -->
+    <section id="standby-backup" depend="/replication/streaming">
+        <title>Backup from a Standby</title>
+
+        <p><backrest/> can perform backups on a standby instead of the master.  Standby backups require the <host>db-standby</host> host to be configured and the <br-option>backup-standby</br-option> option enabled.</p>
+
+        <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
+            <title>Configure <br-option>db2-host</br-option>/<br-option>db2-user</br-option> and <br-option>db2-path</br-option></title>
+
+            <backrest-config-option section="demo" key="db2-path">{[db-path]}</backrest-config-option>
+            <backrest-config-option section="demo" key="db2-host">{[host-db-standby]}</backrest-config-option>
+            <backrest-config-option section="demo" key="db2-user">postgres</backrest-config-option>
+
+            <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
+        </backrest-config>
+
+        <p>Both the master and standby databases are required to perform the backup, though the vast majority of the files will be copied from the standby to reduce load on the master.  The database hosts can be configured in any order.  <backrest/> will automatically determine which is the master and which is the standby.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Backup the {[postgres-cluster-demo]} cluster from <host>db-standby</host></title>
+
+            <execute user="backrest" output="y" filter="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail backup</exe-cmd>
+                <exe-highlight>backup file db-master|replay on the standby</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>This incremental backup shows that most of the files are copied from the <host>db-standby</host> host and only a few are copied from the <host>db-master</host> host.</p>
+
+        <p><backrest/> creates a standby backup that is identical to a backup performed on the master.  It does this by starting/stopping the backup on the <host>db-master</host> host, copying only files that are replicated from the <host>db-standby</host> host, the copying the remaining few files from the <host>db-master</host> host.  This means that logs and statistics from the master database will be included in the backup.</p>
+    </section>
 </doc>

@@ -694,6 +694,7 @@ sub backupTestRun
             $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardLink ? JSON::PP::true : JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
@@ -1709,6 +1710,7 @@ sub backupTestRun
             # Restore test string
             my $strDefaultMessage = 'default';
             my $strFullMessage = 'full';
+            my $strStandbyMessage = 'standby';
             my $strIncrMessage = 'incr';
             my $strTimeMessage = 'time';
             my $strXidMessage = 'xid';
@@ -1911,6 +1913,20 @@ sub backupTestRun
 
                 # Check that the cluster was restored properly
                 $oHostDbStandby->sqlSelectOneTest('select message from test', $strFullMessage);
+
+                # Update message for standby
+                $oHostDbMaster->sqlExecute("update test set message = '$strStandbyMessage'");
+
+                my $strStandbyBackup = $oHostBackup->backup(
+                    BACKUP_TYPE_FULL, 'backup from standby',
+                    {bStandby => true,
+                     iExpectedExitStatus => $oHostDbStandby->dbVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG,
+                     strOptionalParam => '--' . OPTION_RETENTION_FULL . '=1'});
+
+                if ($oHostDbStandby->dbVersion() >= PG_VERSION_BACKUP_STANDBY)
+                {
+                    $strFullBackup = $strStandbyBackup;
+                }
             }
 
             # Execute stop and make sure the backup fails
@@ -2139,7 +2155,7 @@ sub backupTestRun
 
                 $oHostDbMaster->clusterStart();
                 $oHostDbMaster->sqlSelectOneTest(
-                    'select message from test', $strFullMessage);
+                    'select message from test', ($bHostStandby ? $strStandbyMessage : $strFullMessage));
             }
 
             # Restore (restore type = xid, inclusive)

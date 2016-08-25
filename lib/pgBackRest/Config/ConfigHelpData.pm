@@ -140,6 +140,18 @@ my $oConfigHelpData =
                 "When backing up to a locally mounted network filesystem this setting is not required."
         },
 
+        # BACKUP-STANDBY Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'backup-standby' =>
+        {
+            section => 'backup',
+            summary =>
+                "Backup from the standby cluster.",
+            description =>
+                "Enable backup from standby to reduce load on the master cluster. This option requires that both the master and " .
+                    "standby hosts be configured."
+        },
+
         # BACKUP-USER Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-user' =>
@@ -803,6 +815,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-standby' => 'section',
                 'buffer-size' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
@@ -895,6 +908,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-standby' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
                 'compress-level' => 'section',

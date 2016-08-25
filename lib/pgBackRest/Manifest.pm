@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::Config::Config;
 
 ####################################################################################################################################
 # File/path constants
@@ -92,6 +93,8 @@ use constant MANIFEST_KEY_TYPE                                      => 'backup-t
     push @EXPORT, qw(MANIFEST_KEY_TYPE);
 
 # Options that were set when the backup was made
+use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-' . OPTION_BACKUP_STANDBY;
+    push @EXPORT, qw(MANIFEST_KEY_BACKUP_STANDBY);
 use constant MANIFEST_KEY_HARDLINK                                  => 'option-hardlink';
     push @EXPORT, qw(MANIFEST_KEY_HARDLINK);
 use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-archive-check';
@@ -152,10 +155,16 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 # Database locations for important files/paths
 ####################################################################################################################################
+use constant DB_PATH_BASE                                           => 'base';
+    push @EXPORT, qw(DB_PATH_BASE);
+use constant DB_PATH_PGCLOG                                         => 'pg_clog';
+    push @EXPORT, qw(DB_PATH_PGCLOG);
 use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
     push @EXPORT, qw(DB_PATH_PGDYNSHMEM);
+use constant DB_PATH_PGMULTIXACT                                    => 'pg_multixact';
+    push @EXPORT, qw(DB_PATH_PGMULTIXACT);
 use constant DB_PATH_PGNOTIFY                                       => 'pg_notify';
     push @EXPORT, qw(DB_PATH_PGNOTIFY);
 use constant DB_PATH_PGREPLSLOT                                     => 'pg_replslot';
@@ -200,8 +209,16 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
+use constant MANIFEST_PATH_BASE                                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE;
+    push @EXPORT, qw(MANIFEST_PATH_BASE);
+use constant MANIFEST_PATH_PGCLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGCLOG;
+    push @EXPORT, qw(MANIFEST_PATH_PGCLOG);
+use constant MANIFEST_PATH_GLOBAL                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL;
+    push @EXPORT, qw(MANIFEST_PATH_GLOBAL);
 use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
     push @EXPORT, qw(MANIFEST_PATH_PGDYNSHMEM);
+use constant MANIFEST_PATH_PGMULTIXACT                              => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGMULTIXACT;
+    push @EXPORT, qw(MANIFEST_PATH_PGMULTIXACT);
 use constant MANIFEST_PATH_PGNOTIFY                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGNOTIFY;
     push @EXPORT, qw(MANIFEST_PATH_PGNOTIFY);
 use constant MANIFEST_PATH_PGREPLSLOT                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGREPLSLOT;
@@ -214,6 +231,8 @@ use constant MANIFEST_PATH_PGSTATTMP                                => MANIFEST_
     push @EXPORT, qw(MANIFEST_PATH_PGSTATTMP);
 use constant MANIFEST_PATH_PGSUBTRANS                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGSUBTRANS;
     push @EXPORT, qw(MANIFEST_PATH_PGSUBTRANS);
+use constant MANIFEST_PATH_PGTBLSPC                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC;
+    push @EXPORT, qw(MANIFEST_PATH_PGTBLSPC);
 use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
     push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
 

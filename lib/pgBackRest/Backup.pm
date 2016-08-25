@@ -228,7 +228,9 @@ sub processManifest
         $strOperation,
         $oFileMaster,
         $strDbMasterPath,
+        $strDbCopyPath,
         $strType,
+        $strDbVersion,
         $bCompress,
         $bHardLink,
         $oBackupManifest                            # Manifest for the current backup
@@ -238,7 +240,9 @@ sub processManifest
         __PACKAGE__ . '->processManifest', \@_,
         {name => 'oFileMaster'},
         {name => 'strDbMasterPath'},
+        {name => 'strDbCopyPath'},
         {name => 'strType'},
+        {name => 'strDbVersion'},
         {name => 'bCompress'},
         {name => 'bHardLink'},
         {name => 'oBackupManifest'},
@@ -308,21 +312,24 @@ sub processManifest
             # Generate a plain key for pg_control to make it easier to find later
             my $strFileKey = $strFile eq MANIFEST_FILE_PGCONTROL ? $strFile : sprintf("%016d-${strFile}", $lFileSize);
 
-            # Certain files are not copied until the end
-            if ($strFile eq MANIFEST_FILE_PGCONTROL)
+            # Certain files must be copied from the master
+            if ($strFile eq MANIFEST_FILE_PGCONTROL ||
+                $strFile !~ ('^(' . MANIFEST_PATH_BASE . '|' . MANIFEST_PATH_PGTBLSPC . '|' . MANIFEST_PATH_GLOBAL . '|' .
+                    MANIFEST_PATH_PGCLOG . '|' . MANIFEST_PATH_PGMULTIXACT . ')\/'))
             {
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
+                $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
             }
             # Else continue normally
             else
             {
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = false;
-
-                # Add file size to total size
-                $lSizeTotal += $lFileSize;
+                $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbCopyPath, $strFile);
             }
 
-            $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
+            # Add file size to total size
+            $lSizeTotal += $lFileSize;
+
             $hFileCopyMap{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
             $hFileCopyMap{$strQueueKey}{$strFileKey}{size} = $lFileSize;
             $hFileCopyMap{$strQueueKey}{$strFileKey}{modification_time} =
@@ -377,7 +384,23 @@ sub processManifest
         # Get the master protocol for keep-alive
         my $oProtocolMaster = protocolGet(DB, $self->{iMasterRemoteIdx});
 
-        # Iterate all backup files
+        # Get the copy protocol and file object if single-threaded
+        my $oProtocolCopy = undef;
+        my $oFileCopy = undef;
+
+        if (optionGet(OPTION_THREAD_MAX) == 1)
+        {
+            $oProtocolCopy = protocolGet(DB, $self->{iCopyRemoteIdx});
+
+            $oFileCopy = new pgBackRest::File
+            (
+                optionGet(OPTION_STANZA),
+                optionGet(OPTION_REPO_PATH),
+                $oProtocolCopy
+            );
+        }
+
+        # Iterate all files to be copied from the master (or standby if specified)
         foreach my $strTargetKey (sort(keys(%hFileCopyMap)))
         {
             if (optionGet(OPTION_THREAD_MAX) > 1)
@@ -400,7 +423,7 @@ sub processManifest
                 {
                     # Backup the file
                     ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-                        backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                        backupFile($oFileCopy, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
                                    $$hFileCopy{modification_time}, $$hFileCopy{size}, $lSizeTotal, $lSizeCurrent);
 
                     $lManifestSaveCurrent = backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize,
@@ -410,6 +433,7 @@ sub processManifest
                     # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
                     # then the remote might timeout while waiting for a command.
                     $oProtocolMaster->keepAlive();
+                    $oProtocolCopy->keepAlive();
                 }
             }
         }
@@ -426,7 +450,7 @@ sub processManifest
                 my %oParam;
 
                 $oParam{remote_type} = DB;
-                $oParam{remote_index} = $self->{iMasterRemoteIdx};
+                $oParam{remote_index} = $self->{iCopyRemoteIdx};
                 $oParam{compress} = $bCompress;
                 $oParam{queue} = \@oyBackupQueue;
                 $oParam{result_queue} = $oResultQueue;
@@ -476,18 +500,48 @@ sub processManifest
             while (!$bDone);
         }
 
+        # Iterate all backup files
+        foreach my $strTargetKey (sort(keys(%hFileCopyMap)))
+        {
+            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$hFileCopyMap{$strTargetKey}})))
+            {
+                my $hFileCopy = $hFileCopyMap{$strTargetKey}{$strFileKey};
+
+                # Skip files marked to be copied later
+                next if !$$hFileCopy{skip} || $strFileKey eq &MANIFEST_FILE_PGCONTROL;
+
+                # Backup the file
+                ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) = backupFile(
+                    $oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                    $$hFileCopy{modification_time}, $$hFileCopy{size}, $lSizeTotal, $lSizeCurrent);
+
+                $lManifestSaveCurrent = backupManifestUpdate(
+                    $oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum,
+                    $lManifestSaveSize, $lManifestSaveCurrent);
+
+                # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
+                # then the remote might timeout while waiting for a command.
+                $oProtocolMaster->keepAlive();
+
+                if (defined($oProtocolCopy))
+                {
+                    $oProtocolCopy->keepAlive();
+                }
+            }
+        }
+
         # Copy pg_control last - this is required for backups taken during recovery
         my $hFileCopy = $hFileCopyMap{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL};
 
         if (defined($hFileCopy))
         {
-            my ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) =
-                backupFile($oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
-                           $$hFileCopy{modification_time}, $$hFileCopy{size}, undef, undef, false);
+            ($bCopied, $lSizeCurrent, $lCopySize, $lRepoSize, $strCopyChecksum) = backupFile(
+                $oFileMaster, $$hFileCopy{db_file}, $$hFileCopy{repo_file}, $bCompress, $$hFileCopy{checksum},
+                $$hFileCopy{modification_time}, $$hFileCopy{size}, $lSizeTotal, $lSizeCurrent, false);
 
-            backupManifestUpdate($oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum);
-
-            $lSizeTotal += $$hFileCopy{size};
+            backupManifestUpdate(
+                $oBackupManifest, $$hFileCopy{repo_file}, $bCopied, $lCopySize, $lRepoSize, $strCopyChecksum, $lManifestSaveSize,
+                $lManifestSaveCurrent);
         }
     }
 
@@ -585,6 +639,7 @@ sub process
     # Backup settings
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, optionGet(OPTION_BACKUP_STANDBY));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, optionGet(OPTION_ONLINE));
@@ -596,6 +651,7 @@ sub process
 
     # Initialize database objects
     my $oDbMaster = undef;
+    my $oDbStandby = undef;
     $self->{iMasterRemoteIdx} = 1;
 
     # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
@@ -617,8 +673,19 @@ sub process
                 {
                     my $bStandby = $oDb->executeSqlOne('select pg_is_in_recovery()');
 
-                    # If this is a master (for now standbys are ignored)
-                    if (!$bStandby)
+                    # If this db is a standby
+                    if ($bStandby)
+                    {
+                        # If standby backup is requested then use the first standby found
+                        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+                        {
+                            $oDbStandby = $oDb;
+                            $self->{iCopyRemoteIdx} = $iRemoteIdx;
+                            $bAssigned = true;
+                        }
+                    }
+                    # Else this db is a master
+                    else
                     {
                         # Error if more than one master is found
                         if (defined($oDbMaster))
@@ -640,6 +707,12 @@ sub process
             }
         }
 
+        # Make sure the standby database is defined when backup from standby requested
+        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+        {
+            confess &log(ERROR, 'unable to find standby database - cannot proceed');
+        }
+
         # A master database is always required
         if (!defined($oDbMaster))
         {
@@ -653,6 +726,12 @@ sub process
         $oDbMaster = new pgBackRest::Db($self->{iMasterRemoteIdx});
     }
 
+    # If remote copy was not explicitly set then set it equal to master
+    if (!defined($self->{iCopyRemoteIdx}))
+    {
+        $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
+    }
+
     # Initialize the master file object
     my $oFileMaster = new pgBackRest::File
     (
@@ -663,6 +742,7 @@ sub process
 
     # Determine the database paths
     my $strDbMasterPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iMasterRemoteIdx}));
+    my $strDbCopyPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iCopyRemoteIdx}));
 
     # Database info
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
@@ -674,6 +754,14 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
+
+    # Backup from standby can only be used on PostgreSQL >= 9.1
+    if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
+    {
+        confess &log(
+            ERROR,
+            'option \'' . OPTION_BACKUP_STANDBY . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY, ERROR_CONFIG);
+    }
 
     # Start backup (unless --no-online is set)
     my $strArchiveStart;
@@ -715,6 +803,33 @@ sub process
 
         # Get database map
         $oDatabaseMap = $oDbMaster->databaseMapGet();
+
+        # Wait for replay on the standby to catch up
+        if (optionGet(OPTION_BACKUP_STANDBY))
+        {
+            my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
+            $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
+
+            $oDbStandby->configValidate();
+
+            &log(INFO, "wait for replay on the standby to reach ${strArchiveStart}");
+
+            my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strArchiveStart);
+
+            &log(
+                INFO,
+                "replay on the standby reached ${strReplayedLSN}" .
+                    (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
+
+            # The standby db object won't be used anymore so undef it to catch an subsequent references
+            undef($oDbStandby);
+
+            # If multi-threaded then the standby protocol won't be used again so destroy it now to avoid a timeout
+            if (optionGet(OPTION_THREAD_MAX) > 1)
+            {
+                protocolDestroy(DB, $self->{iCopyRemoteIdx});
+            }
+        }
     }
 
     # Build the manifest
@@ -840,7 +955,7 @@ sub process
     # Perform the backup
     my $lBackupSizeTotal =
         $self->processManifest(
-            $oFileMaster, $strDbMasterPath, $strType, $bCompress, $bHardLink, $oBackupManifest);
+            $oFileMaster, $strDbMasterPath, $strDbCopyPath, $strType, $strDbVersion, $bCompress, $bHardLink, $oBackupManifest);
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Stop backup (unless --no-online is set)

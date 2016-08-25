@@ -293,6 +293,8 @@ use constant OPTION_BACKUP_CONFIG                                   => 'backup-c
     push @EXPORT, qw(OPTION_BACKUP_CONFIG);
 use constant OPTION_BACKUP_HOST                                     => 'backup-host';
     push @EXPORT, qw(OPTION_BACKUP_HOST);
+use constant OPTION_BACKUP_STANDBY                                  => 'backup-standby';
+    push @EXPORT, qw(OPTION_BACKUP_STANDBY);
 use constant OPTION_BACKUP_USER                                     => 'backup-user';
     push @EXPORT, qw(OPTION_BACKUP_USER);
 use constant OPTION_HARDLINK                                        => 'hardlink';
@@ -480,6 +482,8 @@ use constant OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD          => 107374182
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD);
 use constant OPTION_DEFAULT_BACKUP_RESUME                           => true;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_RESUME);
+use constant OPTION_DEFAULT_BACKUP_STANDBY                          => false;
+    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STANDBY);
 use constant OPTION_DEFAULT_BACKUP_STOP_AUTO                        => false;
     push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STOP_AUTO);
 use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
@@ -1317,6 +1321,19 @@ my %oOptionRule =
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
+        },
+    },
+
+    &OPTION_BACKUP_STANDBY =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STANDBY,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_REMOTE => true,
         },
     },
 

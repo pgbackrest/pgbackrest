@@ -115,7 +115,10 @@ sub new
             $strDbVersionActual =~ s/$strVersionRegExp//;
             $strDevVersion = substr($strDevVersion, length($strDbVersionActual));
 
-            &log(WARN, "Testing against ${strDbVersionActual} ${strDevVersion} version");
+            if (!defined($$oParam{bStandby}) || !$$oParam{bStandby})
+            {
+                &log(WARN, "Testing against ${strDbVersionActual} ${strDevVersion} version");
+            }
         }
 
         # Don't run unit tests for unsupported versions

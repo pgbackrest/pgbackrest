@@ -254,6 +254,15 @@
                         <example>backrest</example>
                     </config-key>
 
+                    <!-- CONFIG - BACKUP SECTION - BACKUP-STANDBY KEY -->
+                    <config-key id="backup-standby" name="Backup from Standby">
+                        <summary>Backup from the standby cluster.</summary>
+
+                        <text>Enable backup from standby to reduce load on the master cluster.  This option requires that both the <host>master</host> and <host>standby</host> hosts be configured.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - HARDLINK -->
                     <config-key id="hardlink" name="Hardlink">
                         <summary>Hardlink files between backups.</summary>
