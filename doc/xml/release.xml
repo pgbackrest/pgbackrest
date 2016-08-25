@@ -114,7 +114,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.06dev" title="UNDER DEVELOPMENT">
+        <release date="2016-08-25" version="1.06" title="Backup from Standby and Bug Fixes">
              <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -182,7 +182,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve backup log messages to indicated which host the files are being copied from.</p>
+                        <p>Improve backup log messages to indicate which host the files are being copied from.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
