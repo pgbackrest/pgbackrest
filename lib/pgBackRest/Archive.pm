@@ -36,6 +36,8 @@ use constant OP_ARCHIVE                                             => 'Archive'
 
 use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => OP_ARCHIVE . '->getArchiveId';
     push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
+use constant OP_ARCHIVE_GET_BACKUP_INFO_CHECK                       => OP_ARCHIVE . '->getBackupInfoCheck';
+    push @EXPORT, qw(OP_ARCHIVE_GET_BACKUP_INFO_CHECK);
 use constant OP_ARCHIVE_GET_CHECK                                   => OP_ARCHIVE . '->getCheck';
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
@@ -468,6 +470,96 @@ sub getCheck
     (
         $strOperation,
         {name => 'strArchiveId', value => $strArchiveId, trace => true}
+    );
+}
+
+####################################################################################################################################
+# getBackupInfoCheck
+#
+# Check the backup.info file, if it exists, to confirm the DB version, system-id, control and catalog numbers match the database.
+####################################################################################################################################
+sub getBackupInfoCheck
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strDbVersion,
+        $iControlVersion,
+        $iCatalogVersion,
+        $ullDbSysId
+    ) =
+        logDebugParam
+    (
+        __PACKAGE__ . '->getBackupInfoCheck', \@_,
+        {name => 'oFile'},
+        {name => 'strDbVersion', required => false},
+        {name => 'iControlVersion', required => false},
+        {name => 'iCatalogVersion', required => false},
+        {name => 'ullDbSysId', required => false}
+    );
+
+    # If the db info are not passed, then we need to retrieve the database information
+    my $iDbHistoryId;
+
+    if (!defined($strDbVersion) || !defined($iControlVersion) || !defined($iCatalogVersion) || !defined($ullDbSysId))
+    {
+        # get DB info for comparison
+        ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
+            (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
+    }
+
+    if ($oFile->isRemote(PATH_BACKUP))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        # Pass the database information to the remote server
+        $oParamHash{'db-version'} = $strDbVersion;
+        $oParamHash{'db-control-version'} = $iControlVersion;
+        $oParamHash{'db-catalog-version'} = $iCatalogVersion;
+        $oParamHash{'db-sys-id'} = $ullDbSysId;
+
+        $iDbHistoryId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_BACKUP_INFO_CHECK, \%oParamHash, false);
+    }
+    else
+    {
+        my $oBackupInfo = undef;
+
+        # Load or build backup.info
+        eval
+        {
+            $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+        };
+
+        if ($@)
+        {
+            my $oMessage = $@;
+
+            # If this is a backrest error but it is not that the file is missing then confess
+            # else nothing to do so exit
+            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception')
+                && ($oMessage->code() != ERROR_PATH_MISSING))
+            {
+                confess $oMessage;
+            }
+        }
+        else
+        {
+            # Check that the stanza backup info is compatible with the current version of the database
+            # If not, an error will be thrown
+            $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId, trace => true}
     );
 }
 
@@ -1055,7 +1147,6 @@ sub check
 
     my $strArchiveId = undef;
     my $strArchiveFile = undef;
-    my $oBackupInfo = undef;
 
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
@@ -1121,36 +1212,8 @@ sub check
     # If the archive info was successful, then check the backup info
     if ($iResult == 0)
     {
-        # If backup repo is local, then check the backup info
-        if (isRepoLocal())
-        {
-            # Load or build backup.info
-            eval
-            {
-                $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
-            };
-            if ($@)
-            {
-                my $oMessage = $@;
-
-                # If this is a backrest error but it is not that the file is missing then confess
-                if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception')
-                    && ($oMessage->code() != ERROR_PATH_MISSING))
-                {
-                    confess $oMessage;
-                }
-            }
-            else
-            {
-                # Get the current database info
-                my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-                    $oDb->info(optionGet(OPTION_DB_PATH));
-
-                # Check that the stanza backup info is compatible with the current version of the database
-                # If not, an error will be thrown
-                my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-            }
-        }
+        # Check the backup info
+        my $iDbHistoryId =  $self->getBackupInfoCheck($oFile);
 
         # If the backup and archive checks were successful, then indicate success
         &log(INFO,

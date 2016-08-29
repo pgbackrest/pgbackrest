@@ -115,6 +115,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.07dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed the <cmd>check</cmd> command so backup info is checked remotely and not just locally.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-bug-list>
                     <release-item>
