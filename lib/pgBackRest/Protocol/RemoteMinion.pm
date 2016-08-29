@@ -242,6 +242,14 @@ sub process
 
                 $self->outputWrite("${strArchiveId}\t" . (defined($strChecksum) ? $strChecksum : 'Y'));
             }
+            elsif ($strCommand eq OP_ARCHIVE_GET_BACKUP_INFO_CHECK)
+            {
+                $self->outputWrite($oArchive->getBackupInfoCheck($oFile,
+                                                       paramGet(\%oParamHash, 'db-version'),
+                                                       paramGet(\%oParamHash, 'db-control-version'),
+                                                       paramGet(\%oParamHash, 'db-catalog-version'),
+                                                       paramGet(\%oParamHash, 'db-sys-id')));
+            }
             elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
             {
                 $self->outputWrite($oArchive->getCheck($oFile,
