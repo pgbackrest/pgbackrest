@@ -605,7 +605,11 @@ sub manGet
 
             if (defined($strDefault))
             {
-                if ($$hOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+                if ($strOption eq OPTION_BACKUP_CMD || $strOption eq OPTION_DB_CMD)
+                {
+                    $strDefault = BACKREST_EXE;
+                }
+                elsif ($$hOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
                 {
                     $strDefault = $strDefault ? 'y' : 'n';
                 }
@@ -917,13 +921,9 @@ sub helpOptionGet
     {
         my $strDefault;
 
-        if ($strOption eq OPTION_CONFIG || $strOption eq OPTION_BACKUP_CONFIG || $strOption eq OPTION_DB_CONFIG)
+        if ($strOption eq OPTION_BACKUP_CMD || $strOption eq OPTION_DB_CMD)
         {
-            $strDefault = '/etc/{[backrest-exe]}.conf';
-        }
-        elsif ($strOption eq OPTION_BACKUP_CMD || $strOption eq OPTION_DB_CMD)
-        {
-            $strDefault = '[INSTALL-PATH]/{[backrest-exe]}';
+            $strDefault = '[INSTALL-PATH]/' . BACKREST_EXE;
         }
         else
         {
