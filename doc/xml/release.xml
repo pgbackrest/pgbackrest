@@ -125,6 +125,12 @@
                         <p>Fixed the <cmd>check</cmd> command so backup info is checked remotely and not just locally.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+                    </release-item>
+                </release-feature-list>
             </release-core-list>
 
             <release-doc-list>
