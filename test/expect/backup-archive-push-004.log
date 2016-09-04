@@ -35,7 +35,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -256,7 +256,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000001.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -407,7 +407,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000002.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -459,7 +459,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000003.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -511,7 +511,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000004.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000004-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -563,7 +563,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -784,7 +784,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000005.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -935,7 +935,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000006.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000006-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -987,7 +987,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000007.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000007-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -1039,7 +1039,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000008.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000008-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -1091,7 +1091,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop
@@ -1312,7 +1312,7 @@ run 004 - rmt 0, cmp 1, arc_async 1
  DEBUG:     File->list=>: stryFileList = ()
  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef]
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
+ DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.3-1/000000010000000100000009.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-1c7e00fd09b9dd11fc2966590b3e3274645dd031, strSourcePathType = db:absolute, strUser = [undef]
  DEBUG:     Archive->xfer=>: lFileTotal = 1
  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive->xfer() again
  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/repo/archive/db/out, strStopFile = [TEST_PATH]/db-master/repo/stop/db-archive.stop

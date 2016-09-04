@@ -146,7 +146,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Changed temporary file names to consistently use <file>.pgbackrest.tmp</file>.</p>
+                        <p>Changed temporary file names to consistently use the <file>.pgbackrest.tmp</file> extension even if the destination file is compressed or has an appended checksum.</p>
                     </release-item>
 
                     <release-item>

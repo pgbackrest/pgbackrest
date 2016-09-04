@@ -278,9 +278,12 @@ sub pathGet
             confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
         }
 
-        if (defined($bTemp) && $bTemp)
+        if ($bTemp)
         {
-            return "${strFile}." . BACKREST_EXE . '.tmp';
+            return
+                ($strFile =~ "\.$self->{strCompressExtension}\$" ?
+                    substr($strFile, 0, length($strFile) - (length($self->{strCompressExtension}) + 1)) : $strFile) .
+                    '.' . BACKREST_EXE . '.tmp';
         }
 
         return $strFile;
@@ -307,9 +310,19 @@ sub pathGet
     # Get the backup tmp path
     if ($strType eq PATH_BACKUP_TMP)
     {
+        # return
+        #     "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" . (defined($strFile) ? "/${strFile}" : '') .
+        #     ($bTemp ? '.' . BACKREST_EXE . '.tmp' : '');
         return
-            "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" . (defined($strFile) ? "/${strFile}" : '') .
-            ($bTemp ? '.' . BACKREST_EXE . '.tmp' : '');
+            "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" .
+            # (defined($strFile) ?
+            #     '/' . ($strFile =~ "\.$self->{strCompressExtension}\$" ?
+            #     substr($strFile, 0, length($strFile) - (length($self->{strCompressExtension}) + 1)) : $strFile) : '') .
+            ($bTemp ?
+                '/' . ($strFile =~ "\.$self->{strCompressExtension}\$" ?
+                substr($strFile, 0, length($strFile) - (length($self->{strCompressExtension}) + 1)) : $strFile) .
+                '.' . BACKREST_EXE . '.tmp' :
+                (defined($strFile) ? "/${strFile}" : ''));
     }
 
     # Get the backup archive path
@@ -339,21 +352,15 @@ sub pathGet
                 return "${strArchivePath}/${strFile}";
             }
 
-            $strArchivePath = "${strArchivePath}/${strArchiveId}/" . substr($strArchive, 0, 16) . "/${strArchiveFile}";
+            $strArchivePath =
+                "${strArchivePath}/${strArchiveId}/" . substr($strArchive, 0, 16) .
+                ($bTemp ? "/${strArchive}." . BACKREST_EXE . '.tmp' : "/${strArchiveFile}");
         }
         else
         {
-            $strArchivePath = "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
-        }
-
-        if ($bTemp)
-        {
-            if (!defined($strFile))
-            {
-                confess &log(ASSERT, 'archive temp must have strFile defined');
-            }
-
-            $strArchivePath = "${strArchivePath}." . BACKREST_EXE . '.tmp';
+            $strArchivePath =
+                "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '') .
+                ($bTemp ? '.' . BACKREST_EXE . '.tmp' : '');
         }
 
         return $strArchivePath;
@@ -1166,8 +1173,8 @@ sub manifestRecurse
 
         if ($strPathType eq PATH_ABSOLUTE)
         {
-            confess &log(ERROR, $strError, $iErrorCode);
-        }
+        confess &log(ERROR, $strError, $iErrorCode);
+    }
 
         confess &log(ERROR, $strError);
     }
@@ -1221,8 +1228,8 @@ sub manifestRecurse
 
             if ($strPathType eq PATH_ABSOLUTE)
             {
-                confess &log(ERROR, $strError, $iErrorCode);
-            }
+            confess &log(ERROR, $strError, $iErrorCode);
+        }
 
             confess &log(ERROR, $strError);
         }
@@ -1437,9 +1444,9 @@ sub copy
                 if (!($bDestinationPathCreate && $iErrorCode == COMMAND_ERR_FILE_MISSING))
                 {
                     if ($strSourcePathType eq PATH_ABSOLUTE)
-                    {
-                        confess &log(ERROR, $strError, $iErrorCode);
-                    }
+                {
+                    confess &log(ERROR, $strError, $iErrorCode);
+                }
 
                     confess &log(ERROR, $strError);
                 }

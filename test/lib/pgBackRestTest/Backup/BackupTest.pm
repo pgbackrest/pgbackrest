@@ -209,20 +209,45 @@ sub backupTestRun
                                    ', archive ' .sprintf('%02x', $iArchive) .
                                    " - ${strArchiveFile}");
 
+                        my $strArchiveTmp = undef;
+
                         if ($iBackup == 1 && $iArchive == 2)
                         {
                             # Should succeed when temp file already exists
                             &log(INFO, '        test archive when tmp file exists');
 
-                            my $strArchiveTmp =
+                            $strArchiveTmp =
                                 $oHostBackup->repoPath() . "/archive/${strStanza}/" .
-                                PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.tmp";
+                                PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.pgbackrest.tmp";
 
                             executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
                             fileStringWrite($strArchiveTmp, 'JUNK');
+
+                            if ($bRemote)
+                            {
+                                executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
+                            }
                         }
 
                         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
+
+                        # Make sure the temp file no longer exists
+                        if (defined($strArchiveTmp))
+                        {
+                            my $oWait = waitInit(5);
+                            my $bFound = true;
+
+                            do
+                            {
+                                $bFound = fileExists($strArchiveTmp);
+                            }
+                            while ($bFound && waitMore($oWait));
+
+                            if ($bFound)
+                            {
+                                confess "${strArchiveTmp} should have been removed by archive command";
+                            }
+                        }
 
                         if ($iArchive == $iBackup)
                         {
@@ -303,7 +328,6 @@ sub backupTestRun
                                     "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
 
                                 fileRemove($strDuplicateWal);
-                                    # or confess "unable to remove duplicate WAL segment created for testing: ${strDuplicateWal}";
                             }
 
                             # Test .partial archive
@@ -330,7 +354,6 @@ sub backupTestRun
                                     "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
 
                                 fileRemove($strDuplicateWal);
-                                    # or confess "unable to remove duplicate WAL segment created for testing: ${strDuplicateWal}";
                             }
                         }
 

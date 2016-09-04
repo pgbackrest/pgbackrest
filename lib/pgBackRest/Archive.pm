@@ -1010,13 +1010,18 @@ sub xfer
                 my $bDestinationCompress = $bArchiveFile && optionGet(OPTION_COMPRESS);
                 my $strDestinationFile = basename($strFile);
 
-                if (!$bSourceCompressed && $bDestinationCompress)
+                # Strip off existing checksum
+                my $strAppendedChecksum = undef;
+
+                if ($bArchiveFile)
+                {
+                    $strAppendedChecksum = substr($strDestinationFile, $bPartial ? 33 : 25, 40);
+                    $strDestinationFile = substr($strDestinationFile, 0, $bPartial ? 32 : 24);
+                }
+
+                if ($bDestinationCompress)
                 {
                     $strDestinationFile .= ".$oFile->{strCompressExtension}";
-                }
-                elsif ($bSourceCompressed && !$bDestinationCompress)
-                {
-                    $strDestinationFile = substr($strDestinationFile, 0, length($strDestinationFile) - 3);
                 }
 
                 logDebugMisc
@@ -1043,18 +1048,31 @@ sub xfer
                     $strArchiveId = $self->getCheck($oFile);
                 }
 
-                # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already
-                # exists in the repository with the same checksum (else there would have been an error on checksum mismatch).
+                # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment
+                # already exists in the repository with the same checksum (else there would have been an error on checksum
+                # mismatch).
                 if (!defined($strChecksum))
                 {
                     # Copy the archive file
-                    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveFile,         # Source path/file
-                                 PATH_BACKUP_ARCHIVE,                       # Destination path
-                                 "${strArchiveId}/${strDestinationFile}",   # Destination file
-                                 $bSourceCompressed,                        # Source is not compressed
-                                 $bDestinationCompress,                     # Destination compress is configurable
-                                 undef, undef, undef,                       # Unused params
-                                 true);                                     # Create path if it does not exist
+                    my ($bResult, $strCopyChecksum) = $oFile->copy(
+                        PATH_DB_ABSOLUTE, $strArchiveFile,          # Source path/file
+                        PATH_BACKUP_ARCHIVE,                        # Destination path
+                        "${strArchiveId}/${strDestinationFile}",    # Destination file
+                        $bSourceCompressed,                         # Source is not compressed
+                        $bDestinationCompress,                      # Destination compress is configurable
+                        undef, undef, undef,                        # Unused params
+                        true,                                       # Create path if it does not exist
+                        undef, undef,                               # Unused params
+                        true);                                      # Append checksum
+
+                    # If appended checksum does not equal copy checksum
+                    if (defined($strAppendedChecksum) && $strAppendedChecksum ne $strCopyChecksum)
+                    {
+                        confess &log(
+                            ERROR,
+                            "archive ${strArchiveFile} appended checksum ${strAppendedChecksum} does not match" .
+                                " copy checksum ${strCopyChecksum}", ERROR_ARCHIVE_MISMATCH);
+                    }
                 }
 
                 #  Remove the source archive file
