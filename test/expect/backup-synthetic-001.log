@@ -845,6 +845,7 @@ DETAIL: remove file [TEST_PATH]/db-master/db/base/postmaster.opts
 DETAIL: remove file [TEST_PATH]/db-master/db/base/postgresql.auto.conf.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_subtrans/anything.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_stat_tmp/anything.tmp
+DETAIL: remove file [TEST_PATH]/db-master/db/base/pg_replslot/anything.tmp
 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
 DETAIL: remove path [TEST_PATH]/db-master/db/base/deleteme
 DETAIL: remove file [TEST_PATH]/db-master/db/base/base/pgsql_tmp/pgsql_tmp.1
@@ -856,7 +857,7 @@ DETAIL: set ownership vagrant:postgres on [TEST_PATH]/db-master/db/base/base/1/P
 DETAIL: set mode 0660 on [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
 DETAIL: set mode 0700 on [TEST_PATH]/db-master/db/base/base
 DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
-  INFO: cleanup removed 8 files, 2 paths
+  INFO: cleanup removed 9 files, 2 paths
  DEBUG:     Restore->build(): oManifest = [object]
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true

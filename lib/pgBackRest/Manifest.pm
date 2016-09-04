@@ -673,6 +673,9 @@ sub build
         # there.
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $strDbVersion >= PG_VERSION_84;
 
+        # Skip pg_replslot/* since these files are generally not useful after a restore
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $strDbVersion >= PG_VERSION_94;
+
         # Skip pg_subtrans/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
 

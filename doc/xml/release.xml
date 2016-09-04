@@ -128,6 +128,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the master do not become part of the backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
