@@ -33,7 +33,7 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -47,9 +47,9 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -78,7 +78,7 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/base/32768/33000, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
@@ -123,7 +123,7 @@ full backup - create pg_stat link, pg_clog dir (backup host)
   INFO: expire start: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
@@ -290,7 +290,7 @@ full backup - resume (backup host)
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -306,9 +306,9 @@ full backup - resume (backup host)
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -352,7 +352,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_data/base/32768/33000, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 5, strHash = 7f4c74dc10f61eef43e6ae642606627df1999b34
 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
@@ -396,7 +396,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8
   INFO: expire start: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
@@ -565,7 +565,7 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strHost = backup, strRemoteType = backup, strUser = [USER-2]
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --command=restore --config=[TEST_PATH]/backup/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/PG_VERSION, strPathType = db:absolute
@@ -681,7 +681,7 @@ DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/base/16384/17000, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster, strUser = [USER-1]
- DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/base/16384/17000.backrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
+ DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/base/16384/17000.pgbackrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
   INFO: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 68%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/base/1/12000, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = true
@@ -717,7 +717,7 @@ DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and match
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/global/pg_control, strPathType = db:absolute
  DEBUG:     File->exists=>: bExists = false
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-2], strDestinationFile = [TEST_PATH]/db-master/db/base/global/pg_control, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster, strUser = [USER-1]
- DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/global/pg_control.backrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
+ DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.manifest, strPathType = db:absolute
  DEBUG:     File->remove=>: bRemoved = true
@@ -877,7 +877,7 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -900,9 +900,9 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -954,7 +954,7 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 38%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/badchecksum.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
@@ -973,7 +973,7 @@ incr backup - add tablespace 1 (backup host)
   INFO: expire start: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
@@ -1150,7 +1150,7 @@ incr backup - resume and add tablespace 2 (backup host)
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
@@ -1175,9 +1175,9 @@ incr backup - resume and add tablespace 2 (backup host)
  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no vagrant@db-master '[BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
@@ -1261,7 +1261,7 @@ DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strSourcePathType = db:absolute, strUser = [undef]
   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 28%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
  DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strHashType = <sha1>, strPathType = backup:tmp
@@ -1286,7 +1286,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH
   INFO: expire start: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$

@@ -245,12 +245,12 @@ sub fileTestRun
         for (my $bRemote = 0; $bRemote <= 0; $bRemote++)
         {
             # Create the file object
-            my $oFile = (new pgBackRest::File
+            my $oFile = new pgBackRest::File
             (
                 $strStanza,
                 $strTestPath,
                 $bRemote ? $oRemote : $oLocal
-            ))->clone(1);
+            );
 
             # Loop through source exists
             for (my $bSourceExists = 0; $bSourceExists <= 1; $bSourceExists++)
@@ -816,7 +816,7 @@ sub fileTestRun
                     }
                     else
                     {
-                        system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? '.backrest.tmp' : ''));
+                        system("echo 'TESTDATA' > ${strFile}" . ($bTemp ? '.pgbackrest.tmp' : ''));
                     }
 
                     # Execute in eval in case of error
@@ -857,7 +857,7 @@ sub fileTestRun
                         confess 'remove returned false, but something should have been removed';
                     }
 
-                    if (-e ($strFile . ($bTemp ? '.backrest.tmp' : '')))
+                    if (-e ($strFile . ($bTemp ? '.pgbackrest.tmp' : '')))
                     {
                         confess 'file still exists';
                     }

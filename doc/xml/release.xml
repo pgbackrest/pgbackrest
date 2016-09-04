@@ -139,6 +139,16 @@
                         <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Remove obsolete thread index variable from <code>File()</code> module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Changed temporary file names to consistently use <file>.pgbackrest.tmp</file>.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>

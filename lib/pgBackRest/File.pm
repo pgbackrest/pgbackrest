@@ -24,6 +24,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::FileCommon;
 use pgBackRest::Protocol::Common;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # Remote operation constants
@@ -110,7 +111,6 @@ sub new
         $self->{oProtocol},
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
-        $self->{iThreadIdx}
     ) =
         logDebugParam
         (
@@ -120,7 +120,6 @@ sub new
             {name => 'oProtocol'},
             {name => 'strDefaultPathMode', default => '0750'},
             {name => 'strDefaultFileMode', default => '0640'},
-            {name => 'iThreadIdx', required => false}
         );
 
     # Default compression extension to gz
@@ -157,42 +156,6 @@ sub DESTROY
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# clone
-####################################################################################################################################
-sub clone
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $iThreadIdx
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->clone', \@_,
-        {name => 'iThreadidx', required => false}
-    );
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {
-            name => 'self',
-            value => pgBackRest::File->new(
-                $self->{strStanza},
-                $self->{strBackupPath},
-                $self->{oProtocol},
-                $self->{strDefaultPathMode},
-                $self->{strDefaultFileMode},
-                $iThreadIdx)
-        }
-    );
 }
 
 ####################################################################################################################################
@@ -317,7 +280,7 @@ sub pathGet
 
         if (defined($bTemp) && $bTemp)
         {
-            return $strFile . '.backrest.tmp';
+            return "${strFile}." . BACKREST_EXE . '.tmp';
         }
 
         return $strFile;
@@ -346,7 +309,7 @@ sub pathGet
     {
         return
             "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" . (defined($strFile) ? "/${strFile}" : '') .
-            ($bTemp ? (defined($self->{iThreadIdx}) ? ".$self->{iThreadIdx}" : '') . '.tmp' : '');
+            ($bTemp ? '.' . BACKREST_EXE . '.tmp' : '');
     }
 
     # Get the backup archive path
@@ -390,7 +353,7 @@ sub pathGet
                 confess &log(ASSERT, 'archive temp must have strFile defined');
             }
 
-            $strArchivePath = "${strArchivePath}.tmp";
+            $strArchivePath = "${strArchivePath}." . BACKREST_EXE . '.tmp';
         }
 
         return $strArchivePath;
