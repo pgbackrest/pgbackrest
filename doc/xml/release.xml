@@ -148,6 +148,10 @@
                     <release-item>
                         <p>Changed temporary file names to consistently use <file>.pgbackrest.tmp</file>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve ASSERT error handling.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

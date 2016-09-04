@@ -129,7 +129,7 @@ sub exitSafe
                 ($iThreadsStopped > 0 ? ", ${iThreadsStopped} threads stopped" : ''),
                 defined($strSignal) ? ERROR_TERM : ERROR_UNHANDLED_EXCEPTION);
 
-    # If terminated by a signal exit with 0 code
+    # If terminated by a signal exit with ERROR_TERM
     exit ERROR_TERM if defined($strSignal);
 
     # Return from function and log return values if any

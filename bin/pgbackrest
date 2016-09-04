@@ -253,3 +253,7 @@ if ($@)
     exitSafe(-1);
     confess $oMessage;
 }
+
+# It shouldn't be possible to get here so throw an error if it happens.  Currently this can be caused by the error result being
+# cleared out - this will be fixed by using Try::Tiny.
+exit ERROR_UNKNOWN;

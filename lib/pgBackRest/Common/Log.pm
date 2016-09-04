@@ -464,6 +464,16 @@ sub log
         $strMessageFormat = '(undefined)';
     }
 
+    # Set the error code
+    if ($strLevel eq ASSERT)
+    {
+        $iCode = ERROR_ASSERT;
+    }
+    elsif ($strLevel eq ERROR && !defined($iCode))
+    {
+        $iCode = ERROR_UNKNOWN;
+    }
+
     $strMessageFormat = (defined($iCode) ? "[${iCode}]: " : '') . $strMessageFormat;
 
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
@@ -487,13 +497,8 @@ sub log
         $strMessageFormat =~ s/\n/\n    /g;
         $strMessageFormat = '    ' . $strMessageFormat;
     }
-    elsif ($strLevel eq ERROR)
+    elsif ($strLevel eq ERROR || $strLevel eq ASSERT)
     {
-        if (!defined($iCode))
-        {
-            $iCode = ERROR_UNKNOWN;
-        }
-
         $strMessageFormat =~ s/\n/\n       /g;
     }
 
@@ -502,7 +507,7 @@ sub log
 
     $strMessageFormat = timestampFormat() . sprintf('.%03d T%02d', (gettimeofday() - int(gettimeofday())) * 1000,
                         threads->tid()) .
-                        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
+        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to console depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
