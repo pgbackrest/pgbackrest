@@ -161,6 +161,12 @@
                         <p>Fixed minor documentation reproducibility issues related to binary paths.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Suppress TOC for unsupported versions of <backrest/>.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-doc-list>
         </release>
 

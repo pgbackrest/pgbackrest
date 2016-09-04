@@ -282,6 +282,9 @@ sub docGet
         # Get the release version
         my $strVersion = $oRelease->paramGet('version');
 
+        # Display versions in TOC?
+        my $bTOC = true;
+
         # Create a release section
         if ($strVersion =~ /dev$/)
         {
@@ -320,6 +323,7 @@ sub docGet
             }
 
             $iUnsupportedReleaseTotal++;
+            $bTOC = false;
         }
 
         # Format the date
@@ -345,7 +349,7 @@ sub docGet
         }
 
         # Add section and titles
-        my $oReleaseSection = $oSection->nodeAdd('section', undef, {id => $strVersion});
+        my $oReleaseSection = $oSection->nodeAdd('section', undef, {id => $strVersion, toc => !$bTOC ? 'n' : undef});
         $oReleaseSection->paramSet(XML_SECTION_PARAM_ANCHOR, XML_SECTION_PARAM_ANCHOR_VALUE_NOINHERIT);
 
         $oReleaseSection->nodeAdd('title')->textSet(

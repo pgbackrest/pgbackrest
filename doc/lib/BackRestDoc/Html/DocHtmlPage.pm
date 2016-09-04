@@ -161,7 +161,7 @@ sub process
 
         $oPageBody->add($oChildSectionElement);
 
-        if (defined($oPageTocBody))
+        if (defined($oPageTocBody) && defined($oChildSectionTocElement))
         {
             $oPageTocBody->add($oChildSectionTocElement);
         }
@@ -456,7 +456,11 @@ sub sectionProcess
                 $self->sectionProcess($oChild, $strAnchor, $iDepth + 1);
 
             $oSectionBodyElement->add($oChildSectionElement);
-            $oSectionTocElement->add($oChildSectionTocElement);
+
+            if (defined($oChildSectionTocElement))
+            {
+                $oSectionTocElement->add($oChildSectionTocElement);
+            }
         }
         # Check if the child can be processed by a parent
         else
@@ -470,7 +474,7 @@ sub sectionProcess
     (
         $strOperation,
         {name => 'oSectionElement', value => $oSectionElement, trace => true},
-        {name => 'oSectionTocElement', value => $oSectionTocElement, trace => true}
+        {name => 'oSectionTocElement', value => $oSection->paramTest('toc', 'n') ? undef : $oSectionTocElement, trace => true}
     );
 }
 
