@@ -207,19 +207,20 @@ pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -465,19 +466,20 @@ pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -932,10 +934,10 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/badchecksum.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 38%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/badchecksum.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 100%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
  DEBUG:     Backup->processManifest=>: lSizeTotal = 18
   INFO: incr backup size = 18B
   INFO: new backup label = [BACKUP-INCR-1]
@@ -1029,21 +1031,22 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
 pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -1229,16 +1232,16 @@ DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): iThreadIdx = [undef], oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+ DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strSourcePathType = db:absolute, strUser = [undef]
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 28%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+ DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strHashType = <sha1>, strPathType = backup:tmp
+ DEBUG:     File->hashSize=>: iSize = 7, strHash = d85de07d6421d90aa9191c11c889bfde43680f0f
+DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 56%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
  DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_data/badchecksum.txt, strHashType = <sha1>, strPathType = backup:tmp
  DEBUG:     File->hashSize=>: iSize = 11, strHash = f927212cd08d11a42a666b2f04235398e9ceeb51
   WARN: resumed backup file pg_data/badchecksum.txt should have checksum bogus but actually has checksum f927212cd08d11a42a666b2f04235398e9ceeb51.  The file will be recopied and backup will continue but this may be an issue unless the backup temp path is known to be corrupted.
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/badchecksum.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
- DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = true, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strSourcePathType = db:absolute, strUser = [undef]
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
- DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strHashType = <sha1>, strPathType = backup:tmp
- DEBUG:     File->hashSize=>: iSize = 7, strHash = d85de07d6421d90aa9191c11c889bfde43680f0f
-DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 100%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
  DEBUG:     Backup->processManifest=>: lSizeTotal = 25
   INFO: incr backup size = 25B
   INFO: new backup label = [BACKUP-INCR-2]
@@ -1333,22 +1336,23 @@ pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -1411,9 +1415,9 @@ diff backup - cannot resume - new diff (db-master host)
   WARN: backup [BACKUP-INCR-2] missing in repository removed from backup.info
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
   WARN: aborted backup exists, but cannot be resumed (new backup-type 'diff' does not match aborted backup-type 'incr') - will be dropped and recreated
-  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 28%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 56%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 100%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
   INFO: diff backup size = 25B
   INFO: new backup label = [BACKUP-DIFF-1]
   INFO: backup stop
@@ -1475,22 +1479,23 @@ pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -1553,9 +1558,9 @@ diff backup - cannot resume - disabled (db-master host)
   WARN: backup [BACKUP-DIFF-1] missing in repository removed from backup.info
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
   WARN: aborted backup exists, but cannot be resumed (resume is disabled) - will be dropped and recreated
-  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 28%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 56%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+  INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 100%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
   INFO: diff backup size = 25B
   INFO: new backup label = [BACKUP-DIFF-2]
   INFO: backup stop
@@ -1617,22 +1622,23 @@ pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -1786,8 +1792,8 @@ incr backup - add files and remove tablespace 2 (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 100%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
   INFO: incr backup size = 13B
   INFO: new backup label = [BACKUP-INCR-3]
   INFO: backup stop
@@ -1852,8 +1858,8 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1861,14 +1867,15 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -1991,8 +1998,8 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2000,14 +2007,15 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -2066,11 +2074,11 @@ diff backup - updates since last full (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 20%) checksum 9a53d532e27785e681766c98516a5e93f096a501
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 33%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 61%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 82%) checksum e324463005236d83e6e54795dbddd20a74533bf3
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 20%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 41%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 58%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 71%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 100%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
   INFO: diff backup size = 39B
   INFO: new backup label = [BACKUP-DIFF-3]
   INFO: backup stop
@@ -2135,8 +2143,8 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2144,14 +2152,15 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -2275,8 +2284,8 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2284,14 +2293,15 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -2352,10 +2362,10 @@ diff backup - remove files during backup (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 25%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 48%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 DETAIL: skip file removed by database: [TEST_PATH]/db-master/db/base-2/base/base2.txt
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 51%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 77%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 100%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
   INFO: diff backup size = 31B
   INFO: new backup label = [BACKUP-DIFF-4]
   INFO: backup stop
@@ -2420,21 +2430,22 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -2495,16 +2506,16 @@ full backup - update file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 0%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 0%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 0%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
   INFO: backup file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 0%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
   INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-  INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 0%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 1%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
   INFO: backup file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 1%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
   INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
@@ -2571,22 +2582,23 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 
@@ -3050,8 +3062,8 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3059,14 +3071,15 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="postgres"
+master=false
 mode="0600"
 user="vagrant"
 

@@ -131,6 +131,8 @@ use constant MANIFEST_SUBKEY_FUTURE                                 => 'future';
     push @EXPORT, qw(MANIFEST_SUBKEY_FUTURE);
 use constant MANIFEST_SUBKEY_GROUP                                  => 'group';
     push @EXPORT, qw(MANIFEST_SUBKEY_GROUP);
+use constant MANIFEST_SUBKEY_MASTER                                 => 'master';
+    push @EXPORT, qw(MANIFEST_SUBKEY_MASTER);
 use constant MANIFEST_SUBKEY_MODE                                   => 'mode';
     push @EXPORT, qw(MANIFEST_SUBKEY_MODE);
 use constant MANIFEST_SUBKEY_TIMESTAMP                              => 'timestamp';
@@ -262,6 +264,14 @@ use constant DB_USER_OBJECT_MINIMUM_ID                              => 16384;
     push @EXPORT, qw(DB_USER_OBJECT_MINIMUM_ID);
 
 ####################################################################################################################################
+# Expression to determine whether files can be copied from a standby
+####################################################################################################################################
+use constant COPY_STANDBY_EXPRESSION                                => '^(' . MANIFEST_TARGET_PGDATA . '\/' .
+                                                                       '(' . DB_PATH_BASE . '|' . DB_PATH_GLOBAL . '|' .
+                                                                       DB_PATH_PGCLOG . '|' . DB_PATH_PGMULTIXACT . ')|' .
+                                                                       DB_PATH_PGTBLSPC . ')\/';
+
+####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -335,7 +345,7 @@ sub get
         ($strSection eq MANIFEST_SECTION_TARGET_FILE || $strSection eq MANIFEST_SECTION_TARGET_PATH ||
          $strSection eq MANIFEST_SECTION_TARGET_LINK) &&
         ($strSubKey eq MANIFEST_SUBKEY_USER || $strSubKey eq MANIFEST_SUBKEY_GROUP ||
-         $strSubKey eq MANIFEST_SUBKEY_MODE) &&
+         $strSubKey eq MANIFEST_SUBKEY_MODE || $strSubKey eq MANIFEST_SUBKEY_MASTER) &&
         $self->test($strSection, $strKey))
     {
         $oValue = $self->SUPER::get("${strSection}:default", $strSubKey, undef, $bRequired, $oDefault);
@@ -763,6 +773,8 @@ sub build
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_TIMESTAMP,
                        $oManifestHash{name}{$strName}{modification_time} + 0);
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{$strName}{size} + 0);
+            $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_MASTER,
+                ($strFile eq MANIFEST_FILE_PGCONTROL || $strFile !~ COPY_STANDBY_EXPRESSION) ? true : false);
         }
 
         # Link destination required for link type only
@@ -866,10 +878,19 @@ sub build
                                $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM));
                 }
 
+                # Copy repo size from the previous manifest
                 if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE))
                 {
                     $self->set(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
                                $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
+                }
+
+                # Copy master flag from the previous manifest (if it exists)
+                if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER))
+                {
+                    $self->set(
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
                 }
             }
         }
@@ -949,7 +970,8 @@ sub fileAdd
         $strManifestFile,
         $lModificationTime,
         $lSize,
-        $strChecksum
+        $strChecksum,
+        $bMaster,
     ) =
         logDebugParam
         (
@@ -957,7 +979,8 @@ sub fileAdd
             {name => 'strManifestFile'},
             {name => 'lModificationTime'},
             {name => 'lSize'},
-            {name => 'lChecksum'}
+            {name => 'lChecksum'},
+            {name => 'bMaster'},
         );
 
     # Set manifest values
@@ -986,6 +1009,7 @@ sub fileAdd
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_TIMESTAMP, $lModificationTime);
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_SIZE, $lSize);
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+    $self->boolSet(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_MASTER, $bMaster);
 }
 
 ####################################################################################################################################
@@ -1003,28 +1027,32 @@ sub buildDefault
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
-        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE)
+        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE, &MANIFEST_SUBKEY_MASTER)
         {
             # Links don't have a mode so skip
             next if ($strSection eq MANIFEST_SECTION_TARGET_LINK && $strSubKey eq &MANIFEST_SUBKEY_MODE);
+
+            # Only files have the master subkey
+            next if ($strSection ne MANIFEST_SECTION_TARGET_FILE && $strSubKey eq &MANIFEST_SUBKEY_MASTER);
 
             my %oDefault;
             my $iSectionTotal = 0;
 
             foreach my $strFile ($self->keys($strSection))
             {
-                if (!$self->boolTest($strSection, $strFile, $strSubKey, false))
-                {
-                    my $strValue = $self->get($strSection, $strFile, $strSubKey);
+                # Don't count false values when subkey in (MANIFEST_SUBKEY_USER, MANIFEST_SUBKEY_GROUP)
+                next if (($strSubKey eq MANIFEST_SUBKEY_USER || $strSubKey eq MANIFEST_SUBKEY_GROUP) &&
+                         $self->boolTest($strSection, $strFile, $strSubKey, false));
 
-                    if (defined($oDefault{$strValue}))
-                    {
-                        $oDefault{$strValue}++;
-                    }
-                    else
-                    {
-                        $oDefault{$strValue} = 1;
-                    }
+                my $strValue = $self->get($strSection, $strFile, $strSubKey);
+
+                if (defined($oDefault{$strValue}))
+                {
+                    $oDefault{$strValue}++;
+                }
+                else
+                {
+                    $oDefault{$strValue} = 1;
                 }
 
                 $iSectionTotal++;
@@ -1044,7 +1072,14 @@ sub buildDefault
 
             if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
             {
-                $self->set("${strSection}:default", $strSubKey, undef, $strMaxValue);
+                if ($strSubKey eq MANIFEST_SUBKEY_MASTER)
+                {
+                    $self->boolSet("${strSection}:default", $strSubKey, undef, $strMaxValue);
+                }
+                else
+                {
+                    $self->set("${strSection}:default", $strSubKey, undef, $strMaxValue);
+                }
 
                 foreach my $strFile ($self->keys($strSection))
                 {

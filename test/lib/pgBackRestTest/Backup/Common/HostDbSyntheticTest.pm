@@ -215,6 +215,7 @@ sub manifestFileCreate
     my $strChecksum = shift;
     my $lTime = shift;
     my $strMode = shift;
+    my $bMaster = shift;
 
     # Determine the manifest key
     my $strManifestKey = $self->manifestKeyGet($oManifestRef, $strTarget, $strFile);
@@ -227,9 +228,12 @@ sub manifestFileCreate
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
-    ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_MODE} = sprintf('%04o', S_IMODE($oStat->mode));
+    ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_MODE} =
+        sprintf('%04o', S_IMODE($oStat->mode));
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
+    ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
+        defined($bMaster) ? ($bMaster ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
     delete(${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_REFERENCE});
 
     if (defined($strChecksum))
@@ -301,6 +305,7 @@ sub manifestLinkCreate
     my $strPath = shift;
     my $strFile = shift;
     my $strDestination = shift;
+    my $bMaster = shift;
 
     # Determine the manifest key
     my $strManifestKey = $self->manifestKeyGet($oManifestRef, $strPath, $strFile);
@@ -345,6 +350,8 @@ sub manifestLinkCreate
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM} = fileHash($strDestinationFile);
+        ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
+            defined($bMaster) ? ($bMaster ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
 
         ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strManifestKey}{&MANIFEST_SUBKEY_FILE} =
             basename(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strManifestKey}{&MANIFEST_SUBKEY_PATH});

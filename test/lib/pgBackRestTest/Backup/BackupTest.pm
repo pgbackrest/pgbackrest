@@ -712,7 +712,7 @@ sub backupTestRun
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA);
 
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_94,
-                                                  '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
+                                                  '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
             # Create base path
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
@@ -755,7 +755,7 @@ sub backupTestRun
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-                                                  '2ee0de0a5fb5cf15f4a24e72b368c41f7e187003', $lTime - 100);
+                                                  '2ee0de0a5fb5cf15f4a24e72b368c41f7e187003', $lTime - 100, undef, true);
 
             # Copy pg_control
             executeTest('cp ' . testDataPath() . '/pg_control_94 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
@@ -838,7 +838,7 @@ sub backupTestRun
             testLinkCreate($oHostDbMaster->dbPath() . '/pg_config/postgresql.conf.link', './postgresql.conf');
 
             $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf',
-                                                  '../pg_config/postgresql.conf');
+                                                  '../pg_config/postgresql.conf', true);
 
             # This link will cause errors because it points to the same location as above
             $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_config_bad',
@@ -869,7 +869,7 @@ sub backupTestRun
             filePathCreate($oHostDbMaster->dbPath() . '/pg_stat', undef, undef, true);
             $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../pg_stat');
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat', 'global.stat', 'stats',
-                                                  'e350d5ce0153f3e22d5db21cf2a4eff00f3ee877', $lTime - 100);
+                                                  'e350d5ce0153f3e22d5db21cf2a4eff00f3ee877', $lTime - 100, undef, true);
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_clog');
 
             $strFullBackup = $oHostBackup->backup(
@@ -1283,7 +1283,7 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
                                                   'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
-                                                  'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime);
+                                                  'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime, undef, true);
 
             # Create temp dir and file that will be ignored
             if ($bNeutralTest && !$bRemote)

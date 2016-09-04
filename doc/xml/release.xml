@@ -118,6 +118,10 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <p>Fixed a issue where tablespaces were copied from the master during standby backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>

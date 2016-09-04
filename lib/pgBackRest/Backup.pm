@@ -265,7 +265,7 @@ sub processManifest
         }
     }
 
-    # Iterate through the files for each backup source path
+    # Iterate all files in the manifest
     foreach my $strFile ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
         # my $strBackupSourceFile = "${strBackupSourcePath}/${strFile}";
@@ -313,9 +313,7 @@ sub processManifest
             my $strFileKey = $strFile eq MANIFEST_FILE_PGCONTROL ? $strFile : sprintf("%016d-${strFile}", $lFileSize);
 
             # Certain files must be copied from the master
-            if ($strFile eq MANIFEST_FILE_PGCONTROL ||
-                $strFile !~ ('^(' . MANIFEST_PATH_BASE . '|' . MANIFEST_PATH_PGTBLSPC . '|' . MANIFEST_PATH_GLOBAL . '|' .
-                    MANIFEST_PATH_PGCLOG . '|' . MANIFEST_PATH_PGMULTIXACT . ')\/'))
+            if ($oBackupManifest->boolGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_MASTER))
             {
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{skip} = true;
                 $hFileCopyMap{$strQueueKey}{$strFileKey}{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
@@ -991,7 +989,7 @@ sub process
                     $strFile,
                     (fileStat($strFileName))->mtime,
                     length($$oFileHash{$strFile}),
-                    $oFileLocal->hash(PATH_BACKUP_ABSOLUTE, $strFileName, $bCompress));
+                    $oFileLocal->hash(PATH_BACKUP_ABSOLUTE, $strFileName, $bCompress), true);
 
                 &log(DETAIL, "wrote '${strFile}' file returned from pg_stop_backup()");
             }
@@ -1058,7 +1056,7 @@ sub process
                 }
 
                 # Add file to manifest
-                $oBackupManifest->fileAdd($strFileLog, $lModificationTime, $lCopySize, $strCopyChecksum);
+                $oBackupManifest->fileAdd($strFileLog, $lModificationTime, $lCopySize, $strCopyChecksum, true);
             }
         }
     }
