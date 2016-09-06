@@ -112,7 +112,7 @@ local $EVAL_ERROR = undef; eval
         exitSafe($oLocal->process());
     }
 
-    # Set the log levels
+    # Set the log levels - even though configLoad sets them, they may be turned off above, so need to ensure they are on here
     logLevelSet(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # Log the command start

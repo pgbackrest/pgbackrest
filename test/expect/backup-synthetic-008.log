@@ -161,7 +161,7 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-1])
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -449,7 +449,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8
  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-2])
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -1049,7 +1049,7 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -1370,7 +1370,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -1540,7 +1540,7 @@ diff backup - cannot resume - new diff (backup host)
   INFO: new backup label = [BACKUP-DIFF-1]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -1702,7 +1702,7 @@ diff backup - cannot resume - disabled (backup host)
   INFO: new backup label = [BACKUP-DIFF-2]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -1954,7 +1954,7 @@ incr backup - add files and remove tablespace 2 (backup host)
   INFO: new backup label = [BACKUP-INCR-3]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2113,7 +2113,7 @@ incr backup - update files (backup host)
   INFO: new backup label = [BACKUP-INCR-4]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2277,7 +2277,7 @@ diff backup - updates since last full (backup host)
   INFO: new backup label = [BACKUP-DIFF-3]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2437,7 +2437,7 @@ incr backup - remove files - but won't affect manifest (backup host)
   INFO: new backup label = [BACKUP-INCR-5]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2602,7 +2602,7 @@ DETAIL: skip file removed by database db-master:[TEST_PATH]/db-master/db/base-2/
   INFO: new backup label = [BACKUP-DIFF-4]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2774,7 +2774,7 @@ full backup - update file (backup host)
   INFO: new backup label = [BACKUP-FULL-3]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -3251,7 +3251,8 @@ info db stanza - normal output (backup host)
 expire full=1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --backup-host=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo --retention-full=1 --stanza=db
+  INFO: option 'retention-archive' is not set for 'retention-archive-type=full' so it is being set to the value of option 'retention-full'
+  INFO: expire start: --backup-host=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo --retention-archive=1 --retention-full=1 --stanza=db
  ERROR: [147]: backup and expire commands must be run on the backup host
   INFO: expire stop
 
@@ -3265,7 +3266,7 @@ diff backup - add file (backup host)
   INFO: new backup label = [BACKUP-DIFF-5]
   INFO: backup stop
   INFO: expire start: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

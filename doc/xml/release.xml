@@ -128,6 +128,14 @@
 
                         <p>Fixed the <cmd>check</cmd> command so backup info is checked remotely and not just locally.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where <br-option>retention-archive-type</br-option> was being ignored if <br-option>retention-archive</br-option> was not set, resulting in archive logs not being expired with expiring backups.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

@@ -667,6 +667,44 @@ sub backupTestRun
             $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_INCR, 1, $strDescription);
 
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire diff treating full as diff';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, 2, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire diff with retention-archive with warning retention-diff not set';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, undef, undef, BACKUP_TYPE_DIFF, 1, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire full with retention-archive with warning retention-full not set';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, undef, undef, BACKUP_TYPE_FULL, 1, $strDescription);
+
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire no archive with warning since retention-archive not set for INCR';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, 1, 1, BACKUP_TYPE_INCR, undef, $strDescription);
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strDescription = 'Expire no archive with warning since neither retention-archive nor retention-diff is set';
+
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->backupCreate($strStanza, BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+            $oExpireTest->process($strStanza, undef, undef, BACKUP_TYPE_DIFF, undef, $strDescription);
+
             testCleanup(\$oLogTest);
         }
     }

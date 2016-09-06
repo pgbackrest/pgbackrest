@@ -570,9 +570,14 @@ my $oConfigHelpData =
         {
             section => 'expire',
             summary =>
-                "Number of backups worth of WAL to retain.",
+                "Number of backups worth of WAL to retain. Only WAL required to make the backup consistent will be retained.",
             description =>
-                "Number of backups worth of archive log to keep."
+                "If this value is not set, then the number of archives to expire will default to the retention-full (or " .
+                    "retention-diff) value corresponding to the retention-archive-type if set to full (or diff). This will " .
+                    "insure that WAL is only expired for backups that are expired. It must be set if retention-archive-type is " .
+                    "set to incr. If disk space is at a premium, then this setting, in conjunction with retention-archive-type, " .
+                    "can be used to agressively expire WAL; however, doing so will negate the ability to perform PITR from the " .
+                    "backups with expired WAL and is therefore not recommended."
         },
 
         # RETENTION-ARCHIVE-TYPE Option Help
@@ -585,8 +590,11 @@ my $oConfigHelpData =
             description =>
                 "If set to full pgBackRest will keep archive logs for the number of full backups defined by retention-archive. " .
                     "If set to diff (differential) pgBackRest will keep archive logs for the number of full and differential " .
-                    "backups defined by retention-archive. If set to incr (incremental) pgBackRest will keep archive logs for " .
-                    "the number of full, differential, and incremental backups defined by retention-archive."
+                    "backups defined by retention-archive, meaning if the last backup taken was a full backup, it will be " .
+                    "counted as a differential for the purpose of retention. If set to incr (incremental) pgBackRest will keep " .
+                    "archive logs for the number of full, differential, and incremental backups defined by retention-archive. " .
+                    "It is recommended that this setting not be changed from the default which will only expire WAL in " .
+                    "conjunction with expiring full backups."
         },
 
         # RETENTION-DIFF Option Help

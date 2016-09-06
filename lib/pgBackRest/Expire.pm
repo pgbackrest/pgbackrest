@@ -178,12 +178,17 @@ sub process
             confess &log(ERROR, 'retention-diff must be a number >= 1');
         }
 
-        @stryPath = $oBackupInfo->list(backupRegExpGet(false, true));
+        # Get a list of full and differential backups. Full are considered differential for the purpose of retention.
+        # Example: F1, D1, D2, F2 and retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
+        @stryPath = $oBackupInfo->list(backupRegExpGet(true, true));
 
         if (@stryPath > $iDifferentialRetention)
         {
             for (my $iDiffIdx = 0; $iDiffIdx < @stryPath - $iDifferentialRetention; $iDiffIdx++)
             {
+                # Skip if this is a full backup
+                next if ($stryPath[$iDiffIdx] =~ backupRegExpGet(true));
+
                 # Get a list of all differential and incremental backups
                 my @stryRemoveList;
 
@@ -224,28 +229,15 @@ sub process
         }
     }
 
-    # Default archive retention if not explicily set
-    if (defined($iFullRetention))
+    # if archive retention is still undefined, then ignore archiving
+    if  (!defined($iArchiveRetention))
     {
-        if (!defined($iArchiveRetention))
-        {
-            $iArchiveRetention = $iFullRetention;
-        }
-
-        if (!defined($strArchiveRetentionType))
-        {
-            $strArchiveRetentionType = BACKUP_TYPE_FULL;
-        }
-    }
-
-    # If no archive retention type is set then exit
-    if (!defined($strArchiveRetentionType))
-    {
-        &log(INFO, 'archive retention type not set - archive logs will not be expired');
+         &log(INFO, "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set - archive logs will not be expired");
     }
     else
     {
         # Determine which backup type to use for archive retention (full, differential, incremental)
+        # and get a list of the remaining non-expired backups based on the type.
         if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
         {
             @stryPath = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
