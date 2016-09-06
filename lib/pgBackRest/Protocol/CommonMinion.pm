@@ -16,7 +16,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
 
@@ -36,7 +35,7 @@ sub new
         $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
         $iCompressLevelNetwork,                     # Set compression level for network only compression
-        $iProtocolTimeout                           # Protocol timeout
+        $iProtocolTimeout,                          # Protocol timeout
     ) =
         logDebugParam
         (
@@ -46,7 +45,7 @@ sub new
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
             {name => 'iCompressLevelNetwork'},
-            {name => 'iProtocolTimeout'}
+            {name => 'iProtocolTimeout'},
         );
 
     # Create the class hash
@@ -60,6 +59,9 @@ sub new
 
     # Write the greeting so master process knows who we are
     $self->greetingWrite();
+
+    # Initialize module variables
+    $self->init();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -180,10 +182,10 @@ sub outputWrite
 sub cmdRead
 {
     my $self = shift;
-    my $oParamHashRef = shift;
 
     my $strLine;
     my $strCommand;
+    my $hParam = {};
 
     while ($strLine = $self->{io}->lineRead())
     {
@@ -216,11 +218,72 @@ sub cmdRead
             my $strParam = substr($strLine, 0, $iPos);
             my $strValue = substr($strLine, $iPos + 1);
 
-            ${$oParamHashRef}{"${strParam}"} = ${strValue};
+            $hParam->{$strParam} = ${strValue};
         }
     }
 
-    return $strCommand;
+    return $strCommand, $hParam;
+}
+
+####################################################################################################################################
+# paramGet
+#
+# Helper function that returns the param or an error if required and it does not exist.
+####################################################################################################################################
+sub paramGet
+{
+    my $self = shift;
+    my $strParam = shift;
+    my $bRequired = shift;
+
+    my $strValue = $self->{hParam}{$strParam};
+
+    if (!defined($strValue) && (!defined($bRequired) || $bRequired))
+    {
+        confess "${strParam} must be defined";
+    }
+
+    return $strValue;
+}
+
+####################################################################################################################################
+# process
+####################################################################################################################################
+sub process
+{
+    my $self = shift;
+
+    # Command string
+    my $strCommand = OP_NOOP;
+
+    # Loop until the exit command is received
+    while ($strCommand ne OP_EXIT)
+    {
+        ($strCommand, $self->{hParam}) = $self->cmdRead();
+
+        eval
+        {
+            if (!$self->commandProcess($strCommand))
+            {
+                if ($strCommand eq OP_NOOP)
+                {
+                    $self->outputWrite();
+                }
+                elsif ($strCommand ne OP_EXIT)
+                {
+                    confess "invalid command: ${strCommand}";
+                }
+            }
+        };
+
+        # Process errors
+        if ($@)
+        {
+            $self->errorWrite($@);
+        }
+    }
+
+    return 0;
 }
 
 1;

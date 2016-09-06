@@ -30,20 +30,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
-# Remote operation constants
-####################################################################################################################################
-use constant OP_ARCHIVE                                             => 'Archive';
-
-use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => OP_ARCHIVE . '->getArchiveId';
-    push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
-use constant OP_ARCHIVE_GET_BACKUP_INFO_CHECK                       => OP_ARCHIVE . '->getBackupInfoCheck';
-    push @EXPORT, qw(OP_ARCHIVE_GET_BACKUP_INFO_CHECK);
-use constant OP_ARCHIVE_GET_CHECK                                   => OP_ARCHIVE . '->getCheck';
-    push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
-use constant OP_ARCHIVE_PUSH_CHECK                                  => OP_ARCHIVE . '->pushCheck';
-    push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
-
-####################################################################################################################################
 # PostgreSQL WAL magic
 ####################################################################################################################################
 my $oWalMagicHash =

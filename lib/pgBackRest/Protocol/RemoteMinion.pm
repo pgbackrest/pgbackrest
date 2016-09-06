@@ -62,246 +62,226 @@ sub new
 }
 
 ####################################################################################################################################
-# paramGet
-#
-# Helper function that returns the param or an error if required and it does not exist.
+# init
 ####################################################################################################################################
-sub paramGet
-{
-    my $oParamHashRef = shift;
-    my $strParam = shift;
-    my $bRequired = shift;
-
-    my $strValue = ${$oParamHashRef}{$strParam};
-
-    if (!defined($strValue) && (!defined($bRequired) || $bRequired))
-    {
-        confess "${strParam} must be defined";
-    }
-
-    return $strValue;
-}
-
-####################################################################################################################################
-# process
-####################################################################################################################################
-sub process
+sub init
 {
     my $self = shift;
 
-    # Create the file object
-    my $oFile = new pgBackRest::File
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->init');
+
+    # Create objects
+    $self->{oFile} = new pgBackRest::File
     (
         optionGet(OPTION_STANZA, false),
         optionGet(OPTION_REPO_PATH, false),
         $self
     );
 
-    # Create objects
-    my $oArchive = new pgBackRest::Archive();
-    my $oInfo = new pgBackRest::Info();
-    my $oJSON = JSON::PP->new();
-    my $oDb = new pgBackRest::Db();
+    $self->{oArchive} = new pgBackRest::Archive();
+    $self->{oInfo} = new pgBackRest::Info();
+    $self->{oJSON} = JSON::PP->new();
+    $self->{oDb} = new pgBackRest::Db();
 
-    # Command string
-    my $strCommand = OP_NOOP;
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
-    # Loop until the exit command is received
-    while ($strCommand ne OP_EXIT)
+####################################################################################################################################
+# commandProcess
+####################################################################################################################################
+sub commandProcess
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->commandProcess', \@_,
+            {name => 'strCommand', trace => true},
+        );
+
+    # Copy file
+    if ($strCommand eq OP_FILE_COPY || $strCommand eq OP_FILE_COPY_IN || $strCommand eq OP_FILE_COPY_OUT)
     {
-        my %oParamHash;
+        my $bResult;
+        my $strChecksum;
+        my $iFileSize;
 
-        $strCommand = $self->cmdRead(\%oParamHash);
-
-        eval
+        # Copy a file locally
+        if ($strCommand eq OP_FILE_COPY)
         {
-            # Copy file
-            if ($strCommand eq OP_FILE_COPY ||
-                $strCommand eq OP_FILE_COPY_IN ||
-                $strCommand eq OP_FILE_COPY_OUT)
-            {
-                my $bResult;
-                my $strChecksum;
-                my $iFileSize;
-
-                # Copy a file locally
-                if ($strCommand eq OP_FILE_COPY)
-                {
-                    ($bResult, $strChecksum, $iFileSize) =
-                        $oFile->copy(PATH_ABSOLUTE, paramGet(\%oParamHash, 'source_file'),
-                                     PATH_ABSOLUTE, paramGet(\%oParamHash, 'destination_file'),
-                                     paramGet(\%oParamHash, 'source_compressed'),
-                                     paramGet(\%oParamHash, 'destination_compress'),
-                                     paramGet(\%oParamHash, 'ignore_missing_source', false),
-                                     undef,
-                                     paramGet(\%oParamHash, 'mode', false),
-                                     paramGet(\%oParamHash, 'destination_path_create') ? 'Y' : 'N',
-                                     paramGet(\%oParamHash, 'user', false),
-                                     paramGet(\%oParamHash, 'group', false),
-                                     paramGet(\%oParamHash, 'append_checksum', false));
-                }
-                # Copy a file from STDIN
-                elsif ($strCommand eq OP_FILE_COPY_IN)
-                {
-                    ($bResult, $strChecksum, $iFileSize) =
-                        $oFile->copy(PIPE_STDIN, undef,
-                                     PATH_ABSOLUTE, paramGet(\%oParamHash, 'destination_file'),
-                                     paramGet(\%oParamHash, 'source_compressed'),
-                                     paramGet(\%oParamHash, 'destination_compress'),
-                                     undef, undef,
-                                     paramGet(\%oParamHash, 'mode', false),
-                                     paramGet(\%oParamHash, 'destination_path_create'),
-                                     paramGet(\%oParamHash, 'user', false),
-                                     paramGet(\%oParamHash, 'group', false),
-                                     paramGet(\%oParamHash, 'append_checksum', false));
-                }
-                # Copy a file to STDOUT
-                elsif ($strCommand eq OP_FILE_COPY_OUT)
-                {
-                    ($bResult, $strChecksum, $iFileSize) =
-                        $oFile->copy(PATH_ABSOLUTE, paramGet(\%oParamHash, 'source_file'),
-                                     PIPE_STDOUT, undef,
-                                     paramGet(\%oParamHash, 'source_compressed'),
-                                     paramGet(\%oParamHash, 'destination_compress'));
-                }
-
-                $self->outputWrite(($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
-                                    (defined($iFileSize) ? $iFileSize : '?'));
-            }
-            # List files in a path
-            elsif ($strCommand eq OP_FILE_LIST)
-            {
-                my $strOutput;
-
-                foreach my $strFile ($oFile->list(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path'),
-                                                  paramGet(\%oParamHash, 'expression', false),
-                                                  paramGet(\%oParamHash, 'sort_order'),
-                                                  paramGet(\%oParamHash, 'ignore_missing')))
-                {
-                    if (defined($strOutput))
-                    {
-                        $strOutput .= "\n";
-                    }
-
-                    $strOutput .= $strFile;
-                }
-
-                $self->outputWrite($strOutput);
-            }
-            # Create a path
-            elsif ($strCommand eq OP_FILE_PATH_CREATE)
-            {
-                $oFile->pathCreate(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path'), paramGet(\%oParamHash, 'mode', false));
-                $self->outputWrite();
-            }
-            # Check if a file/path exists
-            elsif ($strCommand eq OP_FILE_EXISTS)
-            {
-                $self->outputWrite($oFile->exists(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path')) ? 'Y' : 'N');
-            }
-            # Wait
-            elsif ($strCommand eq OP_FILE_WAIT)
-            {
-                $self->outputWrite($oFile->wait(PATH_ABSOLUTE, paramGet(\%oParamHash, 'wait')));
-            }
-            # Generate a manifest
-            elsif ($strCommand eq OP_FILE_MANIFEST)
-            {
-                my %oManifestHash;
-
-                $oFile->manifest(PATH_ABSOLUTE, paramGet(\%oParamHash, 'path'), \%oManifestHash);
-
-                my $strOutput = "name\ttype\tuser\tgroup\tmode\tmodification_time\tinode\tsize\tlink_destination";
-
-                foreach my $strName (sort(keys(%{$oManifestHash{name}})))
-                {
-                    $strOutput .= "\n${strName}\t" .
-                        $oManifestHash{name}{"${strName}"}{type} . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{mode}) ? $oManifestHash{name}{"${strName}"}{mode} : "") . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
-                            $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
-                        (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                            $oManifestHash{name}{"${strName}"}{link_destination} : "");
-                }
-
-                $self->outputWrite($strOutput);
-            }
-            # Archive push checks
-            elsif ($strCommand eq OP_ARCHIVE_PUSH_CHECK)
-            {
-                my ($strArchiveId, $strChecksum) = $oArchive->pushCheck($oFile,
-                                                                        paramGet(\%oParamHash, 'wal-segment'),
-                                                                        paramGet(\%oParamHash, 'partial'),
-                                                                        undef,
-                                                                        paramGet(\%oParamHash, 'db-version'),
-                                                                        paramGet(\%oParamHash, 'db-sys-id'));
-
-                $self->outputWrite("${strArchiveId}\t" . (defined($strChecksum) ? $strChecksum : 'Y'));
-            }
-            elsif ($strCommand eq OP_ARCHIVE_GET_BACKUP_INFO_CHECK)
-            {
-                $self->outputWrite($oArchive->getBackupInfoCheck($oFile,
-                                                       paramGet(\%oParamHash, 'db-version'),
-                                                       paramGet(\%oParamHash, 'db-control-version'),
-                                                       paramGet(\%oParamHash, 'db-catalog-version'),
-                                                       paramGet(\%oParamHash, 'db-sys-id')));
-            }
-            elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
-            {
-                $self->outputWrite($oArchive->getCheck($oFile,
-                                                       paramGet(\%oParamHash, 'db-version'),
-                                                       paramGet(\%oParamHash, 'db-sys-id')));
-            }
-            elsif ($strCommand eq OP_ARCHIVE_GET_ARCHIVE_ID)
-            {
-                $self->outputWrite($oArchive->getArchiveId($oFile));
-            }
-            # Info list stanza
-            elsif ($strCommand eq OP_INFO_STANZA_LIST)
-            {
-                $self->outputWrite(
-                    $oJSON->encode(
-                        $oInfo->stanzaList($oFile,
-                            paramGet(\%oParamHash, 'stanza', false))));
-            }
-            elsif ($strCommand eq OP_DB_INFO)
-            {
-                my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-                    $oDb->info(paramGet(\%oParamHash, 'db-path'));
-
-                $self->outputWrite("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
-            }
-            elsif ($strCommand eq OP_DB_CONNECT)
-            {
-                $self->outputWrite($oDb->connect());
-            }
-            elsif ($strCommand eq OP_DB_EXECUTE_SQL)
-            {
-                $self->outputWrite($oDb->executeSql(paramGet(\%oParamHash, 'script'),
-                                                    paramGet(\%oParamHash, 'ignore-error', false),
-                                                    paramGet(\%oParamHash, 'result', false)));
-            }
-            elsif ($strCommand eq OP_NOOP)
-            {
-                $self->outputWrite();
-            }
-            # Continue if exit
-            elsif ($strCommand ne OP_EXIT)
-            {
-                confess "invalid command: ${strCommand}";
-            }
-        };
-
-        # Process errors
-        if ($@)
-        {
-            $self->errorWrite($@);
+            ($bResult, $strChecksum, $iFileSize) = $self->{oFile}->copy(
+                PATH_ABSOLUTE, $self->paramGet('source_file'),
+                PATH_ABSOLUTE, $self->paramGet('destination_file'),
+                $self->paramGet('source_compressed'),
+                $self->paramGet('destination_compress'),
+                $self->paramGet('ignore_missing_source', false),
+                undef,
+                $self->paramGet('mode', false),
+                $self->paramGet('destination_path_create') ? 'Y' : 'N',
+                $self->paramGet('user', false),
+                $self->paramGet('group', false),
+                $self->paramGet('append_checksum', false));
         }
+        # Copy a file from STDIN
+        elsif ($strCommand eq OP_FILE_COPY_IN)
+        {
+            ($bResult, $strChecksum, $iFileSize) = $self->{oFile}->copy(
+                PIPE_STDIN, undef,
+                PATH_ABSOLUTE, $self->paramGet('destination_file'),
+                $self->paramGet('source_compressed'),
+                $self->paramGet('destination_compress'),
+                undef, undef,
+                $self->paramGet('mode', false),
+                $self->paramGet('destination_path_create'),
+                $self->paramGet('user', false),
+                $self->paramGet('group', false),
+                $self->paramGet('append_checksum', false));
+        }
+        # Copy a file to STDOUT
+        elsif ($strCommand eq OP_FILE_COPY_OUT)
+        {
+            ($bResult, $strChecksum, $iFileSize) = $self->{oFile}->copy(
+                PATH_ABSOLUTE, $self->paramGet('source_file'),
+                PIPE_STDOUT, undef,
+                $self->paramGet('source_compressed'),
+                $self->paramGet('destination_compress'));
+        }
+
+        $self->outputWrite(
+            ($bResult ? 'Y' : 'N') . " " . (defined($strChecksum) ? $strChecksum : '?') . " " .
+            (defined($iFileSize) ? $iFileSize : '?'));
     }
+    # List files in a path
+    elsif ($strCommand eq OP_FILE_LIST)
+    {
+        my $strOutput;
+
+        foreach my $strFile ($self->{oFile}->list(
+            PATH_ABSOLUTE, $self->paramGet('path'), $self->paramGet('expression', false),
+            $self->paramGet('sort_order'), $self->paramGet('ignore_missing')))
+        {
+            $strOutput .= (defined($strOutput) ? "\n" : '') . $strFile;
+        }
+
+        $self->outputWrite($strOutput);
+    }
+    # Create a path
+    elsif ($strCommand eq OP_FILE_PATH_CREATE)
+    {
+        $self->{oFile}->pathCreate(PATH_ABSOLUTE, $self->paramGet('path'), $self->paramGet('mode', false));
+        $self->outputWrite();
+    }
+    # Check if a file/path exists
+    elsif ($strCommand eq OP_FILE_EXISTS)
+    {
+        $self->outputWrite($self->{oFile}->exists(PATH_ABSOLUTE, $self->paramGet('path')) ? 'Y' : 'N');
+    }
+    # Wait
+    elsif ($strCommand eq OP_FILE_WAIT)
+    {
+        $self->outputWrite($self->{oFile}->wait(PATH_ABSOLUTE, $self->paramGet('wait')));
+    }
+    # Generate a manifest
+    elsif ($strCommand eq OP_FILE_MANIFEST)
+    {
+        my %oManifestHash;
+
+        $self->{oFile}->manifest(PATH_ABSOLUTE, $self->paramGet('path'), \%oManifestHash);
+
+        my $strOutput = "name\ttype\tuser\tgroup\tmode\tmodification_time\tinode\tsize\tlink_destination";
+
+        foreach my $strName (sort(keys(%{$oManifestHash{name}})))
+        {
+            $strOutput .=
+                "\n${strName}\t" .
+                $oManifestHash{name}{"${strName}"}{type} . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{mode}) ? $oManifestHash{name}{"${strName}"}{mode} : "") . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
+                    $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
+                (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
+                    $oManifestHash{name}{"${strName}"}{link_destination} : "");
+        }
+
+        $self->outputWrite($strOutput);
+    }
+    # Archive push checks
+    elsif ($strCommand eq OP_ARCHIVE_PUSH_CHECK)
+    {
+        my ($strArchiveId, $strChecksum) = $self->{oArchive}->pushCheck(
+            $self->{oFile},
+            $self->paramGet('wal-segment'),
+            $self->paramGet('partial'),
+            undef,
+            $self->paramGet('db-version'),
+            $self->paramGet('db-sys-id'));
+
+        $self->outputWrite("${strArchiveId}\t" . (defined($strChecksum) ? $strChecksum : 'Y'));
+    }
+    elsif ($strCommand eq OP_ARCHIVE_GET_BACKUP_INFO_CHECK)
+    {
+        $self->outputWrite(
+            $self->{oArchive}->getBackupInfoCheck(
+                $self->{oFile},
+                $self->paramGet('db-version'),
+                $self->paramGet('db-control-version'),
+                $self->paramGet('db-catalog-version'),
+                $self->paramGet('db-sys-id')));
+    }
+    elsif ($strCommand eq OP_ARCHIVE_GET_CHECK)
+    {
+        $self->outputWrite(
+            $self->{oArchive}->getCheck(
+                $self->{oFile},
+                $self->paramGet('db-version'),
+                $self->paramGet('db-sys-id')));
+    }
+    elsif ($strCommand eq OP_ARCHIVE_GET_ARCHIVE_ID)
+    {
+        $self->outputWrite($self->{oArchive}->getArchiveId($self->{oFile}));
+    }
+    # Info list stanza
+    elsif ($strCommand eq OP_INFO_STANZA_LIST)
+    {
+        $self->outputWrite($self->{oJSON}->encode($self->{oInfo}->stanzaList($self->{oFile}, $self->paramGet('stanza', false))));
+    }
+    elsif ($strCommand eq OP_DB_INFO)
+    {
+        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $self->{oDb}->info($self->paramGet('db-path'));
+
+        $self->outputWrite("${strDbVersion}\t${iControlVersion}\t${iCatalogVersion}\t${ullDbSysId}");
+    }
+    elsif ($strCommand eq OP_DB_CONNECT)
+    {
+        $self->outputWrite($self->{oDb}->connect());
+    }
+    elsif ($strCommand eq OP_DB_EXECUTE_SQL)
+    {
+        $self->outputWrite(
+            $self->{oDb}->executeSql(
+                $self->paramGet('script'),
+                $self->paramGet('ignore-error', false),
+                $self->paramGet('result', false)));
+    }
+    # Command not processed
+    else
+    {
+        return false;
+    }
+
+    # Command processed
+    return true;
 }
 
 1;

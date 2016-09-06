@@ -142,6 +142,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Refactor of protocol minions in preparation for the new local minion.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove obsolete thread index variable from <code>File()</code> module.</p>
                     </release-item>
 

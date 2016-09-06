@@ -27,40 +27,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Remote operation constants
-####################################################################################################################################
-use constant OP_FILE                                                => 'File';
-
-use constant OP_FILE_COPY                                           => OP_FILE . '->copy';
-    push @EXPORT, qw(OP_FILE_COPY);
-use constant OP_FILE_COPY_IN                                        => OP_FILE . '->copyIn';
-    push @EXPORT, qw(OP_FILE_COPY_IN);
-use constant OP_FILE_COPY_OUT                                       => OP_FILE . '->copyOut';
-    push @EXPORT, qw(OP_FILE_COPY_OUT);
-use constant OP_FILE_EXISTS                                         => OP_FILE . '->exists';
-    push @EXPORT, qw(OP_FILE_EXISTS);
-use constant OP_FILE_LIST                                           => OP_FILE . '->list';
-    push @EXPORT, qw(OP_FILE_LIST);
-use constant OP_FILE_MANIFEST                                       => OP_FILE . '->manifest';
-    push @EXPORT, qw(OP_FILE_MANIFEST);
-use constant OP_FILE_PATH_CREATE                                    => OP_FILE . '->pathCreate';
-    push @EXPORT, qw(OP_FILE_PATH_CREATE);
-use constant OP_FILE_WAIT                                           => OP_FILE . '->wait';
-    push @EXPORT, qw(OP_FILE_WAIT);
-
-####################################################################################################################################
-# COMMAND error constants [DEPRECATED - TO BE REPLACED BY CONSTANTS IN EXCEPTION.PM]
-####################################################################################################################################
-use constant COMMAND_ERR_FILE_MISSING           => 1;
-use constant COMMAND_ERR_FILE_READ              => 2;
-use constant COMMAND_ERR_FILE_MOVE              => 3;
-use constant COMMAND_ERR_FILE_TYPE              => 4;
-use constant COMMAND_ERR_LINK_READ              => 5;
-use constant COMMAND_ERR_PATH_MISSING           => 6;
-use constant COMMAND_ERR_PATH_CREATE            => 7;
-use constant COMMAND_ERR_PATH_READ              => 8;
-
-####################################################################################################################################
 # PATH_GET constants
 ####################################################################################################################################
 use constant PATH_ABSOLUTE                                          => 'absolute';
@@ -1156,7 +1122,7 @@ sub manifestRecurse
     if (!opendir($hPath, $strPathRead))
     {
         my $strError = "${strPathRead} could not be read: " . $!;
-        my $iErrorCode = COMMAND_ERR_PATH_READ;
+        my $iErrorCode = ERROR_PATH_OPEN;
 
         # If the path does not exist and is not the root path requested then return, else error
         # It's OK for paths to go away during execution (databases are a dynamic thing!)
@@ -1168,15 +1134,10 @@ sub manifestRecurse
             }
 
             $strError = "${strPathRead} does not exist";
-            $iErrorCode = COMMAND_ERR_PATH_MISSING;
+            $iErrorCode = ERROR_PATH_MISSING;
         }
 
-        if ($strPathType eq PATH_ABSOLUTE)
-        {
         confess &log(ERROR, $strError, $iErrorCode);
-    }
-
-        confess &log(ERROR, $strError);
     }
 
     # Get a list of all files in the path (except ..)
@@ -1217,7 +1178,7 @@ sub manifestRecurse
         if (!defined($oStat))
         {
             my $strError = "${strPathFile} could not be read: " . $!;
-            my $iErrorCode = COMMAND_ERR_FILE_READ;
+            my $iErrorCode = ERROR_FILE_READ;
 
             # If the file does not exist then go to the next file, else error
             # It's OK for files to go away during execution (databases are a dynamic thing!)
@@ -1226,12 +1187,7 @@ sub manifestRecurse
                 next;
             }
 
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
             confess &log(ERROR, $strError, $iErrorCode);
-        }
-
-            confess &log(ERROR, $strError);
         }
 
         # Check for regular file
@@ -1270,7 +1226,7 @@ sub manifestRecurse
                     if ($strPathType eq PATH_ABSOLUTE)
                     {
                         print $strError;
-                        exit COMMAND_ERR_LINK_READ;
+                        exit ERROR_LINK_OPEN;
                     }
 
                     confess &log(ERROR, $strError);
@@ -1285,7 +1241,7 @@ sub manifestRecurse
             if ($strPathType eq PATH_ABSOLUTE)
             {
                 print $strError;
-                exit COMMAND_ERR_FILE_TYPE;
+                exit ERROR_FILE_INVALID;
             }
 
             confess &log(ERROR, $strError);
@@ -1389,12 +1345,12 @@ sub copy
         if (!sysopen($hSourceFile, $strSourceOp, O_RDONLY))
         {
             my $strError = $!;
-            my $iErrorCode = COMMAND_ERR_FILE_READ;
+            my $iErrorCode = ERROR_FILE_READ;
 
             if ($!{ENOENT})
             {
                 # $strError = 'file is missing';
-                $iErrorCode = COMMAND_ERR_FILE_MISSING;
+                $iErrorCode = ERROR_FILE_MISSING;
 
                 if ($bIgnoreMissingSource && $strDestinationPathType ne PIPE_STDOUT)
                 {
@@ -1410,8 +1366,6 @@ sub copy
                 {
                     $self->{oProtocol}->binaryXferAbort();
                 }
-
-                confess &log(ERROR, $strError, $iErrorCode);
             }
 
             confess &log(ERROR, $strError, $iErrorCode);
@@ -1433,22 +1387,17 @@ sub copy
             if (!$bDestinationPathCreate || !sysopen($hDestinationFile, $strDestinationTmpOp, $iCreateFlag))
             {
                 my $strError = "unable to open ${strDestinationTmpOp}: " . $!;
-                my $iErrorCode = COMMAND_ERR_FILE_READ;
+                my $iErrorCode = ERROR_FILE_READ;
 
                 if (!fileExists(dirname($strDestinationTmpOp)))
                 {
                     $strError = dirname($strDestinationTmpOp) . ' destination path does not exist';
-                    $iErrorCode = COMMAND_ERR_FILE_MISSING;
+                    $iErrorCode = ERROR_FILE_MISSING;
                 }
 
-                if (!($bDestinationPathCreate && $iErrorCode == COMMAND_ERR_FILE_MISSING))
-                {
-                    if ($strSourcePathType eq PATH_ABSOLUTE)
+                if (!($bDestinationPathCreate && $iErrorCode == ERROR_FILE_MISSING))
                 {
                     confess &log(ERROR, $strError, $iErrorCode);
-                }
-
-                    confess &log(ERROR, $strError);
                 }
             }
         }
@@ -1626,10 +1575,10 @@ sub copy
             {
                 my $oMessage = $@;
 
-                # We'll ignore this error if the source file was missing and missing file exception was returned
-                # and bIgnoreMissingSource is set
-                if ($bIgnoreMissingSource && $strRemote eq 'in' && blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') &&
-                    $oMessage->code() == COMMAND_ERR_FILE_MISSING)
+                # Ignore error if source file was missing and missing file exception was returned and bIgnoreMissingSource is set
+                if ($bIgnoreMissingSource && $strRemote eq 'in' &&
+                    blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') &&
+                    $oMessage->code() == ERROR_FILE_MISSING)
                 {
                     close($hDestinationFile)
                         or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");

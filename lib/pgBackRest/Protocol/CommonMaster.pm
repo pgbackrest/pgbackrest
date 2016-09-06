@@ -37,7 +37,7 @@ sub new
         $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
         $iCompressLevelNetwork,                     # Set compression level for network only compression
-        $iProtocolTimeout                           # Protocol timeout
+        $iProtocolTimeout,                          # Protocol timeout
     ) =
         logDebugParam
         (
@@ -49,7 +49,7 @@ sub new
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
             {name => 'iCompressLevelNetwork'},
-            {name => 'iProtocolTimeout'}
+            {name => 'iProtocolTimeout'},
         );
 
     # Create the class hash

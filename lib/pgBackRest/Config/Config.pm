@@ -1691,7 +1691,6 @@ my %oOptionRule =
 ####################################################################################################################################
 my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
-my $hProtocol = {};         # Global remote hash that is created on first request (NOT THREADSAFE!)
 
 ####################################################################################################################################
 # configLoad

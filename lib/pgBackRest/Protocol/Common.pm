@@ -20,14 +20,6 @@ use pgBackRest::Protocol::IO;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Operation constants
-####################################################################################################################################
-use constant OP_NOOP                                                => 'noop';
-    push @EXPORT, qw(OP_NOOP);
-use constant OP_EXIT                                                => 'exit';
-    push @EXPORT, qw(OP_EXIT);
-
-####################################################################################################################################
 # DB/BACKUP Constants
 ####################################################################################################################################
 use constant DB                                                     => 'db';
@@ -36,6 +28,54 @@ use constant BACKUP                                                 => 'backup';
     push @EXPORT, qw(BACKUP);
 use constant NONE                                                   => 'none';
     push @EXPORT, qw(NONE);
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_NOOP                                                => 'noop';
+    push @EXPORT, qw(OP_NOOP);
+use constant OP_EXIT                                                => 'exit';
+    push @EXPORT, qw(OP_EXIT);
+
+# Archive Module
+use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => 'archiveId';
+    push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
+use constant OP_ARCHIVE_GET_BACKUP_INFO_CHECK                       => 'backupInfoCheck';
+    push @EXPORT, qw(OP_ARCHIVE_GET_BACKUP_INFO_CHECK);
+use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveCheck';
+    push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
+use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
+
+# Db Module
+use constant OP_DB_CONNECT                                          => 'dbConnect';
+    push @EXPORT, qw(OP_DB_CONNECT);
+use constant OP_DB_EXECUTE_SQL                                      => 'dbExecSql';
+    push @EXPORT, qw(OP_DB_EXECUTE_SQL);
+use constant OP_DB_INFO                                             => 'dbInfo';
+    push @EXPORT, qw(OP_DB_INFO);
+
+# File Module
+use constant OP_FILE_COPY                                           => 'fileCopy';
+    push @EXPORT, qw(OP_FILE_COPY);
+use constant OP_FILE_COPY_IN                                        => 'fileCopyIn';
+    push @EXPORT, qw(OP_FILE_COPY_IN);
+use constant OP_FILE_COPY_OUT                                       => 'fileCopyOut';
+    push @EXPORT, qw(OP_FILE_COPY_OUT);
+use constant OP_FILE_EXISTS                                         => 'fileExists';
+    push @EXPORT, qw(OP_FILE_EXISTS);
+use constant OP_FILE_LIST                                           => 'fileList';
+    push @EXPORT, qw(OP_FILE_LIST);
+use constant OP_FILE_MANIFEST                                       => 'fileManifest';
+    push @EXPORT, qw(OP_FILE_MANIFEST);
+use constant OP_FILE_PATH_CREATE                                    => 'pathCreate';
+    push @EXPORT, qw(OP_FILE_PATH_CREATE);
+use constant OP_FILE_WAIT                                           => 'wait';
+    push @EXPORT, qw(OP_FILE_WAIT);
+
+# Info module
+use constant OP_INFO_STANZA_LIST                                    => 'infoStanzList';
+    push @EXPORT, qw(OP_INFO_STANZA_LIST);
 
 ####################################################################################################################################
 # CONSTRUCTOR

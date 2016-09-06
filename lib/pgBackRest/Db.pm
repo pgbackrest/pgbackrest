@@ -28,18 +28,6 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
-# Remote operation constants
-####################################################################################################################################
-use constant OP_DB                                                  => 'Db';
-
-use constant OP_DB_CONNECT                                          => OP_DB . '->connect';
-    push @EXPORT, qw(OP_DB_CONNECT);
-use constant OP_DB_EXECUTE_SQL                                      => OP_DB . '->executeSql';
-    push @EXPORT, qw(OP_DB_EXECUTE_SQL);
-use constant OP_DB_INFO                                             => OP_DB . '->info';
-    push @EXPORT, qw(OP_DB_INFO);
-
-####################################################################################################################################
 # Backup advisory lock
 ####################################################################################################################################
 use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078987004321';

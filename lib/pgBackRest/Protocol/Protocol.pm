@@ -7,21 +7,14 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-# use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
-# use File::Basename qw(dirname basename);
-# use Getopt::Long qw(GetOptions);
-# use Storable qw(dclone);
 
-# use pgBackRest::Common::Exception;
-# use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-# use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::RemoteMaster;
-# use pgBackRest::Version;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # Module variables
@@ -68,8 +61,7 @@ push @EXPORT, qw(isDbLocal);
 # protocolGet
 #
 # Get the protocol object or create it if does not exist.  Shared protocol objects are used because they create an SSH connection
-# to the remote host and the number of these connections should be minimized.  A protocol object can be shared within a single
-# thread - for new threads clone() should be called on the shared protocol object.
+# to the remote host and the number of these connections should be minimized.
 ####################################################################################################################################
 sub protocolGet
 {
@@ -104,7 +96,7 @@ sub protocolGet
             optionGet(OPTION_BUFFER_SIZE),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-            optionGet(OPTION_PROTOCOL_TIMEOUT)
+            commandTest(CMD_EXPIRE) ? OPTION_PROTOCOL_TIMEOUT : optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
     }
     # Else create the remote protocol
@@ -140,7 +132,6 @@ sub protocolGet
                 $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $iRemoteIdx);
                 $strOptionHost = optionIndex(OPTION_DB_HOST, $iRemoteIdx);
                 $strOptionUser = optionIndex(OPTION_DB_USER, $iRemoteIdx);
-
             }
 
             # Db socket is not valid in all contexts (restore, for instance)
@@ -165,10 +156,16 @@ sub protocolGet
                         &OPTION_LOG_PATH => {},
                         &OPTION_LOCK_PATH => {},
                         &OPTION_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
+
+                        # Set protocol options explicitly so values are not picked up from remote config files
+                        &OPTION_BUFFER_SIZE =>  {value => optionGet(OPTION_BUFFER_SIZE)},
+                        &OPTION_COMPRESS_LEVEL =>  {value => optionGet(OPTION_COMPRESS_LEVEL)},
+                        &OPTION_COMPRESS_LEVEL_NETWORK =>  {value => optionGet(OPTION_COMPRESS_LEVEL_NETWORK)},
+                        &OPTION_PROTOCOL_TIMEOUT =>  {value => optionGet(OPTION_PROTOCOL_TIMEOUT)}
                     }),
                 optionGet(OPTION_BUFFER_SIZE),
-                commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
-                commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK : optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
+                optionGet(OPTION_COMPRESS_LEVEL),
+                optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
                 optionGet($strOptionHost),
                 optionGet($strOptionUser),
                 optionGet(OPTION_PROTOCOL_TIMEOUT)
