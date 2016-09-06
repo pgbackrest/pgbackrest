@@ -6,10 +6,10 @@ package BackRestDoc::Common::Doc;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
-
 use XML::Checker::Parser;
 
 use lib dirname($0) . '/../lib';
@@ -67,14 +67,16 @@ sub new
                 };
 
                 $oTree = $oParser->parsefile($self->{strFileName});
-            };
 
-            # Report any error that stopped parsing
-            if ($@)
-            {
-                $@ =~ s/at \/.*?$//s;               # remove module line number
-                die "malformed xml in '$self->{strFileName}':\n" . trim($@);
+                return true;
             }
+            # Report any error that stopped parsing
+            or do
+            {
+                my $strException = $EVAL_ERROR;
+                $strException =~ s/at \/.*?$//s;               # remove module line number
+                die "malformed xml in '$self->{strFileName}':\n" . trim($strException);
+            };
 
             # Parse and build the doc
             $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));

@@ -6,6 +6,7 @@ package pgBackRest::File;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -15,7 +16,6 @@ use File::Copy qw(cp);
 use File::Path qw(make_path remove_tree);
 use File::stat;
 use IO::Handle;
-use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
@@ -1568,17 +1568,17 @@ sub copy
                 {
                     $bResult = false;
                 }
-            };
 
+                return true;
+            }
             # If there is an error then evaluate
-            if ($@)
+            or do
             {
-                my $oMessage = $@;
+                my $oException = $EVAL_ERROR;
 
                 # Ignore error if source file was missing and missing file exception was returned and bIgnoreMissingSource is set
-                if ($bIgnoreMissingSource && $strRemote eq 'in' &&
-                    blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') &&
-                    $oMessage->code() == ERROR_FILE_MISSING)
+                if ($bIgnoreMissingSource && $strRemote eq 'in' && isException($oException) &&
+                    $oException->code() == ERROR_FILE_MISSING)
                 {
                     close($hDestinationFile)
                         or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
@@ -1587,8 +1587,8 @@ sub copy
                     return false, undef, undef;
                 }
 
-                confess $oMessage;
-            }
+                confess $oException;
+            };
         }
     }
     # Else this is a local operation

@@ -67,9 +67,6 @@ severity = 5
 # S4 - Requires simple assignments in declarations. (TEST ONLY)
 [-Variables::ProhibitAugmentedAssignmentInDeclaration]
 
-# S3 - Requires safe checking of evals.
-[-ErrorHandling::RequireCheckingReturnValueOfEval]
-
 # S4 - Requires parans when logical and bitwise booleans are mixed.
 [-ValuesAndExpressions::ProhibitMixedBooleanOperators]
 

@@ -9,6 +9,7 @@
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
@@ -16,7 +17,6 @@ use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
-use Scalar::Util qw(blessed);
 use Storable;
 
 use lib dirname($0) . '/lib';
@@ -29,6 +29,7 @@ use BackRestDoc::Latex::DocLatex;
 use BackRestDoc::Markdown::DocMarkdown;
 
 use lib dirname($0) . '/../lib';
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
@@ -176,20 +177,24 @@ eval
         executeTest("ssh ${strHost} find ${strPath} -type d -exec chmod 550 {} +");
         executeTest("ssh ${strHost} find ${strPath} -type f -exec chmod 440 {} +");
     }
-};
+
+    # Exit with success
+    exit 0;
+}
 
 ####################################################################################################################################
 # Check for errors
 ####################################################################################################################################
-if ($@)
+or do
 {
-    my $oMessage = $@;
+    # If a backrest exception then return the code
+    exit $EVAL_ERROR->code() if (isException($EVAL_ERROR));
 
-    # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
-    {
-        exit $oMessage->code();
-    }
+    # Else output the unhandled error
+    print $EVAL_ERROR;
+    exit ERROR_UNHANDLED;
+};
 
-    confess $oMessage;
-}
+# It shouldn't be possible to get here
+&log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
+exit ERROR_ASSERT;

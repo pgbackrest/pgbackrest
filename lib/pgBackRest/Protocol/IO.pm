@@ -6,6 +6,7 @@ package pgBackRest::Protocol::IO;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -552,16 +553,20 @@ sub waitPid
 
                                 $strError .= $strLine;
                             }
-                        };
 
-                        if ($@ || !defined($strError))
-                        {
-                            my $strMessage = $@;
-
-                            $strError =
-                                'no output from terminated process' .
-                                (defined($strMessage) && ${strMessage} ne '' ? ": ${strMessage}" : '');
+                            return true;
                         }
+                        or do
+                        {
+                            if (!defined($strError))
+                            {
+                                my $strException = $EVAL_ERROR;
+
+                                $strError =
+                                    'no output from terminated process' .
+                                    (defined($strException) && ${strException} ne '' ? ": ${strException}" : '');
+                            }
+                        };
                     }
 
                     $self->{pId} = undef;

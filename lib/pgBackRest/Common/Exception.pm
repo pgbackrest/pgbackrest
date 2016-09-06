@@ -7,6 +7,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
 
+use Scalar::Util qw(blessed);
+
 use Exporter qw(import);
     our @EXPORT = qw();
 
@@ -98,8 +100,6 @@ use constant ERROR_TERM                                             => ERROR_MIN
     push @EXPORT, qw(ERROR_TERM);
 use constant ERROR_FILE_WRITE                                       => ERROR_MINIMUM + 39;
     push @EXPORT, qw(ERROR_FILE_WRITE);
-use constant ERROR_UNHANDLED_EXCEPTION                              => ERROR_MINIMUM + 40;
-    push @EXPORT, qw(ERROR_UNHANDLED_EXCEPTION);
 use constant ERROR_PROTOCOL_TIMEOUT                                 => ERROR_MINIMUM + 41;
     push @EXPORT, qw(ERROR_PROTOCOL_TIMEOUT);
 use constant ERROR_FEATURE_NOT_SUPPORTED                            => ERROR_MINIMUM + 42;
@@ -143,8 +143,10 @@ use constant ERROR_PROTOCOL_OUTPUT_REQUIRED                         => ERROR_MIN
 use constant ERROR_LINK_OPEN                                        => ERROR_MINIMUM + 61;
     push @EXPORT, qw(ERROR_LINK_OPEN);
 
-use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 1;
+use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);
+use constant ERROR_UNHANDLED                                        => ERROR_MAXIMUM - 1;
+    push @EXPORT, qw(ERROR_UNHANDLED);
 use constant ERROR_UNKNOWN                                          => ERROR_MAXIMUM;
     push @EXPORT, qw(ERROR_UNKNOWN);
 
@@ -158,10 +160,10 @@ sub new
     my $strMessage = shift;  # ErrorMessage
     my $strTrace = shift;    # Stack trace
 
-    # if ($iCode < ERROR_MINIMUM || $iCode > ERROR_MAXIMUM)
-    # {
-    #     $iCode = ERROR_INVALID_VALUE;
-    # }
+    if ($iCode < ERROR_MINIMUM || $iCode > ERROR_MAXIMUM)
+    {
+        $iCode = ERROR_INVALID_VALUE;
+    }
 
     # Create the class hash
     my $self = {};
@@ -204,5 +206,19 @@ sub trace
 
     return $self->{strTrace};
 }
+
+####################################################################################################################################
+# isException
+#
+# Is this a structured exception?
+####################################################################################################################################
+sub isException
+{
+    my $oException = shift;
+
+    return defined($oException) && blessed($oException) && $oException->isa('pgBackRest::Common::Exception') ? 1 : 0;
+}
+
+push @EXPORT, qw(isException);
 
 1;

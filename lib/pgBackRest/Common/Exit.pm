@@ -6,11 +6,11 @@ package pgBackRest::Common::Exit;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
-use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
@@ -29,9 +29,9 @@ use constant SIGNAL_TERM                                            => 'TERM';
 ####################################################################################################################################
 # Hook important signals into exitSafe function
 ####################################################################################################################################
-$SIG{&SIGNAL_HUP} = sub {exitSafe(-1, SIGNAL_HUP)};
-$SIG{&SIGNAL_INT} = sub {exitSafe(-1, SIGNAL_INT)};
-$SIG{&SIGNAL_TERM} = sub {exitSafe(-1, SIGNAL_TERM)};
+$SIG{&SIGNAL_HUP} = sub {exitSafe(ERROR_TERM, undef, SIGNAL_HUP)};
+$SIG{&SIGNAL_INT} = sub {exitSafe(ERROR_TERM, undef, SIGNAL_INT)};
+$SIG{&SIGNAL_TERM} = sub {exitSafe(ERROR_TERM, undef, SIGNAL_TERM)};
 
 ####################################################################################################################################
 # exitSafe
@@ -45,13 +45,15 @@ sub exitSafe
     (
         $strOperation,
         $iExitCode,
-        $strSignal
+        $oException,
+        $strSignal,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::exitSafe', \@_,
-            {name => 'iExitCode'},
-            {name => 'strSignal', required => false}
+            {name => 'iExitCode', required => false},
+            {name => 'oException', required => false},
+            {name => 'strSignal', required => false},
         );
 
     commandStop();
@@ -63,26 +65,41 @@ sub exitSafe
     eval
     {
         lockRelease(false);
-    };
+    }
+    or do {};
 
-    # Exit with code when defined
-    if ($iExitCode != -1)
+    # If exit code is not defined then try to get it from the exception
+    if (!defined($iExitCode))
     {
-        exit $iExitCode;
+        # If a backrest exception
+        if (isException($oException))
+        {
+            $iExitCode = $oException->code();
+        }
+        else
+        {
+            $iExitCode = ERROR_UNHANDLED;
+
+            &log(
+                ERROR,
+                'process terminated due to an unhandled exception' .
+                    (defined($oException) ? ":\n${oException}" : ': [exception not defined]'),
+                $iExitCode);
+        }
+    }
+    elsif ($iExitCode == ERROR_TERM)
+    {
+        &log(ERROR, "process terminated on a ${strSignal} signal", ERROR_TERM);
     }
 
-    # Log error based on where the signal came from
-    &log(
-        ERROR,
-        'process terminated ' .
-            (defined($strSignal) ? "on a ${strSignal} signal" :  'due to an unhandled exception'),
-        defined($strSignal) ? ERROR_TERM : ERROR_UNHANDLED_EXCEPTION);
+    # Log return values if any
+    logDebugReturn
+    (
+        $strOperation,
+        {name => 'iExitCode', value => $iExitCode}
+    );
 
-    # If terminated by a signal exit with ERROR_TERM
-    exit ERROR_TERM if defined($strSignal);
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    exit $iExitCode;
 }
 
 push @EXPORT, qw(exitSafe);

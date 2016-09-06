@@ -6,6 +6,7 @@ package BackRestDoc::Latex::DocLatex;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Data::Dumper;
 use Exporter qw(import);
@@ -13,10 +14,10 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use File::Copy;
 use POSIX qw(strftime);
-use Scalar::Util qw(blessed);
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
@@ -112,14 +113,14 @@ sub process
 
             # Save the html page
             $strLatex .= $oDocLatexSection->process();
-        };
 
-        if ($@)
+            return true;
+        }
+        or do
         {
-            my $oMessage = $@;
+            my $oException = $EVAL_ERROR;
 
-            # If a backrest exception then return the code - don't confess
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') && $oMessage->code() == -1)
+            if (isException($oException) && $oException->code() == ERROR_FILE_INVALID)
             {
                 my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
                 $self->{oManifest}->cacheReset($$oRenderOut{source});
@@ -130,7 +131,7 @@ sub process
                 # Save the html page
                 $strLatex .= $oDocLatexSection->process();
             }
-        }
+        };
     }
 
     $strLatex .= "\n% " . ('-' x 130) . "\n% End document\n% " . ('-' x 130) . "\n\\end{document}\n";

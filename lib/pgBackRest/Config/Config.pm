@@ -2252,12 +2252,17 @@ sub optionValidate
                 {
                     # Test that the string is a valid float or integer  by adding 1 to it.  It's pretty hokey but it works and it
                     # beats requiring Scalar::Util::Numeric to do it properly.
+                    my $bError = false;
+
                     eval
                     {
                         my $strTest = $strValue + 1;
+                        return true;
+                    }
+                    or do
+                    {
+                        $bError = true;
                     };
-
-                    my $bError = $@ ? true : false;
 
                     # Check that integers are really integers
                     if (!$bError && $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_INTEGER &&

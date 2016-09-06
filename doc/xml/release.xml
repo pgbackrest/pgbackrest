@@ -158,7 +158,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Improve ASSERT error handling.</p>
+                        <p>Improve ASSERT error handling, safely check eval blocks, and convert <code>$@</code> to <code>$EVAL_ERROR</code>.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>

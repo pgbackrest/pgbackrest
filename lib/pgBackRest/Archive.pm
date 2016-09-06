@@ -6,6 +6,7 @@ package pgBackRest::Archive;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -518,24 +519,21 @@ sub getBackupInfoCheck
         eval
         {
             $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+            return true;
+        }
+        # If there is an error but it is not that the file is missing then confess
+        or do
+        {
+            if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+            {
+                confess $EVAL_ERROR;
+            }
         };
 
-        if ($@)
+        # Check that the stanza backup info is compatible with the current version of the database
+        # If not, an error will be thrown
+        if (defined($oBackupInfo))
         {
-            my $oMessage = $@;
-
-            # If this is a backrest error but it is not that the file is missing then confess
-            # else nothing to do so exit
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception')
-                && ($oMessage->code() != ERROR_PATH_MISSING))
-            {
-                confess $oMessage;
-            }
-        }
-        else
-        {
-            # Check that the stanza backup info is compatible with the current version of the database
-            # If not, an error will be thrown
             $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
         }
     }
@@ -952,6 +950,8 @@ sub xfer
     }
     else
     {
+        my $oException = undef;
+
         eval
         {
             # Start backup test point
@@ -1069,9 +1069,13 @@ sub xfer
                 # Remove the copied segment from the total size
                 $lFileSize -= $oManifestHash{name}{$strFile}{size};
             }
-        };
 
-        my $oException = $@;
+            return true;
+        }
+        or do
+        {
+            $oException = $EVAL_ERROR;
+        };
 
         # Create a stop file if the archive store exceeds the max even after xfer
         if (optionTest(OPTION_ARCHIVE_MAX_MB))
@@ -1164,23 +1168,21 @@ sub check
 
             # Clear any previous errors if we've found the archive.info
             $iResult = 0;
-        };
 
-        if ($@)
-        {
-            my $oMessage = $@;
-
-            # If this is a backrest error then capture the last code and message else confess
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
-            {
-                $iResult = $oMessage->code();
-                $strResultMessage = $oMessage->message();
-            }
-            else
-            {
-                confess $oMessage;
-            }
+            return true;
         }
+        or do
+        {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
+        };
     } while (!defined($strArchiveId) && waitMore($oWait));
 
     # If able to get the archive id then check the archived WAL file with the time remaining
@@ -1189,24 +1191,21 @@ sub check
         eval
         {
             $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
-        };
-
-        # If this is a backrest error then capture the code and message else confess
-        if ($@)
-        {
-            my $oMessage = $@;
-
-            # If a backrest exception then return the code else confess
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
-            {
-                $iResult = $oMessage->code();
-                $strResultMessage = $oMessage->message();
-            }
-            else
-            {
-                confess $oMessage;
-            }
+            return true;
         }
+        # If this is a backrest error then capture the code and message else confess
+        or do
+        {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
+        };
     }
 
     # Reset the console logging

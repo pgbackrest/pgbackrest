@@ -9,12 +9,12 @@
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 # Convert die to confess to capture the stack trace
 $SIG{__DIE__} = sub { Carp::confess @_ };
 
 use File::Basename qw(dirname);
-use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Archive;
@@ -28,9 +28,9 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
-# START EVAL BLOCK TO CATCH ERRORS AND STOP PROCESSES
+# Run in eval block to catch errors
 ####################################################################################################################################
-eval
+local $EVAL_ERROR = undef; eval
 {
     ################################################################################################################################
     # Load command line parameters and config
@@ -242,25 +242,20 @@ eval
 
     lockRelease();
     exitSafe(0);
-};
 
-####################################################################################################################################
-# CHECK FOR ERRORS AND STOP PROCESSES
-####################################################################################################################################
-if ($@)
-{
-    my $oMessage = $@;
-
-    # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
-    {
-        exitSafe($oMessage->code());
-    }
-
-    exitSafe(-1);
-    confess $oMessage;
+    # It shouldn't be possible to get here
+    &log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
+    exit ERROR_ASSERT;
 }
 
-# It shouldn't be possible to get here so throw an error if it happens.  Currently this can be caused by the error result being
-# cleared out - this will be fixed by using Try::Tiny.
-exit ERROR_UNKNOWN;
+####################################################################################################################################
+# Check for errors
+####################################################################################################################################
+or do
+{
+    exitSafe(undef, $EVAL_ERROR);
+};
+
+# It shouldn't be possible to get here
+&log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
+exit ERROR_ASSERT;

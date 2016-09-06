@@ -7,11 +7,8 @@ use parent 'pgBackRest::Protocol::Common';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
-use File::Basename qw(dirname);
-use Scalar::Util qw(blessed);
-
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -120,30 +117,21 @@ sub binaryXferAbort
 sub errorWrite
 {
     my $self = shift;
-    my $oMessage = shift;
+    my $oException = shift;
 
     my $iCode;
     my $strMessage;
 
     # If the message is blessed it may be a standard exception
-    if (blessed($oMessage))
+    if (isException($oException))
     {
-        # Check if it is a standard exception
-        if ($oMessage->isa('pgBackRest::Common::Exception'))
-        {
-            $iCode = $oMessage->code();
-            $strMessage = $oMessage->message();
-        }
-        # Else terminate the process with an error
-        else
-        {
-            confess &log(ERROR, 'unknown error object', ERROR_UNKNOWN);
-        }
+        $iCode = $oException->code();
+        $strMessage = $oException->message();
     }
     # Else terminate the process with an error
     else
     {
-        confess &log(ERROR, 'unknown error: ' . $oMessage, ERROR_UNKNOWN);
+        confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
     }
 
     # Write the message text into protocol
@@ -274,13 +262,14 @@ sub process
                     confess "invalid command: ${strCommand}";
                 }
             }
-        };
 
-        # Process errors
-        if ($@)
-        {
-            $self->errorWrite($@);
+            return true;
         }
+        # Process errors
+        or do
+        {
+            $self->errorWrite($EVAL_ERROR);
+        };
     }
 
     return 0;

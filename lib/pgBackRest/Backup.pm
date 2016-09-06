@@ -6,6 +6,7 @@ package pgBackRest::Backup;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
 use Fcntl 'SEEK_CUR';
@@ -732,7 +733,7 @@ sub process
     # Check if an aborted backup exists for this stanza
     if (-e $strBackupTmpPath)
     {
-        my $bUsable = false;
+        my $bUsable;
         my $strReason = "resume is disabled";
         my $oAbortedManifest;
 
@@ -811,7 +812,13 @@ sub process
                 {
                     $bUsable = true;
                 }
-            };
+
+                return true;
+            }
+            or do
+            {
+                $bUsable = false;
+            }
         }
 
         # If the aborted backup is usable then clean it

@@ -10,10 +10,9 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use lib dirname($0) . '/../lib';
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -21,7 +20,6 @@ use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
-use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -817,22 +815,22 @@ sub cachePop
 
         if (!defined($hCache))
         {
-            confess &log(ERROR, 'unable to get index from cache', -1);
+            confess &log(ERROR, 'unable to get index from cache', ERROR_FILE_INVALID);
         }
 
         if (!defined($$hCache{key}))
         {
-            confess &log(ERROR, 'unable to get key from cache', -1);
+            confess &log(ERROR, 'unable to get key from cache', ERROR_FILE_INVALID);
         }
 
         if (!defined($$hCache{type}))
         {
-            confess &log(ERROR, 'unable to get type from cache', -1);
+            confess &log(ERROR, 'unable to get type from cache', ERROR_FILE_INVALID);
         }
 
         if ($$hCache{type} ne $strCacheType)
         {
-            confess &log(ERROR, 'types do not match, cache is invalid', -1);
+            confess &log(ERROR, 'types do not match, cache is invalid', ERROR_FILE_INVALID);
         }
 
         if ($oJSON->encode($$hCache{key}) ne $oJSON->encode($hCacheKey))
@@ -840,7 +838,7 @@ sub cachePop
             confess &log(ERROR,
                 "keys at index $self->{iCacheIdx} do not match, cache is invalid." .
                 "\ncache key: " . $oJSON->encode($$hCache{key}) .
-                "\ncurrent key: " . $oJSON->encode($hCacheKey), -1);
+                "\ncurrent key: " . $oJSON->encode($hCacheKey), ERROR_FILE_INVALID);
         }
 
         $bCacheHit = true;

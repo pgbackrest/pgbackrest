@@ -9,15 +9,16 @@ package pgBackRestTest::File::FileTest;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Cwd qw(abs_path cwd);
 use Exporter qw(import);
 use Fcntl qw(:mode);
 use File::stat;
 use POSIX qw(ceil);
-use Scalar::Util qw(blessed);
 use Time::HiRes qw(gettimeofday usleep);
 
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
@@ -183,10 +184,10 @@ sub fileTestRun
                 eval
                 {
                     $oFile->pathCreate($strPathType, $strPath, $strMode);
-                };
-
+                    return true;
+                }
                 # Check for errors
-                if ($@)
+                or do
                 {
                     # Ignore errors if the path did not exist
                     if ($bErrorExpected)
@@ -194,8 +195,8 @@ sub fileTestRun
                         next;
                     }
 
-                    confess "error raised: " . $@ . "\n";
-                }
+                    confess "error raised: " . $EVAL_ERROR . "\n";
+                };
 
                 if ($bErrorExpected)
                 {
@@ -301,17 +302,17 @@ sub fileTestRun
                 eval
                 {
                     $oFile->move(PATH_BACKUP_ABSOLUTE, $strSourceFile, PATH_BACKUP_ABSOLUTE, $strDestinationFile, $bCreate);
-                };
-
-                if ($@)
+                    return true;
+                }
+                or do
                 {
                     if (!$bSourceExists || (!$bDestinationExists && !$bCreate) || $bSourceError || $bDestinationError)
                     {
                         next;
                     }
 
-                    confess 'error raised: ' . $@ . "\n";
-                }
+                    confess 'error raised: ' . $EVAL_ERROR . "\n";
+                };
 
                 if (!$bSourceExists || (!$bDestinationExists && !$bCreate) || $bSourceError || $bDestinationError)
                 {
@@ -381,17 +382,17 @@ sub fileTestRun
                 eval
                 {
                     $oFile->compress(PATH_BACKUP_ABSOLUTE, $strFile);
-                };
-
-                if ($@)
+                    return true;
+                }
+                or do
                 {
                     if (!$bExists || $bError)
                     {
                         next;
                     }
 
-                    confess 'error raised: ' . $@ . "\n";
-                }
+                    confess 'error raised: ' . $EVAL_ERROR . "\n";
+                };
 
                 if (!$bExists || $bError)
                 {
@@ -570,18 +571,18 @@ sub fileTestRun
                 eval
                 {
                     $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash);
-                };
-
+                    return true;
+                }
                 # Check for an error
-                if ($@)
+                or do
                 {
                     if ($bErrorExpected)
                     {
                         next;
                     }
 
-                    confess 'error raised: ' . $@ . "\n";
-                }
+                    confess 'error raised: ' . $EVAL_ERROR . "\n";
+                };
 
                 # Check for an expected error
                 if ($bErrorExpected)
@@ -720,17 +721,17 @@ sub fileTestRun
                         eval
                         {
                             @stryFileList = $oFile->list(PATH_BACKUP_ABSOLUTE, $strPath, $strExpression, $strSort, $bIgnoreMissing);
-                        };
-
-                        if ($@)
+                            return true;
+                        }
+                        or do
                         {
                             if ($bErrorExpected)
                             {
                                 next;
                             }
 
-                            confess 'error raised: ' . $@ . "\n";
-                        }
+                            confess 'error raised: ' . $EVAL_ERROR . "\n";
+                        };
 
                         if ($bErrorExpected)
                         {
@@ -825,9 +826,9 @@ sub fileTestRun
                     eval
                     {
                         $bRemoved = $oFile->remove(PATH_BACKUP_ABSOLUTE, $strFile, $bTemp, $bIgnoreMissing);
-                    };
-
-                    if ($@)
+                        return true;
+                    }
+                    or do
                     {
                         if ($bError || $bRemote)
                         {
@@ -839,8 +840,8 @@ sub fileTestRun
                             next;
                         }
 
-                        confess 'unexpected error raised: ' . $@;
-                    }
+                        confess 'unexpected error raised: ' . $EVAL_ERROR;
+                    };
 
                     if ($bError || $bRemote)
                     {
@@ -932,18 +933,18 @@ sub fileTestRun
 
                 eval
                 {
-                    ($strHash, $iSize) = $oFile->hashSize(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed)
-                };
-
-                if ($@)
+                    ($strHash, $iSize) = $oFile->hashSize(PATH_BACKUP_ABSOLUTE, $strFile, $bCompressed);
+                    return true;
+                }
+                or do
                 {
                     if ($bErrorExpected)
                     {
                         next;
                     }
 
-                    confess 'unexpected error raised: ' . $@;
-                }
+                    confess 'unexpected error raised: ' . $EVAL_ERROR;
+                };
 
                 if ($bErrorExpected)
                 {
@@ -1011,29 +1012,23 @@ sub fileTestRun
                         {
                             confess "bExists is set to ${bExists}, but exists() returned " . !$bExists;
                         }
-                    };
 
-                    if ($@)
+                        return true;
+                    }
+                    or do
                     {
-                        my $oMessage = $@;
+                        my $oException = $@;
                         my $iCode;
                         my $strMessage;
 
-                        if (blessed($oMessage))
+                        if (isException($oException))
                         {
-                            if ($oMessage->isa('pgBackRest::Common::Exception'))
-                            {
-                                $iCode = $oMessage->code();
-                                $strMessage = $oMessage->message();
-                            }
-                            else
-                            {
-                                confess 'unknown error object';
-                            }
+                            $iCode = $oException->code();
+                            $strMessage = $oException->message();
                         }
                         else
                         {
-                            $strMessage = $oMessage;
+                            $strMessage = $oException;
                         }
 
                         if ($bError)
@@ -1042,7 +1037,7 @@ sub fileTestRun
                         }
 
                         confess 'error raised: ' . $strMessage . "\n";
-                    }
+                    };
                 }
             }
         }
@@ -1197,8 +1192,6 @@ sub fileTestRun
 
                 # Run file copy in an eval block because some errors are expected
                 my $bReturn;
-                #
-                # exit;
 
                 eval
                 {
@@ -1208,32 +1201,26 @@ sub fileTestRun
                                      $bSourceCompressed, $bDestinationCompress,
                                      $bSourceIgnoreMissing, undef, '0770', false, undef, undef,
                                      $bChecksumAppend);
-                };
 
+                    return true;
+                }
                 # Check for errors after copy
-                if ($@)
+                or do
                 {
-                    my $oMessage = $@;
+                    my $oException = $EVAL_ERROR;
 
-                    if (blessed($oMessage))
+                    if (isException($oException))
                     {
-                        if ($oMessage->isa('pgBackRest::Common::Exception'))
+                        if ($bSourceMissing && !$bSourceIgnoreMissing)
                         {
-                            if ($bSourceMissing && !$bSourceIgnoreMissing)
-                            {
-                                next;
-                            }
+                            next;
+                        }
 
-                            confess $oMessage->message() . "\n" . $oMessage->trace();
-                        }
-                        else
-                        {
-                            confess 'unknown error object: ' . $oMessage;
-                        }
+                        confess $oException->message() . (defined($oException->trace()) ? "\n" . $oException->trace() : '');
                     }
 
-                    confess $oMessage;
-                }
+                    confess $oException;
+                };
 
                 if ($bSourceMissing)
                 {

@@ -9,11 +9,8 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname);
-use File::Copy;
 use Scalar::Util qw(blessed);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################

@@ -6,6 +6,7 @@ package BackRestDoc::Html::DocHtmlSite;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Data::Dumper;
 use Exporter qw(import);
@@ -13,10 +14,10 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use File::Copy;
 use POSIX qw(strftime);
-use Scalar::Util qw(blessed);
 use Storable qw(dclone);
 
 use lib dirname($0) . '/../lib';
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
@@ -129,14 +130,14 @@ sub process
             $strHtml =
                 $self->{oManifest}->variableReplace(
                     (new BackRestDoc::Html::DocHtmlPage($self->{oManifest}, $strPageId, $self->{bExe}))->process());
-        };
 
-        if ($@)
+            return true;
+        }
+        or do
         {
-            my $oMessage = $@;
+            my $oException = $@;
 
-            # If a backrest exception then return the code - don't confess
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception') && $oMessage->code() == -1)
+            if (isException($oException) && $oException->code() == ERROR_FILE_INVALID)
             {
                 my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
                 $self->{oManifest}->cacheReset($$oRenderOut{source});
@@ -147,9 +148,9 @@ sub process
             }
             else
             {
-                confess $@;
+                confess $oException;
             }
-        }
+        };
 
         # Save the html page
         fileStringWrite("$self->{strHtmlPath}/${strPageId}.html", $strHtml, false);

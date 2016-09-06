@@ -9,6 +9,7 @@
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
+use English '-no_match_vars';
 
 # Convert die to confess to capture the stack trace
 $SIG{__DIE__} = sub { Carp::confess @_ };
@@ -19,9 +20,9 @@ use Cwd qw(abs_path cwd);
 use Pod::Usage qw(pod2usage);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
-use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -138,76 +139,80 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-lint' => \$bNoLint)
     or pod2usage(2);
 
-# Display version and exit if requested
-if ($bVersion || $bHelp)
-{
-    syswrite(*STDOUT, BACKREST_NAME . ' ' . BACKREST_VERSION . " Test Engine\n");
 
-    if ($bHelp)
+####################################################################################################################################
+# Run in eval block to catch errors
+####################################################################################################################################
+eval
+{
+    # Display version and exit if requested
+    if ($bVersion || $bHelp)
     {
-        syswrite(*STDOUT, "\n");
+        syswrite(*STDOUT, BACKREST_NAME . ' ' . BACKREST_VERSION . " Test Engine\n");
+
+        if ($bHelp)
+        {
+            syswrite(*STDOUT, "\n");
+            pod2usage();
+        }
+
+        exit 0;
+    }
+
+    if (@ARGV > 0)
+    {
+        syswrite(*STDOUT, "invalid parameter\n\n");
         pod2usage();
     }
 
-    exit 0;
-}
+    ################################################################################################################################
+    # Setup
+    ################################################################################################################################
+    # Set a neutral umask so tests work as expected
+    umask(0);
 
-if (@ARGV > 0)
-{
-    syswrite(*STDOUT, "invalid parameter\n\n");
-    pod2usage();
-}
+    # Set console log level
+    if ($bQuiet)
+    {
+        $strLogLevel = 'off';
+    }
 
-####################################################################################################################################
-# Setup
-####################################################################################################################################
-# Set a neutral umask so tests work as expected
-umask(0);
+    logLevelSet(uc($strLogLevel), uc($strLogLevel));
 
-# Set console log level
-if ($bQuiet)
-{
-    $strLogLevel = 'off';
-}
+    if ($strModuleTest ne 'all' && $strModule eq 'all')
+    {
+        confess "--module must be provided for --test=\"${strModuleTest}\"";
+    }
 
-logLevelSet(uc($strLogLevel), uc($strLogLevel));
+    if (defined($iModuleTestRun) && $strModuleTest eq 'all')
+    {
+        confess "--test must be provided for --run=\"${iModuleTestRun}\"";
+    }
 
-if ($strModuleTest ne 'all' && $strModule eq 'all')
-{
-    confess "--module must be provided for --test=\"${strModuleTest}\"";
-}
+    # Check process total
+    if (defined($iProcessMax) && ($iProcessMax < 1 || $iProcessMax > OPTION_DEFAULT_PROCESS_MAX_MAX))
+    {
+        confess 'process-max must be between 1 and ' . OPTION_DEFAULT_PROCESS_MAX_MAX;
+    }
 
-if (defined($iModuleTestRun) && $strModuleTest eq 'all')
-{
-    confess "--test must be provided for --run=\"${iModuleTestRun}\"";
-}
+    # Set test path if not expicitly set
+    if (!defined($strTestPath))
+    {
+        $strTestPath = cwd() . '/test';
+    }
 
-# Check process total
-if (defined($iProcessMax) && ($iProcessMax < 1 || $iProcessMax > OPTION_DEFAULT_PROCESS_MAX_MAX))
-{
-    confess 'process-max must be between 1 and ' . OPTION_DEFAULT_PROCESS_MAX_MAX;
-}
+    # Get the base backrest path
+    my $strBackRestBase = dirname(dirname(abs_path($0)));
 
-# Set test path if not expicitly set
-if (!defined($strTestPath))
-{
-    $strTestPath = cwd() . '/test';
-}
+    ################################################################################################################################
+    # Build Docker containers
+    ################################################################################################################################
+    if ($bVmBuild)
+    {
+        containerBuild($strVm, $bVmForce, $strDbVersion);
+        exit 0;
+    }
 
-# Get the base backrest path
-my $strBackRestBase = dirname(dirname(abs_path($0)));
-
-####################################################################################################################################
-# Build Docker containers
-####################################################################################################################################
-if ($bVmBuild)
-{
-    containerBuild($strVm, $bVmForce, $strDbVersion);
-    exit 0;
-}
-
-eval
-{
     ################################################################################################################################
     # Start VM and run
     ################################################################################################################################
@@ -547,24 +552,29 @@ eval
             executeTest("sudo rm -rf ${strTestPath}");
         }
     }
-};
 
-if ($@)
-{
-    my $oMessage = $@;
-
-    # If a backrest exception then return the code - don't confess
-    if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+    if (!$bDryRun && !$bVmOut)
     {
-        syswrite(*STDOUT, $oMessage->trace());
-        exit $oMessage->code();
+        &log(INFO, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
     }
 
-    syswrite(*STDOUT, $oMessage);
-    exit 250;
+    # Exit with success
+    exit 0;
 }
 
-if (!$bDryRun && !$bVmOut)
+####################################################################################################################################
+# Check for errors
+####################################################################################################################################
+or do
 {
-    &log(INFO, 'TESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)');
-}
+    # If a backrest exception then return the code
+    exit $EVAL_ERROR->code() if (isException($EVAL_ERROR));
+
+    # Else output the unhandled error
+    print $EVAL_ERROR;
+    exit ERROR_UNHANDLED;
+};
+
+# It shouldn't be possible to get here
+&log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
+exit ERROR_ASSERT;

@@ -9,10 +9,10 @@ package pgBackRestTest::Config::ConfigTest;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Cwd qw(abs_path);
 use Exporter qw(import);
-use Scalar::Util qw(blessed);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -108,26 +108,30 @@ sub configLoadExpect
     commandSetTest($oOption, $strCommand);
     argvWriteTest($oOption);
 
+    my $bErrorFound = false;
+
     eval
     {
         configLoad();
-    };
-
-    if ($@)
+        return true;
+    }
+    or do
     {
+        my $oException = $EVAL_ERROR;
+
         if (!defined($iExpectedError))
         {
-            confess $@;
+            confess $oException;
         }
 
-        my $oMessage = $@;
+        $bErrorFound = true;
 
-        if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+        if (isException($oException))
         {
-            if ($oMessage->code() != $iExpectedError)
+            if ($oException->code() != $iExpectedError)
             {
-                confess "expected error ${iExpectedError} from configLoad but got " . $oMessage->code() .
-                        " '" . $oMessage->message() . "'";
+                confess "expected error ${iExpectedError} from configLoad but got " . $oException->code() .
+                        " '" . $oException->message() . "'";
             }
 
             my $strError;
@@ -178,29 +182,25 @@ sub configLoadExpect
             }
             else
             {
-                confess "must construct message for error ${iExpectedError}, use this as an example: '" . $oMessage->message() . "'";
+                confess
+                    "must construct message for error ${iExpectedError}, use this as an example: '" . $oException->message() . "'";
             }
 
-            if ($oMessage->message() ne $strError)
+            if ($oException->message() ne $strError)
             {
-                confess "expected error message \"${strError}\" from configLoad but got \"" . $oMessage->message() . "\"";
+                confess "expected error message \"${strError}\" from configLoad but got \"" . $oException->message() . "\"";
             }
         }
         else
         {
-            confess "configLoad should throw pgBackRest::Common::Exception:\n$oMessage";
+            confess "configLoad should throw pgBackRest::Common::Exception:\n$oException";
         }
-    }
-    else
-    {
-        if (defined($iExpectedError))
-        {
-            confess "expected error ${iExpectedError} from configLoad but got success";
-        }
-    }
+    };
 
-    # cmp_deeply(OPTION_rule_get(), $oOptionRuleExpected, 'compare original and new rule hashes')
-    #     or die 'comparison failed';
+    if (!$bErrorFound && defined($iExpectedError))
+    {
+        confess "expected error ${iExpectedError} from configLoad but got success";
+    }
 }
 
 sub optionTestExpect

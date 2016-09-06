@@ -21,13 +21,14 @@ run 008 - rmt 1, cmp 1, exists 1
  ERROR: [130]: raised on backup host: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 130, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -67,13 +68,14 @@ db-version="9.3"
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000001-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -98,13 +100,14 @@ db-version="9.3"
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000002-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000003 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -129,10 +132,11 @@ db-version="9.3"
  DEBUG:     Archive->walFileName=>: strWalFileName = 000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz
  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = true, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = 9.3-1/000000010000000100000003-1c7e00fd09b9dd11fc2966590b3e3274645dd031.gz, strSourcePathType = backup:archive, strUser = [undef]
  DEBUG:     Archive->get=>: iResult = 0
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-get stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0

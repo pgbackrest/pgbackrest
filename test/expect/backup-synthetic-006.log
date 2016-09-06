@@ -163,13 +163,14 @@ full backup - create pg_stat link, pg_clog dir (backup host)
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -452,13 +453,14 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -770,13 +772,14 @@ DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and match
  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.manifest, strPathType = db:absolute
  DEBUG:     File->remove=>: bRemoved = true
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: restore stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
@@ -1052,13 +1055,14 @@ incr backup - add tablespace 1 (backup host)
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -1374,13 +1378,14 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH
  DEBUG:     BackupInfo->current=>: bTest = true
   INFO: archive retention type not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------

@@ -47,11 +47,12 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -82,11 +83,12 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 119
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -117,22 +119,24 @@ run 002 - rmt 0, cmp 0, arc_async 1
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 119
 
 stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force stop
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: stop start: --config=[TEST_PATH]/db-master/pgbackrest.conf --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
   INFO: sent term signal to process [PROCESS-ID]
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: stop stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push --test --test-delay=5 --test-point=archive-push-async-start=y [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -153,12 +157,13 @@ stop all stanzas (db-master host)
  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
- DEBUG:     Common::Exit::exitSafe(): iExitCode = -1, strSignal = TERM
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 138, oException = [undef], strSignal = TERM
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
  ERROR: [138]: process terminated on a TERM signal
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 138
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -169,21 +174,23 @@ stop all stanzas (db-master host)
  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
  ERROR: [137]: stop file exists for all stanzas
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 137, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 137
 
 start all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
   INFO: start start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: start stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -235,11 +242,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -278,11 +286,12 @@ start all stanzas (db-master host)
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-4518a0fdf41d796760b384a358270d4682589820, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
  ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 120, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 120
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -330,11 +339,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -386,11 +396,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -429,11 +440,12 @@ start all stanzas (db-master host)
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-4518a0fdf41d796760b384a358270d4682589820, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
  ERROR: [120]: WAL segment 000000010000000100000001.partial already exists in the archive
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 120, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 120
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -481,11 +493,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -533,11 +546,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -585,11 +599,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -637,11 +652,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -672,11 +688,12 @@ start all stanzas (db-master host)
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 119
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -707,11 +724,12 @@ start all stanzas (db-master host)
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 119
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -763,11 +781,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -806,11 +825,12 @@ start all stanzas (db-master host)
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-4518a0fdf41d796760b384a358270d4682589820, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
  ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 120, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 120
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -858,11 +878,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -914,11 +935,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -957,11 +979,12 @@ start all stanzas (db-master host)
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-4518a0fdf41d796760b384a358270d4682589820, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
  ERROR: [120]: WAL segment 000000010000000100000005.partial already exists in the archive
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 120, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 120
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1009,11 +1032,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1061,11 +1085,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1113,11 +1138,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1165,11 +1191,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1200,11 +1227,12 @@ start all stanzas (db-master host)
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment version 9.3 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 119
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1235,11 +1263,12 @@ start all stanzas (db-master host)
  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 5947969990501855219
  ERROR: [119]: WAL segment system-id 5947969990501855219 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 119, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 119
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1291,11 +1320,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1334,11 +1364,12 @@ start all stanzas (db-master host)
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-4518a0fdf41d796760b384a358270d4682589820, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
  ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 120, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 120
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1386,11 +1417,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1442,11 +1474,12 @@ start all stanzas (db-master host)
  DEBUG:     Archive->xfer: no WAL segments to archive
  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1485,11 +1518,12 @@ start all stanzas (db-master host)
  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-4518a0fdf41d796760b384a358270d4682589820, strHashType = <sha1>, strPathType = db:absolute
  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760b384a358270d4682589820
  ERROR: [120]: WAL segment 000000010000000100000009.partial already exists in the archive
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 120, strSignal = [undef]
+ DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
   INFO: archive-push stop
  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+ DEBUG:     Common::Exit::exitSafe=>: iExitCode = 120
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------

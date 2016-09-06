@@ -7,10 +7,10 @@ use parent 'pgBackRest::Protocol::Common';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use File::Basename qw(dirname);
 use Time::HiRes qw(gettimeofday);
-use Scalar::Util qw(blessed);
 
 use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
@@ -111,32 +111,32 @@ sub close
         eval
         {
             $self->cmdWrite('exit');
-        };
-
-        if ($@)
+            return true;
+        }
+        or do
         {
-            my $oMessage = $@;
+            my $oException = $EVAL_ERROR;
             my $strError = 'unable to shutdown protocol';
             my $strHint = 'HINT: the process completed successfully but protocol-timeout may need to be increased.';
 
-            if (blessed($oMessage) && $oMessage->isa('pgBackRest::Common::Exception'))
+            if (isException($oException))
             {
-                $iExitStatus = $oMessage->code();
+                $iExitStatus = $oException->code();
             }
             else
             {
-                if (!defined($oMessage))
+                if (!defined($oException))
                 {
-                    $oMessage = 'unknown error';
+                    $oException = 'unknown error';
                 }
 
                 $iExitStatus = ERROR_UNKNOWN;
             }
 
             &log(WARN,
-                $strError . ($iExitStatus == ERROR_UNKNOWN ? '' : ' [' . $oMessage->code() . ']') . ': ' .
-                ($iExitStatus == ERROR_UNKNOWN ? $oMessage : $oMessage->message()) . "\n${strHint}");
-        }
+                $strError . ($iExitStatus == ERROR_UNKNOWN ? '' : ' [' . $oException->code() . ']') . ': ' .
+                ($iExitStatus == ERROR_UNKNOWN ? $oException : $oException->message()) . "\n${strHint}");
+        };
 
         undef($self->{io});
         $bClosed = true;
