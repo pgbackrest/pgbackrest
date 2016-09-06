@@ -28,19 +28,19 @@ use pgBackRestTest::Common::VmTest;
 # User/group definitions
 ####################################################################################################################################
 use constant POSTGRES_GROUP                                         => 'postgres';
-use constant POSTGRES_GROUP_ID                                      => 5000;
+use constant POSTGRES_GROUP_ID                                      => getgrnam(POSTGRES_GROUP) . '';
 use constant POSTGRES_USER                                          => POSTGRES_GROUP;
 use constant POSTGRES_USER_ID                                       => POSTGRES_GROUP_ID;
 
 use constant TEST_GROUP                                             => POSTGRES_GROUP;
 use constant TEST_GROUP_ID                                          => POSTGRES_GROUP_ID;
 use constant TEST_USER                                              => 'vagrant';
-use constant TEST_USER_ID                                           => 1000;
+use constant TEST_USER_ID                                           => getpwnam(TEST_USER) . '';
 
 use constant BACKREST_GROUP                                         => POSTGRES_GROUP;
 use constant BACKREST_GROUP_ID                                      => POSTGRES_GROUP_ID;
 use constant BACKREST_USER                                          => 'backrest';
-use constant BACKREST_USER_ID                                       => 5001;
+use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
 
 ####################################################################################################################################
 # User/group creation

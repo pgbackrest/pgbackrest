@@ -176,6 +176,14 @@
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>New vagrant base box and make uid/gid selection for containers dynamic.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2016-08-25" version="1.06" title="Backup from Standby and Bug Fixes">
